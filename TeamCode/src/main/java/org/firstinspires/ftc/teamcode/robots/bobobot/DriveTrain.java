@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.bobobot;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 class DriveTrain {
@@ -15,7 +16,6 @@ class DriveTrain {
     // robot motors
     private double powerLeft = 0;
     private double powerRight = 0;
-    //mecanum type
     private double powerFrontLeft = 0;
     private double powerFrontRight = 0;
     private double powerBackLeft = 0;
@@ -60,10 +60,10 @@ class DriveTrain {
         motorFrontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorBackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorBackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorBackLeft.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        motorBackRight.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        motorFrontLeft.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        motorFrontRight.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-
+        motorBackLeft.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        motorBackRight.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        motorFrontLeft.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        motorFrontRight.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        //motorFrontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
     }
 }
