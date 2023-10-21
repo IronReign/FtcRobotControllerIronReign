@@ -1,18 +1,19 @@
-package org.firstinspires.ftc.teamcode.robots.ri2d2023.rr_drive.opmode;
+package org.firstinspires.ftc.teamcode.robots.csbot.rr_drive.opmode;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.robots.ri2d2023.rr_drive.DriveConstants;
-import org.firstinspires.ftc.teamcode.robots.ri2d2023.rr_drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.robots.csbot.rr_drive.DriveConstants;
+import org.firstinspires.ftc.teamcode.robots.csbot.rr_drive.SampleMecanumDrive;
 
 import java.util.Objects;
 
@@ -25,7 +26,7 @@ import java.util.Objects;
  * Further fine tuning of kF may be desired.
  */
 @Config
-@Autonomous(name = "Max Velocity Tuner", group = "drive")
+@Autonomous(name  = "Max Velocity Tuner CS", group = "test")
 public class MaxVelocityTuner extends LinearOpMode {
     public static double RUNTIME = 2.0;
 
