@@ -66,5 +66,4 @@ class DriveTrain {
         motorFrontRight.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
     }
-    public double getMotorAvgPosition(){return (double)(Math.abs(motorFrontLeft.getCurrentPosition())+Math.abs(motorFrontRight.getCurrentPosition())+Math.abs(motorBackLeft.getCurrentPosition())+Math.abs(motorBackRight.getCurrentPosition()))/4.0;}
 }
