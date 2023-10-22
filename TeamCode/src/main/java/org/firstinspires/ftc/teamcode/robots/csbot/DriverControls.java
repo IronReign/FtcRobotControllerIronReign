@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 
-public class DriverControls {
+public class  DriverControls {
     //CONSTANTS
     public static double TURRET_DEADZONE = 0.03;
 
@@ -45,13 +45,13 @@ public class DriverControls {
     }
 
     public void joystickDrive() {
-        if(gamepad1.right_trigger > .05) {
+        if(stickyGamepad1.right_trigger) {
             robot.intake.adjustBeaterBarAngle(gamepad1.right_trigger);
         }
-        if(gamepad1.left_trigger > .05) {
+        if(stickyGamepad1.left_trigger) {
             robot.intake.adjustBeaterBarAngle(-gamepad1.left_trigger);
         }
-        if(gamepad1.b) {
+        if(stickyGamepad1.x) {
             robot.intake.toggleBeaterBar();
         }
 
@@ -60,14 +60,14 @@ public class DriverControls {
                         -gamepad1.left_stick_y,
                         -gamepad1.left_stick_x,
                         -gamepad1.right_stick_x
-                )
+                        )
         );
 
-        if(gamepad1.right_bumper)
+        if(stickyGamepad1.right_bumper)
                 robot.outtake.moveSlide(1);
-        if(gamepad1.left_bumper)
+        if(stickyGamepad1.left_bumper)
             robot.outtake.moveSlide(-1);
-        if(gamepad1.y)
+        if(stickyGamepad1.y)
             robot.outtake.flip();
 
     }

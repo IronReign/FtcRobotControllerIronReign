@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -11,6 +12,7 @@ import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Config (value = "CS_OUTTAKE")
 public class Outtake implements Subsystem {
 
     HardwareMap hardwareMap;
@@ -94,6 +96,6 @@ public class Outtake implements Subsystem {
 
     @Override
     public String getTelemetryName() {
-        return null;
+        return "OUTTAKE";
     }
 }

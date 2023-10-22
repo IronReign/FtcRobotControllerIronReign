@@ -41,7 +41,7 @@ public class Autonomous implements TelemetryProvider {
     }
 
     enum Mode {
-        LINEAR, SPLINE, NO_RR, SIMPLE;
+        LINEAR, SPLINE, NO_RR, SIMPLE
     }
 
     // autonomous routines

@@ -1,8 +1,10 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -13,6 +15,7 @@ import java.util.Map;
 
 //i still have no clue what the intake needs lmao
 
+@Config(value = "CS_INTAKE")
 public class Intake implements Subsystem {
     //CONSTANTS
     HardwareMap hardwareMap;
@@ -20,9 +23,10 @@ public class Intake implements Subsystem {
     Servo diverter;
     Joint beaterBarAngleController;
     DcMotorEx beaterBar;
+    public boolean manualBeaterBarOn = false;
     public static double BEATER_BAR_ADJUST_SPEED = 2;
-    public static double BEATER_BAR_INTAKE_VELOCITY = 1.0;
-    public static double BEATER_BAR_EJECT_VELOCITY = -1.0;
+    public static double BEATER_BAR_INTAKE_VELOCITY = 1500;
+    public static double BEATER_BAR_EJECT_VELOCITY = -1500;
     public static double BEATER_BAR_ANGLE_CONTROLLER_HOME;
     public static double BEATER_BAR_ANGLE_CONTROLLER_TICKS_PER_DEGREE;
     public static double BEATER_BAR_ANGLE_CONTROLLER_MIN_DEGREES;
@@ -53,21 +57,26 @@ public class Intake implements Subsystem {
     public Intake(HardwareMap hardwareMap, Robot robot) {
             this.hardwareMap = hardwareMap;
             this.robot = robot;
-            articulation = Articulation.FOLD;
+            articulation = Articulation.MANUAL;
 
             diverter = hardwareMap.get(Servo.class, "diverter");
             beaterBar = hardwareMap.get(DcMotorEx.class, "beaterBar");
+            beaterBar.setDirection(DcMotorSimple.Direction.REVERSE);
 
             beaterBarAngleController = new Joint(hardwareMap, "beaterBarAngleController", false, BEATER_BAR_ANGLE_CONTROLLER_HOME, BEATER_BAR_ANGLE_CONTROLLER_TICKS_PER_DEGREE, BEATER_BAR_ANGLE_CONTROLLER_MIN_DEGREES, BEATER_BAR_ANGLE_CONTROLLER_MAX_DEGREES, BEATER_BAR_ANGLE_CONTROLLER_START_ANGLE, BEATER_BAR_ANGLE_CONTROLLER_SPEED);
-            beaterBar.setMotorEnable();
             beaterBar.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
     }
 
     @Override
     public void update(Canvas fieldOverlay) {
         switch (articulation) {
             case MANUAL:
+                if(manualBeaterBarOn) {
+                    beaterBar.setPower(1);
+                    beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY );
+                }
+                else
+                    beaterBar.setVelocity(0);
                 break;
             case OFF:
                 beaterBar.setPower(0);
@@ -103,21 +112,19 @@ public class Intake implements Subsystem {
     }
 
     public void toggleBeaterBar() {
-        if(Math.abs(beaterBar.getVelocity() - BEATER_BAR_INTAKE_VELOCITY) < .2)
-        beaterBar.setVelocity(0);
-        else
-            beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY);
+        manualBeaterBarOn = !manualBeaterBarOn;
     }
 
     @Override
     public void stop() {
-        beaterBar.setMotorDisable();
+        beaterBar.setVelocity(0);
     }
 
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("articulation", articulation.name());
+        telemetryMap.put("manual beater bar on?", manualBeaterBarOn);
         telemetryMap.put("beater bar amps", beaterBar.getPower());
         return telemetryMap;
     }

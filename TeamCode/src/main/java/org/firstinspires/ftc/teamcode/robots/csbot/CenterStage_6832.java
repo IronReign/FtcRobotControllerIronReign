@@ -83,7 +83,7 @@ public class CenterStage_6832 extends OpMode {
 
     }
 
-    public static GameState gameState = GameState.AUTONOMOUS;
+    public static GameState gameState = GameState.TEST;
     static public int gameStateIndex;
 
 
@@ -133,8 +133,8 @@ public class CenterStage_6832 extends OpMode {
         //DEFAULT AUTONOMOUS SETUP
         alliance = Constants.Alliance.RED;
         //TODO - SET ORIGIN and STARTING POSITION
-//        origin =
-//        startingPosition =
+        //origin =
+        startingPosition = Constants.Position.START_LEFT;
 
         //VISION SETUP
         auton.createVisionProvider(visionProviderIndex);
@@ -293,7 +293,7 @@ public class CenterStage_6832 extends OpMode {
         }
 
         //handle this class' telemetry
-        handleTelemetry(opModeTelemetryMap,  Misc.formatInvariant("(%d): %s", gameState.getName()), packet);
+        handleTelemetry(opModeTelemetryMap,  gameState.getName(), packet);
 
         //handle robot telemetry
         handleTelemetry(robot.getTelemetry(debugTelemetryEnabled), robot.getTelemetryName(), packet);
