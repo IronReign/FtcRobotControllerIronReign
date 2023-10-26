@@ -24,7 +24,7 @@ public class IntakeClaw {
         telemetry.addData("Claw Span  \t", Utils.servoDenormalize(clawSpan.getPosition()));
         telemetry.addData("Claw Arm Position \t", Utils.servoDenormalize(clawArm.getCurrentPosition()));
     }
-    public void init()
+    public void intakeClawInit()
     {
         clawArm = this.hardwareMap.get(DcMotorEx.class, "clawArmServo");
         clawSpan = this.hardwareMap.get(Servo.class, "clawSpanServo");

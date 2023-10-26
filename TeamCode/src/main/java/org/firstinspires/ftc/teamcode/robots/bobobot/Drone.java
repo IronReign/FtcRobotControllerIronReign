@@ -18,11 +18,16 @@ public class Drone {
     {
         telemetry.addData("Drone Launch Servo  \t", Utils.servoDenormalize(droneLaunch.getPosition()));
     }
-    public void init()
+    public void droneInit()
     {
         droneLaunch = this.hardwareMap.get(Servo.class, "droneLaunchServo");
     }
-    public void droneRelease () {droneLaunch.setPosition(RELEASE);}
+    public void droneRelease (boolean press)
+    {
+        if(press == true)
+            droneLaunch.setPosition(RELEASE);
+
+    }
 
     //public double getDronePosition () { return droneLaunch.getPosition();}
 
