@@ -29,7 +29,7 @@ import java.util.List;
  */
 
 @Config(value = "AA_PP_6CanVisionPipeline")
-public class DPRGCanDetectorPipeline extends TimestampedOpenCvPipeline {
+public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
     private Mat cropOutput = new Mat();
     private Mat normalizeInput = new Mat();
     private Mat normalizeOutput = new Mat();
@@ -66,7 +66,7 @@ public class DPRGCanDetectorPipeline extends TimestampedOpenCvPipeline {
     public static int RIGHT_THRESHOLD = 211;
     public static int CENTER_LINE = 160;
 
-    public DPRGCanDetectorPipeline() {
+    public CSBotPropDetectorPipeline() {
         largestX = -1;
         largestY = -1;
         largestArea = -1;

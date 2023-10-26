@@ -23,7 +23,8 @@ public class Intake implements Subsystem {
     Servo diverter;
     Joint beaterBarAngleController;
     DcMotorEx beaterBar;
-    public boolean manualBeaterBarOn = false;
+    public static boolean manualBeaterBarEject = false;
+    public static boolean manualBeaterBarOn = false;
     public static double BEATER_BAR_ADJUST_SPEED = 2;
     public static double BEATER_BAR_INTAKE_VELOCITY = 1500;
     public static double BEATER_BAR_EJECT_VELOCITY = -1500;
@@ -72,8 +73,14 @@ public class Intake implements Subsystem {
         switch (articulation) {
             case MANUAL:
                 if(manualBeaterBarOn) {
-                    beaterBar.setPower(1);
-                    beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY );
+                    if(!manualBeaterBarEject) {
+                        beaterBar.setPower(1);
+                        beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY);
+                    }
+                    else {
+                        beaterBar.setPower(1);
+                        beaterBar.setVelocity(BEATER_BAR_EJECT_VELOCITY);
+                    }
                 }
                 else
                     beaterBar.setVelocity(0);
@@ -113,6 +120,9 @@ public class Intake implements Subsystem {
 
     public void toggleBeaterBar() {
         manualBeaterBarOn = !manualBeaterBarOn;
+    }
+    public void switchBeaterBarDirection (){
+        manualBeaterBarEject = !manualBeaterBarEject;
     }
 
     @Override

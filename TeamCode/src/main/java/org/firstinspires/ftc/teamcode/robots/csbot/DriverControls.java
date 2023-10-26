@@ -51,8 +51,11 @@ public class  DriverControls {
         if(stickyGamepad1.left_trigger) {
             robot.intake.adjustBeaterBarAngle(-gamepad1.left_trigger);
         }
-        if(stickyGamepad1.x) {
+        if(stickyGamepad1.a) {
             robot.intake.toggleBeaterBar();
+        }
+        if(stickyGamepad1.b) {
+            robot.intake.switchBeaterBarDirection();
         }
 
         robot.driveTrain.setWeightedDrivePower(
