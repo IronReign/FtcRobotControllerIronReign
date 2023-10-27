@@ -35,6 +35,7 @@ public class Robot implements Subsystem {
     //vision variables
     public static boolean visionProviderFinalized = false;
     public static int visionProviderIndex = 2;
+    public static boolean colorBlobEnabled = true;
 
 
     private long[] subsystemUpdateTimes;
@@ -115,6 +116,20 @@ public class Robot implements Subsystem {
     }
     //end update
 
+    public void switchVisionProviders() {
+        if(visionProviderIndex == 2){
+            //switch to AprilTags
+            visionProviderIndex = 0;
+            visionProviderFinalized = false;
+        }
+        else if (visionProviderIndex == 0) {
+            //switch back to ColorBlob
+            visionProviderIndex = 2;
+            visionProviderFinalized = false;
+        }
+    }
+
+//    TODO - THIS IS AWFUL, NEEDS TO BE RIPPED OUT
     public void initLoopVision() {
         if (!visionProviderFinalized) {
             visionProvider.initializeVision(hardwareMap, this);

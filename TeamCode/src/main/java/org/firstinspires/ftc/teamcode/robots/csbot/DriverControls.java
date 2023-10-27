@@ -73,6 +73,10 @@ public class  DriverControls {
         if(stickyGamepad1.y)
             robot.outtake.flip();
 
+        if(stickyGamepad1.guide) {
+            robot.switchVisionProviders();
+        }
+
     }
 
     public void handleStateSwitch() {

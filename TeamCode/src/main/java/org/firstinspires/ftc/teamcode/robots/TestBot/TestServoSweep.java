@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode.robots.TestBot;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -47,81 +48,51 @@ import com.qualcomm.robotcore.hardware.Servo;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
-@TeleOp(name = "Taubot: Test Servo Sweep", group = "Test")
+@Config(value = "servoTest")
+@TeleOp(name = "Test Servo", group = "Test")
 //@Disabled
-public class TestServoSweeo extends LinearOpMode {
+public class TestServoSweep extends LinearOpMode {
 
     static final double INCREMENT   = 0.01;     // amount to slew servo each CYCLE_MS cycle
     static final int    CYCLE_MS    =   100;     // period of each cycle
     static final double MAX_POS     =  0.6;     // Maximum rotational position
     static final double MIN_POS     =  0.4;     // Minimum rotational position
+    public static double minPosition = 0;
+    public static double maxPosition = 1500;
 
     // Define class members
-    Servo servo1, servo2, servo3, servo4, servo5, servo6, servo7, servo8;
-    double  position = (MAX_POS - MIN_POS) / 2; // Start at halfway position
+    Servo servo1;
+    double  position = (maxPosition - minPosition) / 2; // Start at halfway position
     boolean rampUp = true;
+    boolean goToMax = false;
 
-    DcMotorEx motor0, motor1, motor2, motor3;
 
     @Override
     public void runOpMode() {
 
         // Connect to servo (Assume PushBot Left Hand)
         // Change the text in quotes to match any servo name on your robot.
-        servo1 = hardwareMap.get(Servo.class, "servoGripper");
-        servo2 = hardwareMap.get(Servo.class, "nudgeSwivel");
-        servo3 = hardwareMap.get(Servo.class, "shoulderJoint");
-        servo4 = hardwareMap.get(Servo.class, "elbowJoint");
-        servo5 = hardwareMap.get(Servo.class, "wristServo");
-        servo6 = hardwareMap.get(Servo.class, "lassoJoint");
-        servo7 = hardwareMap.get(Servo.class, "turretServo");
-        servo8 = hardwareMap.get(Servo.class, "testServo");
-
-        motor0 = hardwareMap.get(DcMotorEx.class, "motorRight");
-        motor1 = hardwareMap.get(DcMotorEx.class, "motorLeft");
-        motor2 = hardwareMap.get(DcMotorEx.class, "motorChariot");
-        motor3 = hardwareMap.get(DcMotorEx.class, "test");
-
-        motor0.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
-        motor1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
-        motor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODERS);
-
+        servo1 = hardwareMap.get(Servo.class, "testServo");
         // Wait for the start button
-        telemetry.addData(">", "Press Start to wiggle Servos." );
+        telemetry.addData(">", "Press Start to test Servo." );
         telemetry.update();
         waitForStart();
 
 
         // Scan servo till stop pressed.
         while(opModeIsActive()){
+            if(gamepad1.a) {
+                goToMax = !goToMax;
+            }
 
             // slew the servo, according to the rampUp (direction) variable.
-            if (rampUp) {
+            if (goToMax) {
                 // Keep stepping up until we hit the max value.
-                position += INCREMENT ;
-                if (position >= MAX_POS ) {
-                    position = MAX_POS;
-                    rampUp = !rampUp;   // Switch ramp direction
-                }
+               position = maxPosition;
             }
             else {
-                // Keep stepping down until we hit the min value.
-                position -= INCREMENT ;
-                if (position <= MIN_POS ) {
-                    position = MIN_POS;
-                    rampUp = !rampUp;  // Switch ramp direction
-                }
+                position = minPosition;
             }
-/*
-            motor0.setPower(0.2);
-            motor1.setPower(0.2);
-            motor2.setPower(0.2);
-            motor3.setPower(0.2);
-*/
-            telemetry.addData("Motor0", motor0.getCurrentPosition());
-            telemetry.addData("Motor1", motor1.getCurrentPosition());
-            telemetry.addData("Motor2", motor2.getCurrentPosition());
-            telemetry.addData("Motor3", motor3.getCurrentPosition());
 
             // Display the current value
             telemetry.addData("Servo Position", "%5.2f", position);
@@ -130,13 +101,6 @@ public class TestServoSweeo extends LinearOpMode {
 
             // Set the servo to the new position and pause;
             servo1.setPosition(position);
-            servo2.setPosition(position);
-            servo3.setPosition(position);
-            servo4.setPosition(position);
-            servo5.setPosition(position);
-            servo6.setPosition(position);
-            servo7.setPosition(position);
-            servo8.setPosition(position);
 
             sleep(CYCLE_MS);
             idle();
