@@ -20,7 +20,7 @@ public class Drone {
     }
     public void droneInit()
     {
-        droneLaunch = this.hardwareMap.get(Servo.class, "droneLaunchServo");
+        droneLaunch = this.hardwareMap.get(Servo.class, "droneLaunch");
     }
     public void droneRelease (boolean press)
     {
