@@ -31,13 +31,11 @@ public class CenterStage_6832 extends OpMode {
     private FtcDashboard dashboard;
     DriverControls dc;
 
+
     //GLOBAL STATES
     public static boolean active;
     public static boolean debugTelemetryEnabled;
     private boolean initializing;
-    public static boolean visionProviderFinalized;
-    public static int visionProviderIndex = 3;
-
     public boolean endGameHandled;
 
     //GAMESTATES
@@ -136,11 +134,7 @@ public class CenterStage_6832 extends OpMode {
         //origin =
         startingPosition = Constants.Position.START_LEFT;
 
-        //VISION SETUP
-        auton.createVisionProvider(visionProviderIndex);
-        auton.visionProvider.initializeVision(hardwareMap, robot);
-        visionProviderFinalized = true;
-        auton.build(startingPosition);
+
 
         //TELEMETRY SETUP
         dashboard = FtcDashboard.getInstance();
@@ -158,6 +152,7 @@ public class CenterStage_6832 extends OpMode {
 
     public void init_loop() {
         dc.init_loop();
+        robot.initLoopVision();
     }
     //end init_loop()
 
@@ -203,10 +198,6 @@ public class CenterStage_6832 extends OpMode {
             switch(gameState) {
                 case AUTONOMOUS:
                     //TODO - remove targetAltCone placeholder
-//                    if(robot.AutonRun(auton.visionProvider.getMostFrequentPosition().getIndex(),startingPosition, false)) {
-//                        gameState = CenterStage_6832.GameState.TELE_OP;
-//                        active = false;
-//                    }
                     break;
 
                 case TELE_OP:
@@ -301,18 +292,18 @@ public class CenterStage_6832 extends OpMode {
         for(TelemetryProvider telemetryProvider: robot.subsystems)
             handleTelemetry(telemetryProvider.getTelemetry(debugTelemetryEnabled), telemetryProvider.getTelemetryName(), packet);
 
-        Map<String, Object> visionTelemetryMap = auton.visionProvider.getTelemetry(debugTelemetryEnabled);
+        Map<String, Object> visionTelemetryMap = robot.visionProvider.getTelemetry(debugTelemetryEnabled);
         visionTelemetryMap.put("Backend",
                 Misc.formatInvariant("%s (%s)",
                         //TODO - CURRENTLY OPENCV, CHANGE IF NECESSARY
                         VisionProviders.VISION_PROVIDERS[3].getSimpleName(),
-                        visionProviderFinalized ?
+                        robot.visionProviderFinalized ?
                                 "finalized" :
                                 System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
                 )
         );
 
-        handleTelemetry(visionTelemetryMap, auton.visionProvider.getTelemetryName(), packet);
+        handleTelemetry(visionTelemetryMap, robot.visionProvider.getTelemetryName(), packet);
         dashboard.sendTelemetryPacket(packet);
         telemetry.update();
 

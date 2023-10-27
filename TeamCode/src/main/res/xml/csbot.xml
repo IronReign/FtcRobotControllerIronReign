@@ -15,4 +15,5 @@
             <Servo name="diverter" port="2" />
         </LynxModule>
     </LynxUsbDevice>
+    <Webcam name="Webcam 1" serialNumber="91C8282F" />
 </Robot>

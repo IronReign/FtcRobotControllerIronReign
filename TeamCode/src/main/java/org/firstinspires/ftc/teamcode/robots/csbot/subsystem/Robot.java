@@ -9,6 +9,8 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -16,15 +18,20 @@ import java.util.List;
 import java.util.Map;
 
 @Config(value = "AA_CSRobot")
-public class Robot implements Subsystem{
+public class Robot implements Subsystem {
 
     //components and subsystems
     public Subsystem[] subsystems;
     public CSDriveTrain driveTrain;
     public Intake intake;
+    public VisionProvider visionProvider = null;
     public Outtake outtake;
     //TODO - create a field
 //    public Field field;
+
+    //vision variables
+    public static boolean visionProviderFinalized = false;
+    public static int visionProviderIndex = 2;
 
 
     private long[] subsystemUpdateTimes;
@@ -56,9 +63,13 @@ public class Robot implements Subsystem{
 
     public Robot(HardwareMap hardwareMap, boolean simulated) {
         hubs = hardwareMap.getAll(LynxModule.class);
-        for(LynxModule module : hubs) {
+        for (LynxModule module : hubs) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
+        //initialize vision
+        createVisionProvider();
+        visionProvider.initializeVision(hardwareMap, this);
+        visionProviderFinalized = true;
 
         // initializing subsystems
         driveTrain = new CSDriveTrain(hardwareMap, this, simulated);
@@ -67,7 +78,7 @@ public class Robot implements Subsystem{
         intake = new Intake(hardwareMap, this);
         outtake = new Outtake(hardwareMap, this);
 
-        subsystems = new Subsystem[] {driveTrain, intake, outtake}; //{driveTrain, turret, crane};
+        subsystems = new Subsystem[]{driveTrain, intake, outtake}; //{driveTrain, turret, crane};
         subsystemUpdateTimes = new long[subsystems.length];
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
@@ -80,9 +91,10 @@ public class Robot implements Subsystem{
 
     public double deltaTime = 0;
     long lastTime = 0;
+
     @Override
     public void update(Canvas fieldOverlay) {
-        deltaTime = (System.nanoTime()-lastTime)/1e9;
+        deltaTime = (System.nanoTime() - lastTime) / 1e9;
         lastTime = System.nanoTime();
 
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
@@ -90,7 +102,7 @@ public class Robot implements Subsystem{
         articulate(articulation);
 
         //update subsystems
-        for(int i = 0; i < subsystems.length; i++) {
+        for (int i = 0; i < subsystems.length; i++) {
             Subsystem subsystem = subsystems[i];
             long updateStartTime = System.nanoTime();
             subsystem.update(fieldOverlay);
@@ -98,6 +110,10 @@ public class Robot implements Subsystem{
         }
     }
     //end update
+
+    public void initLoopVision() {
+        visionProvider.update();
+    }
 
     public Articulation articulate(Articulation target) {
         articulation = target;
@@ -130,7 +146,7 @@ public class Robot implements Subsystem{
             telemetryMap.put(name + " Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (subsystemUpdateTimes[i] * 1e-6), (int) (1 / (subsystemUpdateTimes[i] * 1e-9))));
         }
 
-        if(debug) {
+        if (debug) {
             telemetryMap.put("DriveTrain Pose X", driveTrain.poseEstimate.getX());
             telemetryMap.put("DriveTrain Pose Y", driveTrain.poseEstimate.getY());
             telemetryMap.put("DriveTrain Pose Heading", driveTrain.poseEstimate.getHeading());
@@ -139,12 +155,19 @@ public class Robot implements Subsystem{
         telemetryMap.put("Delta Time", deltaTime);
 
 
-
         return telemetryMap;
     }
     //end getTelemetry
 
-    public void clearBulkCaches(){
+    public void createVisionProvider() {
+        try {
+            visionProvider = VisionProviders.VISION_PROVIDERS[visionProviderIndex].newInstance();
+        } catch (IllegalAccessException | InstantiationException e) {
+            throw new RuntimeException("Error while instantiating vision provider");
+        }
+    }
+
+    public void clearBulkCaches() {
         for (LynxModule module : hubs)
             module.clearBulkCache();
     }

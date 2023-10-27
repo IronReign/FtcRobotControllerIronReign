@@ -6,8 +6,8 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.allia
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.auton;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.visionProviderIndex;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.visionProviderFinalized;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionProviderFinalized;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionProviderIndex;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
@@ -118,23 +118,23 @@ public class  DriverControls {
             if(!visionProviderFinalized) {
                 if (stickyGamepad1.dpad_left || stickyGamepad2.dpad_left) {
                     visionProviderIndex = (visionProviderIndex + 1) % VisionProviders.VISION_PROVIDERS.length; // switch vision provider
-                    auton.createVisionProvider(visionProviderIndex);
+                    robot.createVisionProvider();
                 }
                 if (stickyGamepad1.dpad_up || stickyGamepad2.dpad_up) {
-                    auton.visionProvider.initializeVision(hardwareMap); // this is blocking
+                    robot.visionProvider.initializeVision(hardwareMap); // this is blocking
                     visionProviderFinalized = true;
                 }
             } else if (stickyGamepad1.dpad_up || stickyGamepad2.dpad_up) {
-                auton.visionProvider.shutdownVision(); // also blocking, but should be very quick
+                robot.visionProvider.shutdownVision(); // also blocking, but should be very quick
                 visionProviderFinalized = false;
             }
         }
         else if((stickyGamepad1.dpad_right || stickyGamepad2.dpad_right) && visionProviderFinalized)
         {
-            auton.visionProvider.saveDashboardImage();
+            robot.visionProvider.saveDashboardImage();
         }
         if(visionProviderFinalized)
-            auton.visionProvider.update();
+            robot.visionProvider.update();
     }
 
 

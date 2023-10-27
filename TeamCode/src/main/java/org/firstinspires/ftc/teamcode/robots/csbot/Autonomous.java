@@ -89,21 +89,6 @@ public class Autonomous implements TelemetryProvider {
                         return rightNoRR;
                 }
                 break;
-            case SIMPLE:
-                /*
-                switch(startingPosition) {
-                    case START_BLUE_UP:
-                        return blueUpSimple;
-                    case START_RED_UP:
-                        return redUpSimple;
-                    case START_BLUE_DOWN:
-                        return blueDownSimple;
-                    case START_RED_DOWN:
-                        return redDownSimple;
-                }
-                */
-
-                break;
         }
 
         return null;

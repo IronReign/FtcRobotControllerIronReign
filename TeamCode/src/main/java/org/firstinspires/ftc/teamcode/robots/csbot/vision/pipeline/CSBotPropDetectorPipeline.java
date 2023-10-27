@@ -28,7 +28,7 @@ import java.util.List;
  * @author Iron Reign Coding Team
  */
 
-@Config(value = "AA_PP_6CanVisionPipeline")
+@Config(value = "AA_CSBot_PropDetectorPipeline")
 public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
     private Mat cropOutput = new Mat();
     private Mat normalizeInput = new Mat();
@@ -56,7 +56,7 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
     public static int BOTTOM_RIGHT_X = 320, BOTTOM_RIGHT_Y = 180;
     public static double NORMALIZE_ALPHA = 51.0, NORMALIZE_BETA = 261.0;
     public static double BLUR_RADIUS = 7;
-    public static double HUE_MIN = 105, HUE_MAX = 120;
+    public static double HUE_MIN = 105, HUE_MAX = 150;
     public static double SATURATION_MIN = 80, SATURATION_MAX = 255;
     public static double VALUE_MIN = 120, VALUE_MAX = 255;
     public static double MIN_CONTOUR_AREA = 50;
