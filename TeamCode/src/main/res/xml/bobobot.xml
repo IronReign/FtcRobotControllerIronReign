@@ -3,7 +3,7 @@
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Expansion Hub 1" port="1">
             <Servo name="pixelFlipper" port="2" />
-            <Servo name="clawServo" port="1" />
+            <Servo name="clawSpan" port="1" />
             <Servo name="droneLaunch" port="0" />
             <RevRobotics40HDHexMotor name="clawArm" port="0" />
         </LynxModule>

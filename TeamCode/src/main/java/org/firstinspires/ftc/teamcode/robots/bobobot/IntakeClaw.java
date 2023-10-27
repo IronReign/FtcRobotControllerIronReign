@@ -26,8 +26,8 @@ public class IntakeClaw {
     }
     public void intakeClawInit()
     {
-        clawArm = this.hardwareMap.get(DcMotorEx.class, "clawArmServo");
-        clawSpan = this.hardwareMap.get(Servo.class, "clawSpanServo");
+        clawArm = this.hardwareMap.get(DcMotorEx.class, "clawArm");
+        clawSpan = this.hardwareMap.get(Servo.class, "clawSpan");
     }
     public void openClaw () {clawSpan.setPosition(OPENCLAW);}
     public void closeClaw () {clawSpan.setPosition(CLOSECLAW);}

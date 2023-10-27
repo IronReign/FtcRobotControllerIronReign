@@ -16,7 +16,7 @@ public class BoboBot extends OpMode {
     @Override
     public void loop() {
         bobo.driveTrain.mechanumDrive(gamepad1.right_stick_x, gamepad1.left_stick_x, gamepad1.left_stick_y);
-        bobo.drone.droneRelease(gamepad1.y);
+        bobo.droneLaunch.droneRelease(gamepad1.y);
         bobo.claw.clawArmLift(gamepad1.right_trigger);
     }
 }
