@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -13,6 +14,7 @@ public class IntakeClaw {
     public static double CLOSECLAW = 0.05;
     public static double armliftSpeed = 0.1;
     private static int armPosition;
+    private static double armInitPose = 2;
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
     public IntakeClaw(Telemetry telemetry, HardwareMap hardwareMap) {
@@ -28,6 +30,9 @@ public class IntakeClaw {
     {
         clawArm = this.hardwareMap.get(DcMotorEx.class, "clawArm");
         clawSpan = this.hardwareMap.get(Servo.class, "clawSpan");
+        clawArm.setTargetPosition(-100);
+        clawArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
     }
     public void openClaw () {clawSpan.setPosition(OPENCLAW);}
     public void closeClaw () {clawSpan.setPosition(CLOSECLAW);}
@@ -42,5 +47,6 @@ public class IntakeClaw {
         clawArm.setPositionPIDFCoefficients(Utils.servoNormalize(armPosition));
     }
     public double getClawPosition () { return clawSpan.getPosition();}
+    //adb connect 192.168.43.1
 }
 
