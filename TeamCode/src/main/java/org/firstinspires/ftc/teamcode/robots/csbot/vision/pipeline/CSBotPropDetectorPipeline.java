@@ -49,6 +49,7 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
     private volatile int largestX, largestY;
     private double largestArea;
     private volatile Position lastPosition;
+    private boolean isRedAlliance = false;
 
     // Constants
     public static int VIEW_OPEN_CV_PIPELINE_STAGE = 6;
@@ -56,9 +57,12 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
     public static int BOTTOM_RIGHT_X = 320, BOTTOM_RIGHT_Y = 180;
     public static double NORMALIZE_ALPHA = 51.0, NORMALIZE_BETA = 261.0;
     public static double BLUR_RADIUS = 7;
-    public static double HUE_MIN = 105, HUE_MAX = 150;
-    public static double SATURATION_MIN = 80, SATURATION_MAX = 255;
-    public static double VALUE_MIN = 120, VALUE_MAX = 255;
+    public static double RED_ALLIANCE_HUE_MIN = 105, RED_ALLIANCE_HUE_MAX = 150;
+    public static double RED_ALLIANCE_SATURATION_MIN = 80, RED_ALLIANCE_SATURATION_MAX = 255;
+    public static double RED_ALLIANCE_VALUE_MIN = 120, RED_ALLIANCE_VALUE_MAX = 255;
+    public static double BLUE_ALLIANCE_HUE_MIN = 20, BLUE_ALLIANCE_HUE_MAX = 50;
+    public static double BLUE_ALLIANCE_SATURATION_MIN = 100, BLUE_ALLIANCE_SATURATION_MAX = 180;
+    public static double BLUE_ALLIANCE_VALUE_MIN = 100, BLUE_ALLIANCE_VALUE_MAX = 200;
     public static double MIN_CONTOUR_AREA = 50;
     public static String BLUR = "Box Blur";
 
@@ -67,6 +71,13 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
     public static int CENTER_LINE = 160;
 
     public CSBotPropDetectorPipeline() {
+        largestX = -1;
+        largestY = -1;
+        largestArea = -1;
+        lastPosition = Position.HOLD;
+    }
+    public CSBotPropDetectorPipeline(boolean isRedAlliance) {
+        this.isRedAlliance = isRedAlliance;
         largestX = -1;
         largestY = -1;
         largestArea = -1;
@@ -100,9 +111,19 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
 
         // Step HSV_Threshold0  (stage 4):
         hsvThresholdInput = blurOutput;
-        double[] hsvThresholdHue = {HUE_MIN, HUE_MAX};
-        double[] hsvThresholdSaturation = {SATURATION_MIN, SATURATION_MAX};
-        double[] hsvThresholdValue = {VALUE_MIN, VALUE_MAX};
+        double[] hsvThresholdHue;
+        double[] hsvThresholdSaturation;
+        double[] hsvThresholdValue;
+        if(isRedAlliance) {
+            hsvThresholdHue = new double[]{RED_ALLIANCE_HUE_MIN, RED_ALLIANCE_HUE_MAX};
+            hsvThresholdSaturation = new double[]{RED_ALLIANCE_SATURATION_MIN, RED_ALLIANCE_SATURATION_MAX};
+            hsvThresholdValue = new double[]{RED_ALLIANCE_VALUE_MIN, RED_ALLIANCE_VALUE_MAX};
+        }
+        else {
+            hsvThresholdHue = new double[]{BLUE_ALLIANCE_HUE_MIN, BLUE_ALLIANCE_HUE_MAX};
+            hsvThresholdSaturation = new double[]{BLUE_ALLIANCE_SATURATION_MIN, BLUE_ALLIANCE_SATURATION_MAX};
+            hsvThresholdValue = new double[]{BLUE_ALLIANCE_VALUE_MIN, BLUE_ALLIANCE_VALUE_MAX};
+        }
         hsvThreshold(hsvThresholdInput, hsvThresholdHue, hsvThresholdSaturation, hsvThresholdValue, hsvThresholdOutput);
 
         // Step Find_Contours0 (stage 5):

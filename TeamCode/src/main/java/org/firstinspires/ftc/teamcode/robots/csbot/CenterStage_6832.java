@@ -87,7 +87,7 @@ public class CenterStage_6832 extends OpMode {
 
     //CONSTANTS FOR GAME
     public static boolean DEFAULT_DEBUG_TELEMETRY_ENABLED = false;
-    static Constants.Alliance alliance;
+    public static Constants.Alliance alliance = Constants.Alliance.BLUE;
     static Constants.Position startingPosition;
     long startTime;
 
@@ -129,7 +129,7 @@ public class CenterStage_6832 extends OpMode {
         auton = new Autonomous(robot);
 
         //DEFAULT AUTONOMOUS SETUP
-        alliance = Constants.Alliance.RED;
+        alliance = Constants.Alliance.BLUE;
         //TODO - SET ORIGIN and STARTING POSITION
         //origin =
         startingPosition = Constants.Position.START_LEFT;

@@ -23,6 +23,7 @@ import java.util.Map;
 public abstract class VisionProvider implements TelemetryProvider {
 
     public static int MAX_POSITIONS = 50;
+    public boolean isRedAlliance = true;
 
     private List<Position> positions;
     private Position mostFrequentPosition;
@@ -38,6 +39,21 @@ public abstract class VisionProvider implements TelemetryProvider {
 
         dashboard = FtcDashboard.getInstance();
         saveDashboard = false;
+    }
+
+    public VisionProvider(boolean isRedAlliance) {
+        this.isRedAlliance = isRedAlliance;
+        mostFrequentPosition = Position.HOLD;
+
+        positions = new ArrayList<>();
+
+        dashboard = FtcDashboard.getInstance();
+        saveDashboard = false;
+    }
+
+    public VisionProvider setRedAlliance(boolean isRedAlliance) {
+        this.isRedAlliance = isRedAlliance;
+        return this;
     }
 
     abstract public void initializeVision(HardwareMap hardwareMap);

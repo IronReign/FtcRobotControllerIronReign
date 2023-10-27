@@ -56,7 +56,7 @@ public class CSBotPropDetectorProvider extends VisionProvider {
 
     @Override
     public void initializeVision(HardwareMap hardwareMap) {
-        pipeline = new CSBotPropDetectorPipeline();
+        pipeline = new CSBotPropDetectorPipeline(isRedAlliance);
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"));
 
         noCameraBitmap = Bitmap.createBitmap(320, 240, Bitmap.Config.RGB_565);

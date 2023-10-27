@@ -7,7 +7,10 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
@@ -36,6 +39,7 @@ public class Robot implements Subsystem {
 
     private long[] subsystemUpdateTimes;
     private final List<LynxModule> hubs;
+    HardwareMap hardwareMap;
     private VoltageSensor batteryVoltageSensor;
     private Articulation articulation;
     public List<Target> targets = new ArrayList<Target>();
@@ -62,14 +66,14 @@ public class Robot implements Subsystem {
 
 
     public Robot(HardwareMap hardwareMap, boolean simulated) {
+        this.hardwareMap = hardwareMap;
         hubs = hardwareMap.getAll(LynxModule.class);
         for (LynxModule module : hubs) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
         //initialize vision
         createVisionProvider();
-        visionProvider.initializeVision(hardwareMap, this);
-        visionProviderFinalized = true;
+
 
         // initializing subsystems
         driveTrain = new CSDriveTrain(hardwareMap, this, simulated);
@@ -112,6 +116,10 @@ public class Robot implements Subsystem {
     //end update
 
     public void initLoopVision() {
+        if (!visionProviderFinalized) {
+            visionProvider.initializeVision(hardwareMap, this);
+            visionProviderFinalized = true;
+        }
         visionProvider.update();
     }
 
@@ -161,7 +169,7 @@ public class Robot implements Subsystem {
 
     public void createVisionProvider() {
         try {
-            visionProvider = VisionProviders.VISION_PROVIDERS[visionProviderIndex].newInstance();
+            visionProvider = VisionProviders.VISION_PROVIDERS[visionProviderIndex].newInstance().setRedAlliance(alliance.getMod());
         } catch (IllegalAccessException | InstantiationException e) {
             throw new RuntimeException("Error while instantiating vision provider");
         }
