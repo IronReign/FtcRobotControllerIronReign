@@ -64,8 +64,7 @@ class DriveTrain {
         motorBackRight.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         motorFrontLeft.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         motorFrontRight.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        //motorFrontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        this.motorFrontRight.setDirection(DcMotor.Direction.REVERSE);
-        this.motorBackLeft.setDirection(DcMotor.Direction.REVERSE);
+        motorFrontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        motorBackLeft.setDirection(DcMotor.Direction.REVERSE);
     }
 }
