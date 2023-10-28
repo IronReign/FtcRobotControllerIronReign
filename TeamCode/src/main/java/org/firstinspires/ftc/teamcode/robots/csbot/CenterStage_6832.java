@@ -5,9 +5,11 @@ import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.LOW_BA
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
@@ -88,7 +90,7 @@ public class CenterStage_6832 extends OpMode {
     //CONSTANTS FOR GAME
     public static boolean DEFAULT_DEBUG_TELEMETRY_ENABLED = false;
     public static Constants.Alliance alliance = Constants.Alliance.BLUE;
-    static Constants.Position startingPosition;
+    public static Constants.Position startingPosition;
     long startTime;
 
 
@@ -131,7 +133,7 @@ public class CenterStage_6832 extends OpMode {
         //DEFAULT AUTONOMOUS SETUP
         alliance = Constants.Alliance.BLUE;
         //TODO - SET ORIGIN and STARTING POSITION
-        //origin =
+        origin = Constants.Position.ORIGIN_DEFAULT;
         startingPosition = Constants.Position.START_LEFT;
 
 
@@ -164,13 +166,15 @@ public class CenterStage_6832 extends OpMode {
         //TODO - implement a resetGame function
 //        resetGame();
 
-
-
-        if(gameState.equals(CenterStage_6832.GameState.TELE_OP)){
+        if(gameState.equals(GameState.AUTONOMOUS)){
 
         }
 
-        if(gameState.equals(CenterStage_6832.GameState.TEST) ||  gameState.equals(CenterStage_6832.GameState.DEMO)){
+        if(gameState.equals(GameState.TELE_OP)){
+
+        }
+
+        if(gameState.equals(GameState.TEST) ||  gameState.equals(GameState.DEMO)){
 
         }
 
@@ -197,7 +201,8 @@ public class CenterStage_6832 extends OpMode {
 
             switch(gameState) {
                 case AUTONOMOUS:
-                    //TODO - remove targetAltCone placeholder
+                    robot.autonomous.build(startingPosition);
+                    auton.getStateMachine(startingPosition).execute();
                     break;
 
                 case TELE_OP:

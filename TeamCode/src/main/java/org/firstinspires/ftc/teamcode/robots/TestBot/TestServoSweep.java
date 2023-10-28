@@ -60,6 +60,7 @@ public class TestServoSweep extends LinearOpMode {
     public static double minPosition = 0;
     public static double maxPosition = 1500;
 
+
     // Define class members
     Servo servo1;
     double  position = (maxPosition - minPosition) / 2; // Start at halfway position
@@ -69,6 +70,7 @@ public class TestServoSweep extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+
 
         // Connect to servo (Assume PushBot Left Hand)
         // Change the text in quotes to match any servo name on your robot.

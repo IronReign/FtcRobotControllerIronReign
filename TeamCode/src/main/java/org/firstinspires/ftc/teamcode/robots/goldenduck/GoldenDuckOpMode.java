@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -47,6 +48,7 @@ public class GoldenDuckOpMode extends OpMode {
     AprilTagDetection tagOfInterest = null;
     //Robot variable storage system
     DriveTrain driveTrain;
+
     @Override
     public void init() {
         driveTrain = new DriveTrain(telemetry, hardwareMap);
@@ -69,9 +71,10 @@ public class GoldenDuckOpMode extends OpMode {
             if (driveTrain.robotSpeed == 1)
                 driveTrain.robotSpeed = .5;
             else
-             driveTrain.robotSpeed = 1;
+                driveTrain.robotSpeed = 1;
         }
     }
+
     class DriveTrain {
         private Telemetry telemetry;
         private HardwareMap hardwareMap;
@@ -90,11 +93,12 @@ public class GoldenDuckOpMode extends OpMode {
         // Number variables
         private static final float DEADZONE = .1f;
         double robotSpeed = 1;
-        public DriveTrain(Telemetry telemetry, HardwareMap hardwareMap)
-        {
+
+        public DriveTrain(Telemetry telemetry, HardwareMap hardwareMap) {
             this.telemetry = telemetry;
             this.hardwareMap = hardwareMap;
         }
+
         public void resetMotors() {
             motorFrontLeft.setPower(1);
             motorBackLeft.setPower(1);
@@ -116,6 +120,7 @@ public class GoldenDuckOpMode extends OpMode {
             motorFrontRight.setPower(1);
             mechanumDrive(0, 0, 0);
         }
+
         public void tankDrive(double left, double right) {
             powerRight = 0;
             powerLeft = 0;
@@ -141,20 +146,20 @@ public class GoldenDuckOpMode extends OpMode {
             powerFrontRight = r * Math.sin(robotAngle) + rightX;
             powerBackLeft = r * Math.sin(robotAngle) - rightX;
             powerBackRight = r * Math.cos(robotAngle) + rightX;
-            motorFrontLeft.setPower(powerFrontLeft*robotSpeed);
-            motorFrontRight.setPower(powerFrontRight*robotSpeed);
-            motorBackLeft.setPower(powerBackLeft*robotSpeed);
-            motorBackRight.setPower(powerBackRight*robotSpeed);
+            motorFrontLeft.setPower(powerFrontLeft * robotSpeed);
+            motorFrontRight.setPower(powerFrontRight * robotSpeed);
+            motorBackLeft.setPower(powerBackLeft * robotSpeed);
+            motorBackRight.setPower(powerBackRight * robotSpeed);
         }
-        public void telemetryOutput()
-        {
+
+        public void telemetryOutput() {
             telemetry.addData("Back Right Position \t", motorBackRight.getCurrentPosition());
             telemetry.addData("Back Left Position \t", motorBackLeft.getCurrentPosition());
             telemetry.addData("Front Right Position \t", motorFrontRight.getCurrentPosition());
             telemetry.addData("Front Left Position \t", motorFrontLeft.getCurrentPosition());
         }
-        public void motorInit()
-        {
+
+        public void motorInit() {
             motorFrontLeft = this.hardwareMap.get(DcMotorEx.class, "motorFrontLeft");
             motorBackLeft = this.hardwareMap.get(DcMotorEx.class, "motorBackLeft");
             motorFrontRight = this.hardwareMap.get(DcMotorEx.class, "motorFrontRight");
@@ -169,8 +174,41 @@ public class GoldenDuckOpMode extends OpMode {
             motorFrontRight.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
             this.motorBackLeft.setDirection(DcMotorEx.Direction.REVERSE);
             this.motorFrontLeft.setDirection(DcMotorEx.Direction.REVERSE);
+
         }
-        public double getMotorAvgPosition(){return (double)(Math.abs(motorFrontLeft.getCurrentPosition())+Math.abs(motorFrontRight.getCurrentPosition())+Math.abs(motorBackLeft.getCurrentPosition())+Math.abs(motorBackRight.getCurrentPosition()))/4.0;}
+
+        public double getMotorAvgPosition() {
+            return (double) (Math.abs(motorFrontLeft.getCurrentPosition()) + Math.abs(motorFrontRight.getCurrentPosition()) + Math.abs(motorBackLeft.getCurrentPosition()) + Math.abs(motorBackRight.getCurrentPosition())) / 4.0;
+        }
     }
 
+    private DcMotor motorFrontRight = null;
+    private DcMotor motorBackLeft = null;
+    private DcMotor motorFrontLeft = null;
+    private DcMotor motorBackRight = null;
+    private DcMotor arm = null;
+    private DcMotor elbow = null;
+    private Servo claw = null;
+    private Servo wrist = null;
+    // regular drive
+    private double powerLeft = 0;
+    private double powerRight = 0;
+    // motor power
+
+    private int elbowPosition = 0;
+    private int targetElbowPosition = 0;
+    private double wristPosition = 0;
+    private double targetWristPosition = 0;
+    // arm and claw variables
+    private int armPosition = 0;
+    private int targetArmPos = 0;
+    private int maxArm = Integer.MAX_VALUE;
+
+    public void clawMove() {
+        telemetry.addData("Claw servo position:", claw.getPosition());
+        if (gamepad1.left_bumper)
+            claw.setPosition(claw.getPosition() + .02);
+        if (gamepad1.right_bumper)
+            claw.setPosition(claw.getPosition() - .02);
+    }
 }

@@ -40,8 +40,8 @@ public class PowerPlayIronCore extends OpMode {
     //number variables
     private static final float DEADZONE = .1f;
 //April Tag stuff
-    OpenCvCamera camera;
-    AprilTagDetectionPipeline aprilTagDetectionPipeline;
+//    OpenCvCamera camera;
+//    AprilTagDetectionPipeline aprilTagDetectionPipeline;
 
     static final double FEET_PER_METER = 3.28084;
 
@@ -87,26 +87,26 @@ public class PowerPlayIronCore extends OpMode {
         wrist.setPosition(0);
 
         //AprilTag stuff
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
-        aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
+//        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+//        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+//        aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
 
-        camera.setPipeline(aprilTagDetectionPipeline);
-        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
-        {
-            @Override
-            public void onOpened()
-            {
-                camera.startStreaming(800,448, OpenCvCameraRotation.UPSIDE_DOWN);
-            }
+//        camera.setPipeline(aprilTagDetectionPipeline);
+//        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
+//        {
+//            @Override
+//            public void onOpened()
+//            {
+//                camera.startStreaming(800,448, OpenCvCameraRotation.UPSIDE_DOWN);
+//            }
 
-            @Override
-            public void onError(int errorCode)
-            {
-
-            }
-        });
-        tagCount=0;
+//            @Override
+//            public void onError(int errorCode)
+//            {
+//
+//            }
+//        });
+//        tagCount=0;
     }
     public void setupArm(boolean init){
         if(init) {
@@ -124,88 +124,88 @@ public class PowerPlayIronCore extends OpMode {
 
     @Override
     public void init_loop(){
-        ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
-
-        if (gamepad1.a) {
-            runAuton = true;
-            setupArm(true); //reset encoders
-        }
-        if (gamepad1.b) {
-            runAuton = false;
-            setupArm(false);
-        }
-
-        if(currentDetections.size() != 0)
-        {
-            tagFound = false;
-
-            for(AprilTagDetection tag : currentDetections)
-            {
-                if(tag.id == 1 || tag.id ==2 || tag.id == 3)
-                {
-                    tagOfInterest = tag;
-                    tagFound = true;
-                    tagCount++;
-                    break;
-                }
-            }
-
-            if(tagFound)
-            {
-                telemetry.addLine("Tag of interest is in sight!\n\nLocation data:");
-                tagToTelemetry(tagOfInterest);
-                tagOfInterestCache = tagOfInterest;
-            }
-            else
-            {
-                tagCount = 0;
-                telemetry.addLine("Don't see tag of interest :(");
-
-                if(tagOfInterest == null)
-                {
-                    telemetry.addLine("(The tag has never been seen)");
-                }
-                else
-                {
-                    telemetry.addLine("\nBut we HAVE seen a tag before; last seen at:");
-                    tagToTelemetry(tagOfInterest);
-                }
-            }
-
-        }
-        else
-        {
-            tagCount=0;
-            telemetry.addLine("Don't see tag of interest :(");
-
-            if(tagOfInterest == null)
-            {
-                telemetry.addLine("(A tag has never been seen)");
-            }
-            else
-            {
-                telemetry.addLine("\nBut we HAVE seen a tag before; last seen at:");
-                tagToTelemetry(tagOfInterest);
-            }
-
-        }
-        telemetry.addLine(String.format("\nRunAuton=%b", runAuton));
-        telemetry.update();
+//        ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
+//
+//        if (gamepad1.a) {
+//            runAuton = true;
+//            setupArm(true); //reset encoders
+//        }
+//        if (gamepad1.b) {
+//            runAuton = false;
+//            setupArm(false);
+//        }
+//
+//        if(currentDetections.size() != 0)
+//        {
+//            tagFound = false;
+//
+//            for(AprilTagDetection tag : currentDetections)
+//            {
+//                if(tag.id == 1 || tag.id ==2 || tag.id == 3)
+//                {
+//                    tagOfInterest = tag;
+//                    tagFound = true;
+//                    tagCount++;
+//                    break;
+//                }
+//            }
+//
+//            if(tagFound)
+//            {
+//                telemetry.addLine("Tag of interest is in sight!\n\nLocation data:");
+//                tagToTelemetry(tagOfInterest);
+//                tagOfInterestCache = tagOfInterest;
+//            }
+//            else
+//            {
+//                tagCount = 0;
+//                telemetry.addLine("Don't see tag of interest :(");
+//
+//                if(tagOfInterest == null)
+//                {
+//                    telemetry.addLine("(The tag has never been seen)");
+//                }
+//                else
+//                {
+//                    telemetry.addLine("\nBut we HAVE seen a tag before; last seen at:");
+//                    tagToTelemetry(tagOfInterest);
+//                }
+//            }
+//
+//        }
+//        else
+//        {
+//            tagCount=0;
+//            telemetry.addLine("Don't see tag of interest :(");
+//
+//            if(tagOfInterest == null)
+//            {
+//                telemetry.addLine("(A tag has never been seen)");
+//            }
+//            else
+//            {
+//                telemetry.addLine("\nBut we HAVE seen a tag before; last seen at:");
+//                tagToTelemetry(tagOfInterest);
+//            }
+//
+//        }
+//        telemetry.addLine(String.format("\nRunAuton=%b", runAuton));
+//        telemetry.update();
     }
 
     public boolean runAuton = true;
-    public AprilTagDetection tagOfInterestCache;
+//    public AprilTagDetection tagOfInterestCache;
     @Override
     public void loop() {
         updateSensors();
         //tankDrive();
         //process drive inputs
-        if (runAuton){
-            runAuton = !autonMove(tagOfInterestCache);
-        }
-        else {
+//        if (runAuton){
+//            runAuton = !autonMove(tagOfInterestCache);
+//        }
+//        else {
             mecanumDrive(gamepad1.left_stick_y, -gamepad1.left_stick_x, gamepad1.right_stick_x);
-        }
+//        }
         //joystick processing
         presets();
         armMove();

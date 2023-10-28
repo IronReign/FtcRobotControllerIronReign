@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.csbot.Autonomous;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
@@ -28,6 +29,7 @@ public class Robot implements Subsystem {
     public CSDriveTrain driveTrain;
     public Intake intake;
     public VisionProvider visionProvider = null;
+    public Autonomous autonomous;
     public Outtake outtake;
     //TODO - create a field
 //    public Field field;
@@ -82,6 +84,7 @@ public class Robot implements Subsystem {
         driveTrain.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intake = new Intake(hardwareMap, this);
         outtake = new Outtake(hardwareMap, this);
+        autonomous = new Autonomous(this);
 
         subsystems = new Subsystem[]{driveTrain, intake, outtake}; //{driveTrain, turret, crane};
         subsystemUpdateTimes = new long[subsystems.length];
