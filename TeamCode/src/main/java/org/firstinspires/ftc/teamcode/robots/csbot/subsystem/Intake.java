@@ -7,8 +7,10 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.sun.tools.javac.code.Attribute;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Joint;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -17,10 +19,13 @@ import java.util.Map;
 
 @Config(value = "CS_INTAKE")
 public class Intake implements Subsystem {
+    public static  int ANGLE_CONTROLLER_MAX = 1600;
+    public static int ANGLE_CONTROLLER_MIN = 850;
     //CONSTANTS
     HardwareMap hardwareMap;
     Robot robot;
     Servo diverter;
+    Servo angleController;
     Joint beaterBarAngleController;
     DcMotorEx beaterBar;
     public static boolean manualBeaterBarEject = false;
@@ -34,6 +39,7 @@ public class Intake implements Subsystem {
     public static double BEATER_BAR_ANGLE_CONTROLLER_MAX_DEGREES;
     public static double BEATER_BAR_ANGLE_CONTROLLER_START_ANGLE;
     public static double BEATER_BAR_ANGLE_CONTROLLER_SPEED;
+    public static int angleControllerTicks = 1000;
     public static double BEATER_BAR_FOLD_ANGLE;
     public static double BEATER_BAR_GROUND_ANGLE;
 
@@ -63,9 +69,13 @@ public class Intake implements Subsystem {
             diverter = hardwareMap.get(Servo.class, "diverter");
             beaterBar = hardwareMap.get(DcMotorEx.class, "beaterBar");
             beaterBar.setDirection(DcMotorSimple.Direction.REVERSE);
+            angleController = hardwareMap.get(Servo.class, "beaterBarAngleController");
 
-            beaterBarAngleController = new Joint(hardwareMap, "beaterBarAngleController", false, BEATER_BAR_ANGLE_CONTROLLER_HOME, BEATER_BAR_ANGLE_CONTROLLER_TICKS_PER_DEGREE, BEATER_BAR_ANGLE_CONTROLLER_MIN_DEGREES, BEATER_BAR_ANGLE_CONTROLLER_MAX_DEGREES, BEATER_BAR_ANGLE_CONTROLLER_START_ANGLE, BEATER_BAR_ANGLE_CONTROLLER_SPEED);
+//            beaterBarAngleController = new Joint(hardwareMap, "beaterBarAngleController", false, BEATER_BAR_ANGLE_CONTROLLER_HOME, BEATER_BAR_ANGLE_CONTROLLER_TICKS_PER_DEGREE, BEATER_BAR_ANGLE_CONTROLLER_MIN_DEGREES, BEATER_BAR_ANGLE_CONTROLLER_MAX_DEGREES, BEATER_BAR_ANGLE_CONTROLLER_START_ANGLE, BEATER_BAR_ANGLE_CONTROLLER_SPEED);
             beaterBar.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+    public void update(){
+        update(new Canvas());
     }
 
     @Override
@@ -104,8 +114,9 @@ public class Intake implements Subsystem {
                 beaterBarTargetAngle = angleToStack;
                 break;
         }
-        beaterBarAngleController.setTargetAngle(beaterBarTargetAngle);
-        beaterBarAngleController.update();
+        angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
+//        beaterBarAngleController.setTargetAngle(beaterBarTargetAngle);
+//        beaterBarAngleController.update();
     }
 
     public Articulation articulate(Articulation target) {
@@ -114,8 +125,18 @@ public class Intake implements Subsystem {
     }
 
     public double adjustBeaterBarAngle(double speed) {
-        beaterBarTargetAngle += speed * BEATER_BAR_ADJUST_SPEED;
-        return beaterBarTargetAngle;
+        angleControllerTicks += speed * 100;
+        if(angleControllerTicks < ANGLE_CONTROLLER_MIN) {
+            angleControllerTicks = ANGLE_CONTROLLER_MIN;
+        }
+        if(angleControllerTicks > ANGLE_CONTROLLER_MAX) {
+            angleControllerTicks = ANGLE_CONTROLLER_MAX;
+        }
+
+        angleController.setPosition(
+        Utils.servoNormalize(angleControllerTicks));
+//        beaterBarTargetAngle += speed * BEATER_BAR_ADJUST_SPEED;
+        return angleControllerTicks;
     }
 
     public void toggleBeaterBar() {
@@ -136,6 +157,8 @@ public class Intake implements Subsystem {
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("manual beater bar on?", manualBeaterBarOn);
         telemetryMap.put("beater bar amps", beaterBar.getPower());
+        telemetryMap.put("anglecontroller", Utils.servoDenormalize(angleController.getPosition()));
+//        telemetryMap.put("beaterBarAngle", beaterBarAngleController.getCurrentAngle());
         return telemetryMap;
     }
 

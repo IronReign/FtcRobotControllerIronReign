@@ -36,8 +36,8 @@ public class OpenCVProvider extends VisionProvider {
 
     // Constants
     private static final String TELEMETRY_NAME = "OpenCV Vision Provider";
-    public static int WEBCAM_WIDTH = 320;
-    public static int WEBCAM_HEIGHT = 180;
+    public static int WEBCAM_WIDTH = 640;
+    public static int WEBCAM_HEIGHT = 480;
 
     @Override
     public void initializeVision(HardwareMap hardwareMap) {

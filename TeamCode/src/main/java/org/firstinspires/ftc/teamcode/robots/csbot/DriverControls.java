@@ -9,6 +9,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionProviderFinalized;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionProviderIndex;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.juiceDriveTrain;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -36,7 +37,7 @@ public class  DriverControls {
         updateStickyGamepads();
         handleStateSwitch();
         handlePregameControls();
-        handleVisionProviderSwitch();
+//        handleVisionProviderSwitch();
     }
 
     public void updateStickyGamepads(){
@@ -45,10 +46,10 @@ public class  DriverControls {
     }
 
     public void joystickDrive() {
-        if(stickyGamepad1.right_trigger) {
+        if(gamepad1.right_trigger > .1) {
             robot.intake.adjustBeaterBarAngle(gamepad1.right_trigger);
         }
-        if(stickyGamepad1.left_trigger) {
+        if(gamepad1.left_trigger > .1) {
             robot.intake.adjustBeaterBarAngle(-gamepad1.left_trigger);
         }
         if(stickyGamepad1.a) {
@@ -58,20 +59,45 @@ public class  DriverControls {
             robot.intake.switchBeaterBarDirection();
         }
 
+        if(!juiceDriveTrain)
         robot.driveTrain.setWeightedDrivePower(
                 new Pose2d(
-                        -gamepad1.left_stick_y,
-                        -gamepad1.left_stick_x,
-                        -gamepad1.right_stick_x
+                        -gamepad1.left_stick_y*.75,
+                        -gamepad1.left_stick_x*.75,
+                        -gamepad1.right_stick_x*.75
                         )
         );
+        else
+            robot.driveTrain.setWeightedDrivePower(
+                    new Pose2d(
+                            -gamepad1.left_stick_y*.75,
+                            -gamepad1.left_stick_x*.75,
+                            -gamepad1.right_stick_x*.75
+                    )
+            );
 
         if(stickyGamepad1.right_bumper)
-                robot.outtake.moveSlide(1);
+                robot.outtake.moveSlide(50);
         if(stickyGamepad1.left_bumper)
-            robot.outtake.moveSlide(-1);
+            robot.outtake.moveSlide(-50);
+
         if(stickyGamepad1.y)
-            robot.outtake.flip();
+            robot.outtake.raiseFlipper(10);
+        if(stickyGamepad1.x)
+            robot.outtake.lowerFlipper(10);
+
+        if(stickyGamepad1.dpad_down){
+            juiceDriveTrain = !juiceDriveTrain;
+        }
+//        if(stickyGamepad1.dpad_right){
+//            robot.outtake.clearFlipper();
+//        }
+//        if(stickyGamepad1.dpad_up) {
+//            robot.outtake.scoreFlipper();
+//        }
+//        if(stickyGamepad1.dpad_left) {
+//            robot.outtake.tuckFlipper();
+//        }
 
         if(stickyGamepad1.guide) {
             robot.switchVisionProviders();
@@ -85,7 +111,6 @@ public class  DriverControls {
                 CenterStage_6832.gameStateIndex -= 1;
             if (stickyGamepad1.right_bumper || stickyGamepad2.right_bumper)
                 CenterStage_6832.gameStateIndex += 1;
-
             if(CenterStage_6832.gameStateIndex < 0)
                 CenterStage_6832.gameStateIndex = CenterStage_6832.GameState.getNumGameStates() - 1;
             CenterStage_6832.gameStateIndex %= CenterStage_6832.GameState.getNumGameStates();

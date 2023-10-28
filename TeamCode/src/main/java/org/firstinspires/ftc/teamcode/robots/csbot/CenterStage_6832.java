@@ -64,10 +64,10 @@ public class CenterStage_6832 extends OpMode {
             switch(gameStateIndex) {
                 case 0: return GameState.AUTONOMOUS;
                 case 1: return GameState.TELE_OP;
-                case 3: return GameState.TEST;
-                case 4: return GameState.DEMO;
-                case 5: return GameState.MANUAL_DIAGNOSTIC;
-                default: throw new RuntimeException("how did you manage this");
+                case 2: return GameState.TEST;
+                case 3: return GameState.DEMO;
+                case 4: return GameState.MANUAL_DIAGNOSTIC;
+                default: return GameState.TEST;
             }
         }
 
@@ -75,7 +75,7 @@ public class CenterStage_6832 extends OpMode {
             return name;
         }
 
-        public static int getNumGameStates() {return 6;}
+        public static int getNumGameStates() {return 5;}
 
         public boolean isAutonomous() {
             return autonomous;
@@ -129,6 +129,7 @@ public class CenterStage_6832 extends OpMode {
         robot = new Robot(hardwareMap, false);
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
+        auton.build(startingPosition);
 
         //DEFAULT AUTONOMOUS SETUP
         alliance = Constants.Alliance.BLUE;
@@ -153,8 +154,14 @@ public class CenterStage_6832 extends OpMode {
     //end init()
 
     public void init_loop() {
+        robot.intake.update();
         dc.init_loop();
-        robot.initLoopVision();
+        telemetry.addData("gameState", gameState);
+        telemetry.addData("gameStateIndex", gameStateIndex);
+        telemetry.addData("active", active);
+        telemetry.addData("Alliance", alliance);
+        telemetry.addData("Side", startingPosition);
+//        robot.initLoopVision();
     }
     //end init_loop()
 
@@ -201,11 +208,11 @@ public class CenterStage_6832 extends OpMode {
 
             switch(gameState) {
                 case AUTONOMOUS:
-                    robot.autonomous.build(startingPosition);
                     auton.getStateMachine(startingPosition).execute();
                     break;
 
                 case TELE_OP:
+                    dc.joystickDrive();
                     //implement teleop
                     break;
 

@@ -29,7 +29,6 @@ public class Robot implements Subsystem {
     public CSDriveTrain driveTrain;
     public Intake intake;
     public VisionProvider visionProvider = null;
-    public Autonomous autonomous;
     public Outtake outtake;
     //TODO - create a field
 //    public Field field;
@@ -42,6 +41,7 @@ public class Robot implements Subsystem {
 
     private long[] subsystemUpdateTimes;
     private final List<LynxModule> hubs;
+    public static boolean juiceDriveTrain = false;
     HardwareMap hardwareMap;
     private VoltageSensor batteryVoltageSensor;
     private Articulation articulation;
@@ -84,7 +84,6 @@ public class Robot implements Subsystem {
         driveTrain.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intake = new Intake(hardwareMap, this);
         outtake = new Outtake(hardwareMap, this);
-        autonomous = new Autonomous(this);
 
         subsystems = new Subsystem[]{driveTrain, intake, outtake}; //{driveTrain, turret, crane};
         subsystemUpdateTimes = new long[subsystems.length];
@@ -134,11 +133,11 @@ public class Robot implements Subsystem {
 
 //    TODO - THIS IS AWFUL, NEEDS TO BE RIPPED OUT
     public void initLoopVision() {
-        if (!visionProviderFinalized) {
-            visionProvider.initializeVision(hardwareMap, this);
-            visionProviderFinalized = true;
-        }
-        visionProvider.update();
+//        if (!visionProviderFinalized) {
+//            visionProvider.initializeVision(hardwareMap, this);
+//            visionProviderFinalized = true;
+//        }
+//        visionProvider.update();
     }
 
     public Articulation articulate(Articulation target) {
@@ -176,6 +175,7 @@ public class Robot implements Subsystem {
             telemetryMap.put("DriveTrain Pose X", driveTrain.poseEstimate.getX());
             telemetryMap.put("DriveTrain Pose Y", driveTrain.poseEstimate.getY());
             telemetryMap.put("DriveTrain Pose Heading", driveTrain.poseEstimate.getHeading());
+            telemetryMap.put("driveTrain juiced?", juiceDriveTrain);
         }
 
         telemetryMap.put("Delta Time", deltaTime);

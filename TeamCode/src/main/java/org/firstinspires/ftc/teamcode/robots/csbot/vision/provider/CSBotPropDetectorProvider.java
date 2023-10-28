@@ -50,8 +50,8 @@ public class CSBotPropDetectorProvider extends VisionProvider {
 
     // Constants
     private static final String TELEMETRY_NAME = "Prop Detector Vision Provider";
-    public static int WEBCAM_WIDTH = 320;
-    public static int WEBCAM_HEIGHT = 180;
+    public static int WEBCAM_WIDTH = 640;
+    public static int WEBCAM_HEIGHT = 480;
     public static double distanceThreshold = 6; //this is in inches - detections closer than this threshold are considered duplicates
 
     @Override

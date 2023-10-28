@@ -86,43 +86,43 @@ public class Autonomous implements TelemetryProvider {
         //----------------------------------------------------------------------------------------------
         TrajectorySequence redRightAutonSequence =
                 robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
-                        .back(12)
+                        .back(12*2)
                         .turn(90)
-                        .back(18)
+                        .back(18*2)
                         .build();
         redRight = trajectorySequenceToStateMachine(redRightAutonSequence);
 
         TrajectorySequence blueRightAutonSequence =
                 robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
-                        .back(30)
+                        .back(30*2)
                         .turn(90)
-                        .back(42)
+                        .back(42*2)
                         .turn(90)
-                        .back(12)
+                        .back(12*2)
                         .turn(-90)
-                        .back(12)
+                        .back(12*2)
                         .build();
         blueRight = trajectorySequenceToStateMachine(blueRightAutonSequence);
 
         TrajectorySequence redLeftAutonSequence =
                 robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
-                        .back(30)
+                        .back(30*2)
                         .turn(-90)
-                        .back(42)
+                        .back(42*2)
                         .turn(-90)
-                        .back(12)
+                        .back(12*2)
                         .turn(90)
-                        .back(12)
+                        .back(12*2)
                         .build();
-        redLeft = trajectorySequenceToStateMachine(redRightAutonSequence);
+        redLeft = trajectorySequenceToStateMachine(redLeftAutonSequence);
 
         TrajectorySequence blueLeftAutonSequence =
                 robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
-                        .back(12)
+                        .back(12*2)
                         .turn(-90)
-                        .back(18)
+                        .back(18*2)
                         .build();
-        blueLeft = trajectorySequenceToStateMachine(blueRightAutonSequence);
+        blueLeft = trajectorySequenceToStateMachine(blueLeftAutonSequence);
 
         TrajectorySequence backAndForthSequence =
                 robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())

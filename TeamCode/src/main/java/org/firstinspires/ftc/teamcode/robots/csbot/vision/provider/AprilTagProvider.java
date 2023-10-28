@@ -26,7 +26,7 @@ import java.util.Map;
  * @author Mahesh Natamai
  */
 
-@Config
+@Config(value = "AprilTagProvider")
 public class AprilTagProvider extends VisionProvider {
     private Bitmap noCameraBitmap;
     private OpenCvCamera camera;
@@ -36,18 +36,18 @@ public class AprilTagProvider extends VisionProvider {
 
     // Constants
     private static final String TELEMETRY_NAME = "April Tag Vision Provider";
-    public static int WEBCAM_WIDTH = 800;
-    public static int WEBCAM_HEIGHT = 448;
+    public static int WEBCAM_WIDTH = 640;
+    public static int WEBCAM_HEIGHT = 480;
     static final double FEET_PER_METER = 3.28084;
 
     // Lens intrinsics
     // UNITS ARE PIXELS
     // NOTE: this calibration is for the C920 webcam at 800x448.
     // You will need to do your own calibration for other configurations!
-    double fx = 578.272;
-    double fy = 578.272;
-    double cx = 402.145;
-    double cy = 221.506;
+    public static double fx = 578.272;
+    public static double fy = 578.272;
+    public static double cx = 402.145;
+    public static double cy = 221.506;
     // UNITS ARE METERS
     double tagsize = 0.045; //tag size on iron reign signal sleeve
     @Override
