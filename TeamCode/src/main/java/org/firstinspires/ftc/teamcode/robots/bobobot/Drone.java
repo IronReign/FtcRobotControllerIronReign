@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -20,7 +21,7 @@ public class Drone {
     }
     public void droneInit()
     {
-        droneLaunch = this.hardwareMap.get(Servo.class, "droneLaunchServo");
+        droneLaunch = this.hardwareMap.get(Servo.class, "droneLaunch");
     }
     public void droneRelease (boolean press)
     {

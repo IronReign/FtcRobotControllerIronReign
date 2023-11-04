@@ -8,13 +8,13 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 public class Robot {
         Telemetry telemetry;
         DriveTrain driveTrain;
-        Drone drone;
+        Drone droneLaunch;
         IntakeClaw claw;
         public Robot(Telemetry telemetry, HardwareMap hardwareMap)
         {
             this.telemetry=telemetry;
             driveTrain = new DriveTrain(telemetry, hardwareMap);
-            drone = new Drone(telemetry, hardwareMap);
+            droneLaunch = new Drone(telemetry, hardwareMap);
             claw = new IntakeClaw(telemetry, hardwareMap);
             motorInit();
             droneInit();
@@ -28,7 +28,7 @@ public class Robot {
         }
         public void droneInit()
         {
-            drone.droneInit();
+            droneLaunch.droneInit();
         }
         public void intakeClawInit()
         {
