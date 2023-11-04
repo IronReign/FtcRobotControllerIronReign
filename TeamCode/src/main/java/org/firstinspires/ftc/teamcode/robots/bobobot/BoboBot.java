@@ -17,10 +17,12 @@ public class BoboBot extends OpMode {
     public void loop() {
         bobo.driveTrain.mechanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
         bobo.droneLaunch.droneRelease(gamepad1.y);
-        bobo.claw.clawArmLift(gamepad1.right_trigger);
+        //bobo.claw.clawArmLift(gamepad1.a);
+        //bobo.claw.clawArmLower(gamepad1.b);
+        //bobo.claw.armPositionTest();
         bobo.claw.openClaw(gamepad1.right_bumper);
         bobo.claw.closeClaw(gamepad1.left_bumper);
         bobo.claw.telemetryOutput();
-
+        bobo.droneLaunch.telemetryOutput();
     }
 }

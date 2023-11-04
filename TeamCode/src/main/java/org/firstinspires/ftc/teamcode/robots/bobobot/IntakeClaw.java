@@ -12,8 +12,10 @@ public class IntakeClaw {
     private Servo clawSpan = null;
     public static double OPENCLAW = 0.15;
     public static double CLOSECLAW = 0.35;
-    public static double armliftSpeed = 0.3;
-    private static int armPosition;
+    public static double armliftSpeed = 0.2;
+    public static double armSpeed = 2.0;
+    private static int armPosition = 0;
+    private static int maxArmTicks = 100;
     private static int armInitPosition = -129;
     private double powerArm = 0;
     private Telemetry telemetry;
@@ -32,8 +34,12 @@ public class IntakeClaw {
         clawArm = this.hardwareMap.get(DcMotorEx.class, "clawArm");
         clawSpan = this.hardwareMap.get(Servo.class, "clawSpan");
         //clawArm.setDirection(DcMotor.Direction.REVERSE);
-        clawArm.setTargetPosition(armInitPosition);
+        clawArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        clawArm.setPower(1);
+        clawArm.setTargetPosition(0);
         clawArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
 
 
     }
@@ -49,12 +55,32 @@ public class IntakeClaw {
 
     }
 
-    public void clawArmLift (double press)
+    public void clawArmLift (boolean press)
     {
-        press = -press;
-        powerArm = 0.23*press;
-        clawArm.setPower(armliftSpeed*powerArm);
+        //int temptarget = clawArm.getCurrentPosition() + (int) (press * armSpeed);
+        //if (temptarget > maxArmTicks)
+        //    temptarget = maxArmTicks;
+        if(press == true) {
+            clawArm.setTargetPosition(90);
+        }
+
+
     }
+    public void armPositionTest() {
+        clawArm.setTargetPosition(90);
+    }
+    public void clawArmLower (boolean press)
+    {
+        //int targettemp = clawArm.getCurrentPosition()-(int)(press*armSpeed);
+        //if (targettemp <= 0)
+        //    targettemp = 0;
+        if(press == true) {
+            clawArm.setTargetPosition(0);
+        }
+
+
+    }
+
 
     public double getClawPosition () { return clawSpan.getPosition();}
     //adb connect 192.168.43.1
