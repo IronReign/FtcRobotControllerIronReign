@@ -88,11 +88,10 @@ public class DashboardUtil {
         canvas.setTranslation(origin.getPose().getX(), origin.getPose().getY());
 
         //override the field image if needed
-        if(origin.equals(Constants.Position.ORIGIN_6CAN)) //different competition
-            canvas.drawImage("/dash/assets/dprg6can.svg", 0,0, 144, 144,0,0,0,true);
+
 
         //draw the origin
-        boolean offsetLabel = (origin.equals(Constants.Position.ORIGIN_ALLIANCE_RED) || origin.equals(Constants.Position.ORIGIN_6CAN))? true: false;
+        boolean offsetLabel = false;
         canvas.setStrokeWidth(1);
         canvas.setStroke("red");
         canvas.strokeLine(0,0,24,0); //x axis

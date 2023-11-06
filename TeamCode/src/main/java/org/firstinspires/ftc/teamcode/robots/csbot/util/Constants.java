@@ -2,7 +2,8 @@ package org.firstinspires.ftc.teamcode.robots.csbot.util;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
+import org.firstinspires.ftc.teamcode.robots.taubot.Field;
 
 @Config(value = "PPConstants")
 public class Constants {
@@ -55,12 +56,15 @@ public class Constants {
 
     public enum Position {
         ORIGIN_DEFAULT (new Pose2d(0, 0, 0)), //this if used will reset the origin to FTC Dashboard's default
-        ORIGIN_ALLIANCE_RED (new Pose2d(0, 12*6, 0)), //these origin redefinitions are relative to the FTC Dashboard default which is different from a Canvas default
-        ORIGIN_ALLIANCE_BLUE (new Pose2d(0, -12*6, Math.PI)),
-        ORIGIN_6CAN (new Pose2d(-5*12, 0, Math.toRadians(0))),
-        START_LEFT(new Pose2d(9, 1.5 * FIELD_INCHES_PER_GRID, Math.toRadians(0))),
-        START_RIGHT(new Pose2d(9, -1.5 * FIELD_INCHES_PER_GRID, Math.toRadians(0)));
+        START_LEFT_RED(P2D(1.5, -2.5, 90)),
+        START_RIGHT_RED(P2D(3.5, -2.5, 90)),
+        START_RIGHT_BLUE(P2D(1.5, 2.5, -90)),
+        START_LEFT_BLUE(P2D(3.5, 2.5, -90));
         private final Pose2d pose;
+
+        public boolean getMod() {
+            return this.name() == START_LEFT_RED.name() || this.name() == START_RIGHT_RED.name() ?  true : false;
+        }
 
         Position(Pose2d pose) {
             this.pose = pose;

@@ -10,8 +10,6 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.csbot.Autonomous;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
@@ -28,13 +26,13 @@ public class Robot implements Subsystem {
     public Subsystem[] subsystems;
     public CSDriveTrain driveTrain;
     public Intake intake;
-    public VisionProvider visionProvider = null;
+    public VisionProvider visionProviderBack = null;
     public Outtake outtake;
     //TODO - create a field
 //    public Field field;
 
     //vision variables
-    public static boolean visionProviderFinalized = false;
+    public boolean visionProviderFinalized = false;
     public static int visionProviderIndex = 2;
     public static boolean colorBlobEnabled = true;
 
@@ -42,7 +40,7 @@ public class Robot implements Subsystem {
     private long[] subsystemUpdateTimes;
     private final List<LynxModule> hubs;
     public static boolean juiceDriveTrain = false;
-    HardwareMap hardwareMap;
+    public HardwareMap hardwareMap;
     private VoltageSensor batteryVoltageSensor;
     private Articulation articulation;
     public List<Target> targets = new ArrayList<Target>();
@@ -133,11 +131,11 @@ public class Robot implements Subsystem {
 
 //    TODO - THIS IS AWFUL, NEEDS TO BE RIPPED OUT
     public void initLoopVision() {
-//        if (!visionProviderFinalized) {
-//            visionProvider.initializeVision(hardwareMap, this);
-//            visionProviderFinalized = true;
-//        }
-//        visionProvider.update();
+        if (!visionProviderFinalized) {
+            visionProviderBack.initializeVision(hardwareMap, this);
+            visionProviderFinalized = true;
+        }
+        visionProviderBack.update();
     }
 
     public Articulation articulate(Articulation target) {
@@ -187,7 +185,7 @@ public class Robot implements Subsystem {
 
     public void createVisionProvider() {
         try {
-            visionProvider = VisionProviders.VISION_PROVIDERS[visionProviderIndex].newInstance().setRedAlliance(alliance.getMod());
+            visionProviderBack = VisionProviders.VISION_PROVIDERS[visionProviderIndex].newInstance().setRedAlliance(alliance.getMod());
         } catch (IllegalAccessException | InstantiationException e) {
             throw new RuntimeException("Error while instantiating vision provider");
         }

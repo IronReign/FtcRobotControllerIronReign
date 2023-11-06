@@ -6,6 +6,7 @@ import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.JOYSTI
 import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.SHOULDER_TO_ELBOW;
 import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.TRIGGER_DEADZONE;
 
+import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
 
@@ -80,6 +81,11 @@ public class Utils {
 
     public static double wrapAngleMinusRad(double angle){
         return 2*Math.PI - wrapAngleRad(angle);
+    }
+
+    //returns a pose2d based on field grid units and a degree-based heading
+    public static Pose2d P2D(double x, double y, double deg) {
+        return new Pose2d(x * Constants.FIELD_INCHES_PER_GRID, y * Constants.FIELD_INCHES_PER_GRID, Math.toRadians(deg));
     }
 
 

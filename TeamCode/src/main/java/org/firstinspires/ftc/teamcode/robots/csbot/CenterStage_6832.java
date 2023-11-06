@@ -5,11 +5,9 @@ import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.LOW_BA
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
@@ -90,7 +88,7 @@ public class CenterStage_6832 extends OpMode {
     //CONSTANTS FOR GAME
     public static boolean DEFAULT_DEBUG_TELEMETRY_ENABLED = false;
     public static Constants.Alliance alliance = Constants.Alliance.BLUE;
-    public static Constants.Position startingPosition;
+    public static Constants.Position startingPosition = Constants.Position.START_RIGHT_RED;
     long startTime;
 
 
@@ -135,7 +133,7 @@ public class CenterStage_6832 extends OpMode {
         alliance = Constants.Alliance.BLUE;
         //TODO - SET ORIGIN and STARTING POSITION
         origin = Constants.Position.ORIGIN_DEFAULT;
-        startingPosition = Constants.Position.START_LEFT;
+        startingPosition = Constants.Position.START_LEFT_RED;
 
 
 
@@ -154,14 +152,15 @@ public class CenterStage_6832 extends OpMode {
     //end init()
 
     public void init_loop() {
-        robot.intake.update();
         dc.init_loop();
+        telemetry.addData("visionProviderIndex", Robot.visionProviderIndex);
+        telemetry.addData("vision telemetry", robot.visionProviderBack.getTelemetry(true));
         telemetry.addData("gameState", gameState);
         telemetry.addData("gameStateIndex", gameStateIndex);
         telemetry.addData("active", active);
         telemetry.addData("Alliance", alliance);
         telemetry.addData("Side", startingPosition);
-//        robot.initLoopVision();
+        robot.initLoopVision();
     }
     //end init_loop()
 
@@ -304,18 +303,18 @@ public class CenterStage_6832 extends OpMode {
         for(TelemetryProvider telemetryProvider: robot.subsystems)
             handleTelemetry(telemetryProvider.getTelemetry(debugTelemetryEnabled), telemetryProvider.getTelemetryName(), packet);
 
-        Map<String, Object> visionTelemetryMap = robot.visionProvider.getTelemetry(debugTelemetryEnabled);
+        Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
         visionTelemetryMap.put("Backend",
                 Misc.formatInvariant("%s (%s)",
                         //TODO - CURRENTLY OPENCV, CHANGE IF NECESSARY
-                        VisionProviders.VISION_PROVIDERS[3].getSimpleName(),
+                        VisionProviders.VISION_PROVIDERS[Robot.visionProviderIndex].getSimpleName(),
                         robot.visionProviderFinalized ?
                                 "finalized" :
                                 System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
                 )
         );
 
-        handleTelemetry(visionTelemetryMap, robot.visionProvider.getTelemetryName(), packet);
+        handleTelemetry(visionTelemetryMap, robot.visionProviderBack.getTelemetryName(), packet);
         dashboard.sendTelemetryPacket(packet);
         telemetry.update();
 
