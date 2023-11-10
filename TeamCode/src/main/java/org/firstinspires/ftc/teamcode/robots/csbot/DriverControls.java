@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.active;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
@@ -34,6 +35,12 @@ public class DriverControls {
     }
 
     public void init_loop() {
+        if(!gamepad1.atRest()) {
+            telemetry.addData("gamepad1", "not zeroed");
+        }
+        if(!gamepad2.atRest()) {
+            telemetry.addData("gamepad2", "not zeroed");
+        }
         updateStickyGamepads();
         handleStateSwitch();
         handlePregameControls();

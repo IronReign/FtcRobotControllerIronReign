@@ -83,7 +83,9 @@ public class Utils {
         return 2*Math.PI - wrapAngleRad(angle);
     }
 
-    //returns a pose2d based on field grid units and a degree-based heading
+    /**
+     * Returns a Pose2D built with inches and radians given field units and degree-based heading
+     */
     public static Pose2d P2D(double x, double y, double deg) {
         return new Pose2d(x * Constants.FIELD_INCHES_PER_GRID, y * Constants.FIELD_INCHES_PER_GRID, Math.toRadians(deg));
     }

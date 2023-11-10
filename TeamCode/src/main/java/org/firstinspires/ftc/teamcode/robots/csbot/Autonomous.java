@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.auton;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.Position;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -100,58 +101,171 @@ public class Autonomous implements TelemetryProvider {
         };
     }
 
-    public void build(Position startingPosition) {
+    public void build() {
 
         TrajectorySequence redRightAutonSequenceStageOne =
                 robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
-                        .back(FIELD_INCHES_PER_GRID)
-                        .turn(90)
+                        .lineToLinearHeading(P2D(3.5, -.5, 90))
+                        .build();
+
+        TrajectorySequence redLeftAutonSequenceStageOne =
+                robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
+                        .lineToLinearHeading(P2D(1.5, -.5, 90))
+                        .build();
+
+        TrajectorySequence redAutonSequencePathToMiddle =
+                robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
+                        .lineToLinearHeading(P2D(4.5, -.5, 180))
+                        .build();
+        TrajectorySequence redAutonPathToPixelStack =
+                robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
+                        .lineToLinearHeading(P2D(.5, -.5, 180))
+                        .build();
+
+        TrajectorySequence blueRightAutonSequenceStageOne =
+                robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
+                        .lineToLinearHeading(P2D(1.5, .5, -90))
+                        .build();
+
+        TrajectorySequence blueLeftAutonSequenceStageOne =
+                robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
+                        .lineToLinearHeading(P2D(3.5, .5, -90))
+                        .build();
+
+        TrajectorySequence blueAutonSequencePathToMiddle =
+                robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
+                        .lineToLinearHeading(P2D(4.5, .5, 180))
+                        .build();
+        TrajectorySequence blueAutonPathToPixelStack =
+                robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
+                        .lineToLinearHeading(P2D(.5, .5, 180))
                         .build();
 
 
+
         redRight  = Utils.getStateMachine(new Stage())
+                //backs up to behind tape
                 .addSingleState(trajectorySequenceToSingleState(redRightAutonSequenceStageOne))
                 .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //TODO - figure out how to score on correct tape here based on vision in init loop
+                //inits AprilTag vision
                 .addSingleState(() -> {robot.visionProviderFinalized = false; robot.switchVisionProviders(); robot.createVisionProvider(); robot.visionProviderBack.initializeVision(hardwareMap); robot.visionProviderFinalized = true;})
                 .addState(() -> robot.visionProviderFinalized)
-                .addSingleState(() -> {robot.driveTrain.setWeightedDrivePower(new Pose2d(0, 1, 0)); autonState = AutonState.SCAN_FOR_APRILTAG;})
+                //gets to in front of pixel board on the left
+                .addSingleState(trajectorySequenceToSingleState(redAutonSequencePathToMiddle))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //strafes slowly to scan for apriltag
+                .addSingleState(() -> {robot.driveTrain.setWeightedDrivePower(new Pose2d(0, -.3, 0)); autonState = AutonState.SCAN_FOR_APRILTAG;})
+                //TODO - STOP, ALIGN, SCORE, AND ADVANCE THE STATEMACHINE WHEN YOU SEE THE APRILTAG YOU WANT
+                //this stops the robot, just to skip the above line during testing for only path
+                .addSingleState(() -> robot.driveTrain.setWeightedDrivePower(new Pose2d(0, 0, 0)))
+                .addState(() -> !robot.driveTrain.isBusy())
+                //come back to the middle to get under the stage door
+                .addSingleState(trajectorySequenceToSingleState(redAutonSequencePathToMiddle))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //straight path to pixel stack closest to middle
+                .addSingleState(trajectorySequenceToSingleState(redAutonPathToPixelStack))
+                //TODO - INTAKE FROM PIXELSTACK HERE
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //come back up via stage door
+                .addSingleState(trajectorySequenceToSingleState(redAutonSequencePathToMiddle))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //TODO - repeat lines 136-153 for each time we want to cycle conestack
+                .build();
 
-                .addSingleState(() -> {autonState = AutonState.TRAVEL;})
+
+        redLeft = Utils.getStateMachine(new Stage())
+                //backs up to behind tape
+                .addSingleState(trajectorySequenceToSingleState(redLeftAutonSequenceStageOne))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //TODO - figure out how to score on correct tape here based on vision in init loop
+                //inits AprilTag vision
+                .addSingleState(() -> {robot.visionProviderFinalized = false; robot.switchVisionProviders(); robot.createVisionProvider(); robot.visionProviderBack.initializeVision(hardwareMap); robot.visionProviderFinalized = true;})
+                .addState(() -> robot.visionProviderFinalized)
+                //gets to in front of pixel board on the left
+                .addSingleState(trajectorySequenceToSingleState(redAutonSequencePathToMiddle))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //strafes slowly to scan for apriltag
+                .addSingleState(() -> {robot.driveTrain.setWeightedDrivePower(new Pose2d(0, -.3, 0)); autonState = AutonState.SCAN_FOR_APRILTAG;})
+                //TODO - STOP, ALIGN, SCORE, AND ADVANCE THE STATEMACHINE WHEN YOU SEE THE APRILTAG YOU WANT
+                //this stops the robot, just to skip the above line during testing for only path
+                .addSingleState(() -> robot.driveTrain.setWeightedDrivePower(new Pose2d(0, 0, 0)))
+                .addState(() -> !robot.driveTrain.isBusy())
+                //come back to the middle to get under the stage door
+                .addSingleState(trajectorySequenceToSingleState(redAutonSequencePathToMiddle))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //straight path to pixel stack closest to middle
+                .addSingleState(trajectorySequenceToSingleState(redAutonPathToPixelStack))
+                //TODO - INTAKE FROM PIXELSTACK HERE
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //come back up via stage door
+                .addSingleState(trajectorySequenceToSingleState(redAutonSequencePathToMiddle))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //TODO - repeat lines 136-153 for each time we want to cycle conestack
                 .build();
 
 
 
-        TrajectorySequence blueRightAutonSequence =
-                robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
-                        .back(30*2)
-                        .turn(90)
-                        .back(42*2)
-                        .turn(90)
-                        .back(12*2)
-                        .turn(-90)
-                        .back(12*2)
-                        .build();
-        blueRight = trajectorySequenceToStateMachine(blueRightAutonSequence);
+        blueRight = Utils.getStateMachine(new Stage())
+                //backs up to behind tape
+                .addSingleState(trajectorySequenceToSingleState(blueRightAutonSequenceStageOne))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //TODO - figure out how to score on correct tape here based on vision in init loop
+                //inits AprilTag vision
+                .addSingleState(() -> {robot.visionProviderFinalized = false; robot.switchVisionProviders(); robot.createVisionProvider(); robot.visionProviderBack.initializeVision(hardwareMap); robot.visionProviderFinalized = true;})
+                .addState(() -> robot.visionProviderFinalized)
+                //gets to in front of pixel board on the left
+                .addSingleState(trajectorySequenceToSingleState(blueAutonSequencePathToMiddle))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //strafes slowly to scan for apriltag
+                .addSingleState(() -> {robot.driveTrain.setWeightedDrivePower(new Pose2d(0, .3, 0)); autonState = AutonState.SCAN_FOR_APRILTAG;})
+                //TODO - STOP, ALIGN, SCORE, AND ADVANCE THE STATEMACHINE WHEN YOU SEE THE APRILTAG YOU WANT
+                //this stops the robot, just to skip the above line during testing for only path
+                .addSingleState(() -> robot.driveTrain.setWeightedDrivePower(new Pose2d(0, 0, 0)))
+                .addState(() -> !robot.driveTrain.isBusy())
+                //come back to the middle to get under the stage door
+                .addSingleState(trajectorySequenceToSingleState(blueAutonSequencePathToMiddle))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //straight path to pixel stack closest to middle
+                .addSingleState(trajectorySequenceToSingleState(blueAutonPathToPixelStack))
+                //TODO - INTAKE FROM PIXELSTACK HERE
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //come back up via stage door
+                .addSingleState(trajectorySequenceToSingleState(blueAutonSequencePathToMiddle))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //TODO - repeat lines 136-153 for each time we want to cycle conestack
+                .build();
 
-        TrajectorySequence redLeftAutonSequence =
-                robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
-                        .back(30*2)
-                        .turn(-90)
-                        .back(42*2)
-                        .turn(-90)
-                        .back(12*2)
-                        .turn(90)
-                        .back(12*2)
-                        .build();
-        redLeft = trajectorySequenceToStateMachine(redLeftAutonSequence);
 
-        TrajectorySequence blueLeftAutonSequence =
-                robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
-                        .back(12*2)
-                        .turn(-90)
-                        .back(18*2)
-                        .build();
-        blueLeft = trajectorySequenceToStateMachine(blueLeftAutonSequence);
+        blueLeft = Utils.getStateMachine(new Stage())
+                //backs up to behind tape
+                .addSingleState(trajectorySequenceToSingleState(blueLeftAutonSequenceStageOne))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //TODO - figure out how to score on correct tape here based on vision in init loop
+                //inits AprilTag vision
+                .addSingleState(() -> {robot.visionProviderFinalized = false; robot.switchVisionProviders(); robot.createVisionProvider(); robot.visionProviderBack.initializeVision(hardwareMap); robot.visionProviderFinalized = true;})
+                .addState(() -> robot.visionProviderFinalized)
+                //gets to in front of pixel board on the left
+                .addSingleState(trajectorySequenceToSingleState(blueAutonSequencePathToMiddle))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //strafes slowly to scan for apriltag
+                .addSingleState(() -> {robot.driveTrain.setWeightedDrivePower(new Pose2d(0, -.3, 0)); autonState = AutonState.SCAN_FOR_APRILTAG;})
+                //TODO - STOP, ALIGN, SCORE, AND ADVANCE THE STATEMACHINE WHEN YOU SEE THE APRILTAG YOU WANT
+                //this stops the robot, just to skip the above line during testing for only path
+                .addSingleState(() -> robot.driveTrain.setWeightedDrivePower(new Pose2d(0, 0, 0)))
+                .addState(() -> !robot.driveTrain.isBusy())
+                //come back to the middle to get under the stage door
+                .addSingleState(trajectorySequenceToSingleState(blueAutonSequencePathToMiddle))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //straight path to pixel stack closest to middle
+                .addSingleState(trajectorySequenceToSingleState(blueAutonPathToPixelStack))
+                //TODO - INTAKE FROM PIXELSTACK HERE
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //come back up via stage door
+                .addSingleState(trajectorySequenceToSingleState(blueAutonSequencePathToMiddle))
+                .addState(() -> !robot.driveTrain.trajectorySequenceRunner.isBusy())
+                //TODO - repeat lines 136-153 for each time we want to cycle conestack
+                .build();
 
         TrajectorySequence backAndForthSequence =
                 robot.driveTrain.trajectorySequenceBuilder(robot.driveTrain.getPoseEstimate())
@@ -181,12 +295,6 @@ public class Autonomous implements TelemetryProvider {
                         .turn(Math.toRadians(90))
                         .build();
         turn = trajectorySequenceToStateMachine(turnSequence);
-
-
-        //----------------------------------------------------------------------------------------------
-        // Spline Routines
-        //----------------------------------------------------------------------------------------------
-
     }
 
 }

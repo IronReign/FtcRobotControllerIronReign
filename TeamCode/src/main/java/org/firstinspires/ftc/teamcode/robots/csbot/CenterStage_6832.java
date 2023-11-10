@@ -127,7 +127,7 @@ public class CenterStage_6832 extends OpMode {
         robot = new Robot(hardwareMap, false);
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
-        auton.build(startingPosition);
+        auton.build();
 
         //DEFAULT AUTONOMOUS SETUP
         alliance = Constants.Alliance.BLUE;
