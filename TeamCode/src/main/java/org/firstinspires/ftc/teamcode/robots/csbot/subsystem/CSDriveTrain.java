@@ -43,9 +43,9 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigu
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_drive.DriveConstants;
-import org.firstinspires.ftc.teamcode.robots.csbot.trajectorysequence.TrajectorySequence;
-import org.firstinspires.ftc.teamcode.robots.csbot.trajectorysequence.TrajectorySequenceBuilder;
-import org.firstinspires.ftc.teamcode.robots.csbot.trajectorysequence.TrajectorySequenceRunner;
+import org.firstinspires.ftc.teamcode.robots.csbot.rr_trajectorysequence.TrajectorySequence;
+import org.firstinspires.ftc.teamcode.robots.csbot.rr_trajectorysequence.TrajectorySequenceBuilder;
+import org.firstinspires.ftc.teamcode.robots.csbot.rr_trajectorysequence.TrajectorySequenceRunner;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.LynxModuleUtil;
 
 import java.util.ArrayList;
@@ -201,7 +201,6 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
                         .build()
         );
     }
-
     public void followTrajectory(Trajectory trajectory) {
         followTrajectoryAsync(trajectory);
         waitForIdle();
@@ -227,7 +226,7 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
     private void update() {
         updatePoseEstimate();
         poseEstimate = getPoseEstimate();
-        DriveSignal signal = trajectorySequenceRunner.update(getPoseEstimate(), getPoseVelocity(), new Canvas());
+        DriveSignal signal = trajectorySequenceRunner.update(getPoseEstimate(), getPoseVelocity());
         if (signal != null) setDriveSignal(signal);
     }
 
@@ -352,6 +351,9 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
         Map<String, Object> telemetryMap = new HashMap<>();
         telemetryMap.put("x", poseEstimate.getX());
         telemetryMap.put("y", poseEstimate.getY());
+        telemetryMap.put("Left Odometry Pod:\t", leftFront.getCurrentPosition());
+        telemetryMap.put("Right Odometry Pod:\t", rightFront.getCurrentPosition());
+        telemetryMap.put("Cross Odometry Pod:\t", rightRear.getCurrentPosition());
         telemetryMap.put("heading", poseEstimate.getHeading());
         return telemetryMap;
     }

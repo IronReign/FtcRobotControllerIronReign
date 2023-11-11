@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 @Config("BoboGameVariables")
-@Autonomous(name="BoboAutoMode", group="Challenge")
-public class BoboAuto {
+//@Autonomous(name="BoboAutoMode", group="Challenge")
+public class BoboAuto {//all main classes must extend opMode!!!!!
+
 }

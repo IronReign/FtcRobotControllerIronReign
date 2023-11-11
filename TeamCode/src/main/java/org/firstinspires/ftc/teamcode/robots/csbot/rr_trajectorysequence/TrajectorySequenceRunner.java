@@ -1,11 +1,11 @@
-package org.firstinspires.ftc.teamcode.robots.csbot.trajectorysequence;
+package org.firstinspires.ftc.teamcode.robots.csbot.rr_trajectorysequence;
 
 import androidx.annotation.Nullable;
 
-import com.acmerobotics.dashboard.DashboardCore;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.control.PIDCoefficients;
 import com.acmerobotics.roadrunner.control.PIDFController;
 import com.acmerobotics.roadrunner.drive.DriveSignal;
@@ -17,11 +17,13 @@ import com.acmerobotics.roadrunner.trajectory.TrajectoryMarker;
 import com.acmerobotics.roadrunner.util.NanoClock;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
-import org.firstinspires.ftc.teamcode.robots.csbot.trajectorysequence.sequencesegment.SequenceSegment;
-import org.firstinspires.ftc.teamcode.robots.csbot.trajectorysequence.sequencesegment.TrajectorySegment;
-import org.firstinspires.ftc.teamcode.robots.csbot.trajectorysequence.sequencesegment.TurnSegment;
-import org.firstinspires.ftc.teamcode.robots.csbot.trajectorysequence.sequencesegment.WaitSegment;
-import org.firstinspires.ftc.teamcode.robots.reachRefactor.util.DashboardUtil;
+import org.firstinspires.ftc.teamcode.robots.csbot.rr_trajectorysequence.sequencesegment.SequenceSegment;
+import org.firstinspires.ftc.teamcode.robots.csbot.rr_trajectorysequence.sequencesegment.TrajectorySegment;
+import org.firstinspires.ftc.teamcode.robots.csbot.rr_trajectorysequence.sequencesegment.TurnSegment;
+import org.firstinspires.ftc.teamcode.robots.csbot.rr_trajectorysequence.sequencesegment.WaitSegment;
+import org.firstinspires.ftc.teamcode.robots.ri2d2023.rr_drive.DriveConstants;
+import org.firstinspires.ftc.teamcode.robots.ri2d2023.rr_util.DashboardUtil;
+import org.firstinspires.ftc.teamcode.robots.ri2d2023.rr_util.LogFiles;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,11 +47,6 @@ public class TrajectorySequenceRunner {
     private final PIDFController turnController;
 
     private final NanoClock clock;
-    private  List<Integer> lastDriveEncPositions;
-    private  List<Integer> lastDriveEncVels;
-    private  List<Integer> lastTrackingEncPositions;
-    private  List<Integer> lastTrackingEncVels;
-    private VoltageSensor voltageSensor;
 
     private TrajectorySequence currentTrajectorySequence;
     private double currentSegmentStartTime;
@@ -60,16 +57,12 @@ public class TrajectorySequenceRunner {
 
     List<TrajectoryMarker> remainingMarkers = new ArrayList<>();
 
+    private final FtcDashboard dashboard;
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
-    public TrajectorySequenceRunner(TrajectoryFollower follower, PIDCoefficients headingPIDCoefficients) {
-        this.follower = follower;
+    private VoltageSensor voltageSensor;
 
-        turnController = new PIDFController(headingPIDCoefficients);
-        turnController.setInputBounds(0, 2 * Math.PI);
-
-        clock = NanoClock.system();
-    }
+    private List<Integer> lastDriveEncPositions, lastDriveEncVels, lastTrackingEncPositions, lastTrackingEncVels;
 
     public TrajectorySequenceRunner(
             TrajectoryFollower follower, PIDCoefficients headingPIDCoefficients, VoltageSensor voltageSensor,
@@ -89,10 +82,9 @@ public class TrajectorySequenceRunner {
 
         clock = NanoClock.system();
 
-        FtcDashboard dashboard = FtcDashboard.getInstance();
+        dashboard = FtcDashboard.getInstance();
         dashboard.setTelemetryTransmissionInterval(25);
     }
-
 
     public void followTrajectorySequenceAsync(TrajectorySequence trajectorySequence) {
         currentTrajectorySequence = trajectorySequence;
@@ -102,9 +94,12 @@ public class TrajectorySequenceRunner {
     }
 
     public @Nullable
-    DriveSignal update(Pose2d poseEstimate, Pose2d poseVelocity, Canvas fieldOverlay) {
+    DriveSignal update(Pose2d poseEstimate, Pose2d poseVelocity) {
         Pose2d targetPose = null;
         DriveSignal driveSignal = null;
+
+        TelemetryPacket packet = new TelemetryPacket();
+        Canvas fieldOverlay = packet.fieldOverlay();
 
         SequenceSegment currentSegment = null;
 
@@ -206,7 +201,33 @@ public class TrajectorySequenceRunner {
             poseHistory.removeFirst();
         }
 
+        final double NOMINAL_VOLTAGE = 12.0;
+        double voltage = voltageSensor.getVoltage();
+        if (driveSignal != null && !DriveConstants.RUN_USING_ENCODER) {
+            driveSignal = new DriveSignal(
+                    driveSignal.getVel().times(NOMINAL_VOLTAGE / voltage),
+                    driveSignal.getAccel().times(NOMINAL_VOLTAGE / voltage)
+            );
+        }
+
+        if (targetPose != null) {
+            LogFiles.record(
+                    targetPose, poseEstimate, voltage,
+                    lastDriveEncPositions, lastDriveEncVels, lastTrackingEncPositions, lastTrackingEncVels
+            );
+        }
+
+        packet.put("x", poseEstimate.getX());
+        packet.put("y", poseEstimate.getY());
+        packet.put("heading (deg)", Math.toDegrees(poseEstimate.getHeading()));
+
+        packet.put("xError", getLastPoseError().getX());
+        packet.put("yError", getLastPoseError().getY());
+        packet.put("headingError (deg)", Math.toDegrees(getLastPoseError().getHeading()));
+
         draw(fieldOverlay, currentTrajectorySequence, currentSegment, targetPose, poseEstimate);
+
+        dashboard.sendTelemetryPacket(packet);
 
         return driveSignal;
     }
@@ -265,13 +286,14 @@ public class TrajectorySequenceRunner {
         if (targetPose != null) {
             fieldOverlay.setStrokeWidth(1);
             fieldOverlay.setStroke("#4CAF50");
-            DashboardUtil.drawPose(fieldOverlay, targetPose);
+            DashboardUtil.drawRobot(fieldOverlay, targetPose);
         }
 
+        fieldOverlay.setStroke("#3F51B5");
         DashboardUtil.drawPoseHistory(fieldOverlay, poseHistory);
 
         fieldOverlay.setStroke("#3F51B5");
-        DashboardUtil.drawPose(fieldOverlay, poseEstimate);
+        DashboardUtil.drawRobot(fieldOverlay, poseEstimate);
     }
 
     public Pose2d getLastPoseError() {
@@ -280,9 +302,5 @@ public class TrajectorySequenceRunner {
 
     public boolean isBusy() {
         return currentTrajectorySequence != null;
-    }
-
-    public void stop() {
-        currentTrajectorySequence = null;
     }
 }

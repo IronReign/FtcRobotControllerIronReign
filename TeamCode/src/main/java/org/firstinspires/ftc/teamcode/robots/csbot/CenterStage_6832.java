@@ -160,7 +160,7 @@ public class CenterStage_6832 extends OpMode {
         telemetry.addData("active", active);
         telemetry.addData("Alliance", alliance);
         telemetry.addData("Side", startingPosition);
-        robot.initLoopVision();
+        //robot.initLoopVision();
     }
     //end init_loop()
 

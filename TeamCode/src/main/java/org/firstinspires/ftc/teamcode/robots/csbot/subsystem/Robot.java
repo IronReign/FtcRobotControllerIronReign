@@ -80,6 +80,7 @@ public class Robot implements Subsystem {
         driveTrain = new CSDriveTrain(hardwareMap, this, simulated);
         //TODO - THIS IS FOR MANUAL ONLY
         driveTrain.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        driveTrain.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intake = new Intake(hardwareMap, this);
         outtake = new Outtake(hardwareMap, this);
 

@@ -36,8 +36,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.rr_drive.StandardTrackingWhee
  * satisfactory result is produced.
  */
 @Config
-@Disabled
-//@Autonomous(group="drive")
+@Autonomous(group = "drive", name = "CS Tracking Wheel Forward Offset Tuner")
 public class TrackingWheelForwardOffsetTuner extends LinearOpMode {
     public static double ANGLE = 180; // deg
     public static int NUM_TRIALS = 5;

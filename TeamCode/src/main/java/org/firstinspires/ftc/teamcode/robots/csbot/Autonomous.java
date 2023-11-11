@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.auton;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.Position;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
@@ -10,16 +8,14 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
-import org.firstinspires.ftc.teamcode.robots.csbot.trajectorysequence.TrajectorySequence;
+import org.firstinspires.ftc.teamcode.robots.csbot.rr_trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
 import org.firstinspires.ftc.teamcode.statemachine.SingleState;
 import org.firstinspires.ftc.teamcode.statemachine.Stage;
 import org.firstinspires.ftc.teamcode.statemachine.StateMachine;
-import org.slf4j.helpers.Util;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
