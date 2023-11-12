@@ -1,13 +1,12 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.vision;
 
-import com.acmerobotics.roadrunner.geometry.Vector2d;
-
+import org.firstinspires.ftc.teamcode.util.Vector2;
 import org.opencv.core.RotatedRect;
 
 public class Target {
     long timeStamp; //the timestamp on which the target was detected - nanos from the time streaming was started
     int targetNumber; //the order of the target in the frame
-    Vector2d centroid; //this is the position of the centroid of the target in the frame it was detected
+    Vector2 centroid; //this is the position of the centroid of the target in the frame it was detected
     RotatedRect fittedRect; //holds the bounding rect of the fitted ellipse
     double aspectRatio; //hold the aspect ratio of the fitted ellipse
     double areaPixels; //this is the area in pixels of the target
@@ -17,7 +16,7 @@ public class Target {
     boolean upright; //an assessment of the vertical orientation of the can
     double cameraHeading; //this is the heading (in degrees) of the target in the camera's fov when the target was last detected. it is only relevant for the frame where the target was detected
     double cameraDistance; //this is the distance from the camera to the target. it is only relevant for the frame where the target was detected
-    Vector2d fieldPosition; //this is the estimated position of the target/can on the field
+    Vector2 fieldPosition; //this is the estimated position of the target/can on the field
     boolean isCan; //do we think this is a can?
 
     public long getTimeStamp() {
@@ -36,11 +35,11 @@ public class Target {
         this.targetNumber = targetNumber;
     }
 
-    public Vector2d getCentroid() {
+    public Vector2 getCentroid() {
         return centroid;
     }
 
-    public void setCentroid(Vector2d centroid) {
+    public void setCentroid(Vector2 centroid) {
         this.centroid = centroid;
     }
 
@@ -114,11 +113,11 @@ public class Target {
     public void setCameraDistance(double cameraDistance) {
         this.cameraDistance = cameraDistance;
     }
-    public Vector2d getFieldPosition() {
+    public Vector2 getFieldPosition() {
         return fieldPosition;
     }
 
-    public void setFieldPosition(Vector2d fieldPosition) {
+    public void setFieldPosition(Vector2 fieldPosition) {
         this.fieldPosition = fieldPosition;
     }
 
@@ -136,20 +135,20 @@ public class Target {
         this.timeStamp = timeStamp;
         this.targetNumber = targetNumber;
     }
-    public Target(long timeStamp, int targetNumber, Vector2d centroid, double cameraHeading) {
+    public Target(long timeStamp, int targetNumber, Vector2 centroid, double cameraHeading) {
         this.timeStamp = timeStamp;
         this.targetNumber = targetNumber;
         this.centroid = centroid;
         this.cameraHeading = cameraHeading;
     }
 
-    public double HeadingTo(Vector2d location){
+    public double HeadingTo(Vector2 location){
         return this.getFieldPosition().angleBetween(location);
     }
-    public double HeadingFrom(Vector2d location){
+    public double HeadingFrom(Vector2 location){
         return location.angleBetween(this.getFieldPosition());
     }
-    public double Distance(Vector2d location){
+    public double Distance(Vector2 location){
         return location.distTo(this.getFieldPosition());
     }
 }

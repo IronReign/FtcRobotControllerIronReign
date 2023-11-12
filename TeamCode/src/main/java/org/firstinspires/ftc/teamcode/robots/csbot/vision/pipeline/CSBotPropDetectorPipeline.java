@@ -3,10 +3,10 @@ package org.firstinspires.ftc.teamcode.robots.csbot.vision.pipeline;
 import android.graphics.Bitmap;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.geometry.Vector2d;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Position;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
+import org.firstinspires.ftc.teamcode.util.Vector2;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -167,7 +167,7 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
 
                 boundingBox[i] = Imgproc.boundingRect(new MatOfPoint2f(findContoursOutput.get(i).toArray()));
 
-                Target newTarget = new Target(timestamp, i, new Vector2d(x, y), 0);
+                Target newTarget = new Target(timestamp, i, new Vector2(x, y), 0);
                 newTarget.setAreaPixels(contourArea);
                 newTarget.setFittedRect(minEllipse[i]);
                 newTarget.setOrientation(minEllipse[i].angle);

@@ -1,12 +1,10 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.vision.provider;
 
-import static org.firstinspires.ftc.teamcode.robots.taubot.util.Utils.wrapAngle;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.wrapAngle;
 
 import android.graphics.Bitmap;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -15,6 +13,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.vision.pipeline.CSBotPropDete
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Position;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
+import org.firstinspires.ftc.teamcode.util.Vector2;
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -138,8 +137,8 @@ public class CSBotPropDetectorProvider extends VisionProvider {
                 telemetryMap.put(Integer.toString(can.getTargetNumber())+"Aspect Ratio", can.getAspectRatio());
                 telemetryMap.put(Integer.toString(can.getTargetNumber())+"Camera Heading", can.getCameraHeading());
                 telemetryMap.put(Integer.toString(can.getTargetNumber())+"Camera Distance", can.getCameraDistance());
-                telemetryMap.put(Integer.toString(can.getTargetNumber())+"X", can.getFieldPosition().getX());
-                telemetryMap.put(Integer.toString(can.getTargetNumber())+"Y", can.getFieldPosition().getY());
+                telemetryMap.put(Integer.toString(can.getTargetNumber())+"X", can.getFieldPosition().x);
+                telemetryMap.put(Integer.toString(can.getTargetNumber())+"Y", can.getFieldPosition().y);
             }
         }
 
@@ -195,8 +194,8 @@ public class CSBotPropDetectorProvider extends VisionProvider {
                 //at the top of the frame a range of 60 degrees corresponds to a span of 295 centered on 160
                 //at the bottom 60 degrees is a span of 237 also centered on 160
                 //the height of the frame is 180
-                double x = newCan.getCentroid().getX();
-                double y = newCan.getCentroid().getY();
+                double x = newCan.getCentroid().x;
+                double y = newCan.getCentroid().y;
                 double heightFactor = (180.0-y)/180.0;
                 double deltaThirty = (58.0 * heightFactor + 237.0)/2; //pixel width at a given height equivalent to 30 degrees from center
                 double frameDegrees =  wrapAngle(-(x-160.0) / deltaThirty * 30);
@@ -209,7 +208,7 @@ public class CSBotPropDetectorProvider extends VisionProvider {
                 //can_y = robot_y + distance * sin(heading)
                 double can_x = canDistance*Math.cos(targetHeadingRad);
                 double can_y = canDistance*Math.sin(targetHeadingRad);
-                newCan.setFieldPosition(new Vector2d(can_x,can_y));
+                newCan.setFieldPosition(new Vector2(can_x,can_y));
 
                 for (Target existingCan : uniqueCans) {
                     double distance = newCan.getFieldPosition().distTo(existingCan.getFieldPosition());
@@ -255,21 +254,21 @@ public class CSBotPropDetectorProvider extends VisionProvider {
         List<Target> shortlist = new ArrayList<>();
 
         for (Target can: uniqueCans){
-            if (Math.abs(can.getFieldPosition().getX())<12){
+            if (Math.abs(can.getFieldPosition().x)<12){
                 shortlist.add(can);
             }
         }
         for (Target can: shortlist){
-            if (can.getFieldPosition().getY() < smallestY)
+            if (can.getFieldPosition().y < smallestY)
             {
-                smallestY = can.getFieldPosition().getY();
+                smallestY = can.getFieldPosition().y;
                 returnableCan = can; //this is the smallest one so far
             }
         }
         return returnableCan; //could be null
     }
 
-    public Target GetNearest(List<Target> targets, Vector2d location){
+    public Target GetNearest(List<Target> targets, Vector2 location){
         Target closest = null;
         double smallest = Double.MAX_VALUE;
         for (Target target: targets){
@@ -285,10 +284,6 @@ public class CSBotPropDetectorProvider extends VisionProvider {
 
     public Target GetNearest(List<Target> targets, Target target){
         return GetNearest(targets, target.getFieldPosition());
-    }
-
-    public Target GetNearest(List<Target> targets, Pose2d pose){
-        return GetNearest(targets, new Vector2d(pose.getX(), pose.getY()));
     }
 }
 

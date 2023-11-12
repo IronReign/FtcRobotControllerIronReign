@@ -1,12 +1,10 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.util;
 
-import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.ELBOW_TO_WRIST;
-import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.EPSILON;
-import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.JOYSTICK_DEADZONE;
-import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.SHOULDER_TO_ELBOW;
-import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.TRIGGER_DEADZONE;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.EPSILON;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.JOYSTICK_DEADZONE;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.TRIGGER_DEADZONE;
 
-import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
 
@@ -113,7 +111,7 @@ public class Utils {
     }
 
     public static boolean notJoystickDeadZone(double value) {
-        return value < -Constants.JOYSTICK_DEADZONE || value > JOYSTICK_DEADZONE;
+        return value < -JOYSTICK_DEADZONE || value > JOYSTICK_DEADZONE;
     }
 
     public static boolean joysticksActive(Gamepad gamepad) {
@@ -132,33 +130,5 @@ public class Utils {
 
     public static double map(double x, double imin, double imax, double omin, double omax) {
         return omin + (omax - omin) * ((x - imin) / (imax - imin));
-    }
-
-    public static double[] craneIK(double dx, double dy) {
-        double theta2 = -Math.acos((Math.pow(dx, 2) + Math.pow(dy, 2) - Math.pow(SHOULDER_TO_ELBOW, 2) - Math.pow(ELBOW_TO_WRIST, 2)) / (2 * SHOULDER_TO_ELBOW * ELBOW_TO_WRIST));
-        double theta1 = Math.atan2(dy, dx) - Math.atan2(ELBOW_TO_WRIST * Math.sin(theta2), SHOULDER_TO_ELBOW + ELBOW_TO_WRIST * Math.cos(theta2));
-
-        if(Double.isNaN(theta1) || Double.isNaN(theta2))
-            return null;
-
-        double shoulderAngle = wrapAngle(90 - Math.toDegrees(theta1));
-        double elbowAngle = 180 - wrapAngle(Math.toDegrees(-theta2));
-        double wristAngle = 90 - (wrapAngle(Math.toDegrees(-theta2)) - wrapAngle(Math.toDegrees(theta1)));
-
-        return new double[] {shoulderAngle, elbowAngle, wristAngle, wrapAngle(wristAngle + 90)};
-    }
-
-    public static double[] craneIK(double dx, double dy, double offset) {
-        double theta2 = -Math.acos((Math.pow(dx, 2) + Math.pow(dy, 2) - Math.pow(SHOULDER_TO_ELBOW, 2) - Math.pow(ELBOW_TO_WRIST, 2)) / (2 * SHOULDER_TO_ELBOW * ELBOW_TO_WRIST));
-        double theta1 = offset + Math.atan2(dy, dx) - Math.atan2(ELBOW_TO_WRIST * Math.sin(theta2), SHOULDER_TO_ELBOW + ELBOW_TO_WRIST * Math.cos(theta2));
-
-        if(Double.isNaN(theta1) || Double.isNaN(theta2))
-            return null;
-
-        double shoulderAngle = wrapAngle(90 - Math.toDegrees(theta1));
-        double elbowAngle = 180 - wrapAngle(Math.toDegrees(-theta2));
-        double wristAngle = 90 - (wrapAngle(Math.toDegrees(-theta2)) - wrapAngle(Math.toDegrees(theta1)));
-
-        return new double[] {shoulderAngle, elbowAngle, wristAngle, wrapAngle(wristAngle + 90)};
     }
 }

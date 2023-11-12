@@ -258,8 +258,8 @@ public class R2V2 extends OpMode {
             telemetry.addData("Number of Targets", ((R2V2ConeDetectorProvider) visionProvider).getFrameDetections().size());
         }
         if(currentTarget != null){
-            telemetry.addData("Centroid:\t", currentTarget.getCentroid().getX());
-            telemetry.addData("Centroid:\t", currentTarget.getCentroid().getY());
+            telemetry.addData("Centroid:\t", currentTarget.getCentroid().x);
+            telemetry.addData("Centroid:\t", currentTarget.getCentroid().y);
         }
 
         Map<String, Object> visionTelemetryMap = visionProvider.getTelemetry(true);

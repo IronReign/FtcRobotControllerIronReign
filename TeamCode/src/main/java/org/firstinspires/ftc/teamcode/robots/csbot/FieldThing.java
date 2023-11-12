@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
-import com.acmerobotics.roadrunner.geometry.Pose2d;
-
 import org.firstinspires.ftc.teamcode.util.Vector2;
 
 public class FieldThing {
@@ -56,10 +54,6 @@ public class FieldThing {
     public int getHeight(){ return height; }
 
     public String getName(){ return name; }
-
-    public Pose2d getPosition(){
-        return new Pose2d(pos.x,pos.y);
-    }
 
     public Vector2 getPositionVec(){
         return pos;

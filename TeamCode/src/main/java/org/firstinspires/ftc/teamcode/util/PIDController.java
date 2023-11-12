@@ -107,20 +107,6 @@ public class PIDController {
         m_D = coefficients.d;
         m_prevTime=System.nanoTime();
     }
-    public PIDController(com.acmerobotics.roadrunner.control.PIDCoefficients coefficients) {
-        m_P = coefficients.kP;
-        m_I = coefficients.kI;
-        m_D = coefficients.kD;
-        m_prevTime=System.nanoTime();
-    }
-
-    public PIDController(com.acmerobotics.roadrunner.control.PIDCoefficients coefficients, Function<Double, Double> kF) {
-        m_P = coefficients.kP;
-        m_I = coefficients.kI;
-        m_D = coefficients.kD;
-        m_F = kF;
-        m_prevTime=System.nanoTime();
-    }
 
 
     /**
@@ -234,19 +220,6 @@ public class PIDController {
         m_P = pidCoefficients.p;
         m_I = pidCoefficients.i;
         m_D = pidCoefficients.d;
-    }
-
-   public void setPID(PIDCoefficients pidCoefficients) {
-        m_P = pidCoefficients.kP;
-        m_I = pidCoefficients.kI;
-        m_D = pidCoefficients.kD;
-    }
-
-    public void setPID(com.acmerobotics.roadrunner.control.PIDCoefficients pidCoefficients, Function<Double, Double> kF) {
-        m_P = pidCoefficients.kP;
-        m_I = pidCoefficients.kI;
-        m_D = pidCoefficients.kD;
-        m_F = kF;
     }
 
     /**

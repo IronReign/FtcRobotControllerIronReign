@@ -1,15 +1,14 @@
 package org.firstinspires.ftc.teamcode.robots.r2v2.util;
 
-import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.ELBOW_TO_WRIST;
-import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.EPSILON;
-import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.JOYSTICK_DEADZONE;
-import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.SHOULDER_TO_ELBOW;
-import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.TRIGGER_DEADZONE;
+
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.EPSILON;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.JOYSTICK_DEADZONE;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.TRIGGER_DEADZONE;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.robots.taubot.util.Constants;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.statemachine.Stage;
 import org.firstinspires.ftc.teamcode.statemachine.StateMachine;
 
@@ -106,7 +105,7 @@ public class Utils {
     }
 
     public static boolean notJoystickDeadZone(double value) {
-        return value < -Constants.JOYSTICK_DEADZONE || value > JOYSTICK_DEADZONE;
+        return value < -JOYSTICK_DEADZONE || value > JOYSTICK_DEADZONE;
     }
 
     public static boolean joysticksActive(Gamepad gamepad) {

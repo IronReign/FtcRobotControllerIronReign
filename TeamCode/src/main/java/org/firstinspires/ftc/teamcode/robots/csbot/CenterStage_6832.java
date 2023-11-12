@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
-import static org.firstinspires.ftc.teamcode.robots.taubot.util.Constants.LOW_BATTERY_VOLTAGE;
-
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -23,6 +21,7 @@ import java.util.Map;
 @Config(value = "AA_CS_6832")
 public class CenterStage_6832 extends OpMode {
 
+    private static final double LOW_BATTERY_VOLTAGE = 12;
     private ElapsedTime runtime = new ElapsedTime();
 
     //COMPONENTS
@@ -127,7 +126,7 @@ public class CenterStage_6832 extends OpMode {
         robot = new Robot(hardwareMap, false);
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
-        auton.build();
+        //auton.build();
 
         //DEFAULT AUTONOMOUS SETUP
         alliance = Constants.Alliance.BLUE;

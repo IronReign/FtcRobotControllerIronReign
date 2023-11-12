@@ -10,7 +10,6 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.vision
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.juiceDriveTrain;
 
-import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
@@ -68,23 +67,12 @@ public class DriverControls {
         if (stickyGamepad1.b) {
             robot.intake.switchBeaterBarDirection();
         }
-
+        if(gamepad1.dpad_right)
+            robot.driveTrain.line();
         if (!juiceDriveTrain)
-            robot.driveTrain.setWeightedDrivePower(
-                    new Pose2d(
-                            -gamepad1.left_stick_y * .75,
-                            -gamepad1.left_stick_x * .75,
-                            -gamepad1.right_stick_x * .75
-                    )
-            );
+           robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x);
         else
-            robot.driveTrain.setWeightedDrivePower(
-                    new Pose2d(
-                            -gamepad1.left_stick_y * .75,
-                            -gamepad1.left_stick_x * .75,
-                            -gamepad1.right_stick_x * .75
-                    )
-            );
+            robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x);
 
         if (stickyGamepad1.right_bumper)
             robot.outtake.moveSlide(50);

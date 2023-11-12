@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.util;
 
-import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.Pose2d;
 
 import java.io.Serializable;
 
@@ -18,22 +18,6 @@ public class TauPosition implements Serializable {
         chassisHeading = 0;
         turretHeading=0;
         timestamp = System.currentTimeMillis();
-    }
-
-    public TauPosition(Pose2d chassisPose, double turretHeading, int turretTicks) {
-        this.chassisX = chassisPose.getX();
-        this.chassisY = chassisPose.getY();
-        this.chassisHeading = chassisPose.getHeading();
-        this.turretHeading= turretHeading;
-        this.turretTicks = turretTicks;
-        timestamp = System.currentTimeMillis();
-    }
-
-
-    public void setPose(Pose2d pose){
-        this.chassisX = pose.getX();
-        this.chassisY = pose.getY();
-        this.chassisHeading = pose.getHeading();
     }
     public void setTurretHeading(double heading) {
         turretHeading = heading;

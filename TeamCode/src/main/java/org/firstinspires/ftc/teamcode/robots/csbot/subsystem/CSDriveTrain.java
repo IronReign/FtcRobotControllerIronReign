@@ -1,26 +1,19 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
-import androidx.annotation.NonNull;
-
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.PIDCoefficients;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
-import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.LynxModuleUtil;
 
@@ -33,14 +26,6 @@ import java.util.Map;
 @Config(value = "CS_ROADRUNNER")
 public class CSDriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
-    public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(0, 0, 0);
-    public static PIDCoefficients HEADING_PID = new PIDCoefficients(0, 0, 0);
-
-    public static double LATERAL_MULTIPLIER = 1;
-
-    public static double VX_WEIGHT = 1;
-    public static double VY_WEIGHT = 1;
-    public static double OMEGA_WEIGHT = 1;
 
     private final DcMotorEx leftFront;
     private final DcMotorEx leftRear;
@@ -48,10 +33,6 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
     private final DcMotorEx rightFront;
     private final List<DcMotorEx> motors;
     private final VoltageSensor batteryVoltageSensor;
-
-    private final List<Integer> lastEncPositions = new ArrayList<>();
-    private final List<Integer> lastEncVels = new ArrayList<>();
-    public Pose2d poseEstimate;
 
     public CSDriveTrain(HardwareMap hardwareMap, Robot robot, boolean simulated) {
         super(hardwareMap, new Pose2d(new Vector2d(0, 0), new Rotation2d(0, 0)));
@@ -83,14 +64,7 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
         setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // TODO: reverse any motors using DcMotor.setDirection()
-        leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
-        leftRear.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        List<Integer> lastTrackingEncPositions = new ArrayList<>();
-        List<Integer> lastTrackingEncVels = new ArrayList<>();
-
-        // TODO: if desired, use setLocalizer() to change the localization method
-        // setLocalizer(new StandardTrackingWheelLocalizer(hardwareMap, lastTrackingEncPositions, lastTrackingEncVels));
     }
     //end constructor
 
@@ -106,12 +80,28 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
             motor.setZeroPowerBehavior(zeroPowerBehavior);
         }
     }
-
     @Override
     public void update(Canvas fieldOverlay) {
 
     }
+    public void drive(double x, double y, double theta) {
+        setDrivePowers(new PoseVelocity2d(
+                new Vector2d(
+                        -y,
+                        -x
+                ),
+                theta
+        ));
 
+        updatePoseEstimate();
+    }
+
+    public void line() {
+        Actions.runBlocking(
+                actionBuilder(new Pose2d(0, 0, 0))
+                        .lineToXConstantHeading(16)
+                        .build());
+    }
     @Override
     public void stop() {
         for (DcMotor k : motors) {
