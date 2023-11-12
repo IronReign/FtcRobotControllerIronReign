@@ -171,9 +171,6 @@ public class Robot implements Subsystem {
         }
 
         if (debug) {
-            telemetryMap.put("DriveTrain Pose X", driveTrain.poseEstimate.getX());
-            telemetryMap.put("DriveTrain Pose Y", driveTrain.poseEstimate.getY());
-            telemetryMap.put("DriveTrain Pose Heading", driveTrain.poseEstimate.getHeading());
             telemetryMap.put("driveTrain juiced?", juiceDriveTrain);
         }
 

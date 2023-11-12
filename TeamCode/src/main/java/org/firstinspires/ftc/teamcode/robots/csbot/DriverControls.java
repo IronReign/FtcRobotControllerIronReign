@@ -35,6 +35,9 @@ public class DriverControls {
     }
 
     public void init_loop() {
+        if(stickyGamepad1.left_stick_button) {
+            robot.createVisionProvider();
+        }
         if(!gamepad1.atRest()) {
             telemetry.addData("gamepad1", "not zeroed");
         }

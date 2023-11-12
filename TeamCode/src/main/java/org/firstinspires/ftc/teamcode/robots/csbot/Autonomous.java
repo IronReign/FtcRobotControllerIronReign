@@ -5,11 +5,9 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
@@ -37,7 +35,7 @@ public class Autonomous implements TelemetryProvider {
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
-        telemetryMap.put("flag 1", !robot.driveTrain.trajectorySequenceRunner.isBusy());
+//        telemetryMap.put("flag 1", !robot.driveTrain.trajectorySequenceRunner.isBusy());
         telemetryMap.put("flag 2", robot.visionProviderFinalized);
         telemetryMap.put("auton state", autonState.name() );
         return telemetryMap;
@@ -77,7 +75,8 @@ public class Autonomous implements TelemetryProvider {
                 }
 
     }
-
+//    TODO redo autonomous using the new mechanum drive code/drive train
+/*
     private StateMachine trajectorySequenceToStateMachine(TrajectorySequence trajectorySequence) {
         return Utils.getStateMachine(new Stage())
                 .addSingleState(() -> {
@@ -292,5 +291,5 @@ public class Autonomous implements TelemetryProvider {
                         .build();
         turn = trajectorySequenceToStateMachine(turnSequence);
     }
-
+*/
 }

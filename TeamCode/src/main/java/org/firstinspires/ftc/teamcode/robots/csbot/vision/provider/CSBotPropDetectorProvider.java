@@ -50,8 +50,8 @@ public class CSBotPropDetectorProvider extends VisionProvider {
 
     // Constants
     private static final String TELEMETRY_NAME = "Prop Detector Vision Provider";
-    public static int WEBCAM_WIDTH = 640;
-    public static int WEBCAM_HEIGHT = 480;
+    public static int WEBCAM_WIDTH = 1280;
+    public static int WEBCAM_HEIGHT = 720;
     public static double distanceThreshold = 6; //this is in inches - detections closer than this threshold are considered duplicates
 
     @Override
@@ -158,7 +158,7 @@ public class CSBotPropDetectorProvider extends VisionProvider {
         //get fresh frame detections
         frameDetections.clear();
         try {
-            frameDetections = pipeline.getDetectedCans();
+            frameDetections = pipeline.getDetectedBlobs();
             if (frameDetections.size()>0) timestamp = frameDetections.get(0).getTimeStamp();
         }
         catch (ConcurrentModificationException ex) {

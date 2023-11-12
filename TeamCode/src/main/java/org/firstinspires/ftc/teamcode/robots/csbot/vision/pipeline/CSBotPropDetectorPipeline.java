@@ -53,16 +53,16 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
 
     // Constants
     public static int VIEW_OPEN_CV_PIPELINE_STAGE = 6;
-    public static int TOP_LEFT_X = 0, TOP_LEFT_Y = 0;
-    public static int BOTTOM_RIGHT_X = 320, BOTTOM_RIGHT_Y = 180;
+    public static int TOP_LEFT_X = 0, TOP_LEFT_Y = 300;
+    public static int BOTTOM_RIGHT_X = 1280, BOTTOM_RIGHT_Y = 720;
     public static double NORMALIZE_ALPHA = 51.0, NORMALIZE_BETA = 261.0;
     public static double BLUR_RADIUS = 7;
     public static double RED_ALLIANCE_HUE_MIN = 105, RED_ALLIANCE_HUE_MAX = 150;
     public static double RED_ALLIANCE_SATURATION_MIN = 80, RED_ALLIANCE_SATURATION_MAX = 255;
     public static double RED_ALLIANCE_VALUE_MIN = 120, RED_ALLIANCE_VALUE_MAX = 255;
-    public static double BLUE_ALLIANCE_HUE_MIN = 20, BLUE_ALLIANCE_HUE_MAX = 50;
-    public static double BLUE_ALLIANCE_SATURATION_MIN = 100, BLUE_ALLIANCE_SATURATION_MAX = 180;
-    public static double BLUE_ALLIANCE_VALUE_MIN = 100, BLUE_ALLIANCE_VALUE_MAX = 200;
+    public static double BLUE_ALLIANCE_HUE_MIN = 0, BLUE_ALLIANCE_HUE_MAX = 50;
+    public static double BLUE_ALLIANCE_SATURATION_MIN = 150, BLUE_ALLIANCE_SATURATION_MAX = 250;
+    public static double BLUE_ALLIANCE_VALUE_MIN = 170, BLUE_ALLIANCE_VALUE_MAX = 255;
     public static double MIN_CONTOUR_AREA = 50;
     public static String BLUR = "Box Blur";
 
@@ -84,7 +84,7 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
         lastPosition = Position.HOLD;
     }
 
-    volatile List<Target> detectedCans = new ArrayList<>(); //persist the most recent targets for access outside this thread
+    volatile List<Target> detectedBlobs = new ArrayList<>(); //persist the most recent targets for access outside this thread
     List<Target> frameCans = new ArrayList<>(); //building the targets inside processFrame
 
     @Override
@@ -189,7 +189,7 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
             }
         }
         //we are done building the local list of targets - copy to the list that the robot can access
-        detectedCans = new ArrayList<>(frameCans);
+        detectedBlobs = new ArrayList<>(frameCans);
 
         if (largestContourIndex != -1) {
             Imgproc.drawContours(finalContourOutputMat, findContoursOutput, largestContourIndex, new Scalar(255, 255, 255), 2);
@@ -252,8 +252,8 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
         return new int[]{largestX, largestY};
     }
 
-    public synchronized List<Target> getDetectedCans() {
-        return detectedCans;
+    public synchronized List<Target> getDetectedBlobs() {
+        return detectedBlobs;
     }
 
     public Bitmap getDashboardImage() {

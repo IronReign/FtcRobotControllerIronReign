@@ -107,7 +107,6 @@ public class PIDController {
         m_D = coefficients.d;
         m_prevTime=System.nanoTime();
     }
-
     public PIDController(com.acmerobotics.roadrunner.control.PIDCoefficients coefficients) {
         m_P = coefficients.kP;
         m_I = coefficients.kI;
@@ -237,7 +236,7 @@ public class PIDController {
         m_D = pidCoefficients.d;
     }
 
-    public void setPID(com.acmerobotics.roadrunner.control.PIDCoefficients pidCoefficients) {
+   public void setPID(PIDCoefficients pidCoefficients) {
         m_P = pidCoefficients.kP;
         m_I = pidCoefficients.kI;
         m_D = pidCoefficients.kD;
