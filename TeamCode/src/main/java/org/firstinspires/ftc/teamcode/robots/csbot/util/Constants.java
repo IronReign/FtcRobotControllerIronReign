@@ -5,7 +5,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 
-@Config(value = "PPConstants")
+@Config(value = "CSConstants")
 public class Constants {
 
 
@@ -56,10 +56,10 @@ public class Constants {
 
     public enum Position {
         ORIGIN_DEFAULT (new Pose2d(0, 0, 0)), //this if used will reset the origin to FTC Dashboard's default
-        START_LEFT_RED(P2D(1.5, -2.5, 90)),
-        START_RIGHT_RED(P2D(3.5, -2.5, 90)),
-        START_RIGHT_BLUE(P2D(1.5, 2.5, -90)),
-        START_LEFT_BLUE(P2D(3.5, 2.5, -90));
+        START_LEFT_RED(P2D(1.5, -2.5, -90)),
+        START_RIGHT_RED(P2D(3.5, -2.5, -90)),
+        START_RIGHT_BLUE(P2D(1.5, 2.5, 90)),
+        START_LEFT_BLUE(P2D(3.5, 2.5, 90));
         private final Pose2d pose;
 
         public boolean getMod() {

@@ -165,6 +165,7 @@ public class CenterStage_6832 extends OpMode {
 
     @Override
     public void start() {
+        robot.driveTrain.setPose(startingPosition);
         startTime = System.currentTimeMillis();
         lastLoopClockTime = System.nanoTime();
 
@@ -248,6 +249,8 @@ public class CenterStage_6832 extends OpMode {
 
     private void update() {
         // handling dashboard changes
+
+
         forwardSmoother.setSmoothingFactor(FORWARD_SMOOTHING_FACTOR);
         rotateSmoother.setSmoothingFactor(ROTATE_SMOOTHING_FACTOR);
 
@@ -255,14 +258,6 @@ public class CenterStage_6832 extends OpMode {
 
         //TODO - implement field target & current position to telemetry
 
-//        telemetry.addLine("target X" + target.getX());
-//        telemetry.addLine("target Y" + target.getY());
-//
-//        telemetry.addLine("current_coordinate X" + current.getX());
-//        telemetry.addLine("current_coordinate Y" + current.getY());
-//
-//        telemetry.addLine("current_Pose X" + current2.getX());
-//        telemetry.addLine("current_Pose Y" + current2.getY());
 
         TelemetryPacket packet = new TelemetryPacket();
 

@@ -1,10 +1,13 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.util;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.EPSILON;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.JOYSTICK_DEADZONE;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.TRIGGER_DEADZONE;
 
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
 
@@ -82,11 +85,21 @@ public class Utils {
     }
 
     /**
-     * Returns a Pose2D built with inches and radians given field units and degree-based heading
+     * Returns a PoseVelocity2d built with inches and radians given field units and degree-based heading
      */
-    public static Pose2d P2D(double x, double y, double deg) {
-        return new Pose2d(x * Constants.FIELD_INCHES_PER_GRID, y * Constants.FIELD_INCHES_PER_GRID, Math.toRadians(deg));
+    public static PoseVelocity2d PV2D(double x, double y, double deg) {
+        return new PoseVelocity2d(new Vector2d(x * Constants.FIELD_INCHES_PER_GRID, y * Constants.FIELD_INCHES_PER_GRID), Math.toRadians(deg));
     }
+
+    /**
+     * Returns a Pose2d built with inches and radians given field units and degree-based heading
+     */
+    public static Pose2d P2D (double x, double y, double deg) {
+        return new Pose2d(x * FIELD_INCHES_PER_GRID, y * FIELD_INCHES_PER_GRID, Math.toRadians(deg));
+    }
+
+
+
 
 
     public static double closestAngle(double a, double b)
