@@ -79,8 +79,6 @@ public class Robot implements Subsystem {
         // initializing subsystems
         driveTrain = new CSDriveTrain(hardwareMap, this, simulated);
         //TODO - THIS IS FOR MANUAL ONLY
-        driveTrain.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        driveTrain.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intake = new Intake(hardwareMap, this);
         outtake = new Outtake(hardwareMap, this);
 
@@ -106,6 +104,8 @@ public class Robot implements Subsystem {
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         articulate(articulation);
+        //TODO - DELETE
+        driveTrain.updatePoseEstimate();
 
         //update subsystems
         for (int i = 0; i < subsystems.length; i++) {
@@ -164,6 +164,8 @@ public class Robot implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("Articulation", articulation);
+        //TODO - DELETE
+        telemetryMap.put("drivetrain thing ", driveTrain.pose.position.x);
 
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();

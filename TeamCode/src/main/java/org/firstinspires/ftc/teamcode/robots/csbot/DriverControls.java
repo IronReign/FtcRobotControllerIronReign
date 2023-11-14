@@ -18,8 +18,10 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 
 public class DriverControls {
+    public static double PRECISION_TURN_MULTIPLIER = .8;
+    public static double PRECISION_DRIVE_MULTIPLIER = .8;
     //CONSTANTS
-    public static double TURRET_DEADZONE = 0.03;
+    public static double DEADZONE = 0.1;
 
     public boolean visionProviderFinalized = robot.visionProviderFinalized;
 
@@ -67,12 +69,21 @@ public class DriverControls {
         if (stickyGamepad1.b) {
             robot.intake.switchBeaterBarDirection();
         }
-        if(gamepad1.dpad_right)
+        if(stickyGamepad1.dpad_right)
             robot.driveTrain.line();
-        if (!juiceDriveTrain)
-           robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x);
-        else
-            robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x);
+
+
+        if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
+                Math.abs( gamepad1.left_stick_y) > DEADZONE ||
+                    Math.abs( gamepad1.right_stick_x ) > DEADZONE) {
+            if (!juiceDriveTrain)
+                robot.driveTrain.drive(gamepad1.left_stick_x * PRECISION_DRIVE_MULTIPLIER, gamepad1.left_stick_y * PRECISION_DRIVE_MULTIPLIER, -gamepad1.right_stick_x * PRECISION_TURN_MULTIPLIER);
+            else
+                robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+        }
+        else robot.driveTrain.drive(0, 0, 0);
+
+
 
         if (stickyGamepad1.right_bumper)
             robot.outtake.moveSlide(50);
