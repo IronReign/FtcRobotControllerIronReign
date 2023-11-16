@@ -20,6 +20,8 @@ import java.util.Map;
 @Config(value = "CS_INTAKE")
 public class Intake implements Subsystem {
     public static  int ANGLE_CONTROLLER_MAX = 1600;
+    private static int INTKE_DRIVE_POSITION_DOWN = 1000;
+    private static int INTKE_DRIVE_POSITION_UP = 1400;
     public static int ANGLE_CONTROLLER_MIN = 850;
     //CONSTANTS
     HardwareMap hardwareMap;
@@ -137,6 +139,13 @@ public class Intake implements Subsystem {
         Utils.servoNormalize(angleControllerTicks));
 //        beaterBarTargetAngle += speed * BEATER_BAR_ADJUST_SPEED;
         return angleControllerTicks;
+    }
+    public void BeaterBarUp(boolean beaterBarUp)
+    {
+        if(beaterBarUp)
+            angleController.setPosition(Utils.servoNormalize(INTKE_DRIVE_POSITION_UP));
+        else
+            angleController.setPosition(Utils.servoNormalize(INTKE_DRIVE_POSITION_DOWN));
     }
 
     public void toggleBeaterBar() {

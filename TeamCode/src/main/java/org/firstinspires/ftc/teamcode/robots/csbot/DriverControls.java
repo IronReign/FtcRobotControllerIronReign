@@ -76,6 +76,7 @@ public class DriverControls {
         if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
                 Math.abs( gamepad1.left_stick_y) > DEADZONE ||
                     Math.abs( gamepad1.right_stick_x ) > DEADZONE) {
+            robot.intake.BeaterBarUp(false);
             if (!juiceDriveTrain)
                 robot.driveTrain.drive(gamepad1.left_stick_x * PRECISION_DRIVE_MULTIPLIER, gamepad1.left_stick_y * PRECISION_DRIVE_MULTIPLIER, -gamepad1.right_stick_x * PRECISION_TURN_MULTIPLIER);
             else
