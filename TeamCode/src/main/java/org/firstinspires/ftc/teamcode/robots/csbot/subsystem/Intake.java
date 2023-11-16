@@ -7,7 +7,6 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.sun.tools.javac.code.Attribute;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Joint;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
@@ -19,9 +18,7 @@ import java.util.Map;
 
 @Config(value = "CS_INTAKE")
 public class Intake implements Subsystem {
-    public static  int ANGLE_CONTROLLER_MAX = 1600;
-    private static int INTKE_DRIVE_POSITION_DOWN = 1000;
-    private static int INTKE_DRIVE_POSITION_UP = 1400;
+    public static  int ANGLE_CONTROLLER_MAX = 1800;
     public static int ANGLE_CONTROLLER_MIN = 850;
     //CONSTANTS
     HardwareMap hardwareMap;
@@ -30,12 +27,13 @@ public class Intake implements Subsystem {
     Servo angleController;
     Joint beaterBarAngleController;
     DcMotorEx beaterBar;
+    public static boolean precisionBeaterBar = false;
     public static boolean manualBeaterBarEject = false;
     public static boolean manualBeaterBarOn = false;
     public static double BEATER_BAR_ADJUST_SPEED = 2;
     public static double BEATER_BAR_INTAKE_VELOCITY = 1500;
     public static double BEATER_BAR_EJECT_VELOCITY = -1500;
-    public static double BEATER_BAR_ANGLE_CONTROLLER_HOME;
+    public static int BEATER_BAR_ANGLE_CONTROLLER_HOME = 1350;
     public static double BEATER_BAR_ANGLE_CONTROLLER_TICKS_PER_DEGREE;
     public static double BEATER_BAR_ANGLE_CONTROLLER_MIN_DEGREES;
     public static double BEATER_BAR_ANGLE_CONTROLLER_MAX_DEGREES;
@@ -126,8 +124,12 @@ public class Intake implements Subsystem {
         return articulation;
     }
 
+    public void togglePrecisionBeaterBar() {
+        precisionBeaterBar = !precisionBeaterBar;
+    }
+
     public double adjustBeaterBarAngle(double speed) {
-        angleControllerTicks += speed * 100;
+        angleControllerTicks += speed * (precisionBeaterBar ? 10 : 100);
         if(angleControllerTicks < ANGLE_CONTROLLER_MIN) {
             angleControllerTicks = ANGLE_CONTROLLER_MIN;
         }
@@ -143,9 +145,9 @@ public class Intake implements Subsystem {
     public void BeaterBarUp(boolean beaterBarUp)
     {
         if(beaterBarUp)
-            angleController.setPosition(Utils.servoNormalize(INTKE_DRIVE_POSITION_UP));
+            angleControllerTicks = ANGLE_CONTROLLER_MAX;
         else
-            angleController.setPosition(Utils.servoNormalize(INTKE_DRIVE_POSITION_DOWN));
+           angleControllerTicks = BEATER_BAR_ANGLE_CONTROLLER_HOME;
     }
 
     public void toggleBeaterBar() {
@@ -166,7 +168,7 @@ public class Intake implements Subsystem {
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("manual beater bar on?", manualBeaterBarOn);
         telemetryMap.put("beater bar amps", beaterBar.getPower());
-        telemetryMap.put("anglecontroller", Utils.servoDenormalize(angleController.getPosition()));
+        telemetryMap.put("angle controller position", Utils.servoDenormalize(angleController.getPosition()));
 //        telemetryMap.put("beaterBarAngle", beaterBarAngleController.getCurrentAngle());
         return telemetryMap;
     }

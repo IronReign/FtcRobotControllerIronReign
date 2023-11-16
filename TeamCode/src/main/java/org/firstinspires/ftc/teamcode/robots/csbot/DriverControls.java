@@ -36,13 +36,13 @@ public class DriverControls {
     }
 
     public void init_loop() {
-        if(stickyGamepad1.left_stick_button) {
+        if (stickyGamepad1.left_stick_button) {
             robot.createVisionProvider();
         }
-        if(!gamepad1.atRest()) {
+        if (!gamepad1.atRest()) {
             telemetry.addData("gamepad1", "not zeroed");
         }
-        if(!gamepad2.atRest()) {
+        if (!gamepad2.atRest()) {
             telemetry.addData("gamepad2", "not zeroed");
         }
         updateStickyGamepads();
@@ -95,9 +95,16 @@ public class DriverControls {
             robot.outtake.raiseFlipper(10);
         if (stickyGamepad1.x)
             robot.outtake.lowerFlipper(10);
+        if(stickyGamepad1.a)
+            robot.intake.BeaterBarUp(true);
+        if(stickyGamepad1.b)
+            robot.intake.BeaterBarUp(false);
 
         if (stickyGamepad1.dpad_down) {
             juiceDriveTrain = !juiceDriveTrain;
+        }
+        if(gamepad1.dpad_up) {
+            robot.intake.togglePrecisionBeaterBar();
         }
 //        if(stickyGamepad1.dpad_right){
 //            robot.outtake.clearFlipper();
