@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Joint;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 
 import java.util.LinkedHashMap;
@@ -32,7 +33,7 @@ public class Intake implements Subsystem {
     public static boolean manualBeaterBarOn = false;
     public static double BEATER_BAR_ADJUST_SPEED = 2;
     public static double BEATER_BAR_INTAKE_VELOCITY = 1500;
-    public static double BEATER_BAR_EJECT_VELOCITY = -1500;
+    public static double BEATER_BAR_EJECT_VELOCITY = -700;
     public static int BEATER_BAR_ANGLE_CONTROLLER_HOME = 1350;
     public static double BEATER_BAR_ANGLE_CONTROLLER_TICKS_PER_DEGREE;
     public static double BEATER_BAR_ANGLE_CONTROLLER_MIN_DEGREES;
@@ -41,11 +42,11 @@ public class Intake implements Subsystem {
     public static double BEATER_BAR_ANGLE_CONTROLLER_SPEED;
     public static int angleControllerTicks = 1000;
     public static double BEATER_BAR_FOLD_ANGLE;
-    public static double BEATER_BAR_GROUND_ANGLE;
+    public static double BEATER_BAR_GROUND_ANGLE = 1045;
 
 
     public enum Articulation {
-        GROUND_INTAKE,
+        WING_INTAKE_POSTION,
         STACK_INTAKE,
         EJECT,
         OFF,
@@ -98,9 +99,10 @@ public class Intake implements Subsystem {
             case OFF:
                 beaterBar.setPower(0);
                 break;
-            case GROUND_INTAKE:
-                beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY);
-                beaterBarTargetAngle = BEATER_BAR_GROUND_ANGLE;
+            case WING_INTAKE_POSTION:
+                if(wingIntakePostion()) {
+                    articulation = Articulation.MANUAL;
+                }
                 break;
             case EJECT:
                 beaterBar.setVelocity(BEATER_BAR_EJECT_VELOCITY);
@@ -122,6 +124,13 @@ public class Intake implements Subsystem {
     public Articulation articulate(Articulation target) {
         articulation = target;
         return articulation;
+    }
+
+
+    public boolean wingIntakePostion (){
+        angleController.setPosition(1011);
+        beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY);
+        return true;
     }
 
     public void togglePrecisionBeaterBar() {

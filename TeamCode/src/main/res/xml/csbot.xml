@@ -6,14 +6,15 @@
             <RevRobotics20HDHexMotor name="rightRear" port="1" />
             <RevRobotics20HDHexMotor name="leftRear" port="2" />
             <RevRobotics20HDHexMotor name="leftFront" port="3" />
-            <Servo name="pixelFlipper" port="0" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
         </LynxModule>
         <LynxModule name="Expansion Hub 1" port="1">
             <RevRobotics40HDHexMotor name="slide" port="2" />
-            <RevRobotics40HDHexMotor name="beaterBar" port="3" />
+            <RevRobotics40HDHexMotor name="beaterBar" port="1" />
             <Servo name="beaterBarAngleController" port="0" />
-            <Servo name="diverter" port="2" />
+            <Servo name="pixelFlipper" port="5" />
+
+            <Servo name="diverter" port="1" />
 
         </LynxModule>
     </LynxUsbDevice>

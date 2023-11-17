@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
@@ -18,6 +19,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+
 
 @Config(value = "AA_CSRobot")
 public class Robot implements Subsystem {
@@ -53,6 +56,7 @@ public class Robot implements Subsystem {
         SCORE_PIXEL,
         INTAKE_PIXEL,
         FOLD,
+        WING_INTAKE,
         UNFOLD,
         HANG,
         LAUNCH_DRONE,
@@ -147,6 +151,11 @@ public class Robot implements Subsystem {
             case CALIBRATE:
                 //TODO - WRITE A CALIBRATION ROUTINE
                 break;
+            case WING_INTAKE:
+                if (wingIntake()) {
+                    articulation = Articulation.MANUAL;
+                }
+                break;
 
         }
         return articulation;
@@ -159,6 +168,31 @@ public class Robot implements Subsystem {
         }
     }
     //end stop
+
+
+
+    public static int wingIntakeIndex = 0;
+    public long wingIntakeTimer = 0;
+    public boolean wingIntake () {
+        switch (wingIntakeIndex) {
+            case 0:
+                wingIntakeTimer = futureTime(.5);
+                intake.articulate(Intake.Articulation.WING_INTAKE_POSTION);
+                if (intake.articulation == Intake.Articulation.MANUAL && wingIntakeTimer < System.nanoTime())
+                    wingIntakeIndex ++;
+                break;
+            case 1:
+                outtake.articulate(Outtake.Articulation.INTAKE_PIXEL);
+                if(outtake.articulation == Outtake.Articulation.MANUAL) {
+                    wingIntakeIndex ++;
+                }
+                break;
+            case 2:
+                return true;
+
+        }
+        return false;
+    }
 
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {

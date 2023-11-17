@@ -9,6 +9,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionProviderIndex;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.juiceDriveTrain;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.wingIntakeIndex;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 
@@ -76,7 +77,6 @@ public class DriverControls {
         if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
                 Math.abs( gamepad1.left_stick_y) > DEADZONE ||
                     Math.abs( gamepad1.right_stick_x ) > DEADZONE) {
-            robot.intake.BeaterBarUp(false);
             if (!juiceDriveTrain)
                 robot.driveTrain.drive(gamepad1.left_stick_x * PRECISION_DRIVE_MULTIPLIER, gamepad1.left_stick_y * PRECISION_DRIVE_MULTIPLIER, -gamepad1.right_stick_x * PRECISION_TURN_MULTIPLIER);
             else
@@ -86,18 +86,21 @@ public class DriverControls {
 
 
 
-        if (stickyGamepad1.right_bumper)
-            robot.outtake.moveSlide(50);
-        if (stickyGamepad1.left_bumper)
-            robot.outtake.moveSlide(-50);
+        if (gamepad1.right_bumper)
+            robot.outtake.moveSlide(5);
+        if (gamepad1.left_bumper)
+            robot.outtake.moveSlide(-5);
+        if(stickyGamepad1.guide) {
+            robot.articulate(Robot.Articulation.WING_INTAKE);
+        }
 
         if (stickyGamepad1.y)
-            robot.outtake.raiseFlipper(10);
+            robot.outtake.raiseFlipper(-50);
         if (stickyGamepad1.x)
-            robot.outtake.lowerFlipper(10);
-        if(stickyGamepad1.a)
+            robot.outtake.lowerFlipper(50);
+        if(stickyGamepad1.dpad_left)
             robot.intake.BeaterBarUp(true);
-        if(stickyGamepad1.b)
+        if(stickyGamepad1.dpad_up)
             robot.intake.BeaterBarUp(false);
 
         if (stickyGamepad1.dpad_down) {

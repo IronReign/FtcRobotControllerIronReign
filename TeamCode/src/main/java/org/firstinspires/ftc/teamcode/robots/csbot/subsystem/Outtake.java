@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -23,16 +24,22 @@ public class Outtake implements Subsystem {
 
 
     int slidePosition;
-    public static int slidePositionMax = 2000;
-    public static int slidePositionMin = -1000;
+    public static int slidePositionMax = 2127;
+    public static int slidePositionMin = 0;
 
     int slideSpeed = 20;
-    public static int FLIPPERTUCKPOSITION = 2105;
+    public static int FLIPPERINTAKEPOSITION = 2105;
     public static int FLIPPERCLEARANCEPOSITION = 1900;
     public static int FLIPPERSCOREPOSITION = 750;
     private boolean flipped = false;
 
+    public Articulation articulate(Articulation articulation) {
+        this.articulation = articulation;
+        return articulation;
+    }
+
     public enum Articulation {
+        INTAKE_PIXEL,
         MANUAL,
         SCORE_PIXEL,
         FOLD,
@@ -66,6 +73,26 @@ public class Outtake implements Subsystem {
         articulation = Articulation.MANUAL;
     }
 
+    public static int intakePositionIndex = 0;
+    public long intakePositionTimer = 0;
+    public boolean intakePosition () {
+        switch (intakePositionIndex) {
+            case 0:
+                intakePositionTimer = futureTime(.5);
+                slide.setTargetPosition(slidePositionMax);
+                if(System.nanoTime() > intakePositionTimer)
+                    intakePositionIndex ++;
+                break;
+            case 1:
+                pixelFlipper.setPosition(FLIPPERINTAKEPOSITION);
+                intakePositionIndex ++;
+                break;
+            case 2:
+                return true;
+        }
+        return false;
+    }
+
     public void moveSlide(int power) {
         slidePosition += power * slideSpeed;
         if (slidePosition < slidePositionMin) {
@@ -74,6 +101,7 @@ public class Outtake implements Subsystem {
         if (slidePosition > slidePositionMax) {
             slidePosition = slidePositionMax;
         }
+        slide.setTargetPosition(slidePosition);
     }
 
 
@@ -84,7 +112,7 @@ public class Outtake implements Subsystem {
 
     public void tuckFlipper() {
         this.flipperLocation = FlipperLocation.TUCK;
-        pixelFlipper.setPosition(Utils.servoNormalize(FLIPPERTUCKPOSITION));
+        pixelFlipper.setPosition(Utils.servoNormalize(FLIPPERINTAKEPOSITION));
     }
 
     public void scoreFlipper() {
@@ -94,7 +122,7 @@ public class Outtake implements Subsystem {
 
     public void flip() {
         if (flipped) {
-            pixelFlipper.setPosition(Utils.servoNormalize(FLIPPERTUCKPOSITION));
+            pixelFlipper.setPosition(Utils.servoNormalize(FLIPPERINTAKEPOSITION));
             flipped = false;
         } else {
             pixelFlipper.setPosition(Utils.servoNormalize(FLIPPERSCOREPOSITION));
@@ -117,7 +145,14 @@ public class Outtake implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
-        slide.setTargetPosition(slidePosition);
+        if(articulation == Articulation.MANUAL) {
+            slide.setTargetPosition(slidePosition);
+        }
+        if(articulation == Articulation.INTAKE_PIXEL) {
+            if(intakePosition()) {
+                articulation = Articulation.MANUAL;
+            }
+        }
     }
 
     @Override
