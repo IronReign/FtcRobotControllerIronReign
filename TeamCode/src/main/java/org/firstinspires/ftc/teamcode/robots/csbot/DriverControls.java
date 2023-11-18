@@ -40,6 +40,9 @@ public class DriverControls {
         if (stickyGamepad1.left_stick_button) {
             robot.createVisionProvider();
         }
+        if(stickyGamepad1.a) {
+            CenterStage_6832.initPosition = true;
+        }
         if (!gamepad1.atRest()) {
             telemetry.addData("gamepad1", "not zeroed");
         }
@@ -84,8 +87,6 @@ public class DriverControls {
         }
         else robot.driveTrain.drive(0, 0, 0);
 
-
-
         if (gamepad1.right_bumper)
             robot.outtake.moveSlide(5);
         if (gamepad1.left_bumper)
@@ -94,10 +95,10 @@ public class DriverControls {
             robot.articulate(Robot.Articulation.WING_INTAKE);
         }
 
-        if (stickyGamepad1.y)
-            robot.outtake.raiseFlipper(-50);
-        if (stickyGamepad1.x)
-            robot.outtake.lowerFlipper(50);
+        if (gamepad1.y)
+            robot.outtake.raiseFlipper(-5);
+        if (gamepad1.x)
+            robot.outtake.lowerFlipper(5);
         if(stickyGamepad1.dpad_left)
             robot.intake.BeaterBarUp(true);
         if(stickyGamepad1.dpad_up)

@@ -7,6 +7,7 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
@@ -17,6 +18,8 @@ import org.firstinspires.ftc.teamcode.statemachine.StateMachine;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+
 
 @Config (value = "AA_CS_Auton")
 public class Autonomous implements TelemetryProvider {
@@ -37,7 +40,7 @@ public class Autonomous implements TelemetryProvider {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
 //        telemetryMap.put("flag 1", !robot.driveTrain.trajectorySequenceRunner.isBusy());
         telemetryMap.put("flag 2", robot.visionProviderFinalized);
-        telemetryMap.put("auton state", autonState.name() );
+        telemetryMap.put("autonIndex", autonIndex);
         return telemetryMap;
     }
 
@@ -75,6 +78,49 @@ public class Autonomous implements TelemetryProvider {
                 }
 
     }
+
+
+    public void build() {
+        autonIndex = 0;
+        futureTimer = 0;
+    }
+
+    public static int autonIndex;
+    public static long futureTimer;
+
+    public void execute() {
+
+        switch (autonIndex) {
+            case 0:
+                futureTimer = futureTime(10);
+                robot.intake.ejectBeaterBar();
+                autonIndex++;
+                break;
+            case 1:
+                robot.driveTrain.line();
+                autonIndex++;
+            break;
+            case 2:
+                if(System.nanoTime() > futureTimer)
+                {
+                    robot.intake.beaterBarOff();
+                    autonIndex++;
+                }
+                break;
+            case 3:
+                robot.driveTrain.strafe();
+                autonIndex++;
+                break;
+            case 4:
+                break;
+
+        }
+
+
+    }
+
+
+
 //    TODO redo autonomous using the new mechanum drive code/drive train
 /*
     private StateMachine trajectorySequenceToStateMachine(TrajectorySequence trajectorySequence) {
@@ -95,6 +141,8 @@ public class Autonomous implements TelemetryProvider {
             );
         };
     }
+
+
 
     public void build() {
 

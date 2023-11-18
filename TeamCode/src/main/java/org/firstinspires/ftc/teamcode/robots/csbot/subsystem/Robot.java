@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 
 @Config(value = "AA_CSRobot")
@@ -143,6 +144,13 @@ public class Robot implements Subsystem {
         visionProviderBack.update();
     }
 
+    public static int initPositionIndex = 0;
+    public void initPosition() {
+        switch (initPositionIndex) {
+            
+        }
+    }
+
     public Articulation articulate(Articulation target) {
         articulation = target;
         switch (this.articulation) {
@@ -178,7 +186,7 @@ public class Robot implements Subsystem {
             case 0:
                 wingIntakeTimer = futureTime(.5);
                 intake.articulate(Intake.Articulation.WING_INTAKE_POSTION);
-                if (intake.articulation == Intake.Articulation.MANUAL && wingIntakeTimer < System.nanoTime())
+                if (intake.articulation == Intake.Articulation.MANUAL && isPast(wingIntakeTimer))
                     wingIntakeIndex ++;
                 break;
             case 1:
@@ -198,9 +206,7 @@ public class Robot implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("Articulation", articulation);
-        //TODO - DELETE
-        telemetryMap.put("drivetrain thing ", driveTrain.pose.position.x);
-
+        telemetryMap.put("wingIntakeIndex", wingIntakeIndex);
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();
             telemetryMap.put(name + " Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (subsystemUpdateTimes[i] * 1e-6), (int) (1 / (subsystemUpdateTimes[i] * 1e-9))));

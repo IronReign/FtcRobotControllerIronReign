@@ -152,6 +152,10 @@ public class utilMethods {
         return System.nanoTime() + (long) (seconds * 1e9);
     }
 
+    public static boolean isPast(double futureTime) {
+        return System.nanoTime() > futureTime;
+    }
+
     public static boolean notdeadzone(double value){
         if (value> -deadzone && value < deadzone) return false;
         else return true;

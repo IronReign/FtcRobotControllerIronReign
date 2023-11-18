@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -36,6 +37,7 @@ public class CenterStage_6832 extends OpMode {
     public static boolean debugTelemetryEnabled;
     private boolean initializing;
     public boolean endGameHandled;
+    public static boolean initPosition = false;
 
     //GAMESTATES
     public enum GameState {
@@ -126,7 +128,6 @@ public class CenterStage_6832 extends OpMode {
         robot = new Robot(hardwareMap, false);
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
-        //auton.build();
 
         //DEFAULT AUTONOMOUS SETUP
         alliance = Constants.Alliance.BLUE;
@@ -152,6 +153,11 @@ public class CenterStage_6832 extends OpMode {
 
     public void init_loop() {
         dc.init_loop();
+        if(initPosition) {
+            robot.update(new Canvas());
+            robot.initPosition();
+        }
+
         telemetry.addData("visionProviderIndex", Robot.visionProviderIndex);
         telemetry.addData("vision telemetry", robot.visionProviderBack.getTelemetry(true));
         telemetry.addData("gameState", gameState);
@@ -173,7 +179,7 @@ public class CenterStage_6832 extends OpMode {
 //        resetGame();
 
         if(gameState.equals(GameState.AUTONOMOUS)){
-
+            auton.build();
         }
 
         if(gameState.equals(GameState.TELE_OP)){
@@ -207,7 +213,7 @@ public class CenterStage_6832 extends OpMode {
 
             switch(gameState) {
                 case AUTONOMOUS:
-                    auton.getStateMachine(startingPosition).execute();
+                    auton.execute();
                     break;
 
                 case TELE_OP:

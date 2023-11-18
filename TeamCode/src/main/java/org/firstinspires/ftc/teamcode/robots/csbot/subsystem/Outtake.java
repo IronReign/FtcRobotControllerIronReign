@@ -22,10 +22,12 @@ public class Outtake implements Subsystem {
     private DcMotorEx slide = null;
     private Servo pixelFlipper = null;
 
+    public static int flipperPosition = 2127;
+
 
     int slidePosition;
     public static int slidePositionMax = 2127;
-    public static int slidePositionMin = 0;
+    public static int slidePositionMin = 1800;
 
     int slideSpeed = 20;
     public static int FLIPPERINTAKEPOSITION = 2105;
@@ -105,41 +107,16 @@ public class Outtake implements Subsystem {
     }
 
 
-    public void clearFlipper() {
-        this.flipperLocation = FlipperLocation.CLEAR;
-        pixelFlipper.setPosition(Utils.servoNormalize(FLIPPERCLEARANCEPOSITION));
-    }
 
-    public void tuckFlipper() {
-        this.flipperLocation = FlipperLocation.TUCK;
-        pixelFlipper.setPosition(Utils.servoNormalize(FLIPPERINTAKEPOSITION));
-    }
 
-    public void scoreFlipper() {
-        this.flipperLocation = FlipperLocation.SCORE;
-        pixelFlipper.setPosition(Utils.servoNormalize(FLIPPERSCOREPOSITION));
-    }
 
-    public void flip() {
-        if (flipped) {
-            pixelFlipper.setPosition(Utils.servoNormalize(FLIPPERINTAKEPOSITION));
-            flipped = false;
-        } else {
-            pixelFlipper.setPosition(Utils.servoNormalize(FLIPPERSCOREPOSITION));
-            flipped = true;
-        }
-    }
 
     public void raiseFlipper(int power) {
-        pixelFlipper.setPosition(Utils.servoNormalize(Utils.servoDenormalize(pixelFlipper.getPosition())
-                - power)
-        );
+        flipperPosition += power;
     }
 
     public void lowerFlipper(int power) {
-        pixelFlipper.setPosition(Utils.servoNormalize(Utils.servoDenormalize(pixelFlipper.getPosition())
-                - power)
-        );
+        flipperPosition += power;
     }
 
 
@@ -147,7 +124,9 @@ public class Outtake implements Subsystem {
     public void update(Canvas fieldOverlay) {
         if(articulation == Articulation.MANUAL) {
             slide.setTargetPosition(slidePosition);
-        }
+            pixelFlipper.setPosition(Utils.servoNormalize(flipperPosition
+                    )
+            );        }
         if(articulation == Articulation.INTAKE_PIXEL) {
             if(intakePosition()) {
                 articulation = Articulation.MANUAL;
@@ -166,9 +145,8 @@ public class Outtake implements Subsystem {
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("slide position", slidePosition);
         telemetryMap.put("slide actual position", slide.getCurrentPosition());
-//        telemetryMap.put("flipper position target", flipperLocation.name());
-        telemetryMap.put("flipper location", Utils.servoDenormalize(pixelFlipper.getPosition())
-        );
+        telemetryMap.put("flipper location", Utils.servoDenormalize(pixelFlipper.getPosition()));
+        telemetryMap.put("flipper ticks", flipperPosition);
         return telemetryMap;
     }
 

@@ -32,17 +32,13 @@ public class Intake implements Subsystem {
     public static boolean manualBeaterBarEject = false;
     public static boolean manualBeaterBarOn = false;
     public static double BEATER_BAR_ADJUST_SPEED = 2;
-    public static double BEATER_BAR_INTAKE_VELOCITY = 1500;
+    public static double BEATER_BAR_INTAKE_VELOCITY = 1200;
     public static double BEATER_BAR_EJECT_VELOCITY = -700;
     public static int BEATER_BAR_ANGLE_CONTROLLER_HOME = 1350;
-    public static double BEATER_BAR_ANGLE_CONTROLLER_TICKS_PER_DEGREE;
-    public static double BEATER_BAR_ANGLE_CONTROLLER_MIN_DEGREES;
-    public static double BEATER_BAR_ANGLE_CONTROLLER_MAX_DEGREES;
-    public static double BEATER_BAR_ANGLE_CONTROLLER_START_ANGLE;
-    public static double BEATER_BAR_ANGLE_CONTROLLER_SPEED;
-    public static int angleControllerTicks = 1000;
+
+    public static int angleControllerTicks = 1100;
     public static double BEATER_BAR_FOLD_ANGLE;
-    public static double BEATER_BAR_GROUND_ANGLE = 1045;
+    public static int BEATER_BAR_WING_ANGLE = 1011;
 
 
     public enum Articulation {
@@ -73,7 +69,7 @@ public class Intake implements Subsystem {
             angleController = hardwareMap.get(Servo.class, "beaterBarAngleController");
 
 //            beaterBarAngleController = new Joint(hardwareMap, "beaterBarAngleController", false, BEATER_BAR_ANGLE_CONTROLLER_HOME, BEATER_BAR_ANGLE_CONTROLLER_TICKS_PER_DEGREE, BEATER_BAR_ANGLE_CONTROLLER_MIN_DEGREES, BEATER_BAR_ANGLE_CONTROLLER_MAX_DEGREES, BEATER_BAR_ANGLE_CONTROLLER_START_ANGLE, BEATER_BAR_ANGLE_CONTROLLER_SPEED);
-            beaterBar.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            beaterBar.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
     public void update(){
         update(new Canvas());
@@ -95,24 +91,23 @@ public class Intake implements Subsystem {
                 }
                 else
                     beaterBar.setVelocity(0);
+                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
                 break;
             case OFF:
                 beaterBar.setPower(0);
                 break;
             case WING_INTAKE_POSTION:
+                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
                 if(wingIntakePostion()) {
                     articulation = Articulation.MANUAL;
                 }
-                break;
-            case EJECT:
-                beaterBar.setVelocity(BEATER_BAR_EJECT_VELOCITY);
                 break;
             case FOLD:
                 beaterBar.setPower(0);
                 beaterBarTargetAngle = BEATER_BAR_FOLD_ANGLE;
                 break;
             case STACK_INTAKE:
-                beaterBar.setPower(BEATER_BAR_INTAKE_VELOCITY);
+                beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY);
                 beaterBarTargetAngle = angleToStack;
                 break;
         }
@@ -128,9 +123,18 @@ public class Intake implements Subsystem {
 
 
     public boolean wingIntakePostion (){
-        angleController.setPosition(1011);
+        angleControllerTicks = BEATER_BAR_WING_ANGLE;
         beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY);
         return true;
+    }
+
+    public void ejectBeaterBar() {
+        manualBeaterBarEject = true;
+        manualBeaterBarOn = true;
+    }
+    public void beaterBarOff () {
+        manualBeaterBarEject = false;
+        manualBeaterBarOn = false;
     }
 
     public void togglePrecisionBeaterBar() {
@@ -148,7 +152,6 @@ public class Intake implements Subsystem {
 
         angleController.setPosition(
         Utils.servoNormalize(angleControllerTicks));
-//        beaterBarTargetAngle += speed * BEATER_BAR_ADJUST_SPEED;
         return angleControllerTicks;
     }
     public void BeaterBarUp(boolean beaterBarUp)
@@ -177,6 +180,7 @@ public class Intake implements Subsystem {
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("manual beater bar on?", manualBeaterBarOn);
         telemetryMap.put("beater bar amps", beaterBar.getPower());
+        telemetryMap.put("beater bar velocity", beaterBar.getVelocity());
         telemetryMap.put("angle controller position", Utils.servoDenormalize(angleController.getPosition()));
 //        telemetryMap.put("beaterBarAngle", beaterBarAngleController.getCurrentAngle());
         return telemetryMap;
