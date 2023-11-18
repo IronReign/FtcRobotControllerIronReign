@@ -49,6 +49,9 @@ public class DriverControls {
         if (!gamepad2.atRest()) {
             telemetry.addData("gamepad2", "not zeroed");
         }
+        if(stickyGamepad1.guide) {
+            robot.initPositionIndex ++;
+        }
         updateStickyGamepads();
         handleStateSwitch();
         handlePregameControls();
@@ -96,9 +99,9 @@ public class DriverControls {
         }
 
         if (gamepad1.y)
-            robot.outtake.raiseFlipper(-5);
+            robot.outtake.raiseFlipper(-20);
         if (gamepad1.x)
-            robot.outtake.lowerFlipper(5);
+            robot.outtake.lowerFlipper(20);
         if(stickyGamepad1.dpad_left)
             robot.intake.BeaterBarUp(true);
         if(stickyGamepad1.dpad_up)

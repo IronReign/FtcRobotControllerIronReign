@@ -65,8 +65,7 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
         Actions.runBlocking(
                 new SequentialAction(
                         actionBuilder(pose)
-                                .lineToX(startPosition.position.x-Constants.FIELD_INCHES_PER_GRID)
-                                .strafeTo(new Vector2d(startPosition.position.x, startPosition.position.y + Constants.FIELD_INCHES_PER_GRID))
+                                .lineToX(startPosition.position.x-(Constants.FIELD_INCHES_PER_GRID*2.5))
                                 .build()
                 )
         );

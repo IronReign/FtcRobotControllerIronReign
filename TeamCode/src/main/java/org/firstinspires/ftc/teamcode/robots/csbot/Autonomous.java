@@ -19,6 +19,7 @@ import org.firstinspires.ftc.teamcode.statemachine.StateMachine;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 
 @Config (value = "AA_CS_Auton")
@@ -92,23 +93,24 @@ public class Autonomous implements TelemetryProvider {
 
         switch (autonIndex) {
             case 0:
-                futureTimer = futureTime(10);
-                robot.intake.ejectBeaterBar();
+                futureTimer = futureTime(5);
                 autonIndex++;
                 break;
             case 1:
                 robot.driveTrain.line();
+                futureTimer = futureTime(4);
                 autonIndex++;
             break;
             case 2:
-                if(System.nanoTime() > futureTimer)
+                robot.intake.setAngleControllerTicks(Intake.BEATER_BAR_WING_ANGLE + 90);
+                robot.intake.ejectBeaterBar();
+                if(isPast(futureTimer))
                 {
-                    robot.intake.beaterBarOff();
                     autonIndex++;
                 }
                 break;
             case 3:
-                robot.driveTrain.strafe();
+                robot.intake.beaterBarOff();
                 autonIndex++;
                 break;
             case 4:

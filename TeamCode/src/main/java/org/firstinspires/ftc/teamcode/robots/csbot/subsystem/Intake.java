@@ -20,7 +20,7 @@ import java.util.Map;
 @Config(value = "CS_INTAKE")
 public class Intake implements Subsystem {
     public static  int ANGLE_CONTROLLER_MAX = 1800;
-    public static int ANGLE_CONTROLLER_MIN = 850;
+    public static int ANGLE_CONTROLLER_MIN = 750;
     //CONSTANTS
     HardwareMap hardwareMap;
     Robot robot;
@@ -32,12 +32,12 @@ public class Intake implements Subsystem {
     public static boolean manualBeaterBarEject = false;
     public static boolean manualBeaterBarOn = false;
     public static double BEATER_BAR_ADJUST_SPEED = 2;
-    public static double BEATER_BAR_INTAKE_VELOCITY = 1200;
+    public static double BEATER_BAR_INTAKE_VELOCITY = 1800;
     public static double BEATER_BAR_EJECT_VELOCITY = -700;
     public static int BEATER_BAR_ANGLE_CONTROLLER_HOME = 1350;
 
-    public static int angleControllerTicks = 1100;
-    public static double BEATER_BAR_FOLD_ANGLE;
+    public static int angleControllerTicks = 1011;
+    public static int BEATER_BAR_FOLD_ANGLE = 1800;
     public static int BEATER_BAR_WING_ANGLE = 1011;
 
 
@@ -104,7 +104,8 @@ public class Intake implements Subsystem {
                 break;
             case FOLD:
                 beaterBar.setPower(0);
-                beaterBarTargetAngle = BEATER_BAR_FOLD_ANGLE;
+                angleControllerTicks = BEATER_BAR_FOLD_ANGLE;
+                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
                 break;
             case STACK_INTAKE:
                 beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY);
@@ -119,6 +120,9 @@ public class Intake implements Subsystem {
     public Articulation articulate(Articulation target) {
         articulation = target;
         return articulation;
+    }
+    public void setAngleControllerTicks (int ticks) {
+        angleControllerTicks = ticks;
     }
 
 

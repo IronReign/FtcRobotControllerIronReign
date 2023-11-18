@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.ExponentialSmoother;
@@ -111,6 +112,7 @@ public class CenterStage_6832 extends OpMode {
 
     @Override
     public void init() {
+        Robot.initPositionIndex = 0;
         telemetry.addData("Status", "Hold right_trigger to enable debug mode");
         telemetry.update();
 
@@ -159,12 +161,13 @@ public class CenterStage_6832 extends OpMode {
         }
 
         telemetry.addData("visionProviderIndex", Robot.visionProviderIndex);
-        telemetry.addData("vision telemetry", robot.visionProviderBack.getTelemetry(true));
+        telemetry.addData("blobLocation", robot.visionProviderBack.getMostFrequentPosition().getIndex());
         telemetry.addData("gameState", gameState);
         telemetry.addData("gameStateIndex", gameStateIndex);
         telemetry.addData("active", active);
         telemetry.addData("Alliance", alliance);
         telemetry.addData("Side", startingPosition);
+        telemetry.addData("initPositionIndex", Robot.initPositionIndex);
         robot.initLoopVision();
     }
     //end init_loop()
@@ -172,6 +175,7 @@ public class CenterStage_6832 extends OpMode {
     @Override
     public void start() {
         robot.driveTrain.setPose(startingPosition);
+        robot.intake.articulate(Intake.Articulation.MANUAL);
         startTime = System.currentTimeMillis();
         lastLoopClockTime = System.nanoTime();
 

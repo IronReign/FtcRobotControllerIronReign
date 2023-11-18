@@ -18,7 +18,7 @@ public class Constants {
     //----------------------------------------------------------------------------------------------
 
     // driveTrain
-    public static double FIELD_INCHES_PER_GRID = 23.5;
+    public static double FIELD_INCHES_PER_GRID = 21.5;
 
 
 

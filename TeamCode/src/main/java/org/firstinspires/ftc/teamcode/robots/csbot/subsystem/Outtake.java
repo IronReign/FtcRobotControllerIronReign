@@ -22,15 +22,17 @@ public class Outtake implements Subsystem {
     private DcMotorEx slide = null;
     private Servo pixelFlipper = null;
 
-    public static int flipperPosition = 2127;
+    public static int flipperPosition = 1888;
 
 
-    int slidePosition;
-    public static int slidePositionMax = 2127;
-    public static int slidePositionMin = 1800;
+    int slidePosition = 0;
+    public static int slidePositionMax = 1600;
+    public static int slidePositionMin = 0;
 
     int slideSpeed = 20;
-    public static int FLIPPERINTAKEPOSITION = 2105;
+    public static int UNTUCK_SLIDE_POSITION = 0;
+    public static int FLIPPERINTAKEPOSITION = 1888;
+    public static int FLIPPER_INIT_POSITION = 1439;
     public static int FLIPPERCLEARANCEPOSITION = 1900;
     public static int FLIPPERSCOREPOSITION = 750;
     private boolean flipped = false;

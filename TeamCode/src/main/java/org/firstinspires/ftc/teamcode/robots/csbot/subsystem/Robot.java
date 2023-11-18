@@ -140,14 +140,45 @@ public class Robot implements Subsystem {
         if (!visionProviderFinalized) {
             visionProviderBack.initializeVision(hardwareMap, this);
             visionProviderFinalized = true;
+
         }
         visionProviderBack.update();
     }
 
     public static int initPositionIndex = 0;
+    public long initPositionTimer;
     public void initPosition() {
         switch (initPositionIndex) {
-            
+            case 0:
+                initPositionTimer = futureTime(1);
+                initPositionIndex ++;
+                break;
+            case 1:
+                intake.articulate(Intake.Articulation.FOLD);
+//                if(isPast(initPositionTimer)) {
+//                    initPositionTimer = futureTime(1);
+//                    initPositionIndex ++;
+//                }
+                break;
+            case 2:
+                outtake.slidePosition = Outtake.UNTUCK_SLIDE_POSITION;
+//                if (isPast(initPositionTimer)) {
+//                    initPositionTimer = futureTime(1);
+//                    initPositionIndex ++;
+//                }
+                break;
+            case 3:
+                Outtake.flipperPosition = Outtake.FLIPPER_INIT_POSITION;
+//                if (isPast(initPositionTimer)) {
+//                    initPositionTimer = futureTime(1);
+//                    initPositionIndex ++;
+//                }
+                break;
+            case 4:
+                outtake.slidePosition = 0;
+                break;
+            case 5:
+                break;
         }
     }
 
@@ -207,6 +238,7 @@ public class Robot implements Subsystem {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("Articulation", articulation);
         telemetryMap.put("wingIntakeIndex", wingIntakeIndex);
+        telemetryMap.put("initPositionIndex", initPositionIndex);
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();
             telemetryMap.put(name + " Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (subsystemUpdateTimes[i] * 1e-6), (int) (1 / (subsystemUpdateTimes[i] * 1e-9))));
