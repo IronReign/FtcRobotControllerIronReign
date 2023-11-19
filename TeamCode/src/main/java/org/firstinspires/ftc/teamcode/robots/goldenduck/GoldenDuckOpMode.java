@@ -60,7 +60,7 @@ public class GoldenDuckOpMode extends OpMode {
     @Override
     public void loop() {
 
-        driveTrain.mechanumDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x);
+        driveTrain.mechanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
         if (gamepad1.dpad_down) {
             calibrate = false;
         }
@@ -109,8 +109,8 @@ public class GoldenDuckOpMode extends OpMode {
             motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             motorFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             motorBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            this.motorFrontLeft.setDirection(DcMotor.Direction.REVERSE);
-            this.motorBackLeft.setDirection(DcMotor.Direction.REVERSE);
+            this.motorFrontLeft.setDirection(DcMotor.Direction.FORWARD);
+            this.motorBackLeft.setDirection(DcMotor.Direction.FORWARD);
             motorFrontLeft.setPower(1);
             motorBackLeft.setPower(1);
             motorBackRight.setPower(1);
@@ -208,4 +208,10 @@ public class GoldenDuckOpMode extends OpMode {
         if (gamepad1.right_bumper)
             claw.setPosition(claw.getPosition() - .02);
     }
+
+        private double servoRailgun = 0;
+        public void Railgun(){
+            if (gamepad2.a);
+        }
+
 }
