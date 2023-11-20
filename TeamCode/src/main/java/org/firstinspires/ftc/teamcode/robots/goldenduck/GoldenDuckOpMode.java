@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.goldenduck;
 
+import static org.firstinspires.ftc.teamcode.util.utilMethods.servoNormalize;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -9,11 +11,6 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.robots.csbot.vision.pipeline.AprilTagDetectionPipeline;
-import org.openftc.apriltag.AprilTagDetection;
-import org.openftc.easyopencv.OpenCvCamera;
-
-import java.util.ArrayList;
 
 @Config ("GoldenDuckGameVariables")
 @TeleOp(name="Golden Duck OpMode", group="Challenge")
@@ -22,38 +19,31 @@ public class GoldenDuckOpMode extends OpMode {
     public boolean auton = true; // controls if auton will run set to true to run with auton
     public static boolean testing = false;// turns off normal robot motion
     public static boolean red = true; // team boolean variable red true is red team
-    public static boolean farmCones = false;
+
     //miscellaneous variables
     public static boolean calibrateOn = true;// turns off automatic elevator calibration
     private boolean calibrate = false;
     public static float DEADZONE = .1f;
-    //vision variables
-    OpenCvCamera camera;
-    AprilTagDetectionPipeline aprilTagDetectionPipeline;
     static final double FEET_PER_METER = 3.28084;
     int tagDetected = 0;
-    // UNITS ARE PIXELS
-    double fx = 578.272;
-    double fy = 578.272;
-    double cx = 402.145;
-    double cy = 221.506;
-    // UNITS ARE METERS
-    double tagsize = 0.045; //tag size on iron reign signal sleeve
-    int ID_TAG_OF_INTEREST = 1; // Tag ID 1 from the 36h11 family
-    int tagCount = 0;
-    boolean tagFound = false;
-    AprilTagDetection tagOfInterest = null;
-    //Robot variable storage system
+
     DriveTrain driveTrain;
 
     @Override
     public void init() {
         driveTrain = new DriveTrain(telemetry, hardwareMap);
         driveTrain.motorInit();
+        servoRailgun = hardwareMap.get(Servo.class,"servoRailgun");
+        servoClaw = hardwareMap.get(Servo.class, "claw");
+        clawWrist = hardwareMap.get(Servo.class, "clawWrist");
     }
 
     @Override
     public void init_loop() {
+        arm();
+        claws();
+        clawWrist();
+        setServoRailgun();
         telemetry.update();
     }
 
@@ -64,12 +54,16 @@ public class GoldenDuckOpMode extends OpMode {
         if (gamepad1.dpad_down) {
             calibrate = false;
         }
+
+        //speed boost - untested
         if (gamepad1.dpad_up) {
             if (driveTrain.robotSpeed == 1)
                 driveTrain.robotSpeed = .5;
             else
                 driveTrain.robotSpeed = 1;
         }
+        claws();
+
     }
 
     class DriveTrain {
@@ -109,8 +103,8 @@ public class GoldenDuckOpMode extends OpMode {
             motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             motorFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             motorBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            this.motorFrontLeft.setDirection(DcMotor.Direction.FORWARD);
-            this.motorBackLeft.setDirection(DcMotor.Direction.FORWARD);
+            this.motorFrontLeft.setDirection(DcMotor.Direction.REVERSE);
+            this.motorBackLeft.setDirection(DcMotor.Direction.REVERSE);
             motorFrontLeft.setPower(1);
             motorBackLeft.setPower(1);
             motorBackRight.setPower(1);
@@ -118,20 +112,6 @@ public class GoldenDuckOpMode extends OpMode {
             mechanumDrive(0, 0, 0);
         }
 
-        public void tankDrive(double left, double right) {
-            powerRight = 0;
-            powerLeft = 0;
-            if (Math.abs(left) > DEADZONE) {
-                powerLeft = left;
-            }
-            if (Math.abs(right) > DEADZONE) {
-                powerRight = right;
-            }
-            motorFrontRight.setPower(powerRight);
-            motorFrontLeft.setPower(powerLeft);
-            motorBackRight.setPower(powerRight);
-            motorBackLeft.setPower(powerLeft);
-        }
 
         public void mechanumDrive(double forward, double strafe, double turn) {
             forward = -forward;
@@ -161,6 +141,10 @@ public class GoldenDuckOpMode extends OpMode {
             motorBackLeft = this.hardwareMap.get(DcMotorEx.class, "motorBackLeft");
             motorFrontRight = this.hardwareMap.get(DcMotorEx.class, "motorFrontRight");
             motorBackRight = this.hardwareMap.get(DcMotorEx.class, "motorBackRight");
+            arm = this.hardwareMap.get(DcMotorEx.class, "arm");
+            arm.setTargetPosition(0);
+            arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+            arm.setPower(0);
             motorFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             motorFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -185,7 +169,9 @@ public class GoldenDuckOpMode extends OpMode {
     private DcMotor motorBackRight = null;
     private DcMotor arm = null;
     private DcMotor elbow = null;
-    private Servo claw = null;
+    private Servo clawWrist = null;
+    private Servo servoClaw = null;
+    private Servo servoRailgun = null;
     private Servo wrist = null;
     // regular drive
     private double powerLeft = 0;
@@ -197,21 +183,65 @@ public class GoldenDuckOpMode extends OpMode {
     private double wristPosition = 0;
     private double targetWristPosition = 0;
     // arm and claw variables
+    private double max = 0.6;
+    private double min = .4;
     private int armPosition = 0;
     private int targetArmPos = 0;
     private int maxArm = Integer.MAX_VALUE;
 
-    public void clawMove() {
-        telemetry.addData("Claw servo position:", claw.getPosition());
-        if (gamepad1.left_bumper)
-            claw.setPosition(claw.getPosition() + .02);
-        if (gamepad1.right_bumper)
-            claw.setPosition(claw.getPosition() - .02);
+    public void arm(){
+        telemetry.addData("arm position", arm.getCurrentPosition());
+        //targetArmPos
+
+    }
+    public void claws() {
+        telemetry.addData("santa claws claws", servoClaw.getPosition());
+        if (gamepad1.left_bumper) {
+            servoClaw.setPosition(servoNormalize(1935));
+        }
+        else{
+
+        }
+        if (gamepad1.right_bumper) {
+            servoClaw.setPosition(servoNormalize(1665));
+        }
+        else{
+
+        }
+        //value of claw cannot surpass xyz
+
     }
 
-        private double servoRailgun = 0;
-        public void Railgun(){
-            if (gamepad2.a);
+    public void clawWrist() {
+        telemetry.addData("Claw wrist position:", clawWrist.getPosition());
+        if (gamepad1.dpad_right) {
+            clawWrist.setPosition(servoNormalize(2105));
+        }
+        else{
+
+        }
+        if (gamepad1.dpad_left) {
+            clawWrist.setPosition(servoNormalize(1221));
+        }
+        else{
+
+        }
+    }
+    public void setServoRailgun() {
+        telemetry.addData("servo position", servoRailgun.getPosition());
+        if (gamepad1.dpad_up) {
+            servoRailgun.setPosition(servoNormalize(1080));
+        }
+        else{
+
+        }
+        if (gamepad1.dpad_down){
+            servoRailgun.setPosition(servoNormalize(1825));
+        }
+        else{
+
         }
 
+
+    }
 }
