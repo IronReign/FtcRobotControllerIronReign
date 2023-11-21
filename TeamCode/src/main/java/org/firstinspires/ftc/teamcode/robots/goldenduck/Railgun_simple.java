@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.goldenduck;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.servoNormalize;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -11,10 +12,10 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 @Config("GoldenDuckGameVariables")
 @TeleOp(name="Golden Duck OpMode", group="Challenge")
-public class Railgun_simple {
-
+public abstract class Railgun_simple extends OpMode {
+    @Override
     public void loop() {
-//        servoRailgun.();
+//        servoRailgun.railgunInit(gamepad1.dpad_right);
         telemetry.update();
     }
         private Servo servoRailgun = null;
