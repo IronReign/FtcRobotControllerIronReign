@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 @Config ("GoldenDuckGameVariables")
-@TeleOp(name="Golden Duck OpMode", group="Challenge")
+
 
 public class Arm_simple {
 

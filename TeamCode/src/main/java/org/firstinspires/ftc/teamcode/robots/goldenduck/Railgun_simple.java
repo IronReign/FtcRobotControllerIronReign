@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 @Config("GoldenDuckGameVariables")
-@TeleOp(name="Golden Duck OpMode", group="Challenge")
+
 public abstract class Railgun_simple extends OpMode {
     @Override
     public void loop() {

@@ -16,7 +16,7 @@ public class DriveTrain_simple extends OpMode {
     public boolean auton = true;
     public static boolean testing = false;
     public static boolean red = true;
-    public static boolean calibrateOn = true ;
+    public static boolean calibrateOn = true;
     private boolean calibrate = false;
     public static float DEADZONE = .1f;
     static final double FEET_PER_METER = 3.28084;
