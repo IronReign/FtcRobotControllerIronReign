@@ -38,10 +38,6 @@ public class IntakeClaw {
         clawArm.setPower(1);
         clawArm.setTargetPosition(0);
         clawArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-
-
-
     }
     public void openClaw (boolean press)
     {

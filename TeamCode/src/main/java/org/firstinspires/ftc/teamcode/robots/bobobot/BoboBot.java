@@ -22,6 +22,7 @@ public class BoboBot extends OpMode {
         //bobo.claw.armPositionTest();
         bobo.claw.openClaw(gamepad1.right_bumper);
         bobo.claw.closeClaw(gamepad1.left_bumper);
+        bobo.driveTrain.telemetryOutput();
         bobo.claw.telemetryOutput();
         bobo.droneLaunch.telemetryOutput();
     }

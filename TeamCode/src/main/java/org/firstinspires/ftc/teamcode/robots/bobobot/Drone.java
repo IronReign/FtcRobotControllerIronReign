@@ -30,7 +30,7 @@ public class Drone {
 
     }
 
-    //public double getDronePosition () { return droneLaunch.getPosition();}
+
 
 }
 
