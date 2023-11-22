@@ -23,7 +23,8 @@ public class BoboAuto extends OpMode {
 
     @Override
     public void start() {
-        autonomous.add(new DriveTile(autobot, 1, telemetry));
+        autonomous.add(new DriveTile(autobot, 1));
+        autonomous.add(new TurnTile(autobot, 90));
     }
     @Override
     public void loop() {

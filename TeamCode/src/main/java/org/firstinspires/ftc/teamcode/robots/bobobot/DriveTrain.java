@@ -50,6 +50,7 @@ class DriveTrain {
         telemetry.addData("Front Right Position \t", motorFrontRight.getCurrentPosition());
         telemetry.addData("Front Left Position \t", motorFrontLeft.getCurrentPosition());
         telemetry.addData("Average Motor Position \t", getMotorAvgPosition());
+
     }
 
     public double getMotorAvgPosition(){return (double)(Math.abs(motorFrontLeft.getCurrentPosition())+Math.abs(motorFrontRight.getCurrentPosition())+Math.abs(motorBackLeft.getCurrentPosition())+Math.abs(motorBackRight.getCurrentPosition()))/3.0;}
