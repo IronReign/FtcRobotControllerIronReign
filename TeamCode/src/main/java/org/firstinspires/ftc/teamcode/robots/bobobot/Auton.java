@@ -14,7 +14,7 @@ public class Auton {
         if(actions.size() > 0){
             if(!actions.peek().run()){
                 actions.poll();
-                autobot.drive.resetMotors();
+                autobot.drive.turnOffMotors();
             }
             return true;
         }

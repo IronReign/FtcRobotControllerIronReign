@@ -4,7 +4,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 public class AutoDrive {
@@ -33,8 +32,8 @@ public class AutoDrive {
         this.telemetry = telemetry;
         this.hardwareMap = hardwareMap;
     }
-    public void mechanumAuto (double forward, double strafe, double turn){
-        forward = -forward;
+    public void mecanumAuto(double forward, double strafe, double turn){
+        forward = forward;
         turn = -turn;
         double r = Math.hypot(strafe, forward);
         double robotAngle = Math.atan2(forward, strafe) - Math.PI / 4;
@@ -54,6 +53,7 @@ public class AutoDrive {
         telemetry.addData("Front Right Position \t", motorFrontRight.getCurrentPosition());
         telemetry.addData("Front Left Position \t", motorFrontLeft.getCurrentPosition());
         telemetry.addData("Average Motor Position \t", getMotorAvgPosition());
+
     }
     public void driveInit(){
         motorFrontLeft = this.hardwareMap.get(DcMotorEx.class, "motorFrontLeft");
@@ -70,52 +70,18 @@ public class AutoDrive {
         motorFrontRight.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         motorFrontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         motorBackLeft.setDirection(DcMotor.Direction.REVERSE);
+        motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorBackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorBackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
     }
-    public boolean tile(double tiles){
-        int mbl = 0, mbr = 0, mfl = 0, mfr = 0;
-        int mbl2 = 0, mbr2 = 0, mfl2 = 0, mfr2 = 0;
-        int delta = 0;
-        int avg = 0, currentAvg = 0;
-        if(!moveinit){
-            delta *= (int) (tiles*tickpertile);
-            mbl2 = motorBackLeft.getCurrentPosition();
-            mbr2 = motorBackRight.getCurrentPosition();
-            mfl2 = motorFrontLeft.getCurrentPosition();
-            mfr2 = motorFrontRight.getCurrentPosition();
-            mbl = mbl2 + delta;
-            mbr = mbr2 + delta;
-            mfl = mfl2 + delta;
-            mfr = mfr2 + delta;
-            motorFrontLeft.setPower(1);
-            motorFrontRight.setPower(1);
-            motorBackLeft.setPower(1);
-            motorBackRight.setPower(1);
-            motorBackLeft.setTargetPosition(mbl);
-            motorBackRight.setTargetPosition(mbr);
-            motorFrontLeft.setTargetPosition(mfl);
-            motorFrontRight.setTargetPosition(mfr);
-            moveinit = true;
-        }
-        else{
-            /*motorFrontLeft.setPower(1);
-            motorFrontRight.setPower(1);
-            motorBackLeft.setPower(1);
-            motorBackRight.setPower(1);
-            motorBackLeft.setTargetPosition(mbl);
-            motorBackRight.setTargetPosition(mbr);
-            motorFrontLeft.setTargetPosition(mfl);
-            motorFrontRight.setTargetPosition(mfr);*/
-            avg = (int)(motorBackLeft.getTargetPosition() + motorFrontRight.getTargetPosition() + motorBackRight.getTargetPosition() + motorFrontLeft.getTargetPosition()) / 3;
-            currentAvg = (int)(mbl2 + mbr2 + mfl2 + mfr2) / 3;
 
-        }
-        if (Math.abs(currentAvg) >= Math.abs((avg - 20))){
-            return true;
-        }
-        else {
-            return false;
-        }
+    public void turnOffMotors(){
+        motorFrontLeft.setPower(0);
+        motorBackLeft.setPower(0);
+        motorBackRight.setPower(0);
+        motorFrontRight.setPower(0);
 
     }
     public void resetMotors() {
@@ -137,13 +103,7 @@ public class AutoDrive {
         motorBackLeft.setPower(1);
         motorBackRight.setPower(1);
         motorFrontRight.setPower(1);
-        mechanumAuto(0, 0, 0);
-    }
-    public void left(){
-        mechanumAuto(0,0,1);
-    }
-    public void right() {
-        mechanumAuto(0,0,-1);
+        mecanumAuto(0, 0, 0);
     }
 
     public double getMotorAvgPosition(){return (double)(Math.abs(motorFrontLeft.getCurrentPosition())+Math.abs(motorFrontRight.getCurrentPosition())+Math.abs(motorBackLeft.getCurrentPosition())+Math.abs(motorBackRight.getCurrentPosition()))/3.0;}

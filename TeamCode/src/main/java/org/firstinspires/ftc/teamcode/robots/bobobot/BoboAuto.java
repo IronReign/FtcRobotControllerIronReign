@@ -21,11 +21,16 @@ public class BoboAuto extends OpMode {
         telemetry.setMsTransmissionInterval(25);
     }
 
-    boolean didDriveTile = false;
+    @Override
+    public void start() {
+        autonomous.add(new DriveTile(autobot, 2, telemetry));
+    }
     @Override
     public void loop() {
         autobot.drive.telemetryOutput();
         autobot.grip.autoWrist();
-        autonomous.add(new DriveTile(autobot, 1));
+//        autobot.DriveTile.telemetryOutput();
+        autonomous.runBehaviors();
+
     }
 }

@@ -13,6 +13,7 @@
             <RevRobotics40HDHexMotor name="motorFrontLeft" port="0" />
             <RevRobotics40HDHexMotor name="motorBackLeft" port="1" />
             <Servo name="clawSpan" port="0" />
+            <Servo name="clawWrist" port ="1"/>
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />s
         </LynxModule>
     </LynxUsbDevice>
