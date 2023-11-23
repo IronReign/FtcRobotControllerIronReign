@@ -2,23 +2,22 @@ package org.firstinspires.ftc.teamcode.robots.bobobot;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-class DriveTile extends Assign {
+class TurnTile extends Assign{
     private Autobot autobot;
-
-    private double tiles;
+    private Telemetry telemetry;
+    private double degrees;
     private double delta;
 
-    // negative tiles means going backwards
-    public DriveTile(Autobot autobot, double tiles){
-
+    public TurnTile(Autobot autobot, double degrees){
+        this.telemetry = telemetry;
         this.autobot = autobot;
-        this.tiles = tiles;
-        delta = autobot.drive.getMotorAvgPosition() + Math.abs(tiles*TICKSPERTILE);
+        this.degrees = degrees;
+        delta = autobot.drive.getMotorAvgPosition() + Math.abs((degrees/90)*TICKSPER90);
     }
     @Override
     public boolean run(){
         if(autobot.drive.getMotorAvgPosition() < delta){
-            autobot.drive.mecanumAuto(tiles/Math.abs(tiles)*MAXMOTORSPEED, 0, 0);
+            autobot.drive.mecanumAuto(0, 0, degrees/Math.abs(degrees)*MAXMOTORSPEED);
             return true;
         }
         else{
@@ -26,5 +25,4 @@ class DriveTile extends Assign {
             return false;
         }
     }
-
 }

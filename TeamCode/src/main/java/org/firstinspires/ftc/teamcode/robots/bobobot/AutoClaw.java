@@ -8,8 +8,8 @@ import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 
 public class AutoClaw {
     private Servo clawSpan = null;
-    public static double OPENCLAW = 0.1;
-    public static double CLOSECLAW = 0.35;
+    public static double OPENCLAW = 0.15;
+    public static double CLOSECLAW = 0.30;
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
     private Servo clawWrist = null;
