@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot;
 
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -10,7 +11,7 @@ public class Autobot {
 
     AutoClaw grip;
 
-    public Autobot(Telemetry telemetry, HardwareMap hardwareMap)
+    public Autobot(MultipleTelemetry telemetry, HardwareMap hardwareMap)
     {
         this.telemetry=telemetry;
         drive = new AutoDrive(telemetry, hardwareMap);

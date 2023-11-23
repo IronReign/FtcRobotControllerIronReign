@@ -40,7 +40,7 @@ public class IntakeClaw {
         //clawArm.setDirection(DcMotor.Direction.REVERSE);
         clawArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         clawArm.setPower(1);
-        clawArm.setTargetPosition(0);
+        clawArm.setTargetPosition(20);
         clawArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
     public void openClaw (boolean press)
@@ -67,13 +67,13 @@ public class IntakeClaw {
     public void clawArmLower (boolean press)
     {
         if(press == true) {
-            clawArm.setTargetPosition(0);
+            clawArm.setTargetPosition(20);
         }
     }
 
     public void armWristDown(boolean press) {
         if (press == true && clawArm.getCurrentPosition() < 200) {
-            clawWrist.setPosition(0.45);
+            clawWrist.setPosition(0.43);
             clawArm.setTargetPosition(3);
         }
         else if (press == true && clawArm.getCurrentPosition() > 200) {
