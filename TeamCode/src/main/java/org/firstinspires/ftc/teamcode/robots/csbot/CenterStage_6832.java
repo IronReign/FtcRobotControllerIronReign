@@ -3,7 +3,10 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -143,6 +146,7 @@ public class CenterStage_6832 extends OpMode {
         dashboard = FtcDashboard.getInstance();
         dashboard.setTelemetryTransmissionInterval(25);
         telemetry.setMsTransmissionInterval(25);
+        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         //TODO - Differentiate between debug and non debug telemetry
         if (debugTelemetryEnabled) {
 
@@ -319,6 +323,7 @@ public class CenterStage_6832 extends OpMode {
         );
 
         handleTelemetry(visionTelemetryMap, robot.visionProviderBack.getTelemetryName(), packet);
+
         dashboard.sendTelemetryPacket(packet);
         telemetry.update();
 
@@ -339,7 +344,7 @@ public class CenterStage_6832 extends OpMode {
 
         if (averageVoltage <= LOW_BATTERY_VOLTAGE) {
             telemetryMap = new LinkedHashMap<>();
-            for (int i = 0; i < 20; i++) {
+            for (int i = 0; i < 5; i++) {
                 telemetryMap.put(i + (System.currentTimeMillis() / 500 % 2 == 0 ? "**BATTERY VOLTAGE LOW**" : "  BATTERY VOLTAGE LOW  "), (System.currentTimeMillis() / 500 % 2 == 0 ? "**CHANGE BATTERY ASAP!!**" : "  CHANGE BATTERY ASAP!!  "));
             }
         }
@@ -352,10 +357,6 @@ public class CenterStage_6832 extends OpMode {
         telemetry.addLine();
         packet.addLine("");
     }
-
-
-
-
 }
 
 
