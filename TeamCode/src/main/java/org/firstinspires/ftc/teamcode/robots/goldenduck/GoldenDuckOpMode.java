@@ -1,16 +1,5 @@
 package org.firstinspires.ftc.teamcode.robots.goldenduck;
 
-import static org.firstinspires.ftc.teamcode.util.utilMethods.servoNormalize;
-import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.robots.bobobot.Robot;
-
 //@Config ("GoldenDuckGameVariables")
 //@TeleOp(name="Golden Duck OpMode", group="Challenge")
 //public class GoldenDuckOpMode extends OpMode {

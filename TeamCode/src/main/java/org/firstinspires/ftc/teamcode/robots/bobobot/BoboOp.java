@@ -4,9 +4,11 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Robot;
+
 @Config("BoboGameVariables")
 @TeleOp(name="BoboOpMode", group="Challenge")
-public class BoboBot extends OpMode {
+public class BoboOp extends OpMode {
     Robot bobo;
     @Override
     public void init() {
