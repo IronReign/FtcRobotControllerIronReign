@@ -7,17 +7,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 @Config ("GoldenDuckGameVariables")
-<<<<<<< HEAD:TeamCode/src/main/java/org/firstinspires/ftc/teamcode/robots/goldenduck/DriveTrain.java
 public class DriveTrain {
     public static boolean calibrateOn = true ;
-=======
-@TeleOp(name="Golden Duck OpMode", group="Challenge")
-public class DriveTrain_simple extends OpMode {
-    public boolean auton = true;
-    public static boolean testing = false;
-    public static boolean red = true;
-    public static boolean calibrateOn = true;
->>>>>>> upstream/main:TeamCode/src/main/java/org/firstinspires/ftc/teamcode/robots/goldenduck/DriveTrain_simple.java
     private boolean calibrate = false;
     public static float DEADZONE = .1f;
     static final double FEET_PER_METER = 3.28084;

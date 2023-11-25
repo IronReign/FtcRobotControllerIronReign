@@ -10,7 +10,6 @@ import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.TankDrive;
 public final class ManualFeedbackTuner extends LinearOpMode {
     public static double DISTANCE = 16;
 
-
     @Override
     public void runOpMode() throws InterruptedException {
         if (TuningOpModes.DRIVE_CLASS.equals(MecanumDrive.class)) {
