@@ -66,9 +66,9 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
     public static double MIN_CONTOUR_AREA = 50;
     public static String BLUR = "Box Blur";
 
-    public static int LEFT_THRESHOLD = 142;
-    public static int RIGHT_THRESHOLD = 211;
-    public static int CENTER_LINE = 160;
+    public static int LEFT_THRESHOLD = 320;
+    public static int RIGHT_THRESHOLD = 960;
+    public static int CENTER_LINE = 640;
 
     public CSBotPropDetectorPipeline() {
         largestX = -1;

@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -31,6 +33,7 @@ public class Robot implements Subsystem {
     public CSDriveTrain driveTrain;
     public Intake intake;
     public VisionProvider visionProviderBack = null;
+    public static boolean visionOn = true;
     public Outtake outtake;
     //TODO - create a field
 //    public Field field;
@@ -106,11 +109,23 @@ public class Robot implements Subsystem {
         deltaTime = (System.nanoTime() - lastTime) / 1e9;
         lastTime = System.nanoTime();
 
+        if(visionOn) {
+            if (!visionProviderFinalized) {
+                createVisionProvider();
+                visionProviderBack.initializeVision(hardwareMap, this);
+                visionProviderFinalized = true;
+
+            }
+            visionProviderBack.update();
+        }
+
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         articulate(articulation);
         //TODO - DELETE
         driveTrain.updatePoseEstimate();
+
+        drawRobot(fieldOverlay, driveTrain.pose);
 
         //update subsystems
         for (int i = 0; i < subsystems.length; i++) {
@@ -122,11 +137,25 @@ public class Robot implements Subsystem {
     }
     //end update
 
+    private static void drawRobot(Canvas c, Pose2d t) {
+        final double ROBOT_RADIUS = 9;
+
+        c.setStrokeWidth(1);
+        c.strokeCircle(t.position.x, t.position.y, ROBOT_RADIUS);
+
+        Vector2d halfv = t.heading.vec().times(0.5 * ROBOT_RADIUS);
+        Vector2d p1 = t.position.plus(halfv);
+        Vector2d p2 = p1.plus(halfv);
+        c.strokeLine(p1.x, p1.y, p2.x, p2.y);
+    }
+
     public void switchVisionProviders() {
+        visionProviderBack.shutdownVision();
         if(visionProviderIndex == 2){
             //switch to AprilTags
             visionProviderIndex = 0;
             visionProviderFinalized = false;
+
         }
         else if (visionProviderIndex == 0) {
             //switch back to ColorBlob
@@ -137,12 +166,7 @@ public class Robot implements Subsystem {
 
 //    TODO - THIS IS AWFUL, NEEDS TO BE RIPPED OUT
     public void initLoopVision() {
-        if (!visionProviderFinalized) {
-            visionProviderBack.initializeVision(hardwareMap, this);
-            visionProviderFinalized = true;
 
-        }
-        visionProviderBack.update();
     }
 
     public static int initPositionIndex = 0;
