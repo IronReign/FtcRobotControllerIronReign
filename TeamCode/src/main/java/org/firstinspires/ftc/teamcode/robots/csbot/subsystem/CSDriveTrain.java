@@ -6,6 +6,8 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.Trajectory;
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -19,22 +21,14 @@ import java.util.Map;
 @Config(value = "CS_ROADRUNNER")
 public class CSDriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
-    public boolean actionStarted = false;
     public boolean trajectoryIsActive;
-    SequentialAction line;
 
 
     public CSDriveTrain(HardwareMap hardwareMap, Robot robot, boolean simulated) {
         super(hardwareMap, new Pose2d(0, 0, 0));
         this.robot = robot;
         trajectoryIsActive = false;
-//      TODO - implement simulations
 
-        line = new SequentialAction(
-                actionBuilder(pose)
-                        .lineToX(pose.position.y - (Constants.FIELD_INCHES_PER_GRID * 2))
-                        .build()
-        );
     }
     //end constructor
 
@@ -56,9 +50,7 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
         updatePoseEstimate();
     }
 
-    public boolean line() {
-        return !line.run(new TelemetryPacket());
-    }
+
     public void strafe() {
         Pose2d startPosition = pose;
         Actions.runBlocking(
