@@ -1,15 +1,17 @@
-package org.firstinspires.ftc.teamcode.robots.bobobot;
+package org.firstinspires.ftc.teamcode.robots.bobobot.Bots;
 
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.robots.bobobot.AutoSystems.AutoClaw;
+import org.firstinspires.ftc.teamcode.robots.bobobot.AutoSystems.AutoDrive;
 
 public class Autobot {
     Telemetry telemetry;
-    AutoDrive drive;
+    public AutoDrive drive;
 
-    AutoClaw grip;
+    public AutoClaw grip;
 
     public Autobot(MultipleTelemetry telemetry, HardwareMap hardwareMap)
     {

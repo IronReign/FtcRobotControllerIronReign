@@ -1,12 +1,14 @@
-package org.firstinspires.ftc.teamcode.robots.bobobot;
+package org.firstinspires.ftc.teamcode.robots.bobobot.AutoTiles;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.robots.bobobot.Assign;
+import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Autobot;
 
-class DriveTile extends Assign {
+public class DriveTile extends Assign {
     private Autobot autobot;
 
     private double tiles;
-    private double delta;
+    //private double delta;
 
     // negative tiles means going backwards
     public DriveTile(Autobot autobot, double tiles){
@@ -15,14 +17,21 @@ class DriveTile extends Assign {
         this.tiles = tiles;
         delta = autobot.drive.getMotorAvgPosition() + Math.abs(tiles*TICKSPERTILE);
     }
+
+    @Override
+    public double getDelta() {
+        return delta;
+    }
+
     @Override
     public boolean run(){
         if(autobot.drive.getMotorAvgPosition() < delta){
             autobot.drive.mecanumAuto(tiles/Math.abs(tiles)*MAXMOTORSPEED, 0, 0);
             return true;
         }
-        else{
-            autobot.drive.turnOffMotors();
+        else {
+
+            autobot.drive.resetMotors();
             return false;
         }
     }

@@ -1,12 +1,15 @@
-package org.firstinspires.ftc.teamcode.robots.bobobot;
+package org.firstinspires.ftc.teamcode.robots.bobobot.AutoSystems;
 
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.robots.bobobot.Assign;
 import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 
 public class AutoClaw {
+    private DcMotorEx clawArm = null;
     private Servo clawSpan = null;
     public static double OPENCLAW = 0.15;
     public static double CLOSECLAW = 0.30;
@@ -19,7 +22,7 @@ public class AutoClaw {
     }
     public void telemetryOutput() {
         telemetry.addData("Claw Position \t", Utils.servoDenormalize(clawSpan.getPosition()));
-        //telemetry.addData("Claw Arm Position \t", clawArm.getCurrentPosition());
+        telemetry.addData("Claw Arm Position \t", clawArm.getCurrentPosition());
         telemetry.addData("Claw Wrist Position \t", Utils.servoDenormalize(clawWrist.getPosition()));
     }
     public void openAuto() {
@@ -32,7 +35,7 @@ public class AutoClaw {
     }
 
     public void gripInit() {
-        //clawArm = this.hardwareMap.get(DcMotorEx.class, "clawArm");
+        clawArm = this.hardwareMap.get(DcMotorEx.class, "clawArm");
         clawSpan = this.hardwareMap.get(Servo.class, "clawSpan");
         clawWrist = this.hardwareMap.get(Servo.class, "clawWrist");
         closeAuto();
@@ -46,5 +49,18 @@ public class AutoClaw {
     }
     public void autoWrist(){
         clawWrist.setPosition(0);
+    }
+    public Assign autoWristDown() {
+        clawWrist.setPosition(0.43);
+        clawArm.setTargetPosition(3);
+        return null;
+    }
+    public Assign autoOpen(){
+        clawSpan.setPosition(OPENCLAW);
+        return null;
+    }
+    public Assign autoClose(){
+        clawSpan.setPosition(CLOSECLAW);
+        return null;
     }
 }

@@ -1,19 +1,23 @@
-package org.firstinspires.ftc.teamcode.robots.bobobot;
+package org.firstinspires.ftc.teamcode.robots.bobobot.AutoTiles;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.robots.bobobot.Assign;
+import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Autobot;
 
-class TurnTile extends Assign{
+public class TurnTile extends Assign {
     private Autobot autobot;
-    private Telemetry telemetry;
     private double degrees;
-    private double delta;
-
+    //private double delta;
+    @Override
+    public double getDelta() {
+        return delta;
+    }
     public TurnTile(Autobot autobot, double degrees){
-        this.telemetry = telemetry;
         this.autobot = autobot;
         this.degrees = degrees;
         delta = autobot.drive.getMotorAvgPosition() + Math.abs((degrees/90)*TICKSPER90);
     }
+
     @Override
     public boolean run(){
         if(autobot.drive.getMotorAvgPosition() < delta){
@@ -21,7 +25,7 @@ class TurnTile extends Assign{
             return true;
         }
         else{
-            autobot.drive.turnOffMotors();
+            autobot.drive.resetMotors();
             return false;
         }
     }
