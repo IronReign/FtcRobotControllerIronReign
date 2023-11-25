@@ -9,8 +9,10 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Twist2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
@@ -79,14 +81,20 @@ public class Autonomous implements TelemetryProvider {
         futureTimer = 0;
         targetIndex = visionProvider.getMostFrequentPosition().getIndex() + 1;
 
+        Pose2d pose = robot.driveTrain.pose;
+
+        Pose2d stageOnePosition = P2D(pose.position.y + (STAGE_ONE_GRID_DISTANCE * FIELD_INCHES_PER_GRID), pose.position.x, STAGE_ONE_HEADING);
+
+//        Pose2d stageTwoPosition = stageOnePosition.plus(new Twist2d(new Vector2d()))
+
         redLeftStageOne = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .lineToYLinearHeading(STAGE_ONE_GRID_DISTANCE * FIELD_INCHES_PER_GRID, STAGE_ONE_HEADING)
+                        .lineToYLinearHeading(stageOnePosition.position.y, stageOnePosition.heading)
                         .build());
 
 //        redLeftStageTwo = new SequentialAction(
 //                robot.driveTrain.actionBuilder(new )
-//                        .lineToX()
+//
 //        )
 
 

@@ -77,8 +77,6 @@ public class DriverControls {
         if (stickyGamepad1.b) {
             robot.intake.switchBeaterBarDirection();
         }
-        if(stickyGamepad1.dpad_right)
-            robot.driveTrain.line();
 
 
         if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||

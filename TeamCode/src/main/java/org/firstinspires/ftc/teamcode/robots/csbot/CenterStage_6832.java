@@ -146,7 +146,6 @@ public class CenterStage_6832 extends OpMode {
         dashboard = FtcDashboard.getInstance();
         dashboard.setTelemetryTransmissionInterval(25);
         telemetry.setMsTransmissionInterval(25);
-        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         //TODO - Differentiate between debug and non debug telemetry
         if (debugTelemetryEnabled) {
 
