@@ -1,37 +1,27 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
-
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
-import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
-import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.VoltageSensor;
-import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
-import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.LynxModuleUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Config(value = "CS_ROADRUNNER")
 public class CSDriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
+    public boolean actionStarted = false;
     public boolean trajectoryIsActive;
+    SequentialAction line;
 
 
     public CSDriveTrain(HardwareMap hardwareMap, Robot robot, boolean simulated) {
@@ -39,6 +29,12 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
         this.robot = robot;
         trajectoryIsActive = false;
 //      TODO - implement simulations
+
+        line = new SequentialAction(
+                actionBuilder(pose)
+                        .lineToX(pose.position.y - (Constants.FIELD_INCHES_PER_GRID * 2))
+                        .build()
+        );
     }
     //end constructor
 
@@ -60,15 +56,8 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
         updatePoseEstimate();
     }
 
-    public void line() {
-        Pose2d startPosition = pose;
-        Actions.runBlocking(
-                new SequentialAction(
-                        actionBuilder(pose)
-                                .lineToX(startPosition.position.x-(Constants.FIELD_INCHES_PER_GRID*2.5))
-                                .build()
-                )
-        );
+    public boolean line() {
+        return !line.run(new TelemetryPacket());
     }
     public void strafe() {
         Pose2d startPosition = pose;
@@ -85,7 +74,7 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
     }
 
     public void setPose(Constants.Position start) {
-
+        pose = start.getPose();
     }
 
     @Override

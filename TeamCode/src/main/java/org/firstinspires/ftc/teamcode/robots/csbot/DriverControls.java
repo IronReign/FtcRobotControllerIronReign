@@ -10,6 +10,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.vision
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.juiceDriveTrain;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.wingIntakeIndex;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionOn;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 
@@ -94,8 +95,9 @@ public class DriverControls {
             robot.outtake.moveSlide(5);
         if (gamepad1.left_bumper)
             robot.outtake.moveSlide(-5);
-        if(stickyGamepad1.guide) {
-            robot.articulate(Robot.Articulation.WING_INTAKE);
+
+        if(stickyGamepad1.left_stick_button) {
+            visionOn = !visionOn;
         }
 
         if (gamepad1.y)

@@ -97,8 +97,7 @@ public class Autonomous implements TelemetryProvider {
                 autonIndex++;
                 break;
             case 1:
-                robot.driveTrain.line();
-                futureTimer = futureTime(4);
+                if(robot.driveTrain.line())
                 autonIndex++;
             break;
             case 2:
