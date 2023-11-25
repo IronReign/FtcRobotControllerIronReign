@@ -15,7 +15,6 @@ import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Autobot;
 @Config("BoboAutoVariables")
 @Autonomous(name = "BoboAuto")
 public class BoboAuto extends OpMode {
-
     Autobot autobot;
     Auton autonomous;
     DriveTile driveTile;
@@ -35,11 +34,9 @@ public class BoboAuto extends OpMode {
 
     @Override
     public void start() {
-        autonomous.add(new Mechanisms(autobot, 1));
-        autonomous.add(new Mechanisms(autobot, 2));
-        autonomous.add(new Mechanisms(autobot, 3));
+        autonomous.add(new Mechanisms(autobot));
         autonomous.add(new DriveTile(autobot, 1));
-        autonomous.add(new TurnTile(autobot, 180));
+        autonomous.add(new TurnTile(autobot, -90));
         autonomous.add(new DriveTile(autobot, 1));
         autonomous.add(new DriveTile(autobot, -1));
         autonomous.add(new StrafeTile(autobot, 1));
@@ -52,6 +49,5 @@ public class BoboAuto extends OpMode {
         autonomous.telemetryOutput();
         autonomous.runBehaviors();
         dashTelemetry.update();
-
     }
 }

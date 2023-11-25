@@ -22,8 +22,11 @@ public class AutoClaw {
     }
     public void telemetryOutput() {
         telemetry.addData("Claw Position \t", Utils.servoDenormalize(clawSpan.getPosition()));
+        telemetry.addData("Claw Values \t", clawSpan.getPosition());
+        telemetry.addData("Arm Speed \t", clawArm.getVelocity());
         telemetry.addData("Claw Arm Position \t", clawArm.getCurrentPosition());
         telemetry.addData("Claw Wrist Position \t", Utils.servoDenormalize(clawWrist.getPosition()));
+        telemetry.addData("Arm Target \t", clawArm.getTargetPosition());
     }
     public void openAuto() {
         clawSpan.setPosition(OPENCLAW);
@@ -31,14 +34,13 @@ public class AutoClaw {
 
     public void closeAuto() {
         clawSpan.setPosition(CLOSECLAW);
-
     }
 
     public void gripInit() {
         clawArm = this.hardwareMap.get(DcMotorEx.class, "clawArm");
         clawSpan = this.hardwareMap.get(Servo.class, "clawSpan");
         clawWrist = this.hardwareMap.get(Servo.class, "clawWrist");
-        closeAuto();
+        //closeAuto();
         //clawArm.setDirection(DcMotor.Direction.REVERSE);
         //clawArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         //clawArm.setPower(1);

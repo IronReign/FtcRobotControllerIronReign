@@ -10,7 +10,6 @@ import org.firstinspires.ftc.teamcode.robots.bobobot.AutoSystems.AutoDrive;
 public class Autobot {
     Telemetry telemetry;
     public AutoDrive drive;
-
     public AutoClaw grip;
 
     public Autobot(MultipleTelemetry telemetry, HardwareMap hardwareMap)
