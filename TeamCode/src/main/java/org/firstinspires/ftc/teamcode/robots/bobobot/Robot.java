@@ -6,7 +6,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 
 public class Robot {
-        Telemetry telemetry;
+
+    Telemetry telemetry;
         DriveTrain driveTrain;
         Drone droneLaunch;
         IntakeClaw claw;

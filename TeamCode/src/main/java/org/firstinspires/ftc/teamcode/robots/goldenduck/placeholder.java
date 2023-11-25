@@ -29,7 +29,7 @@
 //
 //
 //    DriveTrain driveTrain;
-
+//
 //    @Override
 //    public void init() {
 //        driveTrain = new DriveTrain(telemetry, hardwareMap);
@@ -157,6 +157,8 @@
 //            clawWrist.setPosition(servoNormalize(1221));
 //        }
 //    }
+//
+//}
 //    public void setServoRailgun() {
 //        telemetry.addData("servo position", servoRailgun.getPosition());
 //        if (gamepad1.dpad_up) {
@@ -164,10 +166,4 @@
 //        }
 //
 //        if (gamepad1.dpad_down) {
-//            servoRailgun.setPosition(servoNormalize(1825));
-//        }
-//
-//    }
-//}
-//
-//}
+//            servoRailgun.setPosition(servoNormalize(1825))
