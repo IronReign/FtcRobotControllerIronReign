@@ -6,7 +6,7 @@ import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Autobot;
 public class Mechanisms extends Assign {
     private Autobot autobot;
     private int instance;
-    public Mechanisms(Autobot autobot, int instance){
+    public Mechanisms(Autobot autobot){
         this.autobot = autobot;
         this.instance = instance;
         delta = 0;
@@ -17,18 +17,9 @@ public class Mechanisms extends Assign {
     }
     @Override
     public boolean run(){
-        if(instance == 1){
-            autobot.grip.autoWristDown();
-            return false;
-        }
-        else if(instance == 2){
-            autobot.grip.autoOpen();
-            return false;
-        }
-        else if(instance == 3){
-            autobot.grip.autoClose();
-            return false;
-        }
+        autobot.grip.autoWristDown();
+        autobot.grip.autoOpen();
+        autobot.grip.autoClose();
         return false;
     }
 }
