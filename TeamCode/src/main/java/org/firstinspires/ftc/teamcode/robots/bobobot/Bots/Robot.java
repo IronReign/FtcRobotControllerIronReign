@@ -23,11 +23,7 @@ public class Robot {
             droneInit();
             intakeClawInit();
         }
-        public void motorInit()
-        {
-            driveTrain.motorInit();
-
-        }
+        public void motorInit() {driveTrain.motorInit();}
         public void droneInit()
         {
             droneLaunch.droneInit();
