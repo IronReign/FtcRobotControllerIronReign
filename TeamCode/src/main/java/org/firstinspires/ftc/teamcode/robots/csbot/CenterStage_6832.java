@@ -92,8 +92,8 @@ public class CenterStage_6832 extends OpMode {
 
     //CONSTANTS FOR GAME
     public static boolean DEFAULT_DEBUG_TELEMETRY_ENABLED = false;
-    public static Constants.Alliance alliance = Constants.Alliance.BLUE;
-    public static Constants.Position startingPosition = Constants.Position.START_RIGHT_RED;
+    public static Constants.Alliance alliance = Constants.Alliance.RED;
+    public static Constants.Position startingPosition = Constants.Position.START_LEFT_RED;
     long startTime;
 
 
@@ -146,7 +146,6 @@ public class CenterStage_6832 extends OpMode {
         dashboard = FtcDashboard.getInstance();
         dashboard.setTelemetryTransmissionInterval(25);
         telemetry.setMsTransmissionInterval(25);
-        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         //TODO - Differentiate between debug and non debug telemetry
         if (debugTelemetryEnabled) {
 
@@ -173,6 +172,7 @@ public class CenterStage_6832 extends OpMode {
         telemetry.addData("Side", startingPosition);
         telemetry.addData("initPositionIndex", Robot.initPositionIndex);
         robot.initLoopVision();
+        update();
     }
     //end init_loop()
 

@@ -33,6 +33,7 @@ public class Robot implements Subsystem {
     public CSDriveTrain driveTrain;
     public Intake intake;
     public VisionProvider visionProviderBack = null;
+    public static boolean visionOn = true;
     public Outtake outtake;
     //TODO - create a field
 //    public Field field;
@@ -108,6 +109,16 @@ public class Robot implements Subsystem {
         deltaTime = (System.nanoTime() - lastTime) / 1e9;
         lastTime = System.nanoTime();
 
+        if(visionOn) {
+            if (!visionProviderFinalized) {
+                createVisionProvider();
+                visionProviderBack.initializeVision(hardwareMap, this);
+                visionProviderFinalized = true;
+
+            }
+            visionProviderBack.update();
+        }
+
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         articulate(articulation);
@@ -139,10 +150,12 @@ public class Robot implements Subsystem {
     }
 
     public void switchVisionProviders() {
+        visionProviderBack.shutdownVision();
         if(visionProviderIndex == 2){
             //switch to AprilTags
             visionProviderIndex = 0;
             visionProviderFinalized = false;
+
         }
         else if (visionProviderIndex == 0) {
             //switch back to ColorBlob
@@ -153,12 +166,7 @@ public class Robot implements Subsystem {
 
 //    TODO - THIS IS AWFUL, NEEDS TO BE RIPPED OUT
     public void initLoopVision() {
-        if (!visionProviderFinalized) {
-            visionProviderBack.initializeVision(hardwareMap, this);
-            visionProviderFinalized = true;
 
-        }
-        visionProviderBack.update();
     }
 
     public static int initPositionIndex = 0;
