@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot;
 
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Autobot;
 
@@ -10,12 +12,11 @@ public class Auton {
     Queue<Assign> actions;
     Autobot autobot;
     Telemetry telemetry;
-    public Auton(Autobot autobot, Telemetry telemetry){
+    public Auton(Autobot autobot, MultipleTelemetry telemetry){
         actions = new LinkedList<Assign>();
         this.autobot = autobot;
         this.telemetry = telemetry;
     }
-
     public void telemetryOutput(){
         telemetry.addData("Queue Size \t", acts());
         telemetry.addData("Error \t", getEachDelta() - autobot.drive.getMotorAvgPosition());

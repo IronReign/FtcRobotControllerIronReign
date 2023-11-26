@@ -14,7 +14,12 @@ public class TurnTile extends Assign {
     }
     public TurnTile(Autobot autobot, double degrees){
         this.autobot = autobot;
-        this.degrees = degrees;
+        if(degrees < 0){
+            this.degrees = degrees + 360;
+        }
+        else {
+            this.degrees = degrees;
+        }
         delta = autobot.drive.getMotorAvgPosition() + Math.abs((degrees/90)*TICKSPER90);
     }
 
