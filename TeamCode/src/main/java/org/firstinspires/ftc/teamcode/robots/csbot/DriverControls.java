@@ -1,16 +1,14 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.active;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
-import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionProviderIndex;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.juiceDriveTrain;
-import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.wingIntakeIndex;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionOn;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionProviderIndex;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 
@@ -44,12 +42,7 @@ public class DriverControls {
         if(stickyGamepad1.a) {
             CenterStage_6832.initPosition = true;
         }
-        if (!gamepad1.atRest()) {
-            telemetry.addData("gamepad1", "not zeroed");
-        }
-        if (!gamepad2.atRest()) {
-            telemetry.addData("gamepad2", "not zeroed");
-        }
+
         if(stickyGamepad1.guide) {
             robot.initPositionIndex ++;
         }
@@ -167,15 +160,12 @@ public class DriverControls {
 
         if (stickyGamepad1.dpad_left || stickyGamepad2.dpad_left)
             startingPosition = alliance == Constants.Alliance.RED ? Constants.Position.START_LEFT_RED : Constants.Position.START_LEFT_BLUE;
+
         if (stickyGamepad1.dpad_right || stickyGamepad2.dpad_right)
             startingPosition = alliance == Constants.Alliance.RED ? Constants.Position.START_RIGHT_RED : Constants.Position.START_RIGHT_BLUE;
 
         if (stickyGamepad1.dpad_up || stickyGamepad2.dpad_up)
             debugTelemetryEnabled = !debugTelemetryEnabled;
-
-        if (stickyGamepad1.dpad_down) {
-            robot.articulate(Robot.Articulation.CALIBRATE);
-        }
     }
 
     public void handleVisionProviderSwitch() {

@@ -3,10 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -158,10 +155,9 @@ public class CenterStage_6832 extends OpMode {
 
     public void init_loop() {
         dc.init_loop();
-        if(initPosition) {
-            robot.update(new Canvas());
-            robot.initPosition();
-        }
+        robot.updateVision();
+        robot.driveTrain.setPose(startingPosition);
+        robot.driveTrain.updatePoseEstimate();
 
         telemetry.addData("visionProviderIndex", Robot.visionProviderIndex);
         telemetry.addData("blobLocation", robot.visionProviderBack.getMostFrequentPosition().getIndex());
@@ -171,15 +167,12 @@ public class CenterStage_6832 extends OpMode {
         telemetry.addData("Alliance", alliance);
         telemetry.addData("Side", startingPosition);
         telemetry.addData("initPositionIndex", Robot.initPositionIndex);
-        robot.initLoopVision();
         update();
     }
     //end init_loop()
 
     @Override
     public void start() {
-        robot.driveTrain.setPose(startingPosition);
-        robot.intake.articulate(Intake.Articulation.MANUAL);
         startTime = System.currentTimeMillis();
         lastLoopClockTime = System.nanoTime();
 
@@ -221,7 +214,7 @@ public class CenterStage_6832 extends OpMode {
 
             switch(gameState) {
                 case AUTONOMOUS:
-                    auton.execute();
+                    auton.execute(dashboard);
                     break;
 
                 case TELE_OP:

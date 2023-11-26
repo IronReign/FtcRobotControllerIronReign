@@ -31,15 +31,14 @@ public class Intake implements Subsystem {
     public static boolean precisionBeaterBar = false;
     public boolean manualBeaterBarEject = false;
     public boolean manualBeaterBarOn = false;
-    public static double BEATER_BAR_ADJUST_SPEED = 2;
     public static double BEATER_BAR_INTAKE_VELOCITY = 1800;
     public static double BEATER_BAR_EJECT_VELOCITY = -700;
     public static int BEATER_BAR_ANGLE_CONTROLLER_HOME = 1350;
 
-    public static int angleControllerTicks = 1011;
+    public int angleControllerTicks = 1800;
     public static int BEATER_BAR_FOLD_ANGLE = 1800;
     public static int BEATER_BAR_WING_ANGLE = 1011;
-    public static int BEATER_BAR_EJECT_ANGLE = 1101;
+    public static int BEATER_BAR_EJECT_ANGLE = 1051;
 
 
     public enum Articulation {

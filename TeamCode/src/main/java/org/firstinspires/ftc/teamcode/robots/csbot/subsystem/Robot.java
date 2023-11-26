@@ -1,18 +1,19 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
-
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
@@ -21,8 +22,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 
 @Config(value = "AA_CSRobot")
@@ -67,8 +66,11 @@ public class Robot implements Subsystem {
 
     }
 
-    public void start() {
+    public void  start() {
         //TODO - articulate starting position
+        if(gameState.isAutonomous()) {
+            intake.setAngleControllerTicks(1600);
+        }
         articulation = Articulation.MANUAL;
     }
     //end start
@@ -109,15 +111,6 @@ public class Robot implements Subsystem {
         deltaTime = (System.nanoTime() - lastTime) / 1e9;
         lastTime = System.nanoTime();
 
-        if(visionOn) {
-            if (!visionProviderFinalized) {
-                createVisionProvider();
-                visionProviderBack.initializeVision(hardwareMap, this);
-                visionProviderFinalized = true;
-
-            }
-            visionProviderBack.update();
-        }
 
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
@@ -136,6 +129,18 @@ public class Robot implements Subsystem {
         }
     }
     //end update
+
+    public void updateVision() {
+        if(visionOn) {
+            if (!visionProviderFinalized) {
+                createVisionProvider();
+                visionProviderBack.initializeVision(hardwareMap, this);
+                visionProviderFinalized = true;
+
+            }
+            visionProviderBack.update();
+        }
+    }
 
     private static void drawRobot(Canvas c, Pose2d t) {
         final double ROBOT_RADIUS = 9;
@@ -164,10 +169,7 @@ public class Robot implements Subsystem {
         }
     }
 
-//    TODO - THIS IS AWFUL, NEEDS TO BE RIPPED OUT
-    public void initLoopVision() {
 
-    }
 
     public static int initPositionIndex = 0;
     public long initPositionTimer;
