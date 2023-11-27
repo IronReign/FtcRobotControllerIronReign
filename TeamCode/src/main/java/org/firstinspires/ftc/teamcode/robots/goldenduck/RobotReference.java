@@ -9,7 +9,6 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 public class RobotReference {
     Telemetry telemetry;
     Railgun droneShot;
-    DriveTrain driveTrain;
     public RobotReference(Telemetry telemetry, HardwareMap hardwareMap)
     {
         this.telemetry=telemetry;
