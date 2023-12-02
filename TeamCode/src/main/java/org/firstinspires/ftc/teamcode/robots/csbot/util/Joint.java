@@ -25,8 +25,7 @@ public class Joint {
     //todo: add servo feedback functionality
     //todo if necessary: cap min and max speed for another safety layer after testing
 
-    public Joint(HardwareMap hardwareMap, String name, boolean simulated, double HOME, double PER_DEGREE, double MIN, double MAX, double startAngle, double speed)
-    {
+    public Joint(HardwareMap hardwareMap, String name, boolean simulated, double HOME, double PER_DEGREE, double MIN, double MAX, double startAngle, double speed) {
         this.name = name;
         HOME_PWM = HOME;
         PWM_PER_DEGREE = PER_DEGREE;

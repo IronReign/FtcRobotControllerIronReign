@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.robots.csbot.util.Joint;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 
 import java.util.LinkedHashMap;
@@ -21,6 +22,7 @@ public class Outtake implements Subsystem {
 
     private DcMotorEx slide = null;
     private Servo pixelFlipper = null;
+    public Joint flipper;
 
     public static int flipperPosition = 1888;
 
@@ -33,8 +35,18 @@ public class Outtake implements Subsystem {
     public static int UNTUCK_SLIDE_POSITION = 0;
     public static int FLIPPERINTAKEPOSITION = 1888;
     public static int FLIPPER_INIT_POSITION = 1439;
-    public static int FLIPPERCLEARANCEPOSITION = 1900;
-    public static int FLIPPERSCOREPOSITION = 750;
+
+    public static boolean TEMP_FLIPPER_TUNE = false;
+
+    //FLIPPER JOINT VARIABLES
+    public static int FLIPPER_HOME_POSITION = 1888;
+    public static double FLIPPER_PWM_PER_DEGREE = 7.35;
+    public static double FLIPPER_START_ANGLE = 0.1;
+    //IN DEGREES PER SECOND
+    public static double FLIPPER_JOINT_SPEED = 2;
+
+    public static double FLIPPER_MIN_ANGLE = 1;
+    public static double FLIPPER_MAX_ANGLE = 62.8571428571;
     private boolean flipped = false;
 
     public Articulation articulate(Articulation articulation) {
@@ -65,6 +77,7 @@ public class Outtake implements Subsystem {
     public Outtake(HardwareMap hardwareMap, Robot robot) {
         this.hardwareMap = hardwareMap;
         this.robot = robot;
+//        flipper = new Joint(hardwareMap, "pixelFlipper", false, FLIPPER_HOME_POSITION, FLIPPER_PWM_PER_DEGREE, FLIPPER_MIN_ANGLE, FLIPPER_MAX_ANGLE, FLIPPER_START_ANGLE, FLIPPER_JOINT_SPEED);
 
         slide = this.hardwareMap.get(DcMotorEx.class, "slide");
         slide.setMotorEnable();
@@ -109,7 +122,10 @@ public class Outtake implements Subsystem {
     }
 
 
+public void flipperTest(){
 
+    flipper.setTargetAngle(flipper.getCurrentAngle() + 1);
+}
 
 
 
@@ -149,6 +165,8 @@ public class Outtake implements Subsystem {
         telemetryMap.put("slide actual position", slide.getCurrentPosition());
         telemetryMap.put("flipper location", Utils.servoDenormalize(pixelFlipper.getPosition()));
         telemetryMap.put("flipper ticks", flipperPosition);
+        telemetryMap.put("flipper angle", flipper.getCurrentAngle());
+        telemetryMap.put("flipper target angle", flipper.getTargetAngle());
         return telemetryMap;
     }
 
