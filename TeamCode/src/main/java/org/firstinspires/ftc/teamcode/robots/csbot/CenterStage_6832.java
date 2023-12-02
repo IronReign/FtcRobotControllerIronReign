@@ -120,6 +120,7 @@ public class CenterStage_6832 extends OpMode {
         active = true;
         initializing = true;
         debugTelemetryEnabled = DEFAULT_DEBUG_TELEMETRY_ENABLED;
+        auton.build();
 
         //INITIALIZE TIMING
         loopTimeSmoother = new ExponentialSmoother(AVERAGE_LOOP_TIME_SMOOTHING_FACTOR);
@@ -180,7 +181,7 @@ public class CenterStage_6832 extends OpMode {
 //        resetGame();
 
         if(gameState.equals(GameState.AUTONOMOUS)){
-            auton.build();
+            auton.pickAutonToRun();
         }
 
         if(gameState.equals(GameState.TELE_OP)){
@@ -231,7 +232,7 @@ public class CenterStage_6832 extends OpMode {
                     break;
 
                 case MANUAL_DIAGNOSTIC:
-
+                    dc.manualDiagnosticMethods();
                     break;
 
                 case SQUARE:

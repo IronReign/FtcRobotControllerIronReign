@@ -57,12 +57,33 @@ public class DriverControls {
         stickyGamepad2.update();
     }
 
-    public void joystickDrive() {
-        if (gamepad1.right_trigger > .1) {
-            robot.intake.adjustBeaterBarAngle(gamepad1.right_trigger);
+    public void manualDiagnosticMethods() {
+        if(gamepad1.right_bumper) {
+            robot.outtake.flipperTest();
         }
+
+        if(gamepad1.guide) {
+            robot.articulate(Robot.Articulation.WING_INTAKE);
+        }
+
+        if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
+                Math.abs( gamepad1.left_stick_y) > DEADZONE ||
+                Math.abs( gamepad1.right_stick_x ) > DEADZONE) {
+            if (!juiceDriveTrain)
+                robot.driveTrain.drive(gamepad1.left_stick_x * PRECISION_DRIVE_MULTIPLIER, gamepad1.left_stick_y * PRECISION_DRIVE_MULTIPLIER, -gamepad1.right_stick_x * PRECISION_TURN_MULTIPLIER);
+            else
+                robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+        }
+        else robot.driveTrain.drive(0, 0, 0);
+
+    }
+
+    public void joystickDrive() {
         if (gamepad1.left_trigger > .1) {
-            robot.intake.adjustBeaterBarAngle(-gamepad1.left_trigger);
+            robot.intake.adjustBeaterBarAngle(gamepad1.right_trigger*.85);
+        }
+        if (gamepad1.right_trigger > .1) {
+            robot.intake.adjustBeaterBarAngle(-gamepad1.left_trigger*.85);
         }
         if (stickyGamepad1.a) {
             robot.intake.toggleBeaterBar();
@@ -82,9 +103,9 @@ public class DriverControls {
         }
         else robot.driveTrain.drive(0, 0, 0);
 
-        if (gamepad1.right_bumper)
-            robot.outtake.moveSlide(5);
         if (gamepad1.left_bumper)
+            robot.outtake.moveSlide(5);
+        if (gamepad1.right_bumper)
             robot.outtake.moveSlide(-5);
 
         if(stickyGamepad1.left_stick_button) {

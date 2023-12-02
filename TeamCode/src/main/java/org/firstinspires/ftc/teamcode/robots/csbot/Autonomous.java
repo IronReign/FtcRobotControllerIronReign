@@ -52,7 +52,13 @@ public class Autonomous implements TelemetryProvider {
 
     public static int targetIndex = 1;
 
-    private Action redLeftStageOne, redLeftStageTwo, redLeftStageThree;
+    private Action
+            redLeftStageOne, redLeftStageTwo,
+            blueLeftStageOne, blueLeftStageTwo,
+            blueRightStageOne, blueRightStageTwo,
+            redRightStageOne, redRightStageTwo;
+
+    private Action stageOneToRun, stageTwoToRun;
 
     // misc. routines
     public StateMachine backAndForth, square, turn;
@@ -66,13 +72,23 @@ public class Autonomous implements TelemetryProvider {
     Pose2d blueRightStageOnePosition;
     Pose2d blueRightStageTwoPosition;
 
-    public static double STAGE_ONE_Y_COORDINATE = -.5;
+    Pose2d blueLeftStageOnePosition;
+    Pose2d blueLeftStageTwoPosition;
+
+    Pose2d redRightStageOnePosition;
+    Pose2d redRightStageTwoPosition;
+
+    Pose2d redLeftStageOnePosition;
+    Pose2d redLeftStageTwoPosition;
+
+    //BASED ON BLUE_RIGHT_START
+    public static double STAGE_ONE_Y_COORDINATE = .5;
 
     public static double STAGE_TWO_X_COORDINATE = -2.5;
     public static double STAGE_TWO_HEADING = 45;
 
-    public static double STAGE_ONE_HEADING = -90;
-    public static double BACKSTAGE_POSITION_OFFSET = 2;
+    public static double STAGE_ONE_HEADING = 90;
+    public static double BACKSTAGE_X_POSITION_OFFSET = 2.5;
 
     public void build() {
         autonIndex = 0;
@@ -81,29 +97,88 @@ public class Autonomous implements TelemetryProvider {
 
         Pose2d pose = startingPosition.getPose();
 
-        blueRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, -STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
-        blueRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y, -STAGE_TWO_HEADING);
+        blueRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, pose.heading.log());
+        blueRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y, STAGE_TWO_HEADING);
 
-//        redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, -STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
-//        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y, STAGE_TWO_HEADING);
+        blueLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, pose.heading.log());
+        blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET, blueRightStageOnePosition.position.y, STAGE_TWO_HEADING + 90);
 
+        redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, -STAGE_ONE_Y_COORDINATE, pose.heading.log());
+        redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y, -STAGE_TWO_HEADING);
+
+        redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, -STAGE_ONE_Y_COORDINATE, pose.heading.log());
+        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET, blueRightStageOnePosition.position.y, -STAGE_TWO_HEADING - 90);
+
+        //
         redLeftStageOne = new SequentialAction(
+                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                        .lineToYLinearHeading(redLeftStageOnePosition.position.y, redLeftStageOnePosition.heading)
+                        .build()
+        );
+        redLeftStageTwo = new SequentialAction(
+                robot.driveTrain.actionBuilder(redLeftStageOnePosition)
+                        .lineToXLinearHeading(redLeftStageTwoPosition.position.x, redLeftStageTwoPosition.heading)
+                        .build()
+        );
+        //
+
+        //
+        redRightStageOne = new SequentialAction(
+                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                        .lineToYLinearHeading(redRightStageOnePosition.position.y, redRightStageOnePosition.heading)
+                        .build()
+        );
+        redRightStageTwo = new SequentialAction(
+                robot.driveTrain.actionBuilder(redRightStageOnePosition)
+                        .lineToXLinearHeading(redRightStageTwoPosition.position.x, redRightStageTwoPosition.heading)
+                        .build()
+        );
+        //
+
+        //
+        blueLeftStageOne = new SequentialAction(
+                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                        .lineToYLinearHeading(blueLeftStageOnePosition.position.y, blueLeftStageOnePosition.heading)
+                        .build()
+        );
+        blueLeftStageTwo = new SequentialAction(
+                robot.driveTrain.actionBuilder(blueLeftStageOnePosition)
+                        .lineToXLinearHeading(blueLeftStageTwoPosition.position.x, blueLeftStageTwoPosition.heading)
+                        .build()
+        );
+        //
+
+        //
+        blueRightStageOne = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
                         .lineToYLinearHeading(blueRightStageOnePosition.position.y, blueRightStageOnePosition.heading)
                         .build()
         );
-        redLeftStageTwo = new SequentialAction(
+        blueRightStageTwo = new SequentialAction(
                 robot.driveTrain.actionBuilder(blueRightStageOnePosition)
-                        .lineToXLinearHeading(blueRightStageTwoPosition.position.x, blueRightStageTwoPosition.heading)
+                        .lineToXLinearHeading(blueRightStageTwoPosition.position.x, blueLeftStageTwoPosition.heading)
                         .build()
         );
+        //
+    }
 
-//        redLeftStageTwo = new SequentialAction(
-//                robot.driveTrain.actionBuilder(new )
-//
-//        )
-
-
+    public void pickAutonToRun() {
+        if(startingPosition == Constants.Position.START_LEFT_BLUE) {
+            stageOneToRun = blueLeftStageOne;
+            stageTwoToRun = blueLeftStageTwo;
+        }
+        else if(startingPosition == Constants.Position.START_RIGHT_BLUE) {
+            stageOneToRun = blueRightStageOne;
+            stageTwoToRun = blueRightStageTwo;
+        }
+        else if(startingPosition == Constants.Position.START_LEFT_RED) {
+            stageOneToRun = redLeftStageOne;
+            stageTwoToRun = redLeftStageTwo;
+        }
+        else {
+            stageOneToRun = redRightStageOne;
+            stageTwoToRun = redRightStageTwo;
+        }
     }
 
 
@@ -111,22 +186,22 @@ public class Autonomous implements TelemetryProvider {
     public static long futureTimer;
     public static int EJECT_WAIT_TIME = 4;
 
+
     public void execute(FtcDashboard dashboard) {
         TelemetryPacket packet = new TelemetryPacket();
 
-        if (alliance == Constants.Alliance.RED) {
             switch (autonIndex) {
                 case 0:
                     autonIndex++;
                     break;
                 case 1:
-                    if (!redLeftStageOne.run(packet)) {
+                    if (!stageOneToRun.run(packet)) {
                         robot.intake.setAngleControllerTicks(Intake.BEATER_BAR_EJECT_ANGLE);
                         autonIndex++;
                     }
                     break;
                 case 2:
-                    if (!redLeftStageTwo.run(packet)) {
+                    if (!stageTwoToRun.run(packet)) {
                         futureTimer = futureTime(EJECT_WAIT_TIME);
                         autonIndex++;
                     }
@@ -142,9 +217,6 @@ public class Autonomous implements TelemetryProvider {
                     break;
 
             }
-
-
-        }
         dashboard.sendTelemetryPacket(packet);
     }
 

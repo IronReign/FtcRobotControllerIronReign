@@ -77,15 +77,14 @@ public class Outtake implements Subsystem {
     public Outtake(HardwareMap hardwareMap, Robot robot) {
         this.hardwareMap = hardwareMap;
         this.robot = robot;
-//        flipper = new Joint(hardwareMap, "pixelFlipper", false, FLIPPER_HOME_POSITION, FLIPPER_PWM_PER_DEGREE, FLIPPER_MIN_ANGLE, FLIPPER_MAX_ANGLE, FLIPPER_START_ANGLE, FLIPPER_JOINT_SPEED);
-
+        flipper = new Joint(hardwareMap, "pixelFlipper", false, FLIPPER_HOME_POSITION, FLIPPER_PWM_PER_DEGREE, FLIPPER_MIN_ANGLE, FLIPPER_MAX_ANGLE, FLIPPER_START_ANGLE, FLIPPER_JOINT_SPEED);
         slide = this.hardwareMap.get(DcMotorEx.class, "slide");
         slide.setMotorEnable();
         slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         slide.setTargetPosition(0);
         slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slide.setPower(1);
-        pixelFlipper = this.hardwareMap.get(Servo.class, "pixelFlipper");
+//        pixelFlipper = this.hardwareMap.get(Servo.class, "pixelFlipper");
 
         articulation = Articulation.MANUAL;
     }
@@ -123,8 +122,11 @@ public class Outtake implements Subsystem {
 
 
 public void flipperTest(){
-
-    flipper.setTargetAngle(flipper.getCurrentAngle() + 1);
+    if(TEMP_FLIPPER_TUNE) {
+        flipper.setTargetAngle(flipper.getCurrentAngle() + 1);
+    }
+    else
+        flipper.setTargetAngle(flipper.getCurrentAngle() - 1);
 }
 
 
@@ -150,6 +152,7 @@ public void flipperTest(){
                 articulation = Articulation.MANUAL;
             }
         }
+        flipper.update();
     }
 
     @Override
