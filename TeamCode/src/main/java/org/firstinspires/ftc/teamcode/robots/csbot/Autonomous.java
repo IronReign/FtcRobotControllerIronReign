@@ -1,9 +1,10 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.Position;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -11,37 +12,22 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
-import com.acmerobotics.roadrunner.Twist2d;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
-import org.firstinspires.ftc.teamcode.statemachine.SingleState;
-import org.firstinspires.ftc.teamcode.statemachine.Stage;
 import org.firstinspires.ftc.teamcode.statemachine.StateMachine;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 
 @Config (value = "AA_CS_Auton")
 public class Autonomous implements TelemetryProvider {
-    public enum AutonState {
-        INITIAL_DRIVEANDTURN,
-        SCAN_FOR_APRILTAG,
-        SCORE,
-        TRAVEL
 
-    }
     public VisionProvider visionProvider;
-    public AutonState autonState = AutonState.INITIAL_DRIVEANDTURN;
     private Robot robot;
     private HardwareMap hardwareMap;
 
@@ -50,6 +36,8 @@ public class Autonomous implements TelemetryProvider {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("autonIndex", autonIndex);
         telemetryMap.put("targetIndex", targetIndex);
+        telemetryMap.put("stageoneposition", blueStageOnePosition == null? "null" : blueStageOnePosition.position.y);
+        telemetryMap.put("deltaposition", (blueStageOnePosition == null || robot.driveTrain.pose == null)? "null" : robot.driveTrain.pose.position.y - blueStageOnePosition.position.y);
         return telemetryMap;
     }
 
@@ -73,24 +61,36 @@ public class Autonomous implements TelemetryProvider {
         this.visionProvider = robot.visionProviderBack;
     }
 
-    public static int STAGE_ONE_GRID_DISTANCE = 2;
-    public static int STAGE_ONE_HEADING = -45;
+    Pose2d blueStageOnePosition;
+    Pose2d blueStageTwoPosition;
+
+    public static double STAGE_ONE_Y_COORDINATE = .5;
+
+    public static double STAGE_TWO_Y_COORDINATE = -2.5;
+    public static double STAGE_TWO_HEADING = 45;
+
+    public static double STAGE_ONE_HEADING = 90;
 
     public void build() {
         autonIndex = 0;
         futureTimer = 0;
         targetIndex = visionProvider.getMostFrequentPosition().getIndex() + 1;
 
-        Pose2d pose = robot.driveTrain.pose;
+        Pose2d pose = startingPosition.getPose();
 
-        Pose2d stageOnePosition = P2D(pose.position.y + (STAGE_ONE_GRID_DISTANCE * FIELD_INCHES_PER_GRID), pose.position.x, STAGE_ONE_HEADING);
-
-//        Pose2d stageTwoPosition = stageOnePosition.plus(new Twist2d(new Vector2d()))
+        blueStageOnePosition = P2D( pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE , STAGE_ONE_HEADING);
+        blueStageTwoPosition = P2D(STAGE_TWO_Y_COORDINATE, blueStageOnePosition.position.y, STAGE_TWO_HEADING);
 
         redLeftStageOne = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .lineToYLinearHeading(stageOnePosition.position.y, stageOnePosition.heading)
-                        .build());
+                        .lineToYLinearHeading(blueStageOnePosition.position.y, blueStageOnePosition.heading)
+                        .build()
+        );
+        redLeftStageTwo = new SequentialAction(
+                robot.driveTrain.actionBuilder(blueStageOnePosition)
+                        .lineToXLinearHeading(blueStageTwoPosition.position.x, blueStageTwoPosition.heading)
+                        .build()
+        );
 
 //        redLeftStageTwo = new SequentialAction(
 //                robot.driveTrain.actionBuilder(new )
@@ -103,9 +103,9 @@ public class Autonomous implements TelemetryProvider {
 
     public static int autonIndex;
     public static long futureTimer;
-    public static int EJECT_WAIT_TIME;
+    public static int EJECT_WAIT_TIME = 4;
 
-    public void execute() {
+    public void execute(FtcDashboard dashboard) {
         TelemetryPacket packet = new TelemetryPacket();
 
         switch (autonIndex) {
@@ -115,27 +115,29 @@ public class Autonomous implements TelemetryProvider {
             case 1:
                 if(!redLeftStageOne.run(packet)) {
                     robot.intake.setAngleControllerTicks(Intake.BEATER_BAR_EJECT_ANGLE);
-                    robot.intake.ejectBeaterBar();
-                    futureTimer = futureTime(EJECT_WAIT_TIME);
                     autonIndex++;
                 }
             break;
             case 2:
+                if(!redLeftStageTwo.run(packet)) {
+                    futureTimer = futureTime(EJECT_WAIT_TIME);
+                    autonIndex ++;
+                }
+                break;
+            case 3:
+                robot.intake.ejectBeaterBar();
                 if(isPast(futureTimer))
                 {
                     robot.intake.beaterBarOff();
                     autonIndex++;
                 }
                 break;
-            case 3:
-                autonIndex++;
-                break;
             case 4:
                 break;
 
         }
 
-        FtcDashboard.getInstance().sendTelemetryPacket(packet);
+        dashboard.sendTelemetryPacket(packet);
     }
 
 

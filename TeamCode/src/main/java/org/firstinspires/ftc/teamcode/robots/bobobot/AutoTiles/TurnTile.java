@@ -27,6 +27,7 @@ public class TurnTile extends Assign {
     public boolean run(){
         if(autobot.drive.getMotorAvgPosition() < delta){
             autobot.drive.mecanumAuto(0, 0, degrees/Math.abs(degrees)*MAXMOTORSPEED);
+
             return true;
         }
         else{
