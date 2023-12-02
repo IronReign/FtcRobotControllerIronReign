@@ -11,8 +11,10 @@ import java.util.Queue;
 public class Auton {
     Queue<Assign> actions;
     Autobot autobot;
+    public static boolean turnDone = false;
     Telemetry telemetry;
     public Auton(Autobot autobot, MultipleTelemetry telemetry){
+        turnDone = false;
         actions = new LinkedList<Assign>();
         this.autobot = autobot;
         this.telemetry = telemetry;
@@ -20,6 +22,7 @@ public class Auton {
     public void telemetryOutput(){
         telemetry.addData("Queue Size \t", acts());
         telemetry.addData("Error \t", getEachDelta() - autobot.drive.getMotorAvgPosition());
+        telemetry.addData("Done Turning?\t", turnDone);
     }
     public boolean runBehaviors(){
         if(actions.size() > 0){

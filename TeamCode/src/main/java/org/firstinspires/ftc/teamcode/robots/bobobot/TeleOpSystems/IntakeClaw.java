@@ -11,8 +11,11 @@ public class IntakeClaw {
     private DcMotorEx clawArm = null;
     private Servo clawSpan = null;
     private Servo clawWrist = null;
-    public static double OPENCLAW = 0.15;
-    public static double CLOSECLAW = 0.30;
+    public static double OPENCLAW = 0.35;
+    public static double CLOSECLAW = 0.55;
+    public static double WRIST_MIN = Utils.servoNormalize(899);
+    public static double WRIST_MAX = Utils.servoNormalize(2015);
+    public static double WRIST_SCORE_1 = Utils.servoNormalize(1984);
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
     public IntakeClaw(Telemetry telemetry, HardwareMap hardwareMap) {
@@ -57,21 +60,22 @@ public class IntakeClaw {
     }
     public void armWristDown(boolean press) {
         if (press == true && clawArm.getCurrentPosition() < 200) {
-            clawWrist.setPosition(0.43);
-            clawArm.setTargetPosition(3);
+            clawWrist.setPosition(WRIST_MAX);
+
         }
-        else if (press == true && clawArm.getCurrentPosition() > 200) {
-            clawWrist.setPosition(0.3);
-        }
+
     }
     public void armWristUp(boolean press) {
         if (press == true) {
-            clawWrist.setPosition(0);
+            clawWrist.setPosition(WRIST_MIN);
         }
     }
     public void armPositionTest() {
-
         clawArm.setTargetPosition(90);
+    }
+
+    public void setWristScore1(){
+
     }
 }
 
