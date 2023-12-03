@@ -31,14 +31,14 @@ public class Intake implements Subsystem {
     public static boolean precisionBeaterBar = false;
     public boolean manualBeaterBarEject = false;
     public boolean manualBeaterBarOn = false;
-    public static double BEATER_BAR_INTAKE_VELOCITY = 1800;
+    public static double BEATER_BAR_INTAKE_VELOCITY = 2000;
     public static double BEATER_BAR_EJECT_VELOCITY = -700;
-    public static int BEATER_BAR_ANGLE_CONTROLLER_HOME = 1350;
+    public static int BEATER_BAR_ANGLE_CONTROLLER_HOME = 2040;
 
-    public int angleControllerTicks = 1800;
-    public static int BEATER_BAR_FOLD_ANGLE = 1800;
-    public static int BEATER_BAR_WING_ANGLE = 1011;
-    public static int BEATER_BAR_EJECT_ANGLE = 1051;
+    public int angleControllerTicks = ANGLE_CONTROLLER_MAX;
+    public static int BEATER_BAR_FOLD_ANGLE = 2470;
+    public static int BEATER_BAR_WING_ANGLE = 1701;
+    public static int BEATER_BAR_EJECT_ANGLE = 1741;
 
 
     public enum Articulation {
@@ -113,8 +113,7 @@ public class Intake implements Subsystem {
                 break;
         }
         angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
-//        beaterBarAngleController.setTargetAngle(beaterBarTargetAngle);
-//        beaterBarAngleController.update();
+
     }
 
     public Articulation articulate(Articulation target) {

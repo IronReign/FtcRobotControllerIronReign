@@ -41,12 +41,13 @@ public class Outtake implements Subsystem {
     //FLIPPER JOINT VARIABLES
     public static int FLIPPER_HOME_POSITION = 1888;
     public static double FLIPPER_PWM_PER_DEGREE = 7.35;
-    public static double FLIPPER_START_ANGLE = 0.1;
     //IN DEGREES PER SECOND
-    public static double FLIPPER_JOINT_SPEED = 2;
+    public static double FLIPPER_START_ANGLE = -4;
 
-    public static double FLIPPER_MIN_ANGLE = 1;
-    public static double FLIPPER_MAX_ANGLE = 62.8571428571;
+    public static double FLIPPER_JOINT_SPEED = 10;
+
+    public static double FLIPPER_MIN_ANGLE = -135;
+    public static double FLIPPER_MAX_ANGLE = -6;
     private boolean flipped = false;
 
     public Articulation articulate(Articulation articulation) {
@@ -144,9 +145,10 @@ public void flipperTest(){
     public void update(Canvas fieldOverlay) {
         if(articulation == Articulation.MANUAL) {
             slide.setTargetPosition(slidePosition);
-            pixelFlipper.setPosition(Utils.servoNormalize(flipperPosition
-                    )
-            );        }
+//            pixelFlipper.setPosition(Utils.servoNormalize(flipperPosition
+//                    )
+//            );
+            }
         if(articulation == Articulation.INTAKE_PIXEL) {
             if(intakePosition()) {
                 articulation = Articulation.MANUAL;
@@ -166,7 +168,7 @@ public void flipperTest(){
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("slide position", slidePosition);
         telemetryMap.put("slide actual position", slide.getCurrentPosition());
-        telemetryMap.put("flipper location", Utils.servoDenormalize(pixelFlipper.getPosition()));
+//        telemetryMap.put("flipper location", Utils.servoDenormalize(pixelFlipper.getPosition()));
         telemetryMap.put("flipper ticks", flipperPosition);
         telemetryMap.put("flipper angle", flipper.getCurrentAngle());
         telemetryMap.put("flipper target angle", flipper.getTargetAngle());

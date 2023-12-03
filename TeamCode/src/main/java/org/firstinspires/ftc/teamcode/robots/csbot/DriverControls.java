@@ -94,8 +94,8 @@ public class DriverControls {
 
 
         if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
-                Math.abs( gamepad1.left_stick_y) > DEADZONE ||
-                    Math.abs( gamepad1.right_stick_x ) > DEADZONE) {
+                Math.abs(gamepad1.left_stick_y) > DEADZONE ||
+                    Math.abs(gamepad1.right_stick_x ) > DEADZONE ) {
             if (!juiceDriveTrain)
                 robot.driveTrain.drive(gamepad1.left_stick_x * PRECISION_DRIVE_MULTIPLIER, gamepad1.left_stick_y * PRECISION_DRIVE_MULTIPLIER, -gamepad1.right_stick_x * PRECISION_TURN_MULTIPLIER);
             else
@@ -127,16 +127,6 @@ public class DriverControls {
         if(gamepad1.dpad_up) {
             robot.intake.togglePrecisionBeaterBar();
         }
-//        if(stickyGamepad1.dpad_right){
-//            robot.outtake.clearFlipper();
-//        }
-//        if(stickyGamepad1.dpad_up) {
-//            robot.outtake.scoreFlipper();
-//        }
-//        if(stickyGamepad1.dpad_left) {
-//            robot.outtake.tuckFlipper();
-//        }
-
         if (stickyGamepad1.guide) {
             robot.switchVisionProviders();
         }
