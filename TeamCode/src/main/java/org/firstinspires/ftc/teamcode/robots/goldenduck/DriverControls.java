@@ -25,24 +25,24 @@ public class DriverControls extends OpMode {
     Servo clawWrist;
 //    Servo servoRailgun;
     FtcDashboard dashboard;
-    private DcMotor
-            arm = null;
+    private DcMotor arm = null;
 
     @Override
     public void init() {
+        driveTrain = new DriveTrain(telemetry, hardwareMap);
+        driveTrain.motorInit();
         dashboard = FtcDashboard.getInstance();
         servoClaw = hardwareMap.get(Servo.class, "servoClaw");
 //        servoRailgun = hardwareMap.get(Servo.class, "servoRailgun");
-        driveTrain.motorInit();
         clawWrist = hardwareMap.get(Servo.class, "servoWrist");
-        driveTrain = new DriveTrain(telemetry, hardwareMap);
         arm = this.hardwareMap.get
         (DcMotorEx.class, "arm");
-//        telemetry.addData("arm position", arm.getCurrentPosition());
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     @Override
     public void loop() {
+
         telemetry.addData("servoWrist", clawWrist.getPosition());
         telemetry.addData("servoClaw", servoClaw.getPosition());
         telemetry.addData("arm position", arm.getCurrentPosition());
@@ -68,21 +68,21 @@ public class DriverControls extends OpMode {
         }
         if (gamepad1.y) {
             arm.setPower(0.2);
-            arm.setTargetPosition(-87);
+            arm.setTargetPosition(0);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
             clawWrist.setPosition(servoNormalize(1277));
             //to pick up pixel
         }
         if (gamepad1.b) {
             arm.setPower(0.3);
-            arm.setTargetPosition(-1050);
+            arm.setTargetPosition(-354);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
             clawWrist.setPosition(0);
             // mid score backboard
         }
         if (gamepad1.a) {
             arm.setPower(0.3);
-            arm.setTargetPosition(-1023);
+            arm.setTargetPosition(-370);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
             clawWrist.setPosition(0);
             // low score backboard
