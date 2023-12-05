@@ -28,6 +28,12 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
 
     public boolean trajectoryIsActive;
 
+    public Articulation articulation;
+    public enum Articulation{
+        BACKSTAGE_DRIVE,
+        WING_DRIVE,
+    }
+
 
     public CSDriveTrain(HardwareMap hardwareMap, Robot robot, boolean simulated) {
         super(hardwareMap, new Pose2d(0, 0, 0));

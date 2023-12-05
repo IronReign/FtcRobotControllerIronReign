@@ -15,6 +15,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import org.checkerframework.checker.units.qual.Angle;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
@@ -65,7 +66,15 @@ public class DriverControls {
             robot.outtake.flipperTest();
         }
 
-        if(gamepad1.guide) {
+        if (stickyGamepad1.guide) {
+            robot.switchVisionProviders();
+        }
+
+        if(stickyGamepad1.left_stick_button) {
+            visionOn = !visionOn;
+        }
+
+        if(stickyGamepad1.back) {
             robot.articulate(Robot.Articulation.WING_INTAKE);
         }
 
@@ -95,7 +104,6 @@ public class DriverControls {
             robot.intake.switchBeaterBarDirection();
         }
 
-
         if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
                 Math.abs(gamepad1.left_stick_y) > DEADZONE ||
                     Math.abs(gamepad1.right_stick_x ) > DEADZONE ) {
@@ -111,28 +119,18 @@ public class DriverControls {
         if (gamepad1.right_bumper)
             robot.outtake.moveSlide(-5);
 
-        if(stickyGamepad1.left_stick_button) {
-            visionOn = !visionOn;
-        }
-
         if (gamepad1.y)
-            robot.outtake.raiseFlipper(-20);
+            robot.outtake.adjustFlipper(-5);
         if (gamepad1.x)
-            robot.outtake.lowerFlipper(20);
-        if(stickyGamepad1.dpad_left)
-            robot.intake.BeaterBarUp(true);
+            robot.outtake.lowerFlipper(5);
+
         if(stickyGamepad1.dpad_up)
-            robot.intake.BeaterBarUp(false);
+            robot.intake.articulate(Intake.Articulation.SWALLOW);
 
         if (stickyGamepad1.dpad_down) {
             juiceDriveTrain = !juiceDriveTrain;
         }
-        if(gamepad1.dpad_up) {
-            robot.intake.togglePrecisionBeaterBar();
-        }
-        if (stickyGamepad1.guide) {
-            robot.switchVisionProviders();
-        }
+
 
     }
 

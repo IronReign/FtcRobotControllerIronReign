@@ -121,6 +121,10 @@ public class Outtake implements Subsystem {
         slide.setTargetPosition(slidePosition);
     }
 
+    public void adjustFlipper(int power) {
+        flipper.setTargetAngle(flipper.getCurrentAngle() +  power);
+    }
+
 
 public void flipperTest(){
     if(TEMP_FLIPPER_TUNE) {

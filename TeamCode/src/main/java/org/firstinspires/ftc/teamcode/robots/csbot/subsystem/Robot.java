@@ -45,7 +45,7 @@ public class Robot implements Subsystem {
 
     private long[] subsystemUpdateTimes;
     private final List<LynxModule> hubs;
-    public static boolean juiceDriveTrain = false;
+    public static boolean juiceDriveTrain = true;
     public HardwareMap hardwareMap;
     private VoltageSensor batteryVoltageSensor;
     private Articulation articulation;

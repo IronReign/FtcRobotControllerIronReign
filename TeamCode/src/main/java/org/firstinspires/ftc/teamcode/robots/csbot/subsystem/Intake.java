@@ -26,7 +26,6 @@ public class Intake implements Subsystem {
     Robot robot;
     Servo diverter;
     Servo angleController;
-    Joint beaterBarAngleController;
     DcMotorEx beaterBar;
     public static boolean precisionBeaterBar = false;
     public boolean manualBeaterBarEject = false;
@@ -39,6 +38,7 @@ public class Intake implements Subsystem {
     public static int BEATER_BAR_FOLD_ANGLE = 2470;
     public static int BEATER_BAR_WING_ANGLE = 1701;
     public static int BEATER_BAR_EJECT_ANGLE = 1741;
+    public static int SWALLOW_TICKS = 1700;
 
 
     public enum Articulation {
@@ -48,6 +48,7 @@ public class Intake implements Subsystem {
         OFF,
         FOLD,
         MANUAL,
+        SWALLOW
     }
 
 
@@ -91,13 +92,14 @@ public class Intake implements Subsystem {
                 }
                 else
                     beaterBar.setVelocity(0);
-                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
                 break;
-            case OFF:
-                beaterBar.setPower(0);
+            case SWALLOW:
+                angleControllerTicks = SWALLOW_TICKS;
+                manualBeaterBarOn = true;
+                manualBeaterBarEject = false;
+                articulation = Articulation.MANUAL;
                 break;
             case WING_INTAKE_POSTION:
-                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
                 if(wingIntakePostion()) {
                     articulation = Articulation.MANUAL;
                 }
@@ -105,7 +107,6 @@ public class Intake implements Subsystem {
             case FOLD:
                 beaterBar.setPower(0);
                 angleControllerTicks = BEATER_BAR_FOLD_ANGLE;
-                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
                 break;
             case STACK_INTAKE:
                 beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY);
@@ -157,13 +158,7 @@ public class Intake implements Subsystem {
         Utils.servoNormalize(angleControllerTicks));
         return angleControllerTicks;
     }
-    public void BeaterBarUp(boolean beaterBarUp)
-    {
-        if(beaterBarUp)
-            angleControllerTicks = ANGLE_CONTROLLER_MAX;
-        else
-           angleControllerTicks = BEATER_BAR_ANGLE_CONTROLLER_HOME;
-    }
+
 
     public void toggleBeaterBar() {
         manualBeaterBarOn = !manualBeaterBarOn;
