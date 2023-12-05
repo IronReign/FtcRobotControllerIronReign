@@ -12,6 +12,9 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.vision
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 
+import org.checkerframework.checker.units.qual.Angle;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
@@ -97,11 +100,11 @@ public class DriverControls {
                 Math.abs(gamepad1.left_stick_y) > DEADZONE ||
                     Math.abs(gamepad1.right_stick_x ) > DEADZONE ) {
             if (!juiceDriveTrain)
-                robot.driveTrain.drive(gamepad1.left_stick_x * PRECISION_DRIVE_MULTIPLIER, gamepad1.left_stick_y * PRECISION_DRIVE_MULTIPLIER, -gamepad1.right_stick_x * PRECISION_TURN_MULTIPLIER);
+                robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x * PRECISION_DRIVE_MULTIPLIER, gamepad1.left_stick_y * PRECISION_DRIVE_MULTIPLIER, -gamepad1.right_stick_x * PRECISION_TURN_MULTIPLIER);
             else
-                robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+                robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
         }
-        else robot.driveTrain.drive(0, 0, 0);
+        else robot.driveTrain.fieldOrientedDrive(0, 0, 0);
 
         if (gamepad1.left_bumper)
             robot.outtake.moveSlide(5);
@@ -132,6 +135,8 @@ public class DriverControls {
         }
 
     }
+
+
 
     public void handleStateSwitch() {
         if (!active) {

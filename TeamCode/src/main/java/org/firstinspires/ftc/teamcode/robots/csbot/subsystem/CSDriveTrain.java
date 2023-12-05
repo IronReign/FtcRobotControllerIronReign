@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -12,6 +13,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 
@@ -21,6 +23,9 @@ import java.util.Map;
 @Config(value = "CS_ROADRUNNER")
 public class CSDriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
+
+
+
     public boolean trajectoryIsActive;
 
 
@@ -35,8 +40,9 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
 
 
     @Override
-    public void update(Canvas c) {updatePoseEstimate();}
-
+    public void update(Canvas c) {
+        updatePoseEstimate();
+    }
 
     public void drive(double x, double y, double theta) {
         trajectoryIsActive = false;
@@ -48,6 +54,24 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
                 theta
         ));
         updatePoseEstimate();
+    }
+
+    public void fieldOrientedDrive(double x, double y, double theta){
+        Vector2d input = new Vector2d(
+                -y * Math.cos(-pose.heading.log()) + x * Math.sin(-pose.heading.log()),
+                -y * Math.sin(-pose.heading.log()) - x * Math.cos(-pose.heading.log())
+        );
+
+
+        setDrivePowers(
+                new PoseVelocity2d(
+                        new Vector2d(
+                        input.x,
+                        input.y
+                        ),
+                        theta
+                )
+        );
     }
 
 
