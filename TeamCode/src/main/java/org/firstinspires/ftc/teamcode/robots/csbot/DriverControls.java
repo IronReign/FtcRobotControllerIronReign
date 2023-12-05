@@ -73,11 +73,11 @@ public class DriverControls {
                 Math.abs( gamepad1.left_stick_y) > DEADZONE ||
                 Math.abs( gamepad1.right_stick_x ) > DEADZONE) {
             if (!juiceDriveTrain)
-                robot.driveTrain.drive(gamepad1.left_stick_x * PRECISION_DRIVE_MULTIPLIER, gamepad1.left_stick_y * PRECISION_DRIVE_MULTIPLIER, -gamepad1.right_stick_x * PRECISION_TURN_MULTIPLIER);
+                robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x * PRECISION_DRIVE_MULTIPLIER, gamepad1.left_stick_y * PRECISION_DRIVE_MULTIPLIER, -gamepad1.right_stick_x * PRECISION_TURN_MULTIPLIER);
             else
-                robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+                robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
         }
-        else robot.driveTrain.drive(0, 0, 0);
+        else robot.driveTrain.fieldOrientedDrive(0, 0, 0);
 
     }
 
@@ -100,11 +100,11 @@ public class DriverControls {
                 Math.abs(gamepad1.left_stick_y) > DEADZONE ||
                     Math.abs(gamepad1.right_stick_x ) > DEADZONE ) {
             if (!juiceDriveTrain)
-                robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x * PRECISION_DRIVE_MULTIPLIER, gamepad1.left_stick_y * PRECISION_DRIVE_MULTIPLIER, -gamepad1.right_stick_x * PRECISION_TURN_MULTIPLIER);
+                robot.driveTrain.drive(gamepad1.left_stick_x * PRECISION_DRIVE_MULTIPLIER, gamepad1.left_stick_y * PRECISION_DRIVE_MULTIPLIER, -gamepad1.right_stick_x * PRECISION_TURN_MULTIPLIER);
             else
-                robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+                robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
         }
-        else robot.driveTrain.fieldOrientedDrive(0, 0, 0);
+        else robot.driveTrain.drive(0, 0, 0);
 
         if (gamepad1.left_bumper)
             robot.outtake.moveSlide(5);
