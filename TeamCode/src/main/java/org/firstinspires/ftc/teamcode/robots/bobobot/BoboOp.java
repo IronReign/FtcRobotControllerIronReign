@@ -1,32 +1,38 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
 import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Robot;
 
 @Config("BoboGameVariables")
 @TeleOp(name="BoboOpMode", group="Challenge")
 public class BoboOp extends OpMode {
-    Robot bobo;
+    Robot bobot;
+    MultipleTelemetry dashTelemetry;
+    FtcDashboard dashboard;
     @Override
     public void init() {
-        bobo = new Robot(telemetry, hardwareMap);
+        dashboard = FtcDashboard.getInstance();
+        dashTelemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
+        bobot = new Robot(dashTelemetry, hardwareMap);
+        dashTelemetry.setMsTransmissionInterval(25);
     }
 
     @Override
     public void loop() {
-        bobo.driveTrain.mechanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
-        bobo.droneLaunch.droneRelease(gamepad1.y);
-        bobo.claw.clawArmLift(gamepad1.a);
-        bobo.claw.clawArmLower(gamepad1.b);
-        bobo.claw.armWristDown(gamepad1.dpad_down);
-        bobo.claw.armWristUp(gamepad1.dpad_up);
-        bobo.claw.openClaw(gamepad1.right_bumper);
-        bobo.claw.closeClaw(gamepad1.left_bumper);
-        bobo.driveTrain.telemetryOutput();
-        bobo.claw.telemetryOutput();
-        bobo.droneLaunch.telemetryOutput();
+        bobot.driveTrain.mechanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+        bobot.droneLaunch.droneRelease(gamepad1.y);
+        bobot.claw.clawArmLift(gamepad1.a);
+        bobot.claw.clawArmLower(gamepad1.b);
+        bobot.claw.armWristDown(gamepad1.dpad_down);
+        bobot.claw.armWristUp(gamepad1.dpad_up);
+        bobot.claw.openClaw(gamepad1.right_bumper);
+        bobot.claw.closeClaw(gamepad1.left_bumper);
+        bobot.driveTrain.telemetryOutput();
+        bobot.claw.telemetryOutput();
+        bobot.droneLaunch.telemetryOutput();
     }
 }

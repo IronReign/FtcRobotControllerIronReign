@@ -17,9 +17,6 @@ import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Autobot;
 public class BoboAuto extends OpMode {
     Autobot autobot;
     Auton autonomous;
-    DriveTile driveTile;
-    StrafeTile strafeTile;
-    TurnTile turnTile;
     MultipleTelemetry dashTelemetry;
     FtcDashboard dashboard;
 
@@ -28,7 +25,7 @@ public class BoboAuto extends OpMode {
         dashboard = FtcDashboard.getInstance();
         dashTelemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         autobot = new Autobot(dashTelemetry, hardwareMap);
-        autonomous = new Auton(autobot,telemetry);
+        autonomous = new Auton(autobot, dashTelemetry);
         dashTelemetry.setMsTransmissionInterval(25);
     }
 
@@ -39,7 +36,9 @@ public class BoboAuto extends OpMode {
         autonomous.add(new TurnTile(autobot, -90));
         autonomous.add(new DriveTile(autobot, 1));
         autonomous.add(new DriveTile(autobot, -1));
-        autonomous.add(new StrafeTile(autobot, 1));}
+        autonomous.add(new StrafeTile(autobot, 1));
+    }
+
     @Override
     public void loop() {
         autobot.drive.telemetryOutput();

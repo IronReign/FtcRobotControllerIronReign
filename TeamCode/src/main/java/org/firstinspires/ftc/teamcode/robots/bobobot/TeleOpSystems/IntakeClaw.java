@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.robots.bobobot.TeleSystems;
+package org.firstinspires.ftc.teamcode.robots.bobobot.TeleOpSystems;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -11,16 +11,18 @@ public class IntakeClaw {
     private DcMotorEx clawArm = null;
     private Servo clawSpan = null;
     private Servo clawWrist = null;
-    public static double OPENCLAW = 0.15;
-    public static double CLOSECLAW = 0.30;
+    public static double OPENCLAW = 0.35;
+    public static double CLOSECLAW = 0.55;
+    public static double WRIST_MIN = Utils.servoNormalize(899);
+    public static double WRIST_MAX = Utils.servoNormalize(2015);
+    public static double WRIST_SCORE_1 = Utils.servoNormalize(1984);
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
     public IntakeClaw(Telemetry telemetry, HardwareMap hardwareMap) {
         this.telemetry = telemetry;
         this.hardwareMap = hardwareMap;
     }
-    public void telemetryOutput()
-    {
+    public void telemetryOutput() {
         telemetry.addData("Claw Position \t", Utils.servoDenormalize(clawSpan.getPosition()));
         telemetry.addData("Claw Values \t", clawSpan.getPosition());
         telemetry.addData("Claw Arm Position \t", clawArm.getCurrentPosition());
@@ -28,56 +30,52 @@ public class IntakeClaw {
         telemetry.addData("Claw Wrist Position \t", Utils.servoDenormalize(clawWrist.getPosition()));
         telemetry.addData("Arm Target \t", clawArm.getTargetPosition());
     }
-    public void intakeClawInit()
-    {
+    public void intakeClawInit() {
         clawArm = this.hardwareMap.get(DcMotorEx.class, "clawArm");
         clawSpan = this.hardwareMap.get(Servo.class, "clawSpan");
         clawWrist = this.hardwareMap.get(Servo.class, "clawWrist");
         clawArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         clawArm.setPower(1);
-        clawArm.setVelocity(100);
         clawArm.setTargetPosition(20);
         clawArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
-    public void openClaw (boolean press)
-    {
+    public void openClaw (boolean press) {
         if(press == true)
             clawSpan.setPosition(OPENCLAW);
     }
-    public void closeClaw (boolean press)
-    {
+    public void closeClaw (boolean press) {
         if(press == true)
             clawSpan.setPosition(CLOSECLAW);
 
     }
-    public void clawArmLift (boolean press)
-    {
-        if(press == true) {
-            clawArm.setTargetPosition(240);
+    public void clawArmLift (boolean press) {
+        if(press == true && clawArm.getCurrentPosition() < 540) {
+            clawArm.setTargetPosition(clawArm.getCurrentPosition() + 95);
         }
     }
-    public void clawArmLower (boolean press)
-    {
-        if(press == true) {
-            clawArm.setTargetPosition(20);
+    public void clawArmLower (boolean press) {
+        if(press == true && clawArm.getCurrentPosition() > 20) {
+            clawArm.setTargetPosition(clawArm.getCurrentPosition() - 45);
         }
     }
     public void armWristDown(boolean press) {
         if (press == true && clawArm.getCurrentPosition() < 200) {
-            clawWrist.setPosition(0.43);
-            clawArm.setTargetPosition(3);
+            clawWrist.setPosition(WRIST_MAX);
+
         }
-        else if (press == true && clawArm.getCurrentPosition() > 200) {
-            clawWrist.setPosition(0.3);
-        }
+
     }
     public void armWristUp(boolean press) {
         if (press == true) {
-            clawWrist.setPosition(0);
+            clawWrist.setPosition(WRIST_MIN);
         }
     }
     public void armPositionTest() {
         clawArm.setTargetPosition(90);
+    }
+
+    public void setWristScore1(){
+
     }
 }
 

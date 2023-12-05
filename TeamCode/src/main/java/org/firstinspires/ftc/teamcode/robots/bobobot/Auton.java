@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot;
 
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Autobot;
 
@@ -9,16 +11,18 @@ import java.util.Queue;
 public class Auton {
     Queue<Assign> actions;
     Autobot autobot;
+    public static boolean turnDone = false;
     Telemetry telemetry;
-    public Auton(Autobot autobot, Telemetry telemetry){
+    public Auton(Autobot autobot, MultipleTelemetry telemetry){
+        turnDone = false;
         actions = new LinkedList<Assign>();
         this.autobot = autobot;
         this.telemetry = telemetry;
     }
-
     public void telemetryOutput(){
         telemetry.addData("Queue Size \t", acts());
         telemetry.addData("Error \t", getEachDelta() - autobot.drive.getMotorAvgPosition());
+        telemetry.addData("Done Turning?\t", turnDone);
     }
     public boolean runBehaviors(){
         if(actions.size() > 0){
