@@ -22,9 +22,11 @@ public class DriverControls extends OpMode {
     DriveTrain driveTrain;
     Servo servoClaw;
     Servo clawWrist;
-//    Servo servoRailgun;
-    FtcDashboard dashboard;
+    //    Servo clawWrist2;
+    //    Servo servoRailgun;
     private DcMotor arm = null;
+    private DcMotor arm2 = null;
+    FtcDashboard dashboard;
 
     @Override
     public void init() {
@@ -34,30 +36,35 @@ public class DriverControls extends OpMode {
         servoClaw = hardwareMap.get(Servo.class, "servoClaw");
 //        servoRailgun = hardwareMap.get(Servo.class, "servoRailgun");
         clawWrist = hardwareMap.get(Servo.class, "servoWrist");
-        arm = this.hardwareMap.get
-        (DcMotorEx.class, "arm");
+//        clawWRist2 = hardwareMap.get(Servo.class, "servoWrist2");
+        arm = this.hardwareMap.get(DcMotorEx.class, "arm");
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        arm2 = this.hardwareMap.get(DcMotorEx.class, "armMotor2");
+//        arm2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     @Override
     public void loop() {
 
         telemetry.addData("servoWrist", clawWrist.getPosition());
+//        telemetry.addData("servoWrist2". clawWrist2.getPositiion());
         telemetry.addData("servoClaw", servoClaw.getPosition());
-        telemetry.addData("arm position", arm.getCurrentPosition());
+        telemetry.addData("arm U/D position", arm.getCurrentPosition());
+        telemetry.addData("arm R/L position", arm2.getCurrentPosition());
 //        telemetry.addData("Railgun Shot", servoRailgun.getPosition());
 
         driveTrain.mecanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
         if (gamepad1.dpad_down) {
             calibrate = false;
         }
-        if (gamepad1.dpad_up) {
-            if (driveTrain.robotSpeed == 1)
-                driveTrain.robotSpeed = .5;
-            else
-                driveTrain.robotSpeed = 1;
-        }
-        //open claw
+//        if (gamepad1.dpad_up) {
+//            if (driveTrain.robotSpeed == 1)
+//                driveTrain.robotSpeed = .5;
+//            else
+//                driveTrain.robotSpeed = 1;
+//        }
+//      speed reduction-UNTESTED
+
         if (gamepad1.x) {
             arm.setPower(0.1);
             arm.setTargetPosition(-105);
@@ -94,8 +101,18 @@ public class DriverControls extends OpMode {
             servoClaw.setPosition(servoNormalize(1821));
             //claw close
         }
-//        if (gamepad1.dpad_left) {
+//        if (gamepad1.dpad_down) {
 //            servoRailgun.setPosition(servoNormalize(1821));
 //        }
+//        if (gamepad1.dpad_right) {
+//            arm2.setPower(xyz);
+//            arm2.setTargetPosition() + xyz;
+//            arm2.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+//        }
+//         if (gamepad1.dpad_right) {
+//            arm2.setPower(xyz);
+//            arm2.setTargetPosition() - xyz;
+//            arm2.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+//       }
     }
 }
