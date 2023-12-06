@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
@@ -15,6 +14,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.teamcode.robots.bobobot.Auton;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
@@ -33,10 +33,20 @@ public class Autonomous implements TelemetryProvider {
     private Robot robot;
     private HardwareMap hardwareMap;
 
+    public enum AutonState{
+        INIT,
+        BACK_UP,
+        STRAFE,
+        SCORE_GROUND,
+    }
+
+    public AutonState autonState = AutonState.INIT;
+
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("autonIndex", autonIndex);
+        telemetryMap.put("autonState", autonState);
         telemetryMap.put("targetIndex", targetIndex);
         telemetryMap.put("stageoneposition", blueRightStageOnePosition == null ? "null" : blueRightStageOnePosition.position.y);
         telemetryMap.put("deltaposition", (blueRightStageOnePosition == null || robot.driveTrain.pose == null) ? "null" : robot.driveTrain.pose.position.y - blueRightStageOnePosition.position.y);
@@ -88,6 +98,7 @@ public class Autonomous implements TelemetryProvider {
 
     public static double STAGE_TWO_X_COORDINATE = -2.5;
     public static double STAGE_TWO_HEADING = 45;
+    public static double STAGE_ONE_HEADING = 90;
     public static double BACKSTAGE_X_POSITION_OFFSET = 2.5;
 
     public void build() {
@@ -96,17 +107,17 @@ public class Autonomous implements TelemetryProvider {
 
         Pose2d pose = startingPosition.getPose();
 
-        blueRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, pose.heading.log());
-        blueRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y, STAGE_TWO_HEADING - indexHeadingOffset);
+        blueRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
+        blueRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING - indexHeadingOffset);
 
-        blueLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, pose.heading.log());
-        blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET, blueRightStageOnePosition.position.y, STAGE_TWO_HEADING + 90 - indexHeadingOffset);
+        blueLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
+        blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING + 90 - indexHeadingOffset);
 
-        redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, -STAGE_ONE_Y_COORDINATE, pose.heading.log());
-        redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y, -STAGE_TWO_HEADING + indexHeadingOffset);
+        redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, -STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
+        redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING + indexHeadingOffset);
 
-        redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, -STAGE_ONE_Y_COORDINATE, pose.heading.log());
-        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET, blueRightStageOnePosition.position.y, -STAGE_TWO_HEADING - 90 + indexHeadingOffset);
+        redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, -STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
+        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING - 90 + indexHeadingOffset);
 
         //
         redLeftStageOne = new SequentialAction(
@@ -166,6 +177,7 @@ public class Autonomous implements TelemetryProvider {
     }
 
     public void pickAutonToRun() {
+        build();
         targetIndex = visionProvider.getMostFrequentPosition().getIndex() + 1;
         indexHeadingOffset = (targetIndex - 1) * 10;
             if (startingPosition == Constants.Position.START_LEFT_BLUE) {
@@ -181,7 +193,6 @@ public class Autonomous implements TelemetryProvider {
                 stageOneToRun = redRightStageOne;
                 stageTwoToRun = redRightStageTwo;
         }
-        build();
     }
 
 
@@ -198,18 +209,21 @@ public class Autonomous implements TelemetryProvider {
                     autonIndex++;
                     break;
                 case 1:
+                    autonState = AutonState.BACK_UP;
                     if (!stageOneToRun.run(packet)) {
                         robot.intake.setAngleControllerTicks(Intake.BEATER_BAR_EJECT_ANGLE);
                         autonIndex++;
                     }
                     break;
                 case 2:
+                    autonState = AutonState.STRAFE;
                     if (!stageTwoToRun.run(packet)) {
                         futureTimer = futureTime(EJECT_WAIT_TIME);
                         autonIndex++;
                     }
                     break;
                 case 3:
+                    autonState = AutonState.SCORE_GROUND;
                     robot.intake.ejectBeaterBar();
                     if (isPast(futureTimer)) {
                         robot.intake.beaterBarOff();

@@ -3,17 +3,13 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.SequentialAction;
-import com.acmerobotics.roadrunner.Trajectory;
-import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 
@@ -21,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Config(value = "CS_ROADRUNNER")
-public class CSDriveTrain extends MecanumDrive implements Subsystem {
+public class DriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
 
 
@@ -35,7 +31,7 @@ public class CSDriveTrain extends MecanumDrive implements Subsystem {
     }
 
 
-    public CSDriveTrain(HardwareMap hardwareMap, Robot robot, boolean simulated) {
+    public DriveTrain(HardwareMap hardwareMap, Robot robot, boolean simulated) {
         super(hardwareMap, new Pose2d(0, 0, 0));
         this.robot = robot;
         trajectoryIsActive = false;

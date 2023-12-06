@@ -29,7 +29,8 @@ public class Robot implements Subsystem {
 
     //components and subsystems
     public Subsystem[] subsystems;
-    public CSDriveTrain driveTrain;
+    public DriveTrain driveTrain;
+    public Skyhook skyhook;
     public Intake intake;
     public VisionProvider visionProviderBack = null;
     public static boolean visionOn = true;
@@ -66,7 +67,7 @@ public class Robot implements Subsystem {
 
     }
 
-    public void  start() {
+    public void start() {
         //TODO - articulate starting position
         if(gameState.isAutonomous()) {
             intake.setAngleControllerTicks(1600);
@@ -87,12 +88,12 @@ public class Robot implements Subsystem {
 
 
         // initializing subsystems
-        driveTrain = new CSDriveTrain(hardwareMap, this, simulated);
-        //TODO - THIS IS FOR MANUAL ONLY
+        driveTrain = new DriveTrain(hardwareMap, this, simulated);
         intake = new Intake(hardwareMap, this);
         outtake = new Outtake(hardwareMap, this);
+        skyhook = new Skyhook(hardwareMap, this);
 
-        subsystems = new Subsystem[]{driveTrain, intake, outtake}; //{driveTrain, turret, crane};
+        subsystems = new Subsystem[]{driveTrain, intake, outtake, skyhook};
         subsystemUpdateTimes = new long[subsystems.length];
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();

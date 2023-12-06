@@ -214,7 +214,8 @@ public class CenterStage_6832 extends OpMode {
 
             switch(gameState) {
                 case AUTONOMOUS:
-                    auton.execute(dashboard);
+                        auton.execute(dashboard);
+
                     break;
 
                 case TELE_OP:
@@ -288,7 +289,6 @@ public class CenterStage_6832 extends OpMode {
         //IF NECESSARY, ADD TELEMETRY FOR EACH GAME STATE
         switch(gameState) {
             case TELE_OP:
-                //opModeTelemetryMap.put("Double Duck", robot.isDoubleDuckEnabled());
                 break;
             case AUTONOMOUS:
                 handleTelemetry(auton.getTelemetry(debugTelemetryEnabled),  auton.getTelemetryName(), packet);
@@ -307,7 +307,6 @@ public class CenterStage_6832 extends OpMode {
         Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
         visionTelemetryMap.put("Backend",
                 Misc.formatInvariant("%s (%s)",
-                        //TODO - CURRENTLY OPENCV, CHANGE IF NECESSARY
                         VisionProviders.VISION_PROVIDERS[Robot.visionProviderIndex].getSimpleName(),
                         robot.visionProviderFinalized ?
                                 "finalized" :
@@ -335,12 +334,12 @@ public class CenterStage_6832 extends OpMode {
         telemetry.addLine(telemetryName);
         packet.addLine(telemetryName);
 
-        if (averageVoltage <= LOW_BATTERY_VOLTAGE) {
-            telemetryMap = new LinkedHashMap<>();
-            for (int i = 0; i < 5; i++) {
-                telemetryMap.put(i + (System.currentTimeMillis() / 500 % 2 == 0 ? "**BATTERY VOLTAGE LOW**" : "  BATTERY VOLTAGE LOW  "), (System.currentTimeMillis() / 500 % 2 == 0 ? "**CHANGE BATTERY ASAP!!**" : "  CHANGE BATTERY ASAP!!  "));
-            }
-        }
+//        if (averageVoltage <= LOW_BATTERY_VOLTAGE) {
+//            telemetryMap = new LinkedHashMap<>();
+//            for (int i = 0; i < 5; i++) {
+//                telemetryMap.put(i + (System.currentTimeMillis() / 500 % 2 == 0 ? "**BATTERY VOLTAGE LOW**" : "  BATTERY VOLTAGE LOW  "), (System.currentTimeMillis() / 500 % 2 == 0 ? "**CHANGE BATTERY ASAP!!**" : "  CHANGE BATTERY ASAP!!  "));
+//            }
+//        }
         for (Map.Entry<String, Object> entry : telemetryMap.entrySet()) {
             String line = Misc.formatInvariant("%s: %s", entry.getKey(), entry.getValue());
             packet.addLine(line);

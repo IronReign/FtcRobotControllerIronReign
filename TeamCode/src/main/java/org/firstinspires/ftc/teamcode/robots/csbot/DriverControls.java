@@ -78,15 +78,7 @@ public class DriverControls {
             robot.articulate(Robot.Articulation.WING_INTAKE);
         }
 
-        if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
-                Math.abs( gamepad1.left_stick_y) > DEADZONE ||
-                Math.abs( gamepad1.right_stick_x ) > DEADZONE) {
-            if (!juiceDriveTrain)
-                robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x * PRECISION_DRIVE_MULTIPLIER, gamepad1.left_stick_y * PRECISION_DRIVE_MULTIPLIER, -gamepad1.right_stick_x * PRECISION_TURN_MULTIPLIER);
-            else
-                robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
-        }
-        else robot.driveTrain.fieldOrientedDrive(0, 0, 0);
+        fieldOrientedDrive();
 
     }
 
@@ -104,15 +96,7 @@ public class DriverControls {
             robot.intake.switchBeaterBarDirection();
         }
 
-        if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
-                Math.abs(gamepad1.left_stick_y) > DEADZONE ||
-                    Math.abs(gamepad1.right_stick_x ) > DEADZONE ) {
-            if (!juiceDriveTrain)
-                robot.driveTrain.drive(gamepad1.left_stick_x * PRECISION_DRIVE_MULTIPLIER, gamepad1.left_stick_y * PRECISION_DRIVE_MULTIPLIER, -gamepad1.right_stick_x * PRECISION_TURN_MULTIPLIER);
-            else
-                robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
-        }
-        else robot.driveTrain.drive(0, 0, 0);
+        fieldOrientedDrive();
 
         if (gamepad1.left_bumper)
             robot.outtake.moveSlide(5);
@@ -122,16 +106,31 @@ public class DriverControls {
         if (gamepad1.y)
             robot.outtake.adjustFlipper(-5);
         if (gamepad1.x)
-            robot.outtake.lowerFlipper(5);
+            robot.outtake.adjustFlipper( 5);
 
         if(stickyGamepad1.dpad_up)
             robot.intake.articulate(Intake.Articulation.SWALLOW);
+
+        if(stickyGamepad1.dpad_left) {
+            robot.skyhook.releaseTheJimmy();
+        }
 
         if (stickyGamepad1.dpad_down) {
             juiceDriveTrain = !juiceDriveTrain;
         }
 
+        //mu name is jimmy and i am a pickle and i am a potato and i need to sleep with my truffle oil to feel happiness
 
+    }
+
+    public void fieldOrientedDrive() {
+        if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
+                Math.abs(gamepad1.left_stick_y) > DEADZONE ||
+                Math.abs(gamepad1.right_stick_x ) > DEADZONE) {
+            robot.driveTrain.fieldOrientedDrive(alliance == Constants.Alliance.BLUE? -gamepad1.left_stick_y: gamepad1.left_stick_y, alliance == Constants.Alliance.BLUE? -gamepad1.left_stick_x : gamepad1.left_stick_x,  -gamepad1.right_stick_x);
+
+        }
+        else robot.driveTrain.fieldOrientedDrive(0, 0, 0);
     }
 
 
