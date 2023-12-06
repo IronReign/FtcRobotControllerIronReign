@@ -7,15 +7,20 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 
+
 public class IntakeClaw {
     private DcMotorEx clawArm = null;
     private Servo clawSpan = null;
     private Servo clawWrist = null;
+    private double WRIST_INTERM_POSITION;
+    public static double TARGET_POSITION;
     public static double OPENCLAW = 0.35;
     public static double CLOSECLAW = 0.55;
-    public static double WRIST_MIN = Utils.servoNormalize(899);
-    public static double WRIST_MAX = Utils.servoNormalize(2015);
-    public static double WRIST_SCORE_1 = Utils.servoNormalize(1984);
+    public static double WRIST_MIN = Utils.servoNormalize(1300);
+
+    public static double SUB_MAX = (2/3)*Utils.servoNormalize(2300);
+    public static double WRIST_MAX = Utils.servoNormalize(2300);
+    public static double WRIST_SCORE_1 = Utils.servoNormalize(2184);
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
     public IntakeClaw(Telemetry telemetry, HardwareMap hardwareMap) {
@@ -49,7 +54,7 @@ public class IntakeClaw {
 
     }
     public void clawArmLift (boolean press) {
-        if(press == true && clawArm.getCurrentPosition() < 540) {
+        if(press == true && clawArm.getCurrentPosition() < 1000) {
             clawArm.setTargetPosition(clawArm.getCurrentPosition() + 95);
         }
     }
@@ -58,22 +63,29 @@ public class IntakeClaw {
             clawArm.setTargetPosition(clawArm.getCurrentPosition() - 45);
         }
     }
-    public void armWristDown(boolean press) {
-        if (press == true && clawArm.getCurrentPosition() < 200) {
+    public void armWristIn(boolean press) {
+        if (press == true && clawArm.getCurrentPosition() < 750) {
             clawWrist.setPosition(WRIST_MAX);
-
+        }
+        else if(press == true && clawArm.getCurrentPosition() > 750) {
+            clawWrist.setPosition(WRIST_SCORE_1);
         }
 
     }
-    public void armWristUp(boolean press) {
-        if (press == true) {
-            clawWrist.setPosition(WRIST_MIN);
+    public void armWristOut(boolean press) {
+//        if (press == true) {
+//            clawWrist.setPosition(WRIST_MIN);
+//        }
+        if(press == true && clawWrist.getPosition() > WRIST_MIN){
+            clawWrist.setPosition(clawWrist.getPosition() - 60);
         }
     }
     public void armPositionTest() {
         clawArm.setTargetPosition(90);
     }
-
+    public void interm(){
+        clawWrist.setPosition(WRIST_INTERM_POSITION);
+    }
     public void setWristScore1(){
 
     }

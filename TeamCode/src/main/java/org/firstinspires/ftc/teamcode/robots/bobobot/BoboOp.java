@@ -27,12 +27,14 @@ public class BoboOp extends OpMode {
         bobot.droneLaunch.droneRelease(gamepad1.y);
         bobot.claw.clawArmLift(gamepad1.a);
         bobot.claw.clawArmLower(gamepad1.b);
-        bobot.claw.armWristDown(gamepad1.dpad_down);
-        bobot.claw.armWristUp(gamepad1.dpad_up);
+        bobot.claw.armWristIn(gamepad1.dpad_down);
+        bobot.claw.armWristOut(gamepad1.dpad_up);
         bobot.claw.openClaw(gamepad1.right_bumper);
         bobot.claw.closeClaw(gamepad1.left_bumper);
+        bobot.claw.interm();
         bobot.driveTrain.telemetryOutput();
         bobot.claw.telemetryOutput();
         bobot.droneLaunch.telemetryOutput();
+        dashTelemetry.update();
     }
 }
