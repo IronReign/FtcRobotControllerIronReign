@@ -106,12 +106,12 @@ public class DriverControls extends OpMode {
 //        }
 //        if (gamepad1.dpad_right) {
 //            arm2.setPower(xyz);
-//            arm2.setTargetPosition() + xyz;
+//            arm2.getCurrentPosition() + xyz;
 //            arm2.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 //        }
 //         if (gamepad1.dpad_right) {
 //            arm2.setPower(xyz);
-//            arm2.setTargetPosition() - xyz;
+//            arm2.getCurrentPosition() - xyz;
 //            arm2.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 //       }
     }
