@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.goldenduck;
 
 import static org.firstinspires.ftc.teamcode.util.utilMethods.servoNormalize;
-
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -46,7 +45,7 @@ public class DriverControls extends OpMode {
         telemetry.addData("servoWrist", clawWrist.getPosition());
         telemetry.addData("servoClaw", servoClaw.getPosition());
         telemetry.addData("arm position", arm.getCurrentPosition());
-//        telemetry.addData("Railgun Shot"
+//        telemetry.addData("Railgun Shot", servoRailgun.getPosition());
 
         driveTrain.mecanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
         if (gamepad1.dpad_down) {
