@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.util;
 import android.content.SharedPreferences;
 
+import com.acmerobotics.roadrunner.Pose2d;
 import com.google.gson.Gson;
 
 import org.firstinspires.ftc.teamcode.RC;
@@ -17,23 +18,23 @@ public class PositionCache {
         this.updateInterval = updateInterval;
     }
 
-    public void writePose(TauPosition pos, boolean forceFlush) {
+    public void writePose(CSPosition pos, boolean forceFlush) {
         pos.updateTime();
         String json = gson.toJson(pos);
-        editor.putString("TauPosition", json);
+        editor.putString("CSPosition", json);
         if (forceFlush)
             editor.commit();
         else
             editor.apply();
     }
 
-    public TauPosition readPose () {
-        String json = sharedPref.getString("TauPosition", "get failed"); //retrieves the shared preference
-        if(json.equals("get failed")) return new TauPosition(); //return a default zeroed TauPos if there's nothing in shared preferences
-        return gson.fromJson(json, TauPosition.class); //load the saved JSON into the cached class
+    public CSPosition readPose () {
+        String json = sharedPref.getString("CSPosition", "get failed"); //retrieves the shared preference
+        if(json.equals("get failed")) return new CSPosition(new Pose2d(0, 0, 0)); //return a default zeroed TauPos if there's nothing in shared preferences
+        return gson.fromJson(json, CSPosition.class); //load the saved JSON into the cached class
     }
 
-    public int update(TauPosition pos, boolean forceUpdate){
+    public int update(CSPosition pos, boolean forceUpdate){
         if(!forceUpdate){
             if(cyclesSinceUpdate%updateInterval==0){
                 writePose(pos, false);

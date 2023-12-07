@@ -19,12 +19,16 @@ import java.util.Map;
 
 @Config(value = "CS_INTAKE")
 public class Intake implements Subsystem {
-    public static  int ANGLE_CONTROLLER_MAX = 1800;
-    public static int ANGLE_CONTROLLER_MIN = 750;
+    public static final int RIGHT_DIVERTER_OPEN_TICKS = 1000;
+    public static final int LEFT_DIVERTER_OPEN_TICKS = 1490;
+    public static final int LEFT_DIVERTER_CLOSED_TICKS = 1320;
+    public static final int RIGHT_DIVERTER_CLOSED_TICKS = 1300;
+    public static  int ANGLE_CONTROLLER_MAX = 2250;
+    public static int ANGLE_CONTROLLER_MIN = 1400;
     //CONSTANTS
     HardwareMap hardwareMap;
     Robot robot;
-    Servo diverter;
+    Servo diverterRight, diverterLeft;
     Servo angleController;
     DcMotorEx beaterBar;
     public static boolean precisionBeaterBar = false;
@@ -32,13 +36,12 @@ public class Intake implements Subsystem {
     public boolean manualBeaterBarOn = false;
     public static double BEATER_BAR_INTAKE_VELOCITY = 2000;
     public static double BEATER_BAR_EJECT_VELOCITY = -700;
-    public static int BEATER_BAR_ANGLE_CONTROLLER_HOME = 2040;
 
     public int angleControllerTicks = ANGLE_CONTROLLER_MAX;
     public static int BEATER_BAR_FOLD_ANGLE = 2470;
     public static int BEATER_BAR_WING_ANGLE = 1701;
-    public static int BEATER_BAR_EJECT_ANGLE = 1741;
-    public static int SWALLOW_TICKS = 1700;
+    public static int BEATER_BAR_EJECT_ANGLE = 1550;
+    public static int SWALLOW_TICKS = 1950;
 
 
     public enum Articulation {
@@ -51,8 +54,14 @@ public class Intake implements Subsystem {
         SWALLOW
     }
 
+    public enum DiverterState{
+        DELIVER_LEFT,
+        DELIVER_RIGHT,
+        DELIVER_BOTH
+    }
 
     //LIVE STATES
+    public DiverterState diverterState;
     public Articulation articulation;
     public static int numPixelsInStack = 6;
     public static double angleToStack;
@@ -63,13 +72,14 @@ public class Intake implements Subsystem {
             this.hardwareMap = hardwareMap;
             this.robot = robot;
             articulation = Articulation.MANUAL;
+            diverterState = DiverterState.DELIVER_BOTH;
 
-            diverter = hardwareMap.get(Servo.class, "diverter");
+            diverterLeft = hardwareMap.get(Servo.class, "diverterRight");
+            diverterRight = hardwareMap.get(Servo.class, "diverterLeft");
             beaterBar = hardwareMap.get(DcMotorEx.class, "beaterBar");
             beaterBar.setDirection(DcMotorSimple.Direction.REVERSE);
             angleController = hardwareMap.get(Servo.class, "beaterBarAngleController");
 
-//            beaterBarAngleController = new Joint(hardwareMap, "beaterBarAngleController", false, BEATER_BAR_ANGLE_CONTROLLER_HOME, BEATER_BAR_ANGLE_CONTROLLER_TICKS_PER_DEGREE, BEATER_BAR_ANGLE_CONTROLLER_MIN_DEGREES, BEATER_BAR_ANGLE_CONTROLLER_MAX_DEGREES, BEATER_BAR_ANGLE_CONTROLLER_START_ANGLE, BEATER_BAR_ANGLE_CONTROLLER_SPEED);
             beaterBar.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
     public void update(){
@@ -90,27 +100,47 @@ public class Intake implements Subsystem {
                         beaterBar.setVelocity(BEATER_BAR_EJECT_VELOCITY);
                     }
                 }
+
                 else
                     beaterBar.setVelocity(0);
+                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
+                switch (diverterState) {
+                    case DELIVER_BOTH:
+                        diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_OPEN_TICKS));
+                        diverterLeft.setPosition(Utils.servoNormalize(LEFT_DIVERTER_OPEN_TICKS));
+                        break;
+                    case DELIVER_LEFT:
+                        diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_OPEN_TICKS));
+                        diverterLeft.setPosition(Utils.servoNormalize(LEFT_DIVERTER_CLOSED_TICKS));
+                        break;
+                    case DELIVER_RIGHT:
+                        diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_CLOSED_TICKS));
+                        diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_OPEN_TICKS));
+                        break;
+                }
                 break;
             case SWALLOW:
                 angleControllerTicks = SWALLOW_TICKS;
                 manualBeaterBarOn = true;
                 manualBeaterBarEject = false;
                 articulation = Articulation.MANUAL;
+                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
                 break;
             case WING_INTAKE_POSTION:
                 if(wingIntakePostion()) {
                     articulation = Articulation.MANUAL;
                 }
+                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
                 break;
             case FOLD:
                 beaterBar.setPower(0);
                 angleControllerTicks = BEATER_BAR_FOLD_ANGLE;
+                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
                 break;
             case STACK_INTAKE:
                 beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY);
                 beaterBarTargetAngle = angleToStack;
+                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
                 break;
         }
         angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
@@ -180,6 +210,7 @@ public class Intake implements Subsystem {
         telemetryMap.put("beater bar amps", beaterBar.getPower());
         telemetryMap.put("beater bar velocity", beaterBar.getVelocity());
         telemetryMap.put("angle controller position", Utils.servoDenormalize(angleController.getPosition()));
+        telemetryMap.put("diverter state", diverterState.name());
 //        telemetryMap.put("beaterBarAngle", beaterBarAngleController.getCurrentAngle());
         return telemetryMap;
     }

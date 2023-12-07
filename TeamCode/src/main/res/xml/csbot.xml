@@ -2,7 +2,9 @@
 <Robot type="FirstInspires-FTC">
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Control Hub" port="173">
-            <Servo name="jimmy" port="0" />
+            <Servo name="jimmy" port="2" />
+            <Servo name="diverterLeft" port="0" />
+            <REV_VL53L0X_RANGE_SENSOR name="backDist" port="0" bus="0" />
             <RevRobotics20HDHexMotor name="rightFront" port="0" />
             <RevRobotics20HDHexMotor name="rightRear" port="1" />
             <RevRobotics20HDHexMotor name="leftRear" port="2" />
@@ -11,13 +13,12 @@
         </LynxModule>
         <LynxModule name="Expansion Hub 1" port="1">
             <Servo name="beaterBarAngleController" port="0" />
+            <Servo name="diverterRight" port="2" />
             <RevRobotics40HDHexMotor name="beaterBar" port="1" />
             <RevRobotics40HDHexMotor name="slide" port="2"/>
             <RevRobotics40HDHexMotor name="kareem" port="3"/>
             <RevRobotics40HDHexMotor name="jabbar" port="0"/>
             <Servo name="pixelFlipper" port="5" />
-            <Servo name="diverter" port="1" />
-
         </LynxModule>
     </LynxUsbDevice>
     <Webcam name="Webcam 1" serialNumber="VendorProduct:vendor=0x046d|product=0x0825|connection=" />

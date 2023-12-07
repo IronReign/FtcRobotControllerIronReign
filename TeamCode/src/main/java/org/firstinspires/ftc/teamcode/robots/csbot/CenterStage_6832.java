@@ -39,6 +39,7 @@ public class CenterStage_6832 extends OpMode {
     private boolean initializing;
     public boolean endGameHandled;
     public static boolean initPosition = false;
+    public static boolean ignoreCachePosition = false;
 
     //GAMESTATES
     public enum GameState {
@@ -128,6 +129,7 @@ public class CenterStage_6832 extends OpMode {
 
         //INITIALIZE COMPONENTS
         robot = new Robot(hardwareMap, false);
+        robot.fetchCachedCSPosition();
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
 
@@ -176,8 +178,7 @@ public class CenterStage_6832 extends OpMode {
         startTime = System.currentTimeMillis();
         lastLoopClockTime = System.nanoTime();
 
-        //TODO - implement a resetGame function
-//        resetGame();
+        resetGame();
 
         if(gameState.equals(GameState.AUTONOMOUS)){
             auton.pickAutonToRun();
@@ -195,7 +196,10 @@ public class CenterStage_6832 extends OpMode {
         robot.start();
     }
     //end start()
-
+    public void resetGame()
+    {
+        robot.resetRobotPosFromCache(5, ignoreCachePosition);
+    }
 
 
     @Override
@@ -215,7 +219,6 @@ public class CenterStage_6832 extends OpMode {
             switch(gameState) {
                 case AUTONOMOUS:
                         auton.execute(dashboard);
-
                     break;
 
                 case TELE_OP:

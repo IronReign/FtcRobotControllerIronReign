@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -13,7 +14,11 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import org.checkerframework.checker.units.qual.C;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
@@ -38,15 +43,18 @@ public class Robot implements Subsystem {
     //TODO - create a field
 //    public Field field;
 
+    public static boolean updatePositionCache = true;
+    public PositionCache positionCache;
+    public CSPosition currPosition;
+
+    public CSPosition fetchedPosition;
+
     //vision variables
     public boolean visionProviderFinalized = false;
     public static int visionProviderIndex = 2;
-    public static boolean colorBlobEnabled = true;
-
 
     private long[] subsystemUpdateTimes;
     private final List<LynxModule> hubs;
-    public static boolean juiceDriveTrain = true;
     public HardwareMap hardwareMap;
     private VoltageSensor batteryVoltageSensor;
     private Articulation articulation;
@@ -69,7 +77,7 @@ public class Robot implements Subsystem {
 
     public void start() {
         //TODO - articulate starting position
-        if(gameState.isAutonomous()) {
+        if (gameState.isAutonomous()) {
             intake.setAngleControllerTicks(1600);
         }
         articulation = Articulation.MANUAL;
@@ -86,6 +94,7 @@ public class Robot implements Subsystem {
         //initialize vision
         createVisionProvider();
 
+        positionCache = new PositionCache(5);
 
         // initializing subsystems
         driveTrain = new DriveTrain(hardwareMap, this, simulated);
@@ -112,7 +121,10 @@ public class Robot implements Subsystem {
         deltaTime = (System.nanoTime() - lastTime) / 1e9;
         lastTime = System.nanoTime();
 
-
+        if (updatePositionCache) {
+            currPosition = new CSPosition(driveTrain.pose);
+            positionCache.update(currPosition, false);
+        }
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         articulate(articulation);
@@ -132,7 +144,7 @@ public class Robot implements Subsystem {
     //end update
 
     public void updateVision() {
-        if(visionOn) {
+        if (visionOn) {
             if (!visionProviderFinalized) {
                 createVisionProvider();
                 visionProviderBack.initializeVision(hardwareMap, this);
@@ -157,28 +169,44 @@ public class Robot implements Subsystem {
 
     public void switchVisionProviders() {
         visionProviderBack.shutdownVision();
-        if(visionProviderIndex == 2){
+        if (visionProviderIndex == 2) {
             //switch to AprilTags
             visionProviderIndex = 0;
             visionProviderFinalized = false;
 
-        }
-        else if (visionProviderIndex == 0) {
+        } else if (visionProviderIndex == 0) {
             //switch back to ColorBlob
             visionProviderIndex = 2;
             visionProviderFinalized = false;
         }
     }
 
+    public void fetchCachedCSPosition() {
+        fetchedPosition = positionCache.readPose();
+    }
 
+    public void resetRobotPosFromCache(double loggerTimeoutMinutes, boolean ignoreCache) {
+        if(!ignoreCache) {
+            fetchCachedCSPosition();
+            if (gameState.equals(CenterStage_6832.GameState.TELE_OP) || gameState.equals((CenterStage_6832.GameState.TEST))) {
+                int loggerTimeout = (int) (loggerTimeoutMinutes * 60000);
+                if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
+                    //apply cached position
+                    driveTrain.pose = fetchedPosition.getPose();
+                    articulate(Articulation.MANUAL);
+                }
+            }
+        }
+    }
 
     public static int initPositionIndex = 0;
     public long initPositionTimer;
+
     public void initPosition() {
         switch (initPositionIndex) {
             case 0:
                 initPositionTimer = futureTime(1);
-                initPositionIndex ++;
+                initPositionIndex++;
                 break;
             case 1:
                 intake.articulate(Intake.Articulation.FOLD);
@@ -229,6 +257,8 @@ public class Robot implements Subsystem {
 
     @Override
     public void stop() {
+        currPosition = new CSPosition(driveTrain.pose);
+        positionCache.update(currPosition, true);
         for (Subsystem component : subsystems) {
             component.stop();
         }
@@ -236,21 +266,21 @@ public class Robot implements Subsystem {
     //end stop
 
 
-
     public static int wingIntakeIndex = 0;
     public long wingIntakeTimer = 0;
-    public boolean wingIntake () {
+
+    public boolean wingIntake() {
         switch (wingIntakeIndex) {
             case 0:
                 wingIntakeTimer = futureTime(.5);
                 intake.articulate(Intake.Articulation.WING_INTAKE_POSTION);
                 if (intake.articulation == Intake.Articulation.MANUAL && isPast(wingIntakeTimer))
-                    wingIntakeIndex ++;
+                    wingIntakeIndex++;
                 break;
             case 1:
                 outtake.articulate(Outtake.Articulation.INTAKE_PIXEL);
-                if(outtake.articulation == Outtake.Articulation.MANUAL) {
-                    wingIntakeIndex ++;
+                if (outtake.articulation == Outtake.Articulation.MANUAL) {
+                    wingIntakeIndex++;
                 }
                 break;
             case 2:
@@ -266,14 +296,12 @@ public class Robot implements Subsystem {
         telemetryMap.put("Articulation", articulation);
         telemetryMap.put("wingIntakeIndex", wingIntakeIndex);
         telemetryMap.put("initPositionIndex", initPositionIndex);
+        telemetryMap.put("MemoryPose", positionCache.readPose());
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();
             telemetryMap.put(name + " Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (subsystemUpdateTimes[i] * 1e-6), (int) (1 / (subsystemUpdateTimes[i] * 1e-9))));
         }
 
-        if (debug) {
-            telemetryMap.put("driveTrain juiced?", juiceDriveTrain);
-        }
 
         telemetryMap.put("Delta Time", deltaTime);
 

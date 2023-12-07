@@ -42,12 +42,13 @@ public class Outtake implements Subsystem {
     public static int FLIPPER_HOME_POSITION = 1888;
     public static double FLIPPER_PWM_PER_DEGREE = 7.35;
     //IN DEGREES PER SECOND
-    public static double FLIPPER_START_ANGLE = -4;
+    public static double FLIPPER_START_ANGLE = -2;
 
-    public static double FLIPPER_JOINT_SPEED = 10;
+    public static double FLIPPER_JOINT_SPEED = 20;
 
     public static double FLIPPER_MIN_ANGLE = -135;
-    public static double FLIPPER_MAX_ANGLE = -6;
+    public static double FLIPPER_MAX_ANGLE = 10;
+    public static double FLIPPER_SCORE_ANGLE = -62;
     private boolean flipped = false;
 
     public Articulation articulate(Articulation articulation) {
@@ -157,6 +158,10 @@ public void flipperTest(){
             if(intakePosition()) {
                 articulation = Articulation.MANUAL;
             }
+        }
+        if(articulation == Articulation.SCORE_PIXEL) {
+            flipper.setTargetAngle(FLIPPER_SCORE_ANGLE);
+            articulation = Articulation.MANUAL;
         }
         flipper.update();
     }

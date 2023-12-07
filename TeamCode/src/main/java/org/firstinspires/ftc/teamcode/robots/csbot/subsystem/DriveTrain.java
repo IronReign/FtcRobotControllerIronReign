@@ -8,8 +8,10 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 
@@ -19,12 +21,12 @@ import java.util.Map;
 @Config(value = "CS_ROADRUNNER")
 public class DriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
-
-
-
     public boolean trajectoryIsActive;
 
     public Articulation articulation;
+
+    public DistanceSensor backDistanceSensor;
+    public double backDistanceSensorValue = 0;
     public enum Articulation{
         BACKSTAGE_DRIVE,
         WING_DRIVE,
@@ -35,6 +37,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         super(hardwareMap, new Pose2d(0, 0, 0));
         this.robot = robot;
         trajectoryIsActive = false;
+        backDistanceSensor = hardwareMap.get(DistanceSensor.class, "backDist");
 
     }
     //end constructor
@@ -43,6 +46,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
     @Override
     public void update(Canvas c) {
+        backDistanceSensorValue = backDistanceSensor.getDistance(DistanceUnit.INCH);
         updatePoseEstimate();
     }
 
@@ -108,6 +112,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("y in fieldCoords", pose.position.y / Constants.FIELD_INCHES_PER_GRID);
         telemetryMap.put("x in inches", pose.position.x);
         telemetryMap.put("y in inches", pose.position.y);
+        telemetryMap.put("Back Distance Sensor Value", backDistanceSensorValue);
         telemetryMap.put("heading", Math.toDegrees(pose.heading.log()));
         telemetryMap.put("Left Odometry Pod:\t", leftFront.getCurrentPosition());
         telemetryMap.put("Right Odometry Pod:\t", rightFront.getCurrentPosition());

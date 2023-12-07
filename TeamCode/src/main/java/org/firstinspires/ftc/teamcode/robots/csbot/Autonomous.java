@@ -92,6 +92,7 @@ public class Autonomous implements TelemetryProvider {
     Pose2d redLeftStageTwoPosition;
 
     public static double indexHeadingOffset = 0;
+    public static double indexStrafeOffset = 0;
 
     //BASED ON BLUE_RIGHT_START
     public static double STAGE_ONE_Y_COORDINATE = .5;
@@ -108,16 +109,16 @@ public class Autonomous implements TelemetryProvider {
         Pose2d pose = startingPosition.getPose();
 
         blueRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
-        blueRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING - indexHeadingOffset);
+        blueRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING - indexHeadingOffset);
 
         blueLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
-        blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING + 90 - indexHeadingOffset);
+        blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET - indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING + 90 - indexHeadingOffset);
 
         redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, -STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
-        redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING + indexHeadingOffset);
+        redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING + indexHeadingOffset);
 
         redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, -STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
-        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING - 90 + indexHeadingOffset);
+        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET - indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING - 90 + indexHeadingOffset);
 
         //
         redLeftStageOne = new SequentialAction(
@@ -180,6 +181,7 @@ public class Autonomous implements TelemetryProvider {
         build();
         targetIndex = visionProvider.getMostFrequentPosition().getIndex() + 1;
         indexHeadingOffset = (targetIndex - 1) * 10;
+        indexStrafeOffset = targetIndex == 1 ? .5 : 0;
             if (startingPosition == Constants.Position.START_LEFT_BLUE) {
                 stageOneToRun = blueLeftStageOne;
                 stageTwoToRun = blueLeftStageTwo;

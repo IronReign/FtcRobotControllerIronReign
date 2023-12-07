@@ -6,7 +6,6 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.allia
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
-import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.juiceDriveTrain;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionOn;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionProviderIndex;
 
@@ -16,6 +15,7 @@ import org.checkerframework.checker.units.qual.Angle;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
@@ -84,10 +84,10 @@ public class DriverControls {
 
     public void joystickDrive() {
         if (gamepad1.left_trigger > .1) {
-            robot.intake.adjustBeaterBarAngle(gamepad1.right_trigger*.85);
+            robot.intake.adjustBeaterBarAngle(gamepad1.left_trigger*.85);
         }
         if (gamepad1.right_trigger > .1) {
-            robot.intake.adjustBeaterBarAngle(-gamepad1.left_trigger*.85);
+            robot.intake.adjustBeaterBarAngle(-gamepad1.right_trigger*.85);
         }
         if (stickyGamepad1.a) {
             robot.intake.toggleBeaterBar();
@@ -104,9 +104,9 @@ public class DriverControls {
             robot.outtake.moveSlide(-5);
 
         if (gamepad1.y)
-            robot.outtake.adjustFlipper(-5);
+            robot.outtake.adjustFlipper(-10);
         if (gamepad1.x)
-            robot.outtake.adjustFlipper( 5);
+            robot.outtake.adjustFlipper( 10);
 
         if(stickyGamepad1.dpad_up)
             robot.intake.articulate(Intake.Articulation.SWALLOW);
@@ -116,7 +116,7 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.dpad_down) {
-            juiceDriveTrain = !juiceDriveTrain;
+            robot.outtake.articulate(Outtake.Articulation.SCORE_PIXEL);
         }
 
         //mu name is jimmy and i am a pickle and i am a potato and i need to sleep with my truffle oil to feel happiness
@@ -127,7 +127,7 @@ public class DriverControls {
         if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
                 Math.abs(gamepad1.left_stick_y) > DEADZONE ||
                 Math.abs(gamepad1.right_stick_x ) > DEADZONE) {
-            robot.driveTrain.fieldOrientedDrive(alliance == Constants.Alliance.BLUE? -gamepad1.left_stick_y: gamepad1.left_stick_y, alliance == Constants.Alliance.BLUE? -gamepad1.left_stick_x : gamepad1.left_stick_x,  -gamepad1.right_stick_x);
+            robot.driveTrain.fieldOrientedDrive(alliance == Constants.Alliance.BLUE? -gamepad1.left_stick_y: gamepad1.left_stick_y, alliance == Constants.Alliance.BLUE? gamepad1.left_stick_x : -gamepad1.left_stick_x,  -gamepad1.right_stick_x);
 
         }
         else robot.driveTrain.fieldOrientedDrive(0, 0, 0);
