@@ -25,7 +25,7 @@ public class DriverControls extends OpMode {
     //    Servo clawWrist2;
     //    Servo servoRailgun;
     private DcMotor arm = null;
-    private DcMotor arm2 = null;
+//    private DcMotor arm2 = null;
     FtcDashboard dashboard;
 
     @Override
@@ -50,7 +50,7 @@ public class DriverControls extends OpMode {
 //        telemetry.addData("servoWrist2". clawWrist2.getPositiion());
         telemetry.addData("servoClaw", servoClaw.getPosition());
         telemetry.addData("arm U/D position", arm.getCurrentPosition());
-        telemetry.addData("arm R/L position", arm2.getCurrentPosition());
+//        telemetry.addData("arm R/L position", arm2.getCurrentPosition());
 //        telemetry.addData("Railgun Shot", servoRailgun.getPosition());
 
         driveTrain.mecanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
