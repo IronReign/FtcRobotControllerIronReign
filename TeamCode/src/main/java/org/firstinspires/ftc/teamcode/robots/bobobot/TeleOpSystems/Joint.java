@@ -12,7 +12,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.simulation.ServoSim;
 
 public class Joint {
 
-    private Servo motor = null;
+    private Servo servo = null;
     private double HOME_PWM, PWM_PER_DEGREE, DEG_MIN, DEG_MAX;
     private double interimAngle;
     private double targetAngle, oldTargetAngle;
@@ -45,18 +45,18 @@ public class Joint {
 
     public void initJoint(boolean simulated, HardwareMap hardwareMap){
         if(simulated) {
-            motor = new ServoSim();
+            servo = new ServoSim();
         }
 
         else {
-            motor = hardwareMap.get(ServoImplEx.class, name);
-            ((ServoImplEx) motor).setPwmRange(new PwmControl.PwmRange(500, 2500));
+            servo = hardwareMap.get(ServoImplEx.class, name);
+            ((ServoImplEx) servo).setPwmRange(new PwmControl.PwmRange(500, 2500));
         }
     }
 
-    public void RelaxJoint(){((ServoImplEx) motor).setPwmDisable();}
-    public void ActivateJoint(){((ServoImplEx) motor).setPwmEnable();}
-    public boolean IsActive(){return ((ServoImplEx) motor).isPwmEnabled();}
+    public void RelaxJoint(){((ServoImplEx) servo).setPwmDisable();}
+    public void ActivateJoint(){((ServoImplEx) servo).setPwmEnable();}
+    public boolean IsActive(){return ((ServoImplEx) servo).isPwmEnabled();}
 
     public void setTargetAngle(double angle){
         targetAngle = Range.clip(angle, DEG_MIN, DEG_MAX);
@@ -68,7 +68,7 @@ public class Joint {
     }
 
     public double getPosition(){
-        return motor.getPosition();
+        return servo.getPosition();
     }
 
     public double getCurrentAngle() {
@@ -92,7 +92,7 @@ public class Joint {
         if (targetAngle > 30)
             targetAngle = targetAngle;
         interimAngle = Range.clip(interimAngle + Math.signum(errAngle)*jointSpeed * deltaTime,Double.min(targetAngle,interimAngle), Double.max(targetAngle,interimAngle));
-        motor.setPosition(servoNormalize(calcTargetPosition(interimAngle)));
+        servo.setPosition(servoNormalize(calcTargetPosition(interimAngle)));
     }
 
     private double calcTargetPosition(double targetPos) {

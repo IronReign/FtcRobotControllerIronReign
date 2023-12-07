@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.robots.bobobot.AutoTiles;
+package org.firstinspires.ftc.teamcode.robots.bobobot.AutoActions;
 
 import org.firstinspires.ftc.teamcode.robots.bobobot.Assign;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Autobot;
@@ -6,7 +6,7 @@ import static org.firstinspires.ftc.teamcode.robots.bobobot.Auton.turnDone;
 public class TurnTile extends Assign {
     private Autobot autobot;
     private double degrees;
-    //private double delta;
+
     @Override
     public double getDelta() {
         return delta;

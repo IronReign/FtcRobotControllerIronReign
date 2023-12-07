@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.robots.bobobot.AutoSystems;
+package org.firstinspires.ftc.teamcode.robots.bobobot.AutoActions;
 
 import org.firstinspires.ftc.teamcode.robots.bobobot.Assign;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Autobot;
