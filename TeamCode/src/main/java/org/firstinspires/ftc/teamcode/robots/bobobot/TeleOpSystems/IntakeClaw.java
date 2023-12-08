@@ -17,7 +17,7 @@ public class IntakeClaw {
     public static double CLOSECLAW = 0.55;
     public static double PER_DEGREE = 5.8;
     public static double PER_TICK = 0.1724;
-    public double WRIST_MIN = Utils.servoNormalize(1640);
+    public static double WRIST_MIN = Utils.servoNormalize(1640);
 
     public static double WRIST_INIT_POSITION = Utils.servoNormalize(2105);
     public static double WRIST_MAX = Utils.servoNormalize(2200);
