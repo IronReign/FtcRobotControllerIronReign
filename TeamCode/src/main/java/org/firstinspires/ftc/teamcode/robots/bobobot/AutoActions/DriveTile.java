@@ -1,6 +1,5 @@
-package org.firstinspires.ftc.teamcode.robots.bobobot.AutoTiles;
+package org.firstinspires.ftc.teamcode.robots.bobobot.AutoActions;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Assign;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Autobot;
 

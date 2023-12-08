@@ -6,10 +6,10 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
-import org.firstinspires.ftc.teamcode.robots.bobobot.AutoSystems.Mechanisms;
-import org.firstinspires.ftc.teamcode.robots.bobobot.AutoTiles.DriveTile;
-import org.firstinspires.ftc.teamcode.robots.bobobot.AutoTiles.StrafeTile;
-import org.firstinspires.ftc.teamcode.robots.bobobot.AutoTiles.TurnTile;
+import org.firstinspires.ftc.teamcode.robots.bobobot.AutoActions.Mechanisms;
+import org.firstinspires.ftc.teamcode.robots.bobobot.AutoActions.DriveTile;
+import org.firstinspires.ftc.teamcode.robots.bobobot.AutoActions.StrafeTile;
+import org.firstinspires.ftc.teamcode.robots.bobobot.AutoActions.TurnTile;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Autobot;
 
 @Config("BoboAutoVariables")
@@ -27,16 +27,20 @@ public class BoboAuto extends OpMode {
         autobot = new Autobot(dashTelemetry, hardwareMap);
         autonomous = new Auton(autobot, dashTelemetry);
         dashTelemetry.setMsTransmissionInterval(25);
+        //autonomous.add(new Mechanisms(autobot));
     }
 
     @Override
+    public void init_loop(){
+        //autonomous.runBehaviors();
+    }
+    @Override
     public void start() {
-        autonomous.add(new Mechanisms(autobot));
         autonomous.add(new DriveTile(autobot, 1));
         autonomous.add(new TurnTile(autobot, -90));
-        autonomous.add(new DriveTile(autobot, 1));
-        autonomous.add(new DriveTile(autobot, -1));
-        autonomous.add(new StrafeTile(autobot, 1));
+//        autonomous.add(new DriveTile(autobot, 1));
+//        autonomous.add(new DriveTile(autobot, -1));
+//        autonomous.add(new StrafeTile(autobot, 1));
     }
 
     @Override

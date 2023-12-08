@@ -12,14 +12,15 @@ public class IntakeClaw {
     private DcMotorEx clawArm = null;
     private Servo clawSpan = null;
     private Servo clawWrist = null;
-    private double WRIST_INTERM_POSITION;
-    public static double TARGET_POSITION;
+    public Joint wrist;
     public static double OPENCLAW = 0.35;
     public static double CLOSECLAW = 0.55;
-    public static double WRIST_MIN = Utils.servoNormalize(1300);
+    public static double PER_DEGREE = 5.8;
+    public static double PER_TICK = 0.1724;
+    public static double WRIST_MIN = Utils.servoNormalize(1640);
 
-    public static double SUB_MAX = (2/3)*Utils.servoNormalize(2300);
-    public static double WRIST_MAX = Utils.servoNormalize(2300);
+    public static double WRIST_INIT_POSITION = Utils.servoNormalize(2105);
+    public static double WRIST_MAX = Utils.servoNormalize(2200);
     public static double WRIST_SCORE_1 = Utils.servoNormalize(2184);
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
@@ -39,6 +40,7 @@ public class IntakeClaw {
         clawArm = this.hardwareMap.get(DcMotorEx.class, "clawArm");
         clawSpan = this.hardwareMap.get(Servo.class, "clawSpan");
         clawWrist = this.hardwareMap.get(Servo.class, "clawWrist");
+        //wrist = new Joint(hardwareMap, "Claw Wrist", false, WRIST_INIT_POSITION, PER_DEGREE, 1300*PER_TICK, 2300*PER_TICK, 2105*PER_TICK, 1 );
         clawArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         clawArm.setPower(1);
         clawArm.setTargetPosition(20);
@@ -60,7 +62,7 @@ public class IntakeClaw {
     }
     public void clawArmLower (boolean press) {
         if(press == true && clawArm.getCurrentPosition() > 20) {
-            clawArm.setTargetPosition(clawArm.getCurrentPosition() - 45);
+            clawArm.setTargetPosition(clawArm.getCurrentPosition() - 35);
         }
     }
     public void armWristIn(boolean press) {
@@ -73,21 +75,31 @@ public class IntakeClaw {
 
     }
     public void armWristOut(boolean press) {
-//        if (press == true) {
-//            clawWrist.setPosition(WRIST_MIN);
-//        }
-        if(press == true && clawWrist.getPosition() > WRIST_MIN){
-            clawWrist.setPosition(clawWrist.getPosition() - 60);
+        if (press == true) {
+            clawWrist.setPosition(WRIST_MIN);
         }
+//        if(press == true && clawWrist.getPosition() > WRIST_MIN){
+//            clawWrist.setPosition(clawWrist.getPosition() - 60);
+//        }
     }
     public void armPositionTest() {
         clawArm.setTargetPosition(90);
     }
-    public void interm(){
-        clawWrist.setPosition(WRIST_INTERM_POSITION);
-    }
+
     public void setWristScore1(){
 
+    }
+
+    public void inTake (boolean press) {
+        if(press == true){
+            closeClaw(true);
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            clawArm.setTargetPosition(200);
+        }
     }
 }
 

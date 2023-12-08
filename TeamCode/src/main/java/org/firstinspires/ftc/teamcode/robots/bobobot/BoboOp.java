@@ -3,14 +3,22 @@ package org.firstinspires.ftc.teamcode.robots.bobobot;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Robot;
 
 @Config("BoboGameVariables")
 @TeleOp(name="BoboOpMode", group="Challenge")
 public class BoboOp extends OpMode {
     Robot bobot;
+    BNO055IMU imu;
+
+    Orientation angles;
+    Acceleration gravity;
     MultipleTelemetry dashTelemetry;
     FtcDashboard dashboard;
     @Override
@@ -18,7 +26,10 @@ public class BoboOp extends OpMode {
         dashboard = FtcDashboard.getInstance();
         dashTelemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         bobot = new Robot(dashTelemetry, hardwareMap);
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        //imu.initialize(parameters);
         dashTelemetry.setMsTransmissionInterval(25);
+
     }
 
     @Override
@@ -31,7 +42,7 @@ public class BoboOp extends OpMode {
         bobot.claw.armWristOut(gamepad1.dpad_up);
         bobot.claw.openClaw(gamepad1.right_bumper);
         bobot.claw.closeClaw(gamepad1.left_bumper);
-        bobot.claw.interm();
+        bobot.claw.inTake(gamepad1.x);
         bobot.driveTrain.telemetryOutput();
         bobot.claw.telemetryOutput();
         bobot.droneLaunch.telemetryOutput();

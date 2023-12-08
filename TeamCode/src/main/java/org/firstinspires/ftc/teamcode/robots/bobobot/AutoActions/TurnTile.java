@@ -1,34 +1,33 @@
-package org.firstinspires.ftc.teamcode.robots.bobobot.AutoTiles;
+package org.firstinspires.ftc.teamcode.robots.bobobot.AutoActions;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Assign;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Autobot;
-
-public class StrafeTile extends Assign {
+import static org.firstinspires.ftc.teamcode.robots.bobobot.Auton.turnDone;
+public class TurnTile extends Assign {
     private Autobot autobot;
-    private double tiles;
+    private double degrees;
+
     @Override
     public double getDelta() {
         return delta;
     }
-    //private double delta;
-    public StrafeTile (Autobot autobot, double tiles){
+    public TurnTile(Autobot autobot, double degrees){
         this.autobot = autobot;
-        this.tiles = tiles;
-        delta = autobot.drive.getMotorAvgPosition() + Math.abs(tiles*STRAFETICKSPERTILE);
+        this.degrees = degrees;
+        delta = autobot.drive.getMotorAvgPosition() + Math.abs((degrees/90)*TICKSPER90);
     }
 
     @Override
     public boolean run(){
         if(autobot.drive.getMotorAvgPosition() < delta){
-            autobot.drive.mecanumAuto(0, tiles/Math.abs(tiles)*MAXMOTORSPEED, 0);
+            autobot.drive.mecanumAuto(0, 0, Math.signum(degrees)*MAXMOTORSPEED);
+
             return true;
         }
         else{
+            turnDone = true;
             autobot.drive.resetMotors();
             return false;
         }
     }
-
-
 }
