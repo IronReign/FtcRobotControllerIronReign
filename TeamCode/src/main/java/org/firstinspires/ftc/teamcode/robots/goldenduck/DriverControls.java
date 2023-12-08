@@ -81,24 +81,24 @@ public class DriverControls extends OpMode {
         }
         if (gamepad1.b) {
             arm.setPower(0.3);
-            arm.setTargetPosition(-354);
+            arm.setTargetPosition(-1530);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
             clawWrist.setPosition(0);
             // mid score backboard
         }
         if (gamepad1.a) {
             arm.setPower(0.3);
-            arm.setTargetPosition(-370);
+            arm.setTargetPosition(-1740);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
             clawWrist.setPosition(0);
             // low score backboard
         }
         if (gamepad1.right_bumper) {
-            servoClaw.setPosition(servoNormalize(1511));
+            servoClaw.setPosition(servoNormalize(1500));
             // claw open
         }
         if (gamepad1.left_bumper) {
-            servoClaw.setPosition(servoNormalize(1821));
+            servoClaw.setPosition(servoNormalize(1835));
             //claw close
         }
 //        if (gamepad1.dpad_down) {
