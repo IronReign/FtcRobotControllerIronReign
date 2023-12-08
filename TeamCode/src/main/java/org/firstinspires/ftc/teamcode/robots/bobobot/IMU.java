@@ -25,6 +25,7 @@ public class IMU {
     public IMU(Telemetry telemetry, HardwareMap hardwareMap){
         this.telemetry = telemetry;
         this.hardwareMap = hardwareMap;
+        imu_init();
     }
 
     public void imu_init(){
