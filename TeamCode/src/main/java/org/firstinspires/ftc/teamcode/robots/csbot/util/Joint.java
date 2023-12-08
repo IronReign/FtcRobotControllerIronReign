@@ -73,7 +73,8 @@ public class Joint {
 
     public double getCurrentAngle() {
         //this only works if interimAngle always has the most recently commanded angle actually sent to the servo
-        return interimAngle;}
+        return interimAngle;
+    }
 
     public double getTargetAngle() { return targetAngle; }
 
@@ -89,8 +90,6 @@ public class Joint {
         oldTime = newTime;
         //assume last deltaTime is predictive of next loop, calc interimAngle
         double errAngle = targetAngle-interimAngle;
-        if (targetAngle > 30)
-            targetAngle = targetAngle;
         interimAngle = Range.clip(interimAngle + Math.signum(errAngle)*jointSpeed * deltaTime,Double.min(targetAngle,interimAngle), Double.max(targetAngle,interimAngle));
         motor.setPosition(servoNormalize(calcTargetPosition(interimAngle)));
     }

@@ -78,7 +78,7 @@ public class CenterStage_6832 extends OpMode {
 
         public static int getNumGameStates() {return 5;}
 
-        public boolean isAutonomous() {
+        public boolean  isAutonomous() {
             return autonomous;
         }
 
@@ -137,7 +137,7 @@ public class CenterStage_6832 extends OpMode {
         alliance = Constants.Alliance.BLUE;
         //TODO - SET ORIGIN and STARTING POSITION
         origin = Constants.Position.ORIGIN_DEFAULT;
-        startingPosition = Constants.Position.START_LEFT_RED;
+        startingPosition = Constants.Position.START_RIGHT_BLUE;
 
 
 
@@ -158,6 +158,7 @@ public class CenterStage_6832 extends OpMode {
     public void init_loop() {
         dc.init_loop();
         robot.updateVision();
+        auton.updateIndexOffsets();
         robot.driveTrain.setPose(startingPosition);
         robot.driveTrain.updatePoseEstimate();
 

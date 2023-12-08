@@ -78,7 +78,7 @@ public class PositionLoggerTest extends OpMode
     @Override
     public void start() {
         testpos = new CSPosition();
-        testpos.setPose(new Pose2d(5, 6, 7));
+        testpos.setPose(new Pose2d(5, 6, 3.14));
         positionCache.writePose(testpos, false);
         telemetry.addData("Status", "Initialized");
     }
@@ -97,6 +97,9 @@ public class PositionLoggerTest extends OpMode
         opModeTelemetryMap.put("Last Loop Time", Misc.formatInvariant("%d ms (%d hz)", (int) (loopTime * 1e-6), (int) (1 / (loopTime * 1e-9))));
         opModeTelemetryMap.put("cycles", n);
         opModeTelemetryMap.put("last read timestamp", testpos.getTimestamp());
+        opModeTelemetryMap.put("testpos x", testpos.getPose().position.x);
+        opModeTelemetryMap.put("testpos heading", testpos.getPose().heading.log());
+        opModeTelemetryMap.put("testpos y", testpos.getPose().position.y);
         handleTelemetry(opModeTelemetryMap, "stuff", packet);
         dashboard.sendTelemetryPacket(packet);
         telemetry.update();

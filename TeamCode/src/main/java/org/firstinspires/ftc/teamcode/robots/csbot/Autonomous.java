@@ -17,6 +17,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Auton;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
@@ -45,11 +46,11 @@ public class Autonomous implements TelemetryProvider {
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
-        telemetryMap.put("autonIndex", autonIndex);
         telemetryMap.put("autonState", autonState);
         telemetryMap.put("targetIndex", targetIndex);
-        telemetryMap.put("stageoneposition", blueRightStageOnePosition == null ? "null" : blueRightStageOnePosition.position.y);
-        telemetryMap.put("deltaposition", (blueRightStageOnePosition == null || robot.driveTrain.pose == null) ? "null" : robot.driveTrain.pose.position.y - blueRightStageOnePosition.position.y);
+        telemetryMap.put("indexStrafeOffset", indexStrafeOffset);
+        telemetryMap.put("indexHeadingOffset", indexHeadingOffset);
+        telemetryMap.put("visionProvider index", visionProviderIndex);
         return telemetryMap;
     }
 
@@ -61,6 +62,7 @@ public class Autonomous implements TelemetryProvider {
     // autonomous routines
 
     public static int targetIndex = 1;
+    public static int visionProviderIndex;
 
     private Action
             redLeftStageOne, redLeftStageTwo,
@@ -97,10 +99,31 @@ public class Autonomous implements TelemetryProvider {
     //BASED ON BLUE_RIGHT_START
     public static double STAGE_ONE_Y_COORDINATE = .5;
 
-    public static double STAGE_TWO_X_COORDINATE = -2.5;
-    public static double STAGE_TWO_HEADING = 45;
+    public static double STAGE_TWO_X_COORDINATE = -2.1;
+    public static double STAGE_TWO_HEADING = 40;
     public static double STAGE_ONE_HEADING = 90;
     public static double BACKSTAGE_X_POSITION_OFFSET = 2.5;
+
+    public void updateIndexOffsets() {
+        visionProviderIndex = robot.visionProviderBack.getMostFrequentPosition().getIndex();
+        targetIndex = visionProviderIndex + 1;
+
+        if(targetIndex == 1) {
+             STAGE_ONE_Y_COORDINATE = 0.65;
+             STAGE_TWO_X_COORDINATE = -1.65;
+             STAGE_TWO_HEADING = 45;
+        }
+
+        if(targetIndex == 2) {
+            //DO NOTHING, THIS IS THE DEFAULT
+        }
+
+        if(targetIndex == 3) {
+            STAGE_TWO_X_COORDINATE = -1.55;
+            STAGE_TWO_HEADING = 120;
+        }
+
+    }
 
     public void build() {
         autonIndex = 0;
@@ -109,7 +132,7 @@ public class Autonomous implements TelemetryProvider {
         Pose2d pose = startingPosition.getPose();
 
         blueRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
-        blueRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING - indexHeadingOffset);
+        blueRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
 
         blueLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
         blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET - indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING + 90 - indexHeadingOffset);
@@ -179,9 +202,6 @@ public class Autonomous implements TelemetryProvider {
 
     public void pickAutonToRun() {
         build();
-        targetIndex = visionProvider.getMostFrequentPosition().getIndex() + 1;
-        indexHeadingOffset = (targetIndex - 1) * 10;
-        indexStrafeOffset = targetIndex == 1 ? .5 : 0;
             if (startingPosition == Constants.Position.START_LEFT_BLUE) {
                 stageOneToRun = blueLeftStageOne;
                 stageTwoToRun = blueLeftStageTwo;
@@ -233,6 +253,7 @@ public class Autonomous implements TelemetryProvider {
                     }
                     break;
                 case 4:
+                    robot.positionCache.update(new CSPosition(robot.driveTrain.pose), true);
                     break;
 
             }

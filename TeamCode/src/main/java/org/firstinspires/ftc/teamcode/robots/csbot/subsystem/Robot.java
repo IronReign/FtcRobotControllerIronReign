@@ -124,6 +124,8 @@ public class Robot implements Subsystem {
         if (updatePositionCache) {
             currPosition = new CSPosition(driveTrain.pose);
             positionCache.update(currPosition, false);
+            positionCache.writePose(currPosition, false);
+
         }
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
@@ -193,7 +195,6 @@ public class Robot implements Subsystem {
                 if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
                     //apply cached position
                     driveTrain.pose = fetchedPosition.getPose();
-                    articulate(Articulation.MANUAL);
                 }
             }
         }
