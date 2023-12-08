@@ -25,7 +25,7 @@ public class DriverControls extends OpMode {
     //    Servo clawWrist2;
     //    Servo servoRailgun;
     private DcMotor arm = null;
-//    private DcMotor arm2 = null;
+    //    private DcMotor arm2 = null;
     FtcDashboard dashboard;
 
     @Override
