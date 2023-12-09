@@ -56,7 +56,7 @@ public class IntakeClaw {
 
     }
     public void clawArmLift (boolean press) {
-        if(press == true && clawArm.getCurrentPosition() < 1000) {
+        if(press == true && clawArm.getCurrentPosition() < 750) {
             clawArm.setTargetPosition(clawArm.getCurrentPosition() + 95);
         }
     }

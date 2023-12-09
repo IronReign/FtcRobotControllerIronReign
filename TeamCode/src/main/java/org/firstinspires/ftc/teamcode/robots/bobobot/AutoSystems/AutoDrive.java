@@ -1,10 +1,19 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot.AutoSystems;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+
+import java.util.Locale;
 
 public class AutoDrive {
     private Telemetry telemetry;
@@ -20,6 +29,14 @@ public class AutoDrive {
     private double powerFrontRight = 0;
     private double powerBackLeft = 0;
     private double powerBackRight = 0;
+    //imu
+    BNO055IMU imu;
+
+    // State used for updating telemetry
+    Orientation angles;
+    Acceleration gravity;    // State used for updating telemetry
+    public double heading;
+
     // power input for each respective wheel
     private static final float DEADZONE = .1f;
     double robotSpeed = 1;
@@ -29,7 +46,7 @@ public class AutoDrive {
     }
     public void mecanumAuto(double forward, double strafe, double turn){
         forward = forward;
-        turn = -turn;
+        turn = turn;
         double r = Math.hypot(strafe, forward);
         double robotAngle = Math.atan2(forward, strafe) - Math.PI / 4;
         double rightX = turn;
@@ -42,12 +59,21 @@ public class AutoDrive {
         motorBackLeft.setPower(powerBackLeft*robotSpeed);
         motorBackRight.setPower(powerBackRight*robotSpeed);
     }
-    public void telemetryOutput(){
+    public void update(){
+
+        // Acquiring the angles is relatively expensive; we don't want
+        // to do that in each of the three items that need that info, as that's
+        // three times the necessary expense.
+        angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        gravity  = imu.getGravity();
+        heading = angles.firstAngle;
+
         telemetry.addData("Back Right Position \t", motorBackRight.getCurrentPosition());
         telemetry.addData("Back Left Position \t", motorBackLeft.getCurrentPosition());
         telemetry.addData("Front Right Position \t", motorFrontRight.getCurrentPosition());
         telemetry.addData("Front Left Position \t", motorFrontLeft.getCurrentPosition());
         telemetry.addData("Average Motor Position \t", getMotorAvgPosition());
+        telemetry.addData("Heading \t", formatAngle(angles.angleUnit, heading));
 
     }
     public void driveInit(){
@@ -69,6 +95,24 @@ public class AutoDrive {
         motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorBackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorBackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        // Set up the parameters with which we will use our IMU. Note that integration
+        // algorithm here just reports accelerations to the logcat log; it doesn't actually
+        // provide positional information.
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample OpMode
+        parameters.loggingEnabled      = true;
+        parameters.loggingTag          = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+
+
+        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
+        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
+        // and named "imu".
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
 
     }
 
@@ -102,5 +146,17 @@ public class AutoDrive {
     }
 
     public double getMotorAvgPosition(){return (double)(Math.abs(motorFrontLeft.getCurrentPosition())+Math.abs(motorFrontRight.getCurrentPosition())+Math.abs(motorBackLeft.getCurrentPosition())+Math.abs(motorBackRight.getCurrentPosition()))/3.0;}
-    //motor broken rn so use 3; when fixed change back to 4
+    //motor broken rn so use 3; when fixed change back to
+
+    String formatAngle(AngleUnit angleUnit, double angle) {
+        return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
+    }
+
+    String formatDegrees(double degrees){
+        return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
+    }
+
+    public double getHeading(){
+        return heading;
+    }
 }

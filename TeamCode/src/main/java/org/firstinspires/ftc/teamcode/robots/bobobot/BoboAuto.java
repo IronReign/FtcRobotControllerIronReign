@@ -6,7 +6,6 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
-import org.firstinspires.ftc.teamcode.robots.bobobot.AutoActions.Mechanisms;
 import org.firstinspires.ftc.teamcode.robots.bobobot.AutoActions.DriveTile;
 import org.firstinspires.ftc.teamcode.robots.bobobot.AutoActions.StrafeTile;
 import org.firstinspires.ftc.teamcode.robots.bobobot.AutoActions.TurnTile;
@@ -37,15 +36,17 @@ public class BoboAuto extends OpMode {
     @Override
     public void start() {
         autonomous.add(new DriveTile(autobot, 1));
-        autonomous.add(new TurnTile(autobot, -90));
-//        autonomous.add(new DriveTile(autobot, 1));
+//        autonomous.add(new TurnTile(autobot, -45));
+        autonomous.add(new TurnTile(autobot, 45));
+        autonomous.add(new StrafeTile(autobot, 1));
+        //autonomous.add(new DriveTile(autobot, -1));
 //        autonomous.add(new DriveTile(autobot, -1));
 //        autonomous.add(new StrafeTile(autobot, 1));
     }
 
     @Override
     public void loop() {
-        autobot.drive.telemetryOutput();
+        autobot.drive.update();
         autobot.grip.telemetryOutput();
         autonomous.telemetryOutput();
         autonomous.runBehaviors();
