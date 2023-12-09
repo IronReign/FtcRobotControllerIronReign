@@ -158,10 +158,12 @@ public class CenterStage_6832 extends OpMode {
     public void init_loop() {
         dc.init_loop();
         robot.updateVision();
-        auton.updateIndexOffsets();
+        robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
+        robot.initPosition();
         robot.driveTrain.setPose(startingPosition);
         robot.driveTrain.updatePoseEstimate();
-
+        auton.updateIndexOffsets();
+        auton.pickAutonToRun();
         telemetry.addData("visionProviderIndex", Robot.visionProviderIndex);
         telemetry.addData("blobLocation", robot.visionProviderBack.getMostFrequentPosition().getIndex());
         telemetry.addData("gameState", gameState);
@@ -182,7 +184,6 @@ public class CenterStage_6832 extends OpMode {
         resetGame();
 
         if(gameState.equals(GameState.AUTONOMOUS)){
-            auton.pickAutonToRun();
         }
 
         if(gameState.equals(GameState.TELE_OP)){
@@ -192,7 +193,6 @@ public class CenterStage_6832 extends OpMode {
         if(gameState.equals(GameState.TEST) ||  gameState.equals(GameState.DEMO)){
 
         }
-
 
         robot.start();
     }

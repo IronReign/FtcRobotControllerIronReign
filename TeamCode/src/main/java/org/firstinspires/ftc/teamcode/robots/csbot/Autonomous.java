@@ -17,6 +17,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Auton;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Skyhook;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
@@ -93,6 +94,9 @@ public class Autonomous implements TelemetryProvider {
     Pose2d redLeftStageOnePosition;
     Pose2d redLeftStageTwoPosition;
 
+    public static int INWARD_SCORING_ANGLE = -45;
+    public static int MIDDLE_SCORING_ANGLE = -50;
+    public static int OUTWARD_SCORING_ANGLE = 30;
     public static double indexHeadingOffset = 0;
     public static double indexStrafeOffset = 0;
 
@@ -108,20 +112,89 @@ public class Autonomous implements TelemetryProvider {
         visionProviderIndex = robot.visionProviderBack.getMostFrequentPosition().getIndex();
         targetIndex = visionProviderIndex + 1;
 
-        if(targetIndex == 1) {
-             STAGE_ONE_Y_COORDINATE = 0.65;
-             STAGE_TWO_X_COORDINATE = -1.65;
-             STAGE_TWO_HEADING = 45;
+        if(startingPosition.equals(Constants.Position.START_RIGHT_BLUE)) {
+            if (targetIndex == 1) {
+                STAGE_ONE_Y_COORDINATE = 0.65;
+                STAGE_TWO_X_COORDINATE = -1.65;
+                STAGE_TWO_HEADING = 90 + INWARD_SCORING_ANGLE;
+            }
+
+            if (targetIndex == 2) {
+                //DO NOTHING, THIS IS THE DEFAULT
+                STAGE_ONE_Y_COORDINATE = .5;
+                STAGE_TWO_HEADING = 90 + MIDDLE_SCORING_ANGLE;
+                STAGE_TWO_X_COORDINATE = -2.1;
+            }
+
+            if (targetIndex == 3) {
+                STAGE_ONE_Y_COORDINATE = .5;
+                STAGE_TWO_X_COORDINATE = -1.55;
+                STAGE_TWO_HEADING = 90 + OUTWARD_SCORING_ANGLE;
+            }
         }
 
-        if(targetIndex == 2) {
-            //DO NOTHING, THIS IS THE DEFAULT
+        if(startingPosition.equals(Constants.Position.START_LEFT_BLUE)) {
+            if (targetIndex == 1) {
+                STAGE_ONE_Y_COORDINATE = .5;
+                STAGE_TWO_X_COORDINATE = 1.55;
+                STAGE_TWO_HEADING = 90 - OUTWARD_SCORING_ANGLE;
+            }
+
+            if (targetIndex == 2) {
+                //DO NOTHING, THIS IS THE DEFAULT
+                STAGE_ONE_Y_COORDINATE = .5;
+                STAGE_TWO_HEADING = 90 - MIDDLE_SCORING_ANGLE;
+                STAGE_TWO_X_COORDINATE = 2.1;
+            }
+
+            if (targetIndex == 3) {
+                STAGE_ONE_Y_COORDINATE = 0.65;
+                STAGE_TWO_X_COORDINATE = 1.65;
+                STAGE_TWO_HEADING = 90 - INWARD_SCORING_ANGLE;
+            }
         }
 
-        if(targetIndex == 3) {
-            STAGE_TWO_X_COORDINATE = -1.55;
-            STAGE_TWO_HEADING = 120;
+        if(startingPosition.equals(Constants.Position.START_LEFT_RED)) {
+            if (targetIndex == 1) {
+                STAGE_ONE_Y_COORDINATE = -0.65;
+                STAGE_TWO_X_COORDINATE = -1.65;
+                STAGE_TWO_HEADING = -(90 + OUTWARD_SCORING_ANGLE);
+            }
+
+            if (targetIndex == 2) {
+                //DO NOTHING, THIS IS THE DEFAULT
+                STAGE_ONE_Y_COORDINATE = -.5;
+                STAGE_TWO_HEADING = -(90 + MIDDLE_SCORING_ANGLE);
+                STAGE_TWO_X_COORDINATE = -2.1;
+            }
+
+            if (targetIndex == 3) {
+                STAGE_ONE_Y_COORDINATE = -.5;
+                STAGE_TWO_X_COORDINATE = -1.55;
+                STAGE_TWO_HEADING = -(90 + INWARD_SCORING_ANGLE);
+            }
         }
+        if(startingPosition.equals(Constants.Position.START_RIGHT_RED)) {
+            if (targetIndex == 1) {
+                STAGE_ONE_Y_COORDINATE = -0.65;
+                STAGE_TWO_X_COORDINATE = 1.65;
+                STAGE_TWO_HEADING = -(90 - INWARD_SCORING_ANGLE);
+            }
+
+            if (targetIndex == 2) {
+                //DO NOTHING, THIS IS THE DEFAULT
+                STAGE_ONE_Y_COORDINATE = -.5;
+                STAGE_TWO_HEADING = -(90 - MIDDLE_SCORING_ANGLE);
+                STAGE_TWO_X_COORDINATE = 2.1;
+            }
+
+            if (targetIndex == 3) {
+                STAGE_ONE_Y_COORDINATE = -.5;
+                STAGE_TWO_X_COORDINATE = 1.55;
+                STAGE_TWO_HEADING = (90 - OUTWARD_SCORING_ANGLE);
+            }
+        }
+
 
     }
 
@@ -135,13 +208,13 @@ public class Autonomous implements TelemetryProvider {
         blueRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
 
         blueLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
-        blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET - indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING + 90 - indexHeadingOffset);
+        blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET - indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
 
-        redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, -STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
-        redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING + indexHeadingOffset);
+        redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
+        redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
 
-        redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, -STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
-        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET - indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING - 90 + indexHeadingOffset);
+        redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
+        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
 
         //
         redLeftStageOne = new SequentialAction(
@@ -229,6 +302,7 @@ public class Autonomous implements TelemetryProvider {
             switch (autonIndex) {
                 case 0:
                     autonIndex++;
+                    robot.skyhook.articulate(Skyhook.Articulation.GAME);
                     break;
                 case 1:
                     autonState = AutonState.BACK_UP;

@@ -210,7 +210,7 @@ public class Robot implements Subsystem {
                 initPositionIndex++;
                 break;
             case 1:
-                intake.articulate(Intake.Articulation.FOLD);
+                intake.setAngleControllerTicks(Intake.ANGLE_CONTROLLER_MIN);
 //                if(isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
 //                    initPositionIndex ++;
@@ -224,8 +224,8 @@ public class Robot implements Subsystem {
 //                }
                 break;
             case 3:
-                Outtake.flipperPosition = Outtake.FLIPPER_INIT_POSITION;
-//                if (isPast(initPositionTimer)) {
+                outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
+                //                if (isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
 //                    initPositionIndex ++;
 //                }
@@ -234,7 +234,10 @@ public class Robot implements Subsystem {
                 outtake.slidePosition = 0;
                 break;
             case 5:
+                skyhook.articulate(Skyhook.Articulation.INIT);
                 break;
+            case 6:
+                intake.articulate(Intake.Articulation.INIT);
         }
     }
 
@@ -251,7 +254,13 @@ public class Robot implements Subsystem {
                     articulation = Articulation.MANUAL;
                 }
                 break;
-
+            case HANG:
+                intake.articulate(Intake.Articulation.HANG);
+                skyhook.articulate(Skyhook.Articulation.HANG);
+                break;
+            case LAUNCH_DRONE:
+                skyhook.articulate(Skyhook.Articulation.LAUNCH);
+                break;
         }
         return articulation;
     }

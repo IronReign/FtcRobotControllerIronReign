@@ -37,10 +37,11 @@ public class Intake implements Subsystem {
     public static double BEATER_BAR_INTAKE_VELOCITY = 2000;
     public static double BEATER_BAR_EJECT_VELOCITY = -700;
 
-    public int angleControllerTicks = ANGLE_CONTROLLER_MAX;
+    public static int angleControllerTicks = ANGLE_CONTROLLER_MAX;
     public static int BEATER_BAR_FOLD_ANGLE = 2470;
     public static int BEATER_BAR_WING_ANGLE = 1701;
     public static int BEATER_BAR_EJECT_ANGLE = 1550;
+    public static int BEATER_BAR_HANG_ANGLE = 1565;
     public static int SWALLOW_TICKS = 1950;
 
 
@@ -51,7 +52,9 @@ public class Intake implements Subsystem {
         OFF,
         FOLD,
         MANUAL,
-        SWALLOW
+        HANG,
+        SWALLOW,
+        INIT
     }
 
     public enum DiverterState{
@@ -73,6 +76,7 @@ public class Intake implements Subsystem {
             this.robot = robot;
             articulation = Articulation.MANUAL;
             diverterState = DiverterState.DELIVER_BOTH;
+            angleControllerTicks = ANGLE_CONTROLLER_MIN;
 
             diverterLeft = hardwareMap.get(Servo.class, "diverterRight");
             diverterRight = hardwareMap.get(Servo.class, "diverterLeft");
@@ -126,6 +130,13 @@ public class Intake implements Subsystem {
                 articulation = Articulation.MANUAL;
                 angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
                 break;
+            case HANG:
+                angleControllerTicks = BEATER_BAR_HANG_ANGLE;
+                manualBeaterBarEject = false;
+                manualBeaterBarOn = false;
+                articulation = Articulation.MANUAL;
+                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
+                break;
             case WING_INTAKE_POSTION:
                 if(wingIntakePostion()) {
                     articulation = Articulation.MANUAL;
@@ -141,6 +152,11 @@ public class Intake implements Subsystem {
                 beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY);
                 beaterBarTargetAngle = angleToStack;
                 angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
+                break;
+            case INIT:
+                angleControllerTicks = ANGLE_CONTROLLER_MAX;
+                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
+                articulation = Articulation.MANUAL;
                 break;
         }
         angleController.setPosition(Utils.servoNormalize(angleControllerTicks));

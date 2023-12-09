@@ -3,7 +3,7 @@
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Control Hub" port="173">
             <Servo name="jimmy" port="2" />
-            <Servo name="diverterLeft" port="0" />
+            <Servo name="diverterLeft" port="5" />
             <REV_VL53L0X_RANGE_SENSOR name="backDist" port="0" bus="0" />
             <RevRobotics20HDHexMotor name="rightFront" port="0" />
             <RevRobotics20HDHexMotor name="rightRear" port="1" />
