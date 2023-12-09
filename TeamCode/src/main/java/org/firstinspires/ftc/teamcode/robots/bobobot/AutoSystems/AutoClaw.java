@@ -13,6 +13,10 @@ public class AutoClaw {
     private Servo clawSpan = null;
     public static double OPENCLAW = 0.15;
     public static double CLOSECLAW = 0.30;
+
+    public static double WRIST_MAX = Utils.servoNormalize(2200);
+
+    public static double WRIST_MIN = Utils.servoNormalize(1640);
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
     private Servo clawWrist = null;
