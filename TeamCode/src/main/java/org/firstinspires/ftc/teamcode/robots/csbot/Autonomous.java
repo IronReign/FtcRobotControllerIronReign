@@ -412,7 +412,7 @@ public class Autonomous implements TelemetryProvider {
                     autonIndex++;
                     break;
                 case 8:
-//                    robot.positionCache.update(new CSPosition(robot.driveTrain.pose), true);
+                    robot.positionCache.update(new CSPosition(robot.driveTrain.pose), true);
                     break;
 
             }

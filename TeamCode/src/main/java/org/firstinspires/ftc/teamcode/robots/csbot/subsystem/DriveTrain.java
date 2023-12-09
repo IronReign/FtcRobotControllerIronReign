@@ -99,6 +99,10 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         pose = start.getPose();
     }
 
+    public void setPose(Pose2d pose) {
+        this.pose = pose;
+    }
+
     @Override
     public void stop() {
         drive(0, 0, 0);

@@ -44,7 +44,7 @@ public class Outtake implements Subsystem {
     //IN DEGREES PER SECOND
     public static double FLIPPER_START_ANGLE = -45;
 
-    public static double FLIPPER_JOINT_SPEED = 30;
+    public static double FLIPPER_JOINT_SPEED = 60;
 
     public static double FLIPPER_MIN_ANGLE = -145;
     public static double FLIPPER_MAX_ANGLE = 10;

@@ -9,6 +9,7 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.HeadingPosePath;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -60,6 +61,7 @@ public class Robot implements Subsystem {
     private VoltageSensor batteryVoltageSensor;
     private Articulation articulation;
     public List<Target> targets = new ArrayList<Target>();
+    public boolean fetched;
 
     public enum Articulation {
         //beater bar, drivetrain, drone launcher, outtake
@@ -187,6 +189,7 @@ public class Robot implements Subsystem {
 
     public void fetchCachedCSPosition() {
         fetchedPosition = positionCache.readPose();
+        fetched = !(fetchedPosition.getPose().position.x == 0 && fetchedPosition.getPose().position.y == 0);
     }
 
     public void resetRobotPosFromCache(double loggerTimeoutMinutes, boolean ignoreCache) {
