@@ -27,10 +27,10 @@ public class Skyhook implements Subsystem {
     public static int jimmyTicks = 1500;
     public static int JIMMY_TENSION_TICKS = 1450;
     public static int JIMMY_RELEASE_TICKS = 2100;
-    public static int SKYHOOK_SAFE_TICKS = 900;
+    public static int SKYHOOK_SAFE_TICKS = 800;
     DcMotor kareem, jabbar;
     Servo jimmy;
-    public static int SKYHOOK_INIT_TICKS = 900;
+    public static int SKYHOOK_INIT_TICKS = 700;
 
     public enum Articulation {
         HANG,

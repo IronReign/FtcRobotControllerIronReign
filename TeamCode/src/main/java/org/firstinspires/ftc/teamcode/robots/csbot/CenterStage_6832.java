@@ -163,7 +163,8 @@ public class CenterStage_6832 extends OpMode {
         robot.driveTrain.setPose(startingPosition);
         robot.driveTrain.updatePoseEstimate();
         auton.updateIndexOffsets();
-        auton.pickAutonToRun();
+        //calc auton based on alliance, starting position and team prop position
+        auton.pickAutonToRun(alliance, (robot.visionProviderBack.getMostFrequentPosition().getIndex()-1)*6);
         telemetry.addData("visionProviderIndex", Robot.visionProviderIndex);
         telemetry.addData("visionProviderOnRed", robot.visionProviderBack.isRedAlliance);
         telemetry.addData("blobLocation", robot.visionProviderBack.getMostFrequentPosition().getIndex());

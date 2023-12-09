@@ -72,6 +72,7 @@ public class Robot implements Subsystem {
         UNFOLD,
         HANG,
         LAUNCH_DRONE,
+        TRAVEL
 
     }
 
@@ -261,6 +262,9 @@ public class Robot implements Subsystem {
             case LAUNCH_DRONE:
                 skyhook.articulate(Skyhook.Articulation.LAUNCH);
                 break;
+            case TRAVEL:
+                intake.articulate(Intake.Articulation.TRAVEL);
+                outtake.articulate(Outtake.Articulation.FOLD);
         }
         return articulation;
     }

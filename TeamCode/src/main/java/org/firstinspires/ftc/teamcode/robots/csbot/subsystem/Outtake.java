@@ -100,7 +100,7 @@ public class Outtake implements Subsystem {
         switch (intakePositionIndex) {
             case 0:
                 intakePositionTimer = futureTime(.5);
-                slide.setTargetPosition(slidePositionMax);
+                slide.setTargetPosition(slidePositionMin);
                 if(System.nanoTime() > intakePositionTimer)
                     intakePositionIndex ++;
                 break;

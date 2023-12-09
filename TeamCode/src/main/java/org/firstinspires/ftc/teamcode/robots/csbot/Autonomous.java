@@ -14,7 +14,6 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.robots.bobobot.Auton;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Skyhook;
@@ -40,6 +39,9 @@ public class Autonomous implements TelemetryProvider {
         BACK_UP,
         STRAFE,
         SCORE_GROUND,
+        TRAVEL_BACKSTAGE,
+        TRAVEL_BACKDROP,
+        SCORE_BACKDROP
     }
 
     public AutonState autonState = AutonState.INIT;
@@ -64,12 +66,17 @@ public class Autonomous implements TelemetryProvider {
 
     public static int targetIndex = 1;
     public static int visionProviderIndex;
+    int allianceDirection = -1;
+    double yellowOffset = 0;
 
+    double standardHeading = 180;
     private Action
             redLeftStageOne, redLeftStageTwo,
             blueLeftStageOne, blueLeftStageTwo,
             blueRightStageOne, blueRightStageTwo,
-            redRightStageOne, redRightStageTwo;
+            redRightStageOne, redRightStageTwo,
+            travelBackstage, travelBackdrop
+    ;
 
     private Action stageOneToRun, stageTwoToRun;
 
@@ -93,6 +100,12 @@ public class Autonomous implements TelemetryProvider {
 
     Pose2d redLeftStageOnePosition;
     Pose2d redLeftStageTwoPosition;
+
+    Pose2d purpleEndPosition;
+    Pose2d backdropApproachPosition;
+
+    Pose2d backdropFinalPosition;
+
 
     public static int INWARD_SCORING_ANGLE = -45;
     public static int MIDDLE_SCORING_ANGLE = -50;
@@ -210,11 +223,15 @@ public class Autonomous implements TelemetryProvider {
         blueLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
         blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET - indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
 
-        redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
-        redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
+        redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
+        redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
 
-        redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
-        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
+        redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
+        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
+
+        purpleEndPosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, allianceDirection * .5, standardHeading);
+        backdropApproachPosition = P2D(2.0, allianceDirection * .5, standardHeading);
+        backdropFinalPosition = P2D(2.0, allianceDirection * 1.5 + yellowOffset/FIELD_INCHES_PER_GRID, standardHeading);
 
         //
         redLeftStageOne = new SequentialAction(
@@ -271,9 +288,31 @@ public class Autonomous implements TelemetryProvider {
                         .build()
         );
         //
+
+        travelBackstageBuild();
+
+        travelBackdrop = new SequentialAction(
+                robot.driveTrain.actionBuilder(backdropApproachPosition)
+                .strafeTo(backdropFinalPosition.position)
+                .turnTo(standardHeading)
+                .build()
+        );
     }
 
-    public void pickAutonToRun() {
+    public void travelBackstageBuild(){
+        travelBackstage = new SequentialAction(
+                //robot.driveTrain.actionBuilder(purpleEndPosition)
+                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                        .turnTo(standardHeading)
+                        //.splineTo(backdropApproachPosition.position, standardHeading)
+                        .build()
+
+        );
+    }
+
+    public void pickAutonToRun(Constants.Alliance alliance, int yellowOffset) {
+        allianceDirection=alliance.equals(Constants.Alliance.BLUE)?-1:1;
+        this.yellowOffset = yellowOffset;
         build();
             if (startingPosition == Constants.Position.START_LEFT_BLUE) {
                 stageOneToRun = blueLeftStageOne;
@@ -293,7 +332,7 @@ public class Autonomous implements TelemetryProvider {
 
     public static int autonIndex;
     public static long futureTimer;
-    public static int EJECT_WAIT_TIME = 4;
+    public static int EJECT_WAIT_TIME = 2;
 
 
     public void execute(FtcDashboard dashboard) {
@@ -323,10 +362,33 @@ public class Autonomous implements TelemetryProvider {
                     robot.intake.ejectBeaterBar();
                     if (isPast(futureTimer)) {
                         robot.intake.beaterBarOff();
+                        //todo - the following 2 lines should be combined into a robot.travel articulation
+                        robot.intake.articulate(Intake.Articulation.TRAVEL);
+                        robot.outtake.intakePosition(); //outtake should already be in this position
+                        //todo IMPORTANT - lower the outtake flipper to slightly below horizontal so it goes under the door
+                        travelBackstageBuild(); //gotta build again since the current position is used
                         autonIndex++;
                     }
                     break;
-                case 4:
+                case 4: //travel to interim position near backdrop and then to final position
+                    autonState = AutonState.TRAVEL_BACKSTAGE;
+                    if (!travelBackstage.run(packet))
+                    {
+                        autonIndex++;
+                        autonIndex++;}
+
+                    break;
+                case 5:
+                    autonState = AutonState.TRAVEL_BACKDROP;
+                    if(!travelBackdrop.run(packet)) autonIndex++;
+                    break;
+                case 6: //todo put the outtake in a scoring config
+                    autonIndex++;
+                    break;
+                case 7: //todo slow final approach to backdrop
+                    autonIndex++;
+                    break;
+                case 8:
                     robot.positionCache.update(new CSPosition(robot.driveTrain.pose), true);
                     break;
 

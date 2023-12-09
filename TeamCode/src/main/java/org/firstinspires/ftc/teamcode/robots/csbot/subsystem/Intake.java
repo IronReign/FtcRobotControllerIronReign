@@ -44,6 +44,8 @@ public class Intake implements Subsystem {
     public static int BEATER_BAR_HANG_ANGLE = 1565;
     public static int SWALLOW_TICKS = 1950;
 
+    public static int INTAKE_TRAVEL = 1800; //safe to travel through backstage door
+
 
     public enum Articulation {
         WING_INTAKE_POSTION,
@@ -54,7 +56,8 @@ public class Intake implements Subsystem {
         MANUAL,
         HANG,
         SWALLOW,
-        INIT
+        INIT,
+        TRAVEL
     }
 
     public enum DiverterState{
@@ -158,6 +161,12 @@ public class Intake implements Subsystem {
                 angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
                 articulation = Articulation.MANUAL;
                 break;
+            case TRAVEL:
+                angleControllerTicks = INTAKE_TRAVEL;
+                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
+                articulation = Articulation.MANUAL;
+                break;
+
         }
         angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
 
