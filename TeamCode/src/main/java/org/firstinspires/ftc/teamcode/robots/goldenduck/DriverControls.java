@@ -30,9 +30,9 @@ public class DriverControls extends OpMode {
 
     @Override
     public void init() {
+        dashboard = FtcDashboard.getInstance();
         driveTrain = new DriveTrain(telemetry, hardwareMap);
         driveTrain.motorInit();
-        dashboard = FtcDashboard.getInstance();
         servoClaw = hardwareMap.get(Servo.class, "servoClaw");
 //        servoRailgun = hardwareMap.get(Servo.class, "servoRailgun");
         clawWrist = hardwareMap.get(Servo.class, "servoWrist");
@@ -69,36 +69,36 @@ public class DriverControls extends OpMode {
             arm.setPower(0.1);
             arm.setTargetPosition(-105);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-            clawWrist.setPosition(servoNormalize(1047));
+            clawWrist.setPosition(servoNormalize(150));
             //driving mode
         }
         if (gamepad1.y) {
             arm.setPower(0.2);
             arm.setTargetPosition(0);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-            clawWrist.setPosition(servoNormalize(1277));
+            clawWrist.setPosition(servoNormalize(300));
             //to pick up pixel
         }
         if (gamepad1.b) {
             arm.setPower(0.3);
-            arm.setTargetPosition(-1530);
+            arm.setTargetPosition(-1389);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
             clawWrist.setPosition(0);
             // mid score backboard
         }
         if (gamepad1.a) {
             arm.setPower(0.3);
-            arm.setTargetPosition(-1740);
+            arm.setTargetPosition(-1615);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
             clawWrist.setPosition(0);
             // low score backboard
         }
         if (gamepad1.right_bumper) {
-            servoClaw.setPosition(servoNormalize(1500));
+            servoClaw.setPosition(servoNormalize(900));
             // claw open
         }
         if (gamepad1.left_bumper) {
-            servoClaw.setPosition(servoNormalize(1835));
+            servoClaw.setPosition(servoNormalize(1402));
             //claw close
         }
 //        if (gamepad1.dpad_down) {
