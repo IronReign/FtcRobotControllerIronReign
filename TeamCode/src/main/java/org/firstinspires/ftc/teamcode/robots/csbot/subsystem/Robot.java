@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
+import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -43,7 +44,7 @@ public class Robot implements Subsystem {
     //TODO - create a field
 //    public Field field;
 
-    public static boolean updatePositionCache = true;
+    public static boolean updatePositionCache = false;
     public PositionCache positionCache;
     public CSPosition currPosition;
 
@@ -77,6 +78,7 @@ public class Robot implements Subsystem {
     }
 
     public void start() {
+        skyhook.articulate(Skyhook.Articulation.GAME);
         //TODO - articulate starting position
         if (gameState.isAutonomous()) {
             intake.setAngleControllerTicks(1600);
@@ -194,7 +196,7 @@ public class Robot implements Subsystem {
                 int loggerTimeout = (int) (loggerTimeoutMinutes * 60000);
                 if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
                     //apply cached position
-                    driveTrain.pose = fetchedPosition.getPose();
+//                    driveTrain.pose = fetchedPosition.getPose();
                 }
             }
         }
@@ -307,9 +309,10 @@ public class Robot implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("Articulation", articulation);
+        telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
         telemetryMap.put("wingIntakeIndex", wingIntakeIndex);
         telemetryMap.put("initPositionIndex", initPositionIndex);
-        telemetryMap.put("MemoryPose", positionCache.readPose());
+//        telemetryMap.put("MemoryPose", positionCache.readPose());
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();
             telemetryMap.put(name + " Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (subsystemUpdateTimes[i] * 1e-6), (int) (1 / (subsystemUpdateTimes[i] * 1e-9))));

@@ -28,7 +28,7 @@ public class DriverControls {
     public static double PRECISION_TURN_MULTIPLIER = .8;
     public static double PRECISION_DRIVE_MULTIPLIER = .8;
     //CONSTANTS
-    public static boolean fieldOrientedDrive = true;
+    public static boolean fieldOrientedDrive = false;
     public static double DEADZONE = 0.1;
 
     public boolean visionProviderFinalized = robot.visionProviderFinalized;
@@ -98,6 +98,7 @@ public class DriverControls {
     }
 
     public void joystickDrive() {
+
         if(stickyGamepad2.b) {
             fieldOrientedDrive = !fieldOrientedDrive;
         }
@@ -130,13 +131,19 @@ public class DriverControls {
             fieldOrientedDrive();
         }
         else {
-            robot.driveTrain.drive(-gamepad1.left_stick_x, -gamepad1.left_stick_y, -gamepad1.right_stick_x);
+            robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
         }
 
-        if (gamepad1.left_bumper)
+        if (gamepad1.left_bumper) {
             robot.outtake.moveSlide(5);
-        if (gamepad1.right_bumper)
+//            if(robot.outtake.getSlidePosition() > 100 && robot.outtake.getSlidePosition() < 800)//TODO find more accurate values for where flipper should be raised
+//                robot.outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
+        }
+        if (gamepad1.right_bumper) {
             robot.outtake.moveSlide(-5);
+//            if(robot.outtake.getSlidePosition() > 100 && robot.outtake.getSlidePosition() < 800)//TODO find more accurate values for where flipper should be raised
+//                robot.outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
+        }
 
         if (gamepad1.y)
             robot.outtake.adjustFlipper(-15);
@@ -150,6 +157,9 @@ public class DriverControls {
 //            robot.skyhook.releaseTheJimmy();
 //        }
 
+        if(stickyGamepad2.y) {
+            fieldOrientedDrive = !fieldOrientedDrive;
+        }
         if (stickyGamepad1.dpad_down) {
             robot.outtake.articulate(Outtake.Articulation.SCORE_PIXEL);
         }

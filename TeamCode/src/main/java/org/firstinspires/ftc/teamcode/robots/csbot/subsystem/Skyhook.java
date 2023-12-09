@@ -24,10 +24,12 @@ public class Skyhook implements Subsystem {
     public static int skyhookLeftTicks = 0;
     public static int SKYHOOK_HANG_TICKS = 300;
     public static int SKYHOOK_LAUNCH_TICKS = 250;
+    public static int PREP_FOR_HANG_TICKS = 0;
     public static int jimmyTicks = 1500;
     public static int JIMMY_TENSION_TICKS = 1450;
     public static int JIMMY_RELEASE_TICKS = 2100;
     public static int SKYHOOK_SAFE_TICKS = 800;
+    public static int SKYHOOK_UP_TICKS = 0;
     DcMotor kareem, jabbar;
     Servo jimmy;
     public static int SKYHOOK_INIT_TICKS = 700;
@@ -38,7 +40,8 @@ public class Skyhook implements Subsystem {
         INIT,
         GAME,
         MANUAL,
-        PREP_FOR_HANG
+        PREP_FOR_HANG,
+        UP
     }
 
     public Articulation articulation = Articulation.MANUAL;
@@ -62,8 +65,8 @@ public class Skyhook implements Subsystem {
     public void update(Canvas fieldOverlay) {
         switch (articulation) {
             case PREP_FOR_HANG:
-                skyhookLeftTicks = 0;
-                skyhookRightTicks = 0;
+                skyhookLeftTicks = PREP_FOR_HANG_TICKS;
+                skyhookRightTicks = PREP_FOR_HANG_TICKS;
                 articulation = Articulation.MANUAL;
                 break;
             case GAME:

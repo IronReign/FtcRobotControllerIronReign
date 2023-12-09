@@ -148,7 +148,9 @@ public void flipperTest(){
         flipperPosition += power;
     }
 
-
+    public int getSlidePosition() {
+        return slidePosition;
+    }
     @Override
     public void update(Canvas fieldOverlay) {
         if(articulation == Articulation.MANUAL) {
