@@ -15,7 +15,6 @@ public class Mechanisms extends Assign {
     }
     @Override
     public boolean run(){
-        autobot.grip.autoWristDown();
         autobot.grip.autoOpen();
         autobot.grip.autoClose();
         return false;
