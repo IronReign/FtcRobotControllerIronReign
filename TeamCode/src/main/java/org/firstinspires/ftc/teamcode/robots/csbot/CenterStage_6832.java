@@ -165,6 +165,7 @@ public class CenterStage_6832 extends OpMode {
         auton.updateIndexOffsets();
         auton.pickAutonToRun();
         telemetry.addData("visionProviderIndex", Robot.visionProviderIndex);
+        telemetry.addData("visionProviderOnRed", robot.visionProviderBack.isRedAlliance);
         telemetry.addData("blobLocation", robot.visionProviderBack.getMostFrequentPosition().getIndex());
         telemetry.addData("gameState", gameState);
         telemetry.addData("gameStateIndex", gameStateIndex);

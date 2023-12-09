@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.active;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
@@ -10,6 +9,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.vision
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionProviderIndex;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.checkerframework.checker.units.qual.Angle;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -44,6 +44,11 @@ public class DriverControls {
         if (stickyGamepad1.left_stick_button) {
             robot.createVisionProvider();
         }
+
+        if(stickyGamepad1.dpad_up) {
+            robot.visionProviderFinalized = !robot.visionProviderFinalized;
+        }
+
         if(stickyGamepad1.a) {
             CenterStage_6832.initPosition = true;
         }
@@ -194,7 +199,8 @@ public class DriverControls {
                     startingPosition :
                         startingPosition == Constants.Position.START_LEFT_RED ?
                             Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
-            robot.visionProviderBack.initializeVision(hardwareMap); // this is blocking
+                robot.visionProviderBack.setRedAlliance(false);
+//            robot.visionProviderBack.initializeVision(hardwareMap); // this is blocking
 
 
         }
@@ -204,7 +210,8 @@ public class DriverControls {
                     startingPosition :
                     startingPosition == Constants.Position.START_LEFT_BLUE ?
                             Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
-            robot.visionProviderBack.initializeVision(hardwareMap); // this is blocking
+                robot.visionProviderBack.setRedAlliance(true);
+//            robot.visionProviderBack.initializeVision(hardwareMap); // this is blocking
 
         }
 
@@ -227,7 +234,7 @@ public class DriverControls {
                     robot.createVisionProvider();
                 }
                 if (stickyGamepad1.dpad_up || stickyGamepad2.dpad_up) {
-                    robot.visionProviderBack.initializeVision(hardwareMap); // this is blocking
+//                    robot.visionProviderBack.initializeVision(hardwareMap); // this is blocking
                     visionProviderFinalized = true;
                 }
             } else if (stickyGamepad1.dpad_up || stickyGamepad2.dpad_up) {
