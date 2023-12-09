@@ -69,14 +69,14 @@ public class DriverControls extends OpMode {
             arm.setPower(0.1);
             arm.setTargetPosition(-105);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-            clawWrist.setPosition(servoNormalize(150));
+            clawWrist.setPosition(servoNormalize(600));
             //driving mode
         }
         if (gamepad1.y) {
             arm.setPower(0.2);
             arm.setTargetPosition(0);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-            clawWrist.setPosition(servoNormalize(300));
+            clawWrist.setPosition(servoNormalize(800));
             //to pick up pixel
         }
         if (gamepad1.b) {
