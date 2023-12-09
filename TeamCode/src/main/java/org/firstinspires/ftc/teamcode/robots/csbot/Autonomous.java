@@ -15,6 +15,7 @@ import com.acmerobotics.roadrunner.SequentialAction;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Skyhook;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
@@ -180,7 +181,7 @@ public class Autonomous implements TelemetryProvider {
 
         if(startingPosition.equals(Constants.Position.START_LEFT_RED)) {
             if (targetIndex == 1) {
-                STAGE_ONE_HEADING = -90;
+                STAGE_ONE_HEADING = 90;
                 STAGE_ONE_Y_COORDINATE = -0.65;
                 STAGE_TWO_X_COORDINATE = -1.65;
                 STAGE_TWO_HEADING = -(90 + OUTWARD_SCORING_ANGLE);
@@ -188,15 +189,14 @@ public class Autonomous implements TelemetryProvider {
 
             if (targetIndex == 2) {
                 //DO NOTHING, THIS IS THE DEFAULT
-                STAGE_ONE_HEADING = -90;
+                STAGE_ONE_HEADING = 90;
                 STAGE_ONE_Y_COORDINATE = -.5;
                 STAGE_TWO_HEADING = -(90 + MIDDLE_SCORING_ANGLE);
                 STAGE_TWO_X_COORDINATE = -2.1;
             }
 
             if (targetIndex == 3) {
-                STAGE_ONE_HEADING = -90;
-                STAGE_ONE_HEADING = -90;
+                STAGE_ONE_HEADING = 90;
                 STAGE_ONE_Y_COORDINATE = -.5;
                 STAGE_TWO_X_COORDINATE = -1.55;
                 STAGE_TWO_HEADING = -(90 + INWARD_SCORING_ANGLE);
@@ -204,7 +204,7 @@ public class Autonomous implements TelemetryProvider {
         }
         if(startingPosition.equals(Constants.Position.START_RIGHT_RED)) {
             if (targetIndex == 1) {
-                STAGE_ONE_HEADING = -90;
+                STAGE_ONE_HEADING = 90;
                 STAGE_ONE_Y_COORDINATE = -0.65;
                 STAGE_TWO_X_COORDINATE = 1.65;
                 STAGE_TWO_HEADING = -(90 - INWARD_SCORING_ANGLE);
@@ -212,14 +212,14 @@ public class Autonomous implements TelemetryProvider {
 
             if (targetIndex == 2) {
                 //DO NOTHING, THIS IS THE DEFAULT
-                STAGE_ONE_HEADING = -90;
+                STAGE_ONE_HEADING = 90;
                 STAGE_ONE_Y_COORDINATE = -.5;
                 STAGE_TWO_HEADING = -(90 - MIDDLE_SCORING_ANGLE);
                 STAGE_TWO_X_COORDINATE = 2.1;
             }
 
             if (targetIndex == 3) {
-                STAGE_ONE_HEADING = -90;
+                STAGE_ONE_HEADING = 90;
                 STAGE_ONE_Y_COORDINATE = -.5;
                 STAGE_TWO_X_COORDINATE = 1.55;
                 STAGE_TWO_HEADING = (90 - OUTWARD_SCORING_ANGLE);
@@ -371,13 +371,13 @@ public class Autonomous implements TelemetryProvider {
                 case 2:
                     autonState = AutonState.STRAFE;
                     if (!stageTwoToRun.run(packet)) {
+                        robot.intake.ejectBeaterBar();
                         futureTimer = futureTime(EJECT_WAIT_TIME);
                         autonIndex++;
                     }
                     break;
                 case 3:
                     autonState = AutonState.SCORE_GROUND;
-                    robot.intake.ejectBeaterBar();
                     if (isPast(futureTimer)) {
                         robot.intake.beaterBarOff();
                         //todo - the following 2 lines should be combined into a robot.travel articulation
@@ -385,7 +385,9 @@ public class Autonomous implements TelemetryProvider {
                         robot.outtake.intakePosition(); //outtake should already be in this position
                         //todo IMPORTANT - lower the outtake flipper to slightly below horizontal so it goes under the door
                         travelBackstageBuild(); //gotta build again since the current position is used
+                        robot.positionCache.update(new CSPosition(robot.driveTrain.pose), true);
                         autonIndex++;
+
                     }
                     break;
                 case 4: //travel to interim position near backdrop and then to final position
@@ -400,7 +402,8 @@ public class Autonomous implements TelemetryProvider {
                     autonState = AutonState.TRAVEL_BACKDROP;
                     if(!travelBackdrop.run(packet)) autonIndex++;
                     break;
-                case 6: //todo put the outtake in a scoring config
+                case 6:
+                    robot.outtake.articulate(Outtake.Articulation.SCORE_PIXEL);
                     autonIndex++;
                     break;
                 case 7: //todo slow final approach to backdrop

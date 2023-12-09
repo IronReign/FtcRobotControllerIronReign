@@ -122,10 +122,9 @@ public class Robot implements Subsystem {
         deltaTime = (System.nanoTime() - lastTime) / 1e9;
         lastTime = System.nanoTime();
 
-        if (updatePositionCache) {
+        if (updatePositionCache && gameState.isAutonomous()) {
             currPosition = new CSPosition(driveTrain.pose);
             positionCache.update(currPosition, false);
-            positionCache.writePose(currPosition, false);
 
         }
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE

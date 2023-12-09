@@ -8,6 +8,8 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.start
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionOn;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionProviderIndex;
 
+import android.annotation.SuppressLint;
+
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -26,6 +28,7 @@ public class DriverControls {
     public static double PRECISION_TURN_MULTIPLIER = .8;
     public static double PRECISION_DRIVE_MULTIPLIER = .8;
     //CONSTANTS
+    public static boolean fieldOrientedDrive = true;
     public static double DEADZONE = 0.1;
 
     public boolean visionProviderFinalized = robot.visionProviderFinalized;
@@ -95,6 +98,9 @@ public class DriverControls {
     }
 
     public void joystickDrive() {
+        if(stickyGamepad2.b) {
+            fieldOrientedDrive = !fieldOrientedDrive;
+        }
         if (gamepad1.left_trigger > .1) {
             robot.intake.adjustBeaterBarAngle(gamepad1.left_trigger*.85);
         }
@@ -119,7 +125,13 @@ public class DriverControls {
             robot.intake.diverterState = Intake.DiverterState.DELIVER_BOTH;
         }
 
-        fieldOrientedDrive();
+
+        if(fieldOrientedDrive) {
+            fieldOrientedDrive();
+        }
+        else {
+            robot.driveTrain.drive(-gamepad1.left_stick_x, -gamepad1.left_stick_y, -gamepad1.right_stick_x);
+        }
 
         if (gamepad1.left_bumper)
             robot.outtake.moveSlide(5);
@@ -134,15 +146,15 @@ public class DriverControls {
         if(stickyGamepad1.dpad_up)
             robot.intake.articulate(Intake.Articulation.SWALLOW);
 
-        if(stickyGamepad1.dpad_left) {
-            robot.skyhook.releaseTheJimmy();
-        }
+//        if(stickyGamepad1.dpad_left) {
+//            robot.skyhook.releaseTheJimmy();
+//        }
 
         if (stickyGamepad1.dpad_down) {
             robot.outtake.articulate(Outtake.Articulation.SCORE_PIXEL);
         }
 
-        if(stickyGamepad2.b) {
+        if(stickyGamepad2.dpad_up) {
             robot.skyhook.articulate(Skyhook.Articulation.PREP_FOR_HANG);
         }
         if(stickyGamepad2.a) {
@@ -152,9 +164,9 @@ public class DriverControls {
         if(stickyGamepad2.dpad_down) {
             robot.articulate(Robot.Articulation.HANG);
         }
-        if(stickyGamepad2.dpad_up) {
-            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
-        }
+//        if(stickyGamepad2.dpad_up) {
+//            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
+//        }
 
         //mu name is jimmy and i am a pickle and i am a potato and i need to sleep with my truffle oil to feel happiness
 
@@ -190,6 +202,7 @@ public class DriverControls {
 
     }
 
+    @SuppressLint("SuspiciousIndentation")
     void handlePregameControls() {
         if (stickyGamepad1.x || stickyGamepad2.x) {
 
