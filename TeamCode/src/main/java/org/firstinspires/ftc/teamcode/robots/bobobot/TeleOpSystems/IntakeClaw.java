@@ -17,11 +17,11 @@ public class IntakeClaw {
     public static double CLOSECLAW = 0.55;
     public static double PER_DEGREE = 5.8;
     public static double PER_TICK = 0.1724;
-    public static double WRIST_MIN = Utils.servoNormalize(1640);
+    public static double WRIST_MIN = Utils.servoNormalize(1650);
 
     public static double WRIST_INIT_POSITION = Utils.servoNormalize(2105);
     public static double WRIST_MAX = Utils.servoNormalize(2200);
-    public static double WRIST_SCORE_1 = Utils.servoNormalize(2184);
+    public static double WRIST_SCORE_1 = Utils.servoNormalize(1800);
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
     public IntakeClaw(Telemetry telemetry, HardwareMap hardwareMap) {
@@ -57,11 +57,11 @@ public class IntakeClaw {
     }
     public void clawArmLift (boolean press) {
         if(press == true && clawArm.getCurrentPosition() < 750) {
-            clawArm.setTargetPosition(clawArm.getCurrentPosition() + 95);
+            clawArm.setTargetPosition(clawArm.getCurrentPosition() + 75);
         }
     }
     public void clawArmLower (boolean press) {
-        if(press == true && clawArm.getCurrentPosition() > 20) {
+        if(press == true && clawArm.getCurrentPosition() > 160) {
             clawArm.setTargetPosition(clawArm.getCurrentPosition() - 35);
         }
     }
@@ -75,30 +75,24 @@ public class IntakeClaw {
 
     }
     public void armWristOut(boolean press) {
-        if (press == true) {
+        if (press == true && clawArm.getCurrentPosition() < 400) {
             clawWrist.setPosition(WRIST_MIN);
         }
-//        if(press == true && clawWrist.getPosition() > WRIST_MIN){
-//            clawWrist.setPosition(clawWrist.getPosition() - 60);
-//        }
+        if (press == true && clawArm.getCurrentPosition() > 400){
+            clawWrist.setPosition(WRIST_SCORE_1);
+        }
+
+
     }
     public void armPositionTest() {
         clawArm.setTargetPosition(90);
     }
 
-    public void setWristScore1(){
 
-    }
 
     public void inTake (boolean press) {
         if(press == true){
-            closeClaw(true);
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            clawArm.setTargetPosition(200);
+            clawArm.setTargetPosition(145);
         }
     }
 }

@@ -22,7 +22,7 @@ public class TurnTile extends Assign {
 
     @Override
     public boolean run(){
-        if(autobot.drive.getHeading() < targetHeading && autobot.drive.getMotorAvgPosition() < delta /*|| System.currentTimeMillis() < timer*/){
+        if(autobot.drive.getHeading() < targetHeading /*&& autobot.drive.getMotorAvgPosition() < delta /*|| System.currentTimeMillis() < timer*/){
             autobot.drive.mecanumAuto(0, 0, Math.signum(degrees)*MAXMOTORSPEED);
             return true;
         }

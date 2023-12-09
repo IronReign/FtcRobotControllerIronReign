@@ -35,13 +35,7 @@ public class BoboAuto extends OpMode {
     }
     @Override
     public void start() {
-        autonomous.add(new DriveTile(autobot, 1));
-//        autonomous.add(new TurnTile(autobot, -45));
-        autonomous.add(new TurnTile(autobot, 45));
-        autonomous.add(new StrafeTile(autobot, 1));
-        //autonomous.add(new DriveTile(autobot, -1));
-//        autonomous.add(new DriveTile(autobot, -1));
-//        autonomous.add(new StrafeTile(autobot, 1));
+        autonomous.add(new DriveTile(autobot,1.8));
     }
 
     @Override
@@ -55,31 +49,31 @@ public class BoboAuto extends OpMode {
 
 
     public void redBack(){
-        autonomous.add(new TurnTile(autobot, -90));
+        autonomous.add(new TurnTile(autobot, -70));
         autonomous.add(new DriveTile(autobot, 2));
     }
 
     public void redFront(){
-        autonomous.add(new DriveTile(autobot,1));
-        autonomous.add(new TurnTile(autobot, -90));
+        autonomous.add(new DriveTile(autobot,1.1));
+        autonomous.add(new TurnTile(autobot, -70));
         autonomous.add(new DriveTile(autobot, 3));
-        autonomous.add(new TurnTile(autobot, -90));
+        autonomous.add(new TurnTile(autobot, -70));
         autonomous.add(new DriveTile(autobot,1));
-        autonomous.add(new TurnTile(autobot, 90));
+        autonomous.add(new TurnTile(autobot, 70));
         autonomous.add(new DriveTile(autobot,1 ));
     }
     public void blueBack(){
-        autonomous.add(new TurnTile(autobot, 90));
-        autonomous.add(new DriveTile(autobot, 2));
+        autonomous.add(new TurnTile(autobot, 70));
+        autonomous.add(new DriveTile(autobot, 1.8));
     }
 
     public void blueFront(){
-        autonomous.add(new DriveTile(autobot,1));
-        autonomous.add(new TurnTile(autobot, 90));
+        autonomous.add(new DriveTile(autobot,1.1));
+        autonomous.add(new TurnTile(autobot, 70));
         autonomous.add(new DriveTile(autobot, 3));
-        autonomous.add(new TurnTile(autobot, 90));
+        autonomous.add(new TurnTile(autobot, 70));
         autonomous.add(new DriveTile(autobot,1));
-        autonomous.add(new TurnTile(autobot, -90));
+        autonomous.add(new TurnTile(autobot, -70));
         autonomous.add(new DriveTile(autobot,1 ));
     }
 }
