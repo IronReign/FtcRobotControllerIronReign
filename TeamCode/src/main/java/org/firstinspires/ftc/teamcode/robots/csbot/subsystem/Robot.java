@@ -3,11 +3,13 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
+import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.HeadingPosePath;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -43,7 +45,7 @@ public class Robot implements Subsystem {
     //TODO - create a field
 //    public Field field;
 
-    public static boolean updatePositionCache = true;
+    public static boolean updatePositionCache = false;
     public PositionCache positionCache;
     public CSPosition currPosition;
 
@@ -59,6 +61,7 @@ public class Robot implements Subsystem {
     private VoltageSensor batteryVoltageSensor;
     private Articulation articulation;
     public List<Target> targets = new ArrayList<Target>();
+    public boolean fetched;
 
     public enum Articulation {
         //beater bar, drivetrain, drone launcher, outtake
@@ -72,10 +75,12 @@ public class Robot implements Subsystem {
         UNFOLD,
         HANG,
         LAUNCH_DRONE,
+        TRAVEL
 
     }
 
     public void start() {
+        skyhook.articulate(Skyhook.Articulation.GAME);
         //TODO - articulate starting position
         if (gameState.isAutonomous()) {
             intake.setAngleControllerTicks(1600);
@@ -121,10 +126,9 @@ public class Robot implements Subsystem {
         deltaTime = (System.nanoTime() - lastTime) / 1e9;
         lastTime = System.nanoTime();
 
-        if (updatePositionCache) {
+        if (updatePositionCache && gameState.isAutonomous()) {
             currPosition = new CSPosition(driveTrain.pose);
             positionCache.update(currPosition, false);
-            positionCache.writePose(currPosition, false);
 
         }
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
@@ -185,6 +189,7 @@ public class Robot implements Subsystem {
 
     public void fetchCachedCSPosition() {
         fetchedPosition = positionCache.readPose();
+        fetched = !(fetchedPosition.getPose().position.x == 0 && fetchedPosition.getPose().position.y == 0);
     }
 
     public void resetRobotPosFromCache(double loggerTimeoutMinutes, boolean ignoreCache) {
@@ -194,7 +199,7 @@ public class Robot implements Subsystem {
                 int loggerTimeout = (int) (loggerTimeoutMinutes * 60000);
                 if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
                     //apply cached position
-                    driveTrain.pose = fetchedPosition.getPose();
+//                    driveTrain.pose = fetchedPosition.getPose();
                 }
             }
         }
@@ -210,7 +215,7 @@ public class Robot implements Subsystem {
                 initPositionIndex++;
                 break;
             case 1:
-                intake.articulate(Intake.Articulation.FOLD);
+                intake.setAngleControllerTicks(Intake.ANGLE_CONTROLLER_MIN);
 //                if(isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
 //                    initPositionIndex ++;
@@ -224,8 +229,8 @@ public class Robot implements Subsystem {
 //                }
                 break;
             case 3:
-                Outtake.flipperPosition = Outtake.FLIPPER_INIT_POSITION;
-//                if (isPast(initPositionTimer)) {
+                outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
+                //                if (isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
 //                    initPositionIndex ++;
 //                }
@@ -234,7 +239,10 @@ public class Robot implements Subsystem {
                 outtake.slidePosition = 0;
                 break;
             case 5:
+                skyhook.articulate(Skyhook.Articulation.INIT);
                 break;
+            case 6:
+                intake.articulate(Intake.Articulation.INIT);
         }
     }
 
@@ -251,7 +259,16 @@ public class Robot implements Subsystem {
                     articulation = Articulation.MANUAL;
                 }
                 break;
-
+            case HANG:
+                intake.articulate(Intake.Articulation.HANG);
+                skyhook.articulate(Skyhook.Articulation.HANG);
+                break;
+            case LAUNCH_DRONE:
+                skyhook.articulate(Skyhook.Articulation.LAUNCH);
+                break;
+            case TRAVEL:
+                intake.articulate(Intake.Articulation.TRAVEL);
+                outtake.articulate(Outtake.Articulation.FOLD);
         }
         return articulation;
     }
@@ -295,9 +312,10 @@ public class Robot implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("Articulation", articulation);
+        telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
         telemetryMap.put("wingIntakeIndex", wingIntakeIndex);
         telemetryMap.put("initPositionIndex", initPositionIndex);
-        telemetryMap.put("MemoryPose", positionCache.readPose());
+//        telemetryMap.put("MemoryPose", positionCache.readPose());
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();
             telemetryMap.put(name + " Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (subsystemUpdateTimes[i] * 1e-6), (int) (1 / (subsystemUpdateTimes[i] * 1e-9))));

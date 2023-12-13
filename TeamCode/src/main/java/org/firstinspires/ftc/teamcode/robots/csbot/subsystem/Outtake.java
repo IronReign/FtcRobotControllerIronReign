@@ -32,7 +32,7 @@ public class Outtake implements Subsystem {
     public static int slidePositionMin = 0;
 
     int slideSpeed = 20;
-    public static int UNTUCK_SLIDE_POSITION = 0;
+    public static int UNTUCK_SLIDE_POSITION = 500;
     public static int FLIPPERINTAKEPOSITION = 1888;
     public static int FLIPPER_INIT_POSITION = 1439;
 
@@ -42,11 +42,11 @@ public class Outtake implements Subsystem {
     public static int FLIPPER_HOME_POSITION = 1888;
     public static double FLIPPER_PWM_PER_DEGREE = 7.35;
     //IN DEGREES PER SECOND
-    public static double FLIPPER_START_ANGLE = -2;
+    public static double FLIPPER_START_ANGLE = -45;
 
-    public static double FLIPPER_JOINT_SPEED = 30;
+    public static double FLIPPER_JOINT_SPEED = 60;
 
-    public static double FLIPPER_MIN_ANGLE = -135;
+    public static double FLIPPER_MIN_ANGLE = -145;
     public static double FLIPPER_MAX_ANGLE = 10;
     public static double FLIPPER_SCORE_ANGLE = -62;
     private boolean flipped = false;
@@ -75,6 +75,9 @@ public class Outtake implements Subsystem {
     //LIVE STATES
     public Articulation articulation;
 
+    public void setTargetAngle(double angle) {
+        flipper.setTargetAngle(angle);
+    }
 
     public Outtake(HardwareMap hardwareMap, Robot robot) {
         this.hardwareMap = hardwareMap;
@@ -97,7 +100,7 @@ public class Outtake implements Subsystem {
         switch (intakePositionIndex) {
             case 0:
                 intakePositionTimer = futureTime(.5);
-                slide.setTargetPosition(slidePositionMax);
+                slide.setTargetPosition(slidePositionMin);
                 if(System.nanoTime() > intakePositionTimer)
                     intakePositionIndex ++;
                 break;
@@ -145,7 +148,9 @@ public void flipperTest(){
         flipperPosition += power;
     }
 
-
+    public int getSlidePosition() {
+        return slidePosition;
+    }
     @Override
     public void update(Canvas fieldOverlay) {
         if(articulation == Articulation.MANUAL) {

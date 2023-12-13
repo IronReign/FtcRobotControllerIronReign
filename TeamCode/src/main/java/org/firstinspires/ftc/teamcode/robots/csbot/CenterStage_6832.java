@@ -129,7 +129,6 @@ public class CenterStage_6832 extends OpMode {
 
         //INITIALIZE COMPONENTS
         robot = new Robot(hardwareMap, false);
-        robot.fetchCachedCSPosition();
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
 
@@ -139,7 +138,8 @@ public class CenterStage_6832 extends OpMode {
         origin = Constants.Position.ORIGIN_DEFAULT;
         startingPosition = Constants.Position.START_RIGHT_BLUE;
 
-
+        //FETCH CACHE
+        robot.fetchCachedCSPosition();
 
         //TELEMETRY SETUP
         dashboard = FtcDashboard.getInstance();
@@ -158,13 +158,24 @@ public class CenterStage_6832 extends OpMode {
     public void init_loop() {
         dc.init_loop();
         robot.updateVision();
-        auton.updateIndexOffsets();
+        robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
+        robot.initPosition();
         robot.driveTrain.setPose(startingPosition);
+        if(gameState.isAutonomous()) {
+            auton.updateIndexOffsets();
+            //calc auton based on alliance, starting position and team prop position
+            auton.pickAutonToRun(alliance, (robot.visionProviderBack.getMostFrequentPosition().getIndex()-1)*6);
+        }
+//        if(robot.fetched)
+//            robot.driveTrain.setPose(robot.fetchedPosition.getPose());
         robot.driveTrain.updatePoseEstimate();
 
         telemetry.addData("visionProviderIndex", Robot.visionProviderIndex);
+        telemetry.addData("visionProviderOnRed", robot.visionProviderBack.isRedAlliance);
         telemetry.addData("blobLocation", robot.visionProviderBack.getMostFrequentPosition().getIndex());
+        telemetry.addData("feched", robot.fetched);
         telemetry.addData("gameState", gameState);
+        telemetry.addData("gameStateAuton?", gameState.isAutonomous());
         telemetry.addData("gameStateIndex", gameStateIndex);
         telemetry.addData("active", active);
         telemetry.addData("Alliance", alliance);
@@ -182,7 +193,6 @@ public class CenterStage_6832 extends OpMode {
         resetGame();
 
         if(gameState.equals(GameState.AUTONOMOUS)){
-            auton.pickAutonToRun();
         }
 
         if(gameState.equals(GameState.TELE_OP)){
@@ -192,7 +202,6 @@ public class CenterStage_6832 extends OpMode {
         if(gameState.equals(GameState.TEST) ||  gameState.equals(GameState.DEMO)){
 
         }
-
 
         robot.start();
     }

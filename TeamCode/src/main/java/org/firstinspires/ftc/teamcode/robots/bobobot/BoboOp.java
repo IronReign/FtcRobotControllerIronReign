@@ -15,7 +15,7 @@ import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Robot;
 @TeleOp(name="BoboOpMode", group="Challenge")
 public class BoboOp extends OpMode {
     Robot bobot;
-    BNO055IMU imu;
+    IMU imu;
 
     Orientation angles;
     Acceleration gravity;
@@ -26,10 +26,9 @@ public class BoboOp extends OpMode {
         dashboard = FtcDashboard.getInstance();
         dashTelemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         bobot = new Robot(dashTelemetry, hardwareMap);
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu = new IMU(dashTelemetry, hardwareMap);
         //imu.initialize(parameters);
         dashTelemetry.setMsTransmissionInterval(25);
-
     }
 
     @Override
@@ -46,6 +45,7 @@ public class BoboOp extends OpMode {
         bobot.driveTrain.telemetryOutput();
         bobot.claw.telemetryOutput();
         bobot.droneLaunch.telemetryOutput();
+        imu.telemetryOutput();
         dashTelemetry.update();
     }
 }

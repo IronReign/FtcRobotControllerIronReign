@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.active;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
@@ -9,7 +8,10 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.start
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionOn;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionProviderIndex;
 
+import android.annotation.SuppressLint;
+
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.checkerframework.checker.units.qual.Angle;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -17,6 +19,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Skyhook;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
@@ -25,6 +28,7 @@ public class DriverControls {
     public static double PRECISION_TURN_MULTIPLIER = .8;
     public static double PRECISION_DRIVE_MULTIPLIER = .8;
     //CONSTANTS
+    public static boolean fieldOrientedDrive = false;
     public static double DEADZONE = 0.1;
 
     public boolean visionProviderFinalized = robot.visionProviderFinalized;
@@ -43,13 +47,24 @@ public class DriverControls {
         if (stickyGamepad1.left_stick_button) {
             robot.createVisionProvider();
         }
+
+        if(stickyGamepad1.dpad_up) {
+            robot.visionProviderFinalized = !robot.visionProviderFinalized;
+        }
+
         if(stickyGamepad1.a) {
             CenterStage_6832.initPosition = true;
         }
 
+
         if(stickyGamepad1.guide) {
             robot.initPositionIndex ++;
         }
+
+        if(stickyGamepad2.a) {
+            robot.skyhook.articulate(Skyhook.Articulation.INIT);
+        }
+
         updateStickyGamepads();
         handleStateSwitch();
         handlePregameControls();
@@ -83,6 +98,10 @@ public class DriverControls {
     }
 
     public void joystickDrive() {
+
+        if(stickyGamepad2.b) {
+            fieldOrientedDrive = !fieldOrientedDrive;
+        }
         if (gamepad1.left_trigger > .1) {
             robot.intake.adjustBeaterBarAngle(gamepad1.left_trigger*.85);
         }
@@ -96,28 +115,68 @@ public class DriverControls {
             robot.intake.switchBeaterBarDirection();
         }
 
-        fieldOrientedDrive();
+        if(stickyGamepad1.left_stick_button) {
+            if(robot.intake.diverterState.equals(Intake.DiverterState.DELIVER_RIGHT))
+                robot.intake.diverterState = Intake.DiverterState.DELIVER_LEFT;
+            else {
+                robot.intake.diverterState = Intake.DiverterState.DELIVER_RIGHT;
+            }
+        }
+        if(stickyGamepad1.right_stick_button) {
+            robot.intake.diverterState = Intake.DiverterState.DELIVER_BOTH;
+        }
 
-        if (gamepad1.left_bumper)
+
+        if(fieldOrientedDrive) {
+            fieldOrientedDrive();
+        }
+        else {
+            robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+        }
+
+        if (gamepad1.left_bumper) {
             robot.outtake.moveSlide(5);
-        if (gamepad1.right_bumper)
+//            if(robot.outtake.getSlidePosition() > 100 && robot.outtake.getSlidePosition() < 800)//TODO find more accurate values for where flipper should be raised
+//                robot.outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
+        }
+        if (gamepad1.right_bumper) {
             robot.outtake.moveSlide(-5);
+//            if(robot.outtake.getSlidePosition() > 100 && robot.outtake.getSlidePosition() < 800)//TODO find more accurate values for where flipper should be raised
+//                robot.outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
+        }
 
         if (gamepad1.y)
-            robot.outtake.adjustFlipper(-10);
+            robot.outtake.adjustFlipper(-15);
         if (gamepad1.x)
-            robot.outtake.adjustFlipper( 10);
+            robot.outtake.adjustFlipper(15);
 
         if(stickyGamepad1.dpad_up)
             robot.intake.articulate(Intake.Articulation.SWALLOW);
 
-        if(stickyGamepad1.dpad_left) {
-            robot.skyhook.releaseTheJimmy();
-        }
+//        if(stickyGamepad1.dpad_left) {
+//            robot.skyhook.releaseTheJimmy();
+//        }
 
+        if(stickyGamepad2.y) {
+            fieldOrientedDrive = !fieldOrientedDrive;
+        }
         if (stickyGamepad1.dpad_down) {
             robot.outtake.articulate(Outtake.Articulation.SCORE_PIXEL);
         }
+
+        if(stickyGamepad2.dpad_up) {
+            robot.skyhook.articulate(Skyhook.Articulation.PREP_FOR_HANG);
+        }
+        if(stickyGamepad2.a) {
+            robot.skyhook.articulate(Skyhook.Articulation.INIT);
+        }
+
+        if(stickyGamepad2.dpad_down) {
+            robot.articulate(Robot.Articulation.HANG);
+        }
+//        if(stickyGamepad2.dpad_up) {
+//            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
+//        }
 
         //mu name is jimmy and i am a pickle and i am a potato and i need to sleep with my truffle oil to feel happiness
 
@@ -153,13 +212,19 @@ public class DriverControls {
 
     }
 
+    @SuppressLint("SuspiciousIndentation")
     void handlePregameControls() {
         if (stickyGamepad1.x || stickyGamepad2.x) {
+
             alliance = Constants.Alliance.BLUE;
+
             startingPosition = startingPosition.getMod() == false ?
                     startingPosition :
                         startingPosition == Constants.Position.START_LEFT_RED ?
                             Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
+                robot.visionProviderBack.setRedAlliance(false);
+//            robot.visionProviderBack.initializeVision(hardwareMap); // this is blocking
+
 
         }
         if (stickyGamepad1.b || stickyGamepad2.b) {
@@ -168,6 +233,9 @@ public class DriverControls {
                     startingPosition :
                     startingPosition == Constants.Position.START_LEFT_BLUE ?
                             Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
+                robot.visionProviderBack.setRedAlliance(true);
+//            robot.visionProviderBack.initializeVision(hardwareMap); // this is blocking
+
         }
 
 
@@ -189,7 +257,7 @@ public class DriverControls {
                     robot.createVisionProvider();
                 }
                 if (stickyGamepad1.dpad_up || stickyGamepad2.dpad_up) {
-                    robot.visionProviderBack.initializeVision(hardwareMap); // this is blocking
+//                    robot.visionProviderBack.initializeVision(hardwareMap); // this is blocking
                     visionProviderFinalized = true;
                 }
             } else if (stickyGamepad1.dpad_up || stickyGamepad2.dpad_up) {

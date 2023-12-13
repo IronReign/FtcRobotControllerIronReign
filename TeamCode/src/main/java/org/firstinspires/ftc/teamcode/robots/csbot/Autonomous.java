@@ -14,9 +14,10 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.robots.bobobot.Auton;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Skyhook;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
@@ -39,6 +40,9 @@ public class Autonomous implements TelemetryProvider {
         BACK_UP,
         STRAFE,
         SCORE_GROUND,
+        TRAVEL_BACKSTAGE,
+        TRAVEL_BACKDROP,
+        SCORE_BACKDROP
     }
 
     public AutonState autonState = AutonState.INIT;
@@ -63,12 +67,17 @@ public class Autonomous implements TelemetryProvider {
 
     public static int targetIndex = 1;
     public static int visionProviderIndex;
+    int allianceDirection = -1;
+    double yellowOffset = 0;
 
+    double standardHeading = 180;
     private Action
             redLeftStageOne, redLeftStageTwo,
             blueLeftStageOne, blueLeftStageTwo,
             blueRightStageOne, blueRightStageTwo,
-            redRightStageOne, redRightStageTwo;
+            redRightStageOne, redRightStageTwo,
+            travelBackstage, travelBackdrop
+    ;
 
     private Action stageOneToRun, stageTwoToRun;
 
@@ -93,6 +102,15 @@ public class Autonomous implements TelemetryProvider {
     Pose2d redLeftStageOnePosition;
     Pose2d redLeftStageTwoPosition;
 
+    Pose2d purpleEndPosition;
+    Pose2d backdropApproachPosition;
+
+    Pose2d backdropFinalPosition;
+
+
+    public static int INWARD_SCORING_ANGLE = -45;
+    public static int MIDDLE_SCORING_ANGLE = -50;
+    public static int OUTWARD_SCORING_ANGLE = 30;
     public static double indexHeadingOffset = 0;
     public static double indexStrafeOffset = 0;
 
@@ -108,20 +126,107 @@ public class Autonomous implements TelemetryProvider {
         visionProviderIndex = robot.visionProviderBack.getMostFrequentPosition().getIndex();
         targetIndex = visionProviderIndex + 1;
 
-        if(targetIndex == 1) {
-             STAGE_ONE_Y_COORDINATE = 0.65;
-             STAGE_TWO_X_COORDINATE = -1.65;
-             STAGE_TWO_HEADING = 45;
+        if(startingPosition.equals(Constants.Position.START_RIGHT_BLUE)) {
+            if (targetIndex == 3) {
+                STAGE_ONE_HEADING = 90;
+                STAGE_ONE_Y_COORDINATE = -0.65;
+                STAGE_TWO_X_COORDINATE = -1.65;
+                STAGE_TWO_HEADING = 90 + INWARD_SCORING_ANGLE;
+            }
+
+            if (targetIndex == 2) {
+                STAGE_ONE_HEADING = 90;
+
+                //DO NOTHING, THIS IS THE DEFAULT
+                STAGE_ONE_Y_COORDINATE = -.5;
+                STAGE_TWO_HEADING = 90 + MIDDLE_SCORING_ANGLE;
+                STAGE_TWO_X_COORDINATE = -2.1;
+            }
+
+            if (targetIndex == 1) {
+
+
+                STAGE_ONE_HEADING = 90;
+                STAGE_ONE_Y_COORDINATE = -.5;
+                STAGE_TWO_X_COORDINATE = -1.55;
+                STAGE_TWO_HEADING = 90 + OUTWARD_SCORING_ANGLE;
+            }
         }
 
-        if(targetIndex == 2) {
-            //DO NOTHING, THIS IS THE DEFAULT
+        if(startingPosition.equals(Constants.Position.START_LEFT_BLUE)) {
+            if (targetIndex == 1) {
+                STAGE_ONE_HEADING = 90;
+
+                STAGE_ONE_Y_COORDINATE = .5;
+                STAGE_TWO_X_COORDINATE = 1.55;
+                STAGE_TWO_HEADING = 90 - OUTWARD_SCORING_ANGLE;
+            }
+
+            if (targetIndex == 2) {
+                STAGE_ONE_HEADING = 90;
+
+                //DO NOTHING, THIS IS THE DEFAULT
+                STAGE_ONE_Y_COORDINATE = .5;
+                STAGE_TWO_HEADING = 90 - MIDDLE_SCORING_ANGLE;
+                STAGE_TWO_X_COORDINATE = 2.1;
+            }
+
+            if (targetIndex == 3) {
+                STAGE_ONE_HEADING = 90;
+
+                STAGE_ONE_Y_COORDINATE = 0.65;
+                STAGE_TWO_X_COORDINATE = 1.65;
+                STAGE_TWO_HEADING = 90 - INWARD_SCORING_ANGLE;
+            }
         }
 
-        if(targetIndex == 3) {
-            STAGE_TWO_X_COORDINATE = -1.55;
-            STAGE_TWO_HEADING = 120;
+        if(startingPosition.equals(Constants.Position.START_LEFT_RED)) {
+            if (targetIndex == 1) {
+                STAGE_ONE_HEADING = 90;
+                STAGE_ONE_Y_COORDINATE = -0.65;
+                STAGE_TWO_X_COORDINATE = -1.65;
+                STAGE_TWO_HEADING = -(90 + OUTWARD_SCORING_ANGLE);
+            }
+
+            if (targetIndex == 2) {
+                //DO NOTHING, THIS IS THE DEFAULT
+                STAGE_ONE_HEADING = 90;
+                STAGE_ONE_Y_COORDINATE = -.5;
+                STAGE_TWO_HEADING = -(90 + MIDDLE_SCORING_ANGLE);
+                STAGE_TWO_X_COORDINATE = -2.1;
+            }
+
+            if (targetIndex == 3) {
+                STAGE_ONE_HEADING = 90;
+                STAGE_ONE_Y_COORDINATE = -.5;
+                STAGE_TWO_X_COORDINATE = -1.55;
+                STAGE_TWO_HEADING = -(90 + INWARD_SCORING_ANGLE);
+            }
         }
+        if(startingPosition.equals(Constants.Position.START_RIGHT_RED)) {
+            if (targetIndex == 1) {
+                STAGE_ONE_HEADING = 90;
+                STAGE_ONE_Y_COORDINATE = -0.65;
+                STAGE_TWO_X_COORDINATE = 1.65;
+                STAGE_TWO_HEADING = -(90 - INWARD_SCORING_ANGLE);
+            }
+
+            if (targetIndex == 2) {
+                //DO NOTHING, THIS IS THE DEFAULT
+                STAGE_ONE_HEADING = 90;
+                STAGE_ONE_Y_COORDINATE = -.5;
+                STAGE_TWO_HEADING = -(90 - MIDDLE_SCORING_ANGLE);
+                STAGE_TWO_X_COORDINATE = 2.1;
+            }
+
+            if (targetIndex == 3) {
+                STAGE_ONE_HEADING = 90;
+                STAGE_ONE_Y_COORDINATE = -.5;
+                STAGE_TWO_X_COORDINATE = 1.55;
+                STAGE_TWO_HEADING = (90 - OUTWARD_SCORING_ANGLE);
+            }
+        }
+
 
     }
 
@@ -135,13 +240,17 @@ public class Autonomous implements TelemetryProvider {
         blueRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
 
         blueLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
-        blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET - indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING + 90 - indexHeadingOffset);
+        blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET - indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
 
-        redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, -STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
-        redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING + indexHeadingOffset);
+        redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
+        redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
 
-        redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, -STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
-        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET - indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING - 90 + indexHeadingOffset);
+        redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
+        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
+
+        purpleEndPosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, allianceDirection * .5, standardHeading);
+        backdropApproachPosition = P2D(2.0, allianceDirection * .5, standardHeading);
+        backdropFinalPosition = P2D(2.0, allianceDirection * 1.5 + yellowOffset/FIELD_INCHES_PER_GRID, standardHeading);
 
         //
         redLeftStageOne = new SequentialAction(
@@ -198,9 +307,31 @@ public class Autonomous implements TelemetryProvider {
                         .build()
         );
         //
+
+        travelBackstageBuild();
+
+        travelBackdrop = new SequentialAction(
+                robot.driveTrain.actionBuilder(backdropApproachPosition)
+                .strafeTo(backdropFinalPosition.position)
+                .turnTo(standardHeading)
+                .build()
+        );
     }
 
-    public void pickAutonToRun() {
+    public void travelBackstageBuild(){
+        travelBackstage = new SequentialAction(
+                //robot.driveTrain.actionBuilder(purpleEndPosition)
+                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                        .turnTo(standardHeading)
+                        //.splineTo(backdropApproachPosition.position, standardHeading)
+                        .build()
+
+        );
+    }
+
+    public void pickAutonToRun(Constants.Alliance alliance, int yellowOffset) {
+        allianceDirection=alliance.equals(Constants.Alliance.BLUE)?-1:1;
+        this.yellowOffset = yellowOffset;
         build();
             if (startingPosition == Constants.Position.START_LEFT_BLUE) {
                 stageOneToRun = blueLeftStageOne;
@@ -220,7 +351,7 @@ public class Autonomous implements TelemetryProvider {
 
     public static int autonIndex;
     public static long futureTimer;
-    public static int EJECT_WAIT_TIME = 4;
+    public static int EJECT_WAIT_TIME = 2;
 
 
     public void execute(FtcDashboard dashboard) {
@@ -229,6 +360,7 @@ public class Autonomous implements TelemetryProvider {
             switch (autonIndex) {
                 case 0:
                     autonIndex++;
+                    robot.skyhook.articulate(Skyhook.Articulation.GAME);
                     break;
                 case 1:
                     autonState = AutonState.BACK_UP;
@@ -240,19 +372,46 @@ public class Autonomous implements TelemetryProvider {
                 case 2:
                     autonState = AutonState.STRAFE;
                     if (!stageTwoToRun.run(packet)) {
+                        robot.intake.ejectBeaterBar();
                         futureTimer = futureTime(EJECT_WAIT_TIME);
                         autonIndex++;
                     }
                     break;
                 case 3:
                     autonState = AutonState.SCORE_GROUND;
-                    robot.intake.ejectBeaterBar();
                     if (isPast(futureTimer)) {
                         robot.intake.beaterBarOff();
+                        //todo - the following 2 lines should be combined into a robot.travel articulation
+                        robot.intake.articulate(Intake.Articulation.TRAVEL);
+                        robot.outtake.intakePosition(); //outtake should already be in this position
+                        //todo IMPORTANT - lower the outtake flipper to slightly below horizontal so it goes under the door
+                        travelBackstageBuild(); //gotta build again since the current position is used
+                        robot.positionCache.update(new CSPosition(robot.driveTrain.pose), true);
                         autonIndex++;
+
                     }
                     break;
-                case 4:
+                case 4: //travel to interim position near backdrop and then to final position
+//                    autonState = AutonState.TRAVEL_BACKSTAGE;
+//                    if (!travelBackstage.run(packet))
+//                    {
+                        autonIndex++;
+//                        autonIndex++;}
+
+                    break;
+                case 5:
+                    robot.skyhook.articulate(Skyhook.Articulation.PREP_FOR_HANG);
+//                    autonState = AutonState.TRAVEL_BACKDROP;
+//                    if(!travelBackdrop.run(packet)) autonIndex++;
+                    break;
+                case 6:
+//                    robot.outtake.articulate(Outtake.Articulation.SCORE_PIXEL);
+//                    autonIndex++;
+                    break;
+                case 7: //todo slow final approach to backdrop
+                    autonIndex++;
+                    break;
+                case 8:
                     robot.positionCache.update(new CSPosition(robot.driveTrain.pose), true);
                     break;
 
