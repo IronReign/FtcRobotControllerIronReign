@@ -189,7 +189,7 @@ public class Robot implements Subsystem {
 
     public void fetchCachedCSPosition() {
         fetchedPosition = positionCache.readPose();
-        fetched = !(fetchedPosition.getPose().position.x == 0 && fetchedPosition.getPose().position.y == 0);
+        fetched = fetchedPosition != null;
     }
 
     public void resetRobotPosFromCache(double loggerTimeoutMinutes, boolean ignoreCache) {

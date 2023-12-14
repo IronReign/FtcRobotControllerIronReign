@@ -159,15 +159,16 @@ public class CenterStage_6832 extends OpMode {
         dc.init_loop();
         robot.updateVision();
         robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
+        if(robot.fetched && !gameState.isAutonomous())
+            robot.driveTrain.setPose(robot.fetchedPosition.getPose());
+        else
+            robot.driveTrain.setPose(startingPosition);
         robot.initPosition();
-        robot.driveTrain.setPose(startingPosition);
         if(gameState.isAutonomous()) {
             auton.updateIndexOffsets();
             //calc auton based on alliance, starting position and team prop position
             auton.pickAutonToRun(alliance, (robot.visionProviderBack.getMostFrequentPosition().getIndex()-1)*6);
         }
-//        if(robot.fetched)
-//            robot.driveTrain.setPose(robot.fetchedPosition.getPose());
         robot.driveTrain.updatePoseEstimate();
 
         telemetry.addData("visionProviderIndex", Robot.visionProviderIndex);

@@ -185,14 +185,14 @@ public class Autonomous implements TelemetryProvider {
                 STAGE_ONE_HEADING = 90;
                 STAGE_ONE_Y_COORDINATE = -0.65;
                 STAGE_TWO_X_COORDINATE = -1.65;
-                STAGE_TWO_HEADING = -(90 + OUTWARD_SCORING_ANGLE);
+                STAGE_TWO_HEADING = (90 + OUTWARD_SCORING_ANGLE);
             }
 
             if (targetIndex == 2) {
                 //DO NOTHING, THIS IS THE DEFAULT
                 STAGE_ONE_HEADING = 90;
                 STAGE_ONE_Y_COORDINATE = -.5;
-                STAGE_TWO_HEADING = -(90 + MIDDLE_SCORING_ANGLE);
+                STAGE_TWO_HEADING = (90 + MIDDLE_SCORING_ANGLE);
                 STAGE_TWO_X_COORDINATE = -2.1;
             }
 
@@ -200,7 +200,7 @@ public class Autonomous implements TelemetryProvider {
                 STAGE_ONE_HEADING = 90;
                 STAGE_ONE_Y_COORDINATE = -.5;
                 STAGE_TWO_X_COORDINATE = -1.55;
-                STAGE_TWO_HEADING = -(90 + INWARD_SCORING_ANGLE);
+                STAGE_TWO_HEADING = (90 + INWARD_SCORING_ANGLE);
             }
         }
         if(startingPosition.equals(Constants.Position.START_RIGHT_RED)) {
@@ -208,14 +208,14 @@ public class Autonomous implements TelemetryProvider {
                 STAGE_ONE_HEADING = 90;
                 STAGE_ONE_Y_COORDINATE = -0.65;
                 STAGE_TWO_X_COORDINATE = 1.65;
-                STAGE_TWO_HEADING = -(90 - INWARD_SCORING_ANGLE);
+                STAGE_TWO_HEADING = (90 - INWARD_SCORING_ANGLE);
             }
 
             if (targetIndex == 2) {
                 //DO NOTHING, THIS IS THE DEFAULT
                 STAGE_ONE_HEADING = 90;
                 STAGE_ONE_Y_COORDINATE = -.5;
-                STAGE_TWO_HEADING = -(90 - MIDDLE_SCORING_ANGLE);
+                STAGE_TWO_HEADING = (90 - MIDDLE_SCORING_ANGLE);
                 STAGE_TWO_X_COORDINATE = 2.1;
             }
 
