@@ -16,35 +16,33 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import java.util.Locale;
 
-public class DriveTrain {
+public class OpDrive {
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
     private DcMotorEx motorFrontRight = null;
     private DcMotorEx motorBackLeft = null;
     private DcMotorEx motorFrontLeft = null;
     private DcMotorEx motorBackRight = null;
+
     // robot motors
-    private double powerLeft = 0;
-    private double powerRight = 0;
     private double powerFrontLeft = 0;
     private double powerFrontRight = 0;
     private double powerBackLeft = 0;
     private double powerBackRight = 0;
-    //imu
-    BNO055IMU imu;
-    // State used for updating telemetry
-    Orientation angles;
-    Acceleration gravity;    // State used for updating telemetry
-    public double heading;
     // power input for each respective wheel
-    private static final float DEADZONE = .1f;
+    BNO055IMU imu;
+    // IMU
+    Orientation angles;
+    Acceleration gravity;
+    public double heading;
+
     double robotSpeed = 1;
-    public DriveTrain(Telemetry telemetry, HardwareMap hardwareMap)
+    public OpDrive(Telemetry telemetry, HardwareMap hardwareMap)
     {
         this.telemetry = telemetry;
         this.hardwareMap = hardwareMap;
     }
-    public void mechanumDrive(double forward, double strafe, double turn) {
+    public void mecanumDrive(double forward, double strafe, double turn) {
         forward = -forward;
         turn = -turn;
         double r = Math.hypot(strafe, forward);
@@ -75,9 +73,9 @@ public class DriveTrain {
         telemetry.addData("Heading \t", formatAngle(angles.angleUnit, heading));
 
     }
-
-    public double getMotorAvgPosition(){return (double)(Math.abs(motorFrontLeft.getCurrentPosition())+Math.abs(motorFrontRight.getCurrentPosition())+Math.abs(motorBackLeft.getCurrentPosition())+Math.abs(motorBackRight.getCurrentPosition()))/3.0;}
+    public double getMotorAvgPosition(){return (double)(Math.abs(motorFrontLeft.getCurrentPosition())+Math.abs(motorFrontRight.getCurrentPosition())+Math.abs(motorBackLeft.getCurrentPosition())+Math.abs(motorBackRight.getCurrentPosition()))/4.0;}
     //motor broken rn so use 3; when fixed change back to 4
+    // UPDATE: New chassis, new motors... Problem solved?
     public void motorInit()
     {
         motorFrontLeft = this.hardwareMap.get(DcMotorEx.class, "motorFrontLeft");
@@ -102,8 +100,6 @@ public class DriveTrain {
         parameters.loggingEnabled      = true;
         parameters.loggingTag          = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
-
-
         // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
         // and named "imu".
@@ -114,12 +110,13 @@ public class DriveTrain {
     String formatAngle(AngleUnit angleUnit, double angle) {
         return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));
     }
-
     String formatDegrees(double degrees){
         return String.format(Locale.getDefault(), "%.1f", AngleUnit.DEGREES.normalize(degrees));
     }
-
     public double getHeading(){
         return heading;
+    }
+    public double getExternalHeadingVelocity(){
+        return (double) imu.getAngularVelocity().zRotationRate;
     }
 }
