@@ -132,12 +132,6 @@ public class CenterStage_6832 extends OpMode {
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
 
-        //DEFAULT AUTONOMOUS SETUP
-        alliance = Constants.Alliance.BLUE;
-        //TODO - SET ORIGIN and STARTING POSITION
-        origin = Constants.Position.ORIGIN_DEFAULT;
-        startingPosition = Constants.Position.START_RIGHT_BLUE;
-
         //FETCH CACHE
         robot.fetchCachedCSPosition();
 
@@ -229,7 +223,7 @@ public class CenterStage_6832 extends OpMode {
 
             switch(gameState) {
                 case AUTONOMOUS:
-                        auton.execute(dashboard);
+                        if(auton.execute(dashboard )) gameState = GameState.TELE_OP;
                     break;
 
                 case TELE_OP:

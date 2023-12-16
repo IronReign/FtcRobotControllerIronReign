@@ -354,7 +354,7 @@ public class Autonomous implements TelemetryProvider {
     public static int EJECT_WAIT_TIME = 2;
 
 
-    public void execute(FtcDashboard dashboard) {
+    public boolean execute(FtcDashboard dashboard) {
         TelemetryPacket packet = new TelemetryPacket();
 
             switch (autonIndex) {
@@ -413,10 +413,11 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 8:
                     robot.positionCache.update(new CSPosition(robot.driveTrain.pose), true);
-                    break;
+                    return true;
 
             }
         dashboard.sendTelemetryPacket(packet);
+            return false;
     }
 
 }

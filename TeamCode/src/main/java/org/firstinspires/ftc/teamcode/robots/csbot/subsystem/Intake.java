@@ -89,9 +89,6 @@ public class Intake implements Subsystem {
 
             beaterBar.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
-    public void update(){
-        update(new Canvas());
-    }
 
     @Override
     public void update(Canvas fieldOverlay) {

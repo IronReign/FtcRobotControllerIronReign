@@ -5,17 +5,18 @@ import com.acmerobotics.roadrunner.Pose2d;
 import java.io.Serializable;
 
 public class CSPosition implements Serializable {
-    private static final long serialVersionUID = 1234L;
+    private static final long serialVersionUID = 12345L;
+    private long timestamp;
     private double chassisX;
     private double chassisY;
     private double chassisHeading;
-    private long timestamp;
 
     public CSPosition() {
+        timestamp = System.currentTimeMillis();
         chassisX = 0;
         chassisY = 0;
         chassisHeading = 0;
-        timestamp = System.currentTimeMillis();
+
     }
     public CSPosition(Pose2d driveTrainPose) {
         chassisX = driveTrainPose.position.x;

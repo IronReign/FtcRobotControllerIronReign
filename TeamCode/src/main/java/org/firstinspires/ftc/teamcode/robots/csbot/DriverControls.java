@@ -28,7 +28,7 @@ public class DriverControls {
     public static double PRECISION_TURN_MULTIPLIER = .8;
     public static double PRECISION_DRIVE_MULTIPLIER = .8;
     //CONSTANTS
-    public static boolean fieldOrientedDrive = false;
+    public static boolean fieldOrientedDrive = true;
     public static double DEADZONE = 0.1;
 
     public boolean visionProviderFinalized = robot.visionProviderFinalized;
@@ -44,6 +44,7 @@ public class DriverControls {
     }
 
     public void init_loop() {
+        updateStickyGamepads();
         if (stickyGamepad1.left_stick_button) {
             robot.createVisionProvider();
         }
@@ -65,7 +66,7 @@ public class DriverControls {
             robot.skyhook.articulate(Skyhook.Articulation.INIT);
         }
 
-        updateStickyGamepads();
+
         handleStateSwitch();
         handlePregameControls();
 //        handleVisionProviderSwitch();
@@ -186,10 +187,9 @@ public class DriverControls {
         if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
                 Math.abs(gamepad1.left_stick_y) > DEADZONE ||
                 Math.abs(gamepad1.right_stick_x ) > DEADZONE) {
-            robot.driveTrain.fieldOrientedDrive(alliance == Constants.Alliance.BLUE? -gamepad1.left_stick_y: gamepad1.left_stick_y, alliance == Constants.Alliance.BLUE? gamepad1.left_stick_x : -gamepad1.left_stick_x,  -gamepad1.right_stick_x);
-
+            robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, alliance.getMod());
         }
-        else robot.driveTrain.fieldOrientedDrive(0, 0, 0);
+        else robot.driveTrain.drive(0, 0, 0);
     }
 
 
