@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.robots.bobobot;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -33,7 +32,7 @@ public class BoboOp extends OpMode {
 
     @Override
     public void loop() {
-        bobot.driveTrain.mechanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+        bobot.opDrive.mecanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
         bobot.droneLaunch.droneRelease(gamepad1.y);
         bobot.claw.clawArmLift(gamepad1.a);
         bobot.claw.clawArmLower(gamepad1.b);
@@ -42,7 +41,7 @@ public class BoboOp extends OpMode {
         bobot.claw.openClaw(gamepad1.right_bumper);
         bobot.claw.closeClaw(gamepad1.left_bumper);
         bobot.claw.inTake(gamepad1.x);
-        bobot.driveTrain.telemetryOutput();
+        bobot.opDrive.telemetryOutput();
         bobot.claw.telemetryOutput();
         bobot.droneLaunch.telemetryOutput();
         imu.telemetryOutput();
