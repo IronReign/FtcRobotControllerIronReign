@@ -30,7 +30,7 @@ public class PositionCache {
 
     public CSPosition readPose () {
         String json = sharedPref.getString("CSPosition", "get failed"); //retrieves the shared preference
-        if(json.equals("get failed")) return new CSPosition(new Pose2d(0, 0, 0)); //return a default zeroed TauPos if there's nothing in shared preferences
+        if(json.equals("get failed")) return null;//new CSPosition(new Pose2d(0, 0, 0)); //return a default zeroed TauPos if there's nothing in shared preferences
         return gson.fromJson(json, CSPosition.class); //load the saved JSON into the cached class
     }
 

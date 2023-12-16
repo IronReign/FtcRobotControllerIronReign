@@ -5,6 +5,7 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
@@ -62,22 +63,18 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         updatePoseEstimate();
     }
 
-    public void fieldOrientedDrive(double x, double y, double theta){
+    public void fieldOrientedDrive(double x, double y, double theta, boolean isRed){
+        // Create a vector from the gamepad x/y inputs
+        // Then, rotate that vector by the inverse of that heading
         Vector2d input = new Vector2d(
-                -y * Math.cos(-pose.heading.log()) + x * Math.sin(-pose.heading.log()),
-                -y * Math.sin(-pose.heading.log()) - x * Math.cos(-pose.heading.log())
-        );
-
-
-        setDrivePowers(
-                new PoseVelocity2d(
-                        new Vector2d(
-                        input.x,
-                        input.y
-                        ),
-                        theta
-                )
-        );
+                x,
+               y);
+        //additional rotation needed if blue alliance perspective
+        Rotation2d heading =(!isRed) ? pose.heading: pose.heading.plus(Math.PI);
+        input = heading.inverse().times(
+                new Vector2d(-input.x, input.y));
+        setDrivePowers(new PoseVelocity2d(input,-theta ));
+        updatePoseEstimate();
     }
 
 

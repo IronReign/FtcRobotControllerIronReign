@@ -20,6 +20,7 @@ import org.checkerframework.checker.units.qual.C;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
@@ -125,13 +126,12 @@ public class Robot implements Subsystem {
     public void update(Canvas fieldOverlay) {
         deltaTime = (System.nanoTime() - lastTime) / 1e9;
         lastTime = System.nanoTime();
+        clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         if (updatePositionCache && gameState.isAutonomous()) {
             currPosition = new CSPosition(driveTrain.pose);
             positionCache.update(currPosition, false);
-
         }
-        clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         articulate(articulation);
         //TODO - DELETE
@@ -189,7 +189,7 @@ public class Robot implements Subsystem {
 
     public void fetchCachedCSPosition() {
         fetchedPosition = positionCache.readPose();
-        fetched = !(fetchedPosition.getPose().position.x == 0 && fetchedPosition.getPose().position.y == 0);
+        fetched = fetchedPosition != null;
     }
 
     public void resetRobotPosFromCache(double loggerTimeoutMinutes, boolean ignoreCache) {
@@ -239,6 +239,10 @@ public class Robot implements Subsystem {
                 outtake.slidePosition = 0;
                 break;
             case 5:
+                //todo load cached skyhook positions
+                //this is the only way to work across power cycles until we incorporate a limit switch calibration
+                skyhook.skyhookLeft.setPosition(0);
+                skyhook.skyhookRight.setPosition(0);
                 skyhook.articulate(Skyhook.Articulation.INIT);
                 break;
             case 6:
@@ -331,7 +335,7 @@ public class Robot implements Subsystem {
 
     public void createVisionProvider() {
         try {
-            visionProviderBack = VisionProviders.VISION_PROVIDERS[visionProviderIndex].newInstance().setRedAlliance(alliance.getMod());
+            visionProviderBack = VisionProviders.VISION_PROVIDERS[visionProviderIndex].newInstance().setRedAlliance(alliance==Constants.Alliance.RED);
         } catch (IllegalAccessException | InstantiationException e) {
             throw new RuntimeException("Error while instantiating vision provider");
         }

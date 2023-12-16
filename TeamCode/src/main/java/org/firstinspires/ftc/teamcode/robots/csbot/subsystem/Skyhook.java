@@ -8,6 +8,9 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.robots.csbot.util.DcMotorExResetable;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.DcMotorExSquared;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.DcMotorImplExSquared;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 
 import java.util.LinkedHashMap;
@@ -16,7 +19,7 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 
-@Config(value = "CS_SKYHOOK")
+@Config(value = "AA_CS_SKYHOOK")
 public class Skyhook implements Subsystem {
     HardwareMap hardwareMap;
     Robot robot;
@@ -30,7 +33,9 @@ public class Skyhook implements Subsystem {
     public static int JIMMY_RELEASE_TICKS = 2100;
     public static int SKYHOOK_SAFE_TICKS = 800;
     public static int SKYHOOK_UP_TICKS = 0;
-    DcMotor kareem, jabbar;
+    DcMotorEx kareem, jabbar;
+    DcMotorExResetable skyhookLeft, skyhookRight;
+
     Servo jimmy;
     public static int SKYHOOK_INIT_TICKS = 700;
 
@@ -52,8 +57,8 @@ public class Skyhook implements Subsystem {
         initMotors();
         jimmy = hardwareMap.get(Servo.class, "jimmy");
         jimmyTicks = JIMMY_TENSION_TICKS;
-        skyhookRightTicks = 0;
-        skyhookLeftTicks = 0;
+        //skyhookRightTicks = 0;
+        //skyhookLeftTicks = 0;
     }
 
     public Articulation articulate(Articulation target) {
@@ -78,6 +83,7 @@ public class Skyhook implements Subsystem {
                 if(launch()) {
                     articulation = Articulation.MANUAL;
                 }
+                break;
             case MANUAL:
                 break;
             case HANG:
@@ -93,8 +99,9 @@ public class Skyhook implements Subsystem {
                 break;
         }
         jimmy.setPosition(Utils.servoNormalize(jimmyTicks));
-        jabbar.setTargetPosition(skyhookRightTicks);
-        kareem.setTargetPosition(skyhookLeftTicks);
+        skyhookRight.setTargetPosition(skyhookRightTicks);
+        skyhookLeft.setTargetPosition(skyhookLeftTicks);
+
     }
 
     public static long launchTimer = 0;
@@ -102,8 +109,8 @@ public class Skyhook implements Subsystem {
     public static double SKYHOOK_LAUNCH_TIMER = 1;
     public boolean launch() {
         jimmy.setPosition(Utils.servoNormalize(jimmyTicks));
-        jabbar.setTargetPosition(skyhookRightTicks);
-        kareem.setTargetPosition(skyhookLeftTicks);
+        skyhookRight.setTargetPosition(skyhookRightTicks);
+        skyhookLeft.setTargetPosition(skyhookLeftTicks);
         switch (launchIndex) {
             case 0:
                 launchTimer = futureTime(SKYHOOK_LAUNCH_TIMER);
@@ -147,7 +154,12 @@ public class Skyhook implements Subsystem {
 
         telemetryMap.put("articulation", articulation);
         telemetryMap.put("skyhookLeftTicks", skyhookLeftTicks);
-        telemetryMap.put("skyhookRightTicks", skyhookRightTicks);
+        telemetryMap.put("skyhookLeftActual", skyhookLeft.getCurrentPosition());
+        telemetryMap.put("kareemActual", kareem.getCurrentPosition());
+        telemetryMap.put("skyhookLeftTarget", skyhookLeft.getTargetPosition());
+        telemetryMap.put("kareemTarget", kareem.getTargetPosition());
+        telemetryMap.put("skyhookRightActual", skyhookRight.getCurrentPosition());
+        telemetryMap.put("jabbarActual", jabbar.getCurrentPosition());
         telemetryMap.put("jimmyTicks", jimmyTicks);
 
         return telemetryMap;
@@ -159,18 +171,24 @@ public class Skyhook implements Subsystem {
     }
 
     public void initMotors() {
-        kareem = this.hardwareMap.get(DcMotorEx.class, "kareem");
+        kareem = this.hardwareMap.get(DcMotorEx.class,"kareem");
+        skyhookLeft = new DcMotorExResetable(kareem);
         jabbar = this.hardwareMap.get(DcMotorEx.class, "jabbar");
-        kareem.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        kareem.setDirection(DcMotorSimple.Direction.REVERSE);
-        kareem.setTargetPosition(0);
-        kareem.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        skyhookRight = new DcMotorExResetable(jabbar);
+        skyhookLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        skyhookLeftTicks = skyhookLeft.getCurrentPosition();
+        skyhookLeft.setTargetPosition(skyhookLeftTicks);
+        //skyhookLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        skyhookLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        //skyhookRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        skyhookRightTicks = skyhookRight.getCurrentPosition();
+        skyhookRight.setTargetPosition(skyhookRightTicks);
+        skyhookRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        jabbar.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        jabbar.setTargetPosition(0);
-        jabbar.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        kareem.setPower(1);
-        jabbar.setPower(1);
+        skyhookLeft.setPower(1);
+        skyhookRight.setPower(1);
     }
+
+    public int getSkyhookLeftTicksCurrent(){return skyhookLeft.getCurrentPosition();}
+    public int getSkyhookRightTicksCurrent(){return skyhookRight.getCurrentPosition();}
 }
