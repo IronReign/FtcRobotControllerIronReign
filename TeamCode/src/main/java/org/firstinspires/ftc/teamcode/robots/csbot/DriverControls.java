@@ -132,7 +132,7 @@ public class DriverControls {
             fieldOrientedDrive();
         }
         else {
-            robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+            robotOrientedDrive();
         }
 
         if (gamepad1.left_bumper) {
@@ -192,6 +192,9 @@ public class DriverControls {
         else robot.driveTrain.drive(0, 0, 0);
     }
 
+    public void robotOrientedDrive() {
+        robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+    }
 
 
     public void handleStateSwitch() {
