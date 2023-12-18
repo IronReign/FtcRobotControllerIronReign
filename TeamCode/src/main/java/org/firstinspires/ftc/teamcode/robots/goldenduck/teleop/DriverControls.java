@@ -1,13 +1,9 @@
-package org.firstinspires.ftc.teamcode.robots.goldenduck;
+package org.firstinspires.ftc.teamcode.robots.goldenduck.teleop;
 
 import static org.firstinspires.ftc.teamcode.util.utilMethods.servoNormalize;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -21,20 +17,24 @@ public class DriverControls extends OpMode {
     private boolean calibrate = false;
     DriveTrain driveTrain;
     Servo servoClaw;
-    Servo clawWrist;
-    //    Servo clawWrist2;
-    //    Servo servoRailgun;
+    Servo clawWrist
+            ;
+//    Servo clawWrist2;
+    Servo servoRailgun;
     private DcMotor arm = null;
     //    private DcMotor arm2 = null;
     FtcDashboard dashboard;
+    MultipleTelemetry dashTelemetry;
 
     @Override
     public void init() {
         dashboard = FtcDashboard.getInstance();
+        dashTelemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
+        dashTelemetry.setMsTransmissionInterval(25);
         driveTrain = new DriveTrain(telemetry, hardwareMap);
         driveTrain.motorInit();
         servoClaw = hardwareMap.get(Servo.class, "servoClaw");
-//        servoRailgun = hardwareMap.get(Servo.class, "servoRailgun");
+        servoRailgun = hardwareMap.get(Servo.class, "servoRailgun");
         clawWrist = hardwareMap.get(Servo.class, "servoWrist");
 //        clawWRist2 = hardwareMap.get(Servo.class, "servoWrist2");
         arm = this.hardwareMap.get(DcMotorEx.class, "arm");
@@ -45,70 +45,78 @@ public class DriverControls extends OpMode {
 
     @Override
     public void loop() {
-
-        telemetry.addData("servoWrist", clawWrist.getPosition());
+        telemetry.addData("servsoWrist", clawWrist.getPosition());
 //        telemetry.addData("servoWrist2". clawWrist2.getPositiion());
         telemetry.addData("servoClaw", servoClaw.getPosition());
         telemetry.addData("arm U/D position", arm.getCurrentPosition());
 //        telemetry.addData("arm R/L position", arm2.getCurrentPosition());
-//        telemetry.addData("Railgun Shot", servoRailgun.getPosition());
+        telemetry.addData("Railgun Shot", servoRailgun.getPosition());
 
         driveTrain.mecanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
         if (gamepad1.dpad_down) {
             calibrate = false;
         }
+//
 //        if (gamepad1.dpad_up) {
 //            if (driveTrain.robotSpeed == 1)
 //                driveTrain.robotSpeed = .5;
 //            else
 //                driveTrain.robotSpeed = 1;
 //        }
-//      speed reduction-UNTESTED
+//      speed reduction
 
         if (gamepad1.x) {
             arm.setPower(0.1);
-            arm.setTargetPosition(-105);
+            arm.setTargetPosition(150);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-            clawWrist.setPosition(servoNormalize(900));
+            clawWrist.setPosition(servoNormalize(-500));
             //driving mode
         }
+
         if (gamepad1.y) {
             arm.setPower(0.2);
-            arm.setTargetPosition(0);
+            arm.setTargetPosition(105);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-            clawWrist.setPosition(servoNormalize(500));
+            clawWrist.setPosition(servoNormalize(-1000));
             //to pick up pixel
         }
+
         if (gamepad1.b) {
             arm.setPower(0.3);
-            arm.setTargetPosition(-1389);
+            arm.setTargetPosition(1389);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
             clawWrist.setPosition(0);
             // mid score backboard
         }
+
         if (gamepad1.a) {
             arm.setPower(0.3);
-            arm.setTargetPosition(-1615);
+            arm.setTargetPosition(1615);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
             clawWrist.setPosition(0);
             // low score backboard
         }
+
         if (gamepad1.right_bumper) {
-            servoClaw.setPosition(servoNormalize(-100));
+            servoClaw.setPosition(servoNormalize(850));
             // claw open
         }
+
         if (gamepad1.left_bumper) {
-            servoClaw.setPosition(servoNormalize(100));
+            servoClaw.setPosition(servoNormalize(1300));
             //claw close
+        }        if (gamepad1.dpad_down) {
+
+
+            servoRailgun.setPosition(servoNormalize(1821));
         }
-//        if (gamepad1.dpad_down) {
-//            servoRailgun.setPosition(servoNormalize(1821));
-//        }
+
 //        if (gamepad1.dpad_right) {
 //            arm2.setPower(xyz);
 //            arm2.getCurrentPosition() + xyz;
 //            arm2.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 //        }
+//
 //         if (gamepad1.dpad_right) {
 //            arm2.setPower(xyz);
 //            arm2.getCurrentPosition() - xyz;

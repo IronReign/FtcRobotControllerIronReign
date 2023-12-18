@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.robots.goldenduck;
+package org.firstinspires.ftc.teamcode.robots.goldenduck.teleop;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -26,7 +26,7 @@ public class DriveTrain {
         private double powerFrontRight = 0;
         private double powerBackLeft = 0;
         private double powerBackRight = 0;
-        //private static final float DEADZONE = .1f;
+//        private static final float DEADZONE = .1f;
         double robotSpeed = 1;
 
         public DriveTrain(Telemetry telemetry, HardwareMap hardwareMap) {
