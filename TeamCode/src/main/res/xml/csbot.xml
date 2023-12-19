@@ -6,8 +6,8 @@
             <Servo name="diverterLeft" port="5" />
             <REV_VL53L0X_RANGE_SENSOR name="backDist" port="0" bus="0" />
             <RevRobotics20HDHexMotor name="rightFront" port="0" />
-            <RevRobotics20HDHexMotor name="rightRear" port="1" />
-            <RevRobotics20HDHexMotor name="leftRear" port="2" />
+            <RevRobotics20HDHexMotor name="rightBack" port="1" />
+            <RevRobotics20HDHexMotor name="leftBack" port="2" />
             <RevRobotics20HDHexMotor name="leftFront" port="3" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
         </LynxModule>
