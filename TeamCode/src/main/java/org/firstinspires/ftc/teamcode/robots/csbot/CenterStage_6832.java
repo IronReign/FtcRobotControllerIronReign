@@ -150,19 +150,27 @@ public class CenterStage_6832 extends OpMode {
     //end init()
 
     public void init_loop() {
+
         dc.init_loop();
+        dc.robotOrientedDrive();
+
         robot.updateVision();
+
         robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
-        if(robot.fetched && !gameState.isAutonomous())
+        if(robot.fetched && !gameState.isAutonomous()) {
             robot.driveTrain.setPose(robot.fetchedPosition.getPose());
-        else
+        }
+        else {
             robot.driveTrain.setPose(startingPosition);
+        }
+
         robot.initPosition();
         if(gameState.isAutonomous()) {
             auton.updateIndexOffsets();
             //calc auton based on alliance, starting position and team prop position
-            auton.pickAutonToRun(alliance, (robot.visionProviderBack.getMostFrequentPosition().getIndex()-1)*6);
+            auton.pickAutonToRun(alliance);
         }
+
         robot.driveTrain.updatePoseEstimate();
 
         telemetry.addData("visionProviderIndex", Robot.visionProviderIndex);
@@ -176,9 +184,11 @@ public class CenterStage_6832 extends OpMode {
         telemetry.addData("Alliance", alliance);
         telemetry.addData("Side", startingPosition);
         telemetry.addData("initPositionIndex", Robot.initPositionIndex);
+
         update();
     }
     //end init_loop()
+
 
     @Override
     public void start() {
@@ -223,7 +233,8 @@ public class CenterStage_6832 extends OpMode {
 
             switch(gameState) {
                 case AUTONOMOUS:
-                        if(auton.execute(dashboard )) gameState = GameState.TELE_OP;
+//                        if(auton.execute(dashboard )) gameState = GameState.TELE_OP;
+                    auton.execute(dashboard);
                     break;
 
                 case TELE_OP:

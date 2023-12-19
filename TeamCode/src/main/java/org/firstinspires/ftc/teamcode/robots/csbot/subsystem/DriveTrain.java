@@ -77,21 +77,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         updatePoseEstimate();
     }
 
-
-    public void strafe() {
-        Pose2d startPosition = pose;
-        Actions.runBlocking(
-                new SequentialAction(
-                        actionBuilder(pose)
-                                .strafeTo(new Vector2d(startPosition.position.x, startPosition.position.y + Constants.FIELD_INCHES_PER_GRID))
-                                .build()
-                )
-        );
-
-
-
-    }
-
     public void setPose(Constants.Position start) {
         pose = start.getPose();
     }
