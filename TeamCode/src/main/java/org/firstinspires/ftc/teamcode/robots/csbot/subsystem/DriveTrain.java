@@ -13,7 +13,9 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+//todo this should not reference the reign version of MecanumDrive
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
+//todo this should not reference reign's Constants
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 
 import java.util.HashMap;
