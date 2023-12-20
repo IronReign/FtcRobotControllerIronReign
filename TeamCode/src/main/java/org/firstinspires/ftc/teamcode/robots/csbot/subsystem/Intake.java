@@ -40,7 +40,7 @@ public class Intake implements Subsystem {
     public static int angleControllerTicks = ANGLE_CONTROLLER_MAX;
     public static int BEATER_BAR_FOLD_ANGLE = 2470;
     public static int BEATER_BAR_WING_ANGLE = 1701;
-    public static int BEATER_BAR_EJECT_ANGLE = 1550;
+    public static int BEATER_BAR_EJECT_ANGLE = 1500;
     public static int BEATER_BAR_HANG_ANGLE = 1565;
     public static int SWALLOW_TICKS = 1950;
 

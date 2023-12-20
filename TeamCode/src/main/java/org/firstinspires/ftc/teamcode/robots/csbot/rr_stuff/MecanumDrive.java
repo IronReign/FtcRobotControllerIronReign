@@ -63,12 +63,12 @@ public class MecanumDrive {
         public double kA = 0.00008;
 
         // path profile parameters (in inches)
-        public double maxWheelVel = 50;
+        public  double maxWheelVel = 50/2;
         public double minProfileAccel = -30;
         public double maxProfileAccel = 50;
 
         // turn profile parameters (in radians)
-        public double maxAngVel = Math.PI; // shared with path
+        public double maxAngVel = Math.PI/2; // shared with path
         public double maxAngAccel = Math.PI;
 
         // path controller gains
@@ -281,14 +281,14 @@ public class MecanumDrive {
 
             FlightRecorder.write("TARGET_POSE", new PoseMessage(txWorldTarget.value()));
 
-            p.put("x", pose.position.x);
-            p.put("y", pose.position.y);
-            p.put("heading (deg)", Math.toDegrees(pose.heading.log()));
-
-            Pose2d error = txWorldTarget.value().minusExp(pose);
-            p.put("xError", error.position.x);
-            p.put("yError", error.position.y);
-            p.put("headingError (deg)", Math.toDegrees(error.heading.log()));
+//            p.put("x", pose.position.x);
+//            p.put("y", pose.position.y);
+//            p.put("heading (deg)", Math.toDegrees(pose.heading.log()));
+//
+//            Pose2d error = txWorldTarget.value().minusExp(pose);
+//            p.put("xError", error.position.x);
+//            p.put("yError", error.position.y);
+//            p.put("headingError (deg)", Math.toDegrees(error.heading.log()));
 
             // only draw when active; only one drive action should be active at a time
             Canvas c = p.fieldOverlay();
