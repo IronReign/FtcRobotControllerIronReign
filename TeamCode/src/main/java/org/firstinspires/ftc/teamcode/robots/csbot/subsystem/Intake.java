@@ -8,56 +8,126 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Joint;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-//i still have no clue what the intake needs lmao
-
-@Config(value = "CS_INTAKE")
+@Config(value = "AA_CS_INTAKE")
 public class Intake implements Subsystem {
-    public static final int RIGHT_DIVERTER_OPEN_TICKS = 1000;
-    public static final int LEFT_DIVERTER_OPEN_TICKS = 1490;
-    public static final int LEFT_DIVERTER_CLOSED_TICKS = 1320;
-    public static final int RIGHT_DIVERTER_CLOSED_TICKS = 1300;
-    public static  int ANGLE_CONTROLLER_MAX = 2250;
-    public static int ANGLE_CONTROLLER_MIN = 1400;
+    public static final int RIGHT_DIVERTER_OPEN = 1000;
+    public static final int LEFT_DIVERTER_OPEN = 1490;
+    public static final int LEFT_DIVERTER_CLOSED = 1320;
+    public static final int RIGHT_DIVERTER_CLOSED = 1300;
+    public static  int ANGLE_MAX = 2250;
+    public static int ANGLE_MIN = 1400;
+    public static int ANGLE_START = 2250;
+    public static int ANGLE_INGEST_GROUND = ANGLE_MIN;
+    public static int ANGLE_INGEST_INCREMENT = 20;
+    public static int ANGLE_EJECT = 1500;
+    public static int ANGLE_HANG = 1565;
+    public static int ANGLE_SWALLOW = 1950;
+    public static int ANGLE_TRAVEL = 1800; //safe to travel through backstage door
+    public static double TIME_SWALLOW = .3;
+    public static double TIME_EJECT = .5;
+
     //CONSTANTS
     HardwareMap hardwareMap;
     Robot robot;
     Servo diverterRight, diverterLeft;
-    Servo angleController;
-    DcMotorEx beaterBar;
-    public static boolean precisionBeaterBar = false;
-    public boolean manualBeaterBarEject = false;
-    public boolean manualBeaterBarOn = false;
-    public static double BEATER_BAR_INTAKE_VELOCITY = 2000;
-    public static double BEATER_BAR_EJECT_VELOCITY = -700;
+    Servo angle;
+    DcMotorEx beater;
+    public static boolean precisionAngle = false;
+    public boolean manualBeaterEject = false;
+    public boolean manualBeaterEnable = false;
+    public static double BEATER_INGEST_VELOCITY = 2000;
+    public static double BEATER_EJECT_VELOCITY = -700;
 
-    public static int angleControllerTicks = ANGLE_CONTROLLER_MAX;
-    public static int BEATER_BAR_FOLD_ANGLE = 2470;
-    public static int BEATER_BAR_WING_ANGLE = 1701;
-    public static int BEATER_BAR_EJECT_ANGLE = 1500;
-    public static int BEATER_BAR_HANG_ANGLE = 1565;
-    public static int SWALLOW_TICKS = 1950;
+    private double beaterTargetVelocity = 0;
 
-    public static int INTAKE_TRAVEL = 1800; //safe to travel through backstage door
+    private static int angleTarget = ANGLE_MIN;
+    private int ingestPixelHeight = 0;  //the height at which to start ingesting pixels. Normally 0 for ground but could be 4 for top pixel in a stack
 
+    public enum PixelStack {
+        GROUND(0, ANGLE_INGEST_GROUND),
+        TWO(1, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT),
+        THREE(2, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT*2),
+        FOUR(3, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT*3),
+        FIVE(4, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT*4);
+
+        private final int value;
+        private final int angle;
+
+        PixelStack(int value, int angle) {
+            this.value = value;
+            this.angle = angle;
+        }
+
+        public int getValue() {
+            return value;
+        }
+
+        public int getAngle() {
+            return angle;
+        }
+
+        public static PixelStack getByIndex(int index) {
+            return PixelStack.values()[index];
+        }
+
+    }
+    public enum PixelSensor {
+        NONE(0),
+        LEFT(1),
+        RIGHT(1),
+        BOTH(2);
+        private final int count;
+
+        PixelSensor(int count) {
+            this.count = count;
+        }
+
+        public int getCount() {
+            return count;
+        }
+        public static PixelSensor getByIndex(int index) {
+            return PixelSensor.values()[index];
+        }
+        public static PixelSensor clear(){
+            return PixelSensor.NONE;
+        }
+
+        public PixelSensor assertLeft(){
+            if (this.equals(PixelSensor.RIGHT) || this.equals(PixelSensor.BOTH))
+                return PixelSensor.BOTH;
+            else
+                return PixelSensor.LEFT;
+        }
+        public PixelSensor assertRight(){
+            if (this.equals(PixelSensor.LEFT) || this.equals(PixelSensor.BOTH))
+                return PixelSensor.BOTH;
+            else return PixelSensor.RIGHT;
+        }
+        //syntactic helpers
+        public boolean isBoth() {return (this.equals(PixelSensor.BOTH));}
+        public boolean isLeft() {return (this.equals(PixelSensor.LEFT));}
+        public boolean isRight() {return (this.equals(PixelSensor.RIGHT));}
+        public boolean isNone() {return (this.equals(PixelSensor.NONE));}
+    }
+    PixelSensor pixelSensor = PixelSensor.clear();
 
     public enum Articulation {
-        WING_INTAKE_POSTION,
-        STACK_INTAKE,
+        TRAVEL,
+        INGEST,
         EJECT,
-        OFF,
-        FOLD,
         MANUAL,
         HANG,
         SWALLOW,
-        INIT,
-        TRAVEL
+        INIT
+
     }
 
     public enum DiverterState{
@@ -65,13 +135,9 @@ public class Intake implements Subsystem {
         DELIVER_RIGHT,
         DELIVER_BOTH
     }
-
-    //LIVE STATES
-    public DiverterState diverterState;
+    private DiverterState diverterState;
     public Articulation articulation;
-    public static int numPixelsInStack = 6;
-    public static double angleToStack;
-    public static double beaterBarTargetAngle;
+    public static int numPixelsInStack = 5;
 
 
     public Intake(HardwareMap hardwareMap, Robot robot) {
@@ -79,161 +145,246 @@ public class Intake implements Subsystem {
             this.robot = robot;
             articulation = Articulation.MANUAL;
             diverterState = DiverterState.DELIVER_BOTH;
-            angleControllerTicks = ANGLE_CONTROLLER_MIN;
+            angleTarget = ANGLE_INGEST_GROUND;
 
             diverterLeft = hardwareMap.get(Servo.class, "diverterRight");
             diverterRight = hardwareMap.get(Servo.class, "diverterLeft");
-            beaterBar = hardwareMap.get(DcMotorEx.class, "beaterBar");
-            beaterBar.setDirection(DcMotorSimple.Direction.REVERSE);
-            angleController = hardwareMap.get(Servo.class, "beaterBarAngleController");
+            beater = hardwareMap.get(DcMotorEx.class, "intakeBeater");
+            beater.setDirection(DcMotorSimple.Direction.REVERSE);
+            angle = hardwareMap.get(Servo.class, "intakeAngle");
 
-            beaterBar.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            beater.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     @Override
     public void update(Canvas fieldOverlay) {
-        switch (articulation) {
-            case MANUAL:
-                if(manualBeaterBarOn) {
-                    if(!manualBeaterBarEject) {
-                        beaterBar.setPower(1);
-                        beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY);
-                    }
-                    else {
-                        beaterBar.setPower(1);
-                        beaterBar.setVelocity(BEATER_BAR_EJECT_VELOCITY);
-                    }
-                }
+        pixelSensors();
+        articulate();
+        angle.setPosition(Utils.servoNormalize(angleTarget));
+        diverters();
+        beater.setVelocity(beaterTargetVelocity);
+    }
 
-                else
-                    beaterBar.setVelocity(0);
-                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
-                switch (diverterState) {
-                    case DELIVER_BOTH:
-                        diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_OPEN_TICKS));
-                        diverterLeft.setPosition(Utils.servoNormalize(LEFT_DIVERTER_OPEN_TICKS));
-                        break;
-                    case DELIVER_LEFT:
-                        diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_OPEN_TICKS));
-                        diverterLeft.setPosition(Utils.servoNormalize(LEFT_DIVERTER_CLOSED_TICKS));
-                        break;
-                    case DELIVER_RIGHT:
-                        diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_CLOSED_TICKS));
-                        diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_OPEN_TICKS));
-                        break;
-                }
-                break;
-            case SWALLOW:
-                angleControllerTicks = SWALLOW_TICKS;
-                manualBeaterBarOn = true;
-                manualBeaterBarEject = false;
-                articulation = Articulation.MANUAL;
-                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
-                break;
-            case HANG:
-                angleControllerTicks = BEATER_BAR_HANG_ANGLE;
-                manualBeaterBarEject = false;
-                manualBeaterBarOn = false;
-                articulation = Articulation.MANUAL;
-                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
-                break;
-            case WING_INTAKE_POSTION:
-                if(wingIntakePostion()) {
-                    articulation = Articulation.MANUAL;
-                }
-                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
-                break;
-            case FOLD:
-                beaterBar.setPower(0);
-                angleControllerTicks = BEATER_BAR_FOLD_ANGLE;
-                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
-                break;
-            case STACK_INTAKE:
-                beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY);
-                beaterBarTargetAngle = angleToStack;
-                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
-                break;
-            case INIT:
-                angleControllerTicks = ANGLE_CONTROLLER_MAX;
-                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
-                articulation = Articulation.MANUAL;
-                break;
-            case TRAVEL:
-                angleControllerTicks = INTAKE_TRAVEL;
-                angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
-                articulation = Articulation.MANUAL;
-                break;
-
-        }
-        angleController.setPosition(Utils.servoNormalize(angleControllerTicks));
-
+    void pixelSensors(){
+        //right now this is a virtual sensor operated by the drive team
+        //and currently no implementation is required outside of DriverControls
+        //this may change
+    }
+    public void pixelSensorLeft(){
+        pixelSensor = pixelSensor.assertLeft();
+    }
+    public void pixelSensorRight(){
+        pixelSensor = pixelSensor.assertRight();
+    }
+    public void pixelSensorClear(){
+        pixelSensor = pixelSensor.clear();
     }
 
     public Articulation articulate(Articulation target) {
         articulation = target;
         return articulation;
     }
-    public void setAngleControllerTicks (int ticks) {
-        angleControllerTicks = ticks;
+
+    public Articulation articulate(){
+        switch (articulation) {
+            case TRAVEL: //intake should spend most of its time here
+                //the angle is one that compacts the robot as much as possible and still
+                //allows it to pass under the backstage door
+                angleTarget = ANGLE_TRAVEL;
+                //also reinforce that the beater should be still
+                beaterTargetVelocity = 0;
+                //also assert that manual beater override has been turned off
+                manualBeaterEnable=false;
+                break;
+            case MANUAL: //todo still need to refactor manual?
+                if(manualBeaterEnable) {
+                    if(!manualBeaterEject) {
+                        beater.setPower(1);
+                        beaterTargetVelocity = BEATER_INGEST_VELOCITY;
+                    }
+                    else {
+                        beater.setPower(1);
+                        beaterTargetVelocity= BEATER_EJECT_VELOCITY;
+                    }
+                }
+                else { //manual override was disabled externally, return to Travel
+                    manualBeaterEject=false;
+                    articulation = Articulation.TRAVEL;
+                }
+                break;
+            case SWALLOW:
+                if (swallow())
+                    articulation = Articulation.TRAVEL;
+                break;
+            case HANG:
+                angleTarget = ANGLE_HANG;
+                manualBeaterEject = false;
+                manualBeaterEnable = false;
+                articulation = Articulation.MANUAL;
+                break;
+            case INGEST:
+                if(ingest(ingestPixelHeight)) {
+                    articulation = Articulation.SWALLOW;
+                }
+                break;
+            case EJECT:
+                if(eject()) {
+                    articulation = Articulation.TRAVEL;
+                }
+                break;
+            case INIT:
+                angleTarget = ANGLE_START;
+                angle.setPosition(Utils.servoNormalize(angleTarget));
+                articulation = Articulation.MANUAL;
+                break;
+        }
+        return articulation;
     }
 
+    public boolean isEating(){
+        if (articulation.equals(Articulation.INGEST) || articulation.equals(Articulation.SWALLOW))
+            return true;
+        else return false;
+    }
 
-    public boolean wingIntakePostion (){
-        angleControllerTicks = BEATER_BAR_WING_ANGLE;
-        beaterBar.setVelocity(BEATER_BAR_INTAKE_VELOCITY);
+    public void setAngle(int pwm) {
+        angleTarget = pwm;
+        if(angleTarget < ANGLE_MIN ) {
+            angleTarget = ANGLE_MIN;
+        }
+        if(angleTarget > ANGLE_MAX) {
+            angleTarget = ANGLE_MAX;
+        }
+    }
+
+    public void setDiverters(DiverterState diverterState){
+        this.diverterState = diverterState;
+    }
+    public void setDiverters(PixelSensor ps, int height){
+        //default to both
+        diverterState = DiverterState.DELIVER_BOTH;
+        if (ps.isLeft()) diverterState = DiverterState.DELIVER_RIGHT;
+        if (ps.isRight() || (height>0 && ps.isNone())) diverterState = DiverterState.DELIVER_LEFT;
+    }
+    public DiverterState getDiverters(){
+        return diverterState;
+    }
+    public boolean diverters(){
+        switch (diverterState) {
+            case DELIVER_BOTH:
+                diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_OPEN));
+                diverterLeft.setPosition(Utils.servoNormalize(LEFT_DIVERTER_OPEN));
+                break;
+            case DELIVER_LEFT:
+                diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_OPEN));
+                diverterLeft.setPosition(Utils.servoNormalize(LEFT_DIVERTER_CLOSED));
+                break;
+            case DELIVER_RIGHT:
+                diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_CLOSED));
+                diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_OPEN));
+                break;
+        }
         return true;
     }
 
-    public void ejectBeaterBar() {
-        manualBeaterBarEject = true;
-        manualBeaterBarOn = true;
+    public boolean ingest(int height){ //height is expected to be changed externally
+        setDiverters(pixelSensor, height);
+        angleTarget = PixelStack.getByIndex(height).angle;
+        beaterTargetVelocity = BEATER_INGEST_VELOCITY;
+        //if a pixel is detected
+        if(pixelSensor.count>1) return true;
+        return false;
     }
-    public void beaterBarOff () {
-        manualBeaterBarEject = false;
-        manualBeaterBarOn = false;
-    }
+    int swallowStage = 0;
+    long swallowTimer;
 
-    public void togglePrecisionBeaterBar() {
-        precisionBeaterBar = !precisionBeaterBar;
-    }
-
-    public double adjustBeaterBarAngle(double speed) {
-        angleControllerTicks += speed * (precisionBeaterBar ? 10 : 100);
-        if(angleControllerTicks < ANGLE_CONTROLLER_MIN) {
-            angleControllerTicks = ANGLE_CONTROLLER_MIN;
+    public boolean swallow() {
+        switch (swallowStage){
+            case 0://todo swallow timing values have not been validated
+                //todo, add some safety checking, like is the scoopagon docked?
+                setAngle(ANGLE_SWALLOW);
+                //todo are these needed? clunky way to allow override
+                manualBeaterEnable = false;
+                manualBeaterEject = false;
+                beaterTargetVelocity = BEATER_INGEST_VELOCITY;
+                swallowTimer = futureTime(TIME_SWALLOW);
+                swallowStage++;
+                break;
+            case 1:
+                if (isPast(swallowTimer))
+                    swallowStage++;
+                break;
+            case 2:
+                beaterTargetVelocity = 0; //stop beater
+                swallowStage=0;
+                //don't need to set next angle since that's the job of the state this resolves to
+                return true;
         }
-        if(angleControllerTicks > ANGLE_CONTROLLER_MAX) {
-            angleControllerTicks = ANGLE_CONTROLLER_MAX;
+        return false;
+    }
+
+    int ejectState = 0;
+    double ejectTimer = TIME_EJECT;
+    public boolean eject() {
+        switch (ejectState){
+            case 0: //todo timing values in eject() have not been validated
+                setAngle(ANGLE_EJECT);
+                ejectTimer = futureTime(.3); //time for angle to set
+                ejectState++;
+            case 1:
+                if (isPast(ejectTimer)){
+                    beaterTargetVelocity=BEATER_EJECT_VELOCITY;
+                    ejectTimer=TIME_EJECT;
+                    ejectState++;
+                }
+                break;
+            case 2:
+                if (isPast(ejectTimer)){
+                    beaterTargetVelocity = 0;
+                    ejectState=0;
+                    articulation=Articulation.TRAVEL;
+                    return true;
+                }
         }
+        return false;
+    }
 
-        angleController.setPosition(
-        Utils.servoNormalize(angleControllerTicks));
-        return angleControllerTicks;
+    public void togglePrecisionAngle() {
+        precisionAngle = !precisionAngle;
+    }
+
+    public double adjustAngle(double speed) {
+        angleTarget += speed * (precisionAngle ? 10 : 100);
+
+
+        angle.setPosition(
+        Utils.servoNormalize(angleTarget));
+        return angleTarget;
     }
 
 
-    public void toggleBeaterBar() {
-        manualBeaterBarOn = !manualBeaterBarOn;
+    public void toggleBeaterEnable() {
+        manualBeaterEnable = !manualBeaterEnable;
     }
-    public void switchBeaterBarDirection (){
-        manualBeaterBarEject = !manualBeaterBarEject;
+    public void toggleBeaterDirection(){
+        manualBeaterEject = !manualBeaterEject;
     }
 
     @Override
     public void stop() {
-        beaterBar.setVelocity(0);
+        beater.setVelocity(0);
     }
 
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("articulation", articulation.name());
-        telemetryMap.put("manual beater bar on?", manualBeaterBarOn);
-        telemetryMap.put("beater bar amps", beaterBar.getPower());
-        telemetryMap.put("beater bar velocity", beaterBar.getVelocity());
-        telemetryMap.put("angle controller position", Utils.servoDenormalize(angleController.getPosition()));
+        telemetryMap.put("manual beater bar on?", manualBeaterEnable);
+        telemetryMap.put("beater bar amps", beater.getPower());
+        telemetryMap.put("beater bar velocity", beater.getVelocity());
+        telemetryMap.put("angle controller position", Utils.servoDenormalize(angle.getPosition()));
         telemetryMap.put("diverter state", diverterState.name());
-//        telemetryMap.put("beaterBarAngle", beaterBarAngleController.getCurrentAngle());
+        telemetryMap.put("intake target angle", angleTarget);
         return telemetryMap;
     }
 

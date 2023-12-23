@@ -12,9 +12,9 @@
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
         </LynxModule>
         <LynxModule name="Expansion Hub 1" port="1">
-            <Servo name="beaterBarAngleController" port="0" />
-            <Servo name="diverterRight" port="2" />
-            <RevRobotics40HDHexMotor name="beaterBar" port="1" />
+            <Servo name="intakeAngle" port="0" />
+            <Servo name="diverterRight" port="1" />
+            <RevRobotics40HDHexMotor name="intakeBeater" port="1" />
             <RevRobotics40HDHexMotor name="slide" port="2"/>
             <RevRobotics40HDHexMotor name="kareem" port="3"/>
             <RevRobotics40HDHexMotor name="jabbar" port="0"/>

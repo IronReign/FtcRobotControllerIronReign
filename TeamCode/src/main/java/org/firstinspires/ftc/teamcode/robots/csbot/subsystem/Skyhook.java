@@ -34,7 +34,7 @@ public class Skyhook implements Subsystem {
     public static int SKYHOOK_SAFE_TICKS = 800;
     public static int SKYHOOK_UP_TICKS = 0;
     DcMotorEx kareem, jabbar;
-    DcMotorExResetable skyhookLeft, skyhookRight;
+    public DcMotorExResetable skyhookLeft, skyhookRight;
 
     Servo jimmy;
     public static int SKYHOOK_INIT_TICKS = 700;

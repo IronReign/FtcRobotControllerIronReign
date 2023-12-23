@@ -159,6 +159,8 @@ public class CenterStage_6832 extends OpMode {
         robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
         if(robot.fetched && !gameState.isAutonomous()) {
             robot.driveTrain.setPose(robot.fetchedPosition.getPose());
+            robot.skyhook.skyhookLeft.setPosition(robot.fetchedPosition.getSkyhookLeftTicks());
+            robot.skyhook.skyhookRight.setPosition(robot.fetchedPosition.getSkyhookRightTicks());
         }
         else {
             robot.driveTrain.setPose(startingPosition);

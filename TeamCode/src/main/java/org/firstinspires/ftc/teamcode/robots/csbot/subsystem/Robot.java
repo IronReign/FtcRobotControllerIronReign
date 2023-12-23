@@ -2,21 +2,18 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.HeadingPosePath;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
-import org.checkerframework.checker.units.qual.C;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
@@ -70,9 +67,8 @@ public class Robot implements Subsystem {
         AUTON,
         CALIBRATE,
         SCORE_PIXEL,
-        INTAKE_PIXEL,
         FOLD,
-        WING_INTAKE,
+        INGEST,
         UNFOLD,
         HANG,
         LAUNCH_DRONE,
@@ -84,7 +80,7 @@ public class Robot implements Subsystem {
         skyhook.articulate(Skyhook.Articulation.GAME);
         //TODO - articulate starting position
         if (gameState.isAutonomous()) {
-            intake.setAngleControllerTicks(1600);
+            intake.setAngle(1600);
         }
         articulation = Articulation.MANUAL;
     }
@@ -129,7 +125,7 @@ public class Robot implements Subsystem {
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         if (updatePositionCache && gameState.isAutonomous()) {
-            currPosition = new CSPosition(driveTrain.pose);
+            currPosition = new CSPosition(driveTrain.pose, skyhook.getSkyhookLeftTicksCurrent(), skyhook.getSkyhookRightTicksCurrent());
             positionCache.update(currPosition, false);
         }
 
@@ -215,7 +211,7 @@ public class Robot implements Subsystem {
                 initPositionIndex++;
                 break;
             case 1:
-                intake.setAngleControllerTicks(Intake.ANGLE_CONTROLLER_MIN);
+                intake.setAngle(Intake.ANGLE_MIN);
 //                if(isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
 //                    initPositionIndex ++;
@@ -258,7 +254,7 @@ public class Robot implements Subsystem {
             case CALIBRATE:
                 //TODO - WRITE A CALIBRATION ROUTINE
                 break;
-            case WING_INTAKE:
+            case INGEST:
                 if (wingIntake()) {
                     articulation = Articulation.MANUAL;
                 }
@@ -279,7 +275,7 @@ public class Robot implements Subsystem {
 
     @Override
     public void stop() {
-        currPosition = new CSPosition(driveTrain.pose);
+        currPosition = new CSPosition(driveTrain.pose, skyhook.getSkyhookLeftTicksCurrent(), skyhook.getSkyhookRightTicksCurrent());
         positionCache.update(currPosition, true);
         for (Subsystem component : subsystems) {
             component.stop();
@@ -294,16 +290,15 @@ public class Robot implements Subsystem {
     public boolean wingIntake() {
         switch (wingIntakeIndex) {
             case 0:
-                wingIntakeTimer = futureTime(.5);
-                intake.articulate(Intake.Articulation.WING_INTAKE_POSTION);
-                if (intake.articulation == Intake.Articulation.MANUAL && isPast(wingIntakeTimer))
-                    wingIntakeIndex++;
-                break;
-            case 1:
                 outtake.articulate(Outtake.Articulation.INTAKE_PIXEL);
                 if (outtake.articulation == Outtake.Articulation.MANUAL) {
                     wingIntakeIndex++;
                 }
+                break;
+            case 1:
+                intake.articulate(Intake.Articulation.INGEST);
+                if (intake.articulation == Intake.Articulation.TRAVEL)
+                    wingIntakeIndex++;
                 break;
             case 2:
                 return true;

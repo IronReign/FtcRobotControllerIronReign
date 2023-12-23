@@ -11,11 +11,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.vision
 import android.annotation.SuppressLint;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.checkerframework.checker.units.qual.Angle;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
@@ -91,7 +87,7 @@ public class DriverControls {
         }
 
         if(stickyGamepad1.back) {
-            robot.articulate(Robot.Articulation.WING_INTAKE);
+            robot.articulate(Robot.Articulation.INGEST);
         }
 
         fieldOrientedDrive();
@@ -104,29 +100,20 @@ public class DriverControls {
             fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (gamepad1.left_trigger > .1) {
-            robot.intake.adjustBeaterBarAngle(gamepad1.left_trigger*.85);
+            robot.intake.adjustAngle(gamepad1.left_trigger*.85);
         }
         if (gamepad1.right_trigger > .1) {
-            robot.intake.adjustBeaterBarAngle(-gamepad1.right_trigger*.85);
+            robot.intake.adjustAngle(-gamepad1.right_trigger*.85);
         }
         if (stickyGamepad1.a) {
-            robot.intake.toggleBeaterBar();
+            robot.intake.toggleBeaterEnable();
         }
         if (stickyGamepad1.b) {
-            robot.intake.switchBeaterBarDirection();
+            robot.intake.toggleBeaterDirection();
         }
-
-        if(stickyGamepad1.left_stick_button) {
-            if(robot.intake.diverterState.equals(Intake.DiverterState.DELIVER_RIGHT))
-                robot.intake.diverterState = Intake.DiverterState.DELIVER_LEFT;
-            else {
-                robot.intake.diverterState = Intake.DiverterState.DELIVER_RIGHT;
-            }
+        if (stickyGamepad1.y){
+            robot.articulate(Robot.Articulation.INGEST);
         }
-        if(stickyGamepad1.right_stick_button) {
-            robot.intake.diverterState = Intake.DiverterState.DELIVER_BOTH;
-        }
-
 
         if(fieldOrientedDrive) {
             fieldOrientedDrive();
@@ -135,13 +122,22 @@ public class DriverControls {
             robotOrientedDrive();
         }
 
+        if (robot.intake.isEating() && !gamepad1.left_bumper && !gamepad1.right_bumper)
+            robot.intake.pixelSensorClear();
+
         if (gamepad1.left_bumper) {
-            robot.outtake.moveSlide(5);
+            if (robot.intake.isEating())
+                robot.intake.pixelSensorLeft();
+            else
+                robot.outtake.moveSlide(5);
 //            if(robot.outtake.getSlidePosition() > 100 && robot.outtake.getSlidePosition() < 800)//TODO find more accurate values for where flipper should be raised
 //                robot.outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
         }
         if (gamepad1.right_bumper) {
-            robot.outtake.moveSlide(-5);
+            if (robot.intake.isEating())
+                robot.intake.pixelSensorRight();
+            else
+                robot.outtake.moveSlide(-5);
 //            if(robot.outtake.getSlidePosition() > 100 && robot.outtake.getSlidePosition() < 800)//TODO find more accurate values for where flipper should be raised
 //                robot.outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
         }

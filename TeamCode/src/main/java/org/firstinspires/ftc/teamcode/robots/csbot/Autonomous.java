@@ -10,10 +10,8 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
-import com.acmerobotics.roadrunner.VelConstraint;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
@@ -372,7 +370,7 @@ public class Autonomous implements TelemetryProvider {
 
     public static int autonIndex;
     public static long futureTimer;
-    public static int EJECT_WAIT_TIME = 2;
+
 
 
     public boolean execute(FtcDashboard dashboard) {
@@ -381,45 +379,36 @@ public class Autonomous implements TelemetryProvider {
             switch (autonIndex) {
                 case 0:
                     autonIndex++;
-//                    robot.skyhook.articulate(Skyhook.Articulation.GAME);
+//                  robot.skyhook.articulate(Skyhook.Articulation.GAME);
                     break;
                 case 1:
                     autonState = AutonState.BACK_UP;
                     if (!stageOneToRun.run(packet)) {
-                        robot.intake.setAngleControllerTicks(Intake.BEATER_BAR_EJECT_ANGLE);
+                        robot.intake.setAngle(Intake.ANGLE_EJECT);
                         autonIndex++;
                     }
                     break;
                 case 2:
                     autonState = AutonState.STRAFE;
                     if (!stageTwoToRun.run(packet)) {
-                        robot.intake.ejectBeaterBar();
-                        futureTimer = futureTime(EJECT_WAIT_TIME);
-                        autonIndex++;
+                        if(robot.intake.eject())
+                            autonIndex++;
                     }
                     break;
                 case 3:
-                    autonState = AutonState.SCORE_GROUND;
-                    if (isPast(futureTimer)) {
-                        robot.intake.beaterBarOff();
-                        //todo - the following 2 lines should be combined into a robot.travel articulation
-                        robot.intake.articulate(Intake.Articulation.TRAVEL);
+                    autonState = AutonState.SCORE_GROUND; //todo why is this here?
                         robot.outtake.intakePosition(); //outtake should already be in this position
-                        //todo IMPORTANT - lower the outtake flipper to slightly below horizontal so it goes under the door
                         findStandardPositionBuild(); //gotta build again since the current position is used
-                        robot.positionCache.update(new CSPosition(robot.driveTrain.pose), true);
+                        robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
                         autonIndex++;
-
-                    }
                     break;
                 case 4: //travel to interim position near backdrop and then to final position
                     autonState = AutonState.FIND_STANDARD_POSITION;
                     if (!findStandardPosition.run(packet))
                     {
                         approachBackdropBuild();
-//                        autonIndex++;
-                        autonIndex++;}
-
+                        autonIndex++;
+                    }
                     break;
                 case 5:
                     autonState = AutonState.TRAVEL_BACKDROP;
@@ -443,7 +432,7 @@ public class Autonomous implements TelemetryProvider {
                     autonIndex++;
                     break;
                 case 8:
-                    robot.positionCache.update(new CSPosition(robot.driveTrain.pose), true);
+                    robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
                     return true;
 
             }
