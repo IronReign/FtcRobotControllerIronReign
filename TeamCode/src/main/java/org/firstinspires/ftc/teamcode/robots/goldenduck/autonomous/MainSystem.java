@@ -26,12 +26,5 @@ public class MainSystem extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         dashboard = FtcDashboard.getInstance();
 
-
-        waitForStart();
-        motorFrontRight.setPower(-0.7);
-        motorFrontLeft.setPower(0.7);
-        motorBackRight.setPower(0.7);
-        motorBackLeft.setPower(-0.7);
-        sleep(30000);
     }
 }

@@ -17,12 +17,14 @@ public class DriverControls extends OpMode {
     private boolean calibrate = false;
     DriveTrain driveTrain;
     Servo servoClaw;
-    Servo clawWrist
-            ;
+    Servo clawWrist;
 //    Servo clawWrist2;
     Servo servoRailgun;
     private DcMotor arm = null;
     //    private DcMotor arm2 = null;
+    private DcMotorEx motorBackLeft = null;
+    private DcMotorEx motorFrontLeft = null;
+    private DcMotorEx motorBackRight = null;
     FtcDashboard dashboard;
     MultipleTelemetry dashTelemetry;
 
@@ -41,10 +43,16 @@ public class DriverControls extends OpMode {
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 //        arm2 = this.hardwareMap.get(DcMotorEx.class, "armMotor2");
 //        arm2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorBackLeft = this.hardwareMap.get(DcMotorEx.class, "motorBackLeft");
+        motorFrontLeft = this.hardwareMap.get(DcMotorEx.class, "motorFrontLeft");
+        motorBackRight = this.hardwareMap.get(DcMotorEx.class, "motorBackRight");
     }
 
     @Override
     public void loop() {
+        telemetry.addData("Middle OdoPod \t", motorBackRight.getCurrentPosition());
+        telemetry.addData("Right OdoPod \t", motorBackLeft.getCurrentPosition());
+        telemetry.addData("Left OdoPod \t", motorFrontLeft.getCurrentPosition());
         telemetry.addData("servsoWrist", clawWrist.getPosition());
 //        telemetry.addData("servoWrist2". clawWrist2.getPositiion());
         telemetry.addData("servoClaw", servoClaw.getPosition());
@@ -56,7 +64,7 @@ public class DriverControls extends OpMode {
         if (gamepad1.dpad_down) {
             calibrate = false;
         }
-//
+
 //        if (gamepad1.dpad_up) {
 //            if (driveTrain.robotSpeed == 1)
 //                driveTrain.robotSpeed = .5;
