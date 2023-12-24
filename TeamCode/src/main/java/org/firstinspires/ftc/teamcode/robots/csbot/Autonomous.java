@@ -257,8 +257,8 @@ public class Autonomous implements TelemetryProvider {
         redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
 
         purpleEndPosition = P2D(startingPosition.getPose().position.x / FIELD_INCHES_PER_GRID, allianceDirection * .35, STANDARD_HEADING);
-        backdropApproachPosition = P2D(1.75, allianceDirection * .35, STANDARD_HEADING);
-        aprilTagApproachPosition = P2D(1.9, allianceDirection * 1 + (targetAprilTagIndex - 3) * aprilTagOffset, STANDARD_HEADING);
+        backdropApproachPosition = P2D(1.65, allianceDirection * .35, STANDARD_HEADING);
+        aprilTagApproachPosition = P2D(1.65, allianceDirection * 2 + (targetAprilTagIndex - 3) * aprilTagOffset, STANDARD_HEADING);
 
         //
         redLeftStageOne = new SequentialAction(
@@ -379,30 +379,33 @@ public class Autonomous implements TelemetryProvider {
             switch (autonIndex) {
                 case 0:
                     autonIndex++;
-//                  robot.skyhook.articulate(Skyhook.Articulation.GAME);
                     break;
                 case 1:
                     autonState = AutonState.BACK_UP;
                     if (!stageOneToRun.run(packet)) {
-                        robot.intake.setAngle(Intake.ANGLE_EJECT);
                         autonIndex++;
                     }
                     break;
                 case 2:
                     autonState = AutonState.STRAFE;
                     if (!stageTwoToRun.run(packet)) {
-                        if(robot.intake.eject())
-                            autonIndex++;
+                        robot.intake.articulate(Intake.Articulation.EJECT);
+                        autonIndex++;
                     }
                     break;
                 case 3:
-                    autonState = AutonState.SCORE_GROUND; //todo why is this here?
+                    autonState = AutonState.SCORE_GROUND;
+                    if(robot.intake.readyForTravel()) {
+                        autonIndex++;
+                    }
+                    break;
+                case 4:
                         robot.outtake.intakePosition(); //outtake should already be in this position
                         findStandardPositionBuild(); //gotta build again since the current position is used
                         robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
                         autonIndex++;
                     break;
-                case 4: //travel to interim position near backdrop and then to final position
+                case 5: //travel to interim position near backdrop and then to final position
                     autonState = AutonState.FIND_STANDARD_POSITION;
                     if (!findStandardPosition.run(packet))
                     {
@@ -410,28 +413,25 @@ public class Autonomous implements TelemetryProvider {
                         autonIndex++;
                     }
                     break;
-                case 5:
+                case 6:
                     autonState = AutonState.TRAVEL_BACKDROP;
                     if(!approachBackdrop.run(packet)) {
-//                    robot.skyhook.articulate(Skyhook.Articulation.PREP_FOR_HANG);
-//                    autonState = AutonState.TRAVEL_BACKDROP;
-//                    if(!travelBackdrop.run(packet)) autonIndex++;
                         approachAprilTagBuild();
                         autonIndex++;
                     }
                     break;
-                case 6:
-                    autonState = AutonState.ALIGN_WITH_APRILTAG;
-//                    if(approachAprilTag.run(packet)) {
-                        autonIndex++;
-//                    }
-                    break;
                 case 7:
+                    autonState = AutonState.ALIGN_WITH_APRILTAG;
+                    if(!approachAprilTag.run(packet)) {
+                        autonIndex++;
+                    }
+                    break;
+                case 8:
                     autonState = AutonState.DONE;
 
                     autonIndex++;
                     break;
-                case 8:
+                case 9:
                     robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
                     return true;
 

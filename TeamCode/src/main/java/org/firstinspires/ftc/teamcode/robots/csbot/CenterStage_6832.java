@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -84,7 +85,7 @@ public class CenterStage_6832 extends OpMode {
 
     }
 
-    public static GameState gameState = GameState.TEST;
+    public static GameState gameState = GameState.AUTONOMOUS;
     static public int gameStateIndex;
 
 
@@ -96,7 +97,6 @@ public class CenterStage_6832 extends OpMode {
 
 
     //CONSTANTS
-    public static Constants.Position origin;
     private ExponentialSmoother loopTimeSmoother, averageUpdateTimeSmoother, voltageSmoother;
     public static double AVERAGE_LOOP_TIME_SMOOTHING_FACTOR = 0.1;
     public final double FORWARD_SMOOTHING_FACTOR = 0.3;
@@ -164,6 +164,8 @@ public class CenterStage_6832 extends OpMode {
         }
         else {
             robot.driveTrain.setPose(startingPosition);
+            robot.skyhook.skyhookLeft.setPosition(0);
+            robot.skyhook.skyhookRight.setPosition(0);
         }
 
         robot.initPosition();
@@ -336,6 +338,7 @@ public class CenterStage_6832 extends OpMode {
         );
 
         handleTelemetry(visionTelemetryMap, robot.visionProviderBack.getTelemetryName(), packet);
+        packet.put("imu/roadrunner error", robot.driveTrain.imuRoadrunnerError);
 
         dashboard.sendTelemetryPacket(packet);
         telemetry.update();

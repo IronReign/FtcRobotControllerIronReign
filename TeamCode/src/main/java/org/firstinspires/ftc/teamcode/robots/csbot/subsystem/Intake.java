@@ -32,7 +32,7 @@ public class Intake implements Subsystem {
     public static int ANGLE_SWALLOW = 1950;
     public static int ANGLE_TRAVEL = 1800; //safe to travel through backstage door
     public static double TIME_SWALLOW = .3;
-    public static double TIME_EJECT = .5;
+    public static double TIME_EJECT = 2;
 
     //CONSTANTS
     HardwareMap hardwareMap;
@@ -323,6 +323,10 @@ public class Intake implements Subsystem {
         return false;
     }
 
+    public boolean readyForTravel() {
+        return articulation.equals(Articulation.TRAVEL);
+    }
+
     int ejectState = 0;
     double ejectTimer = TIME_EJECT;
     public boolean eject() {
@@ -331,20 +335,22 @@ public class Intake implements Subsystem {
                 setAngle(ANGLE_EJECT);
                 ejectTimer = futureTime(.3); //time for angle to set
                 ejectState++;
+                break;
             case 1:
                 if (isPast(ejectTimer)){
-                    beaterTargetVelocity=BEATER_EJECT_VELOCITY;
-                    ejectTimer=TIME_EJECT;
+                    beaterTargetVelocity = BEATER_EJECT_VELOCITY;
+                    ejectTimer = futureTime(TIME_EJECT);
                     ejectState++;
                 }
                 break;
             case 2:
                 if (isPast(ejectTimer)){
                     beaterTargetVelocity = 0;
-                    ejectState=0;
-                    articulation=Articulation.TRAVEL;
+                    ejectState = 0;
+                    articulation = Articulation.TRAVEL;
                     return true;
                 }
+                break;
         }
         return false;
     }

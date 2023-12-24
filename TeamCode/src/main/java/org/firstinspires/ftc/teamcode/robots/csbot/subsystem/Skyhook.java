@@ -161,6 +161,8 @@ public class Skyhook implements Subsystem {
         telemetryMap.put("skyhookRightActual", skyhookRight.getCurrentPosition());
         telemetryMap.put("jabbarActual", jabbar.getCurrentPosition());
         telemetryMap.put("jimmyTicks", jimmyTicks);
+        telemetryMap.put("Skyhook Left Memory Position", robot.positionCache.readPose().getSkyhookLeftTicks());
+        telemetryMap.put("Skyhook Right Memory Position", robot.positionCache.readPose().getSkyhookRightTicks());
 
         return telemetryMap;
     }
@@ -178,9 +180,9 @@ public class Skyhook implements Subsystem {
         skyhookLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         skyhookLeftTicks = skyhookLeft.getCurrentPosition();
         skyhookLeft.setTargetPosition(skyhookLeftTicks);
-        //skyhookLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        skyhookLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         skyhookLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //skyhookRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        skyhookRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         skyhookRightTicks = skyhookRight.getCurrentPosition();
         skyhookRight.setTargetPosition(skyhookRightTicks);
         skyhookRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
