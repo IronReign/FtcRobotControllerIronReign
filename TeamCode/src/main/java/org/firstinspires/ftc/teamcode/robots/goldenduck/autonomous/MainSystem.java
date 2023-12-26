@@ -14,17 +14,15 @@ import org.firstinspires.ftc.teamcode.robots.goldenduck.teleop.DriveTrain;
 @Config("GoldenDuckGameVariables")
 @Autonomous(name="Golden Duck Autonomous OpMode", group="Autonomous")
 public class MainSystem extends LinearOpMode {
+    DriveTrain mecanumAuto;
     FtcDashboard dashboard;
-    private DcMotorEx motorFrontRight = null;
-    private DcMotorEx motorBackLeft = null;
-    private DcMotorEx motorFrontLeft = null;
-    private DcMotorEx motorBackRight = null;
-    private DcMotor arm = null;
     Servo servoClaw;
     Servo clawWrist;
+    public double TicksPerIn = 340.723404;
+
     @Override
     public void runOpMode() throws InterruptedException {
         dashboard = FtcDashboard.getInstance();
-
+//        AutoDrive.mecanumAuto(TicksPerIn * 3.000, 0, 0);
     }
 }

@@ -31,7 +31,8 @@ public class AutoDrive {
         BNO055IMU imu;
         // State used for updating telemetry
         Orientation angles;
-        Acceleration gravity;    // State used for updating telemetry
+        Acceleration gravity;
+        // State used for updating telemetry
         public double heading;
 
         // power input for each respective wheel
@@ -64,7 +65,6 @@ public class AutoDrive {
             angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
             gravity  = imu.getGravity();
             heading = angles.firstAngle;
-
             telemetry.addData("Back Right Position \t", motorBackRight.getCurrentPosition());
             telemetry.addData("Back Left Position \t", motorBackLeft.getCurrentPosition());
             telemetry.addData("Front Right Position \t", motorFrontRight.getCurrentPosition());

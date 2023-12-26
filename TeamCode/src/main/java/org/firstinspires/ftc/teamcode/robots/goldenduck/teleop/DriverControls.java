@@ -30,26 +30,41 @@ public class DriverControls extends OpMode {
 
     @Override
     public void init() {
+
         dashboard = FtcDashboard.getInstance();
         dashTelemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         dashTelemetry.setMsTransmissionInterval(25);
+
         driveTrain = new DriveTrain(telemetry, hardwareMap);
         driveTrain.motorInit();
-        servoClaw = hardwareMap.get(Servo.class, "servoClaw");
+
         servoRailgun = hardwareMap.get(Servo.class, "servoRailgun");
+
+        servoClaw = hardwareMap.get(Servo.class, "servoClaw");
+
         clawWrist = hardwareMap.get(Servo.class, "servoWrist");
 //        clawWRist2 = hardwareMap.get(Servo.class, "servoWrist2");
+
         arm = this.hardwareMap.get(DcMotorEx.class, "arm");
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 //        arm2 = this.hardwareMap.get(DcMotorEx.class, "armMotor2");
 //        arm2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         motorBackLeft = this.hardwareMap.get(DcMotorEx.class, "motorBackLeft");
         motorFrontLeft = this.hardwareMap.get(DcMotorEx.class, "motorFrontLeft");
         motorBackRight = this.hardwareMap.get(DcMotorEx.class, "motorBackRight");
+        motorBackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorFrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorBackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        motorBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
     }
 
     @Override
     public void loop() {
+
         telemetry.addData("Middle OdoPod \t", motorBackRight.getCurrentPosition());
         telemetry.addData("Right OdoPod \t", motorBackLeft.getCurrentPosition());
         telemetry.addData("Left OdoPod \t", motorFrontLeft.getCurrentPosition());
@@ -70,8 +85,16 @@ public class DriverControls extends OpMode {
 //                driveTrain.robotSpeed = .5;
 //            else
 //                driveTrain.robotSpeed = 1;
+////      speed reduction
 //        }
-//      speed reduction
+//
+//        if (gamepad1.dpad_down) {
+//            if (driveTrain.robotSpeed == 0.5)
+//                driveTrain.robotSpeed = 1;
+//            else
+//                driveTrain.robotSpeed = 0.5;
+////      speed up/neutral
+//        }
 
         if (gamepad1.x) {
             arm.setPower(0.1);
@@ -102,20 +125,20 @@ public class DriverControls extends OpMode {
             arm.setTargetPosition(1615);
             arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
             clawWrist.setPosition(0);
-            // low score backboard
+//      low score backboard
         }
 
         if (gamepad1.right_bumper) {
             servoClaw.setPosition(servoNormalize(850));
-            // claw open
+//      claw open
         }
 
         if (gamepad1.left_bumper) {
             servoClaw.setPosition(servoNormalize(1300));
-            //claw close
-        }        if (gamepad1.dpad_down) {
+//      claw close
+        }
 
-
+        if (gamepad1.dpad_down) {
             servoRailgun.setPosition(servoNormalize(1821));
         }
 

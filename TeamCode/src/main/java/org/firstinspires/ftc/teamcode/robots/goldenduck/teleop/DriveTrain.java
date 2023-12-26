@@ -36,8 +36,8 @@ public class DriveTrain {
 
         public void resetMotors() {
             motorFrontLeft.setPower(1);
-            motorBackLeft.setPower(1);
-            motorBackRight.setPower(1);
+            motorBackLeft.setPower(1 * 0.8);
+            motorBackRight.setPower(1 * 0.8);
             motorFrontRight.setPower(1);
             motorFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -50,8 +50,8 @@ public class DriveTrain {
             this.motorFrontLeft.setDirection(DcMotor.Direction.REVERSE);
             this.motorBackLeft.setDirection(DcMotor.Direction.REVERSE);
             motorFrontLeft.setPower(1);
-            motorBackLeft.setPower(1);
-            motorBackRight.setPower(1);
+            motorBackLeft.setPower(1 * 0.8);
+            motorBackRight.setPower(1 * 0.8);
             motorFrontRight.setPower(1);
             mecanumDrive(0, 0, 0);
         }
@@ -88,10 +88,6 @@ public class DriveTrain {
             motorFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             motorBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            motorBackLeft.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-            motorBackRight.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-            motorFrontLeft.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-            motorFrontRight.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
             this.motorBackLeft.setDirection(DcMotorEx.Direction.REVERSE);
             this.motorFrontLeft.setDirection(DcMotorEx.Direction.REVERSE);
 
