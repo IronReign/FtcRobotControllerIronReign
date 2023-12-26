@@ -26,7 +26,6 @@ public class BoboAuto extends OpMode {
         autobot = new Autobot(dashTelemetry, hardwareMap);
         autonomous = new Auton(autobot, dashTelemetry);
         dashTelemetry.setMsTransmissionInterval(25);
-        //autonomous.add(new Mechanisms(autobot));
     }
 
     @Override

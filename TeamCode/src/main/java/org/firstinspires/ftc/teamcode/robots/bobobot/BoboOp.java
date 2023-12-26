@@ -26,7 +26,6 @@ public class BoboOp extends OpMode {
         dashTelemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         bobot = new Robot(dashTelemetry, hardwareMap);
         imu = new IMU(dashTelemetry, hardwareMap);
-        //imu.initialize(parameters);
         dashTelemetry.setMsTransmissionInterval(25);
     }
 

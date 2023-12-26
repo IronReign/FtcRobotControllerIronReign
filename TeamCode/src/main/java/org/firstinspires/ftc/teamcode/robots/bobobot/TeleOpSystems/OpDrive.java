@@ -19,10 +19,10 @@ import java.util.Locale;
 public class OpDrive {
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
-    private DcMotorEx motorFrontRight = null;
-    private DcMotorEx motorBackLeft = null;
-    private DcMotorEx motorFrontLeft = null;
-    private DcMotorEx motorBackRight = null;
+    private DcMotorEx rightFront = null;
+    private DcMotorEx leftBack = null;
+    private DcMotorEx leftFront = null;
+    private DcMotorEx rightBack = null;
 
     // robot motors
     private double powerFrontLeft = 0;
@@ -52,10 +52,10 @@ public class OpDrive {
         powerFrontRight = r * Math.sin(robotAngle) + rightX;
         powerBackLeft = r * Math.sin(robotAngle) - rightX;
         powerBackRight = r * Math.cos(robotAngle) + rightX;
-        motorFrontLeft.setPower(powerFrontLeft*robotSpeed);
-        motorFrontRight.setPower(powerFrontRight*robotSpeed);
-        motorBackLeft.setPower(powerBackLeft*robotSpeed);
-        motorBackRight.setPower(powerBackRight*robotSpeed);
+        leftFront.setPower(powerFrontLeft*robotSpeed);
+        rightFront.setPower(powerFrontRight*robotSpeed);
+        leftBack.setPower(powerBackLeft*robotSpeed);
+        rightBack.setPower(powerBackRight*robotSpeed);
     }
     public void telemetryOutput()
     {
@@ -65,33 +65,35 @@ public class OpDrive {
         angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         gravity  = imu.getGravity();
         heading = angles.firstAngle;
-        telemetry.addData("Back Right Position \t", motorBackRight.getCurrentPosition());
-        telemetry.addData("Back Left Position \t", motorBackLeft.getCurrentPosition());
-        telemetry.addData("Front Right Position \t", motorFrontRight.getCurrentPosition());
-        telemetry.addData("Front Left Position \t", motorFrontLeft.getCurrentPosition());
+        telemetry.addData("Back Right Position \t", rightBack.getCurrentPosition());
+        telemetry.addData("Back Left Position \t", leftBack.getCurrentPosition());
+        telemetry.addData("Front Right Position \t", rightFront.getCurrentPosition());
+        telemetry.addData("Front Left Position \t", leftFront.getCurrentPosition());
         telemetry.addData("Average Motor Position \t", getMotorAvgPosition());
         telemetry.addData("Heading \t", formatAngle(angles.angleUnit, heading));
+        telemetry.addData("Front Right Power \t", rightBack.getPower());
+
 
     }
-    public double getMotorAvgPosition(){return (double)(Math.abs(motorFrontLeft.getCurrentPosition())+Math.abs(motorFrontRight.getCurrentPosition())+Math.abs(motorBackLeft.getCurrentPosition())+Math.abs(motorBackRight.getCurrentPosition()))/4.0;}
+    public double getMotorAvgPosition(){return (double)(Math.abs(leftFront.getCurrentPosition())+Math.abs(rightFront.getCurrentPosition())+Math.abs(leftBack.getCurrentPosition())+Math.abs(rightBack.getCurrentPosition()))/4.0;}
     //motor broken rn so use 3; when fixed change back to 4
     // UPDATE: New chassis, new motors... Problem solved?
     public void motorInit()
     {
-        motorFrontLeft = this.hardwareMap.get(DcMotorEx.class, "motorFrontLeft");
-        motorBackLeft = this.hardwareMap.get(DcMotorEx.class, "motorBackLeft");
-        motorFrontRight = this.hardwareMap.get(DcMotorEx.class, "motorFrontRight");
-        motorBackRight = this.hardwareMap.get(DcMotorEx.class, "motorBackRight");
-        motorFrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorFrontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorBackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorBackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorBackLeft.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        motorBackRight.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        motorFrontLeft.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        motorFrontRight.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        motorFrontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        motorBackLeft.setDirection(DcMotor.Direction.REVERSE);
+        leftFront = this.hardwareMap.get(DcMotorEx.class, "leftFront");
+        leftBack = this.hardwareMap.get(DcMotorEx.class, "leftBack");
+        rightFront = this.hardwareMap.get(DcMotorEx.class, "rightFront");
+        rightBack = this.hardwareMap.get(DcMotorEx.class, "rightBack");
+        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBack.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        rightBack.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        leftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        rightFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftBack.setDirection(DcMotor.Direction.REVERSE);
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
