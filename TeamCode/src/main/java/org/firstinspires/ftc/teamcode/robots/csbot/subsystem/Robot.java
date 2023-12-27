@@ -60,6 +60,7 @@ public class Robot implements Subsystem {
     private Articulation articulation;
     public List<Target> targets = new ArrayList<Target>();
     public boolean fetched;
+    public boolean selfDriving = true;
 
     public enum Articulation {
         //beater bar, drivetrain, drone launcher, outtake

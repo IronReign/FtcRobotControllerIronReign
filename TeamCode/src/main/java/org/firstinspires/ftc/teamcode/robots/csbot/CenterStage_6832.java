@@ -28,7 +28,7 @@ public class CenterStage_6832 extends OpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     //COMPONENTS
-    static Robot robot;
+    public static Robot robot;
     static Autonomous auton;
     private FtcDashboard dashboard;
     DriverControls dc;
