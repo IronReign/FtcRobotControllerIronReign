@@ -35,7 +35,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
                         -y,
                         -x
                 ),
-                theta
+                -theta
         ));
         updatePoseEstimate();
     }
@@ -91,4 +91,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public String getTelemetryName() {
         return "DRIVETRAIN";
     }
+
+
 }

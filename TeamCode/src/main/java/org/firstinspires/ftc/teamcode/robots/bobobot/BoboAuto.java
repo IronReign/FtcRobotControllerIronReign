@@ -38,7 +38,7 @@ public class BoboAuto extends OpMode {
     }
 
     @Override
-    public void loop() {
+    public void loop()  {
         autobot.drive.update();
         autobot.grip.telemetryOutput();
         autonomous.telemetryOutput();

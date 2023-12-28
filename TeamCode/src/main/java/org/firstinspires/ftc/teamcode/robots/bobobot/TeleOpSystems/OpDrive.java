@@ -6,16 +6,15 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import java.util.Locale;
-
+@Config("BoboMotorDebug")
 public class OpDrive {
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
@@ -29,6 +28,8 @@ public class OpDrive {
     private double powerFrontRight = 0;
     private double powerBackLeft = 0;
     private double powerBackRight = 0;
+
+    public static double motorPower = 0;
     // power input for each respective wheel
     BNO055IMU imu;
     // IMU
@@ -36,7 +37,9 @@ public class OpDrive {
     Acceleration gravity;
     public double heading;
 
-    double robotSpeed = 1;
+    double robotSpeed = 0.75;
+
+    private boolean speedPress = false;
     public OpDrive(Telemetry telemetry, HardwareMap hardwareMap)
     {
         this.telemetry = telemetry;
@@ -70,8 +73,12 @@ public class OpDrive {
         telemetry.addData("Front Right Position \t", rightFront.getCurrentPosition());
         telemetry.addData("Front Left Position \t", leftFront.getCurrentPosition());
         telemetry.addData("Average Motor Position \t", getMotorAvgPosition());
-        telemetry.addData("Heading \t", formatAngle(angles.angleUnit, heading));
-        telemetry.addData("Front Right Power \t", rightBack.getPower());
+        telemetry.addData("Right Back Velocity \t", rightBack.getVelocity());
+        telemetry.addData("Right Front Velocity \t", rightFront.getVelocity());
+        telemetry.addData("Left Back Velocity \t", leftBack.getVelocity());
+        telemetry.addData("Left Front Velocity \t", leftFront.getVelocity());
+        telemetry.addData("Speed Press? \t", isSlowed());
+        telemetry.addData("Speed \t", robotSpeed);
 
 
     }
@@ -92,8 +99,8 @@ public class OpDrive {
         rightBack.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         leftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         rightFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
-        leftBack.setDirection(DcMotor.Direction.REVERSE);
+        leftFront.setDirection(DcMotorEx.Direction.REVERSE);
+        leftBack.setDirection(DcMotorEx.Direction.REVERSE);
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
@@ -121,4 +128,102 @@ public class OpDrive {
     public double getExternalHeadingVelocity(){
         return (double) imu.getAngularVelocity().zRotationRate;
     }
+
+    public void velocityTest(boolean press, boolean bumper){
+        if(press == true){
+            leftFront.setPower(motorPower);
+            leftBack.setPower(motorPower);
+            rightFront.setPower(motorPower);
+            rightBack.setPower(motorPower);
+        }
+    }
+long testTime =0;
+    int testStage = 0;
+    public void runTest(boolean press){
+        if(press == true){
+            switch (testStage){
+                case 0:
+                    testTime=futureTime(2);
+                    testStage++;
+
+                case 1:
+                    rightFront.setPower(motorPower);
+
+                    if (isPast(testTime)){
+                        rightFront.setPower(0);
+                        testTime=futureTime(2);
+                        testStage++;
+                    }
+                    break;
+                case 2:
+                    rightBack.setPower(motorPower);
+
+                    if (isPast(testTime)){
+                        rightBack.setPower(0);
+                        testTime=futureTime(2);
+                        testStage++;
+                    }
+                    break;
+                case 3:
+                    leftBack.setPower(motorPower);
+
+                    if (isPast(testTime)){
+                        leftBack.setPower(0);
+                        testStage++;
+                        testTime=futureTime(2);
+                    }
+                    break;
+                case 4:
+                    leftFront.setPower(motorPower);
+
+                    if (isPast(testTime)){
+                        leftFront.setPower(0);
+                        testStage=0;
+                    }
+                    break;
+
+            }
+
+
+        }
+
+    }
+
+    public static long futureTime(float seconds){
+        return System.nanoTime() + (long) (seconds * 1e9);
+    }
+    public static long futureTime(double seconds){
+        return System.nanoTime() + (long) (seconds * 1e9);
+    }
+
+    public static boolean isPast(double futureTime) {
+        return System.nanoTime() > futureTime;
+    }
+
+    public void strafeTile(boolean press){
+        if(getMotorAvgPosition() < 3220){
+            mecanumDrive(0, -1, 0);
+        }
+    }
+
+    int mode = 0;
+    public void modeToggle(){
+            switch(mode){
+                case 0:
+                    robotSpeed = 1;
+                    mode++;
+                    speedPress = true;
+                    break;
+                case 1:
+                    robotSpeed = 0.75;
+                    mode = 0;
+                    speedPress = false;
+                    break;
+
+            }
+    }
+    public boolean isSlowed(){
+        return speedPress;
+    }
+
 }

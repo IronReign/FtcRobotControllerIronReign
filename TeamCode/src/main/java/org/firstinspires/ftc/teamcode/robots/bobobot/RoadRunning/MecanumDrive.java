@@ -56,7 +56,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-@Config
+@Config("BoboTuning")
 public class MecanumDrive {
     public static class Params {
         // IMU orientation
@@ -69,14 +69,14 @@ public class MecanumDrive {
                 RevHubOrientationOnRobot.UsbFacingDirection.LEFT;
 
         // drive model parameters
-        public double inPerTick = (23.5*4)/(32200); //experimentally determined by Alex with a push test - but probably needs fine tuning
+        public double inPerTick = (23.5*4)/(31976); //experimentally determined by Alex with a push test - but probably needs fine tuning
         public double lateralInPerTick = 0.0016332029692110565;
-        public double trackWidthTicks = 3792.012085201398;
+        public double trackWidthTicks =   50053.18303038691;
 
         // feedforward parameters (in tick units)
-        public double kS = 1.4057616046707695;
-        public double kV = 0.0005434755002874686;
-        public double kA = 0.00008;
+        public double kS =  1.8719435574955638;
+        public double kV =   0.00038346161656940814;
+        public double kA = 0.000012;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 50;
