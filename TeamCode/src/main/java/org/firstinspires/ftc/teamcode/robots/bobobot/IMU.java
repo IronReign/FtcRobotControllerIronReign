@@ -50,6 +50,7 @@ public class IMU {
         telemetry.addData("Pitch \t", formatAngle(angles.angleUnit, angles.thirdAngle));
         telemetry.addData("Gravity \t", gravity.toString());
         telemetry.addData("Mag \t", String.format(Locale.getDefault(), "%.3f", Math.sqrt(gravity.xAccel*gravity.xAccel + gravity.yAccel*gravity.yAccel + gravity.zAccel*gravity.zAccel)));
+        telemetry.addLine();
     }
     String formatAngle(AngleUnit angleUnit, double angle) {
         return formatDegrees(AngleUnit.DEGREES.fromUnit(angleUnit, angle));

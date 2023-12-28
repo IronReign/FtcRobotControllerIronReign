@@ -1,7 +1,8 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot.TeleOpSystems;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
-import static org.firstinspires.ftc.teamcode.robots.bobobot.BoboOp.bobot;
+import static org.firstinspires.ftc.teamcode.robots.bobobot.RoadRunning.BoboRunnerOp.runnerBot;
+
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 
 public class Toggle {
@@ -20,7 +21,13 @@ public class Toggle {
 
     public void toggleSpeedMode(){
         if(stickyGamepad1.x){
-            bobot.opDrive.modeToggle();
+            runnerBot.driveTrain.modeToggle();
+        }
+    }
+
+    public void motorDebugTest(){
+        if(stickyGamepad1.a){
+            runnerBot.driveTrain.runTest();
         }
     }
 }
