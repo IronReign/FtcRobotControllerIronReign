@@ -106,7 +106,7 @@ public class DriverControls {
             robot.intake.adjustAngle(-gamepad1.right_trigger*.85);
         }
         if (stickyGamepad1.a) {
-            robot.intake.toggleBeaterEnable();
+            robot.intake.articulate(Intake.Articulation.INGEST);
         }
         if (stickyGamepad1.b) {
             robot.intake.toggleBeaterDirection();
@@ -121,9 +121,6 @@ public class DriverControls {
         else {
             robotOrientedDrive();
         }
-
-        if (robot.intake.isEating() && !gamepad1.left_bumper && !gamepad1.right_bumper)
-            robot.intake.pixelSensorClear();
 
         if (gamepad1.left_bumper) {
             if (robot.intake.isEating())

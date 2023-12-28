@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.ExponentialSmoother;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.Field;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 
@@ -31,6 +32,7 @@ public class CenterStage_6832 extends OpMode {
     public static Robot robot;
     static Autonomous auton;
     private FtcDashboard dashboard;
+    public Field field;
     DriverControls dc;
 
 
@@ -131,6 +133,7 @@ public class CenterStage_6832 extends OpMode {
         robot = new Robot(hardwareMap, false);
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
+        field = new Field();
 
         //FETCH CACHE
         robot.fetchCachedCSPosition();
@@ -180,13 +183,11 @@ public class CenterStage_6832 extends OpMode {
         telemetry.addData("visionProviderIndex", Robot.visionProviderIndex);
         telemetry.addData("visionProviderOnRed", robot.visionProviderBack.isRedAlliance);
         telemetry.addData("blobLocation", robot.visionProviderBack.getMostFrequentPosition().getIndex());
-        telemetry.addData("feched", robot.fetched);
+        telemetry.addData("fetched", robot.fetched);
         telemetry.addData("gameState", gameState);
-        telemetry.addData("gameStateAuton?", gameState.isAutonomous());
-        telemetry.addData("gameStateIndex", gameStateIndex);
         telemetry.addData("active", active);
         telemetry.addData("Alliance", alliance);
-        telemetry.addData("Side", startingPosition);
+        telemetry.addData("startingPosition", startingPosition);
         telemetry.addData("initPositionIndex", Robot.initPositionIndex);
 
         update();
@@ -199,6 +200,7 @@ public class CenterStage_6832 extends OpMode {
         startTime = System.currentTimeMillis();
         lastLoopClockTime = System.nanoTime();
 
+        field.finalizeField();
         resetGame();
 
         if(gameState.equals(GameState.AUTONOMOUS)){
@@ -285,8 +287,6 @@ public class CenterStage_6832 extends OpMode {
         forwardSmoother.setSmoothingFactor(FORWARD_SMOOTHING_FACTOR);
         rotateSmoother.setSmoothingFactor(ROTATE_SMOOTHING_FACTOR);
 
-        telemetry.addLine("State : " + gameState.getName());
-
         //TODO - implement field target & current position to telemetry
 
 
@@ -303,6 +303,9 @@ public class CenterStage_6832 extends OpMode {
         if(initializing) {
             opModeTelemetryMap.put("Starting Position", startingPosition);
         }
+        if(field.finalized)
+            opModeTelemetryMap.put("Current Robot Zone", field.getZone(robot.driveTrain.pose));
+
         opModeTelemetryMap.put("Battery Voltage", averageVoltage);
         opModeTelemetryMap.put("Average Loop Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageLoopTime * 1e-6), (int) (1 / (averageLoopTime * 1e-9))));
         opModeTelemetryMap.put("Last Loop Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageLoopTime * 1e-6), (int) (1 / (averageLoopTime * 1e-9))));

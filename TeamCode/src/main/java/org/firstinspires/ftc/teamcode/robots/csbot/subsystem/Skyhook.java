@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.DcMotorExResetable;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.DcMotorExSquared;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.DcMotorImplExSquared;
@@ -68,6 +69,7 @@ public class Skyhook implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
+
         switch (articulation) {
             case PREP_FOR_HANG:
                 skyhookLeftTicks = PREP_FOR_HANG_TICKS;
@@ -152,6 +154,8 @@ public class Skyhook implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
 
+        telemetryMap.put("skyhook right amps", skyhookRight.getCurrent(CurrentUnit.AMPS));
+        telemetryMap.put("skyhook left amps", skyhookLeft.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("articulation", articulation);
         telemetryMap.put("skyhookLeftTicks", skyhookLeftTicks);
         telemetryMap.put("skyhookLeftActual", skyhookLeft.getCurrentPosition());

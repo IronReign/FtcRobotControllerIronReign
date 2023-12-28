@@ -13,6 +13,7 @@ import java.lang.Math;
 import java.util.*;
 
 public class Field {
+    public boolean finalized = false;
     List<Zone> zones;
     List<SubZone> subZones;
 
@@ -58,12 +59,6 @@ public class Field {
             this.y2 = y2;
         }
 
-        public Zone flipOnX() {
-            y1 = -y1;
-            y2 = -y2;
-            return this;
-        }
-
         public static ArrayList<Zone> getNamedZones() {
             ArrayList<Zone> temp = new ArrayList<Zone>();
             temp.addAll(Arrays.asList(RIGGING, BACKSTAGE, AUDIENCE));
@@ -93,6 +88,7 @@ public class Field {
         isRed = alliance.getMod();
     }
     public void finalizeField() {
+        finalized = true;
         zones = Zone.getNamedZones();
         subZones = SubZone.getNamedSubZones(isRed);
         HANG = isRed? POI.HANG : POI.HANG.flipOnX();

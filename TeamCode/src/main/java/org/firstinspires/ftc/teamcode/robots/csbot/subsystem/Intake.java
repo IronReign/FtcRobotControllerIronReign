@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -18,11 +19,11 @@ import java.util.Map;
 
 @Config(value = "AA_CS_INTAKE")
 public class Intake implements Subsystem {
-    public static final int RIGHT_DIVERTER_OPEN = 1000;
-    public static final int LEFT_DIVERTER_OPEN = 1490;
-    public static final int LEFT_DIVERTER_CLOSED = 1320;
-    public static final int RIGHT_DIVERTER_CLOSED = 1300;
-    public static  int ANGLE_MAX = 2250;
+    public static int RIGHT_DIVERTER_OPEN = 1010;
+    public static int LEFT_DIVERTER_OPEN = 1850;
+    public static int LEFT_DIVERTER_CLOSED = 1490;
+    public static int RIGHT_DIVERTER_CLOSED = 1350;
+    public static int ANGLE_MAX = 2250;
     public static int ANGLE_MIN = 1400;
     public static int ANGLE_START = 2250;
     public static int ANGLE_INGEST_GROUND = ANGLE_MIN;
@@ -194,7 +195,7 @@ public class Intake implements Subsystem {
                 //also reinforce that the beater should be still
                 beaterTargetVelocity = 0;
                 //also assert that manual beater override has been turned off
-                manualBeaterEnable=false;
+                manualBeaterEnable = false;
                 break;
             case MANUAL: //todo still need to refactor manual?
                 if(manualBeaterEnable) {
@@ -261,10 +262,18 @@ public class Intake implements Subsystem {
         this.diverterState = diverterState;
     }
     public void setDiverters(PixelSensor ps, int height){
-        //default to both
         diverterState = DiverterState.DELIVER_BOTH;
-        if (ps.isLeft()) diverterState = DiverterState.DELIVER_RIGHT;
-        if (ps.isRight() || (height>0 && ps.isNone())) diverterState = DiverterState.DELIVER_LEFT;
+
+        if(height == 0) {
+            if (ps.isLeft()) diverterState = DiverterState.DELIVER_RIGHT;
+            else if (ps.isRight()) diverterState = DiverterState.DELIVER_LEFT;
+        }
+        else {
+            if (ps.isNone())
+                diverterState = DiverterState.DELIVER_LEFT;
+        }
+        //default to both
+
     }
     public DiverterState getDiverters(){
         return diverterState;
@@ -275,13 +284,13 @@ public class Intake implements Subsystem {
                 diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_OPEN));
                 diverterLeft.setPosition(Utils.servoNormalize(LEFT_DIVERTER_OPEN));
                 break;
-            case DELIVER_LEFT:
+            case DELIVER_RIGHT:
                 diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_OPEN));
                 diverterLeft.setPosition(Utils.servoNormalize(LEFT_DIVERTER_CLOSED));
                 break;
-            case DELIVER_RIGHT:
+            case DELIVER_LEFT:
                 diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_CLOSED));
-                diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_OPEN));
+                diverterLeft.setPosition(Utils.servoNormalize(LEFT_DIVERTER_OPEN));
                 break;
         }
         return true;
@@ -302,6 +311,8 @@ public class Intake implements Subsystem {
         switch (swallowStage){
             case 0://todo swallow timing values have not been validated
                 //todo, add some safety checking, like is the scoopagon docked?
+                pixelSensorClear();
+                diverterState = DiverterState.DELIVER_BOTH;
                 setAngle(ANGLE_SWALLOW);
                 //todo are these needed? clunky way to allow override
                 manualBeaterEnable = false;
@@ -384,12 +395,16 @@ public class Intake implements Subsystem {
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
+        telemetryMap.put("pixelsensor state", pixelSensor.name());
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("manual beater bar on?", manualBeaterEnable);
         telemetryMap.put("beater bar amps", beater.getPower());
         telemetryMap.put("beater bar velocity", beater.getVelocity());
+        telemetryMap.put("beater bar target velocity", beaterTargetVelocity);
         telemetryMap.put("angle controller position", Utils.servoDenormalize(angle.getPosition()));
         telemetryMap.put("diverter state", diverterState.name());
+        telemetryMap.put("right diverter ticks", Utils.servoDenormalize(diverterRight.getPosition()));
+        telemetryMap.put("left diverter ticks", Utils.servoDenormalize(diverterLeft.getPosition()));
         telemetryMap.put("intake target angle", angleTarget);
         return telemetryMap;
     }
