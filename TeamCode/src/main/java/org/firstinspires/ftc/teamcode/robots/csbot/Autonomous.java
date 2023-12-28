@@ -10,10 +10,8 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
-import com.acmerobotics.roadrunner.VelConstraint;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
@@ -259,8 +257,8 @@ public class Autonomous implements TelemetryProvider {
         redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
 
         purpleEndPosition = P2D(startingPosition.getPose().position.x / FIELD_INCHES_PER_GRID, allianceDirection * .35, STANDARD_HEADING);
-        backdropApproachPosition = P2D(1.75, allianceDirection * .35, STANDARD_HEADING);
-        aprilTagApproachPosition = P2D(1.9, allianceDirection * 1 + (targetAprilTagIndex - 3) * aprilTagOffset, STANDARD_HEADING);
+        backdropApproachPosition = P2D(1.65, allianceDirection * .35, STANDARD_HEADING);
+        aprilTagApproachPosition = P2D(1.65, allianceDirection * 2 + (targetAprilTagIndex - 3) * aprilTagOffset, STANDARD_HEADING);
 
         //
         redLeftStageOne = new SequentialAction(
@@ -372,7 +370,7 @@ public class Autonomous implements TelemetryProvider {
 
     public static int autonIndex;
     public static long futureTimer;
-    public static int EJECT_WAIT_TIME = 2;
+
 
 
     public boolean execute(FtcDashboard dashboard) {
@@ -381,69 +379,60 @@ public class Autonomous implements TelemetryProvider {
             switch (autonIndex) {
                 case 0:
                     autonIndex++;
-//                    robot.skyhook.articulate(Skyhook.Articulation.GAME);
                     break;
                 case 1:
                     autonState = AutonState.BACK_UP;
                     if (!stageOneToRun.run(packet)) {
-                        robot.intake.setAngleControllerTicks(Intake.BEATER_BAR_EJECT_ANGLE);
                         autonIndex++;
                     }
                     break;
                 case 2:
                     autonState = AutonState.STRAFE;
                     if (!stageTwoToRun.run(packet)) {
-                        robot.intake.ejectBeaterBar();
-                        futureTimer = futureTime(EJECT_WAIT_TIME);
+                        robot.intake.articulate(Intake.Articulation.EJECT);
                         autonIndex++;
                     }
                     break;
                 case 3:
                     autonState = AutonState.SCORE_GROUND;
-                    if (isPast(futureTimer)) {
-                        robot.intake.beaterBarOff();
-                        //todo - the following 2 lines should be combined into a robot.travel articulation
-                        robot.intake.articulate(Intake.Articulation.TRAVEL);
-                        robot.outtake.intakePosition(); //outtake should already be in this position
-                        //todo IMPORTANT - lower the outtake flipper to slightly below horizontal so it goes under the door
-                        findStandardPositionBuild(); //gotta build again since the current position is used
-                        robot.positionCache.update(new CSPosition(robot.driveTrain.pose), true);
+                    if(robot.intake.readyForTravel()) {
                         autonIndex++;
-
                     }
                     break;
-                case 4: //travel to interim position near backdrop and then to final position
+                case 4:
+                        robot.outtake.intakePosition(); //outtake should already be in this position
+                        findStandardPositionBuild(); //gotta build again since the current position is used
+                        robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
+                        autonIndex++;
+                    break;
+                case 5: //travel to interim position near backdrop and then to final position
                     autonState = AutonState.FIND_STANDARD_POSITION;
                     if (!findStandardPosition.run(packet))
                     {
                         approachBackdropBuild();
-//                        autonIndex++;
-                        autonIndex++;}
-
-                    break;
-                case 5:
-                    autonState = AutonState.TRAVEL_BACKDROP;
-                    if(!approachBackdrop.run(packet)) {
-//                    robot.skyhook.articulate(Skyhook.Articulation.PREP_FOR_HANG);
-//                    autonState = AutonState.TRAVEL_BACKDROP;
-//                    if(!travelBackdrop.run(packet)) autonIndex++;
-                        approachAprilTagBuild();
                         autonIndex++;
                     }
                     break;
                 case 6:
-                    autonState = AutonState.ALIGN_WITH_APRILTAG;
-//                    if(approachAprilTag.run(packet)) {
+                    autonState = AutonState.TRAVEL_BACKDROP;
+                    if(!approachBackdrop.run(packet)) {
+                        approachAprilTagBuild();
                         autonIndex++;
-//                    }
+                    }
                     break;
                 case 7:
+                    autonState = AutonState.ALIGN_WITH_APRILTAG;
+                    if(!approachAprilTag.run(packet)) {
+                        autonIndex++;
+                    }
+                    break;
+                case 8:
                     autonState = AutonState.DONE;
 
                     autonIndex++;
                     break;
-                case 8:
-                    robot.positionCache.update(new CSPosition(robot.driveTrain.pose), true);
+                case 9:
+                    robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
                     return true;
 
             }
