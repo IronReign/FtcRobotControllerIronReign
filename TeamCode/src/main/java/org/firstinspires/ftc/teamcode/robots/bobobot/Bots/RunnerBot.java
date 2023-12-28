@@ -17,16 +17,13 @@ import java.util.Map;
 public class RunnerBot {
     public Subsystem[] subsystems;
     public DriveTrain driveTrain;
-
     public HardwareMap hardwareMap;
     Telemetry telemetry;
-    private VoltageSensor batteryVoltageSensor;
     public RunnerBot(MultipleTelemetry telemetry, HardwareMap hardwareMap){
         this.telemetry = telemetry;
         this.hardwareMap = hardwareMap;
         driveTrain = new DriveTrain(hardwareMap, this);
         subsystems = new Subsystem[]{driveTrain};
-        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
     }
 
 

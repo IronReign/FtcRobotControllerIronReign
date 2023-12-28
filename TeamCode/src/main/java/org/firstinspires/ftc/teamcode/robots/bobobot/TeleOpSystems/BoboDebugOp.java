@@ -4,19 +4,13 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
-import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.Robot;
 import org.firstinspires.ftc.teamcode.robots.bobobot.IMU;
 
 @TeleOp(name="BoboDebugOpMode", group="Challenge")
 public class BoboDebugOp extends OpMode {
-
     Robot bobot;
     IMU imu;
-    Orientation angles;
-    Acceleration gravity;
     MultipleTelemetry dashTelemetry;
     FtcDashboard dashboard;
     @Override

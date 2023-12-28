@@ -10,10 +10,8 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.RunnerBot;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Subsystem;
@@ -35,8 +33,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public void drive(double x, double y, double theta) {
         setDrivePowers(new PoseVelocity2d(
                 new Vector2d(
-                        -y*robotSpeed,
-                        -x*robotSpeed
+                        -y,
+                        -x
                 ),
                 -theta
         ));
@@ -100,24 +98,24 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
     int mode = 0;
     double robotSpeed = 0.75;
-    private boolean speedPress = false;
+    private boolean speedModeIsOn = false;
     public void modeToggle(){
         switch(mode){
             case 0:
                 robotSpeed = 1;
                 mode++;
-                speedPress = true;
+                speedModeIsOn = true;
                 break;
             case 1:
                 robotSpeed = 0.75;
                 mode = 0;
-                speedPress = false;
+                speedModeIsOn = false;
                 break;
 
         }
     }
     public boolean isSlowed(){
-        return speedPress;
+        return speedModeIsOn;
     }
 
     long testTime =0;
@@ -165,6 +163,10 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
                     }
                     break;
         }
+    }
+
+    public double getRobotSpeed(){
+        return robotSpeed;
     }
     public double getMotorAvgPosition(){return (double)(Math.abs(leftFront.getCurrentPosition())+Math.abs(rightFront.getCurrentPosition())+Math.abs(leftBack.getCurrentPosition())+Math.abs(rightBack.getCurrentPosition()))/4.0;}
 }

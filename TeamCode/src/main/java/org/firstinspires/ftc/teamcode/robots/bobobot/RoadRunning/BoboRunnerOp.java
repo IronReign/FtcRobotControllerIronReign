@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot.RoadRunning;
 
 import android.drm.DrmStore;
-
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -10,7 +9,6 @@ import com.acmerobotics.roadrunner.SequentialAction;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.RunnerBot;
 import org.firstinspires.ftc.teamcode.robots.bobobot.IMU;
@@ -26,10 +24,6 @@ public class BoboRunnerOp extends OpMode {
     Toggle toggle;
     MultipleTelemetry dashTelemetry;
     FtcDashboard dashboard;
-
-    private Action
-            frontRed, backRed,
-            frontBlue, backBlue;
     @Override
     public void init(){
         dashboard = FtcDashboard.getInstance();
@@ -46,13 +40,14 @@ public class BoboRunnerOp extends OpMode {
     @Override
     public void loop(){
         toggle.gamepadUpdate();
-        toggle.toggleSpeedMode();
-        runnerBot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x);
+        toggle.toggleSpeedMode(); //Sticky Gamepad Controls and Update
+        runnerBot.driveTrain.drive(gamepad1.left_stick_x*spd(), gamepad1.left_stick_y*spd(), gamepad1.right_stick_x*spd());
         imu.telemetryOutput();
         update();
         dashTelemetry.update();
 
     }
+
     private void update(){
         TelemetryPacket packet = new TelemetryPacket();
 
@@ -75,4 +70,9 @@ public class BoboRunnerOp extends OpMode {
         telemetry.addLine();
         packet.addLine("");
     }
+
+    public double spd(){
+        return runnerBot.driveTrain.getRobotSpeed();
+    }
+    //Method for getting the robot's speed constant (check robotSpeed in DriveTrain class)
 }
