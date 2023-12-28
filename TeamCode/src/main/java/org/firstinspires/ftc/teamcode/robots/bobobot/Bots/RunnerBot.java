@@ -1,23 +1,30 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot.Bots;
 
-import com.qualcomm.hardware.lynx.LynxModule;
+import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
+
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.bobobot.RoadRunning.DriveTrain;
-import org.firstinspires.ftc.teamcode.robots.r2v2.vision.Target;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Subsystem;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class RunnerBot {
+    public Subsystem[] subsystems;
     public DriveTrain driveTrain;
-
     public HardwareMap hardwareMap;
-    private VoltageSensor batteryVoltageSensor;
-    public RunnerBot(HardwareMap hardwareMap){
+    Telemetry telemetry;
+    public RunnerBot(MultipleTelemetry telemetry, HardwareMap hardwareMap){
+        this.telemetry = telemetry;
         this.hardwareMap = hardwareMap;
-        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
+        driveTrain = new DriveTrain(hardwareMap, this);
+        subsystems = new Subsystem[]{driveTrain};
     }
+
 
 }
