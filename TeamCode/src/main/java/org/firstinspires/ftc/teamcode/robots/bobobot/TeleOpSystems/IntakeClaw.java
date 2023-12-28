@@ -12,7 +12,6 @@ public class IntakeClaw {
     private DcMotorEx clawArm = null;
     private Servo clawSpan = null;
     private Servo clawWrist = null;
-    public Joint wrist;
     public static double OPENCLAW = 0.35;
     public static double CLOSECLAW = 0.55;
     public static double PER_DEGREE = 5.8;

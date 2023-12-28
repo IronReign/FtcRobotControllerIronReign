@@ -35,8 +35,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public void drive(double x, double y, double theta) {
         setDrivePowers(new PoseVelocity2d(
                 new Vector2d(
-                        -y,
-                        -x
+                        -y*robotSpeed,
+                        -x*robotSpeed
                 ),
                 -theta
         ));
@@ -87,7 +87,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("Left Odometry Pod \t", leftFront.getCurrentPosition());
         telemetryMap.put("Right Odometry Pod \t", rightFront.getCurrentPosition());
         telemetryMap.put("Cross Odometry Pod:\t", rightBack.getCurrentPosition());
-        telemetryMap.put("Speed Press? \t", isSlowed());
+        telemetryMap.put("Speed Mode On? \t", isSlowed());
         telemetryMap.put("Speed \t", robotSpeed);
         telemetryMap.put("Average Motor Position \t", getMotorAvgPosition());
         return telemetryMap;
