@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.robots.bobobot.RoadRunning;
+package org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems;
 
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
@@ -11,12 +11,10 @@ import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-
-import org.firstinspires.ftc.teamcode.robots.bobobot.Bots.RunnerBot;
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
+import org.firstinspires.ftc.teamcode.robots.bobobot.RunnerBot;
+import org.firstinspires.ftc.teamcode.robots.bobobot.RoadRunning.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -84,10 +82,11 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("Heading \t", Math.toDegrees(pose.heading.log()));
         telemetryMap.put("Left Odometry Pod \t", leftFront.getCurrentPosition());
         telemetryMap.put("Right Odometry Pod \t", rightFront.getCurrentPosition());
-        telemetryMap.put("Cross Odometry Pod:\t", rightBack.getCurrentPosition());
+        telemetryMap.put("Cross Odometry Pod \t", rightBack.getCurrentPosition());
         telemetryMap.put("Speed Mode On? \t", isSlowed());
         telemetryMap.put("Speed \t", robotSpeed);
         telemetryMap.put("Average Motor Position \t", getMotorAvgPosition());
+        telemetryMap.put("Debug? \t", getDebug());
         return telemetryMap;
     }
 
@@ -97,7 +96,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     }
 
     int mode = 0;
-    double robotSpeed = 0.75;
+    double robotSpeed = 0.45;
     private boolean speedModeIsOn = false;
     public void modeToggle(){
         switch(mode){
@@ -107,7 +106,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
                 speedModeIsOn = true;
                 break;
             case 1:
-                robotSpeed = 0.75;
+                robotSpeed = 0.45;
                 mode = 0;
                 speedModeIsOn = false;
                 break;
@@ -118,55 +117,34 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         return speedModeIsOn;
     }
 
-    long testTime =0;
-    int testStage = 0;
+
     public static double motorPower = 0;
-    public void runTest(){
-        switch (testStage){
-                case 0:
-                    testTime=futureTime(2);
-                    testStage++;
-
-                case 1:
-                    rightFront.setPower(motorPower);
-
-                    if (isPast(testTime)){
-                        rightFront.setPower(0);
-                        testTime=futureTime(2);
-                        testStage++;
-                    }
-                    break;
-                case 2:
-                    rightBack.setPower(motorPower);
-
-                    if (isPast(testTime)){
-                        rightBack.setPower(0);
-                        testTime=futureTime(2);
-                        testStage++;
-                    }
-                    break;
-                case 3:
-                    leftBack.setPower(motorPower);
-
-                    if (isPast(testTime)){
-                        leftBack.setPower(0);
-                        testStage++;
-                        testTime=futureTime(2);
-                    }
-                    break;
-                case 4:
-                    leftFront.setPower(motorPower);
-
-                    if (isPast(testTime)){
-                        leftFront.setPower(0);
-                        testStage=0;
-                    }
-                    break;
+    public void runTest(boolean debug, double motorPower) {
+        if (debug == true) {
+            motorDebugTest(this.motorPower);
         }
     }
 
     public double getRobotSpeed(){
         return robotSpeed;
     }
-    public double getMotorAvgPosition(){return (double)(Math.abs(leftFront.getCurrentPosition())+Math.abs(rightFront.getCurrentPosition())+Math.abs(leftBack.getCurrentPosition())+Math.abs(rightBack.getCurrentPosition()))/4.0;}
+    public double getMotorAvgPosition(){return (double)(Math.abs(leftFront.getCurrentPosition())+Math.abs(rightFront.getCurrentPosition())+Math.abs(rightBack.getCurrentPosition()))/3.0;}
+    public boolean debug = false;
+    int debugMode = 0;
+    public void debugSwitch(){
+        switch(debugMode){
+            case 0:
+                debug = !debug;
+                debugMode++;
+                break;
+            case 1:
+                debug = !debug;
+                debugMode = 0;
+                break;
+        }
+    }
+
+    public boolean getDebug(){
+        return debug;
+    }
 }
