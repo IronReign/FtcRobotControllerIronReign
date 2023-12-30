@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot.RoadRunning;
 
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -486,5 +489,50 @@ public class MecanumDrive {
                 defaultVelConstraint, defaultAccelConstraint,
                 0.25, 0.1
         );
+    }
+    long testTime = 0;
+    int testStage = 0;
+    public void motorDebugTest(double motorPower){
+        switch (testStage) {
+            case 0:
+                testTime = futureTime(2);
+                testStage++;
+
+            case 1:
+                rightFront.setPower(motorPower);
+
+                if (isPast(testTime)) {
+                    rightFront.setPower(0);
+                    testTime = futureTime(2);
+                    testStage++;
+                }
+                break;
+            case 2:
+                rightBack.setPower(motorPower);
+
+                if (isPast(testTime)) {
+                    rightBack.setPower(0);
+                    testTime = futureTime(2);
+                    testStage++;
+                }
+                break;
+            case 3:
+                leftBack.setPower(motorPower);
+
+                if (isPast(testTime)) {
+                    leftBack.setPower(0);
+                    testStage++;
+                    testTime = futureTime(2);
+                }
+                break;
+            case 4:
+                leftFront.setPower(motorPower);
+
+                if (isPast(testTime)) {
+                    leftFront.setPower(0);
+                    testStage = 0;
+                }
+                break;
+        }
     }
 }

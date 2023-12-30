@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.robots.bobobot.TeleOpSystems;
+package org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -8,7 +8,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 
 
-public class IntakeClaw {
+public class Intake {
     private DcMotorEx clawArm = null;
     private Servo clawSpan = null;
     private Servo clawWrist = null;
@@ -23,7 +23,7 @@ public class IntakeClaw {
     public static double WRIST_SCORE_1 = Utils.servoNormalize(1800);
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
-    public IntakeClaw(Telemetry telemetry, HardwareMap hardwareMap) {
+    public Intake(Telemetry telemetry, HardwareMap hardwareMap) {
         this.telemetry = telemetry;
         this.hardwareMap = hardwareMap;
     }
@@ -39,7 +39,6 @@ public class IntakeClaw {
         clawArm = this.hardwareMap.get(DcMotorEx.class, "clawArm");
         clawSpan = this.hardwareMap.get(Servo.class, "clawSpan");
         clawWrist = this.hardwareMap.get(Servo.class, "clawWrist");
-        //wrist = new Joint(hardwareMap, "Claw Wrist", false, WRIST_INIT_POSITION, PER_DEGREE, 1300*PER_TICK, 2300*PER_TICK, 2105*PER_TICK, 1 );
         clawArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         clawArm.setPower(1);
         clawArm.setTargetPosition(20);
