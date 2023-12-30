@@ -118,12 +118,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     }
 
 
-    public static double motorPower = 0;
-    public void runTest(boolean debug, double motorPower) {
-        if (debug == true) {
-            motorDebugTest(this.motorPower);
-        }
-    }
 
     public double getRobotSpeed(){
         return robotSpeed;

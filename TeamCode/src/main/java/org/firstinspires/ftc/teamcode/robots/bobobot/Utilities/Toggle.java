@@ -2,8 +2,7 @@ package org.firstinspires.ftc.teamcode.robots.bobobot.Utilities;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 import static org.firstinspires.ftc.teamcode.robots.bobobot.BoboRunnerOp.runnerBot;
-import static org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.DriveTrain.motorPower;
-
+import static org.firstinspires.ftc.teamcode.robots.bobobot.MotorDebug.motorPower;
 import org.firstinspires.ftc.teamcode.robots.bobobot.BoboRunnerOp;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 
@@ -27,17 +26,15 @@ public class Toggle {
         }
     }
 
-    public void motorDebugTest(){
-        if(stickyGamepad1.dpad_left){
-            runnerBot.driveTrain.runTest(runnerBot.driveTrain.getDebug(), motorPower);
+    public void motorDebugTest() {
+        if (stickyGamepad1.dpad_left) {
         }
     }
-
-    public void toggleDebugMode(){
-        if(stickyGamepad1.dpad_right){
+    public void toggleDebugMode () {
+        if (stickyGamepad1.dpad_right){
             runnerBot.driveTrain.debugSwitch();
+            }
         }
-    }
 
 
 }
