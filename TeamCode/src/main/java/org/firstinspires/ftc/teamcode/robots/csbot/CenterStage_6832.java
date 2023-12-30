@@ -303,8 +303,11 @@ public class CenterStage_6832 extends OpMode {
         if(initializing) {
             opModeTelemetryMap.put("Starting Position", startingPosition);
         }
-        if(field.finalized)
+        if(field.finalized) {
             opModeTelemetryMap.put("Current Robot Zone", field.getZone(robot.driveTrain.pose));
+            opModeTelemetryMap.put("Current Robot SubZones", field.getSubZones(robot.driveTrain.pose));
+            opModeTelemetryMap.put("Current Robot POI", field.getPOI(robot.driveTrain.pose));
+        }
 
         opModeTelemetryMap.put("Battery Voltage", averageVoltage);
         opModeTelemetryMap.put("Average Loop Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageLoopTime * 1e-6), (int) (1 / (averageLoopTime * 1e-9))));

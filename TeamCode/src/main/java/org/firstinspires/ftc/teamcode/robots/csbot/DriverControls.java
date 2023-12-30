@@ -147,9 +147,6 @@ public class DriverControls {
         if(stickyGamepad1.dpad_up)
             robot.intake.articulate(Intake.Articulation.SWALLOW);
 
-//        if(stickyGamepad1.dpad_left) {
-//            robot.skyhook.releaseTheJimmy();
-//        }
 
         if(stickyGamepad2.y) {
             fieldOrientedDrive = !fieldOrientedDrive;

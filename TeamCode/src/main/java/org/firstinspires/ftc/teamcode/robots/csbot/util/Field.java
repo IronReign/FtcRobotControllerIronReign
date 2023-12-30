@@ -28,7 +28,7 @@ public class Field {
     public static double WING_INTAKE_Y = -2;
     public static double WING_INTAKE_ANGLE = 90;
 
-    //all defaults are red sidea
+    //all defaults are red side
     Pose2d WING_INTAKE_LOCATION = P2D(-1.75, 2, 90);
     Pose2d BACKDROP_OUTTAKE_LOCATION = P2D(1.65, -1.5, 180);
 
@@ -60,19 +60,19 @@ public class Field {
         }
 
         public static ArrayList<Zone> getNamedZones() {
-            ArrayList<Zone> temp = new ArrayList<Zone>();
+            ArrayList<Zone> temp = new ArrayList<>();
             temp.addAll(Arrays.asList(RIGGING, BACKSTAGE, AUDIENCE));
             return temp;
         }
 
         public boolean withinZone(Pose2d pose) {
-            List<Double> xVals = Arrays.asList(pose.position.x, x1, x2);
-            List<Double> yVals = Arrays.asList(pose.position.y, y1, y2);
+            List<Double> xVals = Arrays.asList(pose.position.x/FIELD_INCHES_PER_GRID, x1, x2);
+            List<Double> yVals = Arrays.asList(pose.position.y/FIELD_INCHES_PER_GRID, y1, y2);
             if(
                 //if the pose is not an extrema of the list, it's within the bounds of the list
                     !(
-                            Collections.min(xVals) == pose.position.x || Collections.max(xVals) == (pose.position.x) ||
-                                    Collections.min(yVals) == (pose.position.y) || Collections.max(yVals) == (pose.position.y)
+                            Collections.min(xVals) == pose.position.x/FIELD_INCHES_PER_GRID || Collections.max(xVals) == (pose.position.x/FIELD_INCHES_PER_GRID) ||
+                                    Collections.min(yVals) == (pose.position.y/FIELD_INCHES_PER_GRID) || Collections.max(yVals) == (pose.position.y/FIELD_INCHES_PER_GRID)
                     )
             )
             {
@@ -109,6 +109,8 @@ public class Field {
         //ROBOT DOES NOTHING IF THE STARTZONE IS IN THE RIGGING
         if(startZone == Zone.RIGGING)
             return new SequentialAction();
+
+
         return null;
 
     }
@@ -132,6 +134,15 @@ public class Field {
                 temp.add(k);
         }
         return temp;
+    }
+
+    public POI getPOI(Pose2d robotPosition) {
+        List<POI> temp = Arrays.asList(HANG, HANG_PREP, SCORE, WING_INTAKE);
+        for(POI poi : temp) {
+            if(poi.atPOI(robotPosition))
+                return poi;
+        }
+        return null;
     }
 
 
@@ -168,8 +179,8 @@ class SubZone{
         if(
                 //if the pose is an extrema of either list, it's outside the bounds
                 !(
-                        Collections.min(xVals) == pose.position.x/FIELD_INCHES_PER_GRID || Collections.max(xVals).equals(pose.position.x/FIELD_INCHES_PER_GRID) ||
-                                Collections.min(yVals).equals(pose.position.y/FIELD_INCHES_PER_GRID) || Collections.max(yVals).equals(pose.position.y/FIELD_INCHES_PER_GRID)
+                        Collections.min(xVals) == pose.position.x/FIELD_INCHES_PER_GRID || Collections.max(xVals) == (pose.position.x/FIELD_INCHES_PER_GRID) ||
+                                Collections.min(yVals) == (pose.position.y/FIELD_INCHES_PER_GRID) || Collections.max(yVals) == (pose.position.y/FIELD_INCHES_PER_GRID)
                 )
         ) {
             return true;
