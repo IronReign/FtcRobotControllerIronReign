@@ -86,7 +86,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("Speed Mode On? \t", isSlowed());
         telemetryMap.put("Speed \t", robotSpeed);
         telemetryMap.put("Average Motor Position \t", getMotorAvgPosition());
-        telemetryMap.put("Debug? \t", getDebug());
         return telemetryMap;
     }
 

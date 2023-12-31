@@ -23,7 +23,7 @@ public class BoboRunnerOp extends OpMode {
         dashboard = FtcDashboard.getInstance();
         dashTelemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         runnerBot = new RunnerBot(dashTelemetry,hardwareMap);
-        toggle = new Toggle(gamepad1);
+        toggle = new Toggle(gamepad1, gamepad2);
         //imu = new IMU(dashTelemetry, hardwareMap);
         dashTelemetry.setMsTransmissionInterval(25);
     }
@@ -35,8 +35,6 @@ public class BoboRunnerOp extends OpMode {
     public void loop(){
         toggle.gamepadUpdate();
         toggle.toggleSpeedMode(); //Sticky Gamepad Controls and Update
-        toggle.toggleDebugMode();
-        toggle.motorDebugTest();
         runnerBot.driveTrain.drive(gamepad1.left_stick_x*spd(), gamepad1.left_stick_y*spd(), gamepad1.right_stick_x*spd());
         //imu.telemetryOutput();
         update();
