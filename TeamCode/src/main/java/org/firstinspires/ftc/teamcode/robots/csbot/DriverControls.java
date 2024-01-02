@@ -86,10 +86,6 @@ public class DriverControls {
             visionOn = !visionOn;
         }
 
-        if(stickyGamepad1.back) {
-            robot.articulate(Robot.Articulation.INGEST);
-        }
-
         fieldOrientedDrive();
 
     }
@@ -106,14 +102,15 @@ public class DriverControls {
             robot.intake.adjustAngle(-gamepad1.right_trigger*.85);
         }
         if (stickyGamepad1.a) {
-            robot.intake.articulate(Intake.Articulation.INGEST);
-        }
-        if (stickyGamepad1.b) {
-            robot.intake.toggleBeaterDirection();
-        }
-        if (stickyGamepad1.y){
             robot.articulate(Robot.Articulation.INGEST);
         }
+        if (stickyGamepad1.b) {
+            //robot.intake.toggleBeaterDirection();
+            robot.articulate(Robot.Articulation.BACKDROP_PREP);
+        }
+//        if (stickyGamepad1.y){ //todo move off of y since that's pixel flipper also
+//            robot.articulate(Robot.Articulation.INGEST);
+//        }
 
         if(fieldOrientedDrive) {
             fieldOrientedDrive();
@@ -152,7 +149,7 @@ public class DriverControls {
             fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (stickyGamepad1.dpad_down) {
-            robot.outtake.articulate(Outtake.Articulation.SCORE_PIXEL);
+            robot.outtake.articulate(Outtake.Articulation.BACKDROP_PREP);
         }
 
         if(stickyGamepad2.dpad_up) {

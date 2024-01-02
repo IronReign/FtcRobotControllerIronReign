@@ -4,7 +4,6 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_I
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -400,10 +399,12 @@ public class Autonomous implements TelemetryProvider {
                     }
                     break;
                 case 4:
-                        robot.outtake.intakePosition(); //outtake should already be in this position
-                        findStandardPositionBuild(); //gotta build again since the current position is used
-                        robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
-                        autonIndex++;
+                    if(robot.outtake.ingestFromTravel()) //todo should call an articulation instead
+                        {
+                            findStandardPositionBuild(); //gotta build again since the current position is used
+                            robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
+                            autonIndex++;
+                        }
                     break;
                 case 5: //travel to interim position near backdrop and then to final position
                     autonState = AutonState.FIND_STANDARD_POSITION;

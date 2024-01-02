@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
+import static org.firstinspires.ftc.teamcode.util.utilMethods.between;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -9,7 +12,6 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Joint;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,40 +29,76 @@ public class Outtake implements Subsystem {
     public static int flipperPosition = 1888;
 
 
-    int slidePosition = 0;
+    public void setSlideTargetPosition(int slideTargetPosition) {
+        this.slideTargetPosition = slideTargetPosition;
+    }
+
+    int slideTargetPosition = 0;
     public static int slidePositionMax = 1600;
     public static int slidePositionMin = 0;
+    public static int slidePositionPreDock = 500;
+    public static int slidePositionDocked = 0;
+
 
     int slideSpeed = 20;
     public static int UNTUCK_SLIDE_POSITION = 500;
-    public static int FLIPPERINTAKEPOSITION = 1888;
-    public static int FLIPPER_INIT_POSITION = 1439;
-
     public static boolean TEMP_FLIPPER_TUNE = false;
 
     //FLIPPER JOINT VARIABLES
     public static int FLIPPER_HOME_POSITION = 1888;
-    public static double FLIPPER_PWM_PER_DEGREE = 7.35;
+    public static double FLIPPER_PWM_PER_DEGREE = -7.35;
     //IN DEGREES PER SECOND
-    public static double FLIPPER_START_ANGLE = -45;
+    public static double FLIPPER_START_ANGLE = 45;
 
     public static double FLIPPER_JOINT_SPEED = 60;
 
-    public static double FLIPPER_MIN_ANGLE = -145;
-    public static double FLIPPER_MAX_ANGLE = 10;
-    public static double FLIPPER_SCORE_ANGLE = -62;
+    public static double FLIPPER_MIN_ANGLE = 0;
+    public static double FLIPPER_MAX_ANGLE = 145;
+    public static double FLIPPER_PRE_SCORE_ANGLE = 120;
+    public static double FLIPPER_TRAVEL_ANGLE = 30;
+    public static double FLIPPER_DOCK_ANGLE = 0;
+
     private boolean flipped = false;
 
     public Articulation articulate(Articulation articulation) {
         this.articulation = articulation;
         return articulation;
     }
+    public Articulation articulate() {
+        switch (articulation) {
+            case TRAVEL_FROM_INGEST:
+                if(travelFromIngest())
+                    articulation=Articulation.TRAVEL;
+                break;
+            case INGEST_FROM_TRAVEL:
+                if(ingestFromTravel()) {
+                    articulation = Articulation.MANUAL;
+                }
+                break;
+            case TRAVEL_FROM_BACKDROP:
+                if(travelFromBackdrop()) {
+                    articulation = Articulation.TRAVEL;
+                }
+                break;
+            case BACKDROP_PREP:
+                flipper.setTargetAngle(FLIPPER_PRE_SCORE_ANGLE);
+                articulation = Articulation.MANUAL;
+                break;
+
+            default:
+                break;
+        }
+        return articulation;
+    }
 
     public enum Articulation {
-        INTAKE_PIXEL,
-        MANUAL,
-        SCORE_PIXEL,
-        FOLD,
+        MANUAL, //does nothing - used for transition tracking
+        TRAVEL, //does nothing - used for transition tracking
+        TRAVEL_FROM_INGEST,
+        INGEST_FROM_TRAVEL,
+        TRAVEL_FROM_BACKDROP,
+        BACKDROP_PREP,
+        FOLD
     }
 
     public enum FlipperLocation {
@@ -94,39 +132,92 @@ public class Outtake implements Subsystem {
         articulation = Articulation.MANUAL;
     }
 
-    public static int intakePositionIndex = 0;
-    public long intakePositionTimer = 0;
-    public boolean intakePosition () {
-        switch (intakePositionIndex) {
-            case 0:
-                intakePositionTimer = futureTime(.5);
-                slide.setTargetPosition(slidePositionMin);
-                if(System.nanoTime() > intakePositionTimer)
-                    intakePositionIndex ++;
+    public static int ingestPositionIndex = 0;
+    public long ingestPositionTimer = 0;
+    public boolean ingestFromTravel() { //should only call this if Travel was previously set
+        switch (ingestPositionIndex) {
+            case 0: //position outtake to position scoopagon just clear of the intake belt
+                setSlideTargetPosition(slidePositionPreDock);
+                ingestPositionIndex ++;
                 break;
-            case 1:
-                pixelFlipper.setPosition(FLIPPERINTAKEPOSITION);
-                intakePositionIndex ++;
+            case 1: //lower the outtake to intake position
+                if(between( slide.getCurrentPosition(), slidePositionPreDock +10, slidePositionPreDock -10)) {
+                    setTargetAngle(FLIPPER_DOCK_ANGLE);
+                    ingestPositionTimer = futureTime(.75);
+                    ingestPositionIndex++;
+                }
                 break;
-            case 2:
-                return true;
+            case 2: //give enough time to pull down flipper, then slide to intake dock
+                if (isPast(ingestPositionTimer))
+                {
+                    setSlideTargetPosition(slidePositionDocked);
+                    ingestPositionIndex=0;
+                    return true;
+                }
+                break;
         }
         return false;
     }
 
-    public void moveSlide(int power) {
-        slidePosition += power * slideSpeed;
-        if (slidePosition < slidePositionMin) {
-            slidePosition = slidePositionMin;
+    long travelTimer = 0;
+    int travelStage = 0;
+    boolean travelFromIngest(){
+        switch (travelStage){
+            case 0: //begin undock
+                setTargetAngle(FLIPPER_DOCK_ANGLE);
+                setSlideTargetPosition(slidePositionPreDock);
+                travelTimer = futureTime(.5);
+                travelStage++;
+                break;
+            case 1: //complete undock
+                if (isPast(travelTimer)){
+                    setTargetAngle(FLIPPER_TRAVEL_ANGLE);
+                    travelTimer = futureTime(.5);
+                    travelStage++;
+                }
+                break;
+            case 2: //tuck slide - todo this will get more complicated when outtake elevation is changeable
+                if (isPast(travelTimer)){
+                    setSlideTargetPosition(slidePositionDocked);
+                    travelStage = 0;
+                    return true;
+                }
+                break;
         }
-        if (slidePosition > slidePositionMax) {
-            slidePosition = slidePositionMax;
+        return false;
+    }
+    int travelStageBack = 0;
+    boolean travelFromBackdrop(){
+        switch (travelStageBack) { //robot should have already placed the intake into travel position
+            case 0:
+                setTargetAngle(FLIPPER_TRAVEL_ANGLE);
+                setSlideTargetPosition(0);
+                travelTimer = futureTime(.5);
+                travelStageBack++;
+                break;
+            case 1:
+                if (isPast(travelTimer)) {
+                    travelStageBack = 0;
+                    return true;
+                }
+                break;
         }
-        slide.setTargetPosition(slidePosition);
+        return false;
     }
 
-    public void adjustFlipper(int power) {
-        flipper.setTargetAngle(flipper.getCurrentAngle() +  power);
+    public void moveSlide(int distance) {
+        slideTargetPosition += distance * slideSpeed;
+        if (slideTargetPosition < slidePositionMin) {
+            slideTargetPosition = slidePositionMin;
+        }
+        if (slideTargetPosition > slidePositionMax) {
+            slideTargetPosition = slidePositionMax;
+        }
+        slide.setTargetPosition(slideTargetPosition);
+    }
+
+    public void adjustFlipper(int angle) {
+        flipper.setTargetAngle(flipper.getCurrentAngle() +  angle);
     }
 
 
@@ -138,37 +229,17 @@ public void flipperTest(){
         flipper.setTargetAngle(flipper.getCurrentAngle() - 1);
 }
 
-
-
-    public void raiseFlipper(int power) {
-        flipperPosition += power;
-    }
-
-    public void lowerFlipper(int power) {
-        flipperPosition += power;
-    }
-
-    public int getSlidePosition() {
-        return slidePosition;
+    public int getSlideTargetPosition() {
+        return slideTargetPosition;
     }
     @Override
     public void update(Canvas fieldOverlay) {
-        if(articulation == Articulation.MANUAL) {
-            slide.setTargetPosition(slidePosition);
-//            pixelFlipper.setPosition(Utils.servoNormalize(flipperPosition
-//                    )
-//            );
-            }
-        if(articulation == Articulation.INTAKE_PIXEL) {
-            if(intakePosition()) {
-                articulation = Articulation.MANUAL;
-            }
-        }
-        if(articulation == Articulation.SCORE_PIXEL) {
-            flipper.setTargetAngle(FLIPPER_SCORE_ANGLE);
-            articulation = Articulation.MANUAL;
-        }
+        //compute the current articulation/behavior
+        articulate();
+
+        //actually instruct actuators to go to desired targets
         flipper.update();
+        slide.setTargetPosition(slideTargetPosition);
     }
 
     @Override
@@ -180,7 +251,7 @@ public void flipperTest(){
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("articulation", articulation.name());
-        telemetryMap.put("slide position", slidePosition);
+        telemetryMap.put("slide target position", slideTargetPosition);
         telemetryMap.put("slide actual position", slide.getCurrentPosition());
 //        telemetryMap.put("flipper location", Utils.servoDenormalize(pixelFlipper.getPosition()));
         telemetryMap.put("flipper ticks", flipperPosition);
