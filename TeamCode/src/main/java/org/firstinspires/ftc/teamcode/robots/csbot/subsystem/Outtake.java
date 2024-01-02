@@ -56,9 +56,12 @@ public class Outtake implements Subsystem {
     public static double FLIPPER_MAX_ANGLE = 145;
     public static double FLIPPER_PRE_SCORE_ANGLE = 120;
     public static double FLIPPER_TRAVEL_ANGLE = 30;
+    public static int FLIPPER_ADJUST_ANGLE = 10;
     public static double FLIPPER_DOCK_ANGLE = 0;
 
     private boolean flipped = false;
+
+    private Articulation prevArticulation;
 
     public Articulation articulate(Articulation articulation) {
         this.articulation = articulation;
@@ -66,6 +69,12 @@ public class Outtake implements Subsystem {
     }
     public Articulation articulate() {
         switch (articulation) {
+            case MANUAL:
+                break;
+            case BACKDROP:
+                break;
+            case TRAVEL:
+                break;
             case TRAVEL_FROM_INGEST:
                 if(travelFromIngest())
                     articulation=Articulation.TRAVEL;
@@ -82,12 +91,13 @@ public class Outtake implements Subsystem {
                 break;
             case BACKDROP_PREP:
                 flipper.setTargetAngle(FLIPPER_PRE_SCORE_ANGLE);
-                articulation = Articulation.MANUAL;
+                articulation = Articulation.BACKDROP;
                 break;
 
             default:
                 break;
         }
+        prevArticulation = articulation;
         return articulation;
     }
 
@@ -98,6 +108,7 @@ public class Outtake implements Subsystem {
         INGEST_FROM_TRAVEL,
         TRAVEL_FROM_BACKDROP,
         BACKDROP_PREP,
+        BACKDROP,
         FOLD
     }
 
@@ -179,6 +190,7 @@ public class Outtake implements Subsystem {
             case 2: //tuck slide - todo this will get more complicated when outtake elevation is changeable
                 if (isPast(travelTimer)){
                     setSlideTargetPosition(slidePositionDocked);
+                    robot.articulate(Robot.Articulation.TRAVEL);
                     travelStage = 0;
                     return true;
                 }

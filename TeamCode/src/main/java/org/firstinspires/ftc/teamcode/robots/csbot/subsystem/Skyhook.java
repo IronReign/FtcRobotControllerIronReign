@@ -38,7 +38,9 @@ public class Skyhook implements Subsystem {
     public DcMotorExResetable skyhookLeft, skyhookRight;
 
     Servo jimmy;
-    public static int SKYHOOK_INIT_TICKS = 700;
+    public static int SKYHOOK_INIT_TICKS = 500;
+
+    public static double SKYHOOK_POWER = 1;
 
     public enum Articulation {
         HANG,
@@ -101,8 +103,16 @@ public class Skyhook implements Subsystem {
                 break;
         }
         jimmy.setPosition(Utils.servoNormalize(jimmyTicks));
-        skyhookRight.setTargetPosition(skyhookRightTicks);
-        skyhookLeft.setTargetPosition(skyhookLeftTicks);
+        if(skyhookRight.getCurrent(CurrentUnit.AMPS) > 3.5 || skyhookLeft.getCurrent(CurrentUnit.AMPS) > 3.5){
+            SKYHOOK_POWER = 0;
+            articulation = Articulation.MANUAL;
+        }else {
+            skyhookRight.setTargetPosition(skyhookRightTicks);
+            skyhookLeft.setTargetPosition(skyhookLeftTicks);
+        }
+
+        skyhookLeft.setPower(SKYHOOK_POWER);
+        skyhookRight.setPower(SKYHOOK_POWER);
 
     }
 
@@ -178,8 +188,10 @@ public class Skyhook implements Subsystem {
 
     public void initMotors() {
         kareem = this.hardwareMap.get(DcMotorEx.class,"kareem");
+        kareem.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         skyhookLeft = new DcMotorExResetable(kareem);
         jabbar = this.hardwareMap.get(DcMotorEx.class, "jabbar");
+        jabbar.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         skyhookRight = new DcMotorExResetable(jabbar);
         skyhookLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         skyhookLeftTicks = skyhookLeft.getCurrentPosition();
@@ -190,7 +202,7 @@ public class Skyhook implements Subsystem {
         skyhookRightTicks = skyhookRight.getCurrentPosition();
         skyhookRight.setTargetPosition(skyhookRightTicks);
         skyhookRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
+        SKYHOOK_POWER = 1;
         skyhookLeft.setPower(1);
         skyhookRight.setPower(1);
     }

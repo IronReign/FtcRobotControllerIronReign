@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
@@ -67,13 +68,16 @@ public class Robot implements Subsystem {
         AUTON,
         CALIBRATE,
         BACKDROP_PREP,
+        BACKDROP,
         FOLD,
         INGEST,
         UNFOLD,
         HANG,
+        PREP_FOR_HANG,
         LAUNCH_DRONE,
         TRAVEL_FROM_BACKDROP,
-        TRAVEL_FROM_INGEST
+        TRAVEL_FROM_INGEST,
+        TRAVEL
 
     }
 
@@ -253,6 +257,10 @@ public class Robot implements Subsystem {
         switch (this.articulation) {
             case MANUAL:
                 break;
+            case TRAVEL:
+                break;
+            case BACKDROP:
+                break;
             case CALIBRATE:
                 //TODO - WRITE A CALIBRATION ROUTINE
                 break;
@@ -265,24 +273,40 @@ public class Robot implements Subsystem {
                 intake.articulate(Intake.Articulation.HANG);
                 skyhook.articulate(Skyhook.Articulation.HANG);
                 break;
+            case PREP_FOR_HANG:
+                skyhook.articulate(Skyhook.Articulation.PREP_FOR_HANG);
+                outtake.articulate(Outtake.Articulation.INGEST_FROM_TRAVEL);
+                articulation = Articulation.TRAVEL;
+                break;
             case LAUNCH_DRONE:
                 skyhook.articulate(Skyhook.Articulation.LAUNCH);
                 break;
             case TRAVEL_FROM_INGEST:
                 intake.articulate(Intake.Articulation.TRAVEL);
-                if (!(outtake.articulation==Outtake.Articulation.TRAVEL))
+                if (!(outtake.articulation==Outtake.Articulation.TRAVEL)) {
                     outtake.articulate(Outtake.Articulation.TRAVEL_FROM_INGEST);
+                }
                 break;
             case TRAVEL_FROM_BACKDROP:
                 //assume intake is already in travel
                 outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
+                articulation = Articulation.TRAVEL;
                 break;
             case BACKDROP_PREP:
                 outtake.articulate(Outtake.Articulation.BACKDROP_PREP);
-                articulation = Articulation.MANUAL;
+                articulation = Articulation.BACKDROP;
                 break;
         }
         return articulation;
+    }
+
+    public void toggleBackdropPrep(){
+        if(articulation.equals(Articulation.BACKDROP)){
+            articulation = Articulation.TRAVEL_FROM_BACKDROP;
+        }
+        else{
+            articulation = Articulation.BACKDROP_PREP;
+        }
     }
 
     @Override

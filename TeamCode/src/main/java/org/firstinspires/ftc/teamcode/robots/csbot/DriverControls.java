@@ -106,7 +106,7 @@ public class DriverControls {
         }
         if (stickyGamepad1.b) {
             //robot.intake.toggleBeaterDirection();
-            robot.articulate(Robot.Articulation.BACKDROP_PREP);
+            robot.toggleBackdropPrep();
         }
 //        if (stickyGamepad1.y){ //todo move off of y since that's pixel flipper also
 //            robot.articulate(Robot.Articulation.INGEST);
@@ -137,9 +137,9 @@ public class DriverControls {
         }
 
         if (gamepad1.y)
-            robot.outtake.adjustFlipper(-15);
+            robot.outtake.adjustFlipper(robot.outtake.FLIPPER_ADJUST_ANGLE);
         if (gamepad1.x)
-            robot.outtake.adjustFlipper(15);
+            robot.outtake.adjustFlipper(-robot.outtake.FLIPPER_ADJUST_ANGLE);
 
         if(stickyGamepad1.dpad_up)
             robot.intake.articulate(Intake.Articulation.SWALLOW);
@@ -153,7 +153,7 @@ public class DriverControls {
         }
 
         if(stickyGamepad2.dpad_up) {
-            robot.skyhook.articulate(Skyhook.Articulation.PREP_FOR_HANG);
+            robot.articulate(Robot.Articulation.PREP_FOR_HANG);
         }
         if(stickyGamepad2.a) {
             robot.skyhook.articulate(Skyhook.Articulation.INIT);

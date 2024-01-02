@@ -402,7 +402,6 @@ public class Autonomous implements TelemetryProvider {
                     if(robot.outtake.ingestFromTravel()) //todo should call an articulation instead
                         {
                             findStandardPositionBuild(); //gotta build again since the current position is used
-                            robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
                             autonIndex++;
                         }
                     break;
@@ -429,7 +428,6 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 8:
                     autonState = AutonState.DONE;
-
                     autonIndex++;
                     break;
                 case 9:
