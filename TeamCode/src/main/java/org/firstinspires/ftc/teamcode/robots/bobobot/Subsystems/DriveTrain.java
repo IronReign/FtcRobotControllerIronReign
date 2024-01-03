@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems;
 
-import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
@@ -86,7 +84,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("Speed Mode On? \t", isSlowed());
         telemetryMap.put("Speed \t", robotSpeed);
         telemetryMap.put("Average Motor Position \t", getMotorAvgPosition());
-        telemetryMap.put("Debug? \t", getDebug());
         return telemetryMap;
     }
 
