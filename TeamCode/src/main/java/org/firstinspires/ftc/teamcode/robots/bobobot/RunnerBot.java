@@ -8,7 +8,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.DriveTrain;
+import org.firstinspires.ftc.teamcode.robots.bobobot.Utilities.BobotPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.bobobot.Utilities.PositionCache;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -17,10 +19,17 @@ public class RunnerBot implements Subsystem{
     public Subsystem[] subsystems;
     public DriveTrain driveTrain;
     public HardwareMap hardwareMap;
+    public BobotPosition currentPosition;
+    public BobotPosition fetchedPosition;
+    public boolean fetched;
+    public static boolean updatePositionCache = false;
+    public PositionCache positionCache;
+
     Telemetry telemetry;
     public RunnerBot(MultipleTelemetry telemetry, HardwareMap hardwareMap){
         this.telemetry = telemetry;
         this.hardwareMap = hardwareMap;
+        //positionCache = new PositionCache(5);
         driveTrain = new DriveTrain(hardwareMap, this);
         subsystems = new Subsystem[]{driveTrain};
     }
@@ -47,8 +56,14 @@ public class RunnerBot implements Subsystem{
 
     @Override
     public void update(Canvas fieldOverlay){
+
+//        if (updatePositionCache){
+//            currentPosition = new BobotPosition(driveTrain.pose);
+//            positionCache.update(currentPosition, false);
+//        }
         driveTrain.updatePoseEstimate();
         drawRobot(fieldOverlay, driveTrain.pose);
+
         for (int i = 0; i < subsystems.length; i++){
             Subsystem subsystem = subsystems[i];
             subsystem.update(fieldOverlay);
@@ -60,5 +75,10 @@ public class RunnerBot implements Subsystem{
         for(Subsystem component : subsystems) {
             component.stop();
         }
+    }
+
+    public void fetchCachedCSPosition() {
+        fetchedPosition = positionCache.readPose();
+        fetched = fetchedPosition != null;
     }
 }
