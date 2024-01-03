@@ -38,11 +38,11 @@ public class Autonomous extends OpMode {
 
     }
 
-
     public void build(){
-        frontRed = new SequentialAction(
-                runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
-                        .turn(Math.toRadians(-90))
+                frontRed = new SequentialAction(
+                        runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
+                                .turn(Math.toRadians(-90))
+                                .lineToY(5)
                         .build()
         );
     }

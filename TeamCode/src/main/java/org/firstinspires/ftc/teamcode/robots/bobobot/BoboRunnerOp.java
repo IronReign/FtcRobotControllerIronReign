@@ -47,6 +47,7 @@ public class BoboRunnerOp extends OpMode {
 
         for(TelemetryProvider telemetryProvider: runnerBot.subsystems)
             handleTelemetry(telemetryProvider.getTelemetry(false), telemetryProvider.getTelemetryName(), packet);
+        runnerBot.update(packet.fieldOverlay());
         dashboard.sendTelemetryPacket(packet);
         telemetry.update();
     }
