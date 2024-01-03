@@ -2,9 +2,9 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
@@ -67,12 +67,16 @@ public class Robot implements Subsystem {
         MANUAL,
         AUTON,
         CALIBRATE,
-        SCORE_PIXEL,
+        BACKDROP_PREP,
+        BACKDROP,
         FOLD,
         INGEST,
         UNFOLD,
         HANG,
+        PREP_FOR_HANG,
         LAUNCH_DRONE,
+        TRAVEL_FROM_BACKDROP,
+        TRAVEL_FROM_INGEST,
         TRAVEL
 
     }
@@ -220,7 +224,7 @@ public class Robot implements Subsystem {
 //                }
                 break;
             case 2:
-                outtake.slidePosition = Outtake.UNTUCK_SLIDE_POSITION;
+                outtake.slideTargetPosition = Outtake.UNTUCK_SLIDE_POSITION;
 //                if (isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
 //                    initPositionIndex ++;
@@ -234,7 +238,7 @@ public class Robot implements Subsystem {
 //                }
                 break;
             case 4:
-                outtake.slidePosition = 0;
+                outtake.slideTargetPosition = 0;
                 break;
             case 5:
                 //todo load cached skyhook positions
@@ -253,26 +257,56 @@ public class Robot implements Subsystem {
         switch (this.articulation) {
             case MANUAL:
                 break;
+            case TRAVEL:
+                break;
+            case BACKDROP:
+                break;
             case CALIBRATE:
                 //TODO - WRITE A CALIBRATION ROUTINE
                 break;
             case INGEST:
-                if (wingIntake()) {
-                    articulation = Articulation.MANUAL;
+                if (Ingest()) {
+                    articulation = Articulation.TRAVEL_FROM_INGEST;
                 }
                 break;
             case HANG:
                 intake.articulate(Intake.Articulation.HANG);
                 skyhook.articulate(Skyhook.Articulation.HANG);
                 break;
+            case PREP_FOR_HANG:
+                skyhook.articulate(Skyhook.Articulation.PREP_FOR_HANG);
+                outtake.articulate(Outtake.Articulation.INGEST_FROM_TRAVEL);
+                articulation = Articulation.TRAVEL;
+                break;
             case LAUNCH_DRONE:
                 skyhook.articulate(Skyhook.Articulation.LAUNCH);
                 break;
-            case TRAVEL:
+            case TRAVEL_FROM_INGEST:
                 intake.articulate(Intake.Articulation.TRAVEL);
-                outtake.articulate(Outtake.Articulation.FOLD);
+                if (!(outtake.articulation==Outtake.Articulation.TRAVEL)) {
+                    outtake.articulate(Outtake.Articulation.TRAVEL_FROM_INGEST);
+                }
+                break;
+            case TRAVEL_FROM_BACKDROP:
+                //assume intake is already in travel
+                outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
+                articulation = Articulation.TRAVEL;
+                break;
+            case BACKDROP_PREP:
+                outtake.articulate(Outtake.Articulation.BACKDROP_PREP);
+                articulation = Articulation.BACKDROP;
+                break;
         }
         return articulation;
+    }
+
+    public void toggleBackdropPrep(){
+        if(articulation.equals(Articulation.BACKDROP)){
+            articulation = Articulation.TRAVEL_FROM_BACKDROP;
+        }
+        else{
+            articulation = Articulation.BACKDROP_PREP;
+        }
     }
 
     @Override
@@ -286,23 +320,26 @@ public class Robot implements Subsystem {
     //end stop
 
 
-    public static int wingIntakeIndex = 0;
-    public long wingIntakeTimer = 0;
+    public static int ingestStage = 0;
+    public long ingestTimer = 0;
 
-    public boolean wingIntake() {
-        switch (wingIntakeIndex) {
+    public boolean Ingest() {
+        switch (ingestStage) {
             case 0:
-                outtake.articulate(Outtake.Articulation.INTAKE_PIXEL);
+                outtake.articulate(Outtake.Articulation.INGEST_FROM_TRAVEL);
+                ingestStage++;
+            case 1: //wait for outake to dock before proceeding
                 if (outtake.articulation == Outtake.Articulation.MANUAL) {
-                    wingIntakeIndex++;
+                    //intake can start eating
+                    intake.articulate(Intake.Articulation.INGEST);
+                    ingestStage++;
                 }
                 break;
-            case 1:
-                intake.articulate(Intake.Articulation.INGEST);
-                if (intake.articulation == Intake.Articulation.TRAVEL)
-                    wingIntakeIndex++;
+            case 2:  //wait until Intake ingest and swallow are done
+                if (!intake.isEating()) ingestStage++;
                 break;
-            case 2:
+            case 3:
+                ingestStage=0;
                 return true;
 
         }
@@ -314,7 +351,7 @@ public class Robot implements Subsystem {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("Articulation", articulation);
         telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
-        telemetryMap.put("wingIntakeIndex", wingIntakeIndex);
+        telemetryMap.put("wingIntakeIndex", ingestStage);
         telemetryMap.put("initPositionIndex", initPositionIndex);
 //        telemetryMap.put("MemoryPose", positionCache.readPose());
         for (int i = 0; i < subsystems.length; i++) {
