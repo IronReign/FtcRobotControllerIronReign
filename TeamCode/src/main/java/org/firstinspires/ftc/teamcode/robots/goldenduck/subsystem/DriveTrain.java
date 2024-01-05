@@ -27,8 +27,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
     public Articulation articulation;
 
-    public DistanceSensor backDistanceSensor;
-    public double backDistanceSensorValue = 0;
     public double imuRoadrunnerError;
 
     public enum Articulation{
@@ -41,7 +39,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         super(hardwareMap, new Pose2d(0, 0, 0));
         this.robot = robot;
         trajectoryIsActive = false;
-        backDistanceSensor = hardwareMap.get(DistanceSensor.class, "backDist");
 
     }
     //end constructor
@@ -51,7 +48,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     @Override
     public void update(Canvas c) {
         imuRoadrunnerError = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - Math.toDegrees(pose.heading.log());
-        backDistanceSensorValue = backDistanceSensor.getDistance(DistanceUnit.INCH);
         updatePoseEstimate();
     }
 
@@ -102,7 +98,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("y in fieldCoords", pose.position.y / Constants.FIELD_INCHES_PER_GRID);
         telemetryMap.put("x in inches", pose.position.x);
         telemetryMap.put("y in inches", pose.position.y);
-        telemetryMap.put("Back Distance Sensor Value", backDistanceSensorValue);
         telemetryMap.put("heading", Math.toDegrees(pose.heading.log()));
         telemetryMap.put("Left Odometry Pod:\t", leftFront.getCurrentPosition());
         telemetryMap.put("Right Odometry Pod:\t", rightFront.getCurrentPosition());

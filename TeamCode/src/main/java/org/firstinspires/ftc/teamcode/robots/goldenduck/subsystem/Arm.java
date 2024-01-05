@@ -22,7 +22,7 @@ public class Arm implements Subsystem {
     HardwareMap hardwareMap;
     Robot robot;
 
-    private DcMotorEx arm = null;
+    private DcMotorEx shoulder = null;
     private Servo gripperInner, gripperOuter, triggerDrone;
     
     public Joint wristLeft, wristRight; //the wrist is a diffy mechanism - blend of pitch and roll
@@ -30,18 +30,29 @@ public class Arm implements Subsystem {
     public static int flipperPosition = 1888;
 
 
-    public void setArmTargetPosition(int armTargetPosition) {
-        this.armTargetPosition = armTargetPosition;
+    public void setShoulderTargetPosition(int shoulderTargetPosition) {
+        if (shoulderTargetPosition < shoulderPositionMin) {
+            shoulderTargetPosition = shoulderPositionMin;
+        }
+        if (shoulderTargetPosition > shoulderPositionMax) {
+            shoulderTargetPosition = shoulderPositionMax;
+        }
+        this.shoulderTargetPosition = shoulderTargetPosition;
     }
 
-    int armTargetPosition = 0;
-    public static int armPositionMax = 100; //todo find real arm Max
-    public static int armPositionMin = 0;
-    public static int armPositionPreDock = 0;
+    int shoulderTargetPosition = 0;
+    public static int shoulderPositionMax = 100; //todo find real shoulder Max
+    public static int shoulderPositionMin = 0;
+    public static int shoulderPositionPreDock = 0;
     public static int slidePositionDocked = 0;
 
+    public static int GripInnerOpen = 1234;
+    public static int GripInnerClosed = 900;
+    public static int GripOuterOpen = 900;
+    public static int GripOuterClosed = 1400;
 
-    int slideSpeed = 20;
+
+    int shoulderSpeed = 20;
 
     public static boolean TEMP_WRIST_TUNE = false;
 
@@ -124,18 +135,18 @@ public class Arm implements Subsystem {
         this.hardwareMap = hardwareMap;
         this.robot = robot;
         wristLeft = new Joint(hardwareMap, "wristLeft", false, WRIST_HOME_POSITION, WRIST_PWM_PER_DEGREE, WRIST_MIN_ANGLE, WRIST_MAX_ANGLE, WRIST_START_ANGLE, WRIST_JOINT_SPEED);
-        wristLeft = new Joint(hardwareMap, "wristRight", false, WRIST_HOME_POSITION, WRIST_PWM_PER_DEGREE, WRIST_MIN_ANGLE, WRIST_MAX_ANGLE, WRIST_START_ANGLE, WRIST_JOINT_SPEED);
-        triggerDrone = hardwareMap.get(Servo.class, "servoRailgun");
+        wristRight = new Joint(hardwareMap, "wristRight", false, WRIST_HOME_POSITION, WRIST_PWM_PER_DEGREE, WRIST_MIN_ANGLE, WRIST_MAX_ANGLE, WRIST_START_ANGLE, WRIST_JOINT_SPEED);
+        triggerDrone = hardwareMap.get(Servo.class, "triggerDrone");
 
-        gripperInner = hardwareMap.get(Servo.class, "gripperInner");
-        gripperOuter = hardwareMap.get(Servo.class, "gripperOuter");
+        gripperInner = hardwareMap.get(Servo.class, "gripInner");
+        gripperOuter = hardwareMap.get(Servo.class, "gripOuter");
 
-        arm = this.hardwareMap.get(DcMotorEx.class, "motorShoulder");
-        arm.setMotorEnable();
-        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        arm.setTargetPosition(0);
-        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        arm.setPower(1);
+        shoulder = this.hardwareMap.get(DcMotorEx.class, "motorShoulder");
+        shoulder.setMotorEnable();
+        shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shoulder.setTargetPosition(0);
+        shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        shoulder.setPower(1);
 //        pixelFlipper = this.hardwareMap.get(Servo.class, "pixelFlipper");
 
         behavior = Behavior.MANUAL;
@@ -146,11 +157,11 @@ public class Arm implements Subsystem {
     public boolean ingestFromTravel() { //should only call this if Travel was previously set
         switch (ingestPositionIndex) {
             case 0: //position outtake to position scoopagon just clear of the intake belt
-                setArmTargetPosition(armPositionPreDock);
+                setShoulderTargetPosition(shoulderPositionPreDock);
                 ingestPositionIndex ++;
                 break;
             case 1: //lower the outtake to intake position
-                if(between( arm.getCurrentPosition(), armPositionPreDock +10, armPositionPreDock -10)) {
+                if(between( shoulder.getCurrentPosition(), shoulderPositionPreDock +10, shoulderPositionPreDock -10)) {
                     setTargetAngle(WRIST_DOCK_ANGLE);
                     ingestPositionTimer = futureTime(.75);
                     ingestPositionIndex++;
@@ -159,7 +170,7 @@ public class Arm implements Subsystem {
             case 2: //give enough time to pull down flipper, then slide to intake dock
                 if (isPast(ingestPositionTimer))
                 {
-                    setArmTargetPosition(slidePositionDocked);
+                    setShoulderTargetPosition(slidePositionDocked);
                     ingestPositionIndex=0;
                     return true;
                 }
@@ -174,7 +185,7 @@ public class Arm implements Subsystem {
         switch (travelStage){
             case 0: //begin undock
                 setTargetAngle(WRIST_DOCK_ANGLE);
-                setArmTargetPosition(armPositionPreDock);
+                setShoulderTargetPosition(shoulderPositionPreDock);
                 travelTimer = futureTime(.5);
                 travelStage++;
                 break;
@@ -187,7 +198,7 @@ public class Arm implements Subsystem {
                 break;
             case 2: //tuck slide - todo this will get more complicated when outtake elevation is changeable
                 if (isPast(travelTimer)){
-                    setArmTargetPosition(slidePositionDocked);
+                    setShoulderTargetPosition(slidePositionDocked);
                     robot.behave(Robot.Behavior.TRAVEL);
                     travelStage = 0;
                     return true;
@@ -201,7 +212,7 @@ public class Arm implements Subsystem {
         switch (travelStageBack) { //robot should have already placed the intake into travel position
             case 0:
                 setTargetAngle(WRIST_TRAVEL_ANGLE);
-                setArmTargetPosition(0);
+                setShoulderTargetPosition(0);
                 travelTimer = futureTime(.5);
                 travelStageBack++;
                 break;
@@ -215,32 +226,54 @@ public class Arm implements Subsystem {
         return false;
     }
 
-    public void moveSlide(int distance) {
-        armTargetPosition += distance * slideSpeed;
-        if (armTargetPosition < armPositionMin) {
-            armTargetPosition = armPositionMin;
-        }
-        if (armTargetPosition > armPositionMax) {
-            armTargetPosition = armPositionMax;
-        }
-        arm.setTargetPosition(armTargetPosition);
-    }
 
-    public void adjustFlipper(int angle) {
-        wristLeft.setTargetAngle(wristLeft.getCurrentAngle() +  angle);
+    public void adjustShoulder(double gamepadSpeed) {
+        setShoulderTargetPosition(shoulder.getCurrentPosition()+(int)(gamepadSpeed * shoulderSpeed));
     }
 
 
-public void flipperTest(){
+public void wristTune(){
     if(TEMP_WRIST_TUNE) {
         wristLeft.setTargetAngle(wristLeft.getCurrentAngle() + 1);
+        wristRight.setTargetAngle(wristRight.getCurrentAngle() + 1);
     }
-    else
+    else {
         wristLeft.setTargetAngle(wristLeft.getCurrentAngle() - 1);
+        wristRight.setTargetAngle(wristRight.getCurrentAngle() - 1);
+    }
 }
 
-    public int getArmTargetPosition() {
-        return armTargetPosition;
+public void GripInnerToggle(){
+        if (gripperInner.getPosition() == GripInnerOpen) gripperInner.setPosition(GripInnerClosed);
+        else //to open inner, outer has to open as well
+            {
+                gripperOuter.setPosition(GripOuterOpen);
+                gripperInner.setPosition(GripInnerOpen);
+            }
+    }
+    public void GripOuterToggle(){
+        if (gripperOuter.getPosition() == GripOuterClosed) gripperOuter.setPosition(GripOuterOpen);
+        else //to close outer, inner has to close as well
+        {
+            gripperInner.setPosition(GripInnerClosed);
+            gripperOuter.setPosition(GripOuterClosed);
+
+        }
+    }
+
+    public void GripBoth(){
+        gripperInner.setPosition(GripInnerClosed);
+        gripperOuter.setPosition(GripOuterClosed);
+    }
+
+    public void GripNeither(){
+        gripperInner.setPosition(GripInnerOpen);
+        gripperOuter.setPosition(GripOuterOpen);
+    }
+
+
+    public int getShoulderTargetPosition() {
+        return shoulderTargetPosition;
     }
     @Override
     public void update(Canvas fieldOverlay) {
@@ -249,29 +282,28 @@ public void flipperTest(){
 
         //actually instruct actuators to go to desired targets
         wristLeft.update();
-        arm.setTargetPosition(armTargetPosition);
+        wristRight.update();
+        shoulder.setTargetPosition(shoulderTargetPosition);
     }
 
     @Override
     public void stop() {
-        arm.setMotorDisable();
+        shoulder.setMotorDisable();
     }
 
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("articulation", behavior.name());
-        telemetryMap.put("slide target position", armTargetPosition);
-        telemetryMap.put("slide actual position", arm.getCurrentPosition());
-//        telemetryMap.put("flipper location", Utils.servoDenormalize(pixelFlipper.getPosition()));
-        telemetryMap.put("flipper ticks", flipperPosition);
-        telemetryMap.put("flipper angle", wristLeft.getCurrentAngle());
-        telemetryMap.put("flipper target angle", wristLeft.getTargetAngle());
+        telemetryMap.put("shoulder target position", shoulderTargetPosition);
+        telemetryMap.put("shoulder actual position", shoulder.getCurrentPosition());
+        telemetryMap.put("wristLeft angle", wristLeft.getCurrentAngle());
+        telemetryMap.put("wristLeft target angle", wristLeft.getTargetAngle());
         return telemetryMap;
     }
 
     @Override
     public String getTelemetryName() {
-        return "OUTTAKE";
+        return "ARM";
     }
 }

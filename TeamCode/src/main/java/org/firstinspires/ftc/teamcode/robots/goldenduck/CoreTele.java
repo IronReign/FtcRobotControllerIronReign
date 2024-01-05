@@ -85,7 +85,7 @@ public class CoreTele extends OpMode {
 
     }
 
-    public static GameState gameState = GameState.AUTONOMOUS;
+    public static GameState gameState = GameState.TELE_OP;
     static public int gameStateIndex;
 
 

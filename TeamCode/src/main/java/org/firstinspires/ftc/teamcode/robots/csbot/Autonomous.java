@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_I
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -377,12 +378,17 @@ public class Autonomous implements TelemetryProvider {
 
             switch (autonIndex) {
                 case 0:
+                    futureTimer = futureTime(.4);
                     autonIndex++;
                     break;
                 case 1:
                     autonState = AutonState.BACK_UP;
                     if (!stageOneToRun.run(packet)) {
                         autonIndex++;
+                    } else if (isPast(futureTimer)) {
+                        //putting the intake down to eject position so it can nudge the team prop out of the way for the 1 and 3 positions
+                        //doesn't matter if it gets set repeatedly
+                        robot.intake.setAngle(Intake.ANGLE_EJECT);
                     }
                     break;
                 case 2:

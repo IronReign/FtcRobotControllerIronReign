@@ -16,7 +16,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.Joint;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Config(value = "CS_OUTTAKE")
+@Config(value = "AA_CS_OUTTAKE")
 public class Outtake implements Subsystem {
 
     HardwareMap hardwareMap;
@@ -55,7 +55,7 @@ public class Outtake implements Subsystem {
     public static double FLIPPER_MIN_ANGLE = 0;
     public static double FLIPPER_MAX_ANGLE = 145;
     public static double FLIPPER_PRE_SCORE_ANGLE = 120;
-    public static double FLIPPER_TRAVEL_ANGLE = 30;
+    public static double FLIPPER_TRAVEL_ANGLE = 28;
     public static int FLIPPER_ADJUST_ANGLE = 10;
     public static double FLIPPER_DOCK_ANGLE = 0;
 
@@ -263,6 +263,7 @@ public void flipperTest(){
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("articulation", articulation.name());
+        telemetryMap.put("ingest stage", ingestPositionIndex);
         telemetryMap.put("slide target position", slideTargetPosition);
         telemetryMap.put("slide actual position", slide.getCurrentPosition());
 //        telemetryMap.put("flipper location", Utils.servoDenormalize(pixelFlipper.getPosition()));
