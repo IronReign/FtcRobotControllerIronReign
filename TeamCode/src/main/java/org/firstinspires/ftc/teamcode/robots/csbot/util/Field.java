@@ -7,7 +7,10 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
 import android.util.ArraySet;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.*;
+
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 
 import java.lang.Math;
 import java.util.*;
@@ -97,8 +100,17 @@ public class Field {
         SCORE = isRed? POI.SCORE : POI.SCORE.flipOnX();
     }
 
-    public void update() {
-
+    public void update(TelemetryPacket packet, Robot robot) {
+        //handling dashboard fieldOverlay
+        Zone zone = getZone(robot.driveTrain.pose);
+        Canvas c = packet.fieldOverlay();
+        double zoneX = Math.min(zone.x1, zone.x2) * FIELD_INCHES_PER_GRID;
+        double zoneY = Math.min(zone.y1, zone.y2) * FIELD_INCHES_PER_GRID;
+        double zoneHeight = Math.max(zone.x1, zone.x2) * FIELD_INCHES_PER_GRID - zoneX;
+        double zoneWidth = Math.max(zone.y1, zone.y2) * FIELD_INCHES_PER_GRID - zoneY;
+        c.setAlpha(50);
+        c.setFill("green");
+        c.fillRect(zoneX, zoneY, zoneHeight, zoneWidth);
     }
 
     //swap to pathtoPOI(pose, destinationpoi)

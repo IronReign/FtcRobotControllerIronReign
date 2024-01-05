@@ -162,6 +162,7 @@ public class CenterStage_6832 extends OpMode {
         robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
 
 
+
         robot.initPosition();
         if(gameState.isAutonomous()) {
             auton.updateIndexOffsets();
@@ -311,6 +312,7 @@ public class CenterStage_6832 extends OpMode {
             opModeTelemetryMap.put("Starting Position", startingPosition);
         }
         if(field.finalized) {
+            field.update(packet, robot);
             opModeTelemetryMap.put("Current Robot Zone", field.getZone(robot.driveTrain.pose));
             opModeTelemetryMap.put("Current Robot SubZones", field.getSubZones(robot.driveTrain.pose));
             opModeTelemetryMap.put("Current Robot POI", field.getPOI(robot.driveTrain.pose));
