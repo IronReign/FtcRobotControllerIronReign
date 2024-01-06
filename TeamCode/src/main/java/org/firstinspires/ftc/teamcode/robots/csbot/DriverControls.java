@@ -53,6 +53,9 @@ public class DriverControls {
             CenterStage_6832.initPosition = true;
         }
 
+        if(stickyGamepad1.y) {
+            robot.driveTrain.setPose(startingPosition);
+        }
 
         if(stickyGamepad1.guide) {
             robot.initPositionIndex ++;

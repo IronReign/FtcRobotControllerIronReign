@@ -30,6 +30,7 @@ import java.util.Map;
 @Config(value = "AA_CS_Auton")
 public class Autonomous implements TelemetryProvider {
 
+    private static double APRIL_TAG_HEADING = 0;
     public VisionProvider visionProvider;
     private Robot robot;
     private HardwareMap hardwareMap;
@@ -45,7 +46,7 @@ public class Autonomous implements TelemetryProvider {
         FIND_STANDARD_HEADING,
         TRAVEL_BACKDROP,
         ALIGN_WITH_APRILTAG,
-        SCORE_BACKDROP
+        FIND_APRIL_TAG_HEADING, SCORE_BACKDROP
     }
 
     public AutonState autonState = AutonState.INIT;
@@ -83,7 +84,7 @@ public class Autonomous implements TelemetryProvider {
             blueRightStageOne, blueRightStageTwo,
             redRightStageOne, redRightStageTwo,
             findStandardPosition, approachBackdrop,
-            approachAprilTag, findStandardHeading;
+            approachAprilTag, findStandardHeading,findAprilTagHeading;
     ;
 
     private Action stageOneToRun, stageTwoToRun;
@@ -347,7 +348,16 @@ public class Autonomous implements TelemetryProvider {
     public void findStandardHeadingBuild() {
         findStandardHeading = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .turnTo(STANDARD_HEADING)
+                        .turnTo(Math.toRadians(STANDARD_HEADING))
+                        .build()
+        );
+    }
+
+    public void findAprilTagHeadingBuild() {
+        APRIL_TAG_HEADING = Math.atan2(aprilTagApproachPosition.position.y-robot.driveTrain.pose.position.y,aprilTagApproachPosition.position.x-robot.driveTrain.pose.position.x);
+        findAprilTagHeading = new SequentialAction(
+                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                        .turnTo(Math.toRadians(APRIL_TAG_HEADING))
                         .build()
         );
     }
@@ -355,7 +365,7 @@ public class Autonomous implements TelemetryProvider {
     public void approachAprilTagBuild() {
         approachAprilTag = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .splineToLinearHeading(aprilTagApproachPosition, 0)
+                        .splineToLinearHeading(aprilTagApproachPosition,Math.PI)
                         .build()
         );
     }
@@ -438,33 +448,41 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 6:
                     if(startingPosition != Constants.Position.START_RIGHT_BLUE && startingPosition != Constants.Position.START_LEFT_RED) {
+                        findAprilTagHeadingBuild();
                         autonIndex++;
                         break;
                     }
                     autonState = AutonState.TRAVEL_BACKDROP;
                     if(!approachBackdrop.run(packet)) {
-                        approachAprilTagBuild();
+                        findAprilTagHeadingBuild();
                         autonIndex++;
                     }
                     break;
                 case 7:
+                    autonState = AutonState.FIND_APRIL_TAG_HEADING;
+                    if(!findAprilTagHeading.run(packet)) {
+                        approachAprilTagBuild();
+                        autonIndex++;
+                    }
+                    break;
+                case 8:
                     autonState = AutonState.ALIGN_WITH_APRILTAG;
                     if(!approachAprilTag.run(packet)) {
                         actionEndPose = robot.driveTrain.pose;
                         //reset roadrunner based on imuAngle
-//                        robot.driveTrain.pose = new Pose2d(robot.driveTrain.pose.position, Math.toRadians(robot.driveTrain.imuAngle));
+                        robot.driveTrain.pose = new Pose2d(robot.driveTrain.pose.position, Math.toRadians(robot.driveTrain.imuAngle));
                         findStandardHeadingBuild();
 
                         autonIndex++;
                     }
                     break;
-                case 8:
-                    autonState = AutonState.FIND_STANDARD_HEADING;
-//                    if(!findStandardHeading.run(packet)) {
-                        autonIndex++;
-//                    }
-                    break;
                 case 9:
+                    autonState = AutonState.FIND_STANDARD_HEADING;
+                    if(!findStandardHeading.run(packet)) {
+                        autonIndex++;
+                    }
+                    break;
+                case 10:
                     autonState = AutonState.DONE;
                     robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
                     return true;
