@@ -12,9 +12,12 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 //todo this should not reference the reign version of MecanumDrive
+import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 //todo this should not reference reign's Constants
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
@@ -32,6 +35,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public DistanceSensor backDistanceSensor;
     public double backDistanceSensorValue = 0;
     public double imuRoadrunnerError;
+    public double imuAngle;
 
     public enum Articulation{
         BACKSTAGE_DRIVE,
@@ -52,7 +56,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
     @Override
     public void update(Canvas c) {
-        imuRoadrunnerError = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - Math.toDegrees(pose.heading.log());
+        imuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.getMod()? -90 : 90);
+        imuRoadrunnerError = imuAngle - Math.toDegrees(pose.heading.log());
         backDistanceSensorValue = backDistanceSensor.getDistance(DistanceUnit.INCH);
         updatePoseEstimate();
     }
@@ -110,6 +115,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("Right Odometry Pod:\t", rightFront.getCurrentPosition());
         telemetryMap.put("Cross Odometry Pod:\t", rightBack.getCurrentPosition());
         telemetryMap.put("imu vs roadrunner:\t", imuRoadrunnerError);
+        telemetryMap.put("imu:\t", imuAngle);
+
         return telemetryMap;
     }
 

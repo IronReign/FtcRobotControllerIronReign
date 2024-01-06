@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.auton;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
@@ -41,6 +42,7 @@ public class Autonomous implements TelemetryProvider {
         FIND_STANDARD_POSITION,
         TRAVEL_BACKSTAGE,
         DONE,
+        FIND_STANDARD_HEADING,
         TRAVEL_BACKDROP,
         ALIGN_WITH_APRILTAG,
         SCORE_BACKDROP
@@ -74,13 +76,14 @@ public class Autonomous implements TelemetryProvider {
     int allianceDirection = -1;
 
     double STANDARD_HEADING = 180;
+    Pose2d actionEndPose = new Pose2d(0, 0, 0);
     private Action
             redLeftStageOne, redLeftStageTwo,
             blueLeftStageOne, blueLeftStageTwo,
             blueRightStageOne, blueRightStageTwo,
             redRightStageOne, redRightStageTwo,
             findStandardPosition, approachBackdrop,
-            approachAprilTag
+            approachAprilTag, findStandardHeading;
     ;
 
     private Action stageOneToRun, stageTwoToRun;
@@ -256,7 +259,7 @@ public class Autonomous implements TelemetryProvider {
         redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
         redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
 
-        purpleEndPosition = P2D(startingPosition.getPose().position.x / FIELD_INCHES_PER_GRID, allianceDirection * .35, STANDARD_HEADING);
+        purpleEndPosition = P2D(startingPosition.getPose().position.x / FIELD_INCHES_PER_GRID, allianceDirection * .35 * FIELD_INCHES_PER_GRID, STANDARD_HEADING);
         backdropApproachPosition = P2D(1.65, allianceDirection * .35, STANDARD_HEADING);
         aprilTagApproachPosition = P2D(1.65, allianceDirection * 2 + (targetAprilTagIndex - 3) * aprilTagOffset, STANDARD_HEADING);
 
@@ -341,10 +344,18 @@ public class Autonomous implements TelemetryProvider {
         );
     }
 
+    public void findStandardHeadingBuild() {
+        findStandardHeading = new SequentialAction(
+                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                        .turnTo(STANDARD_HEADING)
+                        .build()
+        );
+    }
+
     public void approachAprilTagBuild() {
         approachAprilTag = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .strafeTo(aprilTagApproachPosition.position)
+                        .splineToLinearHeading(aprilTagApproachPosition, 0)
                         .build()
         );
     }
@@ -352,6 +363,7 @@ public class Autonomous implements TelemetryProvider {
     public void pickAutonToRun(Constants.Alliance alliance) {
         allianceDirection=alliance.equals(Constants.Alliance.BLUE)?1:-1;
         build();
+
             if (startingPosition == Constants.Position.START_LEFT_BLUE) {
                 stageOneToRun = blueLeftStageOne;
                 stageTwoToRun = blueLeftStageTwo;
@@ -395,6 +407,8 @@ public class Autonomous implements TelemetryProvider {
                     autonState = AutonState.STRAFE;
                     if (!stageTwoToRun.run(packet)) {
                         robot.intake.articulate(Intake.Articulation.EJECT);
+                        //reset roadrunner based on imuAngle
+                        robot.driveTrain.pose = new Pose2d(robot.driveTrain.pose.position, Math.toRadians(robot.driveTrain.imuAngle));
                         autonIndex++;
                     }
                     break;
@@ -412,14 +426,21 @@ public class Autonomous implements TelemetryProvider {
                         }
                     break;
                 case 5: //travel to interim position near backdrop and then to final position
+                    if(startingPosition != Constants.Position.START_RIGHT_BLUE && startingPosition != Constants.Position.START_LEFT_RED) {
+                        autonIndex++;
+                        break;
+                    }
                     autonState = AutonState.FIND_STANDARD_POSITION;
-                    if (!findStandardPosition.run(packet))
-                    {
+                    if (!findStandardPosition.run(packet)) {
                         approachBackdropBuild();
                         autonIndex++;
                     }
                     break;
                 case 6:
+                    if(startingPosition != Constants.Position.START_RIGHT_BLUE && startingPosition != Constants.Position.START_LEFT_RED) {
+                        autonIndex++;
+                        break;
+                    }
                     autonState = AutonState.TRAVEL_BACKDROP;
                     if(!approachBackdrop.run(packet)) {
                         approachAprilTagBuild();
@@ -429,14 +450,22 @@ public class Autonomous implements TelemetryProvider {
                 case 7:
                     autonState = AutonState.ALIGN_WITH_APRILTAG;
                     if(!approachAprilTag.run(packet)) {
+                        actionEndPose = robot.driveTrain.pose;
+                        //reset roadrunner based on imuAngle
+//                        robot.driveTrain.pose = new Pose2d(robot.driveTrain.pose.position, Math.toRadians(robot.driveTrain.imuAngle));
+                        findStandardHeadingBuild();
+
                         autonIndex++;
                     }
                     break;
                 case 8:
-                    autonState = AutonState.DONE;
-                    autonIndex++;
+                    autonState = AutonState.FIND_STANDARD_HEADING;
+//                    if(!findStandardHeading.run(packet)) {
+                        autonIndex++;
+//                    }
                     break;
                 case 9:
+                    autonState = AutonState.DONE;
                     robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
                     return true;
 

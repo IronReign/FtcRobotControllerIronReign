@@ -113,6 +113,8 @@ public class MecanumDrive {
     public final IMU imu;
 
     public final Localizer localizer;
+
+    //GOD POSE
     public Pose2d pose;
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();

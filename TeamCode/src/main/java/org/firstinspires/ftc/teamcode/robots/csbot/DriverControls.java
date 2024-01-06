@@ -96,10 +96,10 @@ public class DriverControls {
             fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (gamepad1.left_trigger > .1) {
-            robot.intake.adjustAngle(gamepad1.left_trigger*.85);
+            robot.outtake.adjustFlipper(-robot.outtake.FLIPPER_ADJUST_ANGLE);
         }
         if (gamepad1.right_trigger > .1) {
-            robot.intake.adjustAngle(-gamepad1.right_trigger*.85);
+            robot.outtake.adjustFlipper(robot.outtake.FLIPPER_ADJUST_ANGLE);
         }
         if (stickyGamepad1.a) {
             robot.articulate(Robot.Articulation.INGEST);
@@ -136,10 +136,12 @@ public class DriverControls {
 //                robot.outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
         }
 
-        if (gamepad1.y)
-            robot.outtake.adjustFlipper(robot.outtake.FLIPPER_ADJUST_ANGLE);
-        if (gamepad1.x)
-            robot.outtake.adjustFlipper(-robot.outtake.FLIPPER_ADJUST_ANGLE);
+        if (stickyGamepad1.y) {
+            robot.intake.setIngestPixelHeight(4);
+        }
+        if (stickyGamepad1.x) {
+            robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
+        }
 
         if(stickyGamepad1.dpad_up)
             robot.intake.articulate(Intake.Articulation.SWALLOW);

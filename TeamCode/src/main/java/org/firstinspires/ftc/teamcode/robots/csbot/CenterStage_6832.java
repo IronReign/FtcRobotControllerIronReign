@@ -164,11 +164,6 @@ public class CenterStage_6832 extends OpMode {
 
 
         robot.initPosition();
-        if(gameState.isAutonomous()) {
-            auton.updateIndexOffsets();
-            //calc auton based on alliance, starting position and team prop position
-            auton.pickAutonToRun(alliance);
-        }
 
         robot.driveTrain.updatePoseEstimate();
 
@@ -198,16 +193,7 @@ public class CenterStage_6832 extends OpMode {
         field.finalizeField();
         resetGame();
 
-        if(gameState.equals(GameState.AUTONOMOUS)){
-        }
 
-        if(gameState.equals(GameState.TELE_OP)){
-
-        }
-
-        if(gameState.equals(GameState.TEST) ||  gameState.equals(GameState.DEMO)){
-
-        }
 
         if(robot.fetched && !gameState.isAutonomous()) {
             robot.driveTrain.setPose(robot.fetchedPosition.getPose());
@@ -221,6 +207,21 @@ public class CenterStage_6832 extends OpMode {
         }
 
         robot.updatePositionCache = true;
+
+        if(gameState.equals(GameState.AUTONOMOUS)){
+            robot.driveTrain.imu.resetYaw();
+            auton.updateIndexOffsets();
+            //calc auton based on alliance, starting position and team prop position
+            auton.pickAutonToRun(alliance);
+        }
+
+        if(gameState.equals(GameState.TELE_OP)){
+
+        }
+
+        if(gameState.equals(GameState.TEST) ||  gameState.equals(GameState.DEMO)){
+
+        }
 
         robot.start();
     }
@@ -354,6 +355,10 @@ public class CenterStage_6832 extends OpMode {
 
         handleTelemetry(visionTelemetryMap, robot.visionProviderBack.getTelemetryName(), packet);
         packet.put("imu/roadrunner error", robot.driveTrain.imuRoadrunnerError);
+        packet.put("imu angle", robot.driveTrain.imuAngle);
+        packet.put("roadrunner angle", Math.toDegrees(robot.driveTrain.pose.heading.toDouble()));
+        packet.put("action end pose", Math.toDegrees(auton.actionEndPose.heading.toDouble()));
+
 
         dashboard.sendTelemetryPacket(packet);
         telemetry.update();

@@ -104,13 +104,19 @@ public class Field {
         //handling dashboard fieldOverlay
         Zone zone = getZone(robot.driveTrain.pose);
         Canvas c = packet.fieldOverlay();
-        double zoneX = Math.min(zone.x1, zone.x2) * FIELD_INCHES_PER_GRID;
-        double zoneY = Math.min(zone.y1, zone.y2) * FIELD_INCHES_PER_GRID;
-        double zoneHeight = Math.max(zone.x1, zone.x2) * FIELD_INCHES_PER_GRID - zoneX;
-        double zoneWidth = Math.max(zone.y1, zone.y2) * FIELD_INCHES_PER_GRID - zoneY;
-        c.setAlpha(50);
-        c.setFill("green");
-        c.fillRect(zoneX, zoneY, zoneHeight, zoneWidth);
+        if (zone != null) {
+            double zoneX = Math.min(zone.x1, zone.x2) * FIELD_INCHES_PER_GRID;
+            double zoneY = Math.min(zone.y1, zone.y2) * FIELD_INCHES_PER_GRID;
+            double zoneHeight = Math.max(zone.x1, zone.x2) * FIELD_INCHES_PER_GRID - zoneX;
+            double zoneWidth = Math.max(zone.y1, zone.y2) * FIELD_INCHES_PER_GRID - zoneY;
+            if (System.currentTimeMillis()/1000 % 2 == 0) {
+                c.setAlpha(.5);
+                c.setFill("green");
+                c.fillRect(zoneX, zoneY, zoneHeight, zoneWidth);
+
+            }
+            c.setAlpha(100);
+        }
     }
 
     //swap to pathtoPOI(pose, destinationpoi)
