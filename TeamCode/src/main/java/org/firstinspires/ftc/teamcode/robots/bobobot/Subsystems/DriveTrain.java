@@ -9,7 +9,7 @@ import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import org.firstinspires.ftc.teamcode.robots.bobobot.RunnerBot;
+
 import org.firstinspires.ftc.teamcode.robots.bobobot.RoadRunning.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
@@ -18,12 +18,12 @@ import java.util.Map;
 
 @Config(value = "BoadBunner")
 public class DriveTrain extends MecanumDrive implements Subsystem {
-    public RunnerBot robot;
+    public RunnerBot runnerBot;
 
 
-    public DriveTrain(HardwareMap hardwareMap, RunnerBot robot) {
+    public DriveTrain(HardwareMap hardwareMap, RunnerBot runnerBot) {
         super(hardwareMap, new Pose2d(0, 0, 0));
-        this.robot = robot;
+        this.runnerBot = runnerBot;
     }
 
     public void drive(double x, double y, double theta) {

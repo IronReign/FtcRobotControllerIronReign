@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.robots.bobobot;
+package org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -18,6 +18,7 @@ import java.util.Map;
 public class RunnerBot implements Subsystem{
     public Subsystem[] subsystems;
     public DriveTrain driveTrain;
+    public Intake intake;
     public HardwareMap hardwareMap;
     public BobotPosition currentPosition;
     public BobotPosition fetchedPosition;
@@ -30,8 +31,9 @@ public class RunnerBot implements Subsystem{
         this.telemetry = telemetry;
         this.hardwareMap = hardwareMap;
         //positionCache = new PositionCache(5);
+        intake = new Intake(hardwareMap, this);
         driveTrain = new DriveTrain(hardwareMap, this);
-        subsystems = new Subsystem[]{driveTrain};
+        subsystems = new Subsystem[]{driveTrain, intake};
     }
 
     private static void drawRobot(Canvas c, Pose2d t) {

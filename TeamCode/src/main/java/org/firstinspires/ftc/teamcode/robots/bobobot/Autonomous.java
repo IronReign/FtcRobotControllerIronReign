@@ -2,17 +2,13 @@ package org.firstinspires.ftc.teamcode.robots.bobobot;
 
 
 import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
+import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.RunnerBot;
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name= "BobotAutonomous")
 public class Autonomous extends OpMode {
