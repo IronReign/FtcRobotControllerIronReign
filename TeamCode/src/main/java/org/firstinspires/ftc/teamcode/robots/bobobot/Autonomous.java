@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.bobobot;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
@@ -29,11 +30,12 @@ public class Autonomous extends OpMode {
     }
     @Override
     public void start(){
-        Actions.runBlocking(frontRed);
     }
     @Override
     public void loop(){
-
+        if(!frontRed.run(new TelemetryPacket())) {
+            //telemetry done
+        }
     }
 
     public void build(){
