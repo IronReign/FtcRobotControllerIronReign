@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.between;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
@@ -67,31 +69,39 @@ public class Outtake implements Subsystem {
         this.articulation = articulation;
         return articulation;
     }
+
     public Articulation articulate() {
         switch (articulation) {
             case MANUAL:
                 break;
             case BACKDROP:
+                flipper.setTargetAngle(145);
+                articulation = Articulation.TRAVEL;
+
                 break;
             case TRAVEL:
                 break;
             case TRAVEL_FROM_INGEST:
-                if(travelFromIngest())
-                    articulation=Articulation.TRAVEL;
+                if (travelFromIngest())
+                    articulation = Articulation.TRAVEL;
                 break;
             case INGEST_FROM_TRAVEL:
-                if(ingestFromTravel()) {
+                if (ingestFromTravel()) {
                     articulation = Articulation.MANUAL;
                 }
                 break;
             case TRAVEL_FROM_BACKDROP:
-                if(travelFromBackdrop()) {
+                if (travelFromBackdrop()) {
                     articulation = Articulation.TRAVEL;
                 }
                 break;
             case BACKDROP_PREP:
-                flipper.setTargetAngle(FLIPPER_PRE_SCORE_ANGLE);
-                articulation = Articulation.BACKDROP;
+                if (backdropPrep()) {
+                    if (gameState.isAutonomous())
+                        articulation = Articulation.BACKDROP;
+                    else
+                        articulation = Articulation.MANUAL;
+                }
                 break;
 
             default:
@@ -100,6 +110,8 @@ public class Outtake implements Subsystem {
         prevArticulation = articulation;
         return articulation;
     }
+
+
 
     public enum Articulation {
         MANUAL, //does nothing - used for transition tracking
@@ -145,24 +157,24 @@ public class Outtake implements Subsystem {
 
     public static int ingestPositionIndex = 0;
     public long ingestPositionTimer = 0;
+
     public boolean ingestFromTravel() { //should only call this if Travel was previously set
         switch (ingestPositionIndex) {
             case 0: //position outtake to position scoopagon just clear of the intake belt
                 setSlideTargetPosition(slidePositionPreDock);
-                ingestPositionIndex ++;
+                ingestPositionIndex++;
                 break;
             case 1: //lower the outtake to intake position
-                if(between( slide.getCurrentPosition(), slidePositionPreDock +10, slidePositionPreDock -10)) {
+                if (between(slide.getCurrentPosition(), slidePositionPreDock + 10, slidePositionPreDock - 10)) {
                     setTargetAngle(FLIPPER_DOCK_ANGLE);
                     ingestPositionTimer = futureTime(.75);
                     ingestPositionIndex++;
                 }
                 break;
             case 2: //give enough time to pull down flipper, then slide to intake dock
-                if (isPast(ingestPositionTimer))
-                {
+                if (isPast(ingestPositionTimer)) {
                     setSlideTargetPosition(slidePositionDocked);
-                    ingestPositionIndex=0;
+                    ingestPositionIndex = 0;
                     return true;
                 }
                 break;
@@ -172,8 +184,9 @@ public class Outtake implements Subsystem {
 
     long travelTimer = 0;
     int travelStage = 0;
-    boolean travelFromIngest(){
-        switch (travelStage){
+
+    boolean travelFromIngest() {
+        switch (travelStage) {
             case 0: //begin undock
                 setTargetAngle(FLIPPER_DOCK_ANGLE);
                 setSlideTargetPosition(slidePositionPreDock);
@@ -181,14 +194,14 @@ public class Outtake implements Subsystem {
                 travelStage++;
                 break;
             case 1: //complete undock
-                if (isPast(travelTimer)){
+                if (isPast(travelTimer)) {
                     setTargetAngle(FLIPPER_TRAVEL_ANGLE);
                     travelTimer = futureTime(.5);
                     travelStage++;
                 }
                 break;
             case 2: //tuck slide - todo this will get more complicated when outtake elevation is changeable
-                if (isPast(travelTimer)){
+                if (isPast(travelTimer)) {
                     setSlideTargetPosition(slidePositionDocked);
                     robot.articulate(Robot.Articulation.TRAVEL);
                     travelStage = 0;
@@ -198,8 +211,43 @@ public class Outtake implements Subsystem {
         }
         return false;
     }
+
+    public static int backdropPrepStage = 0;
+    long backdropPrepTimer = 0;
+
+    boolean backdropPrep() {
+        switch (backdropPrepStage) {
+            case 0:
+                slideTargetPosition = slidePositionPreDock;
+                if (withinError(slide.getCurrentPosition(), slidePositionPreDock, 30)) {
+                    backdropPrepTimer = futureTime(1);
+                    backdropPrepStage++;
+                }
+                break;
+            case 1:
+                flipper.setTargetAngle(FLIPPER_PRE_SCORE_ANGLE);
+                if (isPast(backdropPrepTimer)) {
+                    backdropPrepStage++;
+                }
+                break;
+            case 2:
+                slideTargetPosition = slidePositionDocked;
+                if (withinError(slide.getCurrentPosition(), slidePositionDocked, 30)) {
+                    backdropPrepStage++;
+                }
+                break;
+            case 3:
+                backdropPrepStage = 0;
+                backdropPrepTimer = 0;
+                return true;
+
+        }
+        return false;
+    }
+
     int travelStageBack = 0;
-    boolean travelFromBackdrop(){
+
+    boolean travelFromBackdrop() {
         switch (travelStageBack) { //robot should have already placed the intake into travel position
             case 0:
                 setTargetAngle(FLIPPER_TRAVEL_ANGLE);
@@ -229,21 +277,21 @@ public class Outtake implements Subsystem {
     }
 
     public void adjustFlipper(int angle) {
-        flipper.setTargetAngle(flipper.getCurrentAngle() +  angle);
+        flipper.setTargetAngle(flipper.getCurrentAngle() + angle);
     }
 
 
-public void flipperTest(){
-    if(TEMP_FLIPPER_TUNE) {
-        flipper.setTargetAngle(flipper.getCurrentAngle() + 1);
+    public void flipperTest() {
+        if (TEMP_FLIPPER_TUNE) {
+            flipper.setTargetAngle(flipper.getCurrentAngle() + 1);
+        } else
+            flipper.setTargetAngle(flipper.getCurrentAngle() - 1);
     }
-    else
-        flipper.setTargetAngle(flipper.getCurrentAngle() - 1);
-}
 
     public int getSlideTargetPosition() {
         return slideTargetPosition;
     }
+
     @Override
     public void update(Canvas fieldOverlay) {
         //compute the current articulation/behavior

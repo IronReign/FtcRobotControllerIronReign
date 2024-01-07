@@ -57,7 +57,7 @@ public class  Robot implements Subsystem {
     private final List<LynxModule> hubs;
     public HardwareMap hardwareMap;
     private VoltageSensor batteryVoltageSensor;
-    private Articulation articulation;
+    public Articulation articulation;
     public List<Target> targets = new ArrayList<Target>();
     public boolean fetched;
     public boolean selfDriving = true;
@@ -260,6 +260,7 @@ public class  Robot implements Subsystem {
             case TRAVEL:
                 break;
             case BACKDROP:
+
                 break;
             case CALIBRATE:
                 //TODO - WRITE A CALIBRATION ROUTINE
@@ -293,6 +294,7 @@ public class  Robot implements Subsystem {
                 articulation = Articulation.TRAVEL;
                 break;
             case BACKDROP_PREP:
+                intake.articulate(Intake.Articulation.TRAVEL);
                 outtake.articulate(Outtake.Articulation.BACKDROP_PREP);
                 articulation = Articulation.BACKDROP;
                 break;

@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.auton;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
@@ -12,10 +11,14 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
@@ -46,7 +49,7 @@ public class Autonomous implements TelemetryProvider {
         FIND_STANDARD_HEADING,
         TRAVEL_BACKDROP,
         ALIGN_WITH_APRILTAG,
-        FIND_APRIL_TAG_HEADING, SCORE_BACKDROP
+        FIND_APRIL_TAG_HEADING, PREP_FOR_PARK, PARK, SCORE_DRIVE, SCORE_BACKDROP
     }
 
     public AutonState autonState = AutonState.INIT;
@@ -84,7 +87,8 @@ public class Autonomous implements TelemetryProvider {
             blueRightStageOne, blueRightStageTwo,
             redRightStageOne, redRightStageTwo,
             findStandardPosition, approachBackdrop,
-            approachAprilTag, findStandardHeading,findAprilTagHeading;
+            approachAprilTag, findStandardHeading,
+            findAprilTagHeading, park;
     ;
 
     private Action stageOneToRun, stageTwoToRun;
@@ -114,16 +118,16 @@ public class Autonomous implements TelemetryProvider {
     Pose2d backdropApproachPosition;
 
     Pose2d aprilTagApproachPosition;
+    Pose2d parkPosition;
 
 
     public static int INWARD_SCORING_ANGLE = -45;
     public static int MIDDLE_SCORING_ANGLE = -50;
     public static int OUTWARD_SCORING_ANGLE = 30;
-    public static double indexHeadingOffset = 0;
     public static double indexStrafeOffset = 0;
 
     //BASED ON BLUE_RIGHT_START
-    public static double STAGE_ONE_Y_COORDINATE = .5;
+    public static double STAGE_ONE_Y_COORDINATE = .4;
 
     public static double STAGE_TWO_X_COORDINATE = -2.1;
     public static double STAGE_TWO_HEADING = 40;
@@ -262,7 +266,9 @@ public class Autonomous implements TelemetryProvider {
 
         purpleEndPosition = P2D(startingPosition.getPose().position.x / FIELD_INCHES_PER_GRID, allianceDirection * .35 * FIELD_INCHES_PER_GRID, STANDARD_HEADING);
         backdropApproachPosition = P2D(1.65, allianceDirection * .35, STANDARD_HEADING);
-        aprilTagApproachPosition = P2D(1.65, allianceDirection * 2 + (targetAprilTagIndex - 3) * aprilTagOffset, STANDARD_HEADING);
+        aprilTagApproachPosition = P2D(1.8, allianceDirection * 1.5 + (targetAprilTagIndex - 3) * aprilTagOffset, STANDARD_HEADING);
+
+        parkPosition = P2D(1.6, allianceDirection * 2.1, STANDARD_HEADING);
 
         //
         redLeftStageOne = new SequentialAction(
@@ -342,6 +348,14 @@ public class Autonomous implements TelemetryProvider {
                         .strafeTo(purpleEndPosition.position)
                         .build()
 
+        );
+    }
+
+    public void parkBuild() {
+        park = new SequentialAction(
+                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                        .lineToYConstantHeading(parkPosition.position.y)
+                        .build()
         );
     }
 
@@ -479,10 +493,36 @@ public class Autonomous implements TelemetryProvider {
                 case 9:
                     autonState = AutonState.FIND_STANDARD_HEADING;
                     if(!findStandardHeading.run(packet)) {
+                        robot.articulate(Robot.Articulation.BACKDROP_PREP);
                         autonIndex++;
                     }
                     break;
                 case 10:
+                    autonState = AutonState.SCORE_BACKDROP;
+                    if(robot.outtake.articulation.equals(Outtake.Articulation.BACKDROP))
+                        autonIndex++;
+                    break;
+                case 11:
+                    autonState = AutonState.SCORE_DRIVE;
+                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.4, 0), 0));
+                    if(robot.driveTrain.backDistanceSensor.getDistance(DistanceUnit.INCH) < 8.5) {
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                        autonIndex++;
+                    }
+                    break;
+                case 12:
+//                    autonState = AutonState.PREP_FOR_PARK;
+//                    robot.outtake.setTargetAngle(Outtake.FLIPPER_PRE_SCORE_ANGLE);
+//                    parkBuild();
+                    autonIndex ++;
+                    break;
+                case 13:
+//                    autonState = AutonState.PARK;
+//                    if(!park.run(packet)) {
+                        autonIndex++;
+//                    }
+                    break;
+                case 14:
                     autonState = AutonState.DONE;
                     robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
                     return true;

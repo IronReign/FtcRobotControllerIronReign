@@ -216,7 +216,7 @@ public class CenterStage_6832 extends OpMode {
         }
 
         if(gameState.equals(GameState.TELE_OP)){
-
+            robot.articulate(Robot.Articulation.TRAVEL);
         }
 
         if(gameState.equals(GameState.TEST) ||  gameState.equals(GameState.DEMO)){

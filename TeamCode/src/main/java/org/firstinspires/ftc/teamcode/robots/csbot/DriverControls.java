@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.active;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionOn;
@@ -33,6 +34,7 @@ public class DriverControls {
     private StickyGamepad stickyGamepad1, stickyGamepad2;
 
     DriverControls(Gamepad pad1, Gamepad pad2) {
+        fieldOrientedDrive = true;
         gamepad1 = pad1;
         gamepad2 = pad2;
         stickyGamepad1 = new StickyGamepad(gamepad1);
@@ -54,7 +56,9 @@ public class DriverControls {
         }
 
         if(stickyGamepad1.y) {
-            robot.driveTrain.setPose(startingPosition);
+            if(gameState.isAutonomous()) {
+                robot.driveTrain.setPose(startingPosition);
+            }
         }
 
         if(stickyGamepad1.guide) {
@@ -105,15 +109,12 @@ public class DriverControls {
             robot.outtake.adjustFlipper(robot.outtake.FLIPPER_ADJUST_ANGLE);
         }
         if (stickyGamepad1.a) {
+            if(robot.articulation == Robot.Articulation.TRAVEL)
             robot.articulate(Robot.Articulation.INGEST);
         }
         if (stickyGamepad1.b) {
-            //robot.intake.toggleBeaterDirection();
             robot.toggleBackdropPrep();
         }
-//        if (stickyGamepad1.y){ //todo move off of y since that's pixel flipper also
-//            robot.articulate(Robot.Articulation.INGEST);
-//        }
 
         if(fieldOrientedDrive) {
             fieldOrientedDrive();
@@ -127,16 +128,12 @@ public class DriverControls {
                 robot.intake.pixelSensorLeft();
             else
                 robot.outtake.moveSlide(5);
-//            if(robot.outtake.getSlidePosition() > 100 && robot.outtake.getSlidePosition() < 800)//TODO find more accurate values for where flipper should be raised
-//                robot.outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
         }
         if (gamepad1.right_bumper) {
             if (robot.intake.isEating())
                 robot.intake.pixelSensorRight();
             else
                 robot.outtake.moveSlide(-5);
-//            if(robot.outtake.getSlidePosition() > 100 && robot.outtake.getSlidePosition() < 800)//TODO find more accurate values for where flipper should be raised
-//                robot.outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
         }
 
         if (stickyGamepad1.y) {
@@ -149,10 +146,6 @@ public class DriverControls {
         if(stickyGamepad1.dpad_up)
             robot.intake.articulate(Intake.Articulation.SWALLOW);
 
-
-        if(stickyGamepad2.y) {
-            fieldOrientedDrive = !fieldOrientedDrive;
-        }
         if (stickyGamepad1.dpad_down) {
             robot.outtake.articulate(Outtake.Articulation.BACKDROP_PREP);
         }
@@ -167,9 +160,6 @@ public class DriverControls {
         if(stickyGamepad2.dpad_down) {
             robot.articulate(Robot.Articulation.HANG);
         }
-//        if(stickyGamepad2.dpad_up) {
-//            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
-//        }
 
         //mu name is jimmy and i am a pickle and i am a potato and i need to sleep with my truffle oil to feel happiness
 
