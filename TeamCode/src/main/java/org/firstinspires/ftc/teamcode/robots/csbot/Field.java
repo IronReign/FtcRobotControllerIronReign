@@ -1,10 +1,7 @@
-package org.firstinspires.ftc.teamcode.robots.csbot.util;
+package org.firstinspires.ftc.teamcode.robots.csbot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
-
-import android.util.ArraySet;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
