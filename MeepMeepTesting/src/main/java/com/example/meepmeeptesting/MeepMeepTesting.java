@@ -7,50 +7,57 @@ import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
 
-public class MeepMeepTesting {
+public class MeepMeepTesting {Alliance alliance = Alliance.RED;
+
+
+    public enum Position {
+        ORIGIN_DEFAULT (new Pose2d(0, 0, 0)), //this if used will reset the origin to FTC Dashboard's default
+        START_LEFT_RED(P2D(-1.5, -2.5, -90)),
+        START_RIGHT_RED(P2D(.5, -2.5, -90)),
+        START_RIGHT_BLUE(P2D(-1.5, 2.5, 90)),
+        START_LEFT_BLUE(P2D(.5, 2.5, 90));
+        private final Pose2d pose;
+
+        public boolean getMod() {
+            return this.name() == START_LEFT_RED.name() || this.name() == START_RIGHT_RED.name() ?  true : false;
+        }
+
+        Position(Pose2d pose) {
+            this.pose = pose;
+        }
+
+        public Pose2d getPose() {
+            return pose;
+        }
+    }
+    static Position startingPosition = Position.START_LEFT_RED;
+    static Pose2d blueRightStageOnePosition;
+    static Pose2d blueRightStageTwoPosition;
+
+    static Pose2d blueLeftStageOnePosition;
+    static Pose2d blueLeftStageTwoPosition;
+
+    static Pose2d redRightStageOnePosition;
+    static Pose2d redRightStageTwoPosition;
+
+    static Pose2d redLeftStageOnePosition;
+    static Pose2d redLeftStageTwoPosition;
+
+    static Pose2d purpleEndPosition;
+    static Pose2d backdropApproachPosition;
+
+    static Pose2d aprilTagApproachPosition;
+    static Pose2d parkPosition;
+
     public static void main(String[] args) {
 
-        Alliance alliance = Alliance.RED;
-        Position startingPosition = Position.START_LEFT_RED;
-        Pose2d blueRightStageOnePosition;
-        Pose2d blueRightStageTwoPosition;
 
-        Pose2d blueLeftStageOnePosition;
-        Pose2d blueLeftStageTwoPosition;
 
-        Pose2d redRightStageOnePosition;
-        Pose2d redRightStageTwoPosition;
 
-        Pose2d redLeftStageOnePosition;
-        Pose2d redLeftStageTwoPosition;
 
-        Pose2d purpleEndPosition;
-        Pose2d backdropApproachPosition;
-
-        Pose2d aprilTagApproachPosition;
-        Pose2d parkPosition;
-
-        Pose2d pose = startingPosition.getPose();
-
-        blueRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
-        blueRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
-
-        blueLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
-        blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET - indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
-
-        redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
-        redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
-
-        redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
-        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
-
-        purpleEndPosition = P2D(startingPosition.getPose().position.x / FIELD_INCHES_PER_GRID, allianceDirection * .35 * FIELD_INCHES_PER_GRID, STANDARD_HEADING);
-        backdropApproachPosition = P2D(1.65, allianceDirection * .35, STANDARD_HEADING);
-        aprilTagApproachPosition = P2D(1.8, allianceDirection * 1.5 + (targetAprilTagIndex - 3) * aprilTagOffset, STANDARD_HEADING);
-
-        parkPosition = P2D(1.6, allianceDirection * 2.1, STANDARD_HEADING);
 
         MeepMeep meepMeep = new MeepMeep(800);
+
 
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
@@ -58,7 +65,12 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(90), Math.toRadians(90), 15)
                 .build();
 
+        updateIndexOffsets(startingPosition, 1);
+        build();
 
+        startingPosition = Position.START_LEFT_RED;
+        Pose2d p = startingPosition.getPose();
+        System.out.println(Position.START_LEFT_RED.getPose());
 
 //        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(0, 0, 0))
 //                .lineToX(30)
@@ -71,8 +83,7 @@ public class MeepMeepTesting {
 //                .turn(Math.toRadians(90))
 //                .build());
 
-        updateIndexOffsets(startingPosition, 1);
-        myBot.runAction(myBot.getDrive().actionBuilder(startingPosition.pose)
+        myBot.runAction(myBot.getDrive().actionBuilder(p)
                 //redLeftStageOne
                         .lineToYLinearHeading(redLeftStageOnePosition.position.y, redLeftStageOnePosition.heading)
 
@@ -123,26 +134,30 @@ public class MeepMeepTesting {
     public static Pose2d P2D (double x, double y, double deg) {
         return new Pose2d(x * FIELD_INCHES_PER_GRID, y * FIELD_INCHES_PER_GRID, Math.toRadians(deg));
     }
-    public enum Position {
-        ORIGIN_DEFAULT (new Pose2d(0, 0, 0)), //this if used will reset the origin to FTC Dashboard's default
-        START_LEFT_RED(P2D(-1.5, -2.5, -90)),
-        START_RIGHT_RED(P2D(.5, -2.5, -90)),
-        START_RIGHT_BLUE(P2D(-1.5, 2.5, 90)),
-        START_LEFT_BLUE(P2D(.5, 2.5, 90));
-        private final Pose2d pose;
 
-        public boolean getMod() {
-            return this.name() == START_LEFT_RED.name() || this.name() == START_RIGHT_RED.name() ?  true : false;
-        }
+    public static void build(){
+        Pose2d pose = startingPosition.getPose();
 
-        Position(Pose2d pose) {
-            this.pose = pose;
-        }
+        parkPosition = P2D(1.6, allianceDirection * 2.1, STANDARD_HEADING);
 
-        public Pose2d getPose() {
-            return pose;
-        }
+        blueRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
+        blueRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
+
+        blueLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
+        blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET - indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
+
+        redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
+        redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
+
+        redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
+        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
+
+        purpleEndPosition = P2D(startingPosition.getPose().position.x / FIELD_INCHES_PER_GRID, allianceDirection * .35 / FIELD_INCHES_PER_GRID, STANDARD_HEADING);
+        backdropApproachPosition = P2D(1.65, allianceDirection * .35, STANDARD_HEADING);
+        aprilTagApproachPosition = P2D(1.8, allianceDirection * 1.5 + (targetAprilTagIndex - 3) * aprilTagOffset, STANDARD_HEADING);
+
     }
+
     public enum Alliance {
         RED(true), BLUE(false);
 
