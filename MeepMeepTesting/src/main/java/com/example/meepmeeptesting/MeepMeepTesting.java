@@ -2,6 +2,7 @@ package com.example.meepmeeptesting;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
@@ -30,7 +31,7 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
             return pose;
         }
     }
-    static Position startingPosition = Position.START_LEFT_RED;
+    //static Position startingPosition = Position.START_LEFT_RED;
     static Pose2d blueRightStageOnePosition;
     static Pose2d blueRightStageTwoPosition;
 
@@ -51,25 +52,20 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
 
     public static void main(String[] args) {
 
-
-
-
-
-
         MeepMeep meepMeep = new MeepMeep(800);
-
-
+        Position startingPosition = Position.START_LEFT_RED;
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(60, 60, Math.toRadians(90), Math.toRadians(90), 15)
                 .build();
 
-        updateIndexOffsets(startingPosition, 1);
-        build();
-
-        startingPosition = Position.START_LEFT_RED;
+        startingPosition = Position.START_RIGHT_RED;
         Pose2d p = startingPosition.getPose();
+
+        updateIndexOffsets(startingPosition, 2);
+        build(startingPosition);
+
         System.out.println(Position.START_LEFT_RED.getPose());
 
 //        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(0, 0, 0))
@@ -82,24 +78,30 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
 //                .lineToY(0)
 //                .turn(Math.toRadians(90))
 //                .build());
-
-        myBot.runAction(myBot.getDrive().actionBuilder(p)
+        Action bot1;
+        bot1 =
+        myBot.getDrive().actionBuilder(p)
+                .turnTo(Math.toRadians(325))
                 //redLeftStageOne
-                        .lineToYLinearHeading(redLeftStageOnePosition.position.y, redLeftStageOnePosition.heading)
+//                .lineToYLinearHeading(redLeftStageOnePosition.position.y, redLeftStageOnePosition.heading)
 
                 //redLeftStageTwo
-                        .strafeTo(redLeftStageTwoPosition.position)
-                        .turnTo(redLeftStageTwoPosition.heading)
+//                .strafeTo(redLeftStageTwoPosition.position)
+//                .turnTo(redLeftStageTwoPosition.heading.log())
+                .waitSeconds(1)
 
-                //findStandardPosition (for audience side starting positions) comment out otherwise
-                        .turnTo(purpleEndPosition.heading)
-                        .strafeTo(purpleEndPosition.position)
+//                //findStandardPosition (for audience side starting positions) comment out otherwise
+//                .turnTo(purpleEndPosition.heading)
+//                .waitSeconds(1)
+//                .strafeTo(purpleEndPosition.position)
+//
+//                //approachBackdrop
+//                .turnTo(purpleEndPosition.heading) //todo, why is this here?
+//                .strafeTo(backdropApproachPosition.position)
 
-                //approachBackdrop
-                .turnTo(purpleEndPosition.heading) //todo, why is this here?
-                .strafeTo(backdropApproachPosition.position)
+                .build();
 
-                                .build());
+        myBot.runAction(bot1);
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_OFFICIAL)
                 .setDarkMode(true)
@@ -135,8 +137,8 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
         return new Pose2d(x * FIELD_INCHES_PER_GRID, y * FIELD_INCHES_PER_GRID, Math.toRadians(deg));
     }
 
-    public static void build(){
-        Pose2d pose = startingPosition.getPose();
+    public static void build(Position start){
+        Pose2d pose = start.getPose();
 
         parkPosition = P2D(1.6, allianceDirection * 2.1, STANDARD_HEADING);
 
@@ -152,7 +154,7 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
         redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
         redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
 
-        purpleEndPosition = P2D(startingPosition.getPose().position.x / FIELD_INCHES_PER_GRID, allianceDirection * .35 / FIELD_INCHES_PER_GRID, STANDARD_HEADING);
+        purpleEndPosition = P2D(start.getPose().position.x / FIELD_INCHES_PER_GRID, allianceDirection * .35 / FIELD_INCHES_PER_GRID, STANDARD_HEADING);
         backdropApproachPosition = P2D(1.65, allianceDirection * .35, STANDARD_HEADING);
         aprilTagApproachPosition = P2D(1.8, allianceDirection * 1.5 + (targetAprilTagIndex - 3) * aprilTagOffset, STANDARD_HEADING);
 
