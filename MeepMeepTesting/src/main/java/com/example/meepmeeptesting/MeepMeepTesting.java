@@ -81,25 +81,37 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
         Action bot1;
         bot1 =
         myBot.getDrive().actionBuilder(p)
-                .turnTo(Math.toRadians(325))
-                //redLeftStageOne
-//                .lineToYLinearHeading(redLeftStageOnePosition.position.y, redLeftStageOnePosition.heading)
 
-                //redLeftStageTwo
-//                .strafeTo(redLeftStageTwoPosition.position)
-//                .turnTo(redLeftStageTwoPosition.heading.log())
+//                redLeftStageOne
+
+                //starting pose has a heading of -90 degrees
+                .turnTo(Math.toRadians(-45-90)) //no glitch
+                .turnTo(Math.toRadians(-90)) //no glitch
+                .turnTo(-2.443460952792061) //glitch
+                .turnTo(Math.toRadians(270)) //glitch
+                .turnTo(Math.toRadians(-45)) //glitch
+                .turnTo(Math.toRadians(90)) //no glitch
+                .turnTo(Math.toRadians(45)) //glitch
+                .turnTo(Math.toRadians(90)) //no glitch
+                .turnTo(Math.toRadians(135)) //glitch - but 134 in this line doesn't glitch
+                .lineToYLinearHeading(redLeftStageOnePosition.position.y, redLeftStageOnePosition.heading)
+
+//                redLeftStageTwo
+                .strafeTo(redLeftStageTwoPosition.position)
+                .turnTo(redLeftStageTwoPosition.heading.log())
                 .waitSeconds(1)
 
-//                //findStandardPosition (for audience side starting positions) comment out otherwise
-//                .turnTo(purpleEndPosition.heading)
-//                .waitSeconds(1)
-//                .strafeTo(purpleEndPosition.position)
-//
-//                //approachBackdrop
-//                .turnTo(purpleEndPosition.heading) //todo, why is this here?
-//                .strafeTo(backdropApproachPosition.position)
+                //findStandardPosition (for audience side starting positions) comment out otherwise
+                .turnTo(purpleEndPosition.heading)
+                .waitSeconds(1)
+                .strafeTo(purpleEndPosition.position)
+
+                //approachBackdrop
+                .turnTo(purpleEndPosition.heading) //todo, why is this here?
+                .strafeTo(backdropApproachPosition.position)
 
                 .build();
+        System.out.println(redLeftStageTwoPosition.heading.log());
 
         myBot.runAction(bot1);
 
