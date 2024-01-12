@@ -31,7 +31,7 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
             return pose;
         }
     }
-    //static Position startingPosition = Position.START_LEFT_RED;
+
     static Pose2d blueRightStageOnePosition;
     static Pose2d blueRightStageTwoPosition;
 
@@ -51,21 +51,24 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
     static Pose2d aprilTagApproachPosition;
     static Pose2d parkPosition;
 
+    static Pose2d audienceIntermediate = P2D(1,-.5,-10);
+
     public static void main(String[] args) {
 
         MeepMeep meepMeep = new MeepMeep(800);
-        Position startingPosition = Position.START_LEFT_RED;
+        Position startingPosition;
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(60, 60, Math.toRadians(90), Math.toRadians(90), 15)
                 .build();
 
-        startingPosition = Position.START_LEFT_BLUE;
+        startingPosition = Position.START_RIGHT_RED;
         Pose2d p = startingPosition.getPose();
 
         updateIndexOffsets(startingPosition, 2);
         build(startingPosition);
+        Pose2d audienceIntermediate = P2D(1,.5*allianceDirection,-10); //todo move
 
         System.out.println(Position.START_LEFT_RED.getPose());
 
@@ -83,7 +86,13 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
         bot1 =
         myBot.getDrive().actionBuilder(p)
 
-
+                .setReversed(true)
+                .splineTo(redLeftStageTwoPosition.position, Math.toRadians(100))
+                .waitSeconds(1) //eject purple here
+                .turnTo(STANDARD_HEADING_RAD)
+                .setReversed(true)
+                .splineTo(audienceIntermediate.position,audienceIntermediate.heading)
+                .splineTo(aprilTagApproachPosition.position, 0)
 //                redLeftStageOne
 
                 //starting pose has a heading of -90 degrees
@@ -96,21 +105,21 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
 //                .turnTo(Math.toRadians(45)) //glitch
 //                .turnTo(Math.toRadians(90)) //no glitch
 //                .turnTo(Math.toRadians(135)) //glitch - but 134 in this line doesn't glitch
-                .lineToYLinearHeading(stageOne.position.y, stageOne.heading)
+//                .lineToYLinearHeading(stageOne.position.y, stageOne.heading)
 
 //
-                .strafeTo(stageTwo.position)
-                .turnTo(stageTwo.heading.log())
-                .waitSeconds(1)
-                .setReversed(true)
-
-//                //findStandardPosition (for audience side starting positions) comment out otherwise
-//                .turnTo(purpleEndPosition.heading)
+//                .strafeTo(stageTwo.position)
+//                .turnTo(stageTwo.heading.log())
 //                .waitSeconds(1)
-//                .strafeTo(purpleEndPosition.position)
-
-                //approachBackdrop
-                .splineToLinearHeading(aprilTagApproachPosition, STANDARD_HEADING)
+//                .setReversed(true)
+//
+////                //findStandardPosition (for audience side starting positions) comment out otherwise
+////                .turnTo(purpleEndPosition.heading)
+////                .waitSeconds(1)
+////                .strafeTo(purpleEndPosition.position)
+//
+//                //approachBackdrop
+//                .splineToLinearHeading(aprilTagApproachPosition, STANDARD_HEADING)
 
                 .build();
         System.out.println(redLeftStageTwoPosition.heading.log());
@@ -131,6 +140,7 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
     public static int allianceDirection = -1;
 
     static double STANDARD_HEADING = 180;
+    static double STANDARD_HEADING_RAD = Math.PI;
     Pose2d actionEndPose = new Pose2d(0, 0, 0);
     private Action
             redLeftStageOne, redLeftStageTwo,
