@@ -13,10 +13,10 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
 
     public enum Position {
         ORIGIN_DEFAULT (new Pose2d(0, 0, 0)), //this if used will reset the origin to FTC Dashboard's default
-        START_LEFT_RED(P2D(-1.5, -2.5, -90)),
-        START_RIGHT_RED(P2D(.5, -2.5, -90)),
-        START_RIGHT_BLUE(P2D(-1.5, 2.5, 90)),
-        START_LEFT_BLUE(P2D(.5, 2.5, 90));
+        START_LEFT_RED(P2D(-1.5, -2.6, -90)),
+        START_RIGHT_RED(P2D(.5, -2.6, -90)),
+        START_RIGHT_BLUE(P2D(-1.5, 2.6, 90)),
+        START_LEFT_BLUE(P2D(.5, 2.6, 90));
         private final Pose2d pose;
 
         public boolean getMod() {
@@ -46,6 +46,7 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
 
     static Pose2d purpleEndPosition;
     static Pose2d backdropApproachPosition;
+    static Pose2d stageOne, stageTwo;
 
     static Pose2d aprilTagApproachPosition;
     static Pose2d parkPosition;
@@ -60,7 +61,7 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
                 .setConstraints(60, 60, Math.toRadians(90), Math.toRadians(90), 15)
                 .build();
 
-        startingPosition = Position.START_RIGHT_RED;
+        startingPosition = Position.START_LEFT_BLUE;
         Pose2d p = startingPosition.getPose();
 
         updateIndexOffsets(startingPosition, 2);
@@ -82,33 +83,34 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
         bot1 =
         myBot.getDrive().actionBuilder(p)
 
+
 //                redLeftStageOne
 
                 //starting pose has a heading of -90 degrees
-                .turnTo(Math.toRadians(-45-90)) //no glitch
-                .turnTo(Math.toRadians(-90)) //no glitch
-                .turnTo(-2.443460952792061) //glitch
-                .turnTo(Math.toRadians(270)) //glitch
-                .turnTo(Math.toRadians(-45)) //glitch
-                .turnTo(Math.toRadians(90)) //no glitch
-                .turnTo(Math.toRadians(45)) //glitch
-                .turnTo(Math.toRadians(90)) //no glitch
-                .turnTo(Math.toRadians(135)) //glitch - but 134 in this line doesn't glitch
-                .lineToYLinearHeading(redLeftStageOnePosition.position.y, redLeftStageOnePosition.heading)
+//                .turnTo(Math.toRadians(-45-90)) //no glitch
+//                .turnTo(Math.toRadians(-90)) //no glitch
+//                .turnTo(-2.443460952792061) //glitch
+//                .turnTo(Math.toRadians(270)) //glitch
+//                .turnTo(Math.toRadians(-45)) //glitch
+//                .turnTo(Math.toRadians(90)) //no glitch
+//                .turnTo(Math.toRadians(45)) //glitch
+//                .turnTo(Math.toRadians(90)) //no glitch
+//                .turnTo(Math.toRadians(135)) //glitch - but 134 in this line doesn't glitch
+                .lineToYLinearHeading(stageOne.position.y, stageOne.heading)
 
 //
-                .strafeTo(redLeftStageTwoPosition.position)
-                .turnTo(redLeftStageTwoPosition.heading.log())
+                .strafeTo(stageTwo.position)
+                .turnTo(stageTwo.heading.log())
                 .waitSeconds(1)
+                .setReversed(true)
 
-                //findStandardPosition (for audience side starting positions) comment out otherwise
-                .turnTo(purpleEndPosition.heading)
-                .waitSeconds(1)
-                .strafeTo(purpleEndPosition.position)
+//                //findStandardPosition (for audience side starting positions) comment out otherwise
+//                .turnTo(purpleEndPosition.heading)
+//                .waitSeconds(1)
+//                .strafeTo(purpleEndPosition.position)
 
                 //approachBackdrop
-                .turnTo(purpleEndPosition.heading) //todo, why is this here?
-                .strafeTo(backdropApproachPosition.position)
+                .splineToLinearHeading(aprilTagApproachPosition, STANDARD_HEADING)
 
                 .build();
         System.out.println(redLeftStageTwoPosition.heading.log());
@@ -125,7 +127,7 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
     public static int targetIndex = 1;
     public static int targetAprilTagIndex = 1;
     public static int visionProviderIndex;
-    public static double aprilTagOffset = .2;
+    public static double aprilTagOffset = .25;
     public static int allianceDirection = -1;
 
     static double STANDARD_HEADING = 180;
@@ -158,7 +160,7 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
         blueRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
 
         blueLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
-        blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET - indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
+        blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
 
         redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
         redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
@@ -168,8 +170,24 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
 
         purpleEndPosition = P2D(start.getPose().position.x / FIELD_INCHES_PER_GRID, allianceDirection * .35 / FIELD_INCHES_PER_GRID, STANDARD_HEADING);
         backdropApproachPosition = P2D(1.65, allianceDirection * .35, STANDARD_HEADING);
-        aprilTagApproachPosition = P2D(1.8, allianceDirection * 1.5 + (targetAprilTagIndex - 3) * aprilTagOffset, STANDARD_HEADING);
+        aprilTagApproachPosition = P2D(1.8, allianceDirection * 1 + ((targetAprilTagIndex - 3) * aprilTagOffset * allianceDirection ), STANDARD_HEADING);
 
+        if(start.equals(Position.START_RIGHT_RED)) {
+            stageOne = redRightStageOnePosition;
+            stageTwo = redRightStageTwoPosition;
+        }
+        if(start.equals(Position.START_LEFT_RED)) {
+            stageOne = redLeftStageOnePosition;
+            stageTwo = redLeftStageTwoPosition;
+        }
+        if(start.equals(Position.START_RIGHT_BLUE)) {
+            stageOne = blueRightStageOnePosition;
+            stageTwo = blueRightStageTwoPosition;
+        }
+        if(start.equals(Position.START_LEFT_BLUE)) {
+            stageOne = blueLeftStageOnePosition;
+            stageTwo = blueLeftStageTwoPosition;
+        }
     }
 
     public enum Alliance {
@@ -203,8 +221,11 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
 
     public static void updateIndexOffsets(Position startingPosition, int randomizer) { // 1, 2 or 3 for randomized prop
         targetIndex = randomizer;
+        allianceDirection = startingPosition.getMod()? -1 : 1;
 
         if(startingPosition.equals(Position.START_RIGHT_BLUE)) {
+            stageOne = blueRightStageOnePosition;
+            stageTwo = blueRightStageTwoPosition;
             targetAprilTagIndex = targetIndex;
             if (targetIndex == 3) {
                 STAGE_ONE_HEADING = 90;
@@ -233,6 +254,8 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
         }
 
         if(startingPosition.equals(Position.START_LEFT_BLUE)) {
+            stageOne = blueLeftStageOnePosition;
+            stageTwo = blueLeftStageTwoPosition;
             targetAprilTagIndex = targetIndex;
             if (targetIndex == 1) {
                 STAGE_ONE_HEADING = 90;
@@ -261,6 +284,8 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
         }
 
         if(startingPosition.equals(Position.START_LEFT_RED)) {
+            stageOne = redLeftStageOnePosition;
+            stageTwo = redLeftStageTwoPosition;
             targetAprilTagIndex = targetIndex + 3;
             if (targetIndex == 1) {
                 STAGE_ONE_HEADING = 90;
@@ -285,6 +310,8 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
             }
         }
         if(startingPosition.equals(Position.START_RIGHT_RED)) {
+            stageOne = redRightStageOnePosition;
+            stageTwo = redRightStageTwoPosition;
             targetAprilTagIndex = targetIndex + 3;
             if (targetIndex == 1) {
                 STAGE_ONE_HEADING = 90;
@@ -310,6 +337,7 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
         }
 
 
+        System.out.println("index: " + targetAprilTagIndex);
     }
 
 }
