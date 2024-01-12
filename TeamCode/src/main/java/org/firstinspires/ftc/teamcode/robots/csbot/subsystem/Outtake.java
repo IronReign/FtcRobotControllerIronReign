@@ -56,7 +56,7 @@ public class Outtake implements Subsystem {
 
     public static double FLIPPER_MIN_ANGLE = 0;
     public static double FLIPPER_MAX_ANGLE = 145;
-    public static double FLIPPER_PRE_SCORE_ANGLE = 120;
+    public static double FLIPPER_PRE_SCORE_ANGLE = 130;
     public static double FLIPPER_TRAVEL_ANGLE = 28;
     public static int FLIPPER_ADJUST_ANGLE = 10;
     public static double FLIPPER_DOCK_ANGLE = 0;

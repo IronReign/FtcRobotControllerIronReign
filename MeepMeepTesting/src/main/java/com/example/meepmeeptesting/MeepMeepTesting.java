@@ -96,7 +96,7 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
                 .turnTo(Math.toRadians(135)) //glitch - but 134 in this line doesn't glitch
                 .lineToYLinearHeading(redLeftStageOnePosition.position.y, redLeftStageOnePosition.heading)
 
-//                redLeftStageTwo
+//
                 .strafeTo(redLeftStageTwoPosition.position)
                 .turnTo(redLeftStageTwoPosition.heading.log())
                 .waitSeconds(1)

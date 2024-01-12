@@ -40,7 +40,7 @@ public class Field {
 
 
 
-    enum Zone {
+    public enum Zone {
         AUDIENCE(Field.MIN_X_VALUE, -1.5, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "AUDIENCE"),
         BACKSTAGE(.5, Field.MAX_X_VALUE, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "BACKSTAGE"),
         RIGGING(-1.5, .5, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "RIGGING");
@@ -166,7 +166,7 @@ public class Field {
 class SubZone{
     static SubZone PICKUP = new SubZone(Field.MIN_X_VALUE, -1.5, 1.5, Field.MAX_Y_VALUE, "PICKUP", Field.Zone.AUDIENCE);
     static SubZone WING = new SubZone(Field.MIN_X_VALUE, -1.5, 1.5, Field.MAX_Y_VALUE,"WING", Field.Zone.AUDIENCE);
-    static SubZone BACKDROP = new SubZone(1.5, Field.MAX_X_VALUE, Field.MIN_Y_VALUE, 0, "BACKDROP", Field.Zone.BACKSTAGE);
+    static SubZone BACKDROP = new SubZone(1, Field.MAX_X_VALUE, Field.MIN_Y_VALUE, 0, "BACKDROP", Field.Zone.BACKSTAGE);
 
     SubZone(double xmin, double xmax, double ymin, double ymax, String name, Field.Zone parent) {
         this.parent = parent;

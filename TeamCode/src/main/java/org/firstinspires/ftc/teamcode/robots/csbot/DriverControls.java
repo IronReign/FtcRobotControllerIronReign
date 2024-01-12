@@ -110,7 +110,7 @@ public class DriverControls {
         }
         if (stickyGamepad1.a) {
             if(robot.articulation == Robot.Articulation.TRAVEL)
-            robot.articulate(Robot.Articulation.INGEST);
+                robot.articulate(Robot.Articulation.INGEST);
         }
         if (stickyGamepad1.b) {
             robot.toggleBackdropPrep();

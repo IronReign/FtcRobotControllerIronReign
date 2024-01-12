@@ -28,7 +28,7 @@ public class CenterStage_6832 extends OpMode {
     public static Robot robot;
     static Autonomous auton;
     private FtcDashboard dashboard;
-    public Field field;
+    public static Field field;
     DriverControls dc;
 
 

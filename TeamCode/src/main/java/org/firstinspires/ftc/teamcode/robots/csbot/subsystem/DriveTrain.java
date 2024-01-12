@@ -18,6 +18,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 //todo this should not reference the reign version of MecanumDrive
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
+import org.firstinspires.ftc.teamcode.robots.csbot.Field;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 //todo this should not reference reign's Constants
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
@@ -29,6 +30,7 @@ import java.util.Map;
 public class DriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
     public boolean trajectoryIsActive;
+    public static double DRIVE_DAMPENING = 0.5;
 
     public Articulation articulation;
 
@@ -63,6 +65,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     }
 
     public void drive(double x, double y, double theta) {
+        if(CenterStage_6832.field.finalized)
+        theta = CenterStage_6832.field.getZone(pose) == Field.Zone.BACKSTAGE ? theta * DRIVE_DAMPENING : theta;
         trajectoryIsActive = false;
         setDrivePowers(new PoseVelocity2d(
                 new Vector2d(
@@ -75,6 +79,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     }
 
     public void fieldOrientedDrive(double x, double y, double theta, boolean isRed){
+        if(CenterStage_6832.field.finalized)
+        theta = CenterStage_6832.field.getZone(pose) == Field.Zone.BACKSTAGE ? theta * DRIVE_DAMPENING : theta;
         // Create a vector from the gamepad x/y inputs
         // Then, rotate that vector by the inverse of that heading
         Vector2d input = new Vector2d(
