@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
@@ -32,7 +33,7 @@ public class Intake implements Subsystem {
     public static int ANGLE_HANG = 1565;
     public static int ANGLE_SWALLOW = 1950;
     public static int ANGLE_TRAVEL = 1800; //safe to travel through backstage door
-    public static double TIME_SWALLOW = .3;
+    public static double TIME_SWALLOW = 1;
     public static double TIME_EJECT = 2;
 
     //CONSTANTS
@@ -53,7 +54,7 @@ public class Intake implements Subsystem {
     private int ingestPixelHeight = 0;  //the height at which to start ingesting pixels. Normally 0 for ground but could be 4 for top pixel in a stack
 
     public enum PixelStack {
-        GROUND(0, ANGLE_INGEST_GROUND),
+        GROUND(0, ANGLE_INGEST_GROUND - ANGLE_INGEST_INCREMENT), //the minus is to force it harder into the tiles
         TWO(1, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT),
         THREE(2, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT*2),
         FOUR(3, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT*3),
@@ -298,7 +299,7 @@ public class Intake implements Subsystem {
 
     public boolean ingest(int height){ //height is expected to be changed externally
         setDiverters(pixelSensor, height);
-        angleTarget = PixelStack.getByIndex(height).angle;
+        angleTarget = PixelStack.getByIndex(Range.clip(height,0,4)).angle;
         beaterTargetVelocity = BEATER_INGEST_VELOCITY;
         //if a pixel is detected
         if(pixelSensor.count>1) return true;

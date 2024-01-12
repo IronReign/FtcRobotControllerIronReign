@@ -135,8 +135,8 @@ public class CenterStage_6832 extends OpMode {
         auton = new Autonomous(robot);
         field = new Field();
 
-        //FETCH CACHE
-        robot.fetchCachedCSPosition();
+        robot.updatePositionCache = false;
+        robot.driveTrain.setPose(startingPosition);
 
         //TELEMETRY SETUP
         dashboard = FtcDashboard.getInstance();
@@ -160,16 +160,7 @@ public class CenterStage_6832 extends OpMode {
         robot.updateVision();
 
         robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
-        if(robot.fetched && !gameState.isAutonomous()) {
-            robot.driveTrain.setPose(robot.fetchedPosition.getPose());
-            robot.skyhook.skyhookLeft.setPosition(robot.fetchedPosition.getSkyhookLeftTicks());
-            robot.skyhook.skyhookRight.setPosition(robot.fetchedPosition.getSkyhookRightTicks());
-        }
-        else {
-            robot.driveTrain.setPose(startingPosition);
-            robot.skyhook.skyhookLeft.setPosition(0);
-            robot.skyhook.skyhookRight.setPosition(0);
-        }
+
 
         robot.initPosition();
         if(gameState.isAutonomous()) {
@@ -200,6 +191,9 @@ public class CenterStage_6832 extends OpMode {
         startTime = System.currentTimeMillis();
         lastLoopClockTime = System.nanoTime();
 
+        //FETCH CACHE
+        robot.fetchCachedCSPosition();
+
         field.finalizeField();
         resetGame();
 
@@ -213,6 +207,19 @@ public class CenterStage_6832 extends OpMode {
         if(gameState.equals(GameState.TEST) ||  gameState.equals(GameState.DEMO)){
 
         }
+
+        if(robot.fetched && !gameState.isAutonomous()) {
+            robot.driveTrain.setPose(robot.fetchedPosition.getPose());
+            robot.skyhook.skyhookLeft.setPosition(-robot.fetchedPosition.getSkyhookLeftTicks());
+            robot.skyhook.skyhookRight.setPosition(-robot.fetchedPosition.getSkyhookRightTicks());
+        }
+        else {
+            robot.driveTrain.setPose(startingPosition);
+            robot.skyhook.skyhookLeft.setPosition(0);
+            robot.skyhook.skyhookRight.setPosition(0);
+        }
+
+        robot.updatePositionCache = true;
 
         robot.start();
     }
@@ -239,8 +246,8 @@ public class CenterStage_6832 extends OpMode {
 
             switch(gameState) {
                 case AUTONOMOUS:
-//                        if(auton.execute(dashboard )) gameState = GameState.TELE_OP;
-                    auton.execute(dashboard);
+                    if(auton.execute(dashboard )) gameState = GameState.TELE_OP;
+                    //auton.execute(dashboard);
                     break;
 
                 case TELE_OP:

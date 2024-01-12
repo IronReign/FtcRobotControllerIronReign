@@ -86,10 +86,6 @@ public class DriverControls {
             visionOn = !visionOn;
         }
 
-        if(stickyGamepad1.back) {
-            robot.articulate(Robot.Articulation.INGEST);
-        }
-
         fieldOrientedDrive();
 
     }
@@ -106,14 +102,15 @@ public class DriverControls {
             robot.intake.adjustAngle(-gamepad1.right_trigger*.85);
         }
         if (stickyGamepad1.a) {
-            robot.intake.articulate(Intake.Articulation.INGEST);
-        }
-        if (stickyGamepad1.b) {
-            robot.intake.toggleBeaterDirection();
-        }
-        if (stickyGamepad1.y){
             robot.articulate(Robot.Articulation.INGEST);
         }
+        if (stickyGamepad1.b) {
+            //robot.intake.toggleBeaterDirection();
+            robot.toggleBackdropPrep();
+        }
+//        if (stickyGamepad1.y){ //todo move off of y since that's pixel flipper also
+//            robot.articulate(Robot.Articulation.INGEST);
+//        }
 
         if(fieldOrientedDrive) {
             fieldOrientedDrive();
@@ -140,9 +137,9 @@ public class DriverControls {
         }
 
         if (gamepad1.y)
-            robot.outtake.adjustFlipper(-15);
+            robot.outtake.adjustFlipper(robot.outtake.FLIPPER_ADJUST_ANGLE);
         if (gamepad1.x)
-            robot.outtake.adjustFlipper(15);
+            robot.outtake.adjustFlipper(-robot.outtake.FLIPPER_ADJUST_ANGLE);
 
         if(stickyGamepad1.dpad_up)
             robot.intake.articulate(Intake.Articulation.SWALLOW);
@@ -152,11 +149,11 @@ public class DriverControls {
             fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (stickyGamepad1.dpad_down) {
-            robot.outtake.articulate(Outtake.Articulation.SCORE_PIXEL);
+            robot.outtake.articulate(Outtake.Articulation.BACKDROP_PREP);
         }
 
         if(stickyGamepad2.dpad_up) {
-            robot.skyhook.articulate(Skyhook.Articulation.PREP_FOR_HANG);
+            robot.articulate(Robot.Articulation.PREP_FOR_HANG);
         }
         if(stickyGamepad2.a) {
             robot.skyhook.articulate(Skyhook.Articulation.INIT);
