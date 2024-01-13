@@ -10,6 +10,7 @@ import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
 public class MeepMeepTesting {
 
+
     public enum Position {
         ORIGIN_DEFAULT (new Pose2d(0, 0, 0)), //this if used will reset the origin to FTC Dashboard's default
         START_LEFT_RED(P2D(-1.5, -2.6, -90)),
@@ -33,6 +34,7 @@ public class MeepMeepTesting {
 
     static Pose2d aprilTagApproachPosition;
     static Pose2d audienceIntermediate;
+    static Pose2d audienceIntermediateForward;
     static Pose2d aprilTagAlign, aprilTagAlignClose;
 
 
@@ -43,7 +45,7 @@ public class MeepMeepTesting {
 
         MeepMeep meepMeep = new MeepMeep(800);
         Position startingPosition;
-        autonPaths = new Pose2d[7][6];
+        autonPaths = new Pose2d[7][10];
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setDimensions(16.5, 16.5)
@@ -66,7 +68,7 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        int randomizer = 1; //1, 2 or 3
+        int randomizer = 3; //1, 2 or 3
         Pose2d p;
 
         startingPosition = Position.START_LEFT_RED;
@@ -94,7 +96,14 @@ public class MeepMeepTesting {
                         .setReversed(true)
                         .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-
+                        .waitSeconds(1)
+                        .setReversed(false)
+                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
+                        .waitSeconds(1)
+                        .setReversed(true)
+                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
                         .build();
 
         //bot2 - builder identical to bot1 - when adjusting the build, do it for bot1 and copy to the other bots
@@ -117,7 +126,14 @@ public class MeepMeepTesting {
                         .setReversed(true)
                         .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-
+                        .waitSeconds(1)
+                        .setReversed(false)
+                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
+                        .waitSeconds(1)
+                        .setReversed(true)
+                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
                         .build();
 
         startingPosition = Position.START_LEFT_BLUE;
@@ -140,7 +156,14 @@ public class MeepMeepTesting {
                         .setReversed(true)
                         .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-
+                        .waitSeconds(1)
+                        .setReversed(false)
+                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
+                        .waitSeconds(1)
+                        .setReversed(true)
+                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
                         .build();
 
         startingPosition = Position.START_RIGHT_RED;
@@ -163,13 +186,21 @@ public class MeepMeepTesting {
                         .setReversed(true)
                         .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-
+                        .waitSeconds(1)
+                        .setReversed(false)
+                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
+                        .waitSeconds(1)
+                        .setReversed(true)
+                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
                         .build();
 
-        myBot.runAction(bot1Action);
+
         myBot2.runAction(bot2Action);
         myBot3.runAction(bot3Action);
         myBot4.runAction(bot4Action);
+        myBot.runAction(bot1Action);
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_OFFICIAL)
                 .setDarkMode(true)
@@ -226,6 +257,7 @@ public class MeepMeepTesting {
     public static int setPath(Position startingPosition, int randomizer) { // 1, 2 or 3 for randomized prop
         aprilTagApproachPosition = P2D(1.8,   1.5, STANDARD_HEADING);
         audienceIntermediate = P2D(1,.5,-10);
+        audienceIntermediateForward = P2D(1, .5, STANDARD_HEADING);
         allianceDirection = startingPosition.getMod()? -1 : 1;
         //aprilTagAlign = new Pose2d (new Vector2d(switchSides(aprilTagApproachPosition.position).x,switchSides(aprilTagApproachPosition.position).y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
 //        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
@@ -239,36 +271,60 @@ public class MeepMeepTesting {
         autonPaths[1][3] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[1][4] = audienceIntermediate;
         autonPaths[1][5] = aprilTagAlign;
+        autonPaths[1][6] = audienceIntermediateForward;
+        autonPaths[1][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[1][8] = audienceIntermediate;
+        autonPaths[1][9] = aprilTagAlign;
 
         autonPaths[2][1] = P2D(-1.2, .45, 47);
         autonPaths[2][2] = P2D(0, 0, -90-47);
         autonPaths[2][3] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[2][4] = audienceIntermediate;
         autonPaths[2][5] = aprilTagAlign;
+        autonPaths[2][6] = audienceIntermediateForward;
+        autonPaths[2][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[2][8] = audienceIntermediate;
+        autonPaths[2][9] = aprilTagAlign;
 
         autonPaths[3][1] = P2D(-1.65, 1, 90);
         autonPaths[3][2] = P2D(0, 0, -30);
         autonPaths[3][3] = P2D(0, 0, -130);
         autonPaths[3][4] = audienceIntermediate;
         autonPaths[3][5] = aprilTagAlign;
+        autonPaths[3][6] = audienceIntermediateForward;
+        autonPaths[3][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[3][8] = audienceIntermediate;
+        autonPaths[3][9] = aprilTagAlign;
 
         autonPaths[4][1] = P2D(startingPosition.pose.position.x/FIELD_INCHES_PER_GRID+.15, 1.25, 90);
         autonPaths[4][2] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[4][3] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[4][4] = aprilTagAlignClose;
         autonPaths[4][5] = aprilTagAlign;
+        autonPaths[4][6] = audienceIntermediateForward;
+        autonPaths[4][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[4][8] = audienceIntermediate;
+        autonPaths[4][9] = aprilTagAlign;
 
         autonPaths[5][1] = P2D(startingPosition.pose.position.x/FIELD_INCHES_PER_GRID, 1.7, 90);
         autonPaths[5][2] = P2D(0, 0, 90);
         autonPaths[5][3] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[5][4] = aprilTagAlignClose;
         autonPaths[5][5] = aprilTagAlign;
+        autonPaths[5][6] = audienceIntermediateForward;
+        autonPaths[5][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[5][8] = audienceIntermediate;
+        autonPaths[5][9] = aprilTagAlign;
 
         autonPaths[6][1] = P2D(1.55, 1.5, -15);
         autonPaths[6][2] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[6][3] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[6][4] = aprilTagAlignClose;
         autonPaths[6][5] = aprilTagAlign;
+        autonPaths[6][6] = audienceIntermediateForward;
+        autonPaths[6][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[6][8] = audienceIntermediate;
+        autonPaths[6][9] = aprilTagAlign;
 
         int rando = randomizer;
         if (allianceDirection==1 && randomizer==1) rando = 3;
