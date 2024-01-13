@@ -24,15 +24,15 @@ public class Intake implements Subsystem {
     public static int LEFT_DIVERTER_OPEN = 1850;
     public static int LEFT_DIVERTER_CLOSED = 1490;
     public static int RIGHT_DIVERTER_CLOSED = 1350;
-    public static int ANGLE_MAX = 2250;
-    public static int ANGLE_MIN = 1400;
-    public static int ANGLE_START = 2250;
+    public static int ANGLE_MAX = 2200;
+    public static int ANGLE_MIN = 1350;
+    public static int ANGLE_START = 2200;
     public static int ANGLE_INGEST_GROUND = ANGLE_MIN;
     public static int ANGLE_INGEST_INCREMENT = 20;
-    public static int ANGLE_EJECT = 1500;
-    public static int ANGLE_HANG = 1565;
-    public static int ANGLE_SWALLOW = 1950;
-    public static int ANGLE_TRAVEL = 1800; //safe to travel through backstage door
+    public static int ANGLE_EJECT = 1450;
+    public static int ANGLE_HANG = 1515;
+    public static int ANGLE_SWALLOW = 1900;
+    public static int ANGLE_TRAVEL = 1750; //safe to travel through backstage door
     public static double TIME_SWALLOW = 1;
     public static double TIME_EJECT = 2;
 
@@ -45,7 +45,7 @@ public class Intake implements Subsystem {
     public static boolean precisionAngle = false;
     public boolean manualBeaterEject = false;
     public boolean manualBeaterEnable = false;
-    public static double BEATER_INGEST_VELOCITY = 2000;
+    public static double BEATER_INGEST_VELOCITY = 1700;
     public static double BEATER_EJECT_VELOCITY = -700;
 
     private double beaterTargetVelocity = 0;
@@ -407,6 +407,7 @@ public class Intake implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("pixelsensor state", pixelSensor.name());
+        telemetryMap.put("ingest pixel height", ingestPixelHeight);
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("manual beater bar on?", manualBeaterEnable);
         telemetryMap.put("beater bar amps", beater.getPower());
