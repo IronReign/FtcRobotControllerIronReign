@@ -2,13 +2,16 @@ package com.example.meepmeeptesting;
 
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
 
-public class MeepMeepTesting {Alliance alliance = Alliance.RED;
+public class MeepMeepTesting {
+    Alliance alliance = Alliance.RED;
 
 
     public enum Position {
@@ -49,26 +52,34 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
     static Pose2d stageOne, stageTwo;
 
     static Pose2d aprilTagApproachPosition;
+    static Pose2d aprilTagApproachPosition1;
     static Pose2d parkPosition;
 
     static Pose2d audienceIntermediate = P2D(1,-.5,-10);
+
+
+
+
+    //values to actually use
+    static Pose2d[] autonPaths;
 
     public static void main(String[] args) {
 
         MeepMeep meepMeep = new MeepMeep(800);
         Position startingPosition;
-
+        autonPaths = new Pose2d[7];
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
+                .setDimensions(16.5, 16.5)
                 .setConstraints(60, 60, Math.toRadians(90), Math.toRadians(90), 15)
                 .build();
 
-        startingPosition = Position.START_RIGHT_RED;
+        startingPosition = Position.START_RIGHT_BLUE;
         Pose2d p = startingPosition.getPose();
 
         updateIndexOffsets(startingPosition, 2);
         build(startingPosition);
-        Pose2d audienceIntermediate = P2D(1,.5*allianceDirection,-10); //todo move
+        Pose2d audienceIntermediate = P2D(1,.5,-10); //todo move
 
         System.out.println(Position.START_LEFT_RED.getPose());
 
@@ -87,12 +98,12 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
         myBot.getDrive().actionBuilder(p)
 
                 .setReversed(true)
-                .splineTo(redLeftStageTwoPosition.position, Math.toRadians(100))
+                .splineTo(switchSides(autonPaths[targetIndex].position), switchSides(autonPaths[targetIndex].heading.log()))
                 .waitSeconds(1) //eject purple here
-                .turnTo(STANDARD_HEADING_RAD)
+                .turnTo(switchSides(STANDARD_HEADING_RAD))
                 .setReversed(true)
-                .splineTo(audienceIntermediate.position,audienceIntermediate.heading)
-                .splineTo(aprilTagApproachPosition.position, 0)
+                .splineTo(switchSides(audienceIntermediate.position),switchSides(audienceIntermediate.heading.log()))
+                .splineTo(new Vector2d(switchSides(aprilTagApproachPosition1.position).x,switchSides(aprilTagApproachPosition1.position).y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), switchSides(0))
 //                redLeftStageOne
 
                 //starting pose has a heading of -90 degrees
@@ -174,6 +185,8 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
 
         redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
         redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
+        autonPaths[1] = P2D(-2, .5, 90);
+        autonPaths[2] = P2D(-1.75, .5, 90);
 
         redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
         redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
@@ -181,6 +194,7 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
         purpleEndPosition = P2D(start.getPose().position.x / FIELD_INCHES_PER_GRID, allianceDirection * .35 / FIELD_INCHES_PER_GRID, STANDARD_HEADING);
         backdropApproachPosition = P2D(1.65, allianceDirection * .35, STANDARD_HEADING);
         aprilTagApproachPosition = P2D(1.8, allianceDirection * 1 + ((targetAprilTagIndex - 3) * aprilTagOffset * allianceDirection ), STANDARD_HEADING);
+        aprilTagApproachPosition1 = P2D(1.8,   1.5, STANDARD_HEADING);
 
         if(start.equals(Position.START_RIGHT_RED)) {
             stageOne = redRightStageOnePosition;
@@ -198,6 +212,16 @@ public class MeepMeepTesting {Alliance alliance = Alliance.RED;
             stageOne = blueLeftStageOnePosition;
             stageTwo = blueLeftStageTwoPosition;
         }
+    }
+
+    public static Pose2d switchSides(Pose2d p) {
+        return new Pose2d(p.position.x, allianceDirection*p.position.y, -allianceDirection*p.heading.log());
+    }
+    public static Vector2d switchSides(Vector2d v) {
+        return new Vector2d(v.x, allianceDirection*v.y);
+    }
+    public static double switchSides(double r) {
+        return -allianceDirection*r;
     }
 
     public enum Alliance {
