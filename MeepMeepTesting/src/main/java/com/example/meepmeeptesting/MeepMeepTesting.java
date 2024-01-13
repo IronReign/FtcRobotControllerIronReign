@@ -66,14 +66,14 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        int randomizer = 2; //1, 2 or 3
+        int randomizer = 1; //1, 2 or 3
         Pose2d p;
 
         startingPosition = Position.START_LEFT_RED;
         p = startingPosition.getPose();
         selectedPath = setPath(startingPosition, randomizer);
-        System.out.println(selectedPath);
-        System.out.println(audienceIntermediate);
+        System.out.println("selected path:\t" + selectedPath);
+        System.out.println("audience intermediate:\t" + audienceIntermediate);
         System.out.println(autonPaths[2][4]);
 
         Action bot1Action, bot2Action, bot3Action, bot4Action;
@@ -103,7 +103,6 @@ public class MeepMeepTesting {
         selectedPath = setPath(startingPosition, randomizer);
         bot2Action =
                 myBot2.getDrive().actionBuilder(p)
-
                         .setReversed(true)
                         //step 1 - go to purple eject location
                         .splineTo(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
