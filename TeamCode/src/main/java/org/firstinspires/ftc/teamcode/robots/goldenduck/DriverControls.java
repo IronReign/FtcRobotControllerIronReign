@@ -1,22 +1,20 @@
-package org.firstinspires.ftc.teamcode.robots.csbot;
+package org.firstinspires.ftc.teamcode.robots.goldenduck;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.active;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
-import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionOn;
-import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionProviderIndex;
+import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.active;
+import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.alliance;
+import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.debugTelemetryEnabled;
+import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.robot;
+import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.startingPosition;
+import static org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot.visionOn;
+import static org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot.visionProviderIndex;
 
 import android.annotation.SuppressLint;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Skyhook;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Arm;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
@@ -25,7 +23,7 @@ public class DriverControls {
     public static double PRECISION_TURN_MULTIPLIER = .8;
     public static double PRECISION_DRIVE_MULTIPLIER = .8;
     //CONSTANTS
-    public static boolean fieldOrientedDrive = true;
+    public static boolean fieldOrientedDrive = false;
     public static double DEADZONE = 0.1;
 
     public boolean visionProviderFinalized = robot.visionProviderFinalized;
@@ -34,7 +32,6 @@ public class DriverControls {
     private StickyGamepad stickyGamepad1, stickyGamepad2;
 
     DriverControls(Gamepad pad1, Gamepad pad2) {
-        fieldOrientedDrive = true;
         gamepad1 = pad1;
         gamepad2 = pad2;
         stickyGamepad1 = new StickyGamepad(gamepad1);
@@ -52,21 +49,16 @@ public class DriverControls {
         }
 
         if(stickyGamepad1.a) {
-            CenterStage_6832.initPosition = true;
+            CoreTele.initPosition = true;
         }
 
-        if(stickyGamepad1.y) {
-            if(gameState.isAutonomous()) {
-                robot.driveTrain.setPose(startingPosition);
-            }
-        }
 
         if(stickyGamepad1.guide) {
             robot.initPositionIndex ++;
         }
 
         if(stickyGamepad2.a) {
-            robot.skyhook.articulate(Skyhook.Articulation.INIT);
+
         }
 
 
@@ -82,7 +74,7 @@ public class DriverControls {
 
     public void manualDiagnosticMethods() {
         if(gamepad1.right_bumper) {
-            robot.outtake.flipperTest();
+
         }
 
         if (stickyGamepad1.guide) {
@@ -103,17 +95,21 @@ public class DriverControls {
             fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (gamepad1.left_trigger > .1) {
-            robot.outtake.adjustFlipper(-robot.outtake.FLIPPER_ADJUST_ANGLE);
+            robot.arm.adjustShoulder(gamepad1.left_trigger);
         }
+
         if (gamepad1.right_trigger > .1) {
-            robot.outtake.adjustFlipper(robot.outtake.FLIPPER_ADJUST_ANGLE);
+
         }
         if (stickyGamepad1.a) {
-            if(robot.articulation == Robot.Articulation.TRAVEL)
-                robot.articulate(Robot.Articulation.INGEST);
+            //ask the robot to snap to an ingest config
+            //todo make this behavior work for core's robot
+            //robot.behave(Robot.Behavior.INGEST);
         }
         if (stickyGamepad1.b) {
-            robot.toggleBackdropPrep();
+            //ask the robot to configure for scoring at backdrop
+            //todo make this behavior work for core's robot
+            //robot.toggleBackdropPrep();
         }
 
         if(fieldOrientedDrive) {
@@ -124,44 +120,35 @@ public class DriverControls {
         }
 
         if (gamepad1.left_bumper) {
-            if (robot.intake.isEating())
-                robot.intake.pixelSensorLeft();
-            else
-                robot.outtake.moveSlide(5);
+
         }
         if (gamepad1.right_bumper) {
-            if (robot.intake.isEating())
-                robot.intake.pixelSensorRight();
-            else
-                robot.outtake.moveSlide(-5);
+
         }
 
-        if (stickyGamepad1.y) {
-            robot.intake.setIngestPixelHeight(4);
-        }
-        if (stickyGamepad1.x) {
-            robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
-        }
+        if (stickyGamepad1.y)
+            robot.arm.GripOuterToggle();
+
+        if (stickyGamepad1.x)
+            robot.arm.GripInnerToggle();
+
 
         if(stickyGamepad1.dpad_up)
-            robot.intake.articulate(Intake.Articulation.SWALLOW);
 
+
+        if(stickyGamepad2.y) {
+            fieldOrientedDrive = !fieldOrientedDrive;
+        }
         if (stickyGamepad1.dpad_down) {
-            robot.outtake.articulate(Outtake.Articulation.BACKDROP_PREP);
         }
 
         if(stickyGamepad2.dpad_up) {
-            robot.articulate(Robot.Articulation.PREP_FOR_HANG);
-        }
-        if(stickyGamepad2.a) {
-            robot.skyhook.articulate(Skyhook.Articulation.INIT);
+            robot.behave(Robot.Behavior.PREP_FOR_HANG);
         }
 
         if(stickyGamepad2.dpad_down) {
-            robot.articulate(Robot.Articulation.HANG);
+            robot.behave(Robot.Behavior.HANG);
         }
-
-        //mu name is jimmy and i am a pickle and i am a potato and i need to sleep with my truffle oil to feel happiness
 
     }
 
@@ -182,13 +169,13 @@ public class DriverControls {
     public void handleStateSwitch() {
         if (!active) {
             if (stickyGamepad1.left_bumper || stickyGamepad2.left_bumper)
-                CenterStage_6832.gameStateIndex -= 1;
+                CoreTele.gameStateIndex -= 1;
             if (stickyGamepad1.right_bumper || stickyGamepad2.right_bumper)
-                CenterStage_6832.gameStateIndex += 1;
-            if (CenterStage_6832.gameStateIndex < 0)
-                CenterStage_6832.gameStateIndex = CenterStage_6832.GameState.getNumGameStates() - 1;
-            CenterStage_6832.gameStateIndex %= CenterStage_6832.GameState.getNumGameStates();
-            CenterStage_6832.gameState = CenterStage_6832.GameState.getGameState(CenterStage_6832.gameStateIndex);
+                CoreTele.gameStateIndex += 1;
+            if (CoreTele.gameStateIndex < 0)
+                CoreTele.gameStateIndex = CoreTele.GameState.getNumGameStates() - 1;
+            CoreTele.gameStateIndex %= CoreTele.GameState.getNumGameStates();
+            CoreTele.gameState = CoreTele.GameState.getGameState(CoreTele.gameStateIndex);
         }
 
         if (stickyGamepad1.back || stickyGamepad2.back)

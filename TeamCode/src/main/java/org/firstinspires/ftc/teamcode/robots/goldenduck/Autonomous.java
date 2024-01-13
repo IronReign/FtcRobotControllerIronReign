@@ -1,25 +1,18 @@
-package org.firstinspires.ftc.teamcode.robots.csbot;
+package org.firstinspires.ftc.teamcode.robots.goldenduck;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.SequentialAction;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
@@ -29,11 +22,11 @@ import org.firstinspires.ftc.teamcode.statemachine.StateMachine;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-
-@Config(value = "AA_CS_Auton")
+//todo this entire set of sequences is ripped from Iron Reign
+//todo will need to rebuild
+@Config(value = "GD_Auton")
 public class Autonomous implements TelemetryProvider {
 
-    private static double APRIL_TAG_HEADING = 0;
     public VisionProvider visionProvider;
     private Robot robot;
     private HardwareMap hardwareMap;
@@ -46,10 +39,9 @@ public class Autonomous implements TelemetryProvider {
         FIND_STANDARD_POSITION,
         TRAVEL_BACKSTAGE,
         DONE,
-        FIND_STANDARD_HEADING,
         TRAVEL_BACKDROP,
         ALIGN_WITH_APRILTAG,
-        FIND_APRIL_TAG_HEADING, PREP_FOR_PARK, PARK, SCORE_DRIVE, SCORE_BACKDROP
+        SCORE_BACKDROP
     }
 
     public AutonState autonState = AutonState.INIT;
@@ -80,15 +72,13 @@ public class Autonomous implements TelemetryProvider {
     int allianceDirection = -1;
 
     double STANDARD_HEADING = 180;
-    Pose2d actionEndPose = new Pose2d(0, 0, 0);
     private Action
             redLeftStageOne, redLeftStageTwo,
             blueLeftStageOne, blueLeftStageTwo,
             blueRightStageOne, blueRightStageTwo,
             redRightStageOne, redRightStageTwo,
             findStandardPosition, approachBackdrop,
-            approachAprilTag, findStandardHeading,
-            findAprilTagHeading, park;
+            approachAprilTag
     ;
 
     private Action stageOneToRun, stageTwoToRun;
@@ -118,16 +108,16 @@ public class Autonomous implements TelemetryProvider {
     Pose2d backdropApproachPosition;
 
     Pose2d aprilTagApproachPosition;
-    Pose2d parkPosition;
 
 
     public static int INWARD_SCORING_ANGLE = -45;
     public static int MIDDLE_SCORING_ANGLE = -50;
     public static int OUTWARD_SCORING_ANGLE = 30;
+    public static double indexHeadingOffset = 0;
     public static double indexStrafeOffset = 0;
 
     //BASED ON BLUE_RIGHT_START
-    public static double STAGE_ONE_Y_COORDINATE = .4;
+    public static double STAGE_ONE_Y_COORDINATE = .5;
 
     public static double STAGE_TWO_X_COORDINATE = -2.1;
     public static double STAGE_TWO_HEADING = 40;
@@ -264,11 +254,9 @@ public class Autonomous implements TelemetryProvider {
         redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
         redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
 
-        purpleEndPosition = P2D(startingPosition.getPose().position.x / FIELD_INCHES_PER_GRID, allianceDirection * .35 / FIELD_INCHES_PER_GRID, STANDARD_HEADING);
+        purpleEndPosition = P2D(startingPosition.getPose().position.x / FIELD_INCHES_PER_GRID, allianceDirection * .35, STANDARD_HEADING);
         backdropApproachPosition = P2D(1.65, allianceDirection * .35, STANDARD_HEADING);
-        aprilTagApproachPosition = P2D(1.8, allianceDirection * 1.5 + (targetAprilTagIndex - 3) * aprilTagOffset, STANDARD_HEADING);
-
-        parkPosition = P2D(1.6, allianceDirection * 2.1, STANDARD_HEADING);
+        aprilTagApproachPosition = P2D(1.65, allianceDirection * 2 + (targetAprilTagIndex - 3) * aprilTagOffset, STANDARD_HEADING);
 
         //
         redLeftStageOne = new SequentialAction(
@@ -351,35 +339,10 @@ public class Autonomous implements TelemetryProvider {
         );
     }
 
-    public void parkBuild() {
-        park = new SequentialAction(
-                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .lineToYConstantHeading(parkPosition.position.y)
-                        .build()
-        );
-    }
-
-    public void findStandardHeadingBuild() {
-        findStandardHeading = new SequentialAction(
-                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .turnTo(Math.toRadians(STANDARD_HEADING))
-                        .build()
-        );
-    }
-
-    public void findAprilTagHeadingBuild() {
-        APRIL_TAG_HEADING = Math.atan2(aprilTagApproachPosition.position.y-robot.driveTrain.pose.position.y,aprilTagApproachPosition.position.x-robot.driveTrain.pose.position.x);
-        findAprilTagHeading = new SequentialAction(
-                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .turnTo(Math.toRadians(APRIL_TAG_HEADING))
-                        .build()
-        );
-    }
-
     public void approachAprilTagBuild() {
         approachAprilTag = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .splineToLinearHeading(aprilTagApproachPosition,Math.PI)
+                        .strafeTo(aprilTagApproachPosition.position)
                         .build()
         );
     }
@@ -387,7 +350,6 @@ public class Autonomous implements TelemetryProvider {
     public void pickAutonToRun(Constants.Alliance alliance) {
         allianceDirection=alliance.equals(Constants.Alliance.BLUE)?1:-1;
         build();
-
             if (startingPosition == Constants.Position.START_LEFT_BLUE) {
                 stageOneToRun = blueLeftStageOne;
                 stageTwoToRun = blueLeftStageTwo;
@@ -414,117 +376,53 @@ public class Autonomous implements TelemetryProvider {
 
             switch (autonIndex) {
                 case 0:
-                    futureTimer = futureTime(.4);
                     autonIndex++;
                     break;
-                case 1:
+                case 1: //drive to purple pixel drop off location
                     autonState = AutonState.BACK_UP;
                     if (!stageOneToRun.run(packet)) {
                         autonIndex++;
-                    } else if (isPast(futureTimer)) {
-                        //putting the intake down to eject position so it can nudge the team prop out of the way for the 1 and 3 positions
-                        //doesn't matter if it gets set repeatedly
-                        robot.intake.setAngle(Intake.ANGLE_EJECT);
                     }
                     break;
                 case 2:
                     autonState = AutonState.STRAFE;
                     if (!stageTwoToRun.run(packet)) {
-                        robot.intake.articulate(Intake.Articulation.EJECT);
-                        //reset roadrunner based on imuAngle
-                        robot.driveTrain.pose = new Pose2d(robot.driveTrain.pose.position, Math.toRadians(robot.driveTrain.imuAngle));
+                        //todo something here to drop the purple pixel
                         autonIndex++;
                     }
                     break;
                 case 3:
                     autonState = AutonState.SCORE_GROUND;
-                    if(robot.intake.readyForTravel()) {
-                        autonIndex++;
-                    }
+                    //todo get ready to travel to backdrop
+//                    if(robot.intake.readyForTravel()) {
+//                        autonIndex++;
+//                    }
                     break;
                 case 4:
-                    if(robot.outtake.ingestFromTravel()) //todo should call an articulation instead
-                        {
-                            findStandardPositionBuild(); //gotta build again since the current position is used
-                            autonIndex++;
-                        }
+                    autonIndex++;
                     break;
-                case 5: //travel to interim position near backdrop and then to final position
-                    if(startingPosition != Constants.Position.START_RIGHT_BLUE && startingPosition != Constants.Position.START_LEFT_RED) {
-                        autonIndex++;
-                        break;
-                    }
-                    autonState = AutonState.FIND_STANDARD_POSITION;
-                    if (!findStandardPosition.run(packet)) {
-                        approachBackdropBuild();
-                        autonIndex++;
-                    }
+                case 5: //travel to interim position near backdrop and then to final position?
+                    autonIndex++;
                     break;
                 case 6:
-                    if(startingPosition != Constants.Position.START_RIGHT_BLUE && startingPosition != Constants.Position.START_LEFT_RED) {
-                        findAprilTagHeadingBuild();
-                        autonIndex++;
-                        break;
-                    }
                     autonState = AutonState.TRAVEL_BACKDROP;
                     if(!approachBackdrop.run(packet)) {
-                        findAprilTagHeadingBuild();
-                        autonIndex++;
-                    }
-                    break;
-                case 7:
-                    autonState = AutonState.FIND_APRIL_TAG_HEADING;
-                    if(!findAprilTagHeading.run(packet)) {
                         approachAprilTagBuild();
                         autonIndex++;
                     }
                     break;
-                case 8:
+                case 7:
                     autonState = AutonState.ALIGN_WITH_APRILTAG;
                     if(!approachAprilTag.run(packet)) {
-                        actionEndPose = robot.driveTrain.pose;
-                        //reset roadrunner based on imuAngle
-                        robot.driveTrain.pose = new Pose2d(robot.driveTrain.pose.position, Math.toRadians(robot.driveTrain.imuAngle));
-                        findStandardHeadingBuild();
-
                         autonIndex++;
                     }
+                    break;
+                case 8:
+                    autonState = AutonState.DONE;
+                    autonIndex++;
                     break;
                 case 9:
-                    autonState = AutonState.FIND_STANDARD_HEADING;
-                    if(!findStandardHeading.run(packet)) {
-                        robot.articulate(Robot.Articulation.BACKDROP_PREP);
-                        autonIndex++;
-                    }
-                    break;
-                case 10:
-                    autonState = AutonState.SCORE_BACKDROP;
-                    if(robot.outtake.articulation.equals(Outtake.Articulation.BACKDROP))
-                        autonIndex++;
-                    break;
-                case 11:
-                    autonState = AutonState.SCORE_DRIVE;
-                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.4, 0), 0));
-                    if(robot.driveTrain.backDistanceSensor.getDistance(DistanceUnit.INCH) < 8.5) {
-                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
-                        autonIndex++;
-                    }
-                    break;
-                case 12:
-//                    autonState = AutonState.PREP_FOR_PARK;
-//                    robot.outtake.setTargetAngle(Outtake.FLIPPER_PRE_SCORE_ANGLE);
-//                    parkBuild();
-                    autonIndex ++;
-                    break;
-                case 13:
-//                    autonState = AutonState.PARK;
-//                    if(!park.run(packet)) {
-                        autonIndex++;
-//                    }
-                    break;
-                case 14:
-                    autonState = AutonState.DONE;
-                    robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
+                    robot.positionCache.update(new CSPosition(robot.driveTrain.pose, 0, 0), true);
                     return true;
 
             }

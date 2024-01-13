@@ -59,7 +59,6 @@ public abstract class VisionProvider implements TelemetryProvider {
     abstract public void initializeVision(HardwareMap hardwareMap);
 
     public void initializeVision(HardwareMap hardwareMap, Robot robot){
-        this.robot = robot;
         initializeVision(hardwareMap);
     }
 

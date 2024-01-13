@@ -1,8 +1,7 @@
-package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
+package org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
@@ -29,17 +28,15 @@ import java.util.List;
 import java.util.Map;
 
 
-@Config(value = "AA_CSRobot")
-public class  Robot implements Subsystem {
+@Config(value = "GD_Robot")
+public class Robot implements Subsystem {
 
     //components and subsystems
     public Subsystem[] subsystems;
     public DriveTrain driveTrain;
-    public Skyhook skyhook;
-    public Intake intake;
     public VisionProvider visionProviderBack = null;
     public static boolean visionOn = true;
-    public Outtake outtake;
+    public Arm arm;
     //TODO - create a field
 //    public Field field;
 
@@ -57,12 +54,12 @@ public class  Robot implements Subsystem {
     private final List<LynxModule> hubs;
     public HardwareMap hardwareMap;
     private VoltageSensor batteryVoltageSensor;
-    public Articulation articulation;
+    private Behavior curBehavior, prevBehavior;
     public List<Target> targets = new ArrayList<Target>();
     public boolean fetched;
     public boolean selfDriving = true;
 
-    public enum Articulation {
+    public enum Behavior {
         //beater bar, drivetrain, drone launcher, outtake
         MANUAL,
         AUTON,
@@ -71,7 +68,6 @@ public class  Robot implements Subsystem {
         BACKDROP,
         FOLD,
         INGEST,
-        UNFOLD,
         HANG,
         PREP_FOR_HANG,
         LAUNCH_DRONE,
@@ -82,12 +78,8 @@ public class  Robot implements Subsystem {
     }
 
     public void start() {
-        skyhook.articulate(Skyhook.Articulation.GAME);
         //TODO - articulate starting position
-        if (gameState.isAutonomous()) {
-            intake.setAngle(1600);
-        }
-        articulation = Articulation.MANUAL;
+        curBehavior = Robot.Behavior.MANUAL;
     }
     //end start
 
@@ -105,17 +97,16 @@ public class  Robot implements Subsystem {
 
         // initializing subsystems
         driveTrain = new DriveTrain(hardwareMap, this, simulated);
-        intake = new Intake(hardwareMap, this);
-        outtake = new Outtake(hardwareMap, this);
-        skyhook = new Skyhook(hardwareMap, this);
+        arm = new Arm(hardwareMap, this);
 
 
-        subsystems = new Subsystem[]{driveTrain, intake, outtake, skyhook};
+
+        subsystems = new Subsystem[]{driveTrain, arm};
         subsystemUpdateTimes = new long[subsystems.length];
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        articulation = Robot.Articulation.MANUAL;
+        curBehavior = Robot.Behavior.MANUAL;
 
 //        field = new Field(true);
     }
@@ -130,12 +121,13 @@ public class  Robot implements Subsystem {
         lastTime = System.nanoTime();
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
-        if (updatePositionCache && gameState.isAutonomous()) {
-            currPosition = new CSPosition(driveTrain.pose, skyhook.getSkyhookLeftTicksCurrent(), skyhook.getSkyhookRightTicksCurrent());
+        //cache current position of robot
+        if (updatePositionCache) {
+            currPosition = new CSPosition(driveTrain.pose,0,0);
             positionCache.update(currPosition, false);
         }
 
-        articulate(articulation);
+        behave(curBehavior);
         //TODO - DELETE
         driveTrain.updatePoseEstimate();
 
@@ -155,7 +147,7 @@ public class  Robot implements Subsystem {
         if (visionOn) {
             if (!visionProviderFinalized) {
                 createVisionProvider();
-                visionProviderBack.initializeVision(hardwareMap, this);
+                visionProviderBack.initializeVision(hardwareMap);
                 visionProviderFinalized = true;
 
             }
@@ -217,103 +209,82 @@ public class  Robot implements Subsystem {
                 initPositionIndex++;
                 break;
             case 1:
-                intake.setAngle(Intake.ANGLE_MIN);
-//                if(isPast(initPositionTimer)) {
-//                    initPositionTimer = futureTime(1);
-//                    initPositionIndex ++;
-//                }
+                    initPositionIndex ++;
                 break;
             case 2:
-                outtake.slideTargetPosition = Outtake.UNTUCK_SLIDE_POSITION;
-//                if (isPast(initPositionTimer)) {
-//                    initPositionTimer = futureTime(1);
-//                    initPositionIndex ++;
-//                }
+
                 break;
             case 3:
-                outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
-                //                if (isPast(initPositionTimer)) {
-//                    initPositionTimer = futureTime(1);
-//                    initPositionIndex ++;
-//                }
+
                 break;
             case 4:
-                outtake.slideTargetPosition = 0;
                 break;
             case 5:
-                //todo load cached skyhook positions
-                //this is the only way to work across power cycles until we incorporate a limit switch calibration
-                skyhook.skyhookLeft.setPosition(0);
-                skyhook.skyhookRight.setPosition(0);
-                skyhook.articulate(Skyhook.Articulation.INIT);
                 break;
             case 6:
-                intake.articulate(Intake.Articulation.INIT);
+                break;
         }
     }
 
-    public Articulation articulate(Articulation target) {
-        articulation = target;
-        switch (this.articulation) {
+    public Behavior behave(Behavior target) {
+        curBehavior = target;
+        switch (this.curBehavior) {
             case MANUAL:
                 break;
             case TRAVEL:
                 break;
             case BACKDROP:
-
                 break;
             case CALIBRATE:
                 //TODO - WRITE A CALIBRATION ROUTINE
                 break;
             case INGEST:
                 if (Ingest()) {
-                    articulation = Articulation.TRAVEL_FROM_INGEST;
+                    curBehavior = Robot.Behavior.TRAVEL_FROM_INGEST;
                 }
                 break;
             case HANG:
-                intake.articulate(Intake.Articulation.HANG);
-                skyhook.articulate(Skyhook.Articulation.HANG);
+                //deploy the hooks
                 break;
             case PREP_FOR_HANG:
-                skyhook.articulate(Skyhook.Articulation.PREP_FOR_HANG);
-                outtake.articulate(Outtake.Articulation.INGEST_FROM_TRAVEL);
-                articulation = Articulation.TRAVEL;
+                arm.behave(Arm.Behavior.INGEST_FROM_TRAVEL);
+                curBehavior = Robot.Behavior.TRAVEL;
                 break;
             case LAUNCH_DRONE:
-                skyhook.articulate(Skyhook.Articulation.LAUNCH);
+                //trigger the drone launcher
                 break;
             case TRAVEL_FROM_INGEST:
-                intake.articulate(Intake.Articulation.TRAVEL);
-                if (!(outtake.articulation==Outtake.Articulation.TRAVEL)) {
-                    outtake.articulate(Outtake.Articulation.TRAVEL_FROM_INGEST);
+                //get arm into a position to safely travel through rigging
+                if (!(arm.behavior == Arm.Behavior.TRAVEL)) {
+                    arm.behave(Arm.Behavior.TRAVEL_FROM_INGEST);
                 }
                 break;
             case TRAVEL_FROM_BACKDROP:
                 //assume intake is already in travel
-                outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
-                articulation = Articulation.TRAVEL;
+                arm.behave(Arm.Behavior.TRAVEL_FROM_BACKDROP);
+                curBehavior = Robot.Behavior.TRAVEL;
                 break;
             case BACKDROP_PREP:
-                intake.articulate(Intake.Articulation.TRAVEL);
-                outtake.articulate(Outtake.Articulation.BACKDROP_PREP);
-                articulation = Articulation.BACKDROP;
+                arm.behave(Arm.Behavior.BACKDROP_PREP);
+                curBehavior = Robot.Behavior.BACKDROP;
                 break;
         }
-        return articulation;
+        return curBehavior;
     }
 
     public void toggleBackdropPrep(){
-        if(articulation.equals(Articulation.BACKDROP)){
-            articulation = Articulation.TRAVEL_FROM_BACKDROP;
+        if(curBehavior.equals(Robot.Behavior.BACKDROP)){
+            curBehavior = Robot.Behavior.TRAVEL_FROM_BACKDROP;
         }
         else{
-            articulation = Articulation.BACKDROP_PREP;
+            curBehavior = Robot.Behavior.BACKDROP_PREP;
         }
     }
 
     @Override
     public void stop() {
-        currPosition = new CSPosition(driveTrain.pose, skyhook.getSkyhookLeftTicksCurrent(), skyhook.getSkyhookRightTicksCurrent());
+        //force update the cached position
+        currPosition = new CSPosition(driveTrain.pose, 0, 0);
         positionCache.update(currPosition, true);
         for (Subsystem component : subsystems) {
             component.stop();
@@ -325,20 +296,21 @@ public class  Robot implements Subsystem {
     public static int ingestStage = 0;
     public long ingestTimer = 0;
 
+    //todo this a template behavior that should be used to automate picking up pixels
+    //todo adapt for GD
     public boolean Ingest() {
         switch (ingestStage) {
             case 0:
-                outtake.articulate(Outtake.Articulation.INGEST_FROM_TRAVEL);
+                arm.behave(Arm.Behavior.INGEST_FROM_TRAVEL);
                 ingestStage++;
             case 1: //wait for outake to dock before proceeding
-                if (outtake.articulation == Outtake.Articulation.MANUAL) {
+                if (arm.behavior == Arm.Behavior.MANUAL) {
                     //intake can start eating
-                    intake.articulate(Intake.Articulation.INGEST);
-                    ingestStage++;
+
                 }
                 break;
-            case 2:  //wait until Intake ingest and swallow are done
-                if (!intake.isEating()) ingestStage++;
+            case 2:
+                ingestStage++;
                 break;
             case 3:
                 ingestStage=0;
@@ -351,9 +323,9 @@ public class  Robot implements Subsystem {
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
-        telemetryMap.put("Articulation", articulation);
+        telemetryMap.put("Behavior", curBehavior);
         telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
-        telemetryMap.put("wingIntakeIndex", ingestStage);
+        telemetryMap.put("Ingest Stage", ingestStage);
         telemetryMap.put("initPositionIndex", initPositionIndex);
 //        telemetryMap.put("MemoryPose", positionCache.readPose());
         for (int i = 0; i < subsystems.length; i++) {

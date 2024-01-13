@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.util;
 
 public class Vector3 {
-//duck
+
     public double x;
     public double y;
     public double z;

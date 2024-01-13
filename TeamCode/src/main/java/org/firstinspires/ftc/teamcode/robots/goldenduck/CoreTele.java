@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.robots.csbot;
+package org.firstinspires.ftc.teamcode.robots.goldenduck;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -7,7 +7,9 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.Autonomous;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.DriverControls;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.ExponentialSmoother;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
@@ -16,10 +18,10 @@ import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "0 CenterStage_6832", group = "Challenge")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Core Tele", group = "Challenge")
 // @Autonomous(...) is the other common choice
-@Config(value = "AA_CS_6832")
-public class CenterStage_6832 extends OpMode {
+@Config(value = "GD_DriverControlled")
+public class CoreTele extends OpMode {
 
     private static final double LOW_BATTERY_VOLTAGE = 12;
     private ElapsedTime runtime = new ElapsedTime();
@@ -28,8 +30,8 @@ public class CenterStage_6832 extends OpMode {
     public static Robot robot;
     static Autonomous auton;
     private FtcDashboard dashboard;
-    public static Field field;
-    DriverControls dc;
+
+    org.firstinspires.ftc.teamcode.robots.goldenduck.DriverControls dc;
 
 
     //GLOBAL STATES
@@ -83,7 +85,7 @@ public class CenterStage_6832 extends OpMode {
 
     }
 
-    public static GameState gameState = GameState.AUTONOMOUS;
+    public static GameState gameState = GameState.TELE_OP;
     static public int gameStateIndex;
 
 
@@ -129,7 +131,6 @@ public class CenterStage_6832 extends OpMode {
         robot = new Robot(hardwareMap, false);
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
-        field = new Field();
 
         robot.updatePositionCache = false;
         robot.driveTrain.setPose(startingPosition);
@@ -158,8 +159,12 @@ public class CenterStage_6832 extends OpMode {
         robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
 
 
-
         robot.initPosition();
+        if(gameState.isAutonomous()) {
+            auton.updateIndexOffsets();
+            //calc auton based on alliance, starting position and team prop position
+            auton.pickAutonToRun(alliance);
+        }
 
         robot.driveTrain.updatePoseEstimate();
 
@@ -186,38 +191,27 @@ public class CenterStage_6832 extends OpMode {
         //FETCH CACHE
         robot.fetchCachedCSPosition();
 
-        field.finalizeField();
         resetGame();
 
-
-
-        if(robot.fetched && !gameState.isAutonomous()) {
-            robot.driveTrain.setPose(robot.fetchedPosition.getPose());
-            robot.skyhook.skyhookLeft.setPosition(-robot.fetchedPosition.getSkyhookLeftTicks());
-            robot.skyhook.skyhookRight.setPosition(-robot.fetchedPosition.getSkyhookRightTicks());
-        }
-        else {
-            robot.driveTrain.setPose(startingPosition);
-            robot.skyhook.skyhookLeft.setPosition(0);
-            robot.skyhook.skyhookRight.setPosition(0);
-        }
-
-        robot.updatePositionCache = true;
-
         if(gameState.equals(GameState.AUTONOMOUS)){
-            robot.driveTrain.imu.resetYaw();
-            auton.updateIndexOffsets();
-            //calc auton based on alliance, starting position and team prop position
-            auton.pickAutonToRun(alliance);
         }
 
         if(gameState.equals(GameState.TELE_OP)){
-            robot.articulate(Robot.Articulation.TRAVEL);
+
         }
 
         if(gameState.equals(GameState.TEST) ||  gameState.equals(GameState.DEMO)){
 
         }
+
+        if(robot.fetched && !gameState.isAutonomous()) {
+            robot.driveTrain.setPose(robot.fetchedPosition.getPose());
+        }
+        else {
+            robot.driveTrain.setPose(startingPosition);
+        }
+
+        robot.updatePositionCache = true;
 
         robot.start();
     }
@@ -235,7 +229,7 @@ public class CenterStage_6832 extends OpMode {
 
         if (active) {
             long currentTime = System.currentTimeMillis();
-            if (!endGameHandled && gameState == CenterStage_6832.GameState.TELE_OP && (currentTime - startTime) * 1e-3 >= 80) {
+            if (!endGameHandled && gameState == CoreTele.GameState.TELE_OP && (currentTime - startTime) * 1e-3 >= 80) {
                 //TODO - handle endgame actions
 //                robot.articulate(Robot.Articulation.START_END_GAME);
                 endGameHandled = true;
@@ -265,12 +259,6 @@ public class CenterStage_6832 extends OpMode {
                     dc.manualDiagnosticMethods();
                     break;
 
-                case SQUARE:
-                    auton.square.execute();
-                    break;
-
-                case TURN:
-                    auton.turn.execute();
             }
         }
         else {
@@ -287,12 +275,8 @@ public class CenterStage_6832 extends OpMode {
 
     private void update() {
         // handling dashboard changes
-
-
         forwardSmoother.setSmoothingFactor(FORWARD_SMOOTHING_FACTOR);
         rotateSmoother.setSmoothingFactor(ROTATE_SMOOTHING_FACTOR);
-
-        //TODO - implement field target & current position to telemetry
 
 
         TelemetryPacket packet = new TelemetryPacket();
@@ -308,13 +292,6 @@ public class CenterStage_6832 extends OpMode {
         if(initializing) {
             opModeTelemetryMap.put("Starting Position", startingPosition);
         }
-        if(field.finalized) {
-            field.update(packet, robot);
-            opModeTelemetryMap.put("Current Robot Zone", field.getZone(robot.driveTrain.pose));
-            opModeTelemetryMap.put("Current Robot SubZones", field.getSubZones(robot.driveTrain.pose));
-            opModeTelemetryMap.put("Current Robot POI", field.getPOI(robot.driveTrain.pose));
-        }
-
         opModeTelemetryMap.put("Battery Voltage", averageVoltage);
         opModeTelemetryMap.put("Average Loop Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageLoopTime * 1e-6), (int) (1 / (averageLoopTime * 1e-9))));
         opModeTelemetryMap.put("Last Loop Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageLoopTime * 1e-6), (int) (1 / (averageLoopTime * 1e-9))));
@@ -351,10 +328,6 @@ public class CenterStage_6832 extends OpMode {
 
         handleTelemetry(visionTelemetryMap, robot.visionProviderBack.getTelemetryName(), packet);
         packet.put("imu/roadrunner error", robot.driveTrain.imuRoadrunnerError);
-        packet.put("imu angle", robot.driveTrain.imuAngle);
-        packet.put("roadrunner angle", Math.toDegrees(robot.driveTrain.pose.heading.toDouble()));
-        packet.put("action end pose", Math.toDegrees(auton.actionEndPose.heading.toDouble()));
-
 
         dashboard.sendTelemetryPacket(packet);
         telemetry.update();
@@ -374,12 +347,12 @@ public class CenterStage_6832 extends OpMode {
         telemetry.addLine(telemetryName);
         packet.addLine(telemetryName);
 
-//        if (averageVoltage <= LOW_BATTERY_VOLTAGE) {
-//            telemetryMap = new LinkedHashMap<>();
-//            for (int i = 0; i < 5; i++) {
-//                telemetryMap.put(i + (System.currentTimeMillis() / 500 % 2 == 0 ? "**BATTERY VOLTAGE LOW**" : "  BATTERY VOLTAGE LOW  "), (System.currentTimeMillis() / 500 % 2 == 0 ? "**CHANGE BATTERY ASAP!!**" : "  CHANGE BATTERY ASAP!!  "));
-//            }
-//        }
+        if (averageVoltage <= LOW_BATTERY_VOLTAGE) {
+            telemetryMap = new LinkedHashMap<>();
+            for (int i = 0; i < 5; i++) {
+                telemetryMap.put(i + (System.currentTimeMillis() / 500 % 2 == 0 ? "**BATTERY VOLTAGE LOW**" : "  BATTERY VOLTAGE LOW  "), (System.currentTimeMillis() / 500 % 2 == 0 ? "**CHANGE BATTERY ASAP!!**" : "  CHANGE BATTERY ASAP!!  "));
+            }
+        }
         for (Map.Entry<String, Object> entry : telemetryMap.entrySet()) {
             String line = Misc.formatInvariant("%s: %s", entry.getKey(), entry.getValue());
             packet.addLine(line);

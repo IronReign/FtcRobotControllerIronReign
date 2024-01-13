@@ -53,6 +53,14 @@ public class Intake implements Subsystem {
     private static int angleTarget = ANGLE_MIN;
     private int ingestPixelHeight = 0;  //the height at which to start ingesting pixels. Normally 0 for ground but could be 4 for top pixel in a stack
 
+    public int getIngestPixelHeight() {
+        return ingestPixelHeight;
+    }
+
+    public void setIngestPixelHeight(int ingestPixelHeight) {
+        this.ingestPixelHeight = ingestPixelHeight < 0? 0 : ingestPixelHeight;
+    }
+
     public enum PixelStack {
         GROUND(0, ANGLE_INGEST_GROUND - ANGLE_INGEST_INCREMENT), //the minus is to force it harder into the tiles
         TWO(1, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT),
@@ -272,6 +280,8 @@ public class Intake implements Subsystem {
         else {
             if (ps.isNone())
                 diverterState = DiverterState.DELIVER_LEFT;
+            else if (ps.isLeft()) diverterState = DiverterState.DELIVER_RIGHT;
+            else if (ps.isRight()) diverterState = DiverterState.DELIVER_LEFT;
         }
         //default to both
 
@@ -299,7 +309,7 @@ public class Intake implements Subsystem {
 
     public boolean ingest(int height){ //height is expected to be changed externally
         setDiverters(pixelSensor, height);
-        angleTarget = PixelStack.getByIndex(Range.clip(height,0,4)).angle;
+        angleTarget = PixelStack.getByIndex(Range.clip(height-pixelSensor.count,0,4)).angle;
         beaterTargetVelocity = BEATER_INGEST_VELOCITY;
         //if a pixel is detected
         if(pixelSensor.count>1) return true;
