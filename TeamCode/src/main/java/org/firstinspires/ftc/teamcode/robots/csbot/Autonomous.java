@@ -49,7 +49,7 @@ public class Autonomous implements TelemetryProvider {
         FIND_STANDARD_HEADING,
         TRAVEL_BACKDROP,
         ALIGN_WITH_APRILTAG,
-        FIND_APRIL_TAG_HEADING, PREP_FOR_PARK, PARK, SCORE_DRIVE, SCORE_BACKDROP
+        FIND_APRIL_TAG_HEADING, PREP_FOR_PARK, PARK, SCORE_DRIVE, DRIVE_TO_PIXEL_STACK, GET_FROM_PIXEL_STACK, SCORE_BACKDROP
     }
 
     public AutonState autonState = AutonState.INIT;
@@ -73,25 +73,34 @@ public class Autonomous implements TelemetryProvider {
 
     // autonomous routines
 
-    public static int targetIndex = 1;
-    public static int targetAprilTagIndex = 1;
-    public static int visionProviderIndex;
-    public static double aprilTagOffset = .2;
+    public int targetIndex = 1;
+    public int targetAprilTagIndex = 1;
+    public int visionProviderIndex;
+    public double aprilTagOffset = .2;
     int allianceDirection = -1;
+    public static int selectedPath;
+    double STANDARD_HEADING_RAD = Math.PI;
+
+    public static double FIELD_INCHES_PER_GRID = 23.5;
 
     double STANDARD_HEADING = 180;
-    Pose2d actionEndPose = new Pose2d(0, 0, 0);
-    private Action
-            redLeftStageOne, redLeftStageTwo,
-            blueLeftStageOne, blueLeftStageTwo,
-            blueRightStageOne, blueRightStageTwo,
-            redRightStageOne, redRightStageTwo,
-            findStandardPosition, approachBackdrop,
-            approachAprilTag, findStandardHeading,
-            findAprilTagHeading, park;
-    ;
+    Pose2d aprilTagApproachPosition;
+    Pose2d audienceIntermediate;
+    Pose2d audienceIntermediateForward;
+    Pose2d aprilTagAlign, aprilTagAlignClose;
 
-    private Action stageOneToRun, stageTwoToRun;
+
+    //values to actually use
+    Pose2d[][] autonPaths;
+
+    private Action
+            driveToPurplePixel,
+            driveToYellowPixel,
+            approachBackdrop,
+            driveToPixelStack,
+            sweep,
+            park
+    ;
 
     // misc. routines
     public StateMachine backAndForth, square, turn;
@@ -100,26 +109,8 @@ public class Autonomous implements TelemetryProvider {
         this.robot = robot;
         this.hardwareMap = robot.hardwareMap;
         this.visionProvider = robot.visionProviderBack;
+        autonPaths = new Pose2d[7][10];
     }
-
-    Pose2d blueRightStageOnePosition;
-    Pose2d blueRightStageTwoPosition;
-
-    Pose2d blueLeftStageOnePosition;
-    Pose2d blueLeftStageTwoPosition;
-
-    Pose2d redRightStageOnePosition;
-    Pose2d redRightStageTwoPosition;
-
-    Pose2d redLeftStageOnePosition;
-    Pose2d redLeftStageTwoPosition;
-
-    Pose2d purpleEndPosition;
-    Pose2d backdropApproachPosition;
-
-    Pose2d aprilTagApproachPosition;
-    Pose2d parkPosition;
-
 
     public static int INWARD_SCORING_ANGLE = -45;
     public static int MIDDLE_SCORING_ANGLE = -50;
@@ -134,275 +125,156 @@ public class Autonomous implements TelemetryProvider {
     public static double STAGE_ONE_HEADING = 90;
     public static double BACKSTAGE_X_POSITION_OFFSET = 2.5;
 
-    public void updateIndexOffsets() {
-        visionProviderIndex = robot.visionProviderBack.getMostFrequentPosition().getIndex();
-        targetIndex = visionProviderIndex + 1;
-
-        if(startingPosition.equals(Constants.Position.START_RIGHT_BLUE)) {
-            targetAprilTagIndex = targetIndex;
-            if (targetIndex == 3) {
-                STAGE_ONE_HEADING = 90;
-                STAGE_ONE_Y_COORDINATE = 0.65;
-                STAGE_TWO_X_COORDINATE = -1.65;
-                STAGE_TWO_HEADING = 90 + INWARD_SCORING_ANGLE;
-            }
-
-            if (targetIndex == 2) {
-                STAGE_ONE_HEADING = 90;
-
-                //DO NOTHING, THIS IS THE DEFAULT
-                STAGE_ONE_Y_COORDINATE = .5;
-                STAGE_TWO_HEADING = 90 + MIDDLE_SCORING_ANGLE;
-                STAGE_TWO_X_COORDINATE = -2.1;
-            }
-
-            if (targetIndex == 1) {
-
-
-                STAGE_ONE_HEADING = 90;
-                STAGE_ONE_Y_COORDINATE = .5;
-                STAGE_TWO_X_COORDINATE = -1.55;
-                STAGE_TWO_HEADING = 90 + OUTWARD_SCORING_ANGLE;
-            }
-        }
-
-        if(startingPosition.equals(Constants.Position.START_LEFT_BLUE)) {
-            targetAprilTagIndex = targetIndex;
-            if (targetIndex == 1) {
-                STAGE_ONE_HEADING = 90;
-
-                STAGE_ONE_Y_COORDINATE = .5;
-                STAGE_TWO_X_COORDINATE = 0.55;
-                STAGE_TWO_HEADING = 90 - OUTWARD_SCORING_ANGLE;
-            }
-
-            if (targetIndex == 2) {
-                STAGE_ONE_HEADING = 90;
-
-                //DO NOTHING, THIS IS THE DEFAULT
-                STAGE_ONE_Y_COORDINATE = .5;
-                STAGE_TWO_HEADING = 90 - MIDDLE_SCORING_ANGLE;
-                STAGE_TWO_X_COORDINATE = 1.1;
-            }
-
-            if (targetIndex == 3) {
-                STAGE_ONE_HEADING = 90;
-
-                STAGE_ONE_Y_COORDINATE = 0.65;
-                STAGE_TWO_X_COORDINATE = 0.65;
-                STAGE_TWO_HEADING = 90 - INWARD_SCORING_ANGLE;
-            }
-        }
-
-        if(startingPosition.equals(Constants.Position.START_LEFT_RED)) {
-            targetAprilTagIndex = targetIndex + 3;
-            if (targetIndex == 1) {
-                STAGE_ONE_HEADING = 90;
-                STAGE_ONE_Y_COORDINATE = -0.65;
-                STAGE_TWO_X_COORDINATE = -1.65;
-                STAGE_TWO_HEADING = (90 + OUTWARD_SCORING_ANGLE);
-            }
-
-            if (targetIndex == 2) {
-                //DO NOTHING, THIS IS THE DEFAULT
-                STAGE_ONE_HEADING = 90;
-                STAGE_ONE_Y_COORDINATE = -.5;
-                STAGE_TWO_HEADING = (90 + MIDDLE_SCORING_ANGLE);
-                STAGE_TWO_X_COORDINATE = -2.1;
-            }
-
-            if (targetIndex == 3) {
-                STAGE_ONE_HEADING = 90;
-                STAGE_ONE_Y_COORDINATE = -.5;
-                STAGE_TWO_X_COORDINATE = -1.55;
-                STAGE_TWO_HEADING = (90 + INWARD_SCORING_ANGLE);
-            }
-        }
-        if(startingPosition.equals(Constants.Position.START_RIGHT_RED)) {
-            targetAprilTagIndex = targetIndex + 3;
-            if (targetIndex == 1) {
-                STAGE_ONE_HEADING = 90;
-                STAGE_ONE_Y_COORDINATE = -0.65;
-                STAGE_TWO_X_COORDINATE = 0.65;
-                STAGE_TWO_HEADING = (90 - INWARD_SCORING_ANGLE);
-            }
-
-            if (targetIndex == 2) {
-                //DO NOTHING, THIS IS THE DEFAULT
-                STAGE_ONE_HEADING = 90;
-                STAGE_ONE_Y_COORDINATE = -.5;
-                STAGE_TWO_HEADING = (90 - MIDDLE_SCORING_ANGLE);
-                STAGE_TWO_X_COORDINATE = 1.1;
-            }
-
-            if (targetIndex == 3) {
-                STAGE_ONE_HEADING = 90;
-                STAGE_ONE_Y_COORDINATE = -.5;
-                STAGE_TWO_X_COORDINATE = 0.55;
-                STAGE_TWO_HEADING = (90 - OUTWARD_SCORING_ANGLE);
-            }
-        }
-
-
-    }
-
-    public void build() {
-        autonIndex = 0;
-        futureTimer = 0;
-
-        Pose2d pose = startingPosition.getPose();
-
-        blueRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
-        blueRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
-
-        blueLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, STAGE_ONE_HEADING);
-        blueLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + BACKSTAGE_X_POSITION_OFFSET - indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, STAGE_TWO_HEADING);
-
-        redLeftStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
-        redLeftStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE + indexStrafeOffset, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
-
-        redRightStageOnePosition = P2D(pose.position.x / FIELD_INCHES_PER_GRID, STAGE_ONE_Y_COORDINATE, -STAGE_ONE_HEADING);
-        redRightStageTwoPosition = P2D(STAGE_TWO_X_COORDINATE, blueRightStageOnePosition.position.y/FIELD_INCHES_PER_GRID, -STAGE_TWO_HEADING);
-
-        purpleEndPosition = P2D(startingPosition.getPose().position.x / FIELD_INCHES_PER_GRID, allianceDirection * .35 / FIELD_INCHES_PER_GRID, STANDARD_HEADING);
-        backdropApproachPosition = P2D(1.65, allianceDirection * .35, STANDARD_HEADING);
-        aprilTagApproachPosition = P2D(1.8, allianceDirection * 1.5 + (targetAprilTagIndex - 3) * aprilTagOffset, STANDARD_HEADING);
-
-        parkPosition = P2D(1.6, allianceDirection * 2.1, STANDARD_HEADING);
-
-        //
-        redLeftStageOne = new SequentialAction(
+    public void driveToYellowPixelBuild() {
+        driveToYellowPixel = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .lineToYLinearHeading(redLeftStageOnePosition.position.y, redLeftStageOnePosition.heading)
+                        .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
+                        .setReversed(true)
+                        .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .build()
         );
-        redLeftStageTwo = new SequentialAction(
-                robot.driveTrain.actionBuilder(redLeftStageOnePosition)
-                        .strafeTo(redLeftStageTwoPosition.position)
-                        .turnTo(redLeftStageTwoPosition.heading)
-                        .build()
-        );
-        //
-
-        //
-        redRightStageOne = new SequentialAction(
-                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .lineToYLinearHeading(redRightStageOnePosition.position.y, redRightStageOnePosition.heading)
-                        .build()
-        );
-        redRightStageTwo = new SequentialAction(
-                robot.driveTrain.actionBuilder(redRightStageOnePosition)
-                        .strafeTo(redRightStageTwoPosition.position)
-                        .turnTo(redRightStageTwoPosition.heading)
-                        .build()
-        );
-        //
-
-        //
-        blueLeftStageOne = new SequentialAction(
-                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .lineToYLinearHeading(blueLeftStageOnePosition.position.y, blueLeftStageOnePosition.heading)
-                        .build()
-        );
-        blueLeftStageTwo = new SequentialAction(
-                robot.driveTrain.actionBuilder(blueLeftStageOnePosition)
-                        .strafeTo(blueLeftStageTwoPosition.position)
-                        .turnTo(blueLeftStageTwoPosition.heading)
-                        .build()
-        );
-        //
-
-        //
-        blueRightStageOne = new SequentialAction(
-                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .lineToYLinearHeading(blueRightStageOnePosition.position.y, blueRightStageOnePosition.heading)
-                        .build()
-        );
-        blueRightStageTwo = new SequentialAction(
-                robot.driveTrain.actionBuilder(blueRightStageOnePosition)
-                        .strafeTo(blueRightStageTwoPosition.position)
-                        .turnTo(blueRightStageTwoPosition.heading)
-                        .build()
-        );
-        //
-        approachAprilTagBuild();
-        findStandardPositionBuild();
-        approachBackdropBuild();
-
-
     }
 
     public void approachBackdropBuild() {
         approachBackdrop = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .turnTo(purpleEndPosition.heading)
-                        .strafeTo(backdropApproachPosition.position)
+                        .setReversed(true)
+                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
                         .build()
-        );
-    }
-
-    public void findStandardPositionBuild(){
-        findStandardPosition = new SequentialAction(
-                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .turnTo(purpleEndPosition.heading)
-                        .strafeTo(purpleEndPosition.position)
-                        .build()
-
         );
     }
 
     public void parkBuild() {
         park = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .lineToYConstantHeading(parkPosition.position.y)
                         .build()
         );
     }
 
-    public void findStandardHeadingBuild() {
-        findStandardHeading = new SequentialAction(
+    public void sweepBuild() {
+        sweep = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .turnTo(Math.toRadians(STANDARD_HEADING))
+                        .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
                         .build()
         );
     }
 
-    public void findAprilTagHeadingBuild() {
-        APRIL_TAG_HEADING = Math.atan2(aprilTagApproachPosition.position.y-robot.driveTrain.pose.position.y,aprilTagApproachPosition.position.x-robot.driveTrain.pose.position.x);
-        findAprilTagHeading = new SequentialAction(
+    public void driveToPurplePixelBuild() {
+        driveToPurplePixel = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .turnTo(Math.toRadians(APRIL_TAG_HEADING))
+                    .setReversed(true)
+                    .splineTo(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
                         .build()
         );
     }
 
-    public void approachAprilTagBuild() {
-        approachAprilTag = new SequentialAction(
+    public void driveToPixelStackBuild() {
+        driveToPixelStack = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .splineToLinearHeading(aprilTagApproachPosition,Math.PI)
+                        .setReversed(false)
+                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
                         .build()
         );
     }
 
-    public void pickAutonToRun(Constants.Alliance alliance) {
-        allianceDirection=alliance.equals(Constants.Alliance.BLUE)?1:-1;
-        build();
-
-            if (startingPosition == Constants.Position.START_LEFT_BLUE) {
-                stageOneToRun = blueLeftStageOne;
-                stageTwoToRun = blueLeftStageTwo;
-            } else if (startingPosition == Constants.Position.START_RIGHT_BLUE) {
-                stageOneToRun = blueRightStageOne;
-                stageTwoToRun = blueRightStageTwo;
-            } else if (startingPosition == Constants.Position.START_LEFT_RED) {
-                stageOneToRun = redLeftStageOne;
-                stageTwoToRun = redLeftStageTwo;
-            } else {
-                stageOneToRun = redRightStageOne;
-                stageTwoToRun = redRightStageTwo;
-        }
+    public void pickAutonToRun(Constants.Position startingPosition) {
+        selectedPath = setPath(startingPosition, targetIndex);
     }
 
+    public static Pose2d P2D(double x, double y, double deg) {
+        return new Pose2d(x * FIELD_INCHES_PER_GRID, y * FIELD_INCHES_PER_GRID, Math.toRadians(deg));
+    }
+
+    public Pose2d switchSides(Pose2d p) {
+        return new Pose2d(p.position.x, allianceDirection*p.position.y, -allianceDirection*p.heading.log());
+    }
+    public Vector2d switchSides(Vector2d v) {
+        return new Vector2d(v.x, allianceDirection*v.y);
+    }
+    public double switchSides(double r) {
+        return -allianceDirection*r;
+    }
+
+    public int setPath(Constants.Position startingPosition, int randomizer) { // 1, 2 or 3 for randomized prop
+        aprilTagApproachPosition = P2D(1.8,   1.5, STANDARD_HEADING);
+        audienceIntermediate = P2D(1,.5,-10);
+        audienceIntermediateForward = P2D(1, .5, STANDARD_HEADING);
+        allianceDirection = startingPosition.getMod()? -1 : 1;
+        //aprilTagAlign = new Pose2d (new Vector2d(switchSides(aprilTagApproachPosition.position).x,switchSides(aprilTagApproachPosition.position).y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
+//        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
+//        aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x-1,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
+        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) *-allianceDirection* aprilTagOffset)), 0);
+        aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x-1,aprilTagApproachPosition.position.y + ((randomizer - 2) *-allianceDirection* aprilTagOffset)), 0);
+        //assemble the paths
+        autonPaths[1][1] = P2D(-2, .5, 90);
+        autonPaths[1][2] = P2D(0, 0, -90);
+        autonPaths[1][3] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[1][4] = audienceIntermediate;
+        autonPaths[1][5] = aprilTagAlign;
+        autonPaths[1][6] = audienceIntermediateForward;
+        autonPaths[1][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[1][8] = audienceIntermediate;
+        autonPaths[1][9] = aprilTagAlign;
+
+        autonPaths[2][1] = P2D(-1.2, .45, 47);
+        autonPaths[2][2] = P2D(0, 0, -90-47);
+        autonPaths[2][3] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[2][4] = audienceIntermediate;
+        autonPaths[2][5] = aprilTagAlign;
+        autonPaths[2][6] = audienceIntermediateForward;
+        autonPaths[2][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[2][8] = audienceIntermediate;
+        autonPaths[2][9] = aprilTagAlign;
+
+        autonPaths[3][1] = P2D(-1.65, 1, 90);
+        autonPaths[3][2] = P2D(0, 0, -30);
+        autonPaths[3][3] = P2D(0, 0, -130);
+        autonPaths[3][4] = audienceIntermediate;
+        autonPaths[3][5] = aprilTagAlign;
+        autonPaths[3][6] = audienceIntermediateForward;
+        autonPaths[3][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[3][8] = audienceIntermediate;
+        autonPaths[3][9] = aprilTagAlign;
+
+        autonPaths[4][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID+.15, 1.25, 90);
+        autonPaths[4][2] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[4][3] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[4][4] = aprilTagAlignClose;
+        autonPaths[4][5] = aprilTagAlign;
+        autonPaths[4][6] = audienceIntermediateForward;
+        autonPaths[4][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[4][8] = audienceIntermediate;
+        autonPaths[4][9] = aprilTagAlign;
+
+        autonPaths[5][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID, 1.7, 90);
+        autonPaths[5][2] = P2D(0, 0, 90);
+        autonPaths[5][3] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[5][4] = aprilTagAlignClose;
+        autonPaths[5][5] = aprilTagAlign;
+        autonPaths[5][6] = audienceIntermediateForward;
+        autonPaths[5][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[5][8] = audienceIntermediate;
+        autonPaths[5][9] = aprilTagAlign;
+
+        autonPaths[6][1] = P2D(1.55, 1.5, -15);
+        autonPaths[6][2] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[6][3] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[6][4] = aprilTagAlignClose;
+        autonPaths[6][5] = aprilTagAlign;
+        autonPaths[6][6] = audienceIntermediateForward;
+        autonPaths[6][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[6][8] = audienceIntermediate;
+        autonPaths[6][9] = aprilTagAlign;
+
+        int rando = randomizer;
+        if (allianceDirection==1 && randomizer==1) rando = 3;
+        if (allianceDirection==1 && randomizer==3) rando = 1;
+        return (startingPosition.equals(Constants.Position.START_RIGHT_RED)||startingPosition.equals(Constants.Position.START_LEFT_BLUE))?
+                3+rando :rando;
+    }
 
     public static int autonIndex;
     public static long futureTimer;
@@ -415,111 +287,86 @@ public class Autonomous implements TelemetryProvider {
             switch (autonIndex) {
                 case 0:
                     futureTimer = futureTime(.4);
+                    driveToPurplePixelBuild();
                     autonIndex++;
                     break;
                 case 1:
                     autonState = AutonState.BACK_UP;
-                    if (!stageOneToRun.run(packet)) {
+                    if (!driveToPurplePixel.run(packet)) {
+                        sweepBuild();
                         autonIndex++;
-                    } else if (isPast(futureTimer)) {
-                        //putting the intake down to eject position so it can nudge the team prop out of the way for the 1 and 3 positions
-                        //doesn't matter if it gets set repeatedly
-                        robot.intake.setAngle(Intake.ANGLE_EJECT);
                     }
                     break;
                 case 2:
-                    autonState = AutonState.STRAFE;
-                    if (!stageTwoToRun.run(packet)) {
-                        robot.intake.articulate(Intake.Articulation.EJECT);
-                        //reset roadrunner based on imuAngle
-                        robot.driveTrain.pose = new Pose2d(robot.driveTrain.pose.position, Math.toRadians(robot.driveTrain.imuAngle));
+                    autonState = AutonState.SCORE_GROUND;
+                    if (!sweep.run(packet)) {
+                        robot.intake.setAngle(Intake.ANGLE_EJECT);
                         autonIndex++;
                     }
                     break;
                 case 3:
-                    autonState = AutonState.SCORE_GROUND;
                     if(robot.intake.readyForTravel()) {
+                        driveToYellowPixelBuild();
                         autonIndex++;
                     }
                     break;
                 case 4:
                     if(robot.outtake.ingestFromTravel()) //todo should call an articulation instead
                         {
-                            findStandardPositionBuild(); //gotta build again since the current position is used
                             autonIndex++;
                         }
                     break;
-                case 5: //travel to interim position near backdrop and then to final position
-                    if(startingPosition != Constants.Position.START_RIGHT_BLUE && startingPosition != Constants.Position.START_LEFT_RED) {
-                        autonIndex++;
-                        break;
-                    }
-                    autonState = AutonState.FIND_STANDARD_POSITION;
-                    if (!findStandardPosition.run(packet)) {
-                        approachBackdropBuild();
+                case 5:
+                    autonState = AutonState.TRAVEL_BACKDROP;
+                    if (!driveToYellowPixel.run(packet)) {
                         autonIndex++;
                     }
                     break;
                 case 6:
-                    if(startingPosition != Constants.Position.START_RIGHT_BLUE && startingPosition != Constants.Position.START_LEFT_RED) {
-                        findAprilTagHeadingBuild();
-                        autonIndex++;
-                        break;
-                    }
-                    autonState = AutonState.TRAVEL_BACKDROP;
-                    if(!approachBackdrop.run(packet)) {
-                        findAprilTagHeadingBuild();
-                        autonIndex++;
-                    }
+                    autonState = AutonState.ALIGN_WITH_APRILTAG;
+                    autonIndex++;
                     break;
                 case 7:
-                    autonState = AutonState.FIND_APRIL_TAG_HEADING;
-                    if(!findAprilTagHeading.run(packet)) {
-                        approachAprilTagBuild();
-                        autonIndex++;
-                    }
-                    break;
-                case 8:
-                    autonState = AutonState.ALIGN_WITH_APRILTAG;
-                    if(!approachAprilTag.run(packet)) {
-                        actionEndPose = robot.driveTrain.pose;
-                        //reset roadrunner based on imuAngle
-                        robot.driveTrain.pose = new Pose2d(robot.driveTrain.pose.position, Math.toRadians(robot.driveTrain.imuAngle));
-                        findStandardHeadingBuild();
-
-                        autonIndex++;
-                    }
-                    break;
-                case 9:
-                    autonState = AutonState.FIND_STANDARD_HEADING;
-                    if(!findStandardHeading.run(packet)) {
-                        robot.articulate(Robot.Articulation.BACKDROP_PREP);
-                        autonIndex++;
-                    }
-                    break;
-                case 10:
                     autonState = AutonState.SCORE_BACKDROP;
                     if(robot.outtake.articulation.equals(Outtake.Articulation.BACKDROP))
                         autonIndex++;
                     break;
-                case 11:
-                    autonState = AutonState.SCORE_DRIVE;
-                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.4, 0), 0));
-                    if(robot.driveTrain.backDistanceSensor.getDistance(DistanceUnit.INCH) < 8.5) {
-                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                case 8:
+//                    autonState = AutonState.SCORE_DRIVE;
+//                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.4, 0), 0));
+//                    if(robot.driveTrain.backDistanceSensor.getDistance(DistanceUnit.INCH) < 8.5) {
+//                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                        driveToPixelStackBuild();
                         autonIndex++;
-                    }
+//                    }
                     break;
-                case 12:
-//                    autonState = AutonState.PREP_FOR_PARK;
-//                    robot.outtake.setTargetAngle(Outtake.FLIPPER_PRE_SCORE_ANGLE);
-//                    parkBuild();
+                case 9:
+                    autonState = AutonState.DRIVE_TO_PIXEL_STACK;
+//                    if (!driveToPixelStack.run(packet)) {
+//                        approachBackdropBuild();
+                        autonIndex++;
+//                    }
+                    break;
+                case 10:
+                    autonState = AutonState.GET_FROM_PIXEL_STACK;
+                    autonIndex++;
+                    break;
+                case 11:
+                    autonState = AutonState.TRAVEL_BACKDROP;
+//                    if (!approachBackdrop.run(packet)) {
+                        autonIndex++;
+//                    }
                     autonIndex ++;
                     break;
-                case 13:
-//                    autonState = AutonState.PARK;
-//                    if(!park.run(packet)) {
+                case 12:
+                    autonState = AutonState.SCORE_BACKDROP;
+//                    if(robot.outtake.articulation.equals(Outtake.Articulation.BACKDROP))
                         autonIndex++;
+                    break;
+                case 13:
+                    autonState = AutonState.PARK;
+//                    if(!park.run(packet)) {
+                    autonIndex++;
 //                    }
                     break;
                 case 14:

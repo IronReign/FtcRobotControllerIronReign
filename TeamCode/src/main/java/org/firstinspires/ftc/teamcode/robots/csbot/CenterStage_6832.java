@@ -206,9 +206,8 @@ public class CenterStage_6832 extends OpMode {
 
         if(gameState.equals(GameState.AUTONOMOUS)){
             robot.driveTrain.imu.resetYaw();
-            auton.updateIndexOffsets();
             //calc auton based on alliance, starting position and team prop position
-            auton.pickAutonToRun(alliance);
+            auton.pickAutonToRun(startingPosition);
         }
 
         if(gameState.equals(GameState.TELE_OP)){
@@ -353,7 +352,6 @@ public class CenterStage_6832 extends OpMode {
         packet.put("imu/roadrunner error", robot.driveTrain.imuRoadrunnerError);
         packet.put("imu angle", robot.driveTrain.imuAngle);
         packet.put("roadrunner angle", Math.toDegrees(robot.driveTrain.pose.heading.toDouble()));
-        packet.put("action end pose", Math.toDegrees(auton.actionEndPose.heading.toDouble()));
 
 
         dashboard.sendTelemetryPacket(packet);
