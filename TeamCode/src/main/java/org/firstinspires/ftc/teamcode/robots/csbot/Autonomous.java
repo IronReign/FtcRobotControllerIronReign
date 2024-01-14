@@ -60,6 +60,7 @@ public class Autonomous implements TelemetryProvider {
         telemetryMap.put("autonState", autonState);
         telemetryMap.put("targetIndex", targetIndex);
         telemetryMap.put("targetAprilTag", targetAprilTagIndex);
+        telemetryMap.put("selectedPath", selectedPath);
 //        telemetryMap.put("indexStrafeOffset", indexStrafeOffset);
 //        telemetryMap.put("indexHeadingOffset", indexHeadingOffset);
         telemetryMap.put("visionProvider name", visionProvider.getTelemetryName());
@@ -110,6 +111,7 @@ public class Autonomous implements TelemetryProvider {
         this.hardwareMap = robot.hardwareMap;
         this.visionProvider = robot.visionProviderBack;
         autonPaths = new Pose2d[7][10];
+        autonIndex = 0;
     }
 
     public static int INWARD_SCORING_ANGLE = -45;
@@ -180,6 +182,10 @@ public class Autonomous implements TelemetryProvider {
         );
     }
 
+    public void saveRandomizer(int visionIndex) {
+        targetIndex = visionIndex + 1;
+    }
+
     public void pickAutonToRun(Constants.Position startingPosition) {
         selectedPath = setPath(startingPosition, targetIndex);
     }
@@ -199,6 +205,7 @@ public class Autonomous implements TelemetryProvider {
     }
 
     public int setPath(Constants.Position startingPosition, int randomizer) { // 1, 2 or 3 for randomized prop
+        autonIndex = 0;
         aprilTagApproachPosition = P2D(1.8,   1.5, STANDARD_HEADING);
         audienceIntermediate = P2D(1,.5,-10);
         audienceIntermediateForward = P2D(1, .5, STANDARD_HEADING);
@@ -239,7 +246,7 @@ public class Autonomous implements TelemetryProvider {
         autonPaths[3][8] = audienceIntermediate;
         autonPaths[3][9] = aprilTagAlign;
 
-        autonPaths[4][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID+.15, 1.25, 90);
+        autonPaths[4][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID+.3, 1.25, 90);
         autonPaths[4][2] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[4][3] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[4][4] = aprilTagAlignClose;
@@ -249,7 +256,7 @@ public class Autonomous implements TelemetryProvider {
         autonPaths[4][8] = audienceIntermediate;
         autonPaths[4][9] = aprilTagAlign;
 
-        autonPaths[5][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID, 1.7, 90);
+        autonPaths[5][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID, 1.8, 90);
         autonPaths[5][2] = P2D(0, 0, 90);
         autonPaths[5][3] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[5][4] = aprilTagAlignClose;
@@ -293,6 +300,7 @@ public class Autonomous implements TelemetryProvider {
                 case 1:
                     autonState = AutonState.BACK_UP;
                     if (!driveToPurplePixel.run(packet)) {
+                        robot.intake.articulate(Intake.Articulation.DOWN);
                         sweepBuild();
                         autonIndex++;
                     }
@@ -300,7 +308,7 @@ public class Autonomous implements TelemetryProvider {
                 case 2:
                     autonState = AutonState.SCORE_GROUND;
                     if (!sweep.run(packet)) {
-                        robot.intake.setAngle(Intake.ANGLE_EJECT);
+                        robot.intake.articulate(Intake.Articulation.EJECT);
                         autonIndex++;
                     }
                     break;
@@ -311,14 +319,15 @@ public class Autonomous implements TelemetryProvider {
                     }
                     break;
                 case 4:
-                    if(robot.outtake.ingestFromTravel()) //todo should call an articulation instead
-                        {
+//                    if(robot.outtake.ingestFromTravel()) //todo should call an articulation instead
+//                        {
                             autonIndex++;
-                        }
+//                        }
                     break;
                 case 5:
                     autonState = AutonState.TRAVEL_BACKDROP;
                     if (!driveToYellowPixel.run(packet)) {
+                        robot.articulate(Robot.Articulation.BACKDROP_PREP);
                         autonIndex++;
                     }
                     break;
@@ -328,17 +337,20 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 7:
                     autonState = AutonState.SCORE_BACKDROP;
-                    if(robot.outtake.articulation.equals(Outtake.Articulation.BACKDROP))
+                    if(robot.outtake.articulation.equals(Outtake.Articulation.BACKDROP)) {
                         autonIndex++;
+                        futureTimer = futureTime(.25);
+                    }
                     break;
                 case 8:
-//                    autonState = AutonState.SCORE_DRIVE;
-//                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.4, 0), 0));
-//                    if(robot.driveTrain.backDistanceSensor.getDistance(DistanceUnit.INCH) < 8.5) {
-//                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                    autonState = AutonState.SCORE_DRIVE;
+                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.4, 0), 0));
+                    if(isPast(futureTimer)) {
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                        robot.articulate(Robot.Articulation.TRAVEL);
                         driveToPixelStackBuild();
                         autonIndex++;
-//                    }
+                    }
                     break;
                 case 9:
                     autonState = AutonState.DRIVE_TO_PIXEL_STACK;

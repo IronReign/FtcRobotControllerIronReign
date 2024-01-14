@@ -68,7 +68,7 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        int randomizer = 3; //1, 2 or 3
+        int randomizer = 1; //1, 2 or 3
         Pose2d p;
 
         startingPosition = Position.START_LEFT_RED;
@@ -264,7 +264,6 @@ public class MeepMeepTesting {
 //        aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x-1,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
         aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) *-allianceDirection* aprilTagOffset)), 0);
         aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x-1,aprilTagApproachPosition.position.y + ((randomizer - 2) *-allianceDirection* aprilTagOffset)), 0);
-        System.out.println(aprilTagOffset);
         //assemble the paths
         autonPaths[1][1] = P2D(-2, .5, 90);
         autonPaths[1][2] = P2D(0, 0, -90);
@@ -296,7 +295,7 @@ public class MeepMeepTesting {
         autonPaths[3][8] = audienceIntermediate;
         autonPaths[3][9] = aprilTagAlign;
 
-        autonPaths[4][1] = P2D(startingPosition.pose.position.x/FIELD_INCHES_PER_GRID+.15, 1.25, 90);
+        autonPaths[4][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID+.3, 1.25, 90);
         autonPaths[4][2] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[4][3] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[4][4] = aprilTagAlignClose;
@@ -306,7 +305,7 @@ public class MeepMeepTesting {
         autonPaths[4][8] = audienceIntermediate;
         autonPaths[4][9] = aprilTagAlign;
 
-        autonPaths[5][1] = P2D(startingPosition.pose.position.x/FIELD_INCHES_PER_GRID, 1.7, 90);
+        autonPaths[5][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID, 1.8, 90);
         autonPaths[5][2] = P2D(0, 0, 90);
         autonPaths[5][3] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[5][4] = aprilTagAlignClose;

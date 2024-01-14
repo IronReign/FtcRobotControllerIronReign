@@ -158,7 +158,7 @@ public class CenterStage_6832 extends OpMode {
         robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
 
 
-
+        auton.saveRandomizer(robot.visionProviderBack.getMostFrequentPosition().getIndex());
         robot.initPosition();
 
         robot.driveTrain.updatePoseEstimate();

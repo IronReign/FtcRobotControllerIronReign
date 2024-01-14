@@ -260,7 +260,7 @@ public class  Robot implements Subsystem {
             case TRAVEL:
                 break;
             case BACKDROP:
-
+                articulation = Articulation.MANUAL;
                 break;
             case CALIBRATE:
                 //TODO - WRITE A CALIBRATION ROUTINE

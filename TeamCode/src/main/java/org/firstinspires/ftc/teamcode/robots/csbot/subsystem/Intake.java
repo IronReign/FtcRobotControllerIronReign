@@ -20,19 +20,20 @@ import java.util.Map;
 
 @Config(value = "AA_CS_INTAKE")
 public class Intake implements Subsystem {
+    public static int INTAKE_OFFSET = -20;
     public static int RIGHT_DIVERTER_OPEN = 1010;
     public static int LEFT_DIVERTER_OPEN = 1850;
     public static int LEFT_DIVERTER_CLOSED = 1490;
     public static int RIGHT_DIVERTER_CLOSED = 1350;
-    public static int ANGLE_MAX = 2200;
-    public static int ANGLE_MIN = 1350;
-    public static int ANGLE_START = 2200;
+    public static int ANGLE_MAX = 2200 + INTAKE_OFFSET;
+    public static int ANGLE_MIN = 1350 + INTAKE_OFFSET;
+    public static int ANGLE_START = 2200+ INTAKE_OFFSET;
     public static int ANGLE_INGEST_GROUND = ANGLE_MIN;
     public static int ANGLE_INGEST_INCREMENT = 20;
-    public static int ANGLE_EJECT = 1450;
-    public static int ANGLE_HANG = 1515;
-    public static int ANGLE_SWALLOW = 1900;
-    public static int ANGLE_TRAVEL = 1750; //safe to travel through backstage door
+    public static int ANGLE_EJECT = 1450+ INTAKE_OFFSET;
+    public static int ANGLE_HANG = 1515+ INTAKE_OFFSET;
+    public static int ANGLE_SWALLOW = 1900+ INTAKE_OFFSET;
+    public static int ANGLE_TRAVEL = 1750+ INTAKE_OFFSET; //safe to travel through backstage door
     public static double TIME_SWALLOW = 1;
     public static double TIME_EJECT = 2;
 
@@ -136,6 +137,7 @@ public class Intake implements Subsystem {
         MANUAL,
         HANG,
         SWALLOW,
+        DOWN,
         INIT
 
     }
@@ -241,6 +243,10 @@ public class Intake implements Subsystem {
                 if(eject()) {
                     articulation = Articulation.TRAVEL;
                 }
+                break;
+            case DOWN:
+                angleTarget = ANGLE_EJECT;
+                angle.setPosition(Utils.servoNormalize(angleTarget));
                 break;
             case INIT:
                 angleTarget = ANGLE_START;
