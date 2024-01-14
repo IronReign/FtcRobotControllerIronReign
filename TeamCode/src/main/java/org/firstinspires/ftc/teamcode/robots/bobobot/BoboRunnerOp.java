@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.RunnerBot;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Utilities.Toggle;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
 
@@ -35,6 +36,7 @@ public class BoboRunnerOp extends OpMode {
     public void loop(){
         toggle.gamepadUpdate();
         toggle.toggleSpeedMode(); //Sticky Gamepad Controls and Update
+        toggle.intake();
         runnerBot.driveTrain.drive(gamepad1.left_stick_x*spd(), gamepad1.left_stick_y*spd(), gamepad1.right_stick_x*spd());
         //imu.telemetryOutput();
         update();

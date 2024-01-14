@@ -37,4 +37,41 @@ public class Toggle {
             debugbot.motorDebug.motorDebugTest();
         }
     }
+
+    public void armUp(){
+        if(gamepad1.a){
+            runnerBot.intake.clawArmLift();
+        }
+    }
+
+    public void armDown(){
+        if(gamepad1.b){
+            runnerBot.intake.clawArmLower();
+        }
+    }
+
+    public void intake(){
+        if(gamepad1.a){
+            runnerBot.intake.clawArmLift();
+        }
+        if(gamepad1.b){
+            runnerBot.intake.clawArmLower();
+        }
+
+        if(gamepad1.right_bumper){
+            runnerBot.intake.openClaw();
+        }
+
+        if(gamepad1.left_bumper){
+            runnerBot.intake.closeClaw();
+        }
+
+        if(gamepad1.dpad_up){
+            runnerBot.intake.armWristOut();
+        }
+
+        if (gamepad1.dpad_down){
+            runnerBot.intake.armWristIn();
+        }
+    }
 }
