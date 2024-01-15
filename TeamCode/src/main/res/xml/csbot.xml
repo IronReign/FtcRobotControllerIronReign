@@ -16,8 +16,8 @@
             <Servo name="diverterLeft" port="1" />
             <RevRobotics40HDHexMotor name="intakeBeater" port="1" />
             <RevRobotics40HDHexMotor name="slide" port="2"/>
-            <RevRobotics40HDHexMotor name="kareem" port="3"/>
-            <RevRobotics40HDHexMotor name="jabbar" port="0"/>
+            <RevRoboticsCoreHexMotor name="kareem" port="3"/>
+            <RevRoboticsCoreHexMotor name="jabbar" port="0"/>
             <Servo name="pixelFlipper" port="5" />
         </LynxModule>
     </LynxUsbDevice>

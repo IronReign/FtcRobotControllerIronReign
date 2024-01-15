@@ -22,13 +22,10 @@ public class Arm implements Subsystem {
     HardwareMap hardwareMap;
     Robot robot;
 
-    private DcMotorEx shoulder = null;
+    private DcMotorEx shoulderRight, shoulderLeft = null;
     private Servo gripperInner, gripperOuter, triggerDrone;
     
     public Joint wristLeft, wristRight; //the wrist is a diffy mechanism - blend of pitch and roll
-
-    public static int flipperPosition = 1888;
-
 
     public void setShoulderTargetPosition(int shoulderTargetPosition) {
         if (shoulderTargetPosition < shoulderPositionMin) {
@@ -41,6 +38,9 @@ public class Arm implements Subsystem {
     }
 
     int shoulderTargetPosition = 0;
+
+    public static int shoulderTargetPositionTest = 0;
+    int shoulderTargetPositionTestPrev;
     public static int shoulderPositionMax = 100; //todo find real shoulder Max
     public static int shoulderPositionMin = 0;
     public static int shoulderPositionPreDock = 0;
@@ -141,12 +141,21 @@ public class Arm implements Subsystem {
         gripperInner = hardwareMap.get(Servo.class, "gripInner");
         gripperOuter = hardwareMap.get(Servo.class, "gripOuter");
 
-        shoulder = this.hardwareMap.get(DcMotorEx.class, "motorShoulder");
-        shoulder.setMotorEnable();
-        shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        shoulder.setTargetPosition(0);
-        shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        shoulder.setPower(1);
+        shoulderRight = this.hardwareMap.get(DcMotorEx.class, "motorShoulderRight");
+        shoulderRight.setMotorEnable();
+        shoulderRight.setDirection(DcMotor.Direction.REVERSE);
+        shoulderRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shoulderRight.setTargetPosition(0);
+        shoulderRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        shoulderRight.setPower(1);
+
+        shoulderLeft = this.hardwareMap.get(DcMotorEx.class, "motorShoulderLeft");
+        shoulderLeft.setMotorEnable();
+        shoulderLeft.setDirection(DcMotor.Direction.REVERSE);
+        shoulderLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shoulderLeft.setTargetPosition(0);
+        shoulderLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        shoulderLeft.setPower(1);
 //        pixelFlipper = this.hardwareMap.get(Servo.class, "pixelFlipper");
 
         behavior = Behavior.MANUAL;
@@ -161,7 +170,7 @@ public class Arm implements Subsystem {
                 ingestPositionIndex ++;
                 break;
             case 1: //lower the outtake to intake position
-                if(between( shoulder.getCurrentPosition(), shoulderPositionPreDock +10, shoulderPositionPreDock -10)) {
+                if(between( shoulderRight.getCurrentPosition(), shoulderPositionPreDock +10, shoulderPositionPreDock -10)) {
                     setTargetAngle(WRIST_DOCK_ANGLE);
                     ingestPositionTimer = futureTime(.75);
                     ingestPositionIndex++;
@@ -228,7 +237,7 @@ public class Arm implements Subsystem {
 
 
     public void adjustShoulder(double gamepadSpeed) {
-        setShoulderTargetPosition(shoulder.getCurrentPosition()+(int)(gamepadSpeed * shoulderSpeed));
+        setShoulderTargetPosition(shoulderRight.getCurrentPosition()+(int)(gamepadSpeed * shoulderSpeed));
     }
 
 
@@ -283,12 +292,21 @@ public void GripInnerToggle(){
         //actually instruct actuators to go to desired targets
         wristLeft.update();
         wristRight.update();
-        shoulder.setTargetPosition(shoulderTargetPosition);
+        //allow setting a test target position via dashboard
+        if (shoulderTargetPositionTest!=shoulderTargetPositionTestPrev)
+        {
+            shoulderTargetPositionTestPrev=shoulderTargetPositionTest;
+            setShoulderTargetPosition(shoulderTargetPositionTest);
+        }
+        shoulderLeft.setTargetPosition(shoulderTargetPosition);
+        shoulderRight.setTargetPosition(shoulderTargetPosition);
     }
 
     @Override
     public void stop() {
-        shoulder.setMotorDisable();
+
+        shoulderRight.setMotorDisable();
+        shoulderLeft.setMotorDisable();
     }
 
     @Override
@@ -296,7 +314,7 @@ public void GripInnerToggle(){
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("articulation", behavior.name());
         telemetryMap.put("shoulder target position", shoulderTargetPosition);
-        telemetryMap.put("shoulder actual position", shoulder.getCurrentPosition());
+        telemetryMap.put("shoulder actual position", shoulderRight.getCurrentPosition());
         telemetryMap.put("wristLeft angle", wristLeft.getCurrentAngle());
         telemetryMap.put("wristLeft target angle", wristLeft.getTargetAngle());
         return telemetryMap;

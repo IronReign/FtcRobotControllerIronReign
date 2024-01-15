@@ -12,8 +12,6 @@ import android.annotation.SuppressLint;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 
-import org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele;
-import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Arm;
 import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
@@ -92,13 +90,16 @@ public class DriverControls {
     public void joystickDrive() {
 
         if(stickyGamepad2.b) {
-            fieldOrientedDrive = !fieldOrientedDrive;
+            //fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (gamepad1.left_trigger > .1) {
             robot.arm.adjustShoulder(gamepad1.left_trigger);
+            //robot.skyhooks.adjustSkyHook(gamepad1.left_trigger);
         }
 
         if (gamepad1.right_trigger > .1) {
+            robot.arm.adjustShoulder(gamepad1.right_trigger);
+            //robot.skyhooks.adjustSkyHooks(gamepad1.right_trigger);
 
         }
         if (stickyGamepad1.a) {

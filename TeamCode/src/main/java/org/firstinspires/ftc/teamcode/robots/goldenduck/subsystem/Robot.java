@@ -37,6 +37,7 @@ public class Robot implements Subsystem {
     public VisionProvider visionProviderBack = null;
     public static boolean visionOn = true;
     public Arm arm;
+    public Skyhook skyhooks;
     //TODO - create a field
 //    public Field field;
 
@@ -98,10 +99,9 @@ public class Robot implements Subsystem {
         // initializing subsystems
         driveTrain = new DriveTrain(hardwareMap, this, simulated);
         arm = new Arm(hardwareMap, this);
+        skyhooks = new Skyhook(hardwareMap,this);
 
-
-
-        subsystems = new Subsystem[]{driveTrain, arm};
+        subsystems = new Subsystem[]{driveTrain, arm, skyhooks};
         subsystemUpdateTimes = new long[subsystems.length];
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
