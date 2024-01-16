@@ -28,7 +28,6 @@ public class Intake implements Subsystem {
     public static double WRIST_INIT_POSITION = Utils.servoNormalize(2105);
     public static double WRIST_MAX = Utils.servoNormalize(1650);
     public static double WRIST_SCORE_1 = Utils.servoNormalize(1800);
-    private Telemetry telemetry;
     private HardwareMap hardwareMap;
     public RunnerBot runnerBot;
     public Intake(HardwareMap hardwareMap, RunnerBot runnerBot) {

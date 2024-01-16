@@ -37,6 +37,7 @@ public class BoboRunnerOp extends OpMode {
         toggle.gamepadUpdate();
         toggle.toggleSpeedMode(); //Sticky Gamepad Controls and Update
         toggle.intake();
+        toggle.drone();
         runnerBot.driveTrain.drive(gamepad1.left_stick_x*spd(), gamepad1.left_stick_y*spd(), gamepad1.right_stick_x*spd());
         //imu.telemetryOutput();
         update();

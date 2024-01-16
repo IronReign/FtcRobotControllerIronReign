@@ -74,4 +74,10 @@ public class Toggle {
             runnerBot.intake.armWristIn();
         }
     }
+
+    public void drone(){
+        if(gamepad1.y){
+            runnerBot.drone.droneRelease();
+        }
+    }
 }
