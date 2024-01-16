@@ -11,6 +11,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.vision
 
 import android.annotation.SuppressLint;
 
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
@@ -99,9 +100,8 @@ public class DriverControls {
 
     public void joystickDrive() {
 
-        if(stickyGamepad2.b) {
-            fieldOrientedDrive = !fieldOrientedDrive;
-        }
+        //GAMEPAD 1 CONTROLS
+        // ------------------------------------------------------------------
         if (gamepad1.left_trigger > .1) {
             robot.outtake.adjustFlipper(-robot.outtake.FLIPPER_ADJUST_ANGLE);
         }
@@ -143,16 +143,29 @@ public class DriverControls {
             robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
         }
 
-        if(stickyGamepad1.dpad_up)
+        if(stickyGamepad1.dpad_up) {
             robot.intake.articulate(Intake.Articulation.SWALLOW);
+        }
 
         if (stickyGamepad1.dpad_down) {
-            robot.outtake.articulate(Outtake.Articulation.BACKDROP_PREP);
+            robot.enterTravel();
+        }
+        // ------------------------------------------------------------------
+
+        //GAMEPAD 2 CONTROLS
+        // ------------------------------------------------------------------
+        if(stickyGamepad2.start) {
+            robot.driveTrain.pose = new Pose2d(robot.driveTrain.pose.position, robot.driveTrain.imuAngle);
+        }
+
+        if(stickyGamepad2.b) {
+            fieldOrientedDrive  = !fieldOrientedDrive;
         }
 
         if(stickyGamepad2.dpad_up) {
             robot.articulate(Robot.Articulation.PREP_FOR_HANG);
         }
+
         if(stickyGamepad2.a) {
             robot.skyhook.articulate(Skyhook.Articulation.INIT);
         }
@@ -160,6 +173,11 @@ public class DriverControls {
         if(stickyGamepad2.dpad_down) {
             robot.articulate(Robot.Articulation.HANG);
         }
+
+        if(stickyGamepad2.x) {
+            robot.skyhook.releaseTheJimmy();
+        }
+        // ------------------------------------------------------------------
 
         //mu name is jimmy and i am a pickle and i am a potato and i need to sleep with my truffle oil to feel happiness
 
