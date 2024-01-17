@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Joint;
 
 import java.util.LinkedHashMap;
@@ -143,7 +144,7 @@ public class Arm implements Subsystem {
 
         shoulderRight = this.hardwareMap.get(DcMotorEx.class, "motorShoulderRight");
         shoulderRight.setMotorEnable();
-        shoulderRight.setDirection(DcMotor.Direction.REVERSE);
+        //shoulderRight.setDirection(DcMotor.Direction.REVERSE);
         shoulderRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shoulderRight.setTargetPosition(0);
         shoulderRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -314,7 +315,10 @@ public void GripInnerToggle(){
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("articulation", behavior.name());
         telemetryMap.put("shoulder target position", shoulderTargetPosition);
-        telemetryMap.put("shoulder actual position", shoulderRight.getCurrentPosition());
+        telemetryMap.put("shoulder left actual position", shoulderLeft.getCurrentPosition());
+        telemetryMap.put("shoulder rightactual position", shoulderRight.getCurrentPosition());
+        telemetryMap.put("shoulder left Amps", shoulderLeft.getCurrent(CurrentUnit.AMPS));
+        telemetryMap.put("shoulder right Amps", shoulderRight.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("wristLeft angle", wristLeft.getCurrentAngle());
         telemetryMap.put("wristLeft target angle", wristLeft.getTargetAngle());
         return telemetryMap;
