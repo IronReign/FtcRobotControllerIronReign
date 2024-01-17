@@ -43,8 +43,8 @@ public class MeepMeepTesting {
 
     static Pose2d aprilTagApproachPosition;
     static Pose2d audienceIntermediate;
-    static Pose2d audienceIntermediateForward;
-    static Pose2d aprilTagAlign, aprilTagAlignClose;
+    static Pose2d audienceIntermediateForward, audienceIntermediateDeep;
+    static Pose2d aprilTagAlign, aprilTagAlignClose,  aprilTagAlignCrossed;
 
 
     //values to actually use
@@ -105,10 +105,11 @@ public class MeepMeepTesting {
                         .waitSeconds(1) //not needed in real path
                         //step 3 - turn to get ready for next spline
                         .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
-                        //steps 4 & 5 - travel through 1 or 2 final waypoints
+                        //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
                         .setReversed(true)
                         .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
                         .waitSeconds(1)
                         //steps 6, 7, 8, and 9 - run to pixelstack and back
 //                        .setReversed(false)
@@ -136,10 +137,11 @@ public class MeepMeepTesting {
                         .waitSeconds(1) //not needed in real path
                         //step 3 - turn to get ready for next spline
                         .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
-                        //steps 4 & 5 - travel through 1 or 2 final waypoints
+                        //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
                         .setReversed(true)
                         .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
                         .waitSeconds(1)
                         //steps 6, 7, 8, and 9 - run to pixelstack and back
 //                        .setReversed(false)
@@ -167,10 +169,11 @@ public class MeepMeepTesting {
                         .waitSeconds(1) //not needed in real path
                         //step 3 - turn to get ready for next spline
                         .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
-                        //steps 4 & 5 - travel through 1 or 2 final waypoints
+                        //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
                         .setReversed(true)
                         .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
                         .waitSeconds(1)
                         //steps 6, 7, 8, and 9 - run to pixelstack and back
 //                        .setReversed(false)
@@ -198,10 +201,11 @@ public class MeepMeepTesting {
                         .waitSeconds(1) //not needed in real path
                         //step 3 - turn to get ready for next spline
                         .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
-                        //steps 4 & 5 - travel through 1 or 2 final waypoints
+                        //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
                         .setReversed(true)
                         .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
                         .waitSeconds(1)
                         //steps 6, 7, 8, and 9 - run to pixelstack and back
 //                        .setReversed(false)
@@ -276,12 +280,15 @@ public class MeepMeepTesting {
         aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
         audienceIntermediate = P2D(1,.5,-10);
         audienceIntermediateForward = P2D(1, .5, STANDARD_HEADING);
+        audienceIntermediateDeep = P2D(1.5,.5,-10);
         allianceDirection = startingPosition.getMod()? -1 : 1;
         //aprilTagAlign = new Pose2d (new Vector2d(switchSides(aprilTagApproachPosition.position).x,switchSides(aprilTagApproachPosition.position).y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
 //        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
 //        aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x-1,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
         aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), 0);
-        aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x - 1,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), 0);
+        aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x - 1,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)),
+                0);
+        aprilTagAlignCrossed = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), Math.toRadians(-90));
 
 
 
@@ -310,8 +317,8 @@ public class MeepMeepTesting {
         autonPaths[3][1] = P2D(-1.7, 1, 90);
         autonPaths[3][2] = P2D(0, 0, -30);
         autonPaths[3][3] = P2D(0, 0, -130);
-        autonPaths[3][4] = audienceIntermediate;
-        autonPaths[3][5] = aprilTagAlign;
+        autonPaths[3][4] = audienceIntermediateDeep;
+        autonPaths[3][5] = aprilTagAlignCrossed;
         autonPaths[3][6] = audienceIntermediateForward;
         autonPaths[3][7] = P2D(-2.25, .5, STANDARD_HEADING);
         autonPaths[3][8] = audienceIntermediate;
