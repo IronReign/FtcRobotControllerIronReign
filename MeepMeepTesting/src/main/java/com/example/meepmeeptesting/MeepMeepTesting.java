@@ -81,7 +81,7 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        int randomizer = 2; //1, 2 or 3
+        int randomizer = 1; //1, 2 or 3
         Pose2d p;
 
         startingPosition = Position.START_LEFT_RED;
@@ -305,8 +305,9 @@ public class MeepMeepTesting {
         autonPaths[2][7] = P2D(-2.25, .5, STANDARD_HEADING);
         autonPaths[2][8] = audienceIntermediate;
         autonPaths[2][9] = aprilTagAlign;
+        System.out.println(switchSides(aprilTagAlign.position).y);
 
-        autonPaths[3][1] = P2D(-1.65, 1, 90);
+        autonPaths[3][1] = P2D(-1.7, 1, 90);
         autonPaths[3][2] = P2D(0, 0, -30);
         autonPaths[3][3] = P2D(0, 0, -130);
         autonPaths[3][4] = audienceIntermediate;
@@ -328,7 +329,7 @@ public class MeepMeepTesting {
 
         autonPaths[5][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID, 1.8, 90);
         autonPaths[5][2] = P2D(0, 0, 90);
-        autonPaths[5][3] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[5][3] = P2D(0, 0, 170);
         autonPaths[5][4] = aprilTagAlignClose;
         autonPaths[5][5] = aprilTagAlign;
         autonPaths[5][6] = audienceIntermediateForward;
@@ -336,8 +337,8 @@ public class MeepMeepTesting {
         autonPaths[5][8] = audienceIntermediate;
         autonPaths[5][9] = aprilTagAlign;
 
-        autonPaths[6][1] = P2D(1.55, 1.5, -15);
-        autonPaths[6][2] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[6][1] = P2D(1.4, 41.2 / 23.5 , -15);
+        autonPaths[6][2] = P2D(0, 0, 125);
         autonPaths[6][3] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[6][4] = aprilTagAlignClose;
         autonPaths[6][5] = aprilTagAlign;
