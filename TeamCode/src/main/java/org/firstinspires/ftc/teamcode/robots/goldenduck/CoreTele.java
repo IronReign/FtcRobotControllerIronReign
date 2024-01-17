@@ -338,6 +338,7 @@ public class CoreTele extends OpMode {
 
     //HELPER METHODS
     private void updateLiveStates() {
+        loopClockTime = System.nanoTime();
         long loopTime = loopClockTime - lastLoopClockTime;
         averageLoopTime = loopTimeSmoother.update(loopTime);
         averageVoltage = voltageSmoother.update(robot.getVoltage());
