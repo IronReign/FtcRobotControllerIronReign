@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem;
 
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.servoDenormalizeExtended;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.servoNormalizeExtended;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.withinErrorPercent;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.between;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
@@ -25,6 +28,8 @@ public class Arm implements Subsystem {
 
     private DcMotorEx shoulderRight, shoulderLeft = null;
     private Servo gripperInner, gripperOuter, triggerDrone;
+
+    public static int gripInnerToggleTest = 0, gripOuterToggleTest = 0;
     
     public Joint wristLeft, wristRight; //the wrist is a diffy mechanism - blend of pitch and roll
 
@@ -42,7 +47,7 @@ public class Arm implements Subsystem {
 
     public static int shoulderTargetPositionTest = 0;
     int shoulderTargetPositionTestPrev;
-    public static int shoulderPositionMax = 100; //todo find real shoulder Max
+    public static int shoulderPositionMax = 75; //todo find real shoulder Max
     public static int shoulderPositionMin = 0;
     public static int shoulderPositionPreDock = 0;
     public static int slidePositionDocked = 0;
@@ -141,6 +146,8 @@ public class Arm implements Subsystem {
 
         gripperInner = hardwareMap.get(Servo.class, "gripInner");
         gripperOuter = hardwareMap.get(Servo.class, "gripOuter");
+
+        //GripBoth();
 
         shoulderRight = this.hardwareMap.get(DcMotorEx.class, "motorShoulderRight");
         shoulderRight.setMotorEnable();
@@ -254,31 +261,32 @@ public void wristTune(){
 }
 
 public void GripInnerToggle(){
-        if (gripperInner.getPosition() == GripInnerOpen) gripperInner.setPosition(GripInnerClosed);
+        if (withinErrorPercent(gripperInner.getPosition(), servoNormalizeExtended(GripInnerOpen), 10))
+            gripperInner.setPosition(servoNormalizeExtended(GripInnerClosed));
         else //to open inner, outer has to open as well
             {
-                gripperOuter.setPosition(GripOuterOpen);
-                gripperInner.setPosition(GripInnerOpen);
+                gripperOuter.setPosition(servoNormalizeExtended(GripOuterOpen));
+                gripperInner.setPosition(servoNormalizeExtended(GripInnerOpen));
             }
     }
     public void GripOuterToggle(){
-        if (gripperOuter.getPosition() == GripOuterClosed) gripperOuter.setPosition(GripOuterOpen);
+        if (withinErrorPercent(gripperOuter.getPosition(), servoNormalizeExtended(GripOuterClosed), 10))
+            gripperOuter.setPosition(servoNormalizeExtended(GripOuterOpen));
         else //to close outer, inner has to close as well
         {
-            gripperInner.setPosition(GripInnerClosed);
-            gripperOuter.setPosition(GripOuterClosed);
-
+            gripperInner.setPosition(servoNormalizeExtended(GripInnerClosed));
+            gripperOuter.setPosition(servoNormalizeExtended(GripOuterClosed));
         }
     }
 
     public void GripBoth(){
-        gripperInner.setPosition(GripInnerClosed);
-        gripperOuter.setPosition(GripOuterClosed);
+        gripperInner.setPosition(servoNormalizeExtended(GripInnerClosed));
+        gripperOuter.setPosition(servoNormalizeExtended(GripOuterClosed));
     }
 
     public void GripNeither(){
-        gripperInner.setPosition(GripInnerOpen);
-        gripperOuter.setPosition(GripOuterOpen);
+        gripperInner.setPosition(servoNormalizeExtended(GripInnerOpen));
+        gripperOuter.setPosition(servoNormalizeExtended(GripOuterOpen));
     }
 
 
@@ -293,6 +301,17 @@ public void GripInnerToggle(){
         //actually instruct actuators to go to desired targets
         wristLeft.update();
         wristRight.update();
+
+        //allow toggling grippers via dashboard
+        if (gripInnerToggleTest%2==1) {
+            GripInnerToggle();
+            gripInnerToggleTest = 0;
+        }
+        if (gripOuterToggleTest%2==1) {
+            GripOuterToggle();
+            gripOuterToggleTest = 0;
+        }
+
         //allow setting a test target position via dashboard
         if (shoulderTargetPositionTest!=shoulderTargetPositionTestPrev)
         {
@@ -321,6 +340,10 @@ public void GripInnerToggle(){
         telemetryMap.put("shoulder right Amps", shoulderRight.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("wristLeft angle", wristLeft.getCurrentAngle());
         telemetryMap.put("wristLeft target angle", wristLeft.getTargetAngle());
+        telemetryMap.put("grip Outer position", gripperOuter.getPosition());
+        telemetryMap.put("grip Outer PWM", servoDenormalizeExtended( gripperOuter.getPosition()));
+        telemetryMap.put("grip Inner position", gripperInner.getPosition());
+        telemetryMap.put("grip Inner PWM", servoDenormalizeExtended( gripperInner.getPosition()));
         return telemetryMap;
     }
 

@@ -93,8 +93,8 @@ public class DriverControls {
             //fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (gamepad1.left_trigger > .1) {
-            robot.arm.adjustShoulder(gamepad1.left_trigger);
-            //robot.skyhooks.adjustSkyHook(gamepad1.left_trigger);
+            robot.arm.adjustShoulder(-gamepad1.left_trigger);
+            //robot.skyhooks.adjustSkyHook(-gamepad1.left_trigger);
         }
 
         if (gamepad1.right_trigger > .1) {
@@ -128,10 +128,12 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.y)
-            robot.arm.GripOuterToggle();
+            //robot.arm.GripOuterToggle();
+            robot.arm.GripNeither();
 
         if (stickyGamepad1.x)
-            robot.arm.GripInnerToggle();
+            //robot.arm.GripInnerToggle();
+            robot.arm.GripBoth();
 
 
         if(stickyGamepad1.dpad_up)

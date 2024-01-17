@@ -45,6 +45,10 @@ public class Utils {
         return (pulse - 500.0) / 2000.0;
     }
 
+    public static double servoDenormalizeExtended(double thing){
+        return thing*1500+1000;
+    }
+
     public static boolean withinErrorPercent(double value, double target, double percent){
         return (Math.abs(target-value)/target <= percent);
     }
