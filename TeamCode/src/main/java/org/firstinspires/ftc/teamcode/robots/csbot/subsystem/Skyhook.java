@@ -32,7 +32,7 @@ public class Skyhook implements Subsystem {
     public static int jimmyTicks = 1500;
     public static int JIMMY_TENSION_TICKS = 1450;
     public static int JIMMY_RELEASE_TICKS = 2100;
-    public static int SKYHOOK_SAFE_TICKS = 800;
+    public static int SKYHOOK_SAFE_TICKS = 900;
     public static int SKYHOOK_UP_TICKS = 0;
     DcMotorEx kareem, jabbar;
     public DcMotorExResetable skyhookLeft, skyhookRight;

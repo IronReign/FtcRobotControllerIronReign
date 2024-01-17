@@ -1,8 +1,11 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.FLIPPER_TRAVEL_ANGLE;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.getStateMachine;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -23,6 +26,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
 import org.firstinspires.ftc.teamcode.statemachine.StateMachine;
 
@@ -37,6 +41,7 @@ public class Autonomous implements TelemetryProvider {
     public VisionProvider visionProvider;
     private Robot robot;
     private HardwareMap hardwareMap;
+    private double preAdjustImu;
 
     public enum AutonState{
         INIT,
@@ -134,6 +139,7 @@ public class Autonomous implements TelemetryProvider {
                         .setReversed(true)
                         .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .turnTo(STANDARD_HEADING_RAD)
                         .build()
         );
     }
@@ -156,11 +162,32 @@ public class Autonomous implements TelemetryProvider {
     }
 
     public void sweepBuild() {
-        sweep = new SequentialAction(
-                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
-                        .build()
-        );
+        //we need to force the turn in one direction for these paths
+        if(selectedPath == 5) {
+            double intermediateAngle;
+            if(alliance.getMod()) {
+                intermediateAngle = Math.toDegrees(10);
+            }
+            else {
+                intermediateAngle = Math.toDegrees(-10);
+            }
+
+            sweep = new SequentialAction(
+                    robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                            .turnTo(robot.driveTrain.pose.heading.log() + intermediateAngle)
+                            .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
+                            .build()
+            );
+        }
+        //otherwise just one turn works
+        else {
+            sweep = new SequentialAction(
+                    robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                            .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
+                            .build());
+        }
+
+
     }
 
     public void driveToPurplePixelBuild() {
@@ -206,7 +233,7 @@ public class Autonomous implements TelemetryProvider {
 
     public int setPath(Constants.Position startingPosition, int randomizer) { // 1, 2 or 3 for randomized prop
         autonIndex = 0;
-        aprilTagApproachPosition = P2D(1.8,   1.5, STANDARD_HEADING);
+        aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
         audienceIntermediate = P2D(1,.5,-10);
         audienceIntermediateForward = P2D(1, .5, STANDARD_HEADING);
         allianceDirection = startingPosition.getMod()? -1 : 1;
@@ -226,8 +253,8 @@ public class Autonomous implements TelemetryProvider {
         autonPaths[1][8] = audienceIntermediate;
         autonPaths[1][9] = aprilTagAlign;
 
-        autonPaths[2][1] = P2D(-1.2, .45, 47);
-        autonPaths[2][2] = P2D(0, 0, -90-47);
+        autonPaths[2][1] = P2D(-1.2, .43, 47);
+        autonPaths[2][2] = P2D(0, 0, -90-35);
         autonPaths[2][3] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[2][4] = audienceIntermediate;
         autonPaths[2][5] = aprilTagAlign;
@@ -313,7 +340,8 @@ public class Autonomous implements TelemetryProvider {
                     }
                     break;
                 case 3:
-                    if(robot.intake.readyForTravel()) {
+                    if (robot.intake.readyForTravel()) {
+                        robot.outtake.setTargetAngle(FLIPPER_TRAVEL_ANGLE);
                         driveToYellowPixelBuild();
                         autonIndex++;
                     }
@@ -321,67 +349,81 @@ public class Autonomous implements TelemetryProvider {
                 case 4:
 //                    if(robot.outtake.ingestFromTravel()) //todo should call an articulation instead
 //                        {
-                            autonIndex++;
+//                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), .2));
+                    autonIndex++;
 //                        }
                     break;
                 case 5:
                     autonState = AutonState.TRAVEL_BACKDROP;
                     if (!driveToYellowPixel.run(packet)) {
-                        robot.articulate(Robot.Articulation.BACKDROP_PREP);
+                        preAdjustImu = Utils.wrapAngle(robot.driveTrain.imuAngle);
                         autonIndex++;
                     }
                     break;
+
                 case 6:
+                    if (preAdjustImu < 180)
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), -.2));
+                    if(preAdjustImu > 180)
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0 ), .2));
+                    if(Utils.withinError(Utils.wrapAngle(robot.driveTrain.imuAngle), STANDARD_HEADING, 1.5)) {
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0 ), 0));
+                        autonIndex++;
+                    }
+
+                        break;
+                case 7:
                     autonState = AutonState.ALIGN_WITH_APRILTAG;
+                    robot.articulate(Robot.Articulation.BACKDROP_PREP);
                     autonIndex++;
                     break;
-                case 7:
+                case 8:
                     autonState = AutonState.SCORE_BACKDROP;
                     if(robot.outtake.articulation.equals(Outtake.Articulation.BACKDROP)) {
                         autonIndex++;
                         futureTimer = futureTime(.25);
                     }
                     break;
-                case 8:
+                case 9:
                     autonState = AutonState.SCORE_DRIVE;
-                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.4, 0), 0));
-                    if(isPast(futureTimer)) {
+                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.3, 0), 0));
+                    if(robot.driveTrain.backDistanceSensorValue < 10) {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                         robot.articulate(Robot.Articulation.TRAVEL);
                         driveToPixelStackBuild();
                         autonIndex++;
                     }
                     break;
-                case 9:
+                case 10:
                     autonState = AutonState.DRIVE_TO_PIXEL_STACK;
 //                    if (!driveToPixelStack.run(packet)) {
 //                        approachBackdropBuild();
                         autonIndex++;
 //                    }
                     break;
-                case 10:
+                case 11:
                     autonState = AutonState.GET_FROM_PIXEL_STACK;
                     autonIndex++;
                     break;
-                case 11:
+                case 12:
                     autonState = AutonState.TRAVEL_BACKDROP;
 //                    if (!approachBackdrop.run(packet)) {
-                        autonIndex++;
+//                        autonIndex++;
 //                    }
                     autonIndex ++;
                     break;
-                case 12:
+                case 13:
                     autonState = AutonState.SCORE_BACKDROP;
 //                    if(robot.outtake.articulation.equals(Outtake.Articulation.BACKDROP))
                         autonIndex++;
                     break;
-                case 13:
+                case 14:
                     autonState = AutonState.PARK;
 //                    if(!park.run(packet)) {
                     autonIndex++;
 //                    }
                     break;
-                case 14:
+                case 15:
                     autonState = AutonState.DONE;
                     robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
                     return true;

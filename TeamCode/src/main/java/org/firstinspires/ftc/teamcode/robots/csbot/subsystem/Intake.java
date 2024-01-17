@@ -62,6 +62,12 @@ public class Intake implements Subsystem {
         this.ingestPixelHeight = ingestPixelHeight < 0? 0 : ingestPixelHeight;
     }
 
+    public void cleanArticulations() {
+        swallowStage = 0;
+        ejectState = 0;
+
+    }
+
     public enum PixelStack {
         GROUND(0, ANGLE_INGEST_GROUND - ANGLE_INGEST_INCREMENT), //the minus is to force it harder into the tiles
         TWO(1, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT),

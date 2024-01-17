@@ -56,7 +56,7 @@ public class Outtake implements Subsystem {
 
     public static double FLIPPER_MIN_ANGLE = 0;
     public static double FLIPPER_MAX_ANGLE = 145;
-    public static double FLIPPER_PRE_SCORE_ANGLE = 130;
+    public static double FLIPPER_PRE_SCORE_ANGLE = 135;
     public static double FLIPPER_TRAVEL_ANGLE = 28;
     public static int FLIPPER_ADJUST_ANGLE = 10;
     public static double FLIPPER_DOCK_ANGLE = 0;
@@ -111,6 +111,13 @@ public class Outtake implements Subsystem {
         return articulation;
     }
 
+    public void cleanArticulations() {
+        backdropPrepStage = 0;
+        travelStage = 0;
+        travelStageBack = 0;
+        ingestPositionIndex = 0;
+
+    }
 
 
     public enum Articulation {
@@ -155,7 +162,7 @@ public class Outtake implements Subsystem {
         articulation = Articulation.MANUAL;
     }
 
-    public static int ingestPositionIndex = 0;
+    public int ingestPositionIndex = 0;
     public long ingestPositionTimer = 0;
 
     public boolean ingestFromTravel() { //should only call this if Travel was previously set
@@ -220,7 +227,7 @@ public class Outtake implements Subsystem {
             case 0:
                 slideTargetPosition = slidePositionPreDock;
                 if (withinError(slide.getCurrentPosition(), slidePositionPreDock, 30)) {
-                    backdropPrepTimer = futureTime(1);
+                    backdropPrepTimer = futureTime(2);
                     backdropPrepStage++;
                 }
                 break;

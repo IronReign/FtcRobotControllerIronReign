@@ -81,7 +81,7 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        int randomizer = 1; //1, 2 or 3
+        int randomizer = 2; //1, 2 or 3
         Pose2d p;
 
         startingPosition = Position.START_LEFT_RED;
@@ -296,8 +296,8 @@ public class MeepMeepTesting {
         autonPaths[1][8] = audienceIntermediate;
         autonPaths[1][9] = aprilTagAlign;
 
-        autonPaths[2][1] = P2D(-1.2, .45, 47);
-        autonPaths[2][2] = P2D(0, 0, -90-47);
+        autonPaths[2][1] = P2D(-1.2, .43, 47);
+        autonPaths[2][2] = P2D(0, 0, -90-35);
         autonPaths[2][3] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[2][4] = audienceIntermediate;
         autonPaths[2][5] = aprilTagAlign;
