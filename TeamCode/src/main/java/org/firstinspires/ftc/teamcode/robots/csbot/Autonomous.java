@@ -92,8 +92,8 @@ public class Autonomous implements TelemetryProvider {
     double STANDARD_HEADING = 180;
     Pose2d aprilTagApproachPosition;
     Pose2d audienceIntermediate;
-    Pose2d audienceIntermediateForward;
-    Pose2d aprilTagAlign, aprilTagAlignClose;
+    Pose2d audienceIntermediateForward, audienceIntermediateDeep;
+    Pose2d aprilTagAlign, aprilTagAlignClose, aprilTagAlignCrossed;
 
 
     //values to actually use
@@ -244,12 +244,15 @@ public class Autonomous implements TelemetryProvider {
         aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
         audienceIntermediate = P2D(1,.5,-10);
         audienceIntermediateForward = P2D(1, .5, STANDARD_HEADING);
+        audienceIntermediateDeep = P2D(1.5,.5,-10);
         allianceDirection = startingPosition.getMod()? -1 : 1;
         //aprilTagAlign = new Pose2d (new Vector2d(switchSides(aprilTagApproachPosition.position).x,switchSides(aprilTagApproachPosition.position).y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
 //        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
 //        aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x-1,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
         aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) *-allianceDirection* aprilTagOffset)), 0);
         aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x-1,aprilTagApproachPosition.position.y + ((randomizer - 2) *-allianceDirection* aprilTagOffset)), 0);
+        aprilTagAlignCrossed = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), Math.toRadians(-90));
+
         //assemble the paths
         autonPaths[1][1] = P2D(-2, .5, 90);
         autonPaths[1][2] = P2D(0, 0, -90);
@@ -270,12 +273,13 @@ public class Autonomous implements TelemetryProvider {
         autonPaths[2][7] = P2D(-2.25, .5, STANDARD_HEADING);
         autonPaths[2][8] = audienceIntermediate;
         autonPaths[2][9] = aprilTagAlign;
+        System.out.println(switchSides(aprilTagAlign.position).y);
 
-        autonPaths[3][1] = P2D(-1.65, 1, 90);
+        autonPaths[3][1] = P2D(-1.7, 1, 90);
         autonPaths[3][2] = P2D(0, 0, -30);
         autonPaths[3][3] = P2D(0, 0, -130);
-        autonPaths[3][4] = audienceIntermediate;
-        autonPaths[3][5] = aprilTagAlign;
+        autonPaths[3][4] = audienceIntermediateDeep;
+        autonPaths[3][5] = aprilTagAlignCrossed;
         autonPaths[3][6] = audienceIntermediateForward;
         autonPaths[3][7] = P2D(-2.25, .5, STANDARD_HEADING);
         autonPaths[3][8] = audienceIntermediate;
@@ -293,7 +297,7 @@ public class Autonomous implements TelemetryProvider {
 
         autonPaths[5][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID, 1.8, 90);
         autonPaths[5][2] = P2D(0, 0, 90);
-        autonPaths[5][3] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[5][3] = P2D(0, 0, 170);
         autonPaths[5][4] = aprilTagAlignClose;
         autonPaths[5][5] = aprilTagAlign;
         autonPaths[5][6] = audienceIntermediateForward;
@@ -301,8 +305,8 @@ public class Autonomous implements TelemetryProvider {
         autonPaths[5][8] = audienceIntermediate;
         autonPaths[5][9] = aprilTagAlign;
 
-        autonPaths[6][1] = P2D(1.55, 1.5, -15);
-        autonPaths[6][2] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[6][1] = P2D(1.4, 41.2 / 23.5 , -15);
+        autonPaths[6][2] = P2D(0, 0, 125);
         autonPaths[6][3] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[6][4] = aprilTagAlignClose;
         autonPaths[6][5] = aprilTagAlign;
