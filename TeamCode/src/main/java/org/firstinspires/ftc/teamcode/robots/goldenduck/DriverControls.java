@@ -106,11 +106,13 @@ public class DriverControls {
             //ask the robot to snap to an ingest config
             //todo make this behavior work for core's robot
             //robot.behave(Robot.Behavior.INGEST);
+            robot.arm.WristPickup();
         }
         if (stickyGamepad1.b) {
             //ask the robot to configure for scoring at backdrop
             //todo make this behavior work for core's robot
             //robot.toggleBackdropPrep();
+            robot.arm.WristBackdrop();
         }
 
         if(fieldOrientedDrive) {

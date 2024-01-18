@@ -30,8 +30,10 @@ public class Arm implements Subsystem {
     private Servo gripperInner, gripperOuter, triggerDrone;
 
     public static int gripInnerToggleTest = 0, gripOuterToggleTest = 0;
-    
-    public Joint wristLeft, wristRight; //the wrist is a diffy mechanism - blend of pitch and roll
+    public Servo wristServoLeft, wristServoRight;
+
+    //todo for when we convert to Joint based wrist control
+    public Joint wristJointLeft, wristJointRight; //the wrist is a diffy mechanism - blend of pitch and roll
 
     public void setShoulderTargetPosition(int shoulderTargetPosition) {
         if (shoulderTargetPosition < shoulderPositionMin) {
@@ -63,19 +65,26 @@ public class Arm implements Subsystem {
     public static boolean TEMP_WRIST_TUNE = false;
 
     //WRIST JOINT VARIABLES
-    public static int WRIST_HOME_POSITION = 1888;
-    public static double WRIST_PWM_PER_DEGREE = -7.35;
-    //IN DEGREES PER SECOND
-    public static double WRIST_START_ANGLE = 45;
-
-    public static double WRIST_JOINT_SPEED = 60;
-
-    public static double WRIST_MIN_ANGLE = 0;
-    public static double WRIST_MAX_ANGLE = 145;
-    public static double WRIST_PRE_SCORE_ANGLE = 120;
-    public static double WRIST_TRAVEL_ANGLE = 30;
-    public static int WRIST_ADJUST_ANGLE = 10;
-    public static double WRIST_DOCK_ANGLE = 0;
+//    public static int WRIST_HOME_POSITION = 1888;
+//    public static double WRIST_PWM_PER_DEGREE = -7.35;
+//    //IN DEGREES PER SECOND
+//    public static double WRIST_START_ANGLE = 45;
+//
+//    public static double WRIST_JOINT_SPEED = 60;
+//
+//    public static double WRIST_MIN_ANGLE = 0;
+//    public static double WRIST_MAX_ANGLE = 145;
+//    public static double WRIST_PRE_SCORE_ANGLE = 120;
+//    public static double WRIST_TRAVEL_ANGLE = 30;
+//    public static int WRIST_ADJUST_ANGLE = 10;
+//    public static double WRIST_DOCK_ANGLE = 0;
+//direct servo control of wrist
+    public static double WRIST_R_PICKUP = 900;
+    public static double WRIST_L_PICKUP = 2105;
+    public static double WRIST_R_TUCK = 2105;
+    public static double WRIST_L_TUCK = 900;
+    public static double WRIST_R_BACKDROP = 850;
+    public static double WRIST_L_BACKDROP = 2150;
 
     private boolean flipped = false;
 
@@ -108,7 +117,7 @@ public class Arm implements Subsystem {
                 }
                 break;
             case BACKDROP_PREP:
-                wristLeft.setTargetAngle(WRIST_PRE_SCORE_ANGLE);
+                //wristJointLeft.setTargetAngle(WRIST_PRE_SCORE_ANGLE);
                 behavior = Behavior.BACKDROP;
                 break;
 
@@ -134,14 +143,16 @@ public class Arm implements Subsystem {
     public Behavior behavior;
 
     public void setTargetAngle(double angle) {
-        wristLeft.setTargetAngle(angle);
+        wristJointLeft.setTargetAngle(angle);
     }
 
     public Arm(HardwareMap hardwareMap, Robot robot) {
         this.hardwareMap = hardwareMap;
         this.robot = robot;
-        wristLeft = new Joint(hardwareMap, "wristLeft", false, WRIST_HOME_POSITION, WRIST_PWM_PER_DEGREE, WRIST_MIN_ANGLE, WRIST_MAX_ANGLE, WRIST_START_ANGLE, WRIST_JOINT_SPEED);
-        wristRight = new Joint(hardwareMap, "wristRight", false, WRIST_HOME_POSITION, WRIST_PWM_PER_DEGREE, WRIST_MIN_ANGLE, WRIST_MAX_ANGLE, WRIST_START_ANGLE, WRIST_JOINT_SPEED);
+        //wristJointLeft = new Joint(hardwareMap, "wristLeft", false, WRIST_HOME_POSITION, WRIST_PWM_PER_DEGREE, WRIST_MIN_ANGLE, WRIST_MAX_ANGLE, WRIST_START_ANGLE, WRIST_JOINT_SPEED);
+        //wristJointRight = new Joint(hardwareMap, "wristRight", false, WRIST_HOME_POSITION, WRIST_PWM_PER_DEGREE, WRIST_MIN_ANGLE, WRIST_MAX_ANGLE, WRIST_START_ANGLE, WRIST_JOINT_SPEED);
+        wristServoLeft = hardwareMap.get(Servo.class, "wristLeft");
+        wristServoRight = hardwareMap.get(Servo.class, "wristRight");
         triggerDrone = hardwareMap.get(Servo.class, "triggerDrone");
 
         gripperInner = hardwareMap.get(Servo.class, "gripInner");
@@ -179,7 +190,7 @@ public class Arm implements Subsystem {
                 break;
             case 1: //lower the outtake to intake position
                 if(between( shoulderRight.getCurrentPosition(), shoulderPositionPreDock +10, shoulderPositionPreDock -10)) {
-                    setTargetAngle(WRIST_DOCK_ANGLE);
+                    //setTargetAngle(WRIST_DOCK_ANGLE);
                     ingestPositionTimer = futureTime(.75);
                     ingestPositionIndex++;
                 }
@@ -201,14 +212,14 @@ public class Arm implements Subsystem {
     boolean travelFromIngest(){
         switch (travelStage){
             case 0: //begin undock
-                setTargetAngle(WRIST_DOCK_ANGLE);
+                //setTargetAngle(WRIST_DOCK_ANGLE);
                 setShoulderTargetPosition(shoulderPositionPreDock);
                 travelTimer = futureTime(.5);
                 travelStage++;
                 break;
             case 1: //complete undock
                 if (isPast(travelTimer)){
-                    setTargetAngle(WRIST_TRAVEL_ANGLE);
+                    //setTargetAngle(WRIST_TRAVEL_ANGLE);
                     travelTimer = futureTime(.5);
                     travelStage++;
                 }
@@ -228,7 +239,7 @@ public class Arm implements Subsystem {
     boolean travelFromBackdrop(){
         switch (travelStageBack) { //robot should have already placed the intake into travel position
             case 0:
-                setTargetAngle(WRIST_TRAVEL_ANGLE);
+                //setTargetAngle(WRIST_TRAVEL_ANGLE);
                 setShoulderTargetPosition(0);
                 travelTimer = futureTime(.5);
                 travelStageBack++;
@@ -251,14 +262,29 @@ public class Arm implements Subsystem {
 
 public void wristTune(){
     if(TEMP_WRIST_TUNE) {
-        wristLeft.setTargetAngle(wristLeft.getCurrentAngle() + 1);
-        wristRight.setTargetAngle(wristRight.getCurrentAngle() + 1);
+        //wristJointLeft.setTargetAngle(wristJointLeft.getCurrentAngle() + 1);
+        //wristRight.setTargetAngle(wristRight.getCurrentAngle() + 1);
     }
     else {
-        wristLeft.setTargetAngle(wristLeft.getCurrentAngle() - 1);
-        wristRight.setTargetAngle(wristRight.getCurrentAngle() - 1);
+        //wristJointLeft.setTargetAngle(wristJointLeft.getCurrentAngle() - 1);
+        //wristRight.setTargetAngle(wristRight.getCurrentAngle() - 1);
     }
 }
+
+public void WristTuck(){
+        wristServoLeft.setPosition(servoNormalizeExtended(WRIST_L_TUCK));
+        wristServoRight.setPosition(servoNormalizeExtended(WRIST_R_TUCK));
+}
+
+    public void WristPickup(){
+        wristServoLeft.setPosition(servoNormalizeExtended(WRIST_L_PICKUP));
+        wristServoRight.setPosition(servoNormalizeExtended(WRIST_R_PICKUP));
+    }
+
+    public void WristBackdrop(){
+        wristServoLeft.setPosition(servoNormalizeExtended(WRIST_L_BACKDROP));
+        wristServoRight.setPosition(servoNormalizeExtended(WRIST_R_BACKDROP));
+    }
 
 public void GripInnerToggle(){
         if (withinErrorPercent(gripperInner.getPosition(), servoNormalizeExtended(GripInnerOpen), 10))
@@ -299,8 +325,8 @@ public void GripInnerToggle(){
         behave();
 
         //actually instruct actuators to go to desired targets
-        wristLeft.update();
-        wristRight.update();
+        //wristJointLeft.update();
+        //wristJointRight.update();
 
         //allow toggling grippers via dashboard
         if (gripInnerToggleTest%2==1) {
@@ -331,15 +357,15 @@ public void GripInnerToggle(){
 
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
-        Map<String, Object> telemetryMap = new LinkedHashMap<>();
+        Map<String,                                                                                                                                                           Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("articulation", behavior.name());
         telemetryMap.put("shoulder target position", shoulderTargetPosition);
         telemetryMap.put("shoulder left actual position", shoulderLeft.getCurrentPosition());
         telemetryMap.put("shoulder rightactual position", shoulderRight.getCurrentPosition());
         telemetryMap.put("shoulder left Amps", shoulderLeft.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("shoulder right Amps", shoulderRight.getCurrent(CurrentUnit.AMPS));
-        telemetryMap.put("wristLeft angle", wristLeft.getCurrentAngle());
-        telemetryMap.put("wristLeft target angle", wristLeft.getTargetAngle());
+        //telemetryMap.put("wristLeft angle", wristJointLeft.getCurrentAngle());
+        //telemetryMap.put("wristLeft target angle", wristJointLeft.getTargetAngle());
         telemetryMap.put("grip Outer position", gripperOuter.getPosition());
         telemetryMap.put("grip Outer PWM", servoDenormalizeExtended( gripperOuter.getPosition()));
         telemetryMap.put("grip Inner position", gripperInner.getPosition());
