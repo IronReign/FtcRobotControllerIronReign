@@ -23,11 +23,15 @@ public class Intake implements Subsystem {
     public static double CLOSECLAW = 0.95;
     public static double PER_DEGREE = 5.8;
     public static double PER_TICK = 0.1724;
-    public static double WRIST_MIN = Utils.servoNormalize(2200);
-
+    public static double WRIST_MIN = Utils.servoNormalize(1390);
     public static double WRIST_INIT_POSITION = Utils.servoNormalize(2105);
-    public static double WRIST_MAX = Utils.servoNormalize(1650);
+    public static double WRIST_MAX = Utils.servoNormalize(2105);
     public static double WRIST_SCORE_1 = Utils.servoNormalize(1800);
+
+    public enum WristArticulation{
+        WRIST_IN, WRIST_OUT;
+    }
+    public WristArticulation wristArticulation;
     private HardwareMap hardwareMap;
     public RunnerBot runnerBot;
     public Intake(HardwareMap hardwareMap, RunnerBot runnerBot) {
@@ -36,9 +40,10 @@ public class Intake implements Subsystem {
         clawArm = this.hardwareMap.get(DcMotorEx.class, "clawArm");
         clawSpan = this.hardwareMap.get(Servo.class, "clawSpan");
         clawWrist = this.hardwareMap.get(Servo.class, "clawWrist");
+
         clawArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         clawArm.setPower(1);
-        clawArm.setTargetPosition(135);
+        clawArm.setTargetPosition(0);
         clawArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
     @Override
@@ -50,6 +55,7 @@ public class Intake implements Subsystem {
         telemetryMap.put("Arm Speed \t", clawArm.getVelocity());
         telemetryMap.put("Claw Wrist Position \t", Utils.servoDenormalize(clawWrist.getPosition()));
         telemetryMap.put("Arm Target \t", clawArm.getTargetPosition());
+        telemetryMap.put("Wrist Articulation \t", getWristArticulation());
         return telemetryMap;
     }
 
@@ -73,7 +79,7 @@ public class Intake implements Subsystem {
         }
     }
     public void clawArmLower () {
-        if( clawArm.getCurrentPosition() > 160) {
+        if( clawArm.getCurrentPosition() > 0) {
             clawArm.setTargetPosition(clawArm.getCurrentPosition() - 35);
         }
     }
@@ -84,6 +90,7 @@ public class Intake implements Subsystem {
         else if(clawArm.getCurrentPosition() > 750) {
             clawWrist.setPosition(WRIST_SCORE_1);
         }
+        wristArticulation = WristArticulation.WRIST_IN;
 
     }
     public void armWristOut() {
@@ -93,7 +100,7 @@ public class Intake implements Subsystem {
         if (clawArm.getCurrentPosition() > 400){
             clawWrist.setPosition(WRIST_SCORE_1);
         }
-
+        wristArticulation = WristArticulation.WRIST_OUT;
 
     }
     public void armPositionTest() {
@@ -108,6 +115,10 @@ public class Intake implements Subsystem {
         if(press == true){
             clawArm.setTargetPosition(145);
         }
+    }
+
+    public WristArticulation getWristArticulation() {
+        return wristArticulation;
     }
 }
 
