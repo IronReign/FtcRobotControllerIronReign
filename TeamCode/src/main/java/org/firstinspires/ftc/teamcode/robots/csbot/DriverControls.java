@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.active;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
@@ -136,11 +137,20 @@ public class DriverControls {
                 robot.outtake.moveSlide(-5);
         }
 
-        if (stickyGamepad1.y) {
+        if (stickyGamepad1.y && field.getZone(robot.driveTrain.pose).equals(Field.Zone.valueOf("AUDIENCE"))) {
             robot.intake.setIngestPixelHeight(4);
         }
-        if (stickyGamepad1.x) {
+        else if(stickyGamepad1.y) {
+            if(robot.skyhook.articulation.equals(Skyhook.Articulation.GAME))
+                robot.skyhook.articulate(Skyhook.Articulation.PREP_FOR_HANG);
+            else if(robot.skyhook.articulation.equals(Skyhook.Articulation.PREP_FOR_HANG))
+                robot.skyhook.articulate(Skyhook.Articulation.HANG);
+        }
+        if (stickyGamepad1.x && field.getZone(robot.driveTrain.pose).equals(Field.Zone.valueOf("AUDIENCE"))) {
             robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
+        }
+        else if(stickyGamepad1.x) {
+            robot.skyhook.releaseTheJimmy();
         }
 
         if(stickyGamepad1.dpad_up) {

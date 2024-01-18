@@ -327,9 +327,9 @@ public class  Robot implements Subsystem {
         if(articulation == Articulation.TRAVEL) {
             ingestStage = 0;
             if(intake.articulation == Intake.Articulation.TRAVEL)
-            intake.cleanArticulations();
+                intake.cleanArticulations();
             if(outtake.articulation == Outtake.Articulation.TRAVEL)
-            outtake.cleanArticulations();
+                outtake.cleanArticulations();
         }
     }
 

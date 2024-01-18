@@ -2,7 +2,6 @@
 <Robot type="FirstInspires-FTC">
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Control Hub" port="173">
-            <Servo name="jimmy" port="2" />
             <Servo name="diverterRight" port="5" />
             <REV_VL53L0X_RANGE_SENSOR name="backDist" port="0" bus="0" />
             <RevRobotics20HDHexMotor name="rightFront" port="0" />
@@ -14,6 +13,7 @@
         <LynxModule name="Expansion Hub 1" port="1">
             <Servo name="intakeAngle" port="0" />
             <Servo name="diverterLeft" port="1" />
+            <Servo name="droneLauncher" port="2" />
             <RevRobotics40HDHexMotor name="intakeBeater" port="1" />
             <RevRobotics40HDHexMotor name="slide" port="2"/>
             <RevRoboticsCoreHexMotor name="kareem" port="3"/>

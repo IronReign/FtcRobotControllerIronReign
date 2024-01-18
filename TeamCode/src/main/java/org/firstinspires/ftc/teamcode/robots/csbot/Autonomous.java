@@ -105,7 +105,7 @@ public class Autonomous implements TelemetryProvider {
             approachBackdrop,
             driveToPixelStack,
             sweep,
-            park
+            strafeToPark
     ;
 
     // misc. routines
@@ -155,7 +155,7 @@ public class Autonomous implements TelemetryProvider {
     }
 
     public void parkBuild() {
-        park = new SequentialAction(
+        strafeToPark = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
                         .build()
         );
@@ -205,6 +205,14 @@ public class Autonomous implements TelemetryProvider {
                         .setReversed(false)
                         .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
+                        .build()
+        );
+    }
+
+    public void strafeToParkBuild() {
+        strafeToPark = new SequentialAction(
+                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                        .strafeTo(new Vector2d(robot.driveTrain.pose.position.x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .build()
         );
     }
@@ -386,44 +394,58 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 9:
                     autonState = AutonState.SCORE_DRIVE;
-                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.3, 0), 0));
-                    if(robot.driveTrain.backDistanceSensorValue < 10) {
-                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
-                        robot.articulate(Robot.Articulation.TRAVEL);
-                        driveToPixelStackBuild();
+                    if(robot.outtake.articulation.equals(Outtake.Articulation.TRAVEL)) {
                         autonIndex++;
+                        futureTimer = futureTime(.25);
                     }
                     break;
                 case 10:
+                    autonState = AutonState.SCORE_DRIVE;
+                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.3, 0), 0));
+                    if(robot.driveTrain.backDistanceSensorValue < 7) {
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                        robot.articulate(Robot.Articulation.TRAVEL);
+                        robot.outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
+                        driveToPixelStackBuild();
+                        futureTimer = futureTime(1);
+                        autonIndex++;
+                    }
+                    break;
+                case 11:
                     autonState = AutonState.DRIVE_TO_PIXEL_STACK;
+                    if(isPast(futureTimer))
 //                    if (!driveToPixelStack.run(packet)) {
 //                        approachBackdropBuild();
                         autonIndex++;
 //                    }
                     break;
-                case 11:
+                case 12:
                     autonState = AutonState.GET_FROM_PIXEL_STACK;
                     autonIndex++;
                     break;
-                case 12:
+                case 13:
                     autonState = AutonState.TRAVEL_BACKDROP;
 //                    if (!approachBackdrop.run(packet)) {
 //                        autonIndex++;
 //                    }
                     autonIndex ++;
                     break;
-                case 13:
+                case 14:
                     autonState = AutonState.SCORE_BACKDROP;
 //                    if(robot.outtake.articulation.equals(Outtake.Articulation.BACKDROP))
-                        autonIndex++;
-                    break;
-                case 14:
-                    autonState = AutonState.PARK;
-//                    if(!park.run(packet)) {
+//                    {
+                    futureTimer = futureTime(1);
+                    strafeToParkBuild();
                     autonIndex++;
-//                    }
+//                   }
                     break;
                 case 15:
+                    autonState = AutonState.PARK;
+                    if(!strafeToPark.run(packet)) {
+                        autonIndex++;
+                    }
+                    break;
+                case 16:
                     autonState = AutonState.DONE;
                     robot.positionCache.update(new CSPosition(robot.driveTrain.pose, robot.skyhook.getSkyhookLeftTicksCurrent(), robot.skyhook.getSkyhookRightTicksCurrent()), true);
                     return true;
