@@ -51,10 +51,10 @@ public class Toggle {
     }
 
     public void intake(){
-        if(gamepad1.a){
+        if(gamepad1.b){
             runnerBot.intake.clawArmLift();
         }
-        if(gamepad1.b){
+        if(gamepad1.a){
             runnerBot.intake.clawArmLower();
         }
 
@@ -72,6 +72,12 @@ public class Toggle {
 
         if (gamepad1.dpad_down){
             runnerBot.intake.armWristIn();
+        }
+    }
+
+    public void drone(){
+        if(gamepad1.y){
+            runnerBot.drone.droneRelease();
         }
     }
 }

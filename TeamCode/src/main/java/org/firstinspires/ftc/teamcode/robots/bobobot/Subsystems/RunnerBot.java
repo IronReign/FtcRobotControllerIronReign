@@ -19,6 +19,7 @@ public class RunnerBot implements Subsystem{
     public Subsystem[] subsystems;
     public DriveTrain driveTrain;
     public Intake intake;
+    public Drone drone;
     public HardwareMap hardwareMap;
     public BobotPosition currentPosition;
     public BobotPosition fetchedPosition;
@@ -33,7 +34,8 @@ public class RunnerBot implements Subsystem{
         //positionCache = new PositionCache(5);
         intake = new Intake(hardwareMap, this);
         driveTrain = new DriveTrain(hardwareMap, this);
-        subsystems = new Subsystem[]{driveTrain, intake};
+        drone = new Drone(hardwareMap, this);
+        subsystems = new Subsystem[]{driveTrain, intake, drone};
     }
 
     private static void drawRobot(Canvas c, Pose2d t) {
@@ -58,7 +60,6 @@ public class RunnerBot implements Subsystem{
 
     @Override
     public void update(Canvas fieldOverlay){
-
 //        if (updatePositionCache){
 //            currentPosition = new BobotPosition(driveTrain.pose);
 //            positionCache.update(currentPosition, false);
