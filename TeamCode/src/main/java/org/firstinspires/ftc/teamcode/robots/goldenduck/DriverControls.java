@@ -25,6 +25,7 @@ public class DriverControls {
     public static double DEADZONE = 0.1;
 
     public boolean visionProviderFinalized = robot.visionProviderFinalized;
+    boolean droneSet = true;
 
     Gamepad gamepad1, gamepad2;
     private StickyGamepad stickyGamepad1, stickyGamepad2;
@@ -139,6 +140,16 @@ public class DriverControls {
 
 
         if(stickyGamepad1.dpad_up)
+            if(droneSet)
+            {
+                robot.arm.droneLaunch();
+                droneSet=false;
+            }
+        else {
+            robot.arm.droneSet();
+            droneSet=true;
+            }
+
 
 
         if(stickyGamepad2.y) {

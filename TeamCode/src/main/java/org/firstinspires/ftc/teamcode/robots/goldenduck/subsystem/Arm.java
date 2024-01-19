@@ -49,8 +49,8 @@ public class Arm implements Subsystem {
 
     public static int shoulderTargetPositionTest = 0;
     int shoulderTargetPositionTestPrev;
-    public static int shoulderPositionMax = 75; //todo find real shoulder Max
-    public static int shoulderPositionMin = 0;
+    public static int shoulderPositionMax = 1200; //beyond vertical with 125:1 ultraplanetary
+    public static int shoulderPositionMin = -50;
     public static int shoulderPositionPreDock = 0;
     public static int slidePositionDocked = 0;
 
@@ -58,6 +58,12 @@ public class Arm implements Subsystem {
     public static int GripInnerClosed = 900;
     public static int GripOuterOpen = 900;
     public static int GripOuterClosed = 1400;
+    public enum GripperState{
+        BothOpen,
+        BothClosed,
+        OuterOpen;
+    }
+    GripperState gripperState = GripperState.BothOpen; //initialized position
 
 
     int shoulderSpeed = 20;
@@ -86,7 +92,8 @@ public class Arm implements Subsystem {
     public static double WRIST_R_BACKDROP = 850;
     public static double WRIST_L_BACKDROP = 2150;
 
-    private boolean flipped = false;
+    public static int DRONE_SET = 1556;
+    public static int DRONE_LAUNCH = 900;
 
     private Behavior prevBehavior;
 
@@ -96,6 +103,10 @@ public class Arm implements Subsystem {
     }
     public Behavior behave() {
         switch (behavior) {
+            case CALIBRATE:
+                if (calibrate())
+                    behavior= Behavior.MANUAL;
+                break;
             case MANUAL:
                 break;
             case BACKDROP:
@@ -136,7 +147,7 @@ public class Arm implements Subsystem {
         TRAVEL_FROM_BACKDROP,
         BACKDROP_PREP,
         BACKDROP,
-        FOLD
+        CALIBRATE
     }
 
     //LIVE STATES
@@ -180,6 +191,36 @@ public class Arm implements Subsystem {
         behavior = Behavior.MANUAL;
     }
 
+    int calibrateStage = 0;
+    long calibrateTimer = 0;
+    double sampleAmps = 0;
+    boolean calibrate(){
+        switch (calibrateStage){
+            case 0: //start shoulder motor downward - motor should be pretty high up
+                GripNeither(); //open wide
+                shoulderRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                shoulderRight.setPower(-0.4); // start running the motor downward
+                calibrateTimer=futureTime(.5);
+                calibrateStage++;
+                break;
+            case 1: //sample the current once arm has started moving
+                if (isPast(calibrateTimer)) {
+                    sampleAmps = shoulderRight.getCurrent(CurrentUnit.AMPS);
+                    calibrateStage++;
+                }
+                break;
+            case 2: //when shoulder stalls, get shoulder ready for RUN_TO_POSITION
+                if (shoulderRight.getCurrent(CurrentUnit.AMPS)>sampleAmps*1.5) {
+                    shoulderRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    shoulderRight.setTargetPosition(0);
+                    shoulderRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    shoulderRight.setPower(1);
+                    return true;
+                }
+                break;
+        }
+        return false;
+    }
     public static int ingestPositionIndex = 0;
     public long ingestPositionTimer = 0;
     public boolean ingestFromTravel() { //should only call this if Travel was previously set
@@ -286,25 +327,24 @@ public void WristTuck(){
         wristServoRight.setPosition(servoNormalizeExtended(WRIST_R_BACKDROP));
     }
 
-public void GripInnerToggle(){
-        if (withinErrorPercent(gripperInner.getPosition(), servoNormalizeExtended(GripInnerOpen), 10))
-            gripperInner.setPosition(servoNormalizeExtended(GripInnerClosed));
-        else //to open inner, outer has to open as well
-            {
-                gripperOuter.setPosition(servoNormalizeExtended(GripOuterOpen));
-                gripperInner.setPosition(servoNormalizeExtended(GripInnerOpen));
-            }
+public void GripInnerToggle(){ //to open inner, outer has to open as well
+        if (gripperState==GripperState.BothClosed || gripperState == GripperState.OuterOpen)
+            gripperState = GripperState.BothOpen;
+
+        else
+            gripperState = GripperState.BothClosed;
     }
     public void GripOuterToggle(){
-        if (withinErrorPercent(gripperOuter.getPosition(), servoNormalizeExtended(GripOuterClosed), 10))
-            gripperOuter.setPosition(servoNormalizeExtended(GripOuterOpen));
-        else //to close outer, inner has to close as well
-        {
-            gripperInner.setPosition(servoNormalizeExtended(GripInnerClosed));
-            gripperOuter.setPosition(servoNormalizeExtended(GripOuterClosed));
-        }
+        if (gripperState==GripperState.OuterOpen || gripperState==GripperState.BothOpen)
+            gripperState = GripperState.BothClosed;
+        else
+            gripperState=GripperState.OuterOpen;
     }
 
+    public void GripInnerOnly(){
+        gripperInner.setPosition(servoNormalizeExtended(GripInnerClosed));
+        gripperOuter.setPosition(servoNormalizeExtended(GripOuterOpen));
+    }
     public void GripBoth(){
         gripperInner.setPosition(servoNormalizeExtended(GripInnerClosed));
         gripperOuter.setPosition(servoNormalizeExtended(GripOuterClosed));
@@ -344,8 +384,28 @@ public void GripInnerToggle(){
             shoulderTargetPositionTestPrev=shoulderTargetPositionTest;
             setShoulderTargetPosition(shoulderTargetPositionTest);
         }
+
+        //actually update actuators
+        switch(gripperState) {
+            case BothOpen:
+                GripNeither();
+                break;
+            case BothClosed:
+                GripBoth();
+                break;
+            case OuterOpen:
+                GripInnerOnly();
+                break;
+        }
         shoulderLeft.setTargetPosition(shoulderTargetPosition);
         shoulderRight.setTargetPosition(shoulderTargetPosition);
+    }
+
+    public void droneSet() {
+        triggerDrone.setPosition(servoNormalizeExtended(DRONE_SET));
+    }
+    public void droneLaunch(){
+        triggerDrone.setPosition(servoNormalizeExtended(DRONE_LAUNCH));
     }
 
     @Override
