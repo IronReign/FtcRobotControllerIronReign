@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -19,17 +22,18 @@ public class Intake implements Subsystem {
     private Servo clawSpan = null;
     private Servo clawWrist = null;
     private Joint wrist = null;
-    public static double OPENCLAW = 0.65;
-    public static double CLOSECLAW = 0.95;
-    public static double PER_DEGREE = 5.8;
-    public static double PER_TICK = 0.1724;
-    public static double WRIST_MIN = Utils.servoNormalize(1390);
+    public static double OPENCLAW = 0.45;
+    public static double CLOSECLAW = 0.85;
+    public static double WRIST_MIN = Utils.servoNormalize(1426);
     public static double WRIST_INIT_POSITION = Utils.servoNormalize(2105);
-    public static double WRIST_MAX = Utils.servoNormalize(2105);
+    public static double WRIST_MAX = Utils.servoNormalize(2055);
     public static double WRIST_SCORE_1 = Utils.servoNormalize(1800);
 
     public enum WristArticulation{
         WRIST_IN, WRIST_OUT;
+    }
+    public enum ScoreState{
+        WRIST_SCORE_1,
     }
     public WristArticulation wristArticulation;
     private HardwareMap hardwareMap;
@@ -43,8 +47,9 @@ public class Intake implements Subsystem {
 
         clawArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         clawArm.setPower(1);
-        clawArm.setTargetPosition(0);
+        clawArm.setTargetPosition(40);
         clawArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
     }
     @Override
     public Map<String, Object> getTelemetry(boolean debug){
@@ -74,14 +79,19 @@ public class Intake implements Subsystem {
 
     }
     public void clawArmLift () {
-        if(clawArm.getCurrentPosition() < 750) {
-            clawArm.setTargetPosition(clawArm.getCurrentPosition() + 75);
-        }
+//        if(clawArm.getCurrentPosition() < 750) {
+//            clawArm.setTargetPosition(clawArm.getCurrentPosition() + 75);
+//        }
+        clawArm.setVelocity(350);
+        clawArm.setTargetPosition(480);
     }
     public void clawArmLower () {
-        if( clawArm.getCurrentPosition() > 0) {
-            clawArm.setTargetPosition(clawArm.getCurrentPosition() - 35);
-        }
+//        if( clawArm.getCurrentPosition() > 0) {
+//            clawArm.setTargetPosition(clawArm.getCurrentPosition() - 35);
+//        }
+        //armWristOut();
+        clawArm.setVelocity(150);
+        clawArm.setTargetPosition(195);
     }
     public void armWristIn() {
         if (clawArm.getCurrentPosition() < 750) {
