@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.active;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
@@ -135,12 +136,26 @@ public class DriverControls {
             else
                 robot.outtake.moveSlide(-5);
         }
-
-        if (stickyGamepad1.y) {
-            robot.intake.setIngestPixelHeight(4);
+        
+        if(stickyGamepad1.y) {
+            if(robot.skyhook.articulation.equals(Skyhook.Articulation.PREP_FOR_HANG)) {
+                robot.articulate(Robot.Articulation.HANG);
+            }
+            else{
+                if(field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")) {
+                    robot.intake.setIngestPixelHeight(4);
+                }
+                else {
+                    robot.articulate(Robot.Articulation.PREP_FOR_HANG);
+                }
+            }
         }
-        if (stickyGamepad1.x) {
+
+        if (stickyGamepad1.x && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")) {
             robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
+        }
+        else if(stickyGamepad1.x) {
+            robot.skyhook.releaseTheJimmy();
         }
 
         if(stickyGamepad1.dpad_up) {
@@ -148,7 +163,7 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.dpad_down) {
-            robot.enterTravel();
+            robot.outtake.setTargetAngle(Outtake.FLIPPER_TRAVEL_ANGLE);
         }
         // ------------------------------------------------------------------
 
@@ -218,7 +233,7 @@ public class DriverControls {
     @SuppressLint("SuspiciousIndentation")
     void handlePregameControls() {
         if (stickyGamepad1.x || stickyGamepad2.x) {
-
+            visionProviderFinalized = false;
             alliance = Constants.Alliance.BLUE;
 
             startingPosition = startingPosition.getMod() == false ?
@@ -232,6 +247,7 @@ public class DriverControls {
         }
         if (stickyGamepad1.b || stickyGamepad2.b) {
             alliance = Constants.Alliance.RED;
+            visionProviderFinalized = false;
             startingPosition = startingPosition.getMod() == true ?
                     startingPosition :
                     startingPosition == Constants.Position.START_LEFT_BLUE ?

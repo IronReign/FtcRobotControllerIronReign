@@ -6,6 +6,7 @@
             <RevRoboticsCoreHexMotor name="motorSkyHookRight" port="1" />
             <RevRoboticsCoreHexMotor name="motorShoulderLeft" port="2" />
             <RevRoboticsCoreHexMotor name="motorShoulderRight" port="3" />
+            <Servo name="triggerDrone" port="0" />
             <Servo name="gripInner" port="2" />
             <Servo name="gripOuter" port="4" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
@@ -15,9 +16,8 @@
             <goBILDA5201SeriesMotor name="rightBack" port="1" />
             <goBILDA5201SeriesMotor name="leftBack" port="2" />
             <goBILDA5201SeriesMotor name="leftFront" port="3" />
-            <Servo name="triggerDrone" port="0" />
             <Servo name="wristLeft" port="2" />
-            <Servo name="wristRight" port="4" />
+            <Servo name="wristRight" port="0" />                                                                                                                                                                                                                                                                                                " />
         </LynxModule>
     </LynxUsbDevice>
     <Webcam name="Webcam 1" serialNumber="283C84D0" />

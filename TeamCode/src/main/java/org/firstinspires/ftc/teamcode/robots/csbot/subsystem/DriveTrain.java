@@ -63,9 +63,11 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         imuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.getMod()? -90 : 90);
         imuRoadrunnerError = imuAngle - Math.toDegrees(pose.heading.log());
         backDistanceSensorValue = backDistanceSensor.getDistance(DistanceUnit.INCH);
-        if((int)(System.nanoTime() / 1e9) % 10 == 0)
-
         updatePoseEstimate();
+
+        if((int)(System.nanoTime() / 1e9) % 2 == 0){
+            pose = new Pose2d(pose.position, Math.toRadians(imuAngle));
+        }
     }
 
     public void drive(double x, double y, double theta) {

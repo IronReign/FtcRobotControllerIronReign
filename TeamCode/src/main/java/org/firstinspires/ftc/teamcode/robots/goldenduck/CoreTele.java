@@ -159,7 +159,8 @@ public class CoreTele extends OpMode {
         robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
 
 
-        robot.initPosition();
+        robot.behave(Robot.Behavior.CALIBRATE);
+
         if(gameState.isAutonomous()) {
             auton.updateIndexOffsets();
             //calc auton based on alliance, starting position and team prop position
@@ -338,6 +339,7 @@ public class CoreTele extends OpMode {
 
     //HELPER METHODS
     private void updateLiveStates() {
+        loopClockTime = System.nanoTime();
         long loopTime = loopClockTime - lastLoopClockTime;
         averageLoopTime = loopTimeSmoother.update(loopTime);
         averageVoltage = voltageSmoother.update(robot.getVoltage());

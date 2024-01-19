@@ -236,7 +236,7 @@ public class Robot implements Subsystem {
             case BACKDROP:
                 break;
             case CALIBRATE:
-                //TODO - WRITE A CALIBRATION ROUTINE
+                arm.behave(Arm.Behavior.CALIBRATE);
                 break;
             case INGEST:
                 if (Ingest()) {

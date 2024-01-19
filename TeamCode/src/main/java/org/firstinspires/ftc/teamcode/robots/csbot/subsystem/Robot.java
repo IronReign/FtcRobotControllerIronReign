@@ -259,9 +259,10 @@ public class  Robot implements Subsystem {
             case MANUAL:
                 break;
             case TRAVEL:
+//                robot.outtake.articulate(Outtake.Articulation.TRAVEL);
+                cleanArticulations();
                 break;
             case BACKDROP:
-                articulation = Articulation.MANUAL;
                 break;
             case CALIBRATE:
                 //TODO - WRITE A CALIBRATION ROUTINE
@@ -321,6 +322,16 @@ public class  Robot implements Subsystem {
         }
     }
     //end stop
+
+    public void cleanArticulations() {
+        if(articulation == Articulation.TRAVEL) {
+            ingestStage = 0;
+            if(intake.articulation == Intake.Articulation.TRAVEL)
+                intake.cleanArticulations();
+            if(outtake.articulation == Outtake.Articulation.TRAVEL)
+                outtake.cleanArticulations();
+        }
+    }
 
 
     public static int ingestStage = 0;

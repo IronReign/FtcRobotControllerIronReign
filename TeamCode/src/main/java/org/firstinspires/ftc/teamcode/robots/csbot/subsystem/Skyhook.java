@@ -32,12 +32,11 @@ public class Skyhook implements Subsystem {
     public static int jimmyTicks = 1500;
     public static int JIMMY_TENSION_TICKS = 1450;
     public static int JIMMY_RELEASE_TICKS = 2100;
-    public static int SKYHOOK_SAFE_TICKS = 800;
+    public static int SKYHOOK_SAFE_TICKS = 900;
     public static int SKYHOOK_UP_TICKS = 0;
     DcMotorEx kareem, jabbar;
     public DcMotorExResetable skyhookLeft, skyhookRight;
-
-    Servo jimmy;
+    public Servo droneLauncher;
     public static int SKYHOOK_INIT_TICKS = 500;
 
     public static double SKYHOOK_POWER = 1;
@@ -58,7 +57,7 @@ public class Skyhook implements Subsystem {
         this.hardwareMap = hardwareMap;
         this.robot = robot;
         initMotors();
-        jimmy = hardwareMap.get(Servo.class, "jimmy");
+        droneLauncher = hardwareMap.get(Servo.class, "droneLauncher");
         jimmyTicks = JIMMY_TENSION_TICKS;
         //skyhookRightTicks = 0;
         //skyhookLeftTicks = 0;
@@ -76,7 +75,6 @@ public class Skyhook implements Subsystem {
             case PREP_FOR_HANG:
                 skyhookLeftTicks = PREP_FOR_HANG_TICKS;
                 skyhookRightTicks = PREP_FOR_HANG_TICKS;
-                articulation = Articulation.MANUAL;
                 break;
             case GAME:
                 skyhookRightTicks = SKYHOOK_SAFE_TICKS;
@@ -102,7 +100,7 @@ public class Skyhook implements Subsystem {
                 articulation = articulation.MANUAL;
                 break;
         }
-        jimmy.setPosition(Utils.servoNormalize(jimmyTicks));
+        droneLauncher.setPosition(Utils.servoNormalize(jimmyTicks));
         if(skyhookRight.getCurrent(CurrentUnit.AMPS) > 3.5 || skyhookLeft.getCurrent(CurrentUnit.AMPS) > 3.5){
             SKYHOOK_POWER = 0;
             articulation = Articulation.MANUAL;
@@ -120,7 +118,7 @@ public class Skyhook implements Subsystem {
     public static int launchIndex = 0;
     public static double SKYHOOK_LAUNCH_TIMER = 1;
     public boolean launch() {
-        jimmy.setPosition(Utils.servoNormalize(jimmyTicks));
+        droneLauncher.setPosition(Utils.servoNormalize(jimmyTicks));
         skyhookRight.setTargetPosition(skyhookRightTicks);
         skyhookLeft.setTargetPosition(skyhookLeftTicks);
         switch (launchIndex) {
