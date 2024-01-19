@@ -75,7 +75,6 @@ public class Skyhook implements Subsystem {
             case PREP_FOR_HANG:
                 skyhookLeftTicks = PREP_FOR_HANG_TICKS;
                 skyhookRightTicks = PREP_FOR_HANG_TICKS;
-                articulation = Articulation.MANUAL;
                 break;
             case GAME:
                 skyhookRightTicks = SKYHOOK_SAFE_TICKS;

@@ -66,6 +66,7 @@ public class Autonomous implements TelemetryProvider {
         telemetryMap.put("targetIndex", targetIndex);
         telemetryMap.put("targetAprilTag", targetAprilTagIndex);
         telemetryMap.put("selectedPath", selectedPath);
+        telemetryMap.put("imu saved", preAdjustImu);
 //        telemetryMap.put("indexStrafeOffset", indexStrafeOffset);
 //        telemetryMap.put("indexHeadingOffset", indexHeadingOffset);
         telemetryMap.put("visionProvider name", visionProvider.getTelemetryName());
@@ -376,10 +377,10 @@ public class Autonomous implements TelemetryProvider {
 
                 case 6:
                     if (preAdjustImu < 180)
-                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), -.2));
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), .2));
                     if(preAdjustImu > 180)
-                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0 ), .2));
-                    if(Utils.withinError(Utils.wrapAngle(robot.driveTrain.imuAngle), STANDARD_HEADING, 1.5)) {
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0 ), -.2));
+                    if(Utils.withinError(Utils.wrapAngle(robot.driveTrain.imuAngle), STANDARD_HEADING, 1)) {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0 ), 0));
                         autonIndex++;
                     }

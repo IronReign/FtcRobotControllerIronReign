@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.ExponentialSmoother;
@@ -211,6 +212,7 @@ public class CenterStage_6832 extends OpMode {
         }
 
         if(gameState.equals(GameState.TELE_OP)){
+            robot.outtake.setTargetAngle(Outtake.FLIPPER_TRAVEL_ANGLE);
             robot.articulate(Robot.Articulation.TRAVEL);
         }
 

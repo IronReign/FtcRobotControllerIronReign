@@ -140,6 +140,7 @@ public abstract class VisionProvider implements TelemetryProvider {
 
         telemetryMap.put("Most Frequent Detected Position", mostFrequentPosition);
         telemetryMap.put("Detected Position", getPosition());
+        telemetryMap.put("alliance", isRedAlliance);
 
         return telemetryMap;
     }

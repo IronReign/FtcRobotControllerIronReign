@@ -32,7 +32,7 @@ public class Intake implements Subsystem {
     public static int ANGLE_INGEST_INCREMENT = 20;
     public static int ANGLE_EJECT = 1450+ INTAKE_OFFSET;
     public static int ANGLE_HANG = 1515+ INTAKE_OFFSET;
-    public static int ANGLE_SWALLOW = 1900+ INTAKE_OFFSET;
+    public static int ANGLE_SWALLOW = 1810 + INTAKE_OFFSET;
     public static int ANGLE_TRAVEL = 1750+ INTAKE_OFFSET; //safe to travel through backstage door
     public static double TIME_SWALLOW = 1;
     public static double TIME_EJECT = 2;
