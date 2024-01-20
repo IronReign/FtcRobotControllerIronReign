@@ -155,7 +155,7 @@ public class DriverControls {
             robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
         }
         else if(stickyGamepad1.x) {
-            robot.skyhook.releaseTheJimmy();
+            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
         }
 
         if(stickyGamepad1.dpad_up) {
@@ -190,7 +190,7 @@ public class DriverControls {
         }
 
         if(stickyGamepad2.x) {
-            robot.skyhook.releaseTheJimmy();
+            robot.skyhook.releaseTheDrone();
         }
         // ------------------------------------------------------------------
 
