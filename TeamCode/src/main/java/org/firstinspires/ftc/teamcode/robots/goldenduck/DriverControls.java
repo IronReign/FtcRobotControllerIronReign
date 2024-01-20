@@ -131,12 +131,12 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.y)
-            //robot.arm.GripOuterToggle();
-            robot.arm.GripNeither();
+            robot.arm.GripOuterToggle();
+            //robot.arm.GripNeither();
 
         if (stickyGamepad1.x)
-            //robot.arm.GripInnerToggle();
-            robot.arm.GripBoth();
+            robot.arm.GripInnerToggle();
+            //robot.arm.GripBoth();
 
 
         if(stickyGamepad1.dpad_up)
@@ -150,12 +150,11 @@ public class DriverControls {
             droneSet=true;
             }
 
-
-
         if(stickyGamepad2.y) {
             fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (stickyGamepad1.dpad_down) {
+            robot.arm.setDroneShoulderTargetPosition();//drone launch angle
         }
 
         if(stickyGamepad2.dpad_up) {

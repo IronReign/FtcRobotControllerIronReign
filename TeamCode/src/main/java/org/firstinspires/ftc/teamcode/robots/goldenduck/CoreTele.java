@@ -145,7 +145,7 @@ public class CoreTele extends OpMode {
         } else {
 
         }
-
+        robot.behave(Robot.Behavior.CALIBRATE);
     }
     //end init()
 
@@ -157,9 +157,6 @@ public class CoreTele extends OpMode {
         robot.updateVision();
 
         robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
-
-
-        robot.behave(Robot.Behavior.CALIBRATE);
 
         if(gameState.isAutonomous()) {
             auton.updateIndexOffsets();

@@ -237,6 +237,7 @@ public class Robot implements Subsystem {
                 break;
             case CALIBRATE:
                 arm.behave(Arm.Behavior.CALIBRATE);
+                curBehavior=Robot.Behavior.MANUAL;
                 break;
             case INGEST:
                 if (Ingest()) {
@@ -255,7 +256,7 @@ public class Robot implements Subsystem {
                 break;
             case TRAVEL_FROM_INGEST:
                 //get arm into a position to safely travel through rigging
-                if (!(arm.behavior == Arm.Behavior.TRAVEL)) {
+                if (!(arm.getBehavior() == Arm.Behavior.TRAVEL)) {
                     arm.behave(Arm.Behavior.TRAVEL_FROM_INGEST);
                 }
                 break;
@@ -304,7 +305,7 @@ public class Robot implements Subsystem {
                 arm.behave(Arm.Behavior.INGEST_FROM_TRAVEL);
                 ingestStage++;
             case 1: //wait for outake to dock before proceeding
-                if (arm.behavior == Arm.Behavior.MANUAL) {
+                if (arm.getBehavior() == Arm.Behavior.MANUAL) {
                     //intake can start eating
 
                 }
