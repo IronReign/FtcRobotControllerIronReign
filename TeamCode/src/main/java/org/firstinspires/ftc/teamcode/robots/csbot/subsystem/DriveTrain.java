@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -31,6 +32,7 @@ import java.util.Map;
 public class DriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
     public boolean trajectoryIsActive;
+    public static double GLOBAL_HEADING_DAMPENING = .7;
     public static double HEADING_DAMPENING = 0.5;
     public static double DRIVE_DAMPENING = 0.6;
 
@@ -91,8 +93,14 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     }
 
     public void fieldOrientedDrive(double x, double y, double theta, boolean isRed){
+        theta = theta * GLOBAL_HEADING_DAMPENING;
         if(CenterStage_6832.field.finalized) {
-            theta = CenterStage_6832.field.getZone(pose) == Field.Zone.BACKSTAGE ? theta * HEADING_DAMPENING : theta;
+            theta = (CenterStage_6832.field.getZone(pose) == Field.Zone.BACKSTAGE ||
+                    field.getSubZones(pose).contains(SubZone.PICKUP) ||
+                    field.getSubZones(pose).contains(SubZone.PICKUP.flipOnX()) ||
+                    field.getSubZones(pose).contains(SubZone.WING)) ||
+                    field.getSubZones(pose).contains(SubZone.WING.flipOnX()) ?
+                    theta * HEADING_DAMPENING : theta;
             x = CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX())?
                     x * DRIVE_DAMPENING : x;
             y = CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX())?
