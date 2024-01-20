@@ -88,7 +88,6 @@ public class  Robot implements Subsystem {
         if (gameState.isAutonomous()) {
             intake.setAngle(1600);
         }
-        articulation = Articulation.MANUAL;
     }
     //end start
 
