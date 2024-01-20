@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Joint;
 import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
@@ -26,15 +27,16 @@ public class Intake implements Subsystem {
     public static double CLOSECLAW = 0.85;
     public static double WRIST_MIN = Utils.servoNormalize(1415);
     public static double WRIST_INIT_POSITION = Utils.servoNormalize(2105);
-    public static double WRIST_MAX = Utils.servoNormalize(1950);
-    public static double WRIST_SCORE_1 = Utils.servoNormalize(1500);
+    public static double WRIST_MAX = Utils.servoNormalize(1720);
+    public static double WRIST_SCORE_1 = Utils.servoNormalize(1700);
+    private boolean initalized;
 
     public enum WristArticulation{
         WRIST_IN, WRIST_OUT, WRIST_SCORE;
     }
 
     public enum ArmState{
-        GROUND, BACKDROP, TRUSS;
+        GROUND, BACKDROP, TRUSS, RESET;
     }
     public ArmState armState;
     public WristArticulation wristArticulation;
@@ -46,11 +48,12 @@ public class Intake implements Subsystem {
         clawArm = this.hardwareMap.get(DcMotorEx.class, "clawArm");
         clawSpan = this.hardwareMap.get(Servo.class, "clawSpan");
         clawWrist = this.hardwareMap.get(Servo.class, "clawWrist");
-
-        clawArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        clawArm.setPower(1);
-        clawArm.setTargetPosition(40);
-        clawArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        initalized = false;
+      //clawArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+      //clawArm.setPower(-.1);
+      clawArm.setPower(1);
+      clawArm.setTargetPosition(40);
+      clawArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
     }
     @Override
@@ -64,6 +67,7 @@ public class Intake implements Subsystem {
         telemetryMap.put("Arm Target \t", clawArm.getTargetPosition());
         telemetryMap.put("Wrist Articulation \t", getWristArticulation());
         telemetryMap.put("Arm State \t", getArmState());
+        telemetryMap.put("Arm Motor Current \t", clawArm.getCurrent(CurrentUnit.AMPS));
         return telemetryMap;
     }
 
@@ -85,17 +89,19 @@ public class Intake implements Subsystem {
 //        if(clawArm.getCurrentPosition() < 750) {
 //            clawArm.setTargetPosition(clawArm.getCurrentPosition() + 75);
 //        }
+        clawArm.setPower(1);
         clawArm.setVelocity(350);
         clawArm.setTargetPosition(475);
         armState = ArmState.BACKDROP;
     }
-    public void clawArmLower () {
+    public void clawArmLower (){
 //        if( clawArm.getCurrentPosition() > 0) {
 //            clawArm.setTargetPosition(clawArm.getCurrentPosition() - 35);
 //        }
         //armWristOut();
         clawArm.setVelocity(150);
-        clawArm.setTargetPosition(186);
+        clawArm.setTargetPosition(0);
+        clawArm.setPower(0);
         armState = ArmState.GROUND;
     }
     public void armWristIn() {
@@ -130,6 +136,7 @@ public class Intake implements Subsystem {
         }
     }
     public void armTrussLift(){
+        clawArm.setPower(1);
         clawArm.setTargetPosition(300);
         armState = ArmState.TRUSS;
     }
@@ -137,10 +144,21 @@ public class Intake implements Subsystem {
     public void reset(){
         clawArm.setTargetPosition(0);
         armWristIn();
+        armState = ArmState.RESET;
     }
     public WristArticulation getWristArticulation() {
         return wristArticulation;
     }
     public ArmState getArmState(){ return armState; }
+
+    public void init_loop(){
+//        if(!initalized && clawArm.getCurrent(CurrentUnit.AMPS) > 3) {
+            initalized = true;
+            clawArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            clawArm.setTargetPosition(0);
+            clawArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            clawArm.setPower(1);
+//        }
+    }
 }
 

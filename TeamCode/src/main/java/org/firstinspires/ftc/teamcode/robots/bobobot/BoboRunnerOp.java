@@ -30,7 +30,7 @@ public class BoboRunnerOp extends OpMode {
     }
     @Override
     public void init_loop(){
-
+    runnerBot.intake.init_loop();
     }
     @Override
     public void loop(){
