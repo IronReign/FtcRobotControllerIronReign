@@ -26,6 +26,8 @@ public class Arm implements Subsystem {
     HardwareMap hardwareMap;
     Robot robot;
 
+    public boolean ArmCycleStarted = false;
+
     private DcMotorEx shoulderRight, shoulderLeft = null;
     private Servo gripperInner, gripperOuter, triggerDrone;
 
@@ -66,6 +68,15 @@ public class Arm implements Subsystem {
         OuterOpen;
     }
     GripperState gripperState = GripperState.BothOpen; //initialized position
+    public enum ArmHeight{
+        Init,
+        Intake,
+        Travel,
+        Backdrop,
+        Drone;
+    }
+
+    ArmHeight armHeight = ArmHeight.Init;
 
 
     int shoulderSpeed = 20;
@@ -411,7 +422,31 @@ public void GripInnerToggle(){ //to open inner, outer has to open as well
                 GripInnerOnly();
                 break;
         }
-        shoulderLeft.setTargetPosition(shoulderTargetPosition);
+
+        if(ArmCycleStarted)
+        {
+            switch (armHeight){
+                case Intake:
+                    armHeight = ArmHeight.Travel;
+                    break;
+                case Init:
+                    armHeight = ArmHeight.Travel;
+                    break;
+                case Travel:
+                    if (true)// prevArmHeight==ArmHeight.Backdrop)
+                    armHeight = ArmHeight.Intake;
+                    else armHeight = ArmHeight.Backdrop;
+                    break;
+                case Backdrop:
+                    armHeight = ArmHeight.Travel;
+                    break;
+                    
+
+
+
+            }
+        }
+        //shoulderLeft.setTargetPosition(shoulderTargetPosition);
         shoulderRight.setTargetPosition(shoulderTargetPosition);
     }
 
