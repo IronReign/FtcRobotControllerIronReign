@@ -25,9 +25,9 @@ public class Skyhook implements Subsystem {
     public static int skyhookRightTicks = 0;
     public static int skyhookLeftTicks = 0;
     public static int SKYHOOK_HANG_TICKS = 300;
-    public static int SKYHOOK_LAUNCH_TICKS = 620;
+    public static int SKYHOOK_LAUNCH_TICKS = 600;
     public static int PREP_FOR_HANG_TICKS = 0;
-    public static int droneServoTicks = 1500;
+    public int droneServoTicks = 1500;
     public static int DRONE_TENSION_TICKS = 1450;
     public static int DRONE_RELEASE_TICKS = 750;
     public static int SKYHOOK_SAFE_TICKS = 900;
@@ -212,6 +212,7 @@ public class Skyhook implements Subsystem {
         skyhookRightTicks = skyhookRight.getCurrentPosition();
         skyhookRight.setTargetPosition(skyhookRightTicks);
         skyhookRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        droneServoTicks = DRONE_TENSION_TICKS;
         SKYHOOK_POWER = 1;
         skyhookLeft.setPower(1);
         skyhookRight.setPower(1);

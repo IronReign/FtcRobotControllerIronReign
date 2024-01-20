@@ -169,7 +169,7 @@ public class DriverControls {
 
         //GAMEPAD 2 CONTROLS
         // ------------------------------------------------------------------
-        if(stickyGamepad2.start) {
+        if(stickyGamepad2.guide) {
             robot.driveTrain.pose = new Pose2d(robot.driveTrain.pose.position, robot.driveTrain.imuAngle);
         }
 
@@ -190,7 +190,7 @@ public class DriverControls {
         }
 
         if(stickyGamepad2.x) {
-            robot.skyhook.releaseTheDrone();
+            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
         }
         // ------------------------------------------------------------------
 

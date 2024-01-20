@@ -81,7 +81,7 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        int randomizer = 3; //1, 2 or 3
+        int randomizer = 1; //1, 2 or 3
         Pose2d p;
 
         startingPosition = Position.START_LEFT_RED;

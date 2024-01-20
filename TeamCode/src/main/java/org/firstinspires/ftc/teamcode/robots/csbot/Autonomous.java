@@ -380,7 +380,7 @@ public class Autonomous implements TelemetryProvider {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), .2));
                     if(preAdjustImu > 180)
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0 ), -.2));
-                    if(Utils.withinError(Utils.wrapAngle(robot.driveTrain.imuAngle), STANDARD_HEADING, 1)) {
+                    if(Utils.withinError(Utils.wrapAngle(robot.driveTrain.imuAngle), STANDARD_HEADING, 2.0)) {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0 ), 0));
                         autonIndex++;
                     }
