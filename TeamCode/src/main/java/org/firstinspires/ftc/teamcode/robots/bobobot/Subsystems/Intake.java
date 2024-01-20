@@ -22,19 +22,21 @@ public class Intake implements Subsystem {
     private Servo clawSpan = null;
     private Servo clawWrist = null;
     private Joint wrist = null;
-    public static double OPENCLAW = 0.45;
+    public static double OPENCLAW = 0.55;
     public static double CLOSECLAW = 0.85;
-    public static double WRIST_MIN = Utils.servoNormalize(1426);
+    public static double WRIST_MIN = Utils.servoNormalize(1415);
     public static double WRIST_INIT_POSITION = Utils.servoNormalize(2105);
-    public static double WRIST_MAX = Utils.servoNormalize(2055);
-    public static double WRIST_SCORE_1 = Utils.servoNormalize(1800);
+    public static double WRIST_MAX = Utils.servoNormalize(1950);
+    public static double WRIST_SCORE_1 = Utils.servoNormalize(1500);
 
     public enum WristArticulation{
-        WRIST_IN, WRIST_OUT;
+        WRIST_IN, WRIST_OUT, WRIST_SCORE;
     }
-    public enum ScoreState{
-        WRIST_SCORE_1,
+
+    public enum ArmState{
+        GROUND, BACKDROP, TRUSS;
     }
+    public ArmState armState;
     public WristArticulation wristArticulation;
     private HardwareMap hardwareMap;
     public RunnerBot runnerBot;
@@ -61,6 +63,7 @@ public class Intake implements Subsystem {
         telemetryMap.put("Claw Wrist Position \t", Utils.servoDenormalize(clawWrist.getPosition()));
         telemetryMap.put("Arm Target \t", clawArm.getTargetPosition());
         telemetryMap.put("Wrist Articulation \t", getWristArticulation());
+        telemetryMap.put("Arm State \t", getArmState());
         return telemetryMap;
     }
 
@@ -83,7 +86,8 @@ public class Intake implements Subsystem {
 //            clawArm.setTargetPosition(clawArm.getCurrentPosition() + 75);
 //        }
         clawArm.setVelocity(350);
-        clawArm.setTargetPosition(480);
+        clawArm.setTargetPosition(475);
+        armState = ArmState.BACKDROP;
     }
     public void clawArmLower () {
 //        if( clawArm.getCurrentPosition() > 0) {
@@ -91,26 +95,25 @@ public class Intake implements Subsystem {
 //        }
         //armWristOut();
         clawArm.setVelocity(150);
-        clawArm.setTargetPosition(195);
+        clawArm.setTargetPosition(186);
+        armState = ArmState.GROUND;
     }
     public void armWristIn() {
         if (clawArm.getCurrentPosition() < 750) {
             clawWrist.setPosition(WRIST_MAX);
+            wristArticulation = WristArticulation.WRIST_IN;
         }
-        else if(clawArm.getCurrentPosition() > 750) {
-            clawWrist.setPosition(WRIST_SCORE_1);
-        }
-        wristArticulation = WristArticulation.WRIST_IN;
-
     }
     public void armWristOut() {
         if (clawArm.getCurrentPosition() < 400) {
             clawWrist.setPosition(WRIST_MIN);
+            wristArticulation = WristArticulation.WRIST_OUT;
         }
         if (clawArm.getCurrentPosition() > 400){
             clawWrist.setPosition(WRIST_SCORE_1);
+            wristArticulation = WristArticulation.WRIST_SCORE;
         }
-        wristArticulation = WristArticulation.WRIST_OUT;
+
 
     }
     public void armPositionTest() {
@@ -126,9 +129,18 @@ public class Intake implements Subsystem {
             clawArm.setTargetPosition(145);
         }
     }
+    public void armTrussLift(){
+        clawArm.setTargetPosition(300);
+        armState = ArmState.TRUSS;
+    }
 
+    public void reset(){
+        clawArm.setTargetPosition(0);
+        armWristIn();
+    }
     public WristArticulation getWristArticulation() {
         return wristArticulation;
     }
+    public ArmState getArmState(){ return armState; }
 }
 

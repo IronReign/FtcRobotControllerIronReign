@@ -38,17 +38,9 @@ public class Toggle {
         }
     }
 
-    public void armUp(){
-        if(gamepad1.a){
-            runnerBot.intake.clawArmLift();
-        }
-    }
 
-    public void armDown(){
-        if(gamepad1.b){
-            runnerBot.intake.clawArmLower();
-        }
-    }
+
+
 
     public void intake(){
         if(gamepad1.b){
@@ -57,7 +49,9 @@ public class Toggle {
         if(gamepad1.a){
             runnerBot.intake.clawArmLower();
         }
-
+        if(gamepad1.dpad_right){
+            runnerBot.intake.reset();
+        }
         if(gamepad1.right_bumper){
             runnerBot.intake.openClaw();
         }
@@ -72,6 +66,10 @@ public class Toggle {
 
         if (gamepad1.dpad_down){
             runnerBot.intake.armWristIn();
+        }
+
+        if (gamepad1.dpad_left){
+            runnerBot.intake.armTrussLift();
         }
     }
 
