@@ -127,6 +127,7 @@ public class DriverControls {
 
         }
         if (gamepad1.right_bumper) {
+            //cycle between Arm presets: Ingest, Travel, Backdrop
 
         }
 
@@ -151,7 +152,7 @@ public class DriverControls {
             }
 
         if(stickyGamepad2.y) {
-            fieldOrientedDrive = !fieldOrientedDrive;
+            //fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (stickyGamepad1.dpad_down) {
             robot.arm.setDroneShoulderTargetPosition();//drone launch angle
