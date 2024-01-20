@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.servoDenormalizeExtended;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.servoNormalizeExtended;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.withinErrorPercent;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.between;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
@@ -56,7 +55,6 @@ public class Arm implements Subsystem {
     public static int shoulderPositionPreDock = 0;
     public static int slidePositionDocked = 0;
 
-    public static int shoulderInitPos = 963;
 
     public static int GripInnerOpen = 1234;
     public static int GripInnerClosed = 900;
@@ -76,8 +74,12 @@ public class Arm implements Subsystem {
         Drone;
     }
 
-    ArmHeight armHeight = ArmHeight.Init;
+    ArmHeight armHeight = ArmHeight.Init, prevArmHeight = ArmHeight.Backdrop;
 
+    public static int shoulderPosInit = 963; //init high for sizing
+    public static int shoulderPosIntake = 400;
+    public static int shoulderPosTravel = 600;
+    public static int shoulderPosBackdrop = 1000;
 
     int shoulderSpeed = 20;
 
@@ -235,7 +237,7 @@ public class Arm implements Subsystem {
                     shoulderRight.setTargetPosition(0);
                     shoulderRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     shoulderRight.setPower(1);
-                    setShoulderTargetPosition(shoulderInitPos);
+                    setShoulderTargetPosition(shoulderPosInit);
                     calibrateStage=0;
                     return true;
                 }
@@ -423,31 +425,38 @@ public void GripInnerToggle(){ //to open inner, outer has to open as well
                 break;
         }
 
-        if(ArmCycleStarted)
-        {
-            switch (armHeight){
-                case Intake:
-                    armHeight = ArmHeight.Travel;
-                    break;
-                case Init:
-                    armHeight = ArmHeight.Travel;
-                    break;
-                case Travel:
-                    if (true)// prevArmHeight==ArmHeight.Backdrop)
-                    armHeight = ArmHeight.Intake;
-                    else armHeight = ArmHeight.Backdrop;
-                    break;
-                case Backdrop:
-                    armHeight = ArmHeight.Travel;
-                    break;
-                    
-
-
-
-            }
-        }
         //shoulderLeft.setTargetPosition(shoulderTargetPosition);
         shoulderRight.setTargetPosition(shoulderTargetPosition);
+    }
+
+    public void armToggle(){
+        switch (armHeight){
+            case Intake:
+                armHeight = ArmHeight.Travel;
+                prevArmHeight=ArmHeight.Intake;
+                shoulderTargetPosition=shoulderPosTravel;
+                break;
+            case Init:
+                armHeight = ArmHeight.Travel;
+                shoulderTargetPosition=shoulderPosTravel;
+                prevArmHeight=ArmHeight.Intake;
+                break;
+            case Travel:
+                if (prevArmHeight==ArmHeight.Backdrop) {
+                    armHeight = ArmHeight.Intake;
+                    shoulderTargetPosition=shoulderPosIntake;
+                }
+                else {
+                    armHeight = ArmHeight.Backdrop;
+                    shoulderTargetPosition = shoulderPosBackdrop;
+                }
+                break;
+            case Backdrop:
+                armHeight = ArmHeight.Travel;
+                shoulderTargetPosition=shoulderPosTravel;
+                prevArmHeight=ArmHeight.Backdrop;
+                break;
+        }
     }
 
     public void droneSet() {
@@ -469,6 +478,8 @@ public void GripInnerToggle(){ //to open inner, outer has to open as well
         Map<String,                                                                                                                                                           Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("articulation", behavior.name());
         telemetryMap.put("shoulder target position", shoulderTargetPosition);
+        telemetryMap.put("shoulder preset", armHeight);
+        telemetryMap.put("shoulder preset previous", prevArmHeight);
         telemetryMap.put("shoulder left actual position", shoulderLeft.getCurrentPosition());
         telemetryMap.put("shoulder rightactual position", shoulderRight.getCurrentPosition());
         telemetryMap.put("shoulder left Amps", shoulderLeft.getCurrent(CurrentUnit.AMPS));

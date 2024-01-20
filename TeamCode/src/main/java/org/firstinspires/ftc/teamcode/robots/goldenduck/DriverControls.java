@@ -51,6 +51,14 @@ public class DriverControls {
             CoreTele.initPosition = true;
         }
 
+        if (stickyGamepad1.y)
+            robot.arm.GripOuterToggle();
+        //robot.arm.GripNeither();
+
+        if (stickyGamepad1.x)
+            robot.arm.GripInnerToggle();
+        //robot.arm.GripBoth();
+
 
         if(stickyGamepad1.guide) {
             robot.initPositionIndex ++;
@@ -126,8 +134,9 @@ public class DriverControls {
         if (gamepad1.left_bumper) {
 
         }
-        if (gamepad1.right_bumper) {
-            //cycle between Arm presets: Ingest, Travel, Backdrop
+        if (stickyGamepad1.right_bumper) {
+            //cycle between Arm presets: Intake, Travel, Backdrop
+            robot.arm.armToggle();
 
         }
 
