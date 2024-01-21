@@ -1,6 +1,10 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems;
 
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
@@ -17,7 +21,7 @@ import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 import java.util.HashMap;
 import java.util.Map;
 
-
+@Config("BobotIntake")
 public class Intake implements Subsystem {
     private DcMotorEx clawArm = null;
     private Servo clawSpan = null;
@@ -26,13 +30,13 @@ public class Intake implements Subsystem {
     public static double OPENCLAW = 0.55;
     public static double CLOSECLAW = 0.85;
     public static double WRIST_MIN = Utils.servoNormalize(1415);
-    public static double WRIST_INIT_POSITION = Utils.servoNormalize(2105);
-    public static double WRIST_MAX = Utils.servoNormalize(1720);
+    public static double WRIST_MAX = Utils.servoNormalize(1820);
     public static double WRIST_SCORE_1 = Utils.servoNormalize(1700);
+    public static double WRIST_PIXEL = WRIST_SCORE_1;
     private boolean initalized;
 
     public enum WristArticulation{
-        WRIST_IN, WRIST_OUT, WRIST_SCORE;
+        WRIST_IN, WRIST_OUT, WRIST_SCORE, PIXEL_GRAB;
     }
 
     public enum ArmState{
@@ -49,11 +53,11 @@ public class Intake implements Subsystem {
         clawSpan = this.hardwareMap.get(Servo.class, "clawSpan");
         clawWrist = this.hardwareMap.get(Servo.class, "clawWrist");
         initalized = false;
-      //clawArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-      //clawArm.setPower(-.1);
-      clawArm.setPower(1);
-      clawArm.setTargetPosition(40);
-      clawArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        clawArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        clawArm.setPower(-.1);
+//      clawArm.setPower(1);
+//      clawArm.setTargetPosition(40);
+//      clawArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
     }
     @Override
@@ -68,6 +72,8 @@ public class Intake implements Subsystem {
         telemetryMap.put("Wrist Articulation \t", getWristArticulation());
         telemetryMap.put("Arm State \t", getArmState());
         telemetryMap.put("Arm Motor Current \t", clawArm.getCurrent(CurrentUnit.AMPS));
+        telemetryMap.put("Arm Motor Power \t", clawArm.getPower());
+        telemetryMap.put("Arm Motor Mode \t", clawArm.getMode());
         return telemetryMap;
     }
 
@@ -78,12 +84,15 @@ public class Intake implements Subsystem {
     public void stop(){
         clawArm.setPower(0);
     }
-    public void openClaw () {
-        clawSpan.setPosition(OPENCLAW);
-    }
+    public void openClaw () {clawSpan.setPosition(OPENCLAW);}
+    long testTime = 0;
     public void closeClaw () {
-            clawSpan.setPosition(CLOSECLAW);
-
+        clawSpan.setPosition(CLOSECLAW);
+        testTime = futureTime(2);
+        if(isPast(testTime)){
+            clawWrist.setPosition(WRIST_PIXEL);
+            wristArticulation = WristArticulation.PIXEL_GRAB;
+        }
     }
     public void clawArmLift () {
 //        if(clawArm.getCurrentPosition() < 750) {
@@ -99,8 +108,8 @@ public class Intake implements Subsystem {
 //            clawArm.setTargetPosition(clawArm.getCurrentPosition() - 35);
 //        }
         //armWristOut();
-        clawArm.setVelocity(150);
-        clawArm.setTargetPosition(0);
+        clawArm.setVelocity(300);
+        clawArm.setTargetPosition(10);
         clawArm.setPower(0);
         armState = ArmState.GROUND;
     }
@@ -122,19 +131,10 @@ public class Intake implements Subsystem {
 
 
     }
-    public void armPositionTest() {
-        clawArm.setTargetPosition(90);
-    }
 
     @Override
     public void update(Canvas fieldOverlay){clawArm.getVelocity();}
 
-
-    public void inTake (boolean press) {
-        if(press == true){
-            clawArm.setTargetPosition(145);
-        }
-    }
     public void armTrussLift(){
         clawArm.setPower(1);
         clawArm.setTargetPosition(300);
@@ -152,13 +152,13 @@ public class Intake implements Subsystem {
     public ArmState getArmState(){ return armState; }
 
     public void init_loop(){
-//        if(!initalized && clawArm.getCurrent(CurrentUnit.AMPS) > 3) {
+        if(!initalized && clawArm.getCurrent(CurrentUnit.AMPS) > 1) {
             initalized = true;
             clawArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             clawArm.setTargetPosition(0);
             clawArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             clawArm.setPower(1);
-//        }
+        }
     }
 }
 
