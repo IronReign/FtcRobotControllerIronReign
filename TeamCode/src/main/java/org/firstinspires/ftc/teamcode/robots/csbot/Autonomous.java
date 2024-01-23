@@ -41,7 +41,6 @@ public class Autonomous implements TelemetryProvider {
     public VisionProvider visionProvider;
     private Robot robot;
     private HardwareMap hardwareMap;
-    private double preAdjustImu;
 
     public enum AutonState{
         INIT,
@@ -66,7 +65,6 @@ public class Autonomous implements TelemetryProvider {
         telemetryMap.put("targetIndex", targetIndex);
         telemetryMap.put("targetAprilTag", targetAprilTagIndex);
         telemetryMap.put("selectedPath", selectedPath);
-        telemetryMap.put("imu saved", preAdjustImu);
 //        telemetryMap.put("indexStrafeOffset", indexStrafeOffset);
 //        telemetryMap.put("indexHeadingOffset", indexHeadingOffset);
         telemetryMap.put("visionProvider name", visionProvider.getTelemetryName());
@@ -370,22 +368,21 @@ public class Autonomous implements TelemetryProvider {
                 case 5:
                     autonState = AutonState.TRAVEL_BACKDROP;
                     if (!driveToYellowPixel.run(packet)) {
-                        preAdjustImu = Utils.wrapAngle(robot.driveTrain.imuAngle);
                         autonIndex++;
                     }
                     break;
 
                 case 6:
-                    if (preAdjustImu < 180)
+                    double currAngle = Utils.wrapAngle(robot.driveTrain.imuAngle);
+                    if (currAngle < 180)
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), .2));
-                    if(preAdjustImu > 180)
+                    if(currAngle > 180)
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0 ), -.2));
                     if(Utils.withinError(Utils.wrapAngle(robot.driveTrain.imuAngle), STANDARD_HEADING, 2.0)) {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0 ), 0));
                         autonIndex++;
                     }
-
-                        break;
+                    break;
                 case 7:
                     autonState = AutonState.ALIGN_WITH_APRILTAG;
                     robot.articulate(Robot.Articulation.BACKDROP_PREP);
