@@ -2,10 +2,6 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.FLIPPER_TRAVEL_ANGLE;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.getStateMachine;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -19,14 +15,12 @@ import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
 import org.firstinspires.ftc.teamcode.statemachine.StateMachine;
 
@@ -373,14 +367,8 @@ public class Autonomous implements TelemetryProvider {
                     break;
 
                 case 6:
-                    double currAngle = Utils.wrapAngle(robot.driveTrain.imuAngle);
-                    if (currAngle < 180)
-                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), .2));
-                    if(currAngle > 180)
-                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0 ), -.2));
-                    if(Utils.withinError(Utils.wrapAngle(robot.driveTrain.imuAngle), STANDARD_HEADING, 2.0)) {
-                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0 ), 0));
-                        autonIndex++;
+                    if(robot.driveTrain.turnUntilIMUDegrees(STANDARD_HEADING)) {
+                        autonIndex ++;
                     }
                     break;
                 case 7:

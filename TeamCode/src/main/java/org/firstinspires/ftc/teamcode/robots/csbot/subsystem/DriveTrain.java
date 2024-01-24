@@ -6,9 +6,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Rotation2d;
-import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -24,6 +22,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.SubZone;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 //todo this should not reference reign's Constants
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -117,6 +116,23 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
                 new Vector2d(-input.x, input.y));
         setDrivePowers(new PoseVelocity2d(input,-theta ));
         updatePoseEstimate();
+    }
+
+    public boolean turnUntilIMUDegrees(double turnAngle) {
+        turnAngle = Utils.wrapAngle(turnAngle);
+        double currAngle = Utils.wrapAngle(imuAngle);
+        boolean turnPositive = (turnAngle - currAngle + 540) % 360 - 180 > 0? false: true;
+        if (turnPositive) {
+            setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), .2));
+        }
+        else{
+            setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), -.2));
+        }
+        if (Utils.withinError(Utils.wrapAngle(imuAngle), turnAngle, 2.0)) {
+            setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+            return true;
+        }
+        return false;
     }
 
     public void setPose(Constants.Position start) {
