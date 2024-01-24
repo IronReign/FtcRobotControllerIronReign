@@ -102,13 +102,13 @@ public class DriverControls {
             //fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (gamepad1.left_trigger > .1) {
-            robot.arm.adjustShoulder(-gamepad1.left_trigger);
-            //robot.skyhooks.adjustSkyHook(-gamepad1.left_trigger);
+//            robot.arm.adjustShoulder(-gamepad1.left_trigger);
+            robot.skyhooks.adjustSkyHooks(-gamepad1.left_trigger);
         }
 
         if (gamepad1.right_trigger > .1) {
-            robot.arm.adjustShoulder(gamepad1.right_trigger);
-            //robot.skyhooks.adjustSkyHooks(gamepad1.right_trigger);
+//            robot.arm.adjustShoulder(gamepad1.right_trigger);
+            robot.skyhooks.adjustSkyHooks(gamepad1.right_trigger);
 
         }
         if (stickyGamepad1.a) {

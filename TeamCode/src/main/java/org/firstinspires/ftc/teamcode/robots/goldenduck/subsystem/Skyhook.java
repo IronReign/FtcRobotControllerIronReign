@@ -29,13 +29,13 @@ public class Skyhook implements Subsystem {
         this.skyHookTargetPosition = skyHookTargetPosition;
     }
 
-    int skyHookTargetPosition = 0;
-    public static int skyHookPositionMax = 100; //todo find real skyhook Max
+    public static int skyHookTargetPosition = 0; //make non public
+    public static int skyHookPositionMax = 1000; //todo find real skyhook Max
     public static int skyHookPositionMin = 0;
 
     //todo, find these values:
-    public static int skyHookPrep = 300; //extension needed to get hooks above the rigging
-    public static int skyHookLift = 150; //position needed to pull robot off of the mat
+    public static int skyHookPrep = 900; //extension needed to get hooks above the rigging
+    public static int skyHookLift = 500; //position needed to pull robot off of the mat
 
     int skyhookSpeed = 20;
 
@@ -52,7 +52,7 @@ public class Skyhook implements Subsystem {
 
         skyHookLeft = this.hardwareMap.get(DcMotorEx.class, "motorSkyHookLeft");
         skyHookLeft.setMotorEnable();
-        skyHookLeft.setDirection(DcMotor.Direction.REVERSE); //todo is this the correct motor to reverse?
+        //skyHookLeft.setDirection(DcMotor.Direction.REVERSE); //todo is this the correct motor to reverse?
         skyHookLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         skyHookLeft.setTargetPosition(0);
         skyHookLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
