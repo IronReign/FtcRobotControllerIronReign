@@ -143,7 +143,10 @@ public class DriverControls {
             }
             else{
                 if(field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")) {
-                    robot.intake.setIngestPixelHeight(4);
+                    if(robot.intake.getIngestPixelHeight() != 4)
+                        robot.intake.setIngestPixelHeight(4);
+                    else if(robot.intake.getIngestPixelHeight() == 4)
+                        robot.intake.setIngestPixelHeight(0);
                 }
                 else {
                     robot.articulate(Robot.Articulation.PREP_FOR_HANG);

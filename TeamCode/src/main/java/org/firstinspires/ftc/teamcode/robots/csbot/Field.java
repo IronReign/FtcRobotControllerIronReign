@@ -18,7 +18,7 @@ public class Field {
     List<Zone> zones;
     List<SubZone> subZones;
 
-    public List<CrossingRoute> crossingRoutes;
+    public List<CrossingRoute> crossingRoutes = new ArrayList<>();
 
     //shouldn't iterate through POIS, they're selectable destinations
     //todo - maybe implement w/ a map?
