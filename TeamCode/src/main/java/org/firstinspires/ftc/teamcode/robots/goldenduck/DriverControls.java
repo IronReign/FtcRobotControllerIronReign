@@ -51,6 +51,14 @@ public class DriverControls {
             CoreTele.initPosition = true;
         }
 
+        if (stickyGamepad1.y)
+            robot.arm.GripOuterToggle();
+        //robot.arm.GripNeither();
+
+        if (stickyGamepad1.x)
+            robot.arm.GripInnerToggle();
+        //robot.arm.GripBoth();
+
 
         if(stickyGamepad1.guide) {
             robot.initPositionIndex ++;
@@ -94,13 +102,13 @@ public class DriverControls {
             //fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (gamepad1.left_trigger > .1) {
-            robot.arm.adjustShoulder(-gamepad1.left_trigger);
-            //robot.skyhooks.adjustSkyHook(-gamepad1.left_trigger);
+//            robot.arm.adjustShoulder(-gamepad1.left_trigger);
+            robot.skyhooks.adjustSkyHooks(-gamepad1.left_trigger);
         }
 
         if (gamepad1.right_trigger > .1) {
-            robot.arm.adjustShoulder(gamepad1.right_trigger);
-            //robot.skyhooks.adjustSkyHooks(gamepad1.right_trigger);
+//            robot.arm.adjustShoulder(gamepad1.right_trigger);
+            robot.skyhooks.adjustSkyHooks(gamepad1.right_trigger);
 
         }
         if (stickyGamepad1.a) {
@@ -126,17 +134,19 @@ public class DriverControls {
         if (gamepad1.left_bumper) {
 
         }
-        if (gamepad1.right_bumper) {
+        if (stickyGamepad1.right_bumper) {
+            //cycle between Arm presets: Intake, Travel, Backdrop
+            robot.arm.armToggle();
 
         }
 
         if (stickyGamepad1.y)
-            //robot.arm.GripOuterToggle();
-            robot.arm.GripNeither();
+            robot.arm.GripOuterToggle();
+            //robot.arm.GripNeither();
 
         if (stickyGamepad1.x)
-            //robot.arm.GripInnerToggle();
-            robot.arm.GripBoth();
+            robot.arm.GripInnerToggle();
+            //robot.arm.GripBoth();
 
 
         if(stickyGamepad1.dpad_up)
@@ -150,12 +160,11 @@ public class DriverControls {
             droneSet=true;
             }
 
-
-
         if(stickyGamepad2.y) {
-            fieldOrientedDrive = !fieldOrientedDrive;
+            //fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (stickyGamepad1.dpad_down) {
+            robot.arm.setDroneShoulderTargetPosition();//drone launch angle
         }
 
         if(stickyGamepad2.dpad_up) {

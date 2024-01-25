@@ -2,10 +2,6 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.FLIPPER_TRAVEL_ANGLE;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.getStateMachine;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -19,14 +15,12 @@ import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
 import org.firstinspires.ftc.teamcode.statemachine.StateMachine;
 
@@ -41,7 +35,6 @@ public class Autonomous implements TelemetryProvider {
     public VisionProvider visionProvider;
     private Robot robot;
     private HardwareMap hardwareMap;
-    private double preAdjustImu;
 
     public enum AutonState{
         INIT,
@@ -66,7 +59,6 @@ public class Autonomous implements TelemetryProvider {
         telemetryMap.put("targetIndex", targetIndex);
         telemetryMap.put("targetAprilTag", targetAprilTagIndex);
         telemetryMap.put("selectedPath", selectedPath);
-        telemetryMap.put("imu saved", preAdjustImu);
 //        telemetryMap.put("indexStrafeOffset", indexStrafeOffset);
 //        telemetryMap.put("indexHeadingOffset", indexHeadingOffset);
         telemetryMap.put("visionProvider name", visionProvider.getTelemetryName());
@@ -370,22 +362,15 @@ public class Autonomous implements TelemetryProvider {
                 case 5:
                     autonState = AutonState.TRAVEL_BACKDROP;
                     if (!driveToYellowPixel.run(packet)) {
-                        preAdjustImu = Utils.wrapAngle(robot.driveTrain.imuAngle);
                         autonIndex++;
                     }
                     break;
 
                 case 6:
-                    if (preAdjustImu < 180)
-                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), .2));
-                    if(preAdjustImu > 180)
-                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0 ), -.2));
-                    if(Utils.withinError(Utils.wrapAngle(robot.driveTrain.imuAngle), STANDARD_HEADING, 1)) {
-                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0 ), 0));
-                        autonIndex++;
+                    if(robot.driveTrain.turnUntilIMUDegrees(STANDARD_HEADING)) {
+                        autonIndex ++;
                     }
-
-                        break;
+                    break;
                 case 7:
                     autonState = AutonState.ALIGN_WITH_APRILTAG;
                     robot.articulate(Robot.Articulation.BACKDROP_PREP);

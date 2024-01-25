@@ -155,7 +155,7 @@ public class DriverControls {
             robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
         }
         else if(stickyGamepad1.x) {
-            robot.skyhook.releaseTheJimmy();
+            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
         }
 
         if(stickyGamepad1.dpad_up) {
@@ -169,7 +169,7 @@ public class DriverControls {
 
         //GAMEPAD 2 CONTROLS
         // ------------------------------------------------------------------
-        if(stickyGamepad2.start) {
+        if(stickyGamepad2.guide) {
             robot.driveTrain.pose = new Pose2d(robot.driveTrain.pose.position, robot.driveTrain.imuAngle);
         }
 
@@ -190,7 +190,7 @@ public class DriverControls {
         }
 
         if(stickyGamepad2.x) {
-            robot.skyhook.releaseTheJimmy();
+            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
         }
         // ------------------------------------------------------------------
 

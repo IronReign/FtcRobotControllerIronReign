@@ -10,8 +10,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.DcMotorExResetable;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.DcMotorExSquared;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.DcMotorImplExSquared;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 
 import java.util.LinkedHashMap;
@@ -27,11 +25,11 @@ public class Skyhook implements Subsystem {
     public static int skyhookRightTicks = 0;
     public static int skyhookLeftTicks = 0;
     public static int SKYHOOK_HANG_TICKS = 300;
-    public static int SKYHOOK_LAUNCH_TICKS = 250;
+    public static int SKYHOOK_LAUNCH_TICKS = 600;
     public static int PREP_FOR_HANG_TICKS = 0;
-    public static int jimmyTicks = 1500;
-    public static int JIMMY_TENSION_TICKS = 1450;
-    public static int JIMMY_RELEASE_TICKS = 2100;
+    public int droneServoTicks = 1500;
+    public static int DRONE_TENSION_TICKS = 1450;
+    public static int DRONE_RELEASE_TICKS = 750;
     public static int SKYHOOK_SAFE_TICKS = 900;
     public static int SKYHOOK_UP_TICKS = 0;
     DcMotorEx kareem, jabbar;
@@ -58,7 +56,7 @@ public class Skyhook implements Subsystem {
         this.robot = robot;
         initMotors();
         droneLauncher = hardwareMap.get(Servo.class, "droneLauncher");
-        jimmyTicks = JIMMY_TENSION_TICKS;
+        droneServoTicks = DRONE_TENSION_TICKS;
         //skyhookRightTicks = 0;
         //skyhookLeftTicks = 0;
     }
@@ -79,7 +77,7 @@ public class Skyhook implements Subsystem {
             case GAME:
                 skyhookRightTicks = SKYHOOK_SAFE_TICKS;
                 skyhookLeftTicks = SKYHOOK_SAFE_TICKS;
-                jimmyTicks = JIMMY_TENSION_TICKS;
+                droneServoTicks = DRONE_TENSION_TICKS;
                 break;
             case LAUNCH:
                 if(launch()) {
@@ -96,11 +94,11 @@ public class Skyhook implements Subsystem {
             case INIT:
                 skyhookRightTicks = SKYHOOK_INIT_TICKS;
                 skyhookLeftTicks = SKYHOOK_INIT_TICKS;
-                jimmyTicks = JIMMY_TENSION_TICKS;
+                droneServoTicks = DRONE_TENSION_TICKS;
                 articulation = articulation.MANUAL;
                 break;
         }
-        droneLauncher.setPosition(Utils.servoNormalize(jimmyTicks));
+        droneLauncher.setPosition(Utils.servoNormalize(droneServoTicks));
         if(skyhookRight.getCurrent(CurrentUnit.AMPS) > 3.5 || skyhookLeft.getCurrent(CurrentUnit.AMPS) > 3.5){
             SKYHOOK_POWER = 0;
             articulation = Articulation.MANUAL;
@@ -116,9 +114,9 @@ public class Skyhook implements Subsystem {
 
     public static long launchTimer = 0;
     public static int launchIndex = 0;
-    public static double SKYHOOK_LAUNCH_TIMER = 1;
+    public static double SKYHOOK_LAUNCH_TIMER = 2;
     public boolean launch() {
-        droneLauncher.setPosition(Utils.servoNormalize(jimmyTicks));
+        droneLauncher.setPosition(Utils.servoNormalize(droneServoTicks));
         skyhookRight.setTargetPosition(skyhookRightTicks);
         skyhookLeft.setTargetPosition(skyhookLeftTicks);
         switch (launchIndex) {
@@ -134,9 +132,18 @@ public class Skyhook implements Subsystem {
                 }
                 break;
             case 2:
-                releaseTheJimmy();
+                releaseTheDrone();
+                launchTimer = futureTime(SKYHOOK_LAUNCH_TIMER);
+                launchIndex++;
                 break;
             case 3:
+                if(isPast(launchTimer)){
+                    resetDrone();
+                    launchIndex++;
+                }
+                break;
+            case 4:
+                launchIndex = 0;
                 return true;
 
         }
@@ -149,8 +156,12 @@ public class Skyhook implements Subsystem {
         return true;
     }
 
-    public void releaseTheJimmy() {
-        jimmyTicks = JIMMY_RELEASE_TICKS;
+    public void releaseTheDrone() {
+        droneServoTicks = DRONE_RELEASE_TICKS;
+    }
+
+    public void resetDrone(){
+        droneServoTicks = DRONE_TENSION_TICKS;
     }
 
     @Override
@@ -172,7 +183,8 @@ public class Skyhook implements Subsystem {
         telemetryMap.put("kareemTarget", kareem.getTargetPosition());
         telemetryMap.put("skyhookRightActual", skyhookRight.getCurrentPosition());
         telemetryMap.put("jabbarActual", jabbar.getCurrentPosition());
-        telemetryMap.put("jimmyTicks", jimmyTicks);
+        telemetryMap.put("droneTicks", droneServoTicks);
+        telemetryMap.put("droneStage", launchIndex);
         telemetryMap.put("Skyhook Left Memory Position", robot.positionCache.readPose().getSkyhookLeftTicks());
         telemetryMap.put("Skyhook Right Memory Position", robot.positionCache.readPose().getSkyhookRightTicks());
 
@@ -200,6 +212,7 @@ public class Skyhook implements Subsystem {
         skyhookRightTicks = skyhookRight.getCurrentPosition();
         skyhookRight.setTargetPosition(skyhookRightTicks);
         skyhookRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        droneServoTicks = DRONE_TENSION_TICKS;
         SKYHOOK_POWER = 1;
         skyhookLeft.setPower(1);
         skyhookRight.setPower(1);

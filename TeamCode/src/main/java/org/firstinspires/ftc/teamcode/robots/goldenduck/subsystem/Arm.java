@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.servoDenormalizeExtended;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.servoNormalizeExtended;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.withinErrorPercent;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.between;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
@@ -25,6 +24,8 @@ public class Arm implements Subsystem {
 
     HardwareMap hardwareMap;
     Robot robot;
+
+    public boolean ArmCycleStarted = false;
 
     private DcMotorEx shoulderRight, shoulderLeft = null;
     private Servo gripperInner, gripperOuter, triggerDrone;
@@ -49,10 +50,11 @@ public class Arm implements Subsystem {
 
     public static int shoulderTargetPositionTest = 0;
     int shoulderTargetPositionTestPrev;
-    public static int shoulderPositionMax = 1200; //beyond vertical with 125:1 ultraplanetary
+    public static int shoulderPositionMax = 1500; //beyond vertical with 125:1 ultraplanetary
     public static int shoulderPositionMin = -50;
     public static int shoulderPositionPreDock = 0;
     public static int slidePositionDocked = 0;
+
 
     public static int GripInnerOpen = 1234;
     public static int GripInnerClosed = 900;
@@ -64,7 +66,20 @@ public class Arm implements Subsystem {
         OuterOpen;
     }
     GripperState gripperState = GripperState.BothOpen; //initialized position
+    public enum ArmHeight{
+        Init,
+        Intake,
+        Travel,
+        Backdrop,
+        Drone;
+    }
 
+    ArmHeight armHeight = ArmHeight.Init, prevArmHeight = ArmHeight.Backdrop;
+
+    public static int shoulderPosInit = 963; //init high for sizing
+    public static int shoulderPosIntake = 400;
+    public static int shoulderPosTravel = 600;
+    public static int shoulderPosBackdrop = 1000;
 
     int shoulderSpeed = 20;
 
@@ -89,11 +104,12 @@ public class Arm implements Subsystem {
     public static double WRIST_L_PICKUP = 2105;
     public static double WRIST_R_TUCK = 2105;
     public static double WRIST_L_TUCK = 900;
-    public static double WRIST_R_BACKDROP = 850;
-    public static double WRIST_L_BACKDROP = 2150;
+    public static double WRIST_R_BACKDROP = 1100;
+    public static double WRIST_L_BACKDROP = 1300;
 
     public static int DRONE_SET = 1556;
     public static int DRONE_LAUNCH = 900;
+    public static int DRONE_SHOULDER = 1200;
 
     private Behavior prevBehavior;
 
@@ -105,7 +121,7 @@ public class Arm implements Subsystem {
         switch (behavior) {
             case CALIBRATE:
                 if (calibrate())
-                    behavior= Behavior.MANUAL;
+                    behavior=Behavior.MANUAL;
                 break;
             case MANUAL:
                 break;
@@ -150,8 +166,12 @@ public class Arm implements Subsystem {
         CALIBRATE
     }
 
+    public Behavior getBehavior() {
+        return behavior;
+    }
+
     //LIVE STATES
-    public Behavior behavior;
+    private Behavior behavior;
 
     public void setTargetAngle(double angle) {
         wristJointLeft.setTargetAngle(angle);
@@ -193,28 +213,32 @@ public class Arm implements Subsystem {
 
     int calibrateStage = 0;
     long calibrateTimer = 0;
-    double sampleAmps = 0;
+    double sampleAmps = 0, sampleSpeed = 0;
     boolean calibrate(){
         switch (calibrateStage){
             case 0: //start shoulder motor downward - motor should be pretty high up
                 GripNeither(); //open wide
+                //shoulderRight.setTargetPosition(-1000);
                 shoulderRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                shoulderRight.setPower(-0.4); // start running the motor downward
-                calibrateTimer=futureTime(.5);
+                shoulderRight.setPower(-0.35); // start running the motor downward
+                calibrateTimer=futureTime(.25);
                 calibrateStage++;
                 break;
             case 1: //sample the current once arm has started moving
                 if (isPast(calibrateTimer)) {
                     sampleAmps = shoulderRight.getCurrent(CurrentUnit.AMPS);
+                    sampleSpeed = shoulderRight.getVelocity();
                     calibrateStage++;
                 }
                 break;
             case 2: //when shoulder stalls, get shoulder ready for RUN_TO_POSITION
-                if (shoulderRight.getCurrent(CurrentUnit.AMPS)>sampleAmps*1.5) {
+                if (shoulderRight.getVelocity()>-10) {
                     shoulderRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     shoulderRight.setTargetPosition(0);
                     shoulderRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     shoulderRight.setPower(1);
+                    setShoulderTargetPosition(shoulderPosInit);
+                    calibrateStage=0;
                     return true;
                 }
                 break;
@@ -300,6 +324,10 @@ public class Arm implements Subsystem {
         setShoulderTargetPosition(shoulderRight.getCurrentPosition()+(int)(gamepadSpeed * shoulderSpeed));
     }
 
+    public void setDroneShoulderTargetPosition(){
+        setShoulderTargetPosition(DRONE_SHOULDER);
+    }
+
 
 public void wristTune(){
     if(TEMP_WRIST_TUNE) {
@@ -330,7 +358,6 @@ public void WristTuck(){
 public void GripInnerToggle(){ //to open inner, outer has to open as well
         if (gripperState==GripperState.BothClosed || gripperState == GripperState.OuterOpen)
             gripperState = GripperState.BothOpen;
-
         else
             gripperState = GripperState.BothClosed;
     }
@@ -397,8 +424,39 @@ public void GripInnerToggle(){ //to open inner, outer has to open as well
                 GripInnerOnly();
                 break;
         }
-        shoulderLeft.setTargetPosition(shoulderTargetPosition);
+
+        //shoulderLeft.setTargetPosition(shoulderTargetPosition);
         shoulderRight.setTargetPosition(shoulderTargetPosition);
+    }
+
+    public void armToggle(){
+        switch (armHeight){
+            case Intake:
+                armHeight = ArmHeight.Travel;
+                prevArmHeight=ArmHeight.Intake;
+                shoulderTargetPosition=shoulderPosTravel;
+                break;
+            case Init:
+                armHeight = ArmHeight.Travel;
+                shoulderTargetPosition=shoulderPosTravel;
+                prevArmHeight=ArmHeight.Intake;
+                break;
+            case Travel:
+                if (prevArmHeight==ArmHeight.Backdrop) {
+                    armHeight = ArmHeight.Intake;
+                    shoulderTargetPosition=shoulderPosIntake;
+                }
+                else {
+                    armHeight = ArmHeight.Backdrop;
+                    shoulderTargetPosition = shoulderPosBackdrop;
+                }
+                break;
+            case Backdrop:
+                armHeight = ArmHeight.Travel;
+                shoulderTargetPosition=shoulderPosTravel;
+                prevArmHeight=ArmHeight.Backdrop;
+                break;
+        }
     }
 
     public void droneSet() {
@@ -420,10 +478,15 @@ public void GripInnerToggle(){ //to open inner, outer has to open as well
         Map<String,                                                                                                                                                           Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("articulation", behavior.name());
         telemetryMap.put("shoulder target position", shoulderTargetPosition);
+        telemetryMap.put("shoulder preset", armHeight);
+        telemetryMap.put("shoulder preset previous", prevArmHeight);
         telemetryMap.put("shoulder left actual position", shoulderLeft.getCurrentPosition());
         telemetryMap.put("shoulder rightactual position", shoulderRight.getCurrentPosition());
         telemetryMap.put("shoulder left Amps", shoulderLeft.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("shoulder right Amps", shoulderRight.getCurrent(CurrentUnit.AMPS));
+        telemetryMap.put("shoulder sample Amps", sampleAmps);
+        telemetryMap.put("shoulder right Speed", shoulderRight.getVelocity());
+        telemetryMap.put("shoulder sample Speed", sampleSpeed);
         //telemetryMap.put("wristLeft angle", wristJointLeft.getCurrentAngle());
         //telemetryMap.put("wristLeft target angle", wristJointLeft.getTargetAngle());
         telemetryMap.put("grip Outer position", gripperOuter.getPosition());

@@ -6,13 +6,12 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Rotation2d;
-import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -23,6 +22,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.SubZone;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 //todo this should not reference reign's Constants
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +31,7 @@ import java.util.Map;
 public class DriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
     public boolean trajectoryIsActive;
+    public static double GLOBAL_HEADING_DAMPENING = .7;
     public static double HEADING_DAMPENING = 0.5;
     public static double DRIVE_DAMPENING = 0.6;
 
@@ -91,8 +92,14 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     }
 
     public void fieldOrientedDrive(double x, double y, double theta, boolean isRed){
+        theta = theta * GLOBAL_HEADING_DAMPENING;
         if(CenterStage_6832.field.finalized) {
-            theta = CenterStage_6832.field.getZone(pose) == Field.Zone.BACKSTAGE ? theta * HEADING_DAMPENING : theta;
+            theta = (CenterStage_6832.field.getZone(pose) == Field.Zone.BACKSTAGE ||
+                    field.getSubZones(pose).contains(SubZone.PICKUP) ||
+                    field.getSubZones(pose).contains(SubZone.PICKUP.flipOnX()) ||
+                    field.getSubZones(pose).contains(SubZone.WING)) ||
+                    field.getSubZones(pose).contains(SubZone.WING.flipOnX()) ?
+                    theta * HEADING_DAMPENING : theta;
             x = CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX())?
                     x * DRIVE_DAMPENING : x;
             y = CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX())?
@@ -109,6 +116,23 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
                 new Vector2d(-input.x, input.y));
         setDrivePowers(new PoseVelocity2d(input,-theta ));
         updatePoseEstimate();
+    }
+
+    public boolean turnUntilIMUDegrees(double turnAngle) {
+        turnAngle = Utils.wrapAngle(turnAngle);
+        double currAngle = Utils.wrapAngle(imuAngle);
+        boolean turnPositive = (turnAngle - currAngle + 540) % 360 - 180 > 0? false: true;
+        if (turnPositive) {
+            setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), .2));
+        }
+        else{
+            setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), -.2));
+        }
+        if (Utils.withinError(Utils.wrapAngle(imuAngle), turnAngle, 2.0)) {
+            setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+            return true;
+        }
+        return false;
     }
 
     public void setPose(Constants.Position start) {
