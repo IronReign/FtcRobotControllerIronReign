@@ -9,9 +9,11 @@ import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.wrapAngle;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -23,11 +25,12 @@ import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 //todo this should not reference reign's Constants
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
+import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Config(value = "CS_ROADRUNNER")
+@Config(value = "AA_CS_Drive_Train")
 public class DriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
     public boolean trajectoryIsActive;
@@ -41,6 +44,12 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public double backDistanceSensorValue = 0;
     public double imuRoadrunnerError;
     public double imuAngle;
+    private double targetHeading, targetVelocity = 0;
+    public static PIDController headingPID;
+    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(.05, .05, 0);
+    public static double HEADING_PID_TOLERANCE = .05; //this is a percentage of the input range .063 of 2PI is 1 degree
+    private double PIDCorrection, PIDError;
+    public static int turnToTest = 0;
 
     public enum Articulation{
         BACKSTAGE_DRIVE,
@@ -54,6 +63,14 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         trajectoryIsActive = false;
         backDistanceSensor = hardwareMap.get(DistanceSensor.class, "backDist");
 
+        headingPID = new PIDController(HEADING_PID_PWR);
+        headingPID.setInputRange(0, 360);
+        headingPID.setOutputRange(-1, 1);
+        headingPID.setIntegralCutIn(4);
+        headingPID.setContinuous(true);
+        headingPID.setTolerance(HEADING_PID_TOLERANCE);
+        headingPID.enable();
+
     }
     //end constructor
 
@@ -66,9 +83,14 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         backDistanceSensorValue = backDistanceSensor.getDistance(DistanceUnit.INCH);
         updatePoseEstimate();
 
+        //update pose heading from imu regularly
         if((int)(System.nanoTime() / 1e9) % 2 == 0){
             pose = new Pose2d(pose.position, Math.toRadians(imuAngle));
         }
+
+        //test imu based turning from dashboard - todo comment out when not needed
+        if (turnToTest!=0) turnUntilDegreesIMU(turnToTest); //can target any angle but zero
+
     }
 
     public void drive(double x, double y, double theta) {
@@ -118,21 +140,30 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         updatePoseEstimate();
     }
 
-    public boolean turnUntilIMUDegrees(double turnAngle) {
-        turnAngle = Utils.wrapAngle(turnAngle);
-        double currAngle = Utils.wrapAngle(imuAngle);
-        boolean turnPositive = (turnAngle - currAngle + 540) % 360 - 180 > 0? false: true;
-        if (turnPositive) {
-            setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), .2));
-        }
-        else{
-            setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), -.2));
-        }
-        if (Utils.withinError(Utils.wrapAngle(imuAngle), turnAngle, 2.0)) {
+    //request a turn in degrees units
+    //this is an absolute (non-relative) implementation.
+    //it's not relative to where you started.
+    //the direction of the turn will favor the shortest approach
+    public boolean turnUntilDegreesIMU(double turnAngle) {
+        targetHeading = wrapAngle(turnAngle);
+        headingPID.setPID(HEADING_PID_PWR);
+        headingPID.setInput(imuAngle);
+        headingPID.setSetpoint(targetHeading);
+        headingPID.setOutputRange(-.4, .4);
+        headingPID.setTolerance(HEADING_PID_TOLERANCE);
+        double correction = headingPID.performPID();
+        PIDCorrection = correction;
+        PIDError = headingPID.getError();
+        if(headingPID.onTarget()){
+            //setMotorPowers(0,0);
             setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
             return true;
+        }else{
+            headingPID.enable();
+            //setMotorPowers(-correction,correction);
+            setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
+            return false;
         }
-        return false;
     }
 
     public void setPose(Constants.Position start) {
@@ -163,6 +194,12 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("Cross Odometry Pod:\t", rightBack.getCurrentPosition());
         telemetryMap.put("imu vs roadrunner:\t", imuRoadrunnerError);
         telemetryMap.put("imu:\t", imuAngle);
+        telemetryMap.put("PID Error:\t", PIDError);
+        telemetryMap.put("PID Correction:\t", PIDCorrection);
+        telemetryMap.put("Left Front Motor Power", leftFront.getPower());
+        telemetryMap.put("Left Back Motor Power", leftBack.getPower());
+        telemetryMap.put("Right Front Motor Power", rightFront.getPower());
+        telemetryMap.put("Right Back Motor Power", rightBack.getPower());
 
         return telemetryMap;
     }
