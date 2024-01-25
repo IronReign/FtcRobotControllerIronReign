@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
 
@@ -17,6 +18,8 @@ public class Field {
     List<Zone> zones;
     List<SubZone> subZones;
 
+    public List<CrossingRoute> crossingRoutes;
+
     //shouldn't iterate through POIS, they're selectable destinations
     //todo - maybe implement w/ a map?
     POI HANG;
@@ -24,19 +27,14 @@ public class Field {
     POI WING_INTAKE;
     POI SCORE;
 
-    public static double WING_INTAKE_X = -1.75;
-    public static double WING_INTAKE_Y = -2;
-    public static double WING_INTAKE_ANGLE = 90;
-
-    //all defaults are red side
-    Pose2d WING_INTAKE_LOCATION = P2D(-1.75, 2, 90);
-    Pose2d BACKDROP_OUTTAKE_LOCATION = P2D(1.65, -1.5, 180);
 
     //all values are in field grids
     public static final double MAX_Y_VALUE = 3;
     public static final double MAX_X_VALUE = 3;
     public static final double MIN_X_VALUE = -3;
     public static final double MIN_Y_VALUE = -3;
+
+    public static final int STANDARD_HEADING = 180;
 
 
 
@@ -91,6 +89,30 @@ public class Field {
         finalized = true;
         zones = Zone.getNamedZones();
         subZones = SubZone.getNamedSubZones(isRed);
+        if(isRed) {
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, -2.5, STANDARD_HEADING), P2D(3.5, -2.5, STANDARD_HEADING), 0));
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, -1.5, STANDARD_HEADING), P2D(3.5, -1.5, STANDARD_HEADING), 1));
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, -.5, STANDARD_HEADING), P2D(3.5, -.5, STANDARD_HEADING), 2));
+            // DIAGONAL ROUTE
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, .5, -56.309932474), P2D(3.5, -.5, -56.309932474), 3));
+            //
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, .5, STANDARD_HEADING), P2D(3.5, .5, STANDARD_HEADING), 4));
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, 1.5, STANDARD_HEADING), P2D(3.5, 1.5, STANDARD_HEADING), 5));
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, 2.5, STANDARD_HEADING), P2D(3.5, 2.5, STANDARD_HEADING), 6));
+        }
+        else {
+
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, 2.5, STANDARD_HEADING), P2D(3.5, 2.5, STANDARD_HEADING), 0));
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, 1.5, STANDARD_HEADING), P2D(3.5, 1.5, STANDARD_HEADING), 1));
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, .5, STANDARD_HEADING), P2D(3.5, .5, STANDARD_HEADING), 2));
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, -.5, STANDARD_HEADING), P2D(3.5, -.5, STANDARD_HEADING), 3));
+//             DIAGONAL ROUTE
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, -.5, 56.309932474), P2D(3.5, .5, 56.309932474), 4));
+            //
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, -1.5, STANDARD_HEADING), P2D(3.5, -1.5, STANDARD_HEADING), 5));
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, -2.5, STANDARD_HEADING), P2D(3.5, -2.5, STANDARD_HEADING), 6));
+        }
+
         HANG = isRed? POI.HANG : POI.HANG.flipOnX();
         HANG_PREP = isRed? POI.HANG_PREP : POI.HANG_PREP.flipOnX();
         WING_INTAKE = isRed? POI.WING_INTAKE : POI.WING_INTAKE.flipOnX();
@@ -118,12 +140,15 @@ public class Field {
 
     //swap to pathtoPOI(pose, destinationpoi)
 
-    public SequentialAction generatePath(Pose2d robotPosition, POI poi){
+    public SequentialAction pathToPOI(Pose2d robotPosition, POI poi){
         Zone startZone = getZone(robotPosition);
         Zone endZone = poi.getZone();
         //ROBOT DOES NOTHING IF THE STARTZONE IS IN THE RIGGING
         if(startZone == Zone.RIGGING)
             return new SequentialAction();
+
+        TrajectoryActionBuilder actionBuilder = robot.driveTrain.actionBuilder(robotPosition);
+
 
 
         return null;
@@ -162,6 +187,42 @@ public class Field {
 
 
 }
+
+class CrossingRoute {
+    Pose2d audienceSide;
+    Pose2d backstageSide;
+    double ROUTE_HEADING;
+    int index;
+
+    public CrossingRoute(Pose2d audienceSide, Pose2d backstageSide, int index){
+        this.audienceSide = audienceSide;
+        this.backstageSide = backstageSide;
+        ROUTE_HEADING = Math.toDegrees(audienceSide.heading.log());
+        this.index = index;
+    }
+
+    //return the shortest distance between a given pose and either endpoint in field grids
+    public double distanceToRoute(Pose2d pose) {
+        double distanceToAudienceSide = Math.hypot(Math.abs(pose.position.x - audienceSide.position.x), Math.abs(pose.position.y - audienceSide.position.x)) / FIELD_INCHES_PER_GRID;
+        double distanceToBackstageSide = Math.hypot(Math.abs(pose.position.x - backstageSide.position.x), Math.abs(pose.position.y - backstageSide.position.x)) / FIELD_INCHES_PER_GRID;
+        return distanceToBackstageSide > distanceToAudienceSide?  distanceToAudienceSide : distanceToBackstageSide;
+    }
+
+    //return the closest entry point to a given pose
+    public Pose2d getClosestEntryPose(Pose2d pose) {
+        double distanceToAudienceSide = Math.hypot(Math.abs(pose.position.x - audienceSide.position.x), Math.abs(pose.position.y - audienceSide.position.x)) / FIELD_INCHES_PER_GRID;
+        double distanceToBackstageSide = Math.hypot(Math.abs(pose.position.x - backstageSide.position.x), Math.abs(pose.position.y - backstageSide.position.x)) / FIELD_INCHES_PER_GRID;
+        return distanceToBackstageSide > distanceToAudienceSide?  audienceSide : backstageSide;
+    }
+
+    //assumes robot is at the start of a crossing route and adds the whole route path to the actionbuilder
+    public void addCrossingRoute(TrajectoryActionBuilder actionBuilder) {
+//        actionBuilder.turnTo(Math.toRadians(ROUTE_HEADING)).lineto
+
+    }
+
+}
+
 
 
 
