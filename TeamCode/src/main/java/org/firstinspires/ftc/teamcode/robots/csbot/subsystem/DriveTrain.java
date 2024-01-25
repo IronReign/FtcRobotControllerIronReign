@@ -46,10 +46,21 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public double imuAngle;
     private double targetHeading, targetVelocity = 0;
     public static PIDController headingPID;
-    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(.05, .05, 0);
+    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0, .2, 0);
     public static double HEADING_PID_TOLERANCE = .05; //this is a percentage of the input range .063 of 2PI is 1 degree
     private double PIDCorrection, PIDError;
     public static int turnToTest = 0;
+    public static double turnToSpeed=.8; //max angular speed for turn
+
+    public boolean isHumanIsDriving() {
+        return humanIsDriving;
+    }
+
+    public void setHumanIsDriving(boolean humanIsDriving) {
+        this.humanIsDriving = humanIsDriving;
+    }
+
+    private boolean humanIsDriving=false;
 
     public enum Articulation{
         BACKSTAGE_DRIVE,
@@ -89,7 +100,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         }
 
         //test imu based turning from dashboard - todo comment out when not needed
-        if (turnToTest!=0) turnUntilDegreesIMU(turnToTest); //can target any angle but zero
+        if (turnToTest!=0) turnUntilDegreesIMU(turnToTest,turnToSpeed); //can target any angle but zero
 
     }
 
@@ -144,18 +155,21 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     //this is an absolute (non-relative) implementation.
     //it's not relative to where you started.
     //the direction of the turn will favor the shortest approach
-    public boolean turnUntilDegreesIMU(double turnAngle) {
+    public boolean turnUntilDegreesIMU(double turnAngle, double maxSpeed) {
         targetHeading = wrapAngle(turnAngle);
         headingPID.setPID(HEADING_PID_PWR);
         headingPID.setInput(imuAngle);
         headingPID.setSetpoint(targetHeading);
-        headingPID.setOutputRange(-.4, .4);
+        headingPID.setOutputRange(-maxSpeed, maxSpeed);
         headingPID.setTolerance(HEADING_PID_TOLERANCE);
         double correction = headingPID.performPID();
         PIDCorrection = correction;
         PIDError = headingPID.getError();
+        setHumanIsDriving(false);
         if(headingPID.onTarget()){
-            //setMotorPowers(0,0);
+            //turn meets accuracy target
+            //todo is this a good time to update pose heading from imu?
+            //stop
             setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
             return true;
         }else{

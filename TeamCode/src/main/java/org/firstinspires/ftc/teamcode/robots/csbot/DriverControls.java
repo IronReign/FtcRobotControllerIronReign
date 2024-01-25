@@ -205,9 +205,10 @@ public class DriverControls {
         if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
                 Math.abs(gamepad1.left_stick_y) > DEADZONE ||
                 Math.abs(gamepad1.right_stick_x ) > DEADZONE) {
+            robot.driveTrain.setHumanIsDriving(true);
             robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, alliance.getMod());
         }
-        else robot.driveTrain.drive(0, 0, 0);
+        else if (robot.driveTrain.isHumanIsDriving()) robot.driveTrain.drive(0, 0, 0);
     }
 
     public void robotOrientedDrive() {
