@@ -1,5 +1,14 @@
 package org.firstinspires.ftc.teamcode.robots.goldenduck;
 
+import android.annotation.SuppressLint;
+
+import com.qualcomm.robotcore.hardware.Gamepad;
+
+import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot;
+
 import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.active;
 import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.alliance;
 import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.debugTelemetryEnabled;
@@ -7,15 +16,6 @@ import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.robot;
 import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot.visionOn;
 import static org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot.visionProviderIndex;
-
-import android.annotation.SuppressLint;
-
-import com.qualcomm.robotcore.hardware.Gamepad;
-
-import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
-import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 
 public class DriverControls {
     public static double PRECISION_TURN_MULTIPLIER = .8;
@@ -180,14 +180,23 @@ public class DriverControls {
     public void fieldOrientedDrive() {
         if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
                 Math.abs(gamepad1.left_stick_y) > DEADZONE ||
-                Math.abs(gamepad1.right_stick_x ) > DEADZONE) {
+                Math.abs(gamepad1.right_stick_x ) > DEADZONE)
+        {
+            robot.driveTrain.setHumanIsDriving(true);
             robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, alliance.getMod());
         }
-        else robot.driveTrain.drive(0, 0, 0);
+        //stop if no input
+        else if (robot.driveTrain.isHumanIsDriving()) robot.driveTrain.drive(0, 0, 0);
     }
 
     public void robotOrientedDrive() {
-        robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+        if (Math.abs(gamepad1.left_stick_x) > DEADZONE ||
+                Math.abs(gamepad1.left_stick_y) > DEADZONE ||
+                Math.abs(gamepad1.right_stick_x) > DEADZONE) {
+            robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+
+        }
+        else if (robot.driveTrain.isHumanIsDriving()) robot.driveTrain.drive(0, 0, 0);
     }
 
 
