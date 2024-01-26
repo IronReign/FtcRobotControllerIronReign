@@ -174,7 +174,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
             return true;
         }else{
             headingPID.enable();
-            //setMotorPowers(-correction,correction);
             setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
             return false;
         }

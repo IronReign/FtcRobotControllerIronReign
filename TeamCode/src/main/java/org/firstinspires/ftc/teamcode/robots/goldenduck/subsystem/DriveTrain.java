@@ -36,11 +36,11 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public double imuAngle;
     private double targetHeading, targetVelocity = 0;
     public static PIDController headingPID;
-    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0, .2, 0);
+    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0, .05, 0);
     public static double HEADING_PID_TOLERANCE = .05; //this is a percentage of the input range .063 of 2PI is 1 degree
-    private double PIDCorrection, PIDError;
+    public double PIDCorrection, PIDError;
     public static int turnToTest = 0;
-    public static double turnToSpeed=.8; //max angular speed for turn
+    public static double turnToSpeed=.4; //max angular speed for turn
     public boolean isHumanIsDriving() {
         return humanIsDriving;
     }
@@ -61,10 +61,15 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         this.robot = robot;
         trajectoryIsActive = false;
 
+        headingPID = new PIDController(HEADING_PID_PWR);
+        headingPID.setInputRange(0, 360);
+        headingPID.setOutputRange(-1, 1);
+        headingPID.setIntegralCutIn(10);
+        headingPID.setContinuous(true);
+        headingPID.setTolerance(HEADING_PID_TOLERANCE);
+        headingPID.enable();
     }
     //end constructor
-
-
 
     @Override
     public void update(Canvas c) {
@@ -124,7 +129,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
             return true;
         }else{
             headingPID.enable();
-            //setMotorPowers(-correction,correction);
             setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
             return false;
         }
@@ -155,6 +159,13 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("Right Odometry Pod:\t", rightFront.getCurrentPosition());
         telemetryMap.put("Cross Odometry Pod:\t", rightBack.getCurrentPosition());
         telemetryMap.put("imu vs roadrunner:\t", imuRoadrunnerError);
+        telemetryMap.put("imu:\t", imuAngle);
+        telemetryMap.put("PID Error:\t", PIDError);
+        telemetryMap.put("PID Correction:\t", PIDCorrection);
+        telemetryMap.put("Left Front Motor Power", leftFront.getPower());
+        telemetryMap.put("Left Back Motor Power", leftBack.getPower());
+        telemetryMap.put("Right Front Motor Power", rightFront.getPower());
+        telemetryMap.put("Right Back Motor Power", rightBack.getPower());
         return telemetryMap;
     }
 
