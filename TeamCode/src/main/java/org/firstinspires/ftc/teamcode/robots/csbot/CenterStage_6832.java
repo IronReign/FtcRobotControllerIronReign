@@ -251,7 +251,6 @@ public class CenterStage_6832 extends OpMode {
 
                 case TELE_OP:
                     dc.joystickDrive();
-                    //implement teleop
                     break;
 
                 case TEST:
@@ -264,6 +263,7 @@ public class CenterStage_6832 extends OpMode {
 
                 case MANUAL_DIAGNOSTIC:
                     dc.manualDiagnosticMethods();
+                    robot.updateVision();
                     break;
 
                 case SQUARE:
@@ -328,6 +328,9 @@ public class CenterStage_6832 extends OpMode {
                 break;
             case AUTONOMOUS:
                 handleTelemetry(auton.getTelemetry(debugTelemetryEnabled),  auton.getTelemetryName(), packet);
+                break;
+            case MANUAL_DIAGNOSTIC:
+//                handleTelemetry(robot.visionProviderBack.getTelemetry(true), robot.visionProviderBack.getTelemetryName(), packet);
                 break;
         }
 

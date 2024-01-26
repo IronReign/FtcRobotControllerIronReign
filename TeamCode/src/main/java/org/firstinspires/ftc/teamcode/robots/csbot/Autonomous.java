@@ -23,6 +23,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.provider.AprilTagProvider;
 import org.firstinspires.ftc.teamcode.statemachine.StateMachine;
 
 import java.util.LinkedHashMap;
@@ -33,7 +34,6 @@ import java.util.Map;
 public class Autonomous implements TelemetryProvider {
 
     private static double APRIL_TAG_HEADING = 0;
-    public VisionProvider visionProvider;
     private Robot robot;
     private HardwareMap hardwareMap;
 
@@ -61,9 +61,12 @@ public class Autonomous implements TelemetryProvider {
         telemetryMap.put("targetIndex", targetIndex);
         telemetryMap.put("targetAprilTag", targetAprilTagIndex);
         telemetryMap.put("selectedPath", selectedPath);
+        if(autonState == AutonState.ALIGN_WITH_APRILTAG) {
+            telemetryMap.put("apriltag index", ((AprilTagProvider)robot.visionProviderBack).getIndex());
+        }
 //        telemetryMap.put("indexStrafeOffset", indexStrafeOffset);
 //        telemetryMap.put("indexHeadingOffset", indexHeadingOffset);
-        telemetryMap.put("visionProvider name", visionProvider.getTelemetryName());
+        telemetryMap.put("visionProvider name", robot.visionProviderBack.getTelemetryName());
         return telemetryMap;
     }
 
@@ -109,7 +112,6 @@ public class Autonomous implements TelemetryProvider {
     public Autonomous(Robot robot) {
         this.robot = robot;
         this.hardwareMap = robot.hardwareMap;
-        this.visionProvider = robot.visionProviderBack;
         autonPaths = new Pose2d[7][10];
         autonIndex = 0;
     }
@@ -241,6 +243,7 @@ public class Autonomous implements TelemetryProvider {
         audienceIntermediateForward = P2D(1, .5, STANDARD_HEADING);
         audienceIntermediateDeep = P2D(1.5,.5,-10);
         allianceDirection = startingPosition.getMod()? -1 : 1;
+        targetAprilTagIndex = targetIndex + (startingPosition.getMod()? 3 : 0);
         //aprilTagAlign = new Pose2d (new Vector2d(switchSides(aprilTagApproachPosition.position).x,switchSides(aprilTagApproachPosition.position).y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
 //        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
 //        aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x-1,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
@@ -321,6 +324,9 @@ public class Autonomous implements TelemetryProvider {
     public static int autonIndex;
     public static long futureTimer;
 
+    int firstIndex = 0;
+    int observedTag = 0;
+
 
 
     public boolean execute(FtcDashboard dashboard) {
@@ -370,13 +376,30 @@ public class Autonomous implements TelemetryProvider {
 
                 case 6:
                     if(robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING,turnToSpeed)) {
+                        robot.driveTrain.pose = new Pose2d(new Vector2d(robot.driveTrain.pose.position.x, robot.driveTrain.pose.position.y), Math.toRadians(robot.driveTrain.imuAngle));
+                        robot.switchVisionProviders();
+                        robot.updateVision();
+                        observedTag = ((AprilTagProvider)robot.visionProviderBack).getIndex();
                         autonIndex ++;
                     }
                     break;
                 case 7:
                     autonState = AutonState.ALIGN_WITH_APRILTAG;
-                    robot.articulate(Robot.Articulation.BACKDROP_PREP);
-                    autonIndex++;
+                    robot.updateVision();
+                    int visionIndex = ((AprilTagProvider)robot.visionProviderBack).getIndex();
+                    observedTag = visionIndex == 0? observedTag : visionIndex;
+                    if(observedTag > targetAprilTagIndex) {
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, -0.2), 0));
+                    }
+                    else if(observedTag < targetAprilTagIndex) {
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0.2), 0));
+                    }
+                    else {
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                        robot.switchVisionProviders();
+                        autonIndex++;
+                    }
+
                     break;
                 case 8:
                     autonState = AutonState.SCORE_BACKDROP;

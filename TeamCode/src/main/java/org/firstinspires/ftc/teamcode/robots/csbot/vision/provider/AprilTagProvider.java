@@ -95,6 +95,9 @@ public class AprilTagProvider extends VisionProvider {
         return cameraOpened ? pipeline.getLastPosition() : Position.HOLD;
     }
 
+    public int getIndex() {
+        return pipeline.getLastDetectedIndex();
+    }
     @Override
     public void reset() {
 
