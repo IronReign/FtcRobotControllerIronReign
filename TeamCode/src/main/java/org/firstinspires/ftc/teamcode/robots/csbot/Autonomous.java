@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.DriveTrain.turnToSpeed;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.FLIPPER_TRAVEL_ANGLE;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
@@ -56,6 +57,7 @@ public class Autonomous implements TelemetryProvider {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("autonState", autonState);
+        telemetryMap.put("auton index", autonIndex);
         telemetryMap.put("targetIndex", targetIndex);
         telemetryMap.put("targetAprilTag", targetAprilTagIndex);
         telemetryMap.put("selectedPath", selectedPath);
@@ -367,7 +369,7 @@ public class Autonomous implements TelemetryProvider {
                     break;
 
                 case 6:
-                    if(robot.driveTrain.turnUntilIMUDegrees(STANDARD_HEADING)) {
+                    if(robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING,turnToSpeed)) {
                         autonIndex ++;
                     }
                     break;

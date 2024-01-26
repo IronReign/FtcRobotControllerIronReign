@@ -52,7 +52,7 @@ public class Outtake implements Subsystem {
     //IN DEGREES PER SECOND
     public static double FLIPPER_START_ANGLE = 45;
 
-    public static double FLIPPER_JOINT_SPEED = 60;
+    public static double FLIPPER_JOINT_SPEED = 75;
 
     public static double FLIPPER_MIN_ANGLE = 0;
     public static double FLIPPER_MAX_ANGLE = 145;
@@ -303,7 +303,8 @@ public class Outtake implements Subsystem {
     public void update(Canvas fieldOverlay) {
         //compute the current articulation/behavior
         articulate();
-
+        //allow real-time flipper speed changes
+        flipper.setSpeed(FLIPPER_JOINT_SPEED);
         //actually instruct actuators to go to desired targets
         flipper.update();
         slide.setTargetPosition(slideTargetPosition);

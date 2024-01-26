@@ -9,6 +9,7 @@ import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -16,9 +17,13 @@ import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.wrapAngle;
 
 @Config(value = "GD_DRIVETRAIN")
 public class DriveTrain extends MecanumDrive implements Subsystem {
@@ -28,7 +33,23 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public Articulation articulation;
 
     public double imuRoadrunnerError;
+    public double imuAngle;
+    private double targetHeading, targetVelocity = 0;
+    public static PIDController headingPID;
+    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0, .2, 0);
+    public static double HEADING_PID_TOLERANCE = .05; //this is a percentage of the input range .063 of 2PI is 1 degree
+    private double PIDCorrection, PIDError;
+    public static int turnToTest = 0;
+    public static double turnToSpeed=.8; //max angular speed for turn
+    public boolean isHumanIsDriving() {
+        return humanIsDriving;
+    }
 
+    public void setHumanIsDriving(boolean humanIsDriving) {
+        this.humanIsDriving = humanIsDriving;
+    }
+
+    private boolean humanIsDriving=false;
     public enum Articulation{
         BACKSTAGE_DRIVE,
         WING_DRIVE,
@@ -47,8 +68,11 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
     @Override
     public void update(Canvas c) {
-        imuRoadrunnerError = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - Math.toDegrees(pose.heading.log());
+        imuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.getMod()? -90 : 90);
+        imuRoadrunnerError = imuAngle - Math.toDegrees(pose.heading.log());
         updatePoseEstimate();
+        //test imu based turning from dashboard - todo comment out when not needed
+        if (turnToTest!=0) turnUntilDegreesIMU(turnToTest,turnToSpeed); //can target any angle but zero
     }
 
     public void drive(double x, double y, double theta) {
@@ -77,6 +101,34 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         updatePoseEstimate();
     }
 
+    //request a turn in degrees units
+    //this is an absolute (non-relative) implementation.
+    //it's not relative to where you started.
+    //the direction of the turn will favor the shortest approach
+    public boolean turnUntilDegreesIMU(double turnAngle, double maxSpeed) {
+        targetHeading = wrapAngle(turnAngle);
+        headingPID.setPID(HEADING_PID_PWR);
+        headingPID.setInput(imuAngle);
+        headingPID.setSetpoint(targetHeading);
+        headingPID.setOutputRange(-maxSpeed, maxSpeed);
+        headingPID.setTolerance(HEADING_PID_TOLERANCE);
+        double correction = headingPID.performPID();
+        PIDCorrection = correction;
+        PIDError = headingPID.getError();
+        setHumanIsDriving(false);
+        if(headingPID.onTarget()){
+            //turn meets accuracy target
+            //todo is this a good time to update pose heading from imu?
+            //stop
+            setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+            return true;
+        }else{
+            headingPID.enable();
+            //setMotorPowers(-correction,correction);
+            setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
+            return false;
+        }
+    }
     public void setPose(Constants.Position start) {
         pose = start.getPose();
     }

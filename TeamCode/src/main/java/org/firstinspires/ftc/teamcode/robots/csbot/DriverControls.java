@@ -143,7 +143,10 @@ public class DriverControls {
             }
             else{
                 if(field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")) {
-                    robot.intake.setIngestPixelHeight(4);
+                    if(robot.intake.getIngestPixelHeight() != 4)
+                        robot.intake.setIngestPixelHeight(4);
+                    else if(robot.intake.getIngestPixelHeight() == 4)
+                        robot.intake.setIngestPixelHeight(0);
                 }
                 else {
                     robot.articulate(Robot.Articulation.PREP_FOR_HANG);
@@ -201,14 +204,22 @@ public class DriverControls {
     public void fieldOrientedDrive() {
         if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
                 Math.abs(gamepad1.left_stick_y) > DEADZONE ||
-                Math.abs(gamepad1.right_stick_x ) > DEADZONE) {
+                Math.abs(gamepad1.right_stick_x ) > DEADZONE)
+        {
+            robot.driveTrain.setHumanIsDriving(true);
             robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, alliance.getMod());
         }
-        else robot.driveTrain.drive(0, 0, 0);
+        else if (robot.driveTrain.isHumanIsDriving()) robot.driveTrain.drive(0, 0, 0);
     }
 
     public void robotOrientedDrive() {
-        robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+        if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
+                Math.abs(gamepad1.left_stick_y) > DEADZONE ||
+                Math.abs(gamepad1.right_stick_x ) > DEADZONE) {
+            robot.driveTrain.setHumanIsDriving(true);
+            robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+        }
+        else if (robot.driveTrain.isHumanIsDriving()) robot.driveTrain.drive(0, 0, 0);
     }
 
 
