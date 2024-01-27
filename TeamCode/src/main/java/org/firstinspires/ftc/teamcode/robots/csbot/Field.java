@@ -27,6 +27,8 @@ public class Field {
     POI WING_INTAKE;
     POI SCORE;
 
+    POI APRILTAG1, APRILTAG2, APRILTAG3, APRILTAG4, APRILTAG5, APRILTAG6;
+
 
     //all values are in field grids
     public static final double MAX_Y_VALUE = 3;
@@ -117,6 +119,12 @@ public class Field {
         HANG_PREP = isRed? POI.HANG_PREP : POI.HANG_PREP.flipOnX();
         WING_INTAKE = isRed? POI.WING_INTAKE : POI.WING_INTAKE.flipOnX();
         SCORE = isRed? POI.SCORE : POI.SCORE.flipOnX();
+        APRILTAG1 = POI.APRILTAG1;
+        APRILTAG2 = POI.APRILTAG2;
+        APRILTAG3 = POI.APRILTAG3;
+        APRILTAG4 = POI.APRILTAG4;
+        APRILTAG5 = POI.APRILTAG5;
+        APRILTAG6 = POI.APRILTAG6;
     }
 
     public void update(TelemetryPacket packet, Robot robot) {
@@ -155,7 +163,23 @@ public class Field {
 
     }
 
-
+    public Pose2d getAprilTagPose(int id) {
+        switch(id){
+            case 1:
+                return APRILTAG1.pose;
+            case 2:
+                return APRILTAG2.pose;
+            case 3:
+                return APRILTAG3.pose;
+            case 4:
+                return APRILTAG4.pose;
+            case 5:
+                return APRILTAG5.pose;
+            case 6:
+                return APRILTAG6.pose;
+        }
+        return null;
+    }
 
     public Zone getZone(Pose2d robotPosition) {
         for(Zone k : zones) {

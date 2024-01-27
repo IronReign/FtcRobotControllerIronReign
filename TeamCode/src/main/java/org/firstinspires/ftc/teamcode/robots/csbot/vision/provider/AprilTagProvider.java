@@ -16,10 +16,12 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -49,7 +51,7 @@ public class AprilTagProvider extends VisionProvider {
     public static double cx = 402.145;
     public static double cy = 221.506;
     // UNITS ARE METERS
-    double tagsize = 0.045; //tag size on iron reign signal sleeve
+    double tagsize = 0.0508; //tag size on iron reign signal sleeve
     @Override
     public void initializeVision(HardwareMap hardwareMap) {
         pipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
@@ -93,6 +95,10 @@ public class AprilTagProvider extends VisionProvider {
     @Override
     public Position getPosition() {
         return cameraOpened ? pipeline.getLastPosition() : Position.HOLD;
+    }
+
+    public ArrayList<AprilTagDetection> getDetections() {
+        return pipeline.getDetections();
     }
 
     public int getIndex() {

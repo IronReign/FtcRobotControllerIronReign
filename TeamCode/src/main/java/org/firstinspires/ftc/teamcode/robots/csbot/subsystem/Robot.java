@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
@@ -21,6 +22,8 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.provider.AprilTagProvider;
+import org.openftc.apriltag.AprilTagDetection;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -51,6 +54,8 @@ public class  Robot implements Subsystem {
     //vision variables
     public boolean visionProviderFinalized = false;
     public static int visionProviderIndex = 2;
+
+    public static final double DISTANCE_FROM_CAMERA_TO_CENTER = 7.5; // In inches
 
     private long[] subsystemUpdateTimes;
     private final List<LynxModule> hubs;
@@ -150,7 +155,7 @@ public class  Robot implements Subsystem {
     }
     //end update
 
-    public void updateVision() {
+    public void enableVision() {
         if (visionOn) {
             if (!visionProviderFinalized) {
                 createVisionProvider();
@@ -160,6 +165,29 @@ public class  Robot implements Subsystem {
             }
             visionProviderBack.update();
         }
+    }
+
+    public void aprilTagRelocalization(int target) {
+        ArrayList<AprilTagDetection> detections = getAprilTagDetections();
+        if(detections != null && detections.size() > 0) {
+            AprilTagDetection targetTag = detections.get(0);
+            for (AprilTagDetection detection : detections) {
+                if(Math.abs(detection.id-target) < Math.abs(targetTag.id-target))
+                    targetTag = detection;
+            }
+            double x = field.getAprilTagPose(targetTag.id).position.x-targetTag.pose.y- DISTANCE_FROM_CAMERA_TO_CENTER;
+            double y = field.getAprilTagPose(targetTag.id).position.y-targetTag.pose.x;
+            driveTrain.setPose(new Pose2d(new Vector2d(x, y), driveTrain.pose.heading));
+        }
+    }
+
+    public ArrayList<AprilTagDetection> getAprilTagDetections() {
+        if (visionOn) {
+            if (!visionProviderFinalized) {
+                return ((AprilTagProvider)visionProviderBack).getDetections();
+            }
+        }
+        return null;
     }
 
     private static void drawRobot(Canvas c, Pose2d t) {
@@ -378,6 +406,7 @@ public class  Robot implements Subsystem {
         telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
         telemetryMap.put("wingIntakeIndex", ingestStage);
         telemetryMap.put("initPositionIndex", initPositionIndex);
+        telemetryMap.put("Vision On/Vision Provider Finalized", visionOn+" "+visionProviderFinalized);
 //        telemetryMap.put("MemoryPose", positionCache.readPose());
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();

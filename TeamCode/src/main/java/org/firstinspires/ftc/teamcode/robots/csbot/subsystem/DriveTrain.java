@@ -94,7 +94,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         backDistanceSensorValue = backDistanceSensor.getDistance(DistanceUnit.INCH);
         updatePoseEstimate();
 
-        //update pose heading from imu regularly
+//        update pose heading from imu regularly
         if((int)(System.nanoTime() / 1e9) % 2 == 0){
             pose = new Pose2d(pose.position, Math.toRadians(imuAngle));
         }

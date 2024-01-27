@@ -192,6 +192,10 @@ public class AprilTagDetectionPipeline extends OpenCvPipeline
         return input;
     }
 
+    public ArrayList<AprilTagDetection> getDetections() {
+        return detections;
+    }
+
     public Bitmap getDashboardImage() {
         return dashboardBitmap;
     }

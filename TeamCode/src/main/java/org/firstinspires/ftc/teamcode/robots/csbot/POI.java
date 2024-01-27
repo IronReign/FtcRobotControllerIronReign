@@ -14,6 +14,12 @@ public class POI {
     public static POI HANG_PREP = new POI(.6, -1.5, 180, "HANG_PREP", Field.Zone.BACKSTAGE);
     public static POI HANG = new POI(-0.5, -1.5, 180, "HANG", Field.Zone.RIGGING);
     public static POI SCORE = new POI(1.65, -1.5, 180, "SCORE", Field.Zone.BACKSTAGE);
+    public static POI APRILTAG1 = new POI(61.728, -40.344, 180, "APRILTAG1", Field.Zone.BACKSTAGE);
+    public static POI APRILTAG2 = new POI(61.728, -35.344, 180, "APRILTAG2", Field.Zone.BACKSTAGE);
+    public static POI APRILTAG3 = new POI(61.728, -29.344, 180, "APRILTAG3", Field.Zone.BACKSTAGE);
+    public static POI APRILTAG4 = new POI(61.728, 29.344, 180, "APRILTAG4", Field.Zone.BACKSTAGE);
+    public static POI APRILTAG5 = new POI(61.728, 35.344, 180, "APRILTAG5", Field.Zone.BACKSTAGE);
+    public static POI APRILTAG6 = new POI(61.728, 40.344, 180, "APRILTAG6", Field.Zone.BACKSTAGE);
 
 
     POI(double x, double y, double heading, String name, Field.Zone parent) {

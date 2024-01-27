@@ -154,7 +154,7 @@ public class CenterStage_6832 extends OpMode {
         dc.init_loop();
         dc.robotOrientedDrive();
 
-        robot.updateVision();
+        robot.enableVision();
 
         robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
 
@@ -243,6 +243,8 @@ public class CenterStage_6832 extends OpMode {
 
             }
 
+            update();
+
             switch(gameState) {
                 case AUTONOMOUS:
                     if(auton.execute(dashboard )) gameState = GameState.TELE_OP;
@@ -263,7 +265,7 @@ public class CenterStage_6832 extends OpMode {
 
                 case MANUAL_DIAGNOSTIC:
                     dc.manualDiagnosticMethods();
-                    robot.updateVision();
+                    robot.enableVision();
                     break;
 
                 case SQUARE:
@@ -277,7 +279,6 @@ public class CenterStage_6832 extends OpMode {
         else {
             dc.handlePregameControls();
         }
-        update();
     }
     //end loop()
 
