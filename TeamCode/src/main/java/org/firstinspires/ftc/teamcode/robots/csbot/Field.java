@@ -3,12 +3,14 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.allia
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
+import static org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils.wrapAngle;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.*;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 
 import java.lang.Math;
 import java.util.*;
@@ -91,29 +93,17 @@ public class Field {
         finalized = true;
         zones = Zone.getNamedZones();
         subZones = SubZone.getNamedSubZones(isRed);
-        if(isRed) {
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, -2.5, STANDARD_HEADING), P2D(3.5, -2.5, STANDARD_HEADING), 0));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, -1.5, STANDARD_HEADING), P2D(3.5, -1.5, STANDARD_HEADING), 1));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, -.5, STANDARD_HEADING), P2D(3.5, -.5, STANDARD_HEADING), 2));
-            // DIAGONAL ROUTE
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, .5, -56.309932474), P2D(3.5, -.5, -56.309932474), 3));
-            //
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, .5, STANDARD_HEADING), P2D(3.5, .5, STANDARD_HEADING), 4));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, 1.5, STANDARD_HEADING), P2D(3.5, 1.5, STANDARD_HEADING), 5));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, 2.5, STANDARD_HEADING), P2D(3.5, 2.5, STANDARD_HEADING), 6));
-        }
-        else {
+        int allianceMultiplier = isRed? 1 : -1;
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, -2.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, -2.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 0: 6)));
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, -1.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, -1.5  * allianceMultiplier, STANDARD_HEADING), (isRed? 1: 5)));
+            crossingRoutes.add(new CrossingRoute(P2D(1.5,  -.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5,  -.5* allianceMultiplier, STANDARD_HEADING), (isRed? 2: 4)));
+//          DIAGONAL ROUTE
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, .5 * allianceMultiplier, isRed? 153.434948823 : 206.565051177), P2D(3.5, -.5 * allianceMultiplier, isRed? 153.434948823 : 206.565051177), 3));
+//
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, .5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, .5 * allianceMultiplier, STANDARD_HEADING), (isRed? 4: 2)));
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, 1.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, 1.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 5: 1)));
+            crossingRoutes.add(new CrossingRoute(P2D(1.5, 2.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, 2.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 6: 0)));
 
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, 2.5, STANDARD_HEADING), P2D(3.5, 2.5, STANDARD_HEADING), 0));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, 1.5, STANDARD_HEADING), P2D(3.5, 1.5, STANDARD_HEADING), 1));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, .5, STANDARD_HEADING), P2D(3.5, .5, STANDARD_HEADING), 2));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, -.5, STANDARD_HEADING), P2D(3.5, -.5, STANDARD_HEADING), 3));
-//             DIAGONAL ROUTE
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, -.5, 56.309932474), P2D(3.5, .5, 56.309932474), 4));
-            //
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, -1.5, STANDARD_HEADING), P2D(3.5, -1.5, STANDARD_HEADING), 5));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, -2.5, STANDARD_HEADING), P2D(3.5, -2.5, STANDARD_HEADING), 6));
-        }
 
         HANG = isRed? POI.HANG : POI.HANG.flipOnX();
         HANG_PREP = isRed? POI.HANG_PREP : POI.HANG_PREP.flipOnX();
@@ -157,10 +147,36 @@ public class Field {
 
         TrajectoryActionBuilder actionBuilder = robot.driveTrain.actionBuilder(robotPosition);
 
+        boolean needsCrossingRoute = !startZone.equals(endZone);
+
+        //to ensure that splines aren't wonky, draw a line from start to end
+        //and add the midpoint of the line as the end and start of two diff splines
+        Pose2d midpoint = new Pose2d(new Vector2d((poi.getPose().position.x + robotPosition.position.x)/2,(poi.getPose().position.y + robotPosition.position.y)/2), (wrapAngle(poi.getPose().heading.log()) + wrapAngle(robotPosition.heading.log()))/2);
+        if(!needsCrossingRoute) {
+            actionBuilder
+                    .splineTo(midpoint.position, midpoint.heading)
+                    .splineTo(poi.getPose().position, poi.getPose().heading)
+                    .build();
+        }
+        else {
+            //TODO - CHANGED/DRIVEN LATER
+            int crossingRouteIndex = 3;
+            addCrossingRoute(actionBuilder, crossingRouteIndex);
+        }
 
 
         return null;
 
+    }
+
+    public TrajectoryActionBuilder addCrossingRoute(TrajectoryActionBuilder actionBuilder, int index) {
+        for(CrossingRoute route : crossingRoutes)
+            if(route.getIndex() == index) {
+                if(index == 3) {
+//                    actionBuilder.strafeTo()
+                }
+            }
+        return null;
     }
 
     public Pose2d getAprilTagPose(int id) {
@@ -237,6 +253,10 @@ class CrossingRoute {
         double distanceToAudienceSide = Math.hypot(Math.abs(pose.position.x - audienceSide.position.x), Math.abs(pose.position.y - audienceSide.position.x)) / FIELD_INCHES_PER_GRID;
         double distanceToBackstageSide = Math.hypot(Math.abs(pose.position.x - backstageSide.position.x), Math.abs(pose.position.y - backstageSide.position.x)) / FIELD_INCHES_PER_GRID;
         return distanceToBackstageSide > distanceToAudienceSide?  audienceSide : backstageSide;
+    }
+
+    public int getIndex() {
+        return index;
     }
 
     //assumes robot is at the start of a crossing route and adds the whole route path to the actionbuilder

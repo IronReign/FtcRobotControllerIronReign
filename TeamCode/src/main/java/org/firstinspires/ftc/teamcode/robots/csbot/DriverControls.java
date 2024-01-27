@@ -24,8 +24,6 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 
 public class DriverControls {
-    public static double PRECISION_TURN_MULTIPLIER = .8;
-    public static double PRECISION_DRIVE_MULTIPLIER = .8;
     //CONSTANTS
     public static boolean fieldOrientedDrive = true;
     public static double DEADZONE = 0.1;

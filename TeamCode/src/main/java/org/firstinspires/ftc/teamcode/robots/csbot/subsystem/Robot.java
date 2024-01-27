@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.allia
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -54,6 +55,10 @@ public class  Robot implements Subsystem {
     //vision variables
     public boolean visionProviderFinalized = false;
     public static int visionProviderIndex = 2;
+    public double aprilTagRelocalizationX = 0;
+    public double aprilTagRelocalizationY = 0;
+    //REMOVE
+    public Pose2d aprilTagPose = new Pose2d(0, 0,0);
 
     public static final double DISTANCE_FROM_CAMERA_TO_CENTER = 7.5; // In inches
 
@@ -175,15 +180,17 @@ public class  Robot implements Subsystem {
                 if(Math.abs(detection.id-target) < Math.abs(targetTag.id-target))
                     targetTag = detection;
             }
-            double x = field.getAprilTagPose(targetTag.id).position.x-targetTag.pose.y- DISTANCE_FROM_CAMERA_TO_CENTER;
-            double y = field.getAprilTagPose(targetTag.id).position.y-targetTag.pose.x;
-            driveTrain.setPose(new Pose2d(new Vector2d(x, y), driveTrain.pose.heading));
+
+            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER;
+            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37;
+            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, 0);
+            driveTrain.pose = new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading);
         }
     }
 
     public ArrayList<AprilTagDetection> getAprilTagDetections() {
         if (visionOn) {
-            if (!visionProviderFinalized) {
+            if (visionProviderFinalized) {
                 return ((AprilTagProvider)visionProviderBack).getDetections();
             }
         }
@@ -407,6 +414,8 @@ public class  Robot implements Subsystem {
         telemetryMap.put("wingIntakeIndex", ingestStage);
         telemetryMap.put("initPositionIndex", initPositionIndex);
         telemetryMap.put("Vision On/Vision Provider Finalized", visionOn+" "+visionProviderFinalized);
+        telemetryMap.put("april tag relocalization point", "("+aprilTagRelocalizationX+", "+aprilTagRelocalizationY+")");
+        telemetryMap.put("april tag pose", "("+aprilTagPose.position.x+", "+aprilTagPose.position.y+")");
 //        telemetryMap.put("MemoryPose", positionCache.readPose());
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();

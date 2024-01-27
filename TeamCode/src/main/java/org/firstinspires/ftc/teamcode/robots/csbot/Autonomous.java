@@ -227,6 +227,7 @@ public class Autonomous implements TelemetryProvider {
 
     public void saveRandomizer(int visionIndex) {
         targetIndex = visionIndex + 1;
+
     }
 
     public void pickAutonToRun(Constants.Position startingPosition) {
@@ -249,6 +250,8 @@ public class Autonomous implements TelemetryProvider {
 
     public int setPath(Constants.Position startingPosition, int randomizer) { // 1, 2 or 3 for randomized prop
         autonIndex = 0;
+        if(randomizer == 0)
+            randomizer = 2;
         aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
         audienceIntermediate = P2D(1,.5,-10);
         audienceIntermediateForward = P2D(1, .5, STANDARD_HEADING);
@@ -399,8 +402,9 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 8:
                     robot.enableVision();
+                    robot.aprilTagRelocalization(targetAprilTagIndex);
                     if(isPast(futureTimer) && robot.getAprilTagDetections() != null) {
-                        robot.aprilTagRelocalization(targetAprilTagIndex);
+
 //                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
 //                        robot.switchVisionProviders();
 //                        robot.articulate(Robot.Articulation.BACKDROP_PREP);
