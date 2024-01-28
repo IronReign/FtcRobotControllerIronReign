@@ -340,6 +340,7 @@ public class  Robot implements Subsystem {
 
     public void toggleBackdropPrep(){
         if(articulation.equals(Articulation.BACKDROP)){
+
             articulation = Articulation.TRAVEL_FROM_BACKDROP;
         }
         else{

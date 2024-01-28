@@ -70,10 +70,10 @@ public class Intake implements Subsystem {
 
     public enum PixelStack {
         GROUND(0, ANGLE_INGEST_GROUND - ANGLE_INGEST_INCREMENT), //the minus is to force it harder into the tiles
-        TWO(1, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT),
-        THREE(2, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT*2),
-        FOUR(3, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT*3),
-        FIVE(4, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT*4);
+        TWO(1, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT - 15),
+        THREE(2, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT * 2 - 15),
+        FOUR(3, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT * 3 - 15),
+        FIVE(4, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT * 4 - 15);
 
         private final int value;
         private final int angle;

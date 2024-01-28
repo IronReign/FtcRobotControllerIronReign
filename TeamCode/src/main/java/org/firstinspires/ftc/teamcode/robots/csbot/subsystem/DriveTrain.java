@@ -73,7 +73,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         this.robot = robot;
         trajectoryIsActive = false;
         backDistanceSensor = hardwareMap.get(DistanceSensor.class, "backDist");
-
         headingPID = new PIDController(HEADING_PID_PWR);
         headingPID.setInputRange(0, 360);
         headingPID.setOutputRange(-1, 1);

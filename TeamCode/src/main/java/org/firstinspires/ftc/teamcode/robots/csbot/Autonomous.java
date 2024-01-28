@@ -16,6 +16,7 @@ import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
@@ -91,6 +92,7 @@ public class Autonomous implements TelemetryProvider {
     Pose2d audienceIntermediate;
     Pose2d audienceIntermediateForward, audienceIntermediateDeep;
     Pose2d aprilTagAlign, aprilTagAlignClose, aprilTagAlignCrossed;
+    Pose2d pixelStack;
 
 
     //values to actually use
@@ -249,9 +251,9 @@ public class Autonomous implements TelemetryProvider {
         autonIndex = 0;
         if(randomizer == 0)
             randomizer = 2;
-        aprilTagApproachPosition = P2D(1.4,   1.5, STANDARD_HEADING);
+        aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
         audienceIntermediate = P2D(1,.5,-10);
-        audienceIntermediateForward = P2D(1, .5, STANDARD_HEADING);
+        audienceIntermediateForward = P2D(1, .3, STANDARD_HEADING);
         audienceIntermediateDeep = P2D(1.5,.5,-10);
         allianceDirection = startingPosition.getMod()? -1 : 1;
         targetAprilTagIndex = targetIndex + (startingPosition.getMod()? 3 : 0);
@@ -262,6 +264,7 @@ public class Autonomous implements TelemetryProvider {
         aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x - 1,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)),
                 0);
         aprilTagAlignCrossed = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), Math.toRadians(-90));
+        pixelStack = P2D(-2.20 , .5, STANDARD_HEADING);
 
         //assemble the paths
         autonPaths[1][1] = P2D(-2, .5, 90);
@@ -270,7 +273,7 @@ public class Autonomous implements TelemetryProvider {
         autonPaths[1][4] = audienceIntermediate;
         autonPaths[1][5] = aprilTagAlign;
         autonPaths[1][6] = audienceIntermediateForward;
-        autonPaths[1][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[1][7] = pixelStack;
         autonPaths[1][8] = audienceIntermediate;
         autonPaths[1][9] = aprilTagAlign;
 
@@ -280,7 +283,7 @@ public class Autonomous implements TelemetryProvider {
         autonPaths[2][4] = audienceIntermediate;
         autonPaths[2][5] = aprilTagAlign;
         autonPaths[2][6] = audienceIntermediateForward;
-        autonPaths[2][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[2][7] = pixelStack;
         autonPaths[2][8] = audienceIntermediate;
         autonPaths[2][9] = aprilTagAlign;
         System.out.println(switchSides(aprilTagAlign.position).y);
@@ -291,7 +294,7 @@ public class Autonomous implements TelemetryProvider {
         autonPaths[3][4] = audienceIntermediateDeep;
         autonPaths[3][5] = aprilTagAlignCrossed;
         autonPaths[3][6] = audienceIntermediateForward;
-        autonPaths[3][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[3][7] = pixelStack;
         autonPaths[3][8] = audienceIntermediate;
         autonPaths[3][9] = aprilTagAlign;
 
@@ -301,7 +304,7 @@ public class Autonomous implements TelemetryProvider {
         autonPaths[4][4] = aprilTagAlignClose;
         autonPaths[4][5] = aprilTagAlign;
         autonPaths[4][6] = audienceIntermediateForward;
-        autonPaths[4][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[4][7] = pixelStack;
         autonPaths[4][8] = audienceIntermediate;
         autonPaths[4][9] = aprilTagAlign;
 
@@ -311,7 +314,7 @@ public class Autonomous implements TelemetryProvider {
         autonPaths[5][4] = aprilTagAlignClose;
         autonPaths[5][5] = aprilTagAlign;
         autonPaths[5][6] = audienceIntermediateForward;
-        autonPaths[5][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[5][7] = pixelStack;
         autonPaths[5][8] = audienceIntermediate;
         autonPaths[5][9] = aprilTagAlign;
 
@@ -321,7 +324,7 @@ public class Autonomous implements TelemetryProvider {
         autonPaths[6][4] = aprilTagAlignClose;
         autonPaths[6][5] = aprilTagAlign;
         autonPaths[6][6] = audienceIntermediateForward;
-        autonPaths[6][7] = P2D(-2.25, .5, STANDARD_HEADING);
+        autonPaths[6][7] = pixelStack;
         autonPaths[6][8] = audienceIntermediate;
         autonPaths[6][9] = aprilTagAlign;
 
@@ -435,27 +438,31 @@ public class Autonomous implements TelemetryProvider {
                         robot.articulate(Robot.Articulation.TRAVEL);
                         robot.outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
                         driveToPixelStackBuild();
+                        MecanumDrive.PARAMS.maxWheelVel = 25;
                         futureTimer = futureTime(1);
                         autonIndex++;
                     }
                     break;
                 case 13:
                     autonState = AutonState.DRIVE_TO_PIXEL_STACK;
-//                    if(isPast(futureTimer))
-//                    if (!driveToPixelStack.run(packet)) {
+                    if(isPast(futureTimer))
+                    if (!driveToPixelStack.run(packet)) {
+                        MecanumDrive.PARAMS.maxWheelVel = 50;
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.1, 0), 0));
                         autonIndex++;
-//                    }
+                    }
                     break;
                 case 14:
-//                    autonState = AutonState.GET_FROM_PIXEL_STACK;
-//                    robot.intake.setIngestPixelHeight(4);
-//                    robot.intake.articulate(Intake.Articulation.INGEST);
-//                    futureTimer = futureTime(1);
-//                    if(isPast(futureTimer)) {
-//                        robot.intake.setIngestPixelHeight(3);
-//                        futureTimer = futureTime(1);
+                    autonState = AutonState.GET_FROM_PIXEL_STACK;
+                    robot.intake.setIngestPixelHeight(4);
+                    robot.intake.articulate(Intake.Articulation.INGEST);
+                    futureTimer = futureTime(1);
+                    if(isPast(futureTimer)) {
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                        robot.intake.setIngestPixelHeight(3);
+                        futureTimer = futureTime(1);
                         autonIndex++;
-//                    }
+                    }
                     break;
                 case 15:
 //                    if(isPast(futureTimer)) {
