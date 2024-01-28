@@ -1,8 +1,10 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -21,6 +23,8 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.provider.AprilTagProvider;
+import org.openftc.apriltag.AprilTagDetection;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -51,6 +55,12 @@ public class  Robot implements Subsystem {
     //vision variables
     public boolean visionProviderFinalized = false;
     public static int visionProviderIndex = 2;
+    public double aprilTagRelocalizationX = 0;
+    public double aprilTagRelocalizationY = 0;
+    //REMOVE
+    public Pose2d aprilTagPose = new Pose2d(0, 0,0);
+
+    public static double DISTANCE_FROM_CAMERA_TO_CENTER_X = 13;// In inches
 
     private long[] subsystemUpdateTimes;
     private final List<LynxModule> hubs;
@@ -114,6 +124,7 @@ public class  Robot implements Subsystem {
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
         articulation = Robot.Articulation.MANUAL;
+         visionProviderIndex = 2;
 
 //        field = new Field(true);
     }
@@ -149,7 +160,7 @@ public class  Robot implements Subsystem {
     }
     //end update
 
-    public void updateVision() {
+    public void enableVision() {
         if (visionOn) {
             if (!visionProviderFinalized) {
                 createVisionProvider();
@@ -159,6 +170,31 @@ public class  Robot implements Subsystem {
             }
             visionProviderBack.update();
         }
+    }
+
+    public void aprilTagRelocalization(int target) {
+        ArrayList<AprilTagDetection> detections = getAprilTagDetections();
+        if(detections != null && detections.size() > 0) {
+            AprilTagDetection targetTag = detections.get(0);
+            for (AprilTagDetection detection : detections) {
+                if(Math.abs(detection.id-target) < Math.abs(targetTag.id-target))
+                    targetTag = detection;
+            }
+
+            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
+            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37;
+            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, 0);
+            driveTrain.pose = new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading);
+        }
+    }
+
+    public ArrayList<AprilTagDetection> getAprilTagDetections() {
+        if (visionOn) {
+            if (visionProviderFinalized) {
+                return ((AprilTagProvider)visionProviderBack).getDetections();
+            }
+        }
+        return null;
     }
 
     private static void drawRobot(Canvas c, Pose2d t) {
@@ -304,6 +340,7 @@ public class  Robot implements Subsystem {
 
     public void toggleBackdropPrep(){
         if(articulation.equals(Articulation.BACKDROP)){
+
             articulation = Articulation.TRAVEL_FROM_BACKDROP;
         }
         else{
@@ -377,6 +414,9 @@ public class  Robot implements Subsystem {
         telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
         telemetryMap.put("wingIntakeIndex", ingestStage);
         telemetryMap.put("initPositionIndex", initPositionIndex);
+        telemetryMap.put("Vision On/Vision Provider Finalized", visionOn+" "+visionProviderFinalized);
+        telemetryMap.put("april tag relocalization point", "("+aprilTagRelocalizationX+", "+aprilTagRelocalizationY+")");
+        telemetryMap.put("april tag pose", "("+aprilTagPose.position.x+", "+aprilTagPose.position.y+")");
 //        telemetryMap.put("MemoryPose", positionCache.readPose());
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();

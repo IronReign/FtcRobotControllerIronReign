@@ -47,7 +47,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     private double targetHeading, targetVelocity = 0;
     public static PIDController headingPID;
     public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0, .2, 0);
-    public static double HEADING_PID_TOLERANCE = .05; //this is a percentage of the input range .063 of 2PI is 1 degree
+    public static double HEADING_PID_TOLERANCE = .04; //this is a percentage of the input range .063 of 2PI is 1 degree
     private double PIDCorrection, PIDError;
     public static int turnToTest = 0;
     public static double turnToSpeed=.8; //max angular speed for turn
@@ -73,7 +73,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         this.robot = robot;
         trajectoryIsActive = false;
         backDistanceSensor = hardwareMap.get(DistanceSensor.class, "backDist");
-
         headingPID = new PIDController(HEADING_PID_PWR);
         headingPID.setInputRange(0, 360);
         headingPID.setOutputRange(-1, 1);
@@ -94,7 +93,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         backDistanceSensorValue = backDistanceSensor.getDistance(DistanceUnit.INCH);
         updatePoseEstimate();
 
-        //update pose heading from imu regularly
+//        update pose heading from imu regularly
         if((int)(System.nanoTime() / 1e9) % 2 == 0){
             pose = new Pose2d(pose.position, Math.toRadians(imuAngle));
         }
@@ -174,7 +173,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
             return true;
         }else{
             headingPID.enable();
-            //setMotorPowers(-correction,correction);
             setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
             return false;
         }

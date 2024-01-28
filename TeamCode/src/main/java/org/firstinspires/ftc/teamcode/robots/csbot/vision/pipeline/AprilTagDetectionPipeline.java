@@ -24,6 +24,8 @@ package org.firstinspires.ftc.teamcode.robots.csbot.vision.pipeline;
 
 import android.graphics.Bitmap;
 
+import com.acmerobotics.dashboard.config.Config;
+
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Position;
 import org.opencv.android.Utils;
 import org.opencv.calib3d.Calib3d;
@@ -42,6 +44,7 @@ import org.openftc.apriltag.AprilTagPose;
 import org.openftc.easyopencv.OpenCvPipeline;
 
 import java.util.ArrayList;
+@Config(value = "AprilTag Pipeline")
 
 public class AprilTagDetectionPipeline extends OpenCvPipeline
 {
@@ -55,6 +58,8 @@ public class AprilTagDetectionPipeline extends OpenCvPipeline
     private ArrayList<AprilTagDetection> detectionsUpdate = new ArrayList<>();
     private final Object detectionsUpdateSync = new Object();
     private volatile Position lastPosition;
+
+    public static int lastDetectedIndex = 0;
 
     Mat cameraMatrix;
 
@@ -133,26 +138,47 @@ public class AprilTagDetectionPipeline extends OpenCvPipeline
             detectionsUpdate = detections;
         }
 
-        // For fun, use OpenCV to draw 6DOF markers on the image.
-        for(AprilTagDetection detection : detections)
-        {
-            //set the position from the ID
-            //todo - this lets the most recent detection win - should probably check for a number of consistent detections
-            switch (detection.id) {
+        //KEEP HORIZONTAL CENTERMOST ONE FOR CENTERSTAGE GAME
+        double min = Integer.MAX_VALUE;
+        AprilTagDetection centermostDetection = new AprilTagDetection();
+        for(AprilTagDetection detection : detections) {
+            double detectionOffset = Math.abs(detection.center.x - 320);
+            if(detectionOffset < min) {
+                min = detectionOffset;
+                centermostDetection = detection;
+            }
+        }
+
+    //        get the index of the centermost tag
+        switch (centermostDetection.id) {
             case 1:
-                lastPosition= Position.LEFT;
+                lastDetectedIndex = 1;
+                lastPosition = Position.LEFT;
                 break;
             case 2:
+                lastDetectedIndex = 2;
                 lastPosition= Position.MIDDLE;
                 break;
             case 3:
+                lastDetectedIndex = 3;
                 lastPosition= Position.RIGHT;
                 break;
-
+            case 4:
+                lastDetectedIndex = 4;
+                break;
+            case 5:
+                lastDetectedIndex = 5;
+                break;
+            case 6:
+                lastDetectedIndex = 6;
+                break;
             default:
+                lastDetectedIndex = 0;
                 lastPosition= Position.NONE_FOUND;
         }
 
+        for(AprilTagDetection detection : detections)
+        {
             Pose pose = aprilTagPoseToOpenCvPose(detection.pose);
             //Pose pose = poseFromTrapezoid(detection.corners, cameraMatrix, tagsizeX, tagsizeY);
             drawAxisMarker(input, tagsizeY/2.0, 6, pose.rvec, pose.tvec, cameraMatrix);
@@ -164,6 +190,10 @@ public class AprilTagDetectionPipeline extends OpenCvPipeline
             Utils.matToBitmap(dashboardMat, dashboardBitmap);
         }
         return input;
+    }
+
+    public ArrayList<AprilTagDetection> getDetections() {
+        return detections;
     }
 
     public Bitmap getDashboardImage() {
@@ -192,6 +222,10 @@ public class AprilTagDetectionPipeline extends OpenCvPipeline
             detectionsUpdate = null;
             return ret;
         }
+    }
+
+    public int getLastDetectedIndex() {
+        return lastDetectedIndex;
     }
 
     public Position getLastPosition() {

@@ -42,7 +42,7 @@ public class Outtake implements Subsystem {
     public static int slidePositionDocked = 0;
 
 
-    int slideSpeed = 20;
+    int slideSpeed = 15;
     public static int UNTUCK_SLIDE_POSITION = 500;
     public static boolean TEMP_FLIPPER_TUNE = false;
 
@@ -50,13 +50,14 @@ public class Outtake implements Subsystem {
     public static int FLIPPER_HOME_POSITION = 1888;
     public static double FLIPPER_PWM_PER_DEGREE = -7.35;
     //IN DEGREES PER SECOND
-    public static double FLIPPER_START_ANGLE = 45;
+    public static double FLIPPER_START_ANGLE = 51;
 
     public static double FLIPPER_JOINT_SPEED = 75;
 
     public static double FLIPPER_MIN_ANGLE = 0;
+    public static double FLIPPER_SCORE_ANGLE = 145;
     public static double FLIPPER_MAX_ANGLE = 145;
-    public static double FLIPPER_PRE_SCORE_ANGLE = 135;
+    public static double FLIPPER_PRE_SCORE_ANGLE = 145;
     public static double FLIPPER_TRAVEL_ANGLE = 28;
     public static int FLIPPER_ADJUST_ANGLE = 10;
     public static double FLIPPER_DOCK_ANGLE = 0;
@@ -75,9 +76,8 @@ public class Outtake implements Subsystem {
             case MANUAL:
                 break;
             case BACKDROP:
-                flipper.setTargetAngle(145);
+                flipper.setTargetAngle(FLIPPER_SCORE_ANGLE);
                 articulation = Articulation.TRAVEL;
-
                 break;
             case TRAVEL:
                 break;
@@ -225,11 +225,11 @@ public class Outtake implements Subsystem {
     boolean backdropPrep() {
         switch (backdropPrepStage) {
             case 0:
-                slideTargetPosition = slidePositionPreDock;
-                if (withinError(slide.getCurrentPosition(), slidePositionPreDock, 30)) {
-                    backdropPrepTimer = futureTime(2);
+//                slideTargetPosition = slidePositionPreDock;
+//                if (withinError(slide.getCurrentPosition(), slidePositionPreDock, 30)) {
+//                    backdropPrepTimer = futureTime(2);
                     backdropPrepStage++;
-                }
+//                }
                 break;
             case 1:
                 flipper.setTargetAngle(FLIPPER_PRE_SCORE_ANGLE);
@@ -238,10 +238,10 @@ public class Outtake implements Subsystem {
                 }
                 break;
             case 2:
-                slideTargetPosition = slidePositionDocked;
-                if (withinError(slide.getCurrentPosition(), slidePositionDocked, 30)) {
+//                slideTargetPosition = slidePositionDocked;
+//                if (withinError(slide.getCurrentPosition(), slidePositionDocked, 30)) {
                     backdropPrepStage++;
-                }
+//                }
                 break;
             case 3:
                 backdropPrepStage = 0;
@@ -257,6 +257,7 @@ public class Outtake implements Subsystem {
     boolean travelFromBackdrop() {
         switch (travelStageBack) { //robot should have already placed the intake into travel position
             case 0:
+                FLIPPER_PRE_SCORE_ANGLE = flipper.getCurrentAngle();
                 setTargetAngle(FLIPPER_TRAVEL_ANGLE);
                 setSlideTargetPosition(0);
                 travelTimer = futureTime(.5);

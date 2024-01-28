@@ -32,8 +32,8 @@ public class Intake implements Subsystem {
 
     public static int ANGLE_EJECT = ANGLE_GROUND + 100;
     public static int ANGLE_HANG = ANGLE_GROUND + 200; //1515+ INTAKE_OFFSET;
-    public static int ANGLE_SWALLOW = ANGLE_GROUND + 445;//1810 + INTAKE_OFFSET;
-    public static int ANGLE_TRAVEL = ANGLE_GROUND + 385;//1750+ INTAKE_OFFSET; //safe to travel through backstage door
+    public static int ANGLE_SWALLOW = ANGLE_GROUND + 525;//1810 + INTAKE_OFFSET;
+    public static int ANGLE_TRAVEL = ANGLE_GROUND + 335;//1750+ INTAKE_OFFSET; //safe to travel through backstage door
     public static double TIME_SWALLOW = 1;
     public static double TIME_EJECT = 2;
 
@@ -70,10 +70,10 @@ public class Intake implements Subsystem {
 
     public enum PixelStack {
         GROUND(0, ANGLE_INGEST_GROUND - ANGLE_INGEST_INCREMENT), //the minus is to force it harder into the tiles
-        TWO(1, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT),
-        THREE(2, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT*2),
-        FOUR(3, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT*3),
-        FIVE(4, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT*4);
+        TWO(1, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT - 15),
+        THREE(2, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT * 2 - 15),
+        FOUR(3, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT * 3 - 15),
+        FIVE(4, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT * 4 - 15);
 
         private final int value;
         private final int angle;

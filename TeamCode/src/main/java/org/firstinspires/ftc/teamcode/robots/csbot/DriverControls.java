@@ -24,8 +24,6 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 
 public class DriverControls {
-    public static double PRECISION_TURN_MULTIPLIER = .8;
-    public static double PRECISION_DRIVE_MULTIPLIER = .8;
     //CONSTANTS
     public static boolean fieldOrientedDrive = true;
     public static double DEADZONE = 0.1;
@@ -142,7 +140,8 @@ public class DriverControls {
                 robot.articulate(Robot.Articulation.HANG);
             }
             else{
-                if(field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")) {
+
+                if(field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")) {
                     if(robot.intake.getIngestPixelHeight() != 4)
                         robot.intake.setIngestPixelHeight(4);
                     else if(robot.intake.getIngestPixelHeight() == 4)
@@ -154,7 +153,7 @@ public class DriverControls {
             }
         }
 
-        if (stickyGamepad1.x && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")) {
+        if (stickyGamepad1.x && field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")) {
             robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
         }
         else if(stickyGamepad1.x) {

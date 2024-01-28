@@ -325,7 +325,12 @@ public class CoreTele extends OpMode {
         );
 
         handleTelemetry(visionTelemetryMap, robot.visionProviderBack.getTelemetryName(), packet);
+
         packet.put("imu/roadrunner error", robot.driveTrain.imuRoadrunnerError);
+        packet.put("imu angle", robot.driveTrain.imuAngle);
+        packet.put("roadrunner angle", Math.toDegrees(robot.driveTrain.pose.heading.toDouble()));
+        packet.put("imu PID error", robot.driveTrain.PIDError);
+        packet.put("imu PID Correction", robot.driveTrain.PIDCorrection);
 
         dashboard.sendTelemetryPacket(packet);
         telemetry.update();
