@@ -33,8 +33,13 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 /*
  * This OpMode executes a Tank Drive control TeleOp a direct drive robot
@@ -50,7 +55,6 @@ import com.qualcomm.robotcore.util.Range;
  */
 
 @TeleOp(name="Robot: Teleop Tank", group="Robot")
-@Disabled
 public class RobotTeleopTank_Iterative extends OpMode{
 
     /* Declare OpMode members. */
@@ -59,6 +63,7 @@ public class RobotTeleopTank_Iterative extends OpMode{
     public DcMotor  leftArm     = null;
     public Servo    leftClaw    = null;
     public Servo    rightClaw   = null;
+    public DistanceSensor distanceSensor = null;
 
     double clawOffset = 0;
 
@@ -73,9 +78,10 @@ public class RobotTeleopTank_Iterative extends OpMode{
     @Override
     public void init() {
         // Define and Initialize Motors
-        leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
-        rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
-        leftArm    = hardwareMap.get(DcMotor.class, "left_arm");
+        leftDrive  = hardwareMap.get(DcMotor.class, "leftFront");
+        rightDrive = hardwareMap.get(DcMotor.class, "rightFront");
+        distanceSensor = hardwareMap.get(DistanceSensor.class, "backDist");
+        //leftArm    = hardwareMap.get(DcMotor.class, "left_arm");
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left and right sticks forward MUST make robot go forward. So adjust these two lines based on your first test drive.
@@ -88,10 +94,6 @@ public class RobotTeleopTank_Iterative extends OpMode{
         // rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Define and initialize ALL installed servos.
-        leftClaw  = hardwareMap.get(Servo.class, "left_hand");
-        rightClaw = hardwareMap.get(Servo.class, "right_hand");
-        leftClaw.setPosition(MID_SERVO);
-        rightClaw.setPosition(MID_SERVO);
 
         // Send telemetry message to signify robot waiting;
         telemetry.addData(">", "Robot Ready.  Press Play.");    //
@@ -109,11 +111,15 @@ public class RobotTeleopTank_Iterative extends OpMode{
      */
     @Override
     public void start() {
+        runtime.reset();
     }
 
     /*
      * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
      */
+
+    private ElapsedTime runtime = new ElapsedTime();
+    double oldTime;
     @Override
     public void loop() {
         double left;
@@ -126,30 +132,14 @@ public class RobotTeleopTank_Iterative extends OpMode{
         leftDrive.setPower(left);
         rightDrive.setPower(right);
 
-        // Use gamepad left & right Bumpers to open and close the claw
-        if (gamepad1.right_bumper)
-            clawOffset += CLAW_SPEED;
-        else if (gamepad1.left_bumper)
-            clawOffset -= CLAW_SPEED;
-
-        // Move both servos to new position.  Assume servos are mirror image of each other.
-        clawOffset = Range.clip(clawOffset, -0.5, 0.5);
-        leftClaw.setPosition(MID_SERVO + clawOffset);
-        rightClaw.setPosition(MID_SERVO - clawOffset);
-
-        // Use gamepad buttons to move the arm up (Y) and down (A)
-        if (gamepad1.y)
-            leftArm.setPower(ARM_UP_POWER);
-        else if (gamepad1.a)
-            leftArm.setPower(ARM_DOWN_POWER);
-        else
-            leftArm.setPower(0.0);
 
         // Send telemetry message to signify robot running;
-        telemetry.addData("claw",  "Offset = %.2f", clawOffset);
         telemetry.addData("left",  "%.2f", left);
         telemetry.addData("right", "%.2f", right);
-    }
+        telemetry.addData("imu", distanceSensor.getDistance(DistanceUnit.INCH));
+        telemetry.addData("Status", "Loop Time: " + (runtime.time()-oldTime));
+        telemetry.addData("Status", "Loop Rate: " + 1/(runtime.time()-oldTime));
+        oldTime = runtime.time();    }
 
     /*
      * Code to run ONCE after the driver hits STOP

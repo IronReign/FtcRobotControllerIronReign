@@ -341,8 +341,7 @@ public class Autonomous implements TelemetryProvider {
 
     public boolean execute(FtcDashboard dashboard) {
         TelemetryPacket packet = new TelemetryPacket();
-
-            switch (autonIndex) {
+        switch (autonIndex) {
                 case 0:
                     futureTimer = futureTime(.4);
                     driveToPurplePixelBuild();
@@ -442,10 +441,10 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 13:
                     autonState = AutonState.DRIVE_TO_PIXEL_STACK;
-                    if(isPast(futureTimer))
-                    if (!driveToPixelStack.run(packet)) {
+//                    if(isPast(futureTimer))
+//                    if (!driveToPixelStack.run(packet)) {
                         autonIndex++;
-                    }
+//                    }
                     break;
                 case 14:
 //                    autonState = AutonState.GET_FROM_PIXEL_STACK;
