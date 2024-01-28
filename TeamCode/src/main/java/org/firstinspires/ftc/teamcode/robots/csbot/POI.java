@@ -53,6 +53,23 @@ public class POI {
         return Math.hypot(pose.position.x / FIELD_INCHES_PER_GRID - x, pose.position.y / FIELD_INCHES_PER_GRID - y) < POI_ERROR_RADIUS;
     }
 
+    public static POI getAprilTag(int index) {
+        switch(index) {
+            case 1:
+                return APRILTAG1;
+            case 2:
+                return APRILTAG2;
+            case 3:
+                return APRILTAG3;
+            case 4:
+                return APRILTAG4;
+            case 5:
+                return APRILTAG5;
+            case 6:
+                return APRILTAG6;
+        }
+        return null;
+    }
 
     public Field.Zone getZone() {
         return parent;

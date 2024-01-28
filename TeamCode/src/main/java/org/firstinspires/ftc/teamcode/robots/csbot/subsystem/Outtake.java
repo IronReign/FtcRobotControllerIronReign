@@ -42,7 +42,7 @@ public class Outtake implements Subsystem {
     public static int slidePositionDocked = 0;
 
 
-    int slideSpeed = 20;
+    int slideSpeed = 15;
     public static int UNTUCK_SLIDE_POSITION = 500;
     public static boolean TEMP_FLIPPER_TUNE = false;
 
@@ -50,13 +50,13 @@ public class Outtake implements Subsystem {
     public static int FLIPPER_HOME_POSITION = 1888;
     public static double FLIPPER_PWM_PER_DEGREE = -7.35;
     //IN DEGREES PER SECOND
-    public static double FLIPPER_START_ANGLE = 45;
+    public static double FLIPPER_START_ANGLE = 51;
 
     public static double FLIPPER_JOINT_SPEED = 75;
 
     public static double FLIPPER_MIN_ANGLE = 0;
     public static double FLIPPER_MAX_ANGLE = 145;
-    public static double FLIPPER_PRE_SCORE_ANGLE = 135;
+    public static double FLIPPER_PRE_SCORE_ANGLE = 145;
     public static double FLIPPER_TRAVEL_ANGLE = 28;
     public static int FLIPPER_ADJUST_ANGLE = 10;
     public static double FLIPPER_DOCK_ANGLE = 0;

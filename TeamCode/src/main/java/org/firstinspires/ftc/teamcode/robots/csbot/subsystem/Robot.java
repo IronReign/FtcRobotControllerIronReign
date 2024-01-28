@@ -60,7 +60,7 @@ public class  Robot implements Subsystem {
     //REMOVE
     public Pose2d aprilTagPose = new Pose2d(0, 0,0);
 
-    public static final double DISTANCE_FROM_CAMERA_TO_CENTER = 7.5; // In inches
+    public static double DISTANCE_FROM_CAMERA_TO_CENTER_X = 13;// In inches
 
     private long[] subsystemUpdateTimes;
     private final List<LynxModule> hubs;
@@ -181,7 +181,7 @@ public class  Robot implements Subsystem {
                     targetTag = detection;
             }
 
-            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER;
+            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
             aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37;
             aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, 0);
             driveTrain.pose = new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading);

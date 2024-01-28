@@ -281,7 +281,7 @@ public class MeepMeepTesting {
     }
 
     public static int setPath(Position startingPosition, int randomizer) { // 1, 2 or 3 for randomized prop
-        aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
+        aprilTagApproachPosition = P2D(1.4,   1.5, STANDARD_HEADING);
         audienceIntermediate = P2D(1,.5,-10);
         audienceIntermediateForward = P2D(1, .5, STANDARD_HEADING);
         audienceIntermediateDeep = P2D(1.5,.5,-10);
