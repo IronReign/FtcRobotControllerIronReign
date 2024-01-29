@@ -32,7 +32,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
                         -y,
                         -x
                 ),
-                -theta
+                theta
         ));
         updatePoseEstimate();
     }
@@ -84,6 +84,10 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("Speed Mode On? \t", isSlowed());
         telemetryMap.put("Speed \t", robotSpeed);
         telemetryMap.put("Average Motor Position \t", getMotorAvgPosition());
+        telemetryMap.put("Left Front Motor Power", leftFront.getPower());
+        telemetryMap.put("Left Back Motor Power", leftBack.getPower());
+        telemetryMap.put("Right Front Motor Power", rightFront.getPower());
+        telemetryMap.put("Right Back Motor Power", rightBack.getPower());
         return telemetryMap;
     }
 
