@@ -227,7 +227,7 @@ public class Outtake implements Subsystem {
             case 0:
 //                slideTargetPosition = slidePositionPreDock;
 //                if (withinError(slide.getCurrentPosition(), slidePositionPreDock, 30)) {
-//                    backdropPrepTimer = futureTime(2);
+                    backdropPrepTimer = futureTime(1);
                     backdropPrepStage++;
 //                }
                 break;

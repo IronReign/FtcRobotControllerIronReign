@@ -24,7 +24,6 @@ import org.firstinspires.ftc.teamcode.robots.csbot.SubZone;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 //todo this should not reference reign's Constants
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.HashMap;
@@ -40,8 +39,9 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
     public Articulation articulation;
 
-    public DistanceSensor backDistanceSensor;
-    public double backDistanceSensorValue = 0;
+    public DistanceSensor leftDistanceSensor, rightDistanceSensor;
+    public double rightDistanceSensorValue = 0;
+    public double leftDistanceSensorValue = 0;
     public double imuRoadrunnerError;
     public double imuAngle;
     private double targetHeading, targetVelocity = 0;
@@ -72,7 +72,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         super(hardwareMap, new Pose2d(0, 0, 0));
         this.robot = robot;
         trajectoryIsActive = false;
-        backDistanceSensor = hardwareMap.get(DistanceSensor.class, "backDist");
+        rightDistanceSensor = hardwareMap.get(DistanceSensor.class, "backDistRight");
+        leftDistanceSensor = hardwareMap.get(DistanceSensor.class, "backDistLeft");
         headingPID = new PIDController(HEADING_PID_PWR);
         headingPID.setInputRange(0, 360);
         headingPID.setOutputRange(-1, 1);
@@ -90,7 +91,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public void update(Canvas c) {
         imuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.getMod()? -90 : 90);
         imuRoadrunnerError = imuAngle - Math.toDegrees(pose.heading.log());
-        backDistanceSensorValue = backDistanceSensor.getDistance(DistanceUnit.INCH);
+        rightDistanceSensorValue = rightDistanceSensor.getDistance(DistanceUnit.INCH);
+        leftDistanceSensorValue = leftDistanceSensor.getDistance(DistanceUnit.INCH);
         updatePoseEstimate();
 
 //        update pose heading from imu regularly
@@ -199,7 +201,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("y in fieldCoords", pose.position.y / Constants.FIELD_INCHES_PER_GRID);
         telemetryMap.put("x in inches", pose.position.x);
         telemetryMap.put("y in inches", pose.position.y);
-        telemetryMap.put("Back Distance Sensor Value", backDistanceSensorValue);
+        telemetryMap.put("Right Distance Sensor Value", rightDistanceSensorValue);
+        telemetryMap.put("Left Distance Sensor Value", leftDistanceSensorValue);
         telemetryMap.put("heading", Math.toDegrees(pose.heading.log()));
         telemetryMap.put("Left Odometry Pod:\t", leftFront.getCurrentPosition());
         telemetryMap.put("Right Odometry Pod:\t", rightFront.getCurrentPosition());
