@@ -427,13 +427,13 @@ public class Autonomous implements TelemetryProvider {
                     autonState = AutonState.SCORE_DRIVE;
                     if(robot.outtake.articulation.equals(Outtake.Articulation.TRAVEL)) {
                         autonIndex++;
-                        futureTimer = futureTime(.25);
+                        futureTimer = futureTime(2);
                     }
                     break;
                 case 12:
                     autonState = AutonState.SCORE_DRIVE;
                     robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.2, 0), 0));
-                    if(robot.driveTrain.backDistanceSensorValue < 10) {
+                    if(robot.driveTrain.rightDistanceSensorValue < 10 || isPast(futureTimer)) {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                         robot.articulate(Robot.Articulation.TRAVEL);
                         robot.outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
@@ -455,8 +455,8 @@ public class Autonomous implements TelemetryProvider {
                 case 14:
                     autonState = AutonState.GET_FROM_PIXEL_STACK;
                     robot.intake.setIngestPixelHeight(4);
-                    robot.intake.articulate(Intake.Articulation.INGEST);
-                    futureTimer = futureTime(1);
+                    robot.articulate(Robot.Articulation.INGEST);
+                    futureTimer = futureTime(1.5);
                     if(isPast(futureTimer)) {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                         robot.intake.setIngestPixelHeight(3);
