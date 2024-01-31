@@ -366,8 +366,10 @@ public class MeepMeepTesting {
         int rando = randomizer;
         if (allianceDirection==1 && randomizer==1) rando = 3;
         if (allianceDirection==1 && randomizer==3) rando = 1;
-        return (startingPosition.equals(Position.START_RIGHT_RED)||startingPosition.equals(Position.START_LEFT_BLUE))?
+        int ret =  (startingPosition.equals(Position.START_RIGHT_RED)||startingPosition.equals(Position.START_LEFT_BLUE))?
                 3+rando :rando;
+        purplePixelLocations.add(new Vector2d(switchSides(autonPaths[ret][1].position).x + CENTROID_TO_PIXEL_DISTANCE*Math.cos(switchSides(autonPaths[ret][2].heading.log())), switchSides(autonPaths[ret][1].position).y + CENTROID_TO_PIXEL_DISTANCE*Math.sin(switchSides(autonPaths[ret][2].heading.log()))));
+        return ret;
     }
 
 }
