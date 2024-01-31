@@ -19,9 +19,9 @@ import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.Localizer;
 @Config
 public final class ThreeDeadWheelLocalizer implements Localizer {
     public static class Params {
-        public double par0YTicks = -2132.13712113252; // y position of the first parallel encoder (in tick units)
-        public double par1YTicks = 2064.5788504021157; // y position of the second parallel encoder (in tick units)
-        public double perpXTicks = -242.5442577808187; // x position of the perpendicular encoder (in tick units)
+        public double par0YTicks = - -2079.5227968016457; // y position of the first parallel encoder (in tick units)
+        public double par1YTicks = 1840.1383527901266; // y position of the second parallel encoder (in tick units)
+        public double perpXTicks =  -353.62240601696243; // x position of the perpendicular encoder (in tick units)
     }
 
     public static Params PARAMS = new Params();
@@ -40,7 +40,8 @@ public final class ThreeDeadWheelLocalizer implements Localizer {
         par1 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "rightFront")));
         perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "rightBack")));
 
-        par1.setDirection(DcMotorSimple.Direction.REVERSE);
+        par0.setDirection(DcMotorSimple.Direction.REVERSE);
+        perp.setDirection(DcMotorSimple.Direction.REVERSE);
 
         lastPar0Pos = par0.getPositionAndVelocity().position;
         lastPar1Pos = par1.getPositionAndVelocity().position;

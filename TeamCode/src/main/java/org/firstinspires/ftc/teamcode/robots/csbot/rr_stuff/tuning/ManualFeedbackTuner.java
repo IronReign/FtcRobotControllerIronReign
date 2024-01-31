@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.ThreeDeadWhee
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.TwoDeadWheelLocalizer;
 
 public final class ManualFeedbackTuner extends LinearOpMode {
-    public static double DISTANCE = 64;
+    public static double DISTANCE = 48;
 
     @Override
     public void runOpMode() throws InterruptedException {
