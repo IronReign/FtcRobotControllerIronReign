@@ -173,13 +173,15 @@ public class Outtake implements Subsystem {
                 break;
             case 1: //lower the outtake to intake position
                 if (between(slide.getCurrentPosition(), slidePositionPreDock + 10, slidePositionPreDock - 10)) {
-                    setTargetAngle(FLIPPER_DOCK_ANGLE);
-                    ingestPositionTimer = futureTime(.75);
+                    flipper.setSpeed(FLIPPER_JOINT_SPEED);
+                    setTargetAngle(FLIPPER_DOCK_ANGLE*.75);
+                    ingestPositionTimer = futureTime(.85);
                     ingestPositionIndex++;
                 }
                 break;
             case 2: //give enough time to pull down flipper, then slide to intake dock
                 if (isPast(ingestPositionTimer)) {
+                    flipper.setSpeed(FLIPPER_JOINT_SPEED);
                     setSlideTargetPosition(slidePositionDocked);
                     ingestPositionIndex = 0;
                     return true;
