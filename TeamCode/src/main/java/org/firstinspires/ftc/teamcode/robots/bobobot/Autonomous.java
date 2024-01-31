@@ -10,6 +10,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.RunnerBot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
@@ -23,9 +24,8 @@ public class Autonomous extends OpMode {
     FtcDashboard dashboard;
 
     private Action
-    test,
-    frontRed, backRed,
-    frontBlue, backBlue;
+    test, audienceRed, backdropRed,
+    audienceBlue, backdropBlue;
     @Override
     public void init(){
         dashboard = FtcDashboard.getInstance();
@@ -41,7 +41,7 @@ public class Autonomous extends OpMode {
     }
     @Override
     public void loop(){
-        if(!frontRed.run(new TelemetryPacket())) {
+        if(!audienceRed.run(new TelemetryPacket())) {
             //telemetry done
         }
         update();
@@ -49,33 +49,28 @@ public class Autonomous extends OpMode {
     }
 
     public void build(){
-                frontRed = new SequentialAction(
+        //todo on: START_LEFT_RED
+                audienceRed = new SequentialAction(
                         runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
                                 .splineTo(new Vector2d(-25, 60), -180)
                         .build()
         );
-//
-//                frontBlue = new SequentialAction(
-//                        runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
-//                                .turn(Math.toRadians(90))
-//                                .lineToX(64)
-//                                .build()
-//                );
 
-//                test = new SequentialAction(
-//                        runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
-//                                .setTangent(90)
-//                                .splineToConstantHeading(new Vector2d(-48,-48),0)
-//                                .build()
-//                );
         //todo on: START_RIGHT_RED
-                  backRed = new SequentialAction(
-                          runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
-                                  .turn(Math.toRadians(-90))
-                                  .lineToX(-25)
-                                  .build()
+                backdropRed = new SequentialAction(
+                        runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
+                                .turn(Math.toRadians(-90))
+                                .lineToX(-25)
+                                .build()
                   );
+        //todo on: START_LEFT_BLUE
+                audienceBlue = new SequentialAction(
 
+                );
+        //todo on: START_RIGHT_BLUE
+                backdropBlue = new SequentialAction(
+
+                );
     }
     private void update(){
         TelemetryPacket packet = new TelemetryPacket();
