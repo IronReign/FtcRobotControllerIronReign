@@ -199,8 +199,6 @@ public class CenterStage_6832 extends OpMode {
         }
         else {
             robot.driveTrain.setPose(startingPosition);
-            robot.skyhook.skyhookLeft.setPosition(0);
-            robot.skyhook.skyhookRight.setPosition(0);
         }
 
         robot.updatePositionCache = true;

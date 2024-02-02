@@ -84,7 +84,7 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        int randomizer = 1; //1, 2 or 3
+        int randomizer = 2; //1, 2 or 3
         Pose2d p;
 
         startingPosition = Position.START_LEFT_RED;
@@ -288,7 +288,7 @@ public class MeepMeepTesting {
             randomizer = 2;
         aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
         audienceIntermediate = P2D(1,.5,-10);
-        audienceIntermediateForward = P2D(1, .3, STANDARD_HEADING);
+        audienceIntermediateForward = P2D(1.4, .5, STANDARD_HEADING);
         audienceIntermediateDeep = P2D(1.5,.5,-10);
         allianceDirection = startingPosition.getMod()? -1 : 1;
 
@@ -321,7 +321,6 @@ public class MeepMeepTesting {
         autonPaths[2][7] = pixelStack;
         autonPaths[2][8] = audienceIntermediate;
         autonPaths[2][9] = aprilTagAlign;
-        System.out.println(switchSides(aprilTagAlign.position).y);
 
         autonPaths[3][1] = P2D(-1.7, 1, 90);
         autonPaths[3][2] = P2D(0, 0, -30);

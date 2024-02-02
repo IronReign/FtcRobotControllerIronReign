@@ -336,9 +336,10 @@ public class Autonomous implements TelemetryProvider {
     }
 
     public static int autonIndex;
-    public static long futureTimer;
+    public long futureTimer = futureTime(10);
 
     int firstIndex = 0;
+
 
 
 
@@ -346,16 +347,21 @@ public class Autonomous implements TelemetryProvider {
         TelemetryPacket packet = new TelemetryPacket();
         switch (autonIndex) {
                 case 0:
-                    futureTimer = futureTime(.4);
+                    robot.driveTrain.distanceSensorsEnabled = false;
                     driveToPurplePixelBuild();
+                    futureTimer = futureTime(0);
                     autonIndex++;
                     break;
                 case 1:
                     autonState = AutonState.BACK_UP;
-                    if (!driveToPurplePixel.run(packet)) {
-                        robot.intake.articulate(Intake.Articulation.DOWN);
-                        sweepBuild();
-                        autonIndex++;
+                    if(isPast(futureTimer)) {
+                        if (!driveToPurplePixel.run(packet)) {
+                            robot.intake.articulate(Intake.Articulation.DOWN);
+                            robot.skyhook.skyhookLeft.setPosition(0);
+                            robot.skyhook.skyhookRight.setPosition(0);
+                            sweepBuild();
+                            autonIndex++;
+                        }
                     }
                     break;
                 case 2:
@@ -397,7 +403,7 @@ public class Autonomous implements TelemetryProvider {
                 case 7:
                     autonState = AutonState.APRILTAG_RELOCALIZE;
                     robot.enableVision();
-                    futureTimer = futureTime(1);
+                    futureTimer = futureTime(2);
                     autonIndex++;
                     break;
                 case 8:
@@ -426,6 +432,7 @@ public class Autonomous implements TelemetryProvider {
                 case 11:
                     autonState = AutonState.SCORE_DRIVE;
                     if(robot.outtake.articulation.equals(Outtake.Articulation.TRAVEL)) {
+                        robot.driveTrain.distanceSensorsEnabled = true;
                         autonIndex++;
                         futureTimer = futureTime(2);
                     }
@@ -437,6 +444,7 @@ public class Autonomous implements TelemetryProvider {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                         robot.articulate(Robot.Articulation.TRAVEL);
                         robot.outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
+                        robot.driveTrain.distanceSensorsEnabled = false;
                         driveToPixelStackBuild();
                         MecanumDrive.PARAMS.maxWheelVel = 25;
                         futureTimer = futureTime(1);
@@ -445,24 +453,24 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 13:
                     autonState = AutonState.DRIVE_TO_PIXEL_STACK;
-                    if(isPast(futureTimer))
-                    if (!driveToPixelStack.run(packet)) {
-                        MecanumDrive.PARAMS.maxWheelVel = 50;
-                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.1, 0), 0));
+//                    if(isPast(futureTimer))
+//                    if (!driveToPixelStack.run(packet)) {
+//                        MecanumDrive.PARAMS.maxWheelVel = 50;
+//                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.1, 0), 0));
                         autonIndex++;
-                    }
+//                    }
                     break;
                 case 14:
-                    autonState = AutonState.GET_FROM_PIXEL_STACK;
-                    robot.intake.setIngestPixelHeight(4);
-                    robot.articulate(Robot.Articulation.INGEST);
-                    futureTimer = futureTime(1.5);
-                    if(isPast(futureTimer)) {
-                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
-                        robot.intake.setIngestPixelHeight(3);
-                        futureTimer = futureTime(1);
+//                    autonState = AutonState.GET_FROM_PIXEL_STACK;
+//                    robot.intake.setIngestPixelHeight(4);
+//                    robot.articulate(Robot.Articulation.INGEST);
+//                    futureTimer = futureTime(1.5);
+//                    if(isPast(futureTimer)) {
+//                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+//                        robot.intake.setIngestPixelHeight(3);
+//                        futureTimer = futureTime(1);
                         autonIndex++;
-                    }
+//                    }
                     break;
                 case 15:
 //                    if(isPast(futureTimer)) {
@@ -497,9 +505,9 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 19:
                     autonState = AutonState.PARK;
-//                    if(!strafeToPark.run(packet)) {
+                    if(!strafeToPark.run(packet)) {
                         autonIndex++;
-//                    }
+                    }
                     break;
                 case 20:
                     autonState = AutonState.DONE;
