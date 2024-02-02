@@ -21,8 +21,6 @@ public class RunnerBot implements Subsystem{
     public Intake intake;
     public Drone drone;
     public HardwareMap hardwareMap;
-    public BobotPosition currentPosition;
-    public BobotPosition fetchedPosition;
     public boolean fetched;
     public static boolean updatePositionCache = false;
     public PositionCache positionCache;
@@ -52,6 +50,7 @@ public class RunnerBot implements Subsystem{
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
+        telemetryMap.put("RunnerBot Pose \t", driveTrain.pose);
         return telemetryMap;
     }
 
@@ -80,8 +79,4 @@ public class RunnerBot implements Subsystem{
         }
     }
 
-    public void fetchCachedCSPosition() {
-        fetchedPosition = positionCache.readPose();
-        fetched = fetchedPosition != null;
-    }
 }

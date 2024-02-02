@@ -10,9 +10,8 @@ import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.RunnerBot;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
+import org.firstinspires.ftc.teamcode.robots.bobobot.Utilities.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
 
 import java.util.Map;
@@ -23,32 +22,32 @@ public class Autonomous extends OpMode {
     MultipleTelemetry dashTelemetry;
     FtcDashboard dashboard;
     public static int autonIndex;
-
-    public int targetX;
+    public enum AutonState{
+        DRIVE_FROM_START, TURN, DRIVE_THRU, DRIVE_TO_BACKDROP, INIT
+    }
+    public AutonState autonState;
     private Action
-    test, audienceRed, backdropRed,
+    audienceRed, backdropRed,
     audienceBlue, backdropBlue, through;
     @Override
     public void init(){
         dashboard = FtcDashboard.getInstance();
         dashTelemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         runnerBot = new RunnerBot(dashTelemetry,hardwareMap);
-        //runnerBot.driveTrain.setPose(Constants.Position.START_RIGHT_RED);
-        runnerBot.driveTrain.setPose(Constants.Position.START_LEFT_RED);
+        //runnerBot.driveTrain.setPose(Constants.Position.START_LEFT_RED);
+        autonState = AutonState.INIT;
         dashTelemetry.setMsTransmissionInterval(25);
         autonIndex = 0;
 
     }
     @Override
     public void start(){
+        runnerBot.driveTrain.pose = Constants.Position.START_RIGHT_RED.getPose();
     }
     @Override
     public void loop(){
-//        if(!audienceRed.run(new TelemetryPacket())) {
-            //telemetry done
-        //
-        // }
-        run();
+        //runAud();
+        runBack();
         update();
         dashTelemetry.update();
     }
@@ -57,7 +56,7 @@ public class Autonomous extends OpMode {
         //todo on: START_LEFT_RED
         audienceRed = new SequentialAction(
                 runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
-                        .lineToY( 20)
+                        .lineToY( 0)
                         .build()
         );
     }
@@ -65,26 +64,22 @@ public class Autonomous extends OpMode {
     public void buildBackRed() {
         backdropRed = new SequentialAction(
                 runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
-                        .turn(Math.toRadians(-90))
-                        .lineToX(-25 / Constants.FIELD_INCHES_PER_GRID)
+                        .lineToX(42)
                         .build()
         );
     }
     public void getAudBlue() {
         //todo on: START_LEFT_BLUE
         audienceBlue = new SequentialAction(
-
         );
     }
     public void buildBackBlue(){
         //todo on: START_RIGHT_BLUE
-                backdropBlue = new SequentialAction(
-
-                );
+        backdropBlue = new SequentialAction(
+        );
     }
     private void update(){
         TelemetryPacket packet = new TelemetryPacket();
-
         for(TelemetryProvider telemetryProvider: runnerBot.subsystems)
             handleTelemetry(telemetryProvider.getTelemetry(false), telemetryProvider.getTelemetryName(), packet);
         runnerBot.update(packet.fieldOverlay());
@@ -106,40 +101,51 @@ public class Autonomous extends OpMode {
         telemetry.addLine();
         packet.addLine("");
     }
-    public boolean run(){
+    public void runAud(){
         switch (autonIndex){
             case 0:
                 buildAudRed();
+
                 autonIndex++;
                 break;
             case 1:
                 if (!audienceRed.run(new TelemetryPacket()))
+                autonState = AutonState.DRIVE_FROM_START;
                 autonIndex++;
                 break;
             case 2:
-                if(runnerBot.driveTrain.turnUntilDegreesIMU(90, .8)){
+                if(runnerBot.driveTrain.turnUntilDegreesIMU(0, .8)){
                     runnerBot.driveTrain.pose = new Pose2d(new Vector2d(runnerBot.driveTrain.pose.position.x, runnerBot.driveTrain.pose.position.y),Math.toRadians(runnerBot.driveTrain.imuAngle));
+                    autonState = AutonState.TURN;
                     throughBuild();
                     autonIndex++;
                 }
                 break;
             case 3:
                 if(!through.run(new TelemetryPacket()))
-                autonIndex++;
-                return true;
+                    autonState = AutonState.DRIVE_THRU;
+                break;
         }
-        return false;
     }
-
+    public void runBack() {
+        switch(autonIndex) {
+            case 0:
+                if(runnerBot.driveTrain.turnUntilDegreesIMU(0,.8)){
+                runnerBot.driveTrain.pose = new Pose2d(new Vector2d(runnerBot.driveTrain.pose.position.x, runnerBot.driveTrain.pose.position.y),Math.toRadians(runnerBot.driveTrain.imuAngle));
+                autonIndex++;
+                }
+                buildBackRed();
+                break;
+            case 1:
+                if(!backdropRed.run(new TelemetryPacket())) {
+                    break;
+                }
+        }
+    }
     public void throughBuild(){
         through = new SequentialAction((runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
-                .lineToX(-40/ Constants.FIELD_INCHES_PER_GRID)
+                .lineToX(-40)
                 .build()
-
         ));
-    }
-
-    public int getTargetX(){
-        return 0;
     }
 }

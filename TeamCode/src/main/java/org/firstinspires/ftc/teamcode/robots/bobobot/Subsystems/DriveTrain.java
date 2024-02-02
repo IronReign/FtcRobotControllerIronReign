@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems;
 
 
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.wrapAngle;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -13,9 +14,10 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.robots.bobobot.RoadRunning.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Subsystem;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
+import org.firstinspires.ftc.teamcode.robots.bobobot.Utilities.Constants;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.HashMap;
@@ -51,7 +53,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
                         y,
                         x
                 ),
-                theta
+                -theta
         ));
         updatePoseEstimate();
     }
@@ -81,6 +83,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     @Override
     public void update(Canvas fieldOverlay) {
         updatePoseEstimate();
+        imuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.getMod()? -90 : 90);
+        if (turnToTest!=0) turnUntilDegreesIMU(turnToTest,turnToSpeed);
     }
 
     @Override
@@ -92,6 +96,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
 
         Map<String, Object> telemetryMap = new HashMap<>();
+        telemetryMap.put("Imu angle", imuAngle);
         telemetryMap.put("X in Field Coordinates \t", pose.position.x / Constants.FIELD_INCHES_PER_GRID);
         telemetryMap.put("Y in Field Coordinates \t", pose.position.y / Constants.FIELD_INCHES_PER_GRID);
         telemetryMap.put("X in Inches \t", pose.position.x);
