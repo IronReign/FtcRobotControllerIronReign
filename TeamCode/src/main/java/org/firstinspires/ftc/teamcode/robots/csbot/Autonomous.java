@@ -20,6 +20,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Skyhook;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
@@ -356,9 +357,8 @@ public class Autonomous implements TelemetryProvider {
                     autonState = AutonState.BACK_UP;
                     if(isPast(futureTimer)) {
                         if (!driveToPurplePixel.run(packet)) {
+                            robot.skyhook.articulate(Skyhook.Articulation.GAME);
                             robot.intake.articulate(Intake.Articulation.DOWN);
-                            robot.skyhook.skyhookLeft.setPosition(0);
-                            robot.skyhook.skyhookRight.setPosition(0);
                             sweepBuild();
                             autonIndex++;
                         }
