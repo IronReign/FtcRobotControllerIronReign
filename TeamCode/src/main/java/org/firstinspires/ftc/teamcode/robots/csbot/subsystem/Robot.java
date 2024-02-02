@@ -93,9 +93,6 @@ public class  Robot implements Subsystem {
     public void start() {
         skyhook.articulate(Skyhook.Articulation.GAME);
         //TODO - articulate starting position
-        if (gameState.isAutonomous()) {
-            intake.setAngle(1600);
-        }
     }
     //end start
 

@@ -84,7 +84,7 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        int randomizer = 3; //1, 2 or 3
+        int randomizer = 2; //1, 2 or 3
         Pose2d p;
 
         startingPosition = Position.START_LEFT_RED;
@@ -458,7 +458,7 @@ public class MeepMeepTesting {
         audienceIntermediate = P2D(1,.5,-10);
         pixelStackAudienceIntermediate = P2D(driverSide?-1.5:1,driverSide?2.5:.5,-10);
         pixelStackAudienceIntermediateForward = P2D(driverSide?-1.5:1,driverSide?2.5:.3,-10);
-        audienceIntermediateForward = P2D(driverSide?-1.5:1, driverSide?2.5:.3, STANDARD_HEADING);
+        audienceIntermediateForward = P2D(driverSide?-1.5:1.4, driverSide?2.5:.5, STANDARD_HEADING);
         driverSidePrep = P2D(1, 2.5, -10);
         driverSidePrepForward = P2D(1, 2.5, STANDARD_HEADING);
         audienceIntermediateDeep = P2D(1.5,.5,-10);
