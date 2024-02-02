@@ -205,6 +205,8 @@ public class CenterStage_6832 extends OpMode {
 
         if(gameState.equals(GameState.AUTONOMOUS)){
             robot.driveTrain.imu.resetYaw();
+            robot.skyhook.skyhookLeft.setPosition(0);
+            robot.skyhook.skyhookRight.setPosition(0);
             //calc auton based on alliance, starting position and team prop position
             auton.pickAutonToRun(startingPosition);
         }
