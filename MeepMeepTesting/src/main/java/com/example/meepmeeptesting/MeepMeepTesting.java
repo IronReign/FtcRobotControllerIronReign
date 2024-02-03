@@ -239,10 +239,10 @@ public class MeepMeepTesting {
                 .addEntity(myBot2)
                 .addEntity(myBot3)
                 .addEntity(myBot4);
-                for(Vector2d k : purplePixelLocations) {
-                meepMeep.addEntity(new Pixel(meepMeep, k, new Vector2d(0, 0)));
-                }
-                meepMeep.start();
+        for(Vector2d k : purplePixelLocations) {
+            meepMeep.addEntity(new Pixel(meepMeep, k, new Vector2d(0, 0)));
+        }
+        meepMeep.start();
     }
     public static int selectedPath;
     public static int allianceDirection = -1;
