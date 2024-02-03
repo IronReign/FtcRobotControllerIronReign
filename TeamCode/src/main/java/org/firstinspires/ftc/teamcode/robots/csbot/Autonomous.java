@@ -316,19 +316,10 @@ public class Autonomous implements TelemetryProvider {
         autonIndex = 0;
         if(randomizer == 0)
             randomizer = 2;
-<<<<<<< Updated upstream
-        aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
-        audienceIntermediate = P2D(1,.5,-10);
-        audienceIntermediateForward = P2D(1.4, .3, STANDARD_HEADING);
-        audienceIntermediateDeep = P2D(1.5,.5,-10);
-        allianceDirection = startingPosition.getMod()? -1 : 1;
-        targetAprilTagIndex = targetIndex + (startingPosition.getMod()? 3 : 0);
-        //aprilTagAlign = new Pose2d (new Vector2d(switchSides(aprilTagApproachPosition.position).x,switchSides(aprilTagApproachPosition.position).y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
-=======
         if(!driverSide) {
             aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
             audienceIntermediate = P2D(1,.5,-10);
-            audienceIntermediateForward = P2D(1, .3, STANDARD_HEADING);
+            audienceIntermediateForward = P2D(1.4, .3, STANDARD_HEADING);
             audienceIntermediateDeep = P2D(1.5,.5,-10);
             allianceDirection = startingPosition.getMod()? -1 : 1;
             targetAprilTagIndex = targetIndex + (startingPosition.getMod()? 3 : 0);
@@ -415,7 +406,6 @@ public class Autonomous implements TelemetryProvider {
             allianceDirection = startingPosition.getMod()? -1 : 1;
 
             //aprilTagAlign = new Pose2d (new Vector2d(switchSides(aprilTagApproachPosition.position).x,switchSides(aprilTagApproachPosition.position).y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
->>>>>>> Stashed changes
 //        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
 //        aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x-1,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
             aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), 0);
