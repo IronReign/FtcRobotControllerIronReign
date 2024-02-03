@@ -3,9 +3,12 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Rotation2d;
+import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -64,6 +67,24 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     }
 
     private boolean humanIsDriving=false;
+
+    private Action driveToDrone;
+    public void driveToDroneBuild() {
+        driveToDrone = new SequentialAction(
+                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                        .splineTo(new Vector2d(0, CenterStage_6832.startingPosition.getMod()?-33:33), 0)
+                        .build()
+        );
+    }
+    public boolean driveToDrone() {
+        if(driveToDrone == null) {
+            driveToDroneBuild();
+            return false;
+        }
+        if(!driveToDrone.run(new TelemetryPacket()))
+            return false;
+        return true;
+    }
 
     public enum Articulation{
         BACKSTAGE_DRIVE,

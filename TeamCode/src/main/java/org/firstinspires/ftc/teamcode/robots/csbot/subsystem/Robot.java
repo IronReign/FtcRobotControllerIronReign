@@ -310,8 +310,10 @@ public class  Robot implements Subsystem {
                 articulation = Articulation.TRAVEL;
                 break;
             case LAUNCH_DRONE:
-                skyhook.articulate(Skyhook.Articulation.LAUNCH);
-                articulation = Articulation.MANUAL;
+//                if(driveTrain.driveToDrone()) {
+                    skyhook.articulate(Skyhook.Articulation.LAUNCH);
+                    articulation = Articulation.MANUAL;
+//                }
                 break;
             case TRAVEL_FROM_INGEST:
                 intake.articulate(Intake.Articulation.TRAVEL);
