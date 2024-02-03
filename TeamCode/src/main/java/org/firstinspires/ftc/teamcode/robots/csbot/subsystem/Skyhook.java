@@ -2,10 +2,12 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
@@ -33,6 +35,7 @@ public class Skyhook implements Subsystem {
     public static int SKYHOOK_SAFE_TICKS = 900;
     public static int SKYHOOK_UP_TICKS = 0;
     DcMotorEx kareem, jabbar;
+    IMU skyhookIMU = null;
     public DcMotorExResetable skyhookLeft, skyhookRight;
     public Servo droneLauncher;
     public static int SKYHOOK_INIT_TICKS = 500;
@@ -57,6 +60,7 @@ public class Skyhook implements Subsystem {
         initMotors();
         droneLauncher = hardwareMap.get(Servo.class, "droneLauncher");
         droneServoTicks = DRONE_TENSION_TICKS;
+        skyhookIMU = hardwareMap.get(IMU.class, "skyhookIMU");
         //skyhookRightTicks = 0;
         //skyhookLeftTicks = 0;
     }
@@ -185,6 +189,7 @@ public class Skyhook implements Subsystem {
         telemetryMap.put("jabbarActual", jabbar.getCurrentPosition());
         telemetryMap.put("droneTicks", droneServoTicks);
         telemetryMap.put("droneStage", launchIndex);
+        telemetryMap.put("skyhookIMU", skyhookIMU.getRobotYawPitchRollAngles());
         telemetryMap.put("Skyhook Left Memory Position", robot.positionCache.readPose().getSkyhookLeftTicks());
         telemetryMap.put("Skyhook Right Memory Position", robot.positionCache.readPose().getSkyhookRightTicks());
 
