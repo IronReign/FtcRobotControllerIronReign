@@ -376,24 +376,27 @@ public class Autonomous implements TelemetryProvider {
 
             switch (autonIndex) {
                 case 0:
+                    //set up to drive really slowly
+
                     autonIndex++;
                     break;
                 case 1: //drive to purple pixel drop off location
                     autonState = AutonState.BACK_UP;
-                    if (!stageOneToRun.run(packet)) {
-                        autonIndex++;
-                    }
+//                    if (!stageOneToRun.run(packet)) {
+//                        autonIndex++;
+//                    }
                     break;
                 case 2:
                     autonState = AutonState.STRAFE;
                     if (!stageTwoToRun.run(packet)) {
                         //todo something here to drop the purple pixel
+                        robot.arm.GripInnerOnly(); //purple needs to be on the outer/lower position
                         autonIndex++;
                     }
                     break;
                 case 3:
                     autonState = AutonState.SCORE_GROUND;
-                    //todo get ready to travel to backdrop
+                    //back up out of the way
 //                    if(robot.intake.readyForTravel()) {
 //                        autonIndex++;
 //                    }
