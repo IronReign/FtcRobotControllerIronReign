@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.DcMotorExResetable;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
@@ -18,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
 
 @Config(value = "AA_CS_SKYHOOK")
@@ -27,7 +29,7 @@ public class Skyhook implements Subsystem {
     public static int skyhookRightTicks = 0;
     public static int skyhookLeftTicks = 0;
     public static int SKYHOOK_HANG_TICKS = 300;
-    public static int SKYHOOK_LAUNCH_TICKS = 400;
+    public static int SKYHOOK_LAUNCH_TICKS = 420;
     public static int PREP_FOR_HANG_TICKS = 0;
     public int droneServoTicks = 1500;
     public static int DRONE_TENSION_TICKS = 1450;
@@ -131,14 +133,19 @@ public class Skyhook implements Subsystem {
             case 1:
                 skyhookRightTicks = SKYHOOK_LAUNCH_TICKS;
                 skyhookLeftTicks = SKYHOOK_LAUNCH_TICKS;
-                if(isPast(launchTimer)) {
+                if(withinError(skyhookIMU.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES), 132, 1)) {
+                    skyhookLeftTicks = getSkyhookLeftTicksCurrent();
+                    skyhookRightTicks = getSkyhookRightTicksCurrent();
+                    launchTimer = futureTime(.7);
                     launchIndex ++;
                 }
                 break;
             case 2:
-                releaseTheDrone();
-                launchTimer = futureTime(SKYHOOK_LAUNCH_TIMER);
-                launchIndex++;
+                if(isPast(launchTimer)) {
+                    releaseTheDrone();
+                    launchTimer = futureTime(SKYHOOK_LAUNCH_TIMER);
+                    launchIndex++;
+                }
                 break;
             case 3:
                 if(isPast(launchTimer)){
