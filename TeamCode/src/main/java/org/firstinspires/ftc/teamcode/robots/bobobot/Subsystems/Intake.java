@@ -28,18 +28,23 @@ public class Intake implements Subsystem {
     public static double CLOSECLAW = Utils.servoNormalize(1500);
     public static double WRIST_MIN = Utils.servoNormalize(1925);
     public static double WRIST_MAX = Utils.servoNormalize(1370);
-    public static double WRIST_SCORE_1 = Utils.servoNormalize(1812);
+    public static double WRIST_SCORE_1 = Utils.servoNormalize(1880);
     public static double WRIST_PIXEL = WRIST_SCORE_1;
     private boolean initalized;
 
     public enum WristArticulation{
-        WRIST_IN, WRIST_OUT, WRIST_SCORE, PIXEL_GRAB;
+        WRIST_IN, WRIST_OUT, WRIST_SCORE, PIXEL_GRAB, INIT
     }
 
     public enum ArmState{
-        GROUND, BACKDROP, TRUSS, RESET;
+        GROUND, BACKDROP, TRUSS, RESET, INIT, SCORING
+    }
+
+    public enum ClawState{
+        INIT, OPEN, CLOSED
     }
     public ArmState armState;
+    public ClawState clawState;
     public WristArticulation wristArticulation;
     private HardwareMap hardwareMap;
     public RunnerBot runnerBot;
@@ -52,10 +57,9 @@ public class Intake implements Subsystem {
         initalized = false;
         clawArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         clawArm.setPower(-.1);
-//      clawArm.setPower(1);
-//      clawArm.setTargetPosition(40);
-//      clawArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
+        clawState = ClawState.INIT;
+        armState = ArmState.INIT;
+        wristArticulation = WristArticulation.INIT;
     }
     @Override
     public Map<String, Object> getTelemetry(boolean debug){
@@ -68,6 +72,7 @@ public class Intake implements Subsystem {
         telemetryMap.put("Arm Target \t", clawArm.getTargetPosition());
         telemetryMap.put("Wrist Articulation \t", getWristArticulation());
         telemetryMap.put("Arm State \t", getArmState());
+        telemetryMap.put("Claw State \t", getClawState());
         telemetryMap.put("Arm Motor Current \t", clawArm.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("Arm Motor Power \t", clawArm.getPower());
         telemetryMap.put("Arm Motor Mode \t", clawArm.getMode());
@@ -85,11 +90,8 @@ public class Intake implements Subsystem {
     long testTime = 0;
     public void closeClaw () {
         clawSpan.setPosition(CLOSECLAW);
-        testTime = futureTime(2);
-        if(isPast(testTime)){
-            clawWrist.setPosition(WRIST_PIXEL);
             wristArticulation = WristArticulation.PIXEL_GRAB;
-        }
+            clawState = ClawState.CLOSED;
     }
     public void clawArmLift () {
     if (clawArm.getCurrentPosition() < 500) {
@@ -118,7 +120,7 @@ public class Intake implements Subsystem {
             clawWrist.setPosition(WRIST_MIN);
             wristArticulation = WristArticulation.WRIST_OUT;
         }
-        if (clawArm.getCurrentPosition() > 400){
+        if (clawArm.getCurrentPosition() > 350){
             clawWrist.setPosition(WRIST_SCORE_1);
             wristArticulation = WristArticulation.WRIST_SCORE;
         }
@@ -130,8 +132,17 @@ public class Intake implements Subsystem {
     public void update(Canvas fieldOverlay){clawArm.getVelocity();}
 
     public void armScoreLift(){
-        clawArm.setTargetPosition(250);
-        armState = ArmState.TRUSS;
+        if(clawArm.getCurrentPosition() < 400) {
+            clawArm.setTargetPosition(clawArm.getCurrentPosition() + 35);
+            armState = ArmState.SCORING;
+        }
+    }
+
+    public void armScoreLower(){
+        if(clawArm.getCurrentPosition() > 0) {
+            clawArm.setTargetPosition(clawArm.getCurrentPosition() - 45);
+            armState = ArmState.SCORING;
+        }
     }
 
     public void reset(){
@@ -142,6 +153,7 @@ public class Intake implements Subsystem {
     public WristArticulation getWristArticulation() {
         return wristArticulation;
     }
+    public ClawState getClawState(){return clawState; }
     public ArmState getArmState(){ return armState; }
 
     public void init_loop(){
@@ -153,5 +165,7 @@ public class Intake implements Subsystem {
             clawArm.setPower(1);
         }
     }
+    public boolean isPressActive = false;
+
 }
 

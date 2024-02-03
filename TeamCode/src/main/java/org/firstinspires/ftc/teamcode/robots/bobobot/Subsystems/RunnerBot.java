@@ -1,7 +1,8 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
-
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -99,9 +100,9 @@ public class RunnerBot implements Subsystem{
             visionProvider.update();
         }
     }
-
+    public static long futureTimer;
     public void start(){
-        intake.closeClaw();
+        intake.openClaw();
     }
 
 }

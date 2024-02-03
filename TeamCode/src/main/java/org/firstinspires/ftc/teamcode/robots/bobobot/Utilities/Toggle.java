@@ -70,6 +70,11 @@ public class Toggle {
         if (gamepad1.dpad_left){
             runnerBot.intake.armScoreLift();
         }
+
+        if(gamepad1.dpad_right){
+            runnerBot.intake.armScoreLower();
+        }
+
     }
 
     public void drone(){

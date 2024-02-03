@@ -129,12 +129,13 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     private boolean speedModeIsOn = false;
     public void modeToggle(){
         switch(mode){
-            case 0:
-                robotSpeed = 1;
+            case 0: //fast
+                robotSpeed = .8;
                 mode++;
                 speedModeIsOn = true;
+                runnerBot.intake.armWristIn();
                 break;
-            case 1:
+            case 1: //slow
                 robotSpeed = 0.45;
                 mode = 0;
                 speedModeIsOn = false;
