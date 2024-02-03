@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.DriveTrain.turnToSpeed;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.FLIPPER_JOINT_SPEED;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.FLIPPER_TRAVEL_ANGLE;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
@@ -220,7 +221,7 @@ public class Autonomous implements TelemetryProvider {
     public void aprilTagStrafeBuild() {
         aprilTagStrafe = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .strafeTo(new Vector2d(robot.driveTrain.pose.position.x, POI.getAprilTag(targetAprilTagIndex).getPose().position.y))
+                        .strafeTo(new Vector2d(robot.driveTrain.pose.position.x, POI.getAprilTag(targetAprilTagIndex).getPose().position.y - 4))
                         .build()
         );
     }
@@ -254,7 +255,7 @@ public class Autonomous implements TelemetryProvider {
             randomizer = 2;
         aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
         audienceIntermediate = P2D(1,.5,-10);
-        audienceIntermediateForward = P2D(1, .3, STANDARD_HEADING);
+        audienceIntermediateForward = P2D(1.4, .3, STANDARD_HEADING);
         audienceIntermediateDeep = P2D(1.5,.5,-10);
         allianceDirection = startingPosition.getMod()? -1 : 1;
         targetAprilTagIndex = targetIndex + (startingPosition.getMod()? 3 : 0);
@@ -350,23 +351,28 @@ public class Autonomous implements TelemetryProvider {
                 case 0:
                     robot.driveTrain.distanceSensorsEnabled = false;
                     driveToPurplePixelBuild();
+
+                    robot.intake.articulate(Intake.Articulation.INIT);
                     futureTimer = futureTime(0);
                     autonIndex++;
                     break;
                 case 1:
                     autonState = AutonState.BACK_UP;
+                    robot.intake.articulate(Intake.Articulation.INIT);
                     if(isPast(futureTimer)) {
                         if (!driveToPurplePixel.run(packet)) {
                             robot.skyhook.articulate(Skyhook.Articulation.GAME);
                             robot.intake.articulate(Intake.Articulation.DOWN);
                             sweepBuild();
                             autonIndex++;
+                            break;
                         }
                     }
                     break;
                 case 2:
                     autonState = AutonState.SCORE_GROUND;
                     if (!sweep.run(packet)) {
+                        robot.outtake.flipper.setSpeed(Outtake.FLIPPER_JOINT_SPEED * .5);
                         robot.intake.articulate(Intake.Articulation.EJECT);
                         autonIndex++;
                     }
@@ -388,6 +394,7 @@ public class Autonomous implements TelemetryProvider {
                 case 5:
                     autonState = AutonState.TRAVEL_BACKDROP;
                     if (!driveToYellowPixel.run(packet)) {
+                        robot.outtake.flipper.setSpeed(FLIPPER_JOINT_SPEED);
                         autonIndex++;
                     }
                     break;
