@@ -180,15 +180,16 @@ public class DriverControls {
         }
 
         if(stickyGamepad2.y) {
-            robot.articulate(Robot.Articulation.PREP_FOR_HANG);
+            if(robot.skyhook.articulation.equals(Skyhook.Articulation.PREP_FOR_HANG)) {
+                robot.articulate(Robot.Articulation.HANG);
+            }
+            else {
+                robot.articulate(Robot.Articulation.PREP_FOR_HANG);
+            }
         }
 
         if(stickyGamepad2.a) {
             robot.skyhook.articulate(Skyhook.Articulation.INIT);
-        }
-
-        if(stickyGamepad2.dpad_down) {
-            robot.articulate(Robot.Articulation.HANG);
         }
 
         if(stickyGamepad2.x) {
