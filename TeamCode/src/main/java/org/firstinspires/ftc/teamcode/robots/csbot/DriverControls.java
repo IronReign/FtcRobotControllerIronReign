@@ -179,7 +179,7 @@ public class DriverControls {
             fieldOrientedDrive  = !fieldOrientedDrive;
         }
 
-        if(stickyGamepad2.dpad_up) {
+        if(stickyGamepad2.y) {
             robot.articulate(Robot.Articulation.PREP_FOR_HANG);
         }
 
