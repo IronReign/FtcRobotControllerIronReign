@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems;
 
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -7,10 +9,10 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.DriveTrain;
-import org.firstinspires.ftc.teamcode.robots.bobobot.Utilities.BobotPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Subsystem;
-import org.firstinspires.ftc.teamcode.robots.bobobot.Utilities.PositionCache;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -21,19 +23,21 @@ public class RunnerBot implements Subsystem{
     public Intake intake;
     public Drone drone;
     public HardwareMap hardwareMap;
-    public boolean fetched;
-    public static boolean updatePositionCache = false;
-    public PositionCache positionCache;
+    public VisionProvider visionProvider = null;
+    public static boolean visionOn = true;
+    public boolean visionProviderFinalized = false;
+    public static int visionProviderIndex = 2;
 
     Telemetry telemetry;
     public RunnerBot(MultipleTelemetry telemetry, HardwareMap hardwareMap){
         this.telemetry = telemetry;
         this.hardwareMap = hardwareMap;
-        //positionCache = new PositionCache(5);
+        createVisionProvider();
         intake = new Intake(hardwareMap, this);
         driveTrain = new DriveTrain(hardwareMap, this);
         drone = new Drone(hardwareMap, this);
         subsystems = new Subsystem[]{driveTrain, intake, drone};
+        visionProviderIndex = 2;
     }
 
     private static void drawRobot(Canvas c, Pose2d t) {
@@ -50,7 +54,8 @@ public class RunnerBot implements Subsystem{
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
-        telemetryMap.put("RunnerBot Pose \t", driveTrain.pose);
+        telemetryMap.put("Vision On/Vision Provider Finalized", visionOn+" "+visionProviderFinalized);
+        telemetryMap.put("visionProvider name", visionProvider.getTelemetryName());
         return telemetryMap;
     }
 
@@ -59,10 +64,6 @@ public class RunnerBot implements Subsystem{
 
     @Override
     public void update(Canvas fieldOverlay){
-//        if (updatePositionCache){
-//            currentPosition = new BobotPosition(driveTrain.pose);
-//            positionCache.update(currentPosition, false);
-//        }
         driveTrain.updatePoseEstimate();
         drawRobot(fieldOverlay, driveTrain.pose);
 
@@ -77,6 +78,30 @@ public class RunnerBot implements Subsystem{
         for(Subsystem component : subsystems) {
             component.stop();
         }
+    }
+
+    public void createVisionProvider() {
+        try {
+            visionProvider = VisionProviders.VISION_PROVIDERS[visionProviderIndex].newInstance().setRedAlliance(alliance== Constants.Alliance.RED);
+        } catch (IllegalAccessException | InstantiationException e) {
+            throw new RuntimeException("Error while instantiating vision provider");
+        }
+    }
+
+    public void enableVision() {
+        if (visionOn) {
+            if (!visionProviderFinalized) {
+                createVisionProvider();
+                visionProvider.initializeVision(hardwareMap, this);
+                visionProviderFinalized = true;
+
+            }
+            visionProvider.update();
+        }
+    }
+
+    public void start(){
+        intake.closeClaw();
     }
 
 }

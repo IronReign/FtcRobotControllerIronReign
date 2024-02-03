@@ -4,8 +4,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 
 import static org.firstinspires.ftc.teamcode.robots.bobobot.BoboDebugOp.debugbot;
 import static org.firstinspires.ftc.teamcode.robots.bobobot.BoboRunnerOp.runnerBot;
-import static org.firstinspires.ftc.teamcode.robots.bobobot.MotorDebug.motorPower;
-import org.firstinspires.ftc.teamcode.robots.bobobot.BoboRunnerOp;
+
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 
 public class Toggle {
@@ -60,16 +59,16 @@ public class Toggle {
             runnerBot.intake.closeClaw();
         }
 
-        if(gamepad1.dpad_up){
+        if(gamepad1.dpad_down){
             runnerBot.intake.armWristOut();
         }
 
-        if (gamepad1.dpad_down){
+        if (gamepad1.dpad_up){
             runnerBot.intake.armWristIn();
         }
 
         if (gamepad1.dpad_left){
-            runnerBot.intake.armTrussLift();
+            runnerBot.intake.armScoreLift();
         }
     }
 

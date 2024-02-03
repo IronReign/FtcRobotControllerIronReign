@@ -23,7 +23,7 @@ public class Autonomous extends OpMode {
     FtcDashboard dashboard;
     public static int autonIndex;
     public enum AutonState{
-        DRIVE_FROM_START, TURN, DRIVE_THRU, DRIVE_TO_BACKDROP, INIT
+        DRIVE_FROM_START, TURN, DRIVE_THRU, DRIVE_TO_BACKDROP, INIT, PURPLE_
     }
     public AutonState autonState;
     private Action
@@ -41,8 +41,13 @@ public class Autonomous extends OpMode {
 
     }
     @Override
+    public void init_loop(){
+        runnerBot.enableVision();
+    }
+    @Override
     public void start(){
         runnerBot.driveTrain.pose = Constants.Position.START_RIGHT_RED.getPose();
+        runnerBot.start();
     }
     @Override
     public void loop(){
@@ -101,11 +106,10 @@ public class Autonomous extends OpMode {
         telemetry.addLine();
         packet.addLine("");
     }
-    public void runAud(){
+    public void run(){
         switch (autonIndex){
             case 0:
                 buildAudRed();
-
                 autonIndex++;
                 break;
             case 1:
@@ -114,16 +118,12 @@ public class Autonomous extends OpMode {
                 autonIndex++;
                 break;
             case 2:
-                if(runnerBot.driveTrain.turnUntilDegreesIMU(0, .8)){
-                    runnerBot.driveTrain.pose = new Pose2d(new Vector2d(runnerBot.driveTrain.pose.position.x, runnerBot.driveTrain.pose.position.y),Math.toRadians(runnerBot.driveTrain.imuAngle));
-                    autonState = AutonState.TURN;
-                    throughBuild();
-                    autonIndex++;
-                }
+                runnerBot.intake.openClaw();
+
+                autonIndex++;
                 break;
             case 3:
-                if(!through.run(new TelemetryPacket()))
-                    autonState = AutonState.DRIVE_THRU;
+
                 break;
         }
     }

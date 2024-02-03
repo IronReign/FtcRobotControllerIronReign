@@ -5,14 +5,11 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.SequentialAction;
-import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Joint;
@@ -27,11 +24,11 @@ public class Intake implements Subsystem {
     private Servo clawSpan = null;
     private Servo clawWrist = null;
     private Joint wrist = null;
-    public static double OPENCLAW = 0.55;
-    public static double CLOSECLAW = 0.85;
-    public static double WRIST_MIN = Utils.servoNormalize(1415);
-    public static double WRIST_MAX = Utils.servoNormalize(1820);
-    public static double WRIST_SCORE_1 = Utils.servoNormalize(1700);
+    public static double OPENCLAW = Utils.servoNormalize(900);
+    public static double CLOSECLAW = Utils.servoNormalize(1500);
+    public static double WRIST_MIN = Utils.servoNormalize(1925);
+    public static double WRIST_MAX = Utils.servoNormalize(1370);
+    public static double WRIST_SCORE_1 = Utils.servoNormalize(1812);
     public static double WRIST_PIXEL = WRIST_SCORE_1;
     private boolean initalized;
 
@@ -95,23 +92,20 @@ public class Intake implements Subsystem {
         }
     }
     public void clawArmLift () {
-//        if(clawArm.getCurrentPosition() < 750) {
-//            clawArm.setTargetPosition(clawArm.getCurrentPosition() + 75);
-//        }
+    if (clawArm.getCurrentPosition() < 500) {
         clawArm.setPower(1);
         clawArm.setVelocity(350);
         clawArm.setTargetPosition(475);
         armState = ArmState.BACKDROP;
     }
+    }
     public void clawArmLower (){
-//        if( clawArm.getCurrentPosition() > 0) {
-//            clawArm.setTargetPosition(clawArm.getCurrentPosition() - 35);
-//        }
-        //armWristOut();
+    if (clawArm.getCurrentPosition() > 0) {
         clawArm.setVelocity(300);
         clawArm.setTargetPosition(10);
         clawArm.setPower(0);
         armState = ArmState.GROUND;
+    }
     }
     public void armWristIn() {
         if (clawArm.getCurrentPosition() < 750) {
@@ -135,9 +129,8 @@ public class Intake implements Subsystem {
     @Override
     public void update(Canvas fieldOverlay){clawArm.getVelocity();}
 
-    public void armTrussLift(){
-        clawArm.setPower(1);
-        clawArm.setTargetPosition(300);
+    public void armScoreLift(){
+        clawArm.setTargetPosition(250);
         armState = ArmState.TRUSS;
     }
 

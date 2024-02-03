@@ -50,8 +50,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public void drive(double x, double y, double theta) {
         setDrivePowers(new PoseVelocity2d(
                 new Vector2d(
-                        y,
-                        x
+                        -y,
+                        -x
                 ),
                 -theta
         ));
