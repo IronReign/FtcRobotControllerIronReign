@@ -84,7 +84,7 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        int randomizer = 1; //1, 2 or 3
+        int randomizer = 3; //1, 2 or 3
         Pose2d p;
 
         startingPosition = Position.START_LEFT_RED;
@@ -239,10 +239,10 @@ public class MeepMeepTesting {
                 .addEntity(myBot2)
                 .addEntity(myBot3)
                 .addEntity(myBot4);
-                for(Vector2d k : purplePixelLocations) {
-                meepMeep.addEntity(new Pixel(meepMeep, k, new Vector2d(0, 0)));
-                }
-                meepMeep.start();
+        for(Vector2d k : purplePixelLocations) {
+            meepMeep.addEntity(new Pixel(meepMeep, k, new Vector2d(0, 0)));
+        }
+        meepMeep.start();
     }
     public static int selectedPath;
     public static int allianceDirection = -1;
@@ -288,7 +288,7 @@ public class MeepMeepTesting {
             randomizer = 2;
         aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
         audienceIntermediate = P2D(1,.5,-10);
-        audienceIntermediateForward = P2D(1, .3, STANDARD_HEADING);
+        audienceIntermediateForward = P2D(1.4, .5, STANDARD_HEADING);
         audienceIntermediateDeep = P2D(1.5,.5,-10);
         allianceDirection = startingPosition.getMod()? -1 : 1;
 
@@ -321,7 +321,6 @@ public class MeepMeepTesting {
         autonPaths[2][7] = pixelStack;
         autonPaths[2][8] = audienceIntermediate;
         autonPaths[2][9] = aprilTagAlign;
-        System.out.println(switchSides(aprilTagAlign.position).y);
 
         autonPaths[3][1] = P2D(-1.7, 1, 90);
         autonPaths[3][2] = P2D(0, 0, -30);
@@ -366,8 +365,10 @@ public class MeepMeepTesting {
         int rando = randomizer;
         if (allianceDirection==1 && randomizer==1) rando = 3;
         if (allianceDirection==1 && randomizer==3) rando = 1;
-        return (startingPosition.equals(Position.START_RIGHT_RED)||startingPosition.equals(Position.START_LEFT_BLUE))?
+        int ret =  (startingPosition.equals(Position.START_RIGHT_RED)||startingPosition.equals(Position.START_LEFT_BLUE))?
                 3+rando :rando;
+        purplePixelLocations.add(new Vector2d(switchSides(autonPaths[ret][1].position).x + CENTROID_TO_PIXEL_DISTANCE*Math.cos(switchSides(autonPaths[ret][2].heading.log())), switchSides(autonPaths[ret][1].position).y + CENTROID_TO_PIXEL_DISTANCE*Math.sin(switchSides(autonPaths[ret][2].heading.log()))));
+        return ret;
     }
 
 }

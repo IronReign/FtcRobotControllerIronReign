@@ -74,13 +74,10 @@ public class  Robot implements Subsystem {
     public enum Articulation {
         //beater bar, drivetrain, drone launcher, outtake
         MANUAL,
-        AUTON,
         CALIBRATE,
         BACKDROP_PREP,
         BACKDROP,
-        FOLD,
         INGEST,
-        UNFOLD,
         HANG,
         PREP_FOR_HANG,
         LAUNCH_DRONE,
@@ -91,11 +88,9 @@ public class  Robot implements Subsystem {
     }
 
     public void start() {
-        skyhook.articulate(Skyhook.Articulation.GAME);
+        if(!gameState.isAutonomous())
+            skyhook.articulate(Skyhook.Articulation.GAME);
         //TODO - articulate starting position
-        if (gameState.isAutonomous()) {
-            intake.setAngle(1600);
-        }
     }
     //end start
 
@@ -315,8 +310,10 @@ public class  Robot implements Subsystem {
                 articulation = Articulation.TRAVEL;
                 break;
             case LAUNCH_DRONE:
-                skyhook.articulate(Skyhook.Articulation.LAUNCH);
-                articulation = Articulation.MANUAL;
+//                if(driveTrain.driveToDrone()) {
+                    skyhook.articulate(Skyhook.Articulation.LAUNCH);
+                    articulation = Articulation.MANUAL;
+//                }
                 break;
             case TRAVEL_FROM_INGEST:
                 intake.articulate(Intake.Articulation.TRAVEL);

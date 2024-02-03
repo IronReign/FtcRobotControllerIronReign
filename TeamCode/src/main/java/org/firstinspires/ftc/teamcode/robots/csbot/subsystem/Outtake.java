@@ -59,7 +59,7 @@ public class Outtake implements Subsystem {
     public static double FLIPPER_MAX_ANGLE = 145;
     public static double FLIPPER_PRE_SCORE_ANGLE = 145;
     public static double FLIPPER_TRAVEL_ANGLE = 28;
-    public static int FLIPPER_ADJUST_ANGLE = 10;
+    public static int FLIPPER_ADJUST_ANGLE = 5;
     public static double FLIPPER_DOCK_ANGLE = 0;
 
     private boolean flipped = false;
@@ -173,13 +173,15 @@ public class Outtake implements Subsystem {
                 break;
             case 1: //lower the outtake to intake position
                 if (between(slide.getCurrentPosition(), slidePositionPreDock + 10, slidePositionPreDock - 10)) {
-                    setTargetAngle(FLIPPER_DOCK_ANGLE);
-                    ingestPositionTimer = futureTime(.75);
+                    flipper.setSpeed(FLIPPER_JOINT_SPEED);
+                    setTargetAngle(FLIPPER_DOCK_ANGLE*.75);
+                    ingestPositionTimer = futureTime(.85);
                     ingestPositionIndex++;
                 }
                 break;
             case 2: //give enough time to pull down flipper, then slide to intake dock
                 if (isPast(ingestPositionTimer)) {
+                    flipper.setSpeed(FLIPPER_JOINT_SPEED);
                     setSlideTargetPosition(slidePositionDocked);
                     ingestPositionIndex = 0;
                     return true;

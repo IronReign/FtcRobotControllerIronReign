@@ -23,7 +23,7 @@ public class Intake implements Subsystem {
     public static int LEFT_DIVERTER_OPEN = 1850;
     public static int LEFT_DIVERTER_CLOSED = 1340;
     public static int RIGHT_DIVERTER_CLOSED = 1500;
-    public static int ANGLE_GROUND = 1315; //where the intake hits the ground
+    public static int ANGLE_GROUND = 1325; //where the intake hits the ground
     public static int ANGLE_INGEST_INCREMENT = 20;
     public static int ANGLE_MIN = ANGLE_GROUND - ANGLE_INGEST_INCREMENT;
     public static int ANGLE_MAX = ANGLE_GROUND + 835;
