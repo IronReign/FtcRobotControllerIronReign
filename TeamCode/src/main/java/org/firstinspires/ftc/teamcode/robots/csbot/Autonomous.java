@@ -518,7 +518,7 @@ public class Autonomous implements TelemetryProvider {
                     driveToPurplePixelBuild();
 
                     robot.intake.articulate(Intake.Articulation.INIT);
-                    futureTimer = futureTime(0);
+                    futureTimer = futureTime(5);
                     autonIndex++;
                     break;
                 case 1:
