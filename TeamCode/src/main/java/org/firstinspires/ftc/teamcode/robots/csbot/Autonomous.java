@@ -527,7 +527,7 @@ public class Autonomous implements TelemetryProvider {
                     if(isPast(futureTimer)) {
                         if (!driveToPurplePixel.run(packet)) {
                             robot.skyhook.articulate(Skyhook.Articulation.GAME);
-                            robot.intake.articulate(Intake.Articulation.DOWN);
+                        robot.intake.articulate(Intake.Articulation.DOWN);
                             sweepBuild();
                             autonIndex++;
                             break;

@@ -63,9 +63,9 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
 //    public static double BLUE_ALLIANCE_HUE_MIN = 0, BLUE_ALLIANCE_HUE_MAX = 50;
 //    public static double BLUE_ALLIANCE_SATURATION_MIN = 100, BLUE_ALLIANCE_SATURATION_MAX = 190;
 //    public static double BLUE_ALLIANCE_VALUE_MIN = 80, BLUE_ALLIANCE_VALUE_MAX = 180;
-    public static double BLUE_ALLIANCE_HUE_MIN = 0, BLUE_ALLIANCE_HUE_MAX = 50;
-    public static double BLUE_ALLIANCE_SATURATION_MIN = 150, BLUE_ALLIANCE_SATURATION_MAX = 190;
-    public static double BLUE_ALLIANCE_VALUE_MIN = 130, BLUE_ALLIANCE_VALUE_MAX = 200;
+    public static double BLUE_ALLIANCE_HUE_MIN = 0, BLUE_ALLIANCE_HUE_MAX = 30;
+    public static double BLUE_ALLIANCE_SATURATION_MIN = 90, BLUE_ALLIANCE_SATURATION_MAX = 190;
+    public static double BLUE_ALLIANCE_VALUE_MIN = 100, BLUE_ALLIANCE_VALUE_MAX = 190;
     public static double MIN_CONTOUR_AREA = 50;
     public static String BLUR = "Box Blur";
 
