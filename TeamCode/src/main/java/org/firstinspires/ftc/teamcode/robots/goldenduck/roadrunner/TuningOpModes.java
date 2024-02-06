@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.tuning;
+package org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.reflection.ReflectionConfig;
@@ -22,13 +22,11 @@ import com.qualcomm.robotcore.eventloop.opmode.OpModeManager;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeRegistrar;
 
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeMeta;
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
-//import org.firstinspires.ftc.teamcode.robots.bobobot.RoadRunning.MecanumDrive;
-//import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.MecanumDrive;
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.TankDrive;
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.ThreeDeadWheelLocalizer;
-//import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.ThreeDeadWheelLocalizer;
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.TwoDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.TankDrive;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.TwoDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.LocalizationTest;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.ManualFeedbackTuner;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.SplineTest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,7 +43,7 @@ public final class TuningOpModes {
 
     private static OpModeMeta metaForClass(Class<? extends OpMode> cls) {
         return new OpModeMeta.Builder()
-                .setName(cls.getSimpleName())
+                .setName(cls.getSimpleName()+"GD")
                 .setGroup(GROUP)
                 .setFlavor(OpModeMeta.Flavor.TELEOP)
                 .build();
@@ -163,7 +161,7 @@ public final class TuningOpModes {
         manager.register(metaForClass(MecanumMotorDirectionDebugger.class), new MecanumMotorDirectionDebugger(dvf));
         manager.register(metaForClass(DeadWheelDirectionDebugger.class), new DeadWheelDirectionDebugger(dvf));
 
-        manager.register(metaForClass(ManualFeedbackTuner.class), ManualFeedbackTuner.class);
+        manager.register(metaForClass(org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.tuning.ManualFeedbackTuner.class), org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.tuning.ManualFeedbackTuner.class);
         manager.register(metaForClass(SplineTest.class), SplineTest.class);
         manager.register(metaForClass(LocalizationTest.class), LocalizationTest.class);
 

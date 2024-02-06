@@ -52,7 +52,7 @@ public class Skyhook implements Subsystem {
 
         skyHookLeft = this.hardwareMap.get(DcMotorEx.class, "motorSkyHookLeft");
         skyHookLeft.setMotorEnable();
-        //skyHookLeft.setDirection(DcMotor.Direction.REVERSE); //todo is this the correct motor to reverse?
+        skyHookLeft.setDirection(DcMotor.Direction.REVERSE); //todo is this the correct motor to reverse?
         skyHookLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         skyHookLeft.setTargetPosition(0);
         skyHookLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
