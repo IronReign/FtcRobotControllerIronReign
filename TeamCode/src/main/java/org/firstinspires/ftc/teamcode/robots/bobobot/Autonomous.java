@@ -29,16 +29,25 @@ public class Autonomous extends OpMode {
     public enum AutonState{
         DRIVE_FROM_START, TURN, DRIVE_THRU, DRIVE_TO_BACKDROP, INIT, PURPLE_PIXEL_DROP
     }
+
+    public static double GO_TO_X_AUD;
+    public static double GO_TO_Y_AUD = -36;
+    public static double GO_TO_X_BACK;
+    public static double GO_TO_Y_BACK = GO_TO_Y_AUD;
     public AutonState autonState;
     private Action
     audienceRed, backdropRed,
     audienceBlue, backdropBlue, through;
+
+    public static Constants.Alliance alliance = Constants.Alliance.RED;
+    public static boolean backdrop = false;
     @Override
     public void init(){
         dashboard = FtcDashboard.getInstance();
         dashTelemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         runnerBot = new RunnerBot(dashTelemetry,hardwareMap);
         runnerBot.driveTrain.setPose(Constants.Position.START_LEFT_RED);
+        //alliance = Constants.Alliance.BLUE;
         autonState = AutonState.INIT;
         dashTelemetry.setMsTransmissionInterval(25);
         autonIndex = 0;
@@ -50,7 +59,23 @@ public class Autonomous extends OpMode {
     }
     @Override
     public void start(){
-        //runnerBot.driveTrain.pose = Constants.Position.START_RIGHT_RED.getPose();
+//        runnerBot.driveTrain.pose = Constants.Position.START_RIGHT_RED.getPose();
+//        if(!alliance.getMod()){
+//            if(!backdrop){
+//                runnerBot.driveTrain.setPose(Constants.Position.START_LEFT_BLUE);
+//            }
+//            else if (backdrop){
+//                runnerBot.driveTrain.setPose(Constants.Position.START_RIGHT_BLUE);
+//            }
+//        }
+//        else if (alliance.getMod()){
+//            if(!backdrop){
+//                runnerBot.driveTrain.setPose(Constants.Position.START_LEFT_RED);
+//            }
+//            else if (backdrop){
+//                runnerBot.driveTrain.setPose(Constants.Position.START_RIGHT_RED);
+//            }
+//        }
 
     }
     @Override
@@ -64,7 +89,7 @@ public class Autonomous extends OpMode {
         //todo on: START_LEFT_RED
         audienceRed = new SequentialAction(
                 runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
-                        .lineToY( 0)
+                        .lineToY( -36)
                         .build()
         );
     }
@@ -76,6 +101,7 @@ public class Autonomous extends OpMode {
                         .build()
         );
     }
+
     public void getAudBlue() {
         //todo on: START_LEFT_BLUE
         audienceBlue = new SequentialAction(
@@ -151,10 +177,13 @@ public class Autonomous extends OpMode {
                 }
         }
     }
-    public void throughBuild(){
-        through = new SequentialAction((runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
-                .lineToX(-40)
-                .build()
-        ));
-    }
+
+public void throughBuild(){
+ through = new SequentialAction(
+         runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
+                 .splineTo(new Vector2d(0,24),0)
+                 .build()
+ );
+}
+
 }
