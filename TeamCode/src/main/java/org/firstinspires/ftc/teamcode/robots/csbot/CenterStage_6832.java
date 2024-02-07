@@ -24,7 +24,7 @@ public class CenterStage_6832 extends OpMode {
 
     private static final double LOW_BATTERY_VOLTAGE = 12;
     private ElapsedTime runtime = new ElapsedTime();
-
+    static long totalRunTime;
     //COMPONENTS
     public static Robot robot;
     static Autonomous auton;
@@ -183,7 +183,7 @@ public class CenterStage_6832 extends OpMode {
     public void start() {
         startTime = System.currentTimeMillis();
         lastLoopClockTime = System.nanoTime();
-
+        totalRunTime = 0;
         //FETCH CACHE
         robot.fetchCachedCSPosition();
 
@@ -231,6 +231,7 @@ public class CenterStage_6832 extends OpMode {
 
     @Override
     public void loop() {
+        totalRunTime = (System.currentTimeMillis()-startTime)/1000;
         dc.updateStickyGamepads();
         dc.handleStateSwitch();
 

@@ -141,7 +141,7 @@ public class DriverControls {
             }
             else{
 
-                if(field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")) {
+                if(CenterStage_6832.totalRunTime > 110/*field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")*/) {
                     if(robot.intake.getIngestPixelHeight() != 4)
                         robot.intake.setIngestPixelHeight(4);
                     else if(robot.intake.getIngestPixelHeight() == 4)
@@ -153,7 +153,7 @@ public class DriverControls {
             }
         }
 
-        if (stickyGamepad1.x && field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")) {
+        if (stickyGamepad1.x && CenterStage_6832.totalRunTime > 110/*field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")*/) {
             robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
         }
         else if(stickyGamepad1.x) {
@@ -179,16 +179,17 @@ public class DriverControls {
             fieldOrientedDrive  = !fieldOrientedDrive;
         }
 
-        if(stickyGamepad2.dpad_up) {
-            robot.articulate(Robot.Articulation.PREP_FOR_HANG);
+        if(stickyGamepad2.y) {
+            if(robot.skyhook.articulation.equals(Skyhook.Articulation.PREP_FOR_HANG)) {
+                robot.articulate(Robot.Articulation.HANG);
+            }
+            else {
+                robot.articulate(Robot.Articulation.PREP_FOR_HANG);
+            }
         }
 
         if(stickyGamepad2.a) {
             robot.skyhook.articulate(Skyhook.Articulation.INIT);
-        }
-
-        if(stickyGamepad2.dpad_down) {
-            robot.articulate(Robot.Articulation.HANG);
         }
 
         if(stickyGamepad2.x) {

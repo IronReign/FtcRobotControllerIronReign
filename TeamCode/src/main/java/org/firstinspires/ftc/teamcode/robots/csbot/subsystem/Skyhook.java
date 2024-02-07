@@ -29,7 +29,7 @@ public class Skyhook implements Subsystem {
     public static int skyhookRightTicks = 0;
     public static int skyhookLeftTicks = 0;
     public static int SKYHOOK_HANG_TICKS = 300;
-    public static int SKYHOOK_LAUNCH_TICKS = 420;
+    public static int SKYHOOK_LAUNCH_TICKS = 340;
     public static int PREP_FOR_HANG_TICKS = 0;
     public int droneServoTicks = 1500;
     public static int DRONE_TENSION_TICKS = 1450;
@@ -133,7 +133,7 @@ public class Skyhook implements Subsystem {
             case 1:
                 skyhookRightTicks = SKYHOOK_LAUNCH_TICKS;
                 skyhookLeftTicks = SKYHOOK_LAUNCH_TICKS;
-                if(withinError(skyhookIMU.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES), 132, 1)) {
+                if(withinError(skyhookIMU.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES), 132, 3)) {
                     skyhookLeftTicks = getSkyhookLeftTicksCurrent();
                     skyhookRightTicks = getSkyhookRightTicksCurrent();
                     launchTimer = futureTime(.7);
@@ -196,7 +196,7 @@ public class Skyhook implements Subsystem {
         telemetryMap.put("jabbarActual", jabbar.getCurrentPosition());
         telemetryMap.put("droneTicks", droneServoTicks);
         telemetryMap.put("droneStage", launchIndex);
-        telemetryMap.put("skyhookIMU", skyhookIMU.getRobotYawPitchRollAngles());
+//        telemetryMap.put("skyhookIMU", skyhookIMU.getRobotYawPitchRollAngles());
         telemetryMap.put("Skyhook Left Memory Position", robot.positionCache.readPose().getSkyhookLeftTicks());
         telemetryMap.put("Skyhook Right Memory Position", robot.positionCache.readPose().getSkyhookRightTicks());
 

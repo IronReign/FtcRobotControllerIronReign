@@ -37,7 +37,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
     public boolean trajectoryIsActive;
     public static double GLOBAL_HEADING_DAMPENING = .7;
-    public static double HEADING_DAMPENING = 0.3;
+    public static double HEADING_DAMPENING = 0.5;
     public static double DRIVE_DAMPENING = 0.6;
 
     public Articulation articulation;

@@ -518,7 +518,7 @@ public class Autonomous implements TelemetryProvider {
                     driveToPurplePixelBuild();
 
                     robot.intake.articulate(Intake.Articulation.INIT);
-                    futureTimer = futureTime(0);
+                    futureTimer = futureTime(5);
                     autonIndex++;
                     break;
                 case 1:
@@ -527,7 +527,7 @@ public class Autonomous implements TelemetryProvider {
                     if(isPast(futureTimer)) {
                         if (!driveToPurplePixel.run(packet)) {
                             robot.skyhook.articulate(Skyhook.Articulation.GAME);
-                            robot.intake.articulate(Intake.Articulation.DOWN);
+                        robot.intake.articulate(Intake.Articulation.DOWN);
                             sweepBuild();
                             autonIndex++;
                             break;
