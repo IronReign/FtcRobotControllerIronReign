@@ -323,13 +323,13 @@ public class Outtake implements Subsystem {
         flipper.update();
         slide.setTargetPosition(slideTargetPosition);
         //compute values for kinematics
-        double tempTheta = Utils.degreeToRad(-armTheta-180);
-        double rotX = armLength*Math.cos(tempTheta) + (slide.getCurrentPosition()/ticksPerInch)*Math.cos(tempTheta);
-        double rotY = armLength*Math.sin(tempTheta) + (slide.getCurrentPosition()/ticksPerInch)*Math.sin(tempTheta);
+        double rotTheta = -flipper.getTargetAngle() -180;
+        double rotX = armLength*Math.cos(Utils.degreeToRad(armTheta)) + (slide.getCurrentPosition()/ticksPerInch)*Math.cos(Utils.degreeToRad(armTheta));
+        double rotY = armLength*Math.sin(Utils.degreeToRad(armTheta)) + (slide.getCurrentPosition()/ticksPerInch)*Math.sin(Utils.degreeToRad(armTheta));
         double x = (slide.getCurrentPosition()/ticksPerInch)*Math.cos(Utils.degreeToRad(armTheta));
         double y = (slide.getCurrentPosition()/ticksPerInch)*Math.sin(Utils.degreeToRad(armTheta));
-        armX = (rotX-(y-rotY)*Math.sin(Utils.degreeToRad(flipper.getTargetAngle()))+(x-rotX)*Math.cos(Utils.degreeToRad(flipper.getTargetAngle())));
-        armY = (rotY+(y-rotY)*Math.cos(Utils.degreeToRad(flipper.getTargetAngle()))+(x-rotX)*Math.sin(Utils.degreeToRad(flipper.getTargetAngle())));
+        armX = (rotX-(y-rotY)*Math.sin(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.cos(Utils.degreeToRad(rotTheta)));
+        armY = (rotY+(y-rotY)*Math.cos(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.sin(Utils.degreeToRad(rotTheta)));
     }
 
     @Override
@@ -344,6 +344,7 @@ public class Outtake implements Subsystem {
         telemetryMap.put("ingest stage", ingestPositionIndex);
         telemetryMap.put("slide target position", slideTargetPosition);
         telemetryMap.put("slide actual position", slide.getCurrentPosition());
+        telemetryMap.put("slide actual position (inches)", slide.getCurrentPosition()/ticksPerInch);
 //        telemetryMap.put("flipper location", Utils.servoDenormalize(pixelFlipper.getPosition()));
         telemetryMap.put("flipper ticks", flipperPosition);
         telemetryMap.put("flipper angle", flipper.getCurrentAngle());
