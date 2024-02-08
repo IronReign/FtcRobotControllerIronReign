@@ -84,6 +84,14 @@ public class Utils {
         return ((angle % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI);
     }
 
+    public static double radToDegree(double angle) {
+        return (angle*180)/Math.PI;
+    }
+
+    public static double degreeToRad(double angle) {
+        return (angle/180)*Math.PI;
+    }
+
     public static double wrapAngleMinusRad(double angle){
         return 2*Math.PI - wrapAngleRad(angle);
     }

@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Joint;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,6 +28,16 @@ public class Outtake implements Subsystem {
     private DcMotorEx slide = null;
     private Servo pixelFlipper = null;
     public Joint flipper;
+
+    public static double ticksPerInch = 130.593132; // determined experimentally using a average distance and ticks
+
+    //Kinematics values in inches
+    public static double armLength = 17.5;
+    public static double armBase = 16.5;
+    public static double armHeight = 9;
+    public static double armTheta = Math.atan2(9, 16.5);
+
+    public static double armX, armY;
 
     public static int flipperPosition = 1888;
 
@@ -311,6 +322,14 @@ public class Outtake implements Subsystem {
         //actually instruct actuators to go to desired targets
         flipper.update();
         slide.setTargetPosition(slideTargetPosition);
+        //compute values for kinematics
+        double tempTheta = Utils.degreeToRad(-armTheta-180);
+        double rotX = armLength*Math.cos(tempTheta) + (slide.getCurrentPosition()/ticksPerInch)*Math.cos(tempTheta);
+        double rotY = armLength*Math.sin(tempTheta) + (slide.getCurrentPosition()/ticksPerInch)*Math.sin(tempTheta);
+        double x = (slide.getCurrentPosition()/ticksPerInch)*Math.cos(Utils.degreeToRad(armTheta));
+        double y = (slide.getCurrentPosition()/ticksPerInch)*Math.sin(Utils.degreeToRad(armTheta));
+        armX = (rotX-(y-rotY)*Math.sin(Utils.degreeToRad(flipper.getTargetAngle()))+(x-rotX)*Math.cos(Utils.degreeToRad(flipper.getTargetAngle())));
+        armY = (rotY+(y-rotY)*Math.cos(Utils.degreeToRad(flipper.getTargetAngle()))+(x-rotX)*Math.sin(Utils.degreeToRad(flipper.getTargetAngle())));
     }
 
     @Override
@@ -329,6 +348,7 @@ public class Outtake implements Subsystem {
         telemetryMap.put("flipper ticks", flipperPosition);
         telemetryMap.put("flipper angle", flipper.getCurrentAngle());
         telemetryMap.put("flipper target angle", flipper.getTargetAngle());
+        telemetryMap.put("arm location", "("+armX+", "+armY+")");
         return telemetryMap;
     }
 
