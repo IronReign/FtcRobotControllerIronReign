@@ -368,7 +368,8 @@ public class Autonomous implements TelemetryProvider {
 
     public static int autonIndex;
     public static long futureTimer;
-
+    public static long targetTicsLeftOdo; //for simple distance calcs between moves
+    public double targetAngle;
 
 
     public boolean execute(FtcDashboard dashboard) {
@@ -376,23 +377,48 @@ public class Autonomous implements TelemetryProvider {
 
             switch (autonIndex) {
                 case 0:
-                    //set up to drive really slowly
-
+                    targetTicsLeftOdo = robot.driveTrain.getLeftOdo() + robot.driveTrain.distInTics(18);
+                    //drive forward really slowly
+                    robot.driveTrain.drive(0,-.3,0);
+                    //set arm down
+                    robot.arm.setShoulderTargetPosition(500); //between intake and travel
                     autonIndex++;
                     break;
                 case 1: //drive to purple pixel drop off location
                     autonState = AutonState.BACK_UP;
+                    if (robot.driveTrain.getLeftOdo()>targetTicsLeftOdo) {
+                        robot.driveTrain.drive(0, 0, 0);
+                        targetAngle = startingPosition.getPose().heading.log();
+                        if (targetIndex == 3) { //turn left
+                            robot.driveTrain.drive(0, 0, -.2);
+                            targetAngle = Math.toRadians(45);
+                        }
+                        if (targetIndex == 1) { //turn right
+                            robot.driveTrain.drive(0, 0, .2);
+                            targetAngle = Math.toRadians(-45);
+                        }
+                        autonIndex++;
+                    }
+
 //                    if (!stageOneToRun.run(packet)) {
 //                        autonIndex++;
 //                    }
                     break;
-                case 2:
-                    autonState = AutonState.STRAFE;
-                    if (!stageTwoToRun.run(packet)) {
+                case 2: //if target angle is good enough drop the pixel
+                    if (Math.abs(Math.abs(Math.toDegrees(targetAngle))-Math.abs(robot.driveTrain.imuAngle))<3) //within 2 degrees of target
+                    {
+                        robot.driveTrain.drive(0, 0, 0);
                         //todo something here to drop the purple pixel
                         robot.arm.GripInnerOnly(); //purple needs to be on the outer/lower position
-                        autonIndex++;
+                        autonIndex=0;
+                        return true;
                     }
+                    //autonState = AutonState.STRAFE;
+//                    if (!stageTwoToRun.run(packet)) {
+//                        //todo something here to drop the purple pixel
+//                        robot.arm.GripInnerOnly(); //purple needs to be on the outer/lower position
+//                        autonIndex++;
+//                    }
                     break;
                 case 3:
                     autonState = AutonState.SCORE_GROUND;

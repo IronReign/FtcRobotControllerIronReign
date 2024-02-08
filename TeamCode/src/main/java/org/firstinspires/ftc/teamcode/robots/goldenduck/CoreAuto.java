@@ -18,7 +18,7 @@ import java.util.Map;
 
 //@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Core Tele", group = "Challenge")
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Core Auto", group = "Challenge")
-@Config(value = "GD_DriverControlled")
+@Config(value = "GD_Auton")
 public class CoreAuto extends OpMode {
 
     private static final double LOW_BATTERY_VOLTAGE = 12;
@@ -83,7 +83,7 @@ public class CoreAuto extends OpMode {
 
     }
 
-    public static GameState gameState = GameState.TELE_OP;
+    public static GameState gameState = GameState.AUTONOMOUS;
     static public int gameStateIndex;
 
 
@@ -188,7 +188,7 @@ public class CoreAuto extends OpMode {
         robot.fetchCachedCSPosition();
 
         resetGame();
-
+        robot.visionProviderBack.shutdownVision();
         if(gameState.equals(GameState.AUTONOMOUS)){
         }
 

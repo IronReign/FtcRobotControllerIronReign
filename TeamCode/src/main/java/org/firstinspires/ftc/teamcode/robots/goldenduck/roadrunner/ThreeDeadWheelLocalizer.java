@@ -14,7 +14,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.Localizer;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.Localizer;
 
 @Config
 public final class ThreeDeadWheelLocalizer implements Localizer {
@@ -51,6 +51,7 @@ public final class ThreeDeadWheelLocalizer implements Localizer {
 
         FlightRecorder.write("THREE_DEAD_WHEEL_PARAMS", PARAMS);
     }
+    public long getLeftOdo() {return lastPar0Pos;}
 
     public Twist2dDual<Time> update() {
         PositionVelocityPair par0PosVel = par0.getPositionAndVelocity();

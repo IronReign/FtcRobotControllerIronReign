@@ -13,8 +13,9 @@ import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.util.PIDController;
@@ -78,6 +79,11 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         updatePoseEstimate();
         //test imu based turning from dashboard - todo comment out when not needed
         if (turnToTest!=0) turnUntilDegreesIMU(turnToTest,turnToSpeed); //can target any angle but zero
+    }
+    public long getLeftOdo(){return localizerCopy.getLeftOdo();}
+
+    public long distInTics(double dist){
+        return (long)(dist / PARAMS.inPerTick);
     }
 
     public void drive(double x, double y, double theta) {

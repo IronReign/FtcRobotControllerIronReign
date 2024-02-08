@@ -102,15 +102,26 @@ public class DriverControls {
             //fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (gamepad1.left_trigger > .1) {
-//            robot.arm.adjustShoulder(-gamepad1.left_trigger);
-            robot.skyhooks.adjustSkyHooks(-gamepad1.left_trigger);
+            robot.arm.adjustShoulder(-gamepad1.left_trigger);
+//            robot.skyhooks.adjustSkyHooks(-gamepad1.left_trigger);
         }
 
         if (gamepad1.right_trigger > .1) {
-//            robot.arm.adjustShoulder(gamepad1.right_trigger);
-            robot.skyhooks.adjustSkyHooks(gamepad1.right_trigger);
+            robot.arm.adjustShoulder(gamepad1.right_trigger);
+//            robot.skyhooks.adjustSkyHooks(gamepad1.right_trigger);
 
         }
+        if (gamepad1.dpad_right) {
+//            robot.arm.adjustShoulder(-gamepad1.left_trigger);
+            robot.skyhooks.adjustSkyHooks(3);
+        }
+
+        if (gamepad1.dpad_left) {
+//            robot.arm.adjustShoulder(gamepad1.right_trigger);
+            robot.skyhooks.adjustSkyHooks(-3);
+
+        }
+
         if (stickyGamepad1.a) {
             //ask the robot to snap to an ingest config
             //todo make this behavior work for core's robot
@@ -192,9 +203,9 @@ public class DriverControls {
     public void robotOrientedDrive() {
         if (Math.abs(gamepad1.left_stick_x) > DEADZONE ||
                 Math.abs(gamepad1.left_stick_y) > DEADZONE ||
-                Math.abs(gamepad1.right_stick_x) > DEADZONE) {
+                Math.abs(gamepad1.right_stick_x) > DEADZONE) { //there is some kind of drive input
+            robot.driveTrain.setHumanIsDriving(true);
             robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
-
         }
         else if (robot.driveTrain.isHumanIsDriving()) robot.driveTrain.drive(0, 0, 0);
     }

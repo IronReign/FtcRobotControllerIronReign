@@ -1,17 +1,14 @@
-package org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.tuning;
+package org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
-//import org.firstinspires.ftc.teamcode.robots.bobobot.RoadRunning.MecanumDrive;
-//import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.MecanumDrive;
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.TankDrive;
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.ThreeDeadWheelLocalizer;
-//import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.ThreeDeadWheelLocalizer;
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.TwoDeadWheelLocalizer;
-//import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.TwoDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.TankDrive;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.TwoDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.ThreeDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.roadrunner.TuningOpModes;
+
 public final class ManualFeedbackTuner extends LinearOpMode {
     public static double DISTANCE = 48;
 
