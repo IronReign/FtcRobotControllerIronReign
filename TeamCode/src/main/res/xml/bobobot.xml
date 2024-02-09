@@ -17,5 +17,5 @@
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />s
         </LynxModule>
     </LynxUsbDevice>
-    <Webcam name="Webcam 1" serialNumber="VendorProduct:vendor=0x046d|product=0x0825|connection=" />
+    <Webcam name="Webcam 1" serialNumber="91C59420" />
 </Robot>

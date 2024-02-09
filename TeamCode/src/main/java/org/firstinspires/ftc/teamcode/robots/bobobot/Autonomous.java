@@ -16,6 +16,7 @@ import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.RunnerBot;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Utilities.Constants;
+import org.firstinspires.ftc.teamcode.robots.bobobot.Utilities.Toggle;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
 
 import java.util.Map;
@@ -25,6 +26,7 @@ public class Autonomous extends OpMode {
     private RunnerBot runnerBot;
     MultipleTelemetry dashTelemetry;
     FtcDashboard dashboard;
+    Toggle toggle;
     public static int autonIndex;
     public enum AutonState{
         DRIVE_FROM_START, TURN, DRIVE_THRU, DRIVE_TO_BACKDROP, INIT, PURPLE_PIXEL_DROP
@@ -39,43 +41,30 @@ public class Autonomous extends OpMode {
     audienceRed, backdropRed,
     audienceBlue, backdropBlue, through;
 
-    public static Constants.Alliance alliance = Constants.Alliance.RED;
-    public static boolean backdrop = false;
+
+
     @Override
     public void init(){
         dashboard = FtcDashboard.getInstance();
         dashTelemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         runnerBot = new RunnerBot(dashTelemetry,hardwareMap);
-        runnerBot.driveTrain.setPose(Constants.Position.START_LEFT_RED);
-        //alliance = Constants.Alliance.BLUE;
+        toggle = new Toggle(gamepad1, gamepad2);
         autonState = AutonState.INIT;
         dashTelemetry.setMsTransmissionInterval(25);
         autonIndex = 0;
+        runnerBot.driveTrain.setPose(Constants.Position.START_RIGHT_RED);
         runnerBot.start();
     }
     @Override
     public void init_loop(){
+        toggle.gamepadUpdate();
         runnerBot.enableVision();
+        toggle.setGamePose();
+        telemetry.addData("Game Init Position \t", runnerBot.driveTrain.getGamePosition());
     }
     @Override
     public void start(){
-//        runnerBot.driveTrain.pose = Constants.Position.START_RIGHT_RED.getPose();
-//        if(!alliance.getMod()){
-//            if(!backdrop){
-//                runnerBot.driveTrain.setPose(Constants.Position.START_LEFT_BLUE);
-//            }
-//            else if (backdrop){
-//                runnerBot.driveTrain.setPose(Constants.Position.START_RIGHT_BLUE);
-//            }
-//        }
-//        else if (alliance.getMod()){
-//            if(!backdrop){
-//                runnerBot.driveTrain.setPose(Constants.Position.START_LEFT_RED);
-//            }
-//            else if (backdrop){
-//                runnerBot.driveTrain.setPose(Constants.Position.START_RIGHT_RED);
-//            }
-//        }
+
 
     }
     @Override

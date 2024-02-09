@@ -34,7 +34,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     private double PIDCorrection, PIDError;
     public static int turnToTest = 0;
     public static double turnToSpeed= .8;
-
+    public static Constants.Position gamePosition = null;
     public DriveTrain(HardwareMap hardwareMap, RunnerBot runnerBot) {
         super(hardwareMap, new Pose2d(0, 0, 0));
         this.runnerBot = runnerBot;
@@ -99,6 +99,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("Imu angle", imuAngle);
         telemetryMap.put("X in Field Coordinates \t", pose.position.x / Constants.FIELD_INCHES_PER_GRID);
         telemetryMap.put("Y in Field Coordinates \t", pose.position.y / Constants.FIELD_INCHES_PER_GRID);
+        telemetryMap.put("Game Init Position \t",getGamePosition());
         telemetryMap.put("X in Inches \t", pose.position.x);
         telemetryMap.put("Y in Inches \t", pose.position.y);
         telemetryMap.put("Heading \t", Math.toDegrees(pose.heading.log()));
@@ -191,5 +192,9 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     }
     public boolean getDebug(){
         return debug;
+    }
+
+    public Constants.Position getGamePosition(){
+        return gamePosition;
     }
 }

@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import static org.firstinspires.ftc.teamcode.robots.bobobot.BoboDebugOp.debugbot;
 import static org.firstinspires.ftc.teamcode.robots.bobobot.BoboRunnerOp.runnerBot;
 
+import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.DriveTrain;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 
 public class Toggle {
@@ -77,9 +78,33 @@ public class Toggle {
 
     }
 
+
+    public void setGamePose(){
+        if(stickyGamepad1.b){
+            runnerBot.driveTrain.setPose(Constants.Position.START_LEFT_RED);
+            DriveTrain.gamePosition = Constants.Position.START_LEFT_RED;
+        }
+
+        if(stickyGamepad1.y){
+            runnerBot.driveTrain.setPose(Constants.Position.START_RIGHT_RED);
+            DriveTrain.gamePosition = Constants.Position.START_RIGHT_BLUE;
+        }
+
+        if(stickyGamepad1.x){
+            runnerBot.driveTrain.setPose(Constants.Position.START_RIGHT_BLUE);
+            DriveTrain.gamePosition = Constants.Position.START_RIGHT_BLUE;
+        }
+
+        if(stickyGamepad1.a){
+            runnerBot.driveTrain.setPose(Constants.Position.START_LEFT_BLUE);
+            DriveTrain.gamePosition = Constants.Position.START_LEFT_BLUE;
+        }
+    }
+
     public void drone(){
         if(gamepad1.y){
             runnerBot.drone.droneRelease();
         }
     }
+
 }
