@@ -190,7 +190,6 @@ public class Autonomous extends OpMode {
         }
     }
 
-
     public AutonState getAutonState() {
         return autonState;
     }

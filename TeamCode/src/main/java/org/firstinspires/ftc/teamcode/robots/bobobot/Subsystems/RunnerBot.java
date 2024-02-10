@@ -57,6 +57,7 @@ public class RunnerBot implements Subsystem{
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("Vision On/Vision Provider Finalized", visionOn+" "+visionProviderFinalized);
         telemetryMap.put("visionProvider name", visionProvider.getTelemetryName());
+        telemetryMap.put("Blob Location \t", visionProvider.getMostFrequentPosition().getIndex());
         return telemetryMap;
     }
 
