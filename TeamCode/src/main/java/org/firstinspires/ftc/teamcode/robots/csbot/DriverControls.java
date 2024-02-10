@@ -167,6 +167,10 @@ public class DriverControls {
         if (stickyGamepad1.dpad_down) {
             robot.outtake.setTargetAngle(Outtake.FLIPPER_TRAVEL_ANGLE);
         }
+
+        if(stickyGamepad1.guide) {
+            robot.autoEndgame = true;
+        }
         // ------------------------------------------------------------------
 
         //GAMEPAD 2 CONTROLS
