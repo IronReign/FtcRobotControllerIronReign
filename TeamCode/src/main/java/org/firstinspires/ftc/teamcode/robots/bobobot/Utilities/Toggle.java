@@ -3,23 +3,26 @@ package org.firstinspires.ftc.teamcode.robots.bobobot.Utilities;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import static org.firstinspires.ftc.teamcode.robots.bobobot.BoboDebugOp.debugbot;
-import static org.firstinspires.ftc.teamcode.robots.bobobot.BoboRunnerOp.runnerBot;
 
+import org.firstinspires.ftc.teamcode.robots.bobobot.BoboRunnerOp;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.DriveTrain;
+import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.RunnerBot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 
 public class Toggle {
 
     Gamepad gamepad1;
     Gamepad gamepad2;
+    RunnerBot runnerBot;
     private StickyGamepad stickyGamepad1;
     private StickyGamepad stickyGamepad2;
 
-    public Toggle(Gamepad gamepad1, Gamepad gamepad2){
+    public Toggle(Gamepad gamepad1, Gamepad gamepad2, RunnerBot robot){
         this.gamepad1 = gamepad1;
         this.gamepad2 = gamepad2;
         stickyGamepad1 = new StickyGamepad(gamepad1);
         stickyGamepad2 = new StickyGamepad(gamepad2);
+        this.runnerBot = robot;
     }
 
     public void gamepadUpdate(){
@@ -65,15 +68,15 @@ public class Toggle {
         }
 
         if (gamepad1.dpad_up){
-            runnerBot.intake.armWristIn();
+            BoboRunnerOp.runnerBot.intake.armWristIn();
         }
 
         if (gamepad1.dpad_left){
-            runnerBot.intake.armScoreLift();
+            BoboRunnerOp.runnerBot.intake.armScoreLift();
         }
 
         if(gamepad1.dpad_right){
-            runnerBot.intake.armScoreLower();
+            BoboRunnerOp.runnerBot.intake.armScoreLower();
         }
 
     }
@@ -87,7 +90,7 @@ public class Toggle {
 
         if(stickyGamepad1.y){
             runnerBot.driveTrain.setPose(Constants.Position.START_RIGHT_RED);
-            DriveTrain.gamePosition = Constants.Position.START_RIGHT_BLUE;
+            DriveTrain.gamePosition = Constants.Position.START_RIGHT_RED;
         }
 
         if(stickyGamepad1.x){
@@ -103,8 +106,7 @@ public class Toggle {
 
     public void drone(){
         if(gamepad1.y){
-            runnerBot.drone.droneRelease();
+            BoboRunnerOp.runnerBot.drone.droneRelease();
         }
     }
-
 }

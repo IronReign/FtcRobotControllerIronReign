@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
+import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.RunnerBot;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Utilities.IMU;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Utilities.Toggle;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
@@ -13,6 +14,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 @TeleOp(name="BoboDebugOpMode", group="Challenge")
 public class BoboDebugOp extends OpMode {
     public static DebugBot debugbot;
+    public static RunnerBot runnerBot;
     IMU imu;
     Toggle toggle;
     MultipleTelemetry dashTelemetry;
@@ -23,7 +25,7 @@ public class BoboDebugOp extends OpMode {
         dashboard = FtcDashboard.getInstance();
         dashTelemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
         debugbot = new DebugBot(dashTelemetry, hardwareMap);
-        toggle = new Toggle(gamepad1, gamepad2);
+        toggle = new Toggle(gamepad1, gamepad2, runnerBot);
         imu = new IMU(dashTelemetry, hardwareMap);
         dashTelemetry.setMsTransmissionInterval(25);
     }
