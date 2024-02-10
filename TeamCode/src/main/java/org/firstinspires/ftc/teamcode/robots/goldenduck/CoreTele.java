@@ -129,7 +129,7 @@ public class CoreTele extends OpMode {
 
         //INITIALIZE COMPONENTS
         robot = new Robot(hardwareMap, false);
-        dc = new DriverControls(gamepad1, gamepad2);
+        dc = new DriverControls(gamepad1, gamepad2, robot);
         auton = new Autonomous(robot);
 
         robot.updatePositionCache = false;

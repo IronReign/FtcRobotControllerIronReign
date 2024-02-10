@@ -24,17 +24,20 @@ public class DriverControls {
     public static boolean fieldOrientedDrive = false;
     public static double DEADZONE = 0.1;
 
-    public boolean visionProviderFinalized = robot.visionProviderFinalized;
+    public boolean visionProviderFinalized;
     boolean droneSet = true;
+    Robot robot;
 
     Gamepad gamepad1, gamepad2;
     private StickyGamepad stickyGamepad1, stickyGamepad2;
 
-    DriverControls(Gamepad pad1, Gamepad pad2) {
+    DriverControls(Gamepad pad1, Gamepad pad2, Robot robot) {
         gamepad1 = pad1;
         gamepad2 = pad2;
         stickyGamepad1 = new StickyGamepad(gamepad1);
         stickyGamepad2 = new StickyGamepad(gamepad2);
+        this.robot = robot;
+        visionProviderFinalized = robot.visionProviderFinalized;
     }
 
     public void init_loop() {
@@ -64,8 +67,11 @@ public class DriverControls {
             robot.initPositionIndex ++;
         }
 
-        if(stickyGamepad2.a) {
-
+        if(stickyGamepad1.right_bumper) {
+            CoreAuto.alliance = Constants.Alliance.RED;
+        }
+        if(stickyGamepad1.left_bumper) {
+            CoreAuto.alliance = Constants.Alliance.BLUE;
         }
 
 

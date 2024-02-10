@@ -38,7 +38,7 @@ import java.util.Map;
 public class CSBotPropDetectorProvider extends VisionProvider {
     private Bitmap noCameraBitmap;
     private OpenCvCamera camera;
-    private CSBotPropDetectorPipeline pipeline;
+    public CSBotPropDetectorPipeline pipeline;
     private volatile boolean cameraOpened;
     private List<Target> frameDetections = new ArrayList<>();
     public List<Target> getFrameDetections() {
