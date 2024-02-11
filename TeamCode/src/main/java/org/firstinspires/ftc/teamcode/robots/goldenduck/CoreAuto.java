@@ -98,7 +98,9 @@ public class CoreAuto extends OpMode {
 
         robot.updateVision();
 
-        robot.visionProviderBack.setRedAlliance(alliance.getMod());
+        //robot.visionProviderBack.setRedAlliance(alliance.getMod());
+
+        robot.visionProviderBack.setRedAlliance(false);
 
         auton.updateIndexOffsets();
         //calc auton based on alliance, starting position and team prop position
@@ -176,9 +178,9 @@ public class CoreAuto extends OpMode {
         Map<String, Object> opModeTelemetryMap = new LinkedHashMap<>();
         // handling op mode telemetry
         opModeTelemetryMap.put("Active", active);
-        if(initializing) {
-            opModeTelemetryMap.put("Starting Position", startingPosition);
-        }
+//        if(initializing) {
+//            opModeTelemetryMap.put("Starting Position", startingPosition);
+//        }
         opModeTelemetryMap.put("Battery Voltage", averageVoltage);
         opModeTelemetryMap.put("Average Loop Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageLoopTime * 1e-6), (int) (1 / (averageLoopTime * 1e-9))));
         opModeTelemetryMap.put("Last Loop Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageLoopTime * 1e-6), (int) (1 / (averageLoopTime * 1e-9))));

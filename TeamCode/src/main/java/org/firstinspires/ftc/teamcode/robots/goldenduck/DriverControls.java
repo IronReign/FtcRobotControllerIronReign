@@ -49,24 +49,24 @@ public class DriverControls {
         if(stickyGamepad1.dpad_up) {
             robot.visionProviderFinalized = !robot.visionProviderFinalized;
         }
-
-        if(stickyGamepad1.a) {
-            CoreTele.initPosition = true;
-        }
+//
+//        if(stickyGamepad1.a) {
+//            CoreTele.initPosition = true;
+//        }
 
         if (stickyGamepad1.y)
             robot.arm.GripOuterToggle();
         //robot.arm.GripNeither();
-
-        if (stickyGamepad1.x)
-            robot.arm.GripInnerToggle();
+//
+//        if (stickyGamepad1.x)
+//            robot.arm.GripInnerToggle();
         //robot.arm.GripBoth();
 
 
         if(stickyGamepad1.guide) {
             robot.initPositionIndex ++;
         }
-
+//todo - these are not enough to change the alliance
         if(stickyGamepad1.right_bumper) {
             CoreAuto.alliance = Constants.Alliance.RED;
         }
@@ -226,7 +226,6 @@ public class DriverControls {
             if (CoreTele.gameStateIndex < 0)
                 CoreTele.gameStateIndex = CoreTele.GameState.getNumGameStates() - 1;
             CoreTele.gameStateIndex %= CoreTele.GameState.getNumGameStates();
-            CoreTele.gameState = CoreTele.GameState.getGameState(CoreTele.gameStateIndex);
         }
 
         if (stickyGamepad1.back || stickyGamepad2.back)

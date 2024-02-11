@@ -112,8 +112,8 @@ public class Arm implements Subsystem {
     public static double WRIST_L_PICKUP = 2105;
     public static double WRIST_R_TUCK = 2105;
     public static double WRIST_L_TUCK = 900;
-    public static double WRIST_R_BACKDROP = 1100;
-    public static double WRIST_L_BACKDROP = 1300;
+    public static double WRIST_R_BACKDROP = 1100;  //maybe 1300
+    public static double WRIST_L_BACKDROP = 1300; //maybe 1300
 
     public static int DRONE_SET = 1556;
     public static int DRONE_LAUNCH = 900;
@@ -379,15 +379,18 @@ public void GripInnerToggle(){ //to open inner, outer has to open as well
     }
 
     public void GripInnerOnly(){
+        gripperState = GripperState.OuterOpen;
         gripperInner.setPosition(servoNormalizeExtended(GripInnerClosed));
         gripperOuter.setPosition(servoNormalizeExtended(GripOuterOpen));
     }
     public void GripBoth(){
+        gripperState = GripperState.BothClosed;
         gripperInner.setPosition(servoNormalizeExtended(GripInnerClosed));
         gripperOuter.setPosition(servoNormalizeExtended(GripOuterClosed));
     }
 
     public void GripNeither(){
+        gripperState = GripperState.BothOpen;
         gripperInner.setPosition(servoNormalizeExtended(GripInnerOpen));
         gripperOuter.setPosition(servoNormalizeExtended(GripOuterOpen));
     }

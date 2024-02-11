@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode.robots.goldenduck;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -379,7 +381,10 @@ public class Autonomous implements TelemetryProvider {
 
             switch (autonIndex) {
                 case 0:
-                    targetTicsLeftOdo = robot.driveTrain.getLeftOdo() + robot.driveTrain.distInTics(26);
+                    if(targetIndex ==  2)
+                        targetTicsLeftOdo = robot.driveTrain.getLeftOdo() + robot.driveTrain.distInTics(22);
+                    else
+                        targetTicsLeftOdo = robot.driveTrain.getLeftOdo() + robot.driveTrain.distInTics(26);
                     robot.driveTrain.imu.resetYaw();
                     //drive forward really slowly
                     robot.driveTrain.drive(0,-.3,0);
@@ -394,21 +399,22 @@ public class Autonomous implements TelemetryProvider {
                         targetAngle = Math.toDegrees(startingPosition.getPose().heading.log());
                         if (targetIndex == 3) { //turn left
                             robot.driveTrain.drive(0, 0, .2);
-                            targetAngle = 0;
+                            targetAngle = 25; //0
                         }
                         if (targetIndex == 1) { //turn right
                             robot.driveTrain.drive(0, 0, -.2);
-                            targetAngle =  180;
+                            targetAngle =  180-25; //180
                         }
                         autonIndex ++;
                     }
                     break;
                 case 2: //if target angle is good enough drop the pixel
-                    if (withinError(Utils.wrapAngle(robot.driveTrain.imuAngle), targetAngle, 2)) //within 2 degrees of target
+                    if (withinError(Utils.wrapAngle(robot.driveTrain.imuAngle), targetAngle, 2) || targetIndex == 2) //within 2 degrees of target
                     {
+                        futureTimer = futureTime(2);
                         robot.driveTrain.drive(0, 0, 0);
                         //todo something here to drop the purple pixel
-                        robot.arm.GripInnerOnly(); //purple needs to be on the outer/lower position
+                        robot.arm.WristBackdrop(); //purple needs to be on the outer/lower position
                         autonIndex++;
                         return true;
                     }
@@ -421,6 +427,10 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 3:
                     autonState = AutonState.SCORE_GROUND;
+                    if(isPast(futureTimer)){
+                        robot.arm.GripNeither();
+
+                    }
                     //back up out of the way
 //                    if(robot.intake.readyForTravel()) {
 //                        autonIndex++;
