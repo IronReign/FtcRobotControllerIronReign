@@ -167,6 +167,10 @@ public class DriverControls {
         if (stickyGamepad1.dpad_down) {
             robot.outtake.setTargetAngle(Outtake.FLIPPER_TRAVEL_ANGLE);
         }
+
+        if(stickyGamepad1.guide && /*CenterStage_6832.totalRunTime > 110 &&*/ field.getZone(robot.driveTrain.pose) == Field.Zone.BACKSTAGE) {
+            robot.autoEndgame = true;
+        }
         // ------------------------------------------------------------------
 
         //GAMEPAD 2 CONTROLS

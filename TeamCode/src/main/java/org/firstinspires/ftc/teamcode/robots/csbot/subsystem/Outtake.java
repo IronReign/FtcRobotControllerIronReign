@@ -33,11 +33,11 @@ public class Outtake implements Subsystem {
 
     //Kinematics values in inches
     public static double armLength = 17.5;
-    public static double armBase = 16.5;
-    public static double armHeight = 9;
-    public static double armTheta = Math.atan2(9, 16.5);
+    public static double armBase = 15.75;
+    public static double armHeight = 10.625;
+    public static double armTheta = Math.atan2(armBase, armHeight);
 
-    public static double armX, armY;
+    public static double armX, armZ;
 
     public static int flipperPosition = 1888;
 
@@ -323,13 +323,13 @@ public class Outtake implements Subsystem {
         flipper.update();
         slide.setTargetPosition(slideTargetPosition);
         //compute values for kinematics
-        double rotTheta = -flipper.getTargetAngle() -180;
-        double rotX = armLength*Math.cos(Utils.degreeToRad(armTheta)) + (slide.getCurrentPosition()/ticksPerInch)*Math.cos(Utils.degreeToRad(armTheta));
-        double rotY = armLength*Math.sin(Utils.degreeToRad(armTheta)) + (slide.getCurrentPosition()/ticksPerInch)*Math.sin(Utils.degreeToRad(armTheta));
-        double x = (slide.getCurrentPosition()/ticksPerInch)*Math.cos(Utils.degreeToRad(armTheta));
-        double y = (slide.getCurrentPosition()/ticksPerInch)*Math.sin(Utils.degreeToRad(armTheta));
-        armX = (rotX-(y-rotY)*Math.sin(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.cos(Utils.degreeToRad(rotTheta)));
-        armY = (rotY+(y-rotY)*Math.cos(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.sin(Utils.degreeToRad(rotTheta)));
+        double rotTheta = -flipper.getCurrentAngle() -180;
+        double rotX = armLength*Math.cos(armTheta) + (slide.getCurrentPosition()/ticksPerInch)*Math.cos(armTheta);
+        double rotZ = armLength*Math.sin(armTheta) + (slide.getCurrentPosition()/ticksPerInch)*Math.sin(armTheta);
+        double x = (slide.getCurrentPosition()/ticksPerInch)*Math.cos(armTheta);
+        double z = (slide.getCurrentPosition()/ticksPerInch)*Math.sin(armTheta);
+        armX = (rotX-(z-rotZ)*Math.sin(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.cos(Utils.degreeToRad(rotTheta)));
+        armZ = (rotZ+(z-rotZ)*Math.cos(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.sin(Utils.degreeToRad(rotTheta)));
     }
 
     @Override
@@ -349,7 +349,8 @@ public class Outtake implements Subsystem {
         telemetryMap.put("flipper ticks", flipperPosition);
         telemetryMap.put("flipper angle", flipper.getCurrentAngle());
         telemetryMap.put("flipper target angle", flipper.getTargetAngle());
-        telemetryMap.put("arm location", "("+armX+", "+armY+")");
+        telemetryMap.put("arm location", "("+armX+", "+armZ+")");
+        telemetryMap.put("arm theta", armTheta);
         return telemetryMap;
     }
 

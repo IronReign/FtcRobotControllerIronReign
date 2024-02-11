@@ -16,7 +16,10 @@ import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.wrapAngle;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -67,24 +70,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     }
 
     private boolean humanIsDriving=false;
-
-    private Action driveToDrone;
-    public void driveToDroneBuild() {
-        driveToDrone = new SequentialAction(
-                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .splineTo(new Vector2d(0, CenterStage_6832.startingPosition.getMod()?-33:33), 0)
-                        .build()
-        );
-    }
-    public boolean driveToDrone() {
-        if(driveToDrone == null) {
-            driveToDroneBuild();
-            return false;
-        }
-        if(!driveToDrone.run(new TelemetryPacket()))
-            return false;
-        return true;
-    }
 
     public enum Articulation{
         BACKSTAGE_DRIVE,

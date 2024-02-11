@@ -6,10 +6,15 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameS
 import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -17,6 +22,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
+import org.firstinspires.ftc.teamcode.robots.csbot.Field;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.PositionCache;
@@ -69,6 +75,10 @@ public class  Robot implements Subsystem {
     public Articulation articulation;
     public List<Target> targets = new ArrayList<Target>();
     public boolean fetched;
+    //auton end game variables
+    private int driveToDroneIndex = 0;
+    public boolean autoEndgame = false;
+
     public boolean selfDriving = true;
 
     public enum Articulation {
@@ -139,6 +149,10 @@ public class  Robot implements Subsystem {
             positionCache.update(currPosition, false);
         }
 
+        if(autoEndgame && driveToDrone()) { //no no I swear this works
+            autoEndgame = false;
+        }
+
         articulate(articulation);
         //TODO - DELETE
         driveTrain.updatePoseEstimate();
@@ -165,6 +179,57 @@ public class  Robot implements Subsystem {
             }
             visionProviderBack.update();
         }
+    }
+
+    private Action driveToDrone;
+    public void driveToDroneBuild() {
+        driveToDrone = new SequentialAction(
+                driveTrain.actionBuilder(driveTrain.pose)
+                        .splineTo(new Vector2d(23.5, CenterStage_6832.startingPosition.getMod()?-33:33), 0)
+                        .splineTo(new Vector2d(0, CenterStage_6832.startingPosition.getMod()?-33:33), 0)
+                        .build()
+        );
+    }
+
+    private long futureTimer = 0;
+    public boolean driveToDrone() {
+        switch (driveToDroneIndex) {
+            case 0:
+                if (driveToDrone == null) {
+                    driveToDroneBuild();
+                }
+                else if (!driveToDrone.run(new TelemetryPacket())) {
+                    driveToDrone = null;
+                    driveToDroneIndex++;
+                }
+                break;
+            case 1:
+                articulate(Robot.Articulation.LAUNCH_DRONE);
+                futureTimer = futureTime(5);
+                driveToDroneIndex++;
+                break;
+            case 2:
+                if (isPast(futureTimer)) {
+                    articulate(Robot.Articulation.PREP_FOR_HANG);
+                    futureTimer = futureTime(2);
+                    driveToDroneIndex++;
+                }
+                break;
+            case 3:
+                driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.2, 0), 0));
+                if (isPast(futureTimer)) {
+                    driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                    driveToDroneIndex++;
+                }
+                break;
+            case 4:
+                if (skyhook.articulation.equals(Skyhook.Articulation.PREP_FOR_HANG)) {
+                    articulate(Robot.Articulation.HANG);
+                    driveToDroneIndex = 0;
+                    return true;
+                }
+        }
+            return false;
     }
 
     public void aprilTagRelocalization(int target) {
