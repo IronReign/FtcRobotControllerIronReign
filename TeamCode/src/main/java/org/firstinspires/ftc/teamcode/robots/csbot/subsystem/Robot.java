@@ -193,46 +193,43 @@ public class  Robot implements Subsystem {
 
     private long futureTimer = 0;
     public boolean driveToDrone() {
-        if (CenterStage_6832.totalRunTime > 110 && field.getZone(driveTrain.pose) == Field.Zone.BACKSTAGE) {
-            switch (driveToDroneIndex) {
-                case 0:
-                    if (driveToDrone == null) {
-                        driveToDroneBuild();
-                        return false;
-                    }
-                    if (!driveToDrone.run(new TelemetryPacket()))
-                        return false;
+        switch (driveToDroneIndex) {
+            case 0:
+                if (driveToDrone == null) {
+                    driveToDroneBuild();
+                }
+                else if (!driveToDrone.run(new TelemetryPacket())) {
                     driveToDrone = null;
                     driveToDroneIndex++;
-                    break;
-                case 1:
-                    articulate(Robot.Articulation.LAUNCH_DRONE);
+                }
+                break;
+            case 1:
+                articulate(Robot.Articulation.LAUNCH_DRONE);
+                futureTimer = futureTime(5);
+                driveToDroneIndex++;
+                break;
+            case 2:
+                if (isPast(futureTimer)) {
+                    articulate(Robot.Articulation.PREP_FOR_HANG);
                     futureTimer = futureTime(2);
                     driveToDroneIndex++;
-                    break;
-                case 2:
-                    if(isPast(futureTimer)) {
-                        articulate(Robot.Articulation.PREP_FOR_HANG);
-                        futureTimer = futureTime(.5);
-                        driveToDroneIndex++;
-                    }
-                    break;
-                case 3:
-                    driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.2, 0), 0));
-                    if(isPast(futureTimer)) {
-                        driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
-                        driveToDroneIndex++;
-                    }
-                    break;
-                case 4:
-                    if(skyhook.articulation.equals(Skyhook.Articulation.PREP_FOR_HANG)) {
-                        articulate(Robot.Articulation.HANG);
-                        return true;
-                    }
-            }
-            return false;
+                }
+                break;
+            case 3:
+                driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.2, 0), 0));
+                if (isPast(futureTimer)) {
+                    driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                    driveToDroneIndex++;
+                }
+                break;
+            case 4:
+                if (skyhook.articulation.equals(Skyhook.Articulation.PREP_FOR_HANG)) {
+                    articulate(Robot.Articulation.HANG);
+                    driveToDroneIndex = 0;
+                    return true;
+                }
         }
-        return true;
+            return false;
     }
 
     public void aprilTagRelocalization(int target) {

@@ -33,7 +33,7 @@ public class Outtake implements Subsystem {
 
     //Kinematics values in inches
     public static double armLength = 17.5;
-    public static double armBase = 16.75;
+    public static double armBase = 15.75;
     public static double armHeight = 10.625;
     public static double armTheta = Math.atan2(armBase, armHeight);
 
@@ -328,8 +328,8 @@ public class Outtake implements Subsystem {
         double rotZ = armLength*Math.sin(armTheta) + (slide.getCurrentPosition()/ticksPerInch)*Math.sin(armTheta);
         double x = (slide.getCurrentPosition()/ticksPerInch)*Math.cos(armTheta);
         double z = (slide.getCurrentPosition()/ticksPerInch)*Math.sin(armTheta);
-        armZ = (rotX-(z-rotZ)*Math.sin(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.cos(Utils.degreeToRad(rotTheta)));//is equation for x
-        armX = (rotZ+(z-rotZ)*Math.cos(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.sin(Utils.degreeToRad(rotTheta)));//is equation for z (had to flip for some reason)
+        armX = (rotX-(z-rotZ)*Math.sin(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.cos(Utils.degreeToRad(rotTheta)));
+        armZ = (rotZ+(z-rotZ)*Math.cos(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.sin(Utils.degreeToRad(rotTheta)));
     }
 
     @Override
