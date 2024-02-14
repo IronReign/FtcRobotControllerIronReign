@@ -1,21 +1,23 @@
-package org.firstinspires.ftc.teamcode.robots.csbot;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
-import static org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils.withinError;
-import static org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils.wrapAngle;
+package com.example.meepmeeptesting;
 
-import com.acmerobotics.dashboard.canvas.Canvas;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.*;
+import static com.example.meepmeeptesting.Field.FIELD_INCHES_PER_GRID;
+import static com.example.meepmeeptesting.TeleOpMeepMeep.P2D;
+import static com.example.meepmeeptesting.TeleOpMeepMeep.field;
 
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
+import com.acmerobotics.roadrunner.Vector2d;
+import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
-import java.lang.Math;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class Field {
+
+    public static final double FIELD_INCHES_PER_GRID = 23.5;
     public boolean finalized = false;
     List<Zone> zones;
     List<SubZone> subZones;
@@ -46,8 +48,8 @@ public class Field {
 
     public enum Zone {
         AUDIENCE(Field.MIN_X_VALUE, -1.5, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "AUDIENCE"),
-        BACKSTAGE(.5, Field.MAX_X_VALUE, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "BACKSTAGE"),
-        RIGGING(-1.5, .5, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "RIGGING");
+        BACKSTAGE(.501, Field.MAX_X_VALUE, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "BACKSTAGE"),
+        RIGGING(-1.5, .501, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "RIGGING");
 
         public double x1;
         public double x2;
@@ -72,6 +74,10 @@ public class Field {
         public boolean withinZone(Pose2d pose) {
             List<Double> xVals = Arrays.asList(pose.position.x/FIELD_INCHES_PER_GRID, x1, x2);
             List<Double> yVals = Arrays.asList(pose.position.y/FIELD_INCHES_PER_GRID, y1, y2);
+            System.out.println(pose.position.x / FIELD_INCHES_PER_GRID);
+            System.out.println(pose.position.y / FIELD_INCHES_PER_GRID);
+            System.out.println("" + Collections.min(xVals) + " " + Collections.max(xVals) + " " + Collections.min(yVals) + " " + Collections.max(yVals));
+
             if(
                 //if the pose is not an extrema of the list, it's within the bounds of the list
                     !(
@@ -88,23 +94,23 @@ public class Field {
 
     public boolean isRed = true;
 
-    public void init_loop() {
-        isRed = alliance.getMod();
-    }
+//    public void init_loop() {
+//        isRed = alliance.getMod();
+//    }
     public void finalizeField() {
         finalized = true;
         zones = Zone.getNamedZones();
         subZones = SubZone.getNamedSubZones(isRed);
         int allianceMultiplier = isRed? 1 : -1;
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, -2.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, -2.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 0: 6)));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, -1.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, -1.5  * allianceMultiplier, STANDARD_HEADING), (isRed? 1: 5)));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5,  -.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5,  -.5* allianceMultiplier, STANDARD_HEADING), (isRed? 2: 4)));
+            crossingRoutes.add(new CrossingRoute(P2D(-1.5, -2.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, -2.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 0: 6)));
+            crossingRoutes.add(new CrossingRoute(P2D(-1.5, -1.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, -1.5  * allianceMultiplier, STANDARD_HEADING), (isRed? 1: 5)));
+            crossingRoutes.add(new CrossingRoute(P2D(-1.5,  -.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5,  -.5* allianceMultiplier, STANDARD_HEADING), (isRed? 2: 4)));
 //          DIAGONAL ROUTE
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, .5 * allianceMultiplier, isRed? 153.434948823 : 206.565051177), P2D(3.5, -.5 * allianceMultiplier, isRed? 153.434948823 : 206.565051177), 3));
+            crossingRoutes.add(new CrossingRoute(P2D(-1.5, .5 * allianceMultiplier, isRed? 153.434948823 : 206.565051177), P2D(.5, -.5 * allianceMultiplier, isRed? 153.434948823 : 206.565051177), 3));
 //
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, .5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, .5 * allianceMultiplier, STANDARD_HEADING), (isRed? 4: 2)));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, 1.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, 1.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 5: 1)));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, 2.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, 2.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 6: 0)));
+            crossingRoutes.add(new CrossingRoute(P2D(-1.5, .5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, .5 * allianceMultiplier, STANDARD_HEADING), (isRed? 4: 2)));
+            crossingRoutes.add(new CrossingRoute(P2D(-1.5, 1.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, 1.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 5: 1)));
+            crossingRoutes.add(new CrossingRoute(P2D(-1.5, 2.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, 2.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 6: 0)));
 
 
         HANG = isRed? POI.HANG : POI.HANG.flipOnX();
@@ -119,7 +125,7 @@ public class Field {
         APRILTAG6 = POI.APRILTAG6;
     }
 
-    public void update(TelemetryPacket packet, Robot robot) {
+   /* public void update(TelemetryPacket packet, Robot robot) {
         //handling dashboard fieldOverlay
         Zone zone = getZone(robot.driveTrain.pose);
         Canvas c = packet.fieldOverlay();
@@ -129,47 +135,59 @@ public class Field {
             double zoneHeight = Math.max(zone.x1, zone.x2) * FIELD_INCHES_PER_GRID - zoneX;
             double zoneWidth = Math.max(zone.y1, zone.y2) * FIELD_INCHES_PER_GRID - zoneY;
             if (System.currentTimeMillis()/1000 % 2 == 0) {
-                c.setAlpha(.5);
+//                c.setAlpha(.5);
                 c.setFill("green");
                 c.fillRect(zoneX, zoneY, zoneHeight, zoneWidth);
 
             }
-            c.setAlpha(100);
+//            c.setAlpha(100);
         }
-    }
+    }*/
 
     int getCrossingRouteArrayIndex(int crossingRouteIndex){
         return isRed? crossingRouteIndex : 6 - crossingRouteIndex;
     }
 
-    //swap to pathtoPOI(pose, destinationpoi)
+    public SequentialAction pathToPOI(Pose2d robotPosition, RoadRunnerBotEntity robot, POI poi, int preferredRouteIndex){
+        System.out.println(robotPosition);
 
-    public SequentialAction pathToPOI(Pose2d robotPosition, Robot robot, POI poi, int preferredRouteIndex){
         Zone startZone = getZone(robotPosition);
         Zone endZone = poi.getZone();
+        System.out.println("START: " + startZone + "\t end : " + endZone);
         //ROBOT DOES NOTHING IF THE STARTZONE IS IN THE RIGGING
         if(startZone == Zone.RIGGING)
             return new SequentialAction();
 
-        TrajectoryActionBuilder actionBuilder = robot.driveTrain.actionBuilder(robotPosition);
+        TrajectoryActionBuilder actionBuilder = robot.getDrive().actionBuilder(robotPosition);
 
         boolean needsCrossingRoute = !startZone.equals(endZone);
+        System.out.println(needsCrossingRoute);
 
         //to ensure that splines aren't too wonky, draw a line from start to end
         //and add the midpoint of the line as the end and start of two diff splines
         if(!needsCrossingRoute) {
             Pose2d midpoint = new Pose2d(new Vector2d((poi.getPose().position.x + robotPosition.position.x)/2,(poi.getPose().position.y + robotPosition.position.y)/2), (wrapAngle(poi.getPose().heading.log()) + wrapAngle(robotPosition.heading.log()))/2);
+            actionBuilder =
             actionBuilder
-                    .splineTo(midpoint.position, midpoint.heading)
-                    .splineTo(poi.getPose().position, poi.getPose().heading)
-                    .build();
+                    .setReversed(false)
+//                    .splineTo(midpoint.position, midpoint.heading)
+                    .splineTo(poi.getPose().position, poi.getPose().heading);
         }
         else {
-            CrossingRoute preferredRoute = crossingRoutes.get(getCrossingRouteArrayIndex(preferredRouteIndex));
+            boolean reverseSplines = startZone.equals(Zone.AUDIENCE);
+            CrossingRoute preferredRoute = crossingRoutes.get(preferredRouteIndex);
+            actionBuilder =
             actionBuilder
-                    .splineTo(preferredRoute.getEntryPose(robotPosition).position, preferredRoute.ROUTE_HEADING_RAD);
-            preferredRoute.addToPath(actionBuilder, robotPosition)
-                    .splineTo(poi.getPose().position, poi.getPose().heading);
+                    .setReversed(reverseSplines)
+                    .splineTo(preferredRoute.getEntryPose(robotPosition).position, preferredRoute.ROUTE_HEADING_RAD + (reverseSplines? Math.PI : 0) )
+//                    .setReversed(false);
+            ;
+            actionBuilder =
+            preferredRoute.addToPath(actionBuilder, robotPosition);
+            actionBuilder = actionBuilder
+                    .setReversed(!reverseSplines)
+                    .splineTo(poi.getPose().position, poi.getPose().heading)
+                    .turnTo(poi.getPose().heading);
         }
 
         return new SequentialAction(
@@ -199,10 +217,14 @@ public class Field {
         for(Zone k : zones) {
             if(k.withinZone(robotPosition))
                 return k;
+            else System.out.println(k.name + ": doesn't work");
         }
 
         //SHOULD NEVER HAPPEN BC ZONES BLANKET THE WHOLE FIELD
         return null;
+    }
+    public static double wrapAngle(double angle) {
+        return ((angle % 360) + 360) % 360;
     }
 
     public ArrayList<SubZone> getSubZones(Pose2d robotPosition) {
@@ -249,14 +271,20 @@ class CrossingRoute {
 
     //return the closest entry point to a given pose
     public Pose2d getEntryPose(Pose2d pose) {
-        double distanceToAudienceSide = Math.hypot(Math.abs(pose.position.x - audienceSide.position.x), Math.abs(pose.position.y - audienceSide.position.x)) / FIELD_INCHES_PER_GRID;
-        double distanceToBackstageSide = Math.hypot(Math.abs(pose.position.x - backstageSide.position.x), Math.abs(pose.position.y - backstageSide.position.x)) / FIELD_INCHES_PER_GRID;
-        return distanceToBackstageSide > distanceToAudienceSide?  audienceSide : backstageSide;
+        if(field.getZone(pose).equals(Field.Zone.AUDIENCE))
+            return audienceSide;
+        return backstageSide;
+//        double distanceToAudienceSide = Math.hypot(Math.abs(pose.position.x - audienceSide.position.x), Math.abs(pose.position.y - audienceSide.position.x)) / FIELD_INCHES_PER_GRID;
+//        double distanceToBackstageSide = Math.hypot(Math.abs(pose.position.x - backstageSide.position.x), Math.abs(pose.position.y - backstageSide.position.x)) / FIELD_INCHES_PER_GRID;
+//        return distanceToBackstageSide > distanceToAudienceSide?  audienceSide : backstageSide;
     }
     public Pose2d getExitPose(Pose2d pose) {
-        double distanceToAudienceSide = Math.hypot(Math.abs(pose.position.x - audienceSide.position.x), Math.abs(pose.position.y - audienceSide.position.x)) / FIELD_INCHES_PER_GRID;
-        double distanceToBackstageSide = Math.hypot(Math.abs(pose.position.x - backstageSide.position.x), Math.abs(pose.position.y - backstageSide.position.x)) / FIELD_INCHES_PER_GRID;
-        return distanceToBackstageSide > distanceToAudienceSide?  backstageSide : audienceSide;
+        if(field.getZone(pose).equals(Field.Zone.AUDIENCE))
+            return backstageSide;
+        return audienceSide;
+//        double distanceToAudienceSide = Math.hypot(Math.abs(pose.position.x - audienceSide.position.x), Math.abs(pose.position.y - audienceSide.position.x)) / FIELD_INCHES_PER_GRID;
+//        double distanceToBackstageSide = Math.hypot(Math.abs(pose.position.x - backstageSide.position.x), Math.abs(pose.position.y - backstageSide.position.x)) / FIELD_INCHES_PER_GRID;
+//        return distanceToBackstageSide > distanceToAudienceSide?  backstageSide : audienceSide;
     }
 
     public int getIndex() {
@@ -266,10 +294,16 @@ class CrossingRoute {
     //assumes robot is at the start of a crossing route and adds the whole route path to the actionbuilder
     public TrajectoryActionBuilder addToPath(TrajectoryActionBuilder actionBuilder, Pose2d startPose) {
         //trying to preempt the turnTo existing heading exception w/ roughly 2deg tolerance
-        if(!withinError(startPose.heading.log(), ROUTE_HEADING_RAD, .05))
-            actionBuilder.turnTo(ROUTE_HEADING_RAD);
-        actionBuilder.strafeTo(getExitPose(startPose).position);
+//        if(!withinError(startPose.heading.log(), ROUTE_HEADING_RAD, .05))
+//            actionBuilder = actionBuilder.turnTo(ROUTE_HEADING_RAD);
+
+        actionBuilder = actionBuilder.strafeTo(getExitPose(startPose).position);
+        System.out.println(getEntryPose(startPose));
         return actionBuilder;
+    }
+
+    public static boolean withinError(double value, double target, double error){
+        return (Math.abs(target-value) <= error);
     }
 
 }
