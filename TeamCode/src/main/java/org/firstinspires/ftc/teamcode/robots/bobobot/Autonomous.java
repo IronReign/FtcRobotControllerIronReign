@@ -30,15 +30,15 @@ public class Autonomous extends OpMode {
     public enum AutonState{
         DRIVE_FROM_START, TURN, DRIVE_THRU, DRIVE_TO_BACKDROP, INIT, PURPLE_PIXEL_DROP
     }
+    Pose2d leftSpikeTape = new Pose2d(24, -24, 90);
+    Pose2d middlespikeTape = new Pose2d(0,-24 ,90);
+    Pose2d rightSpikeTape = new Pose2d(24, -30, 90);
 
     public static double GO_TO_X_RED;
     public static double GO_TO_Y_RED = -36;
     public AutonState autonState;
     private Action
-    audienceRed, toRed, toBlue;
-
-
-
+    audienceRed, toRed, toBlue, toTape;
 
     @Override
     public void init(){
@@ -56,8 +56,13 @@ public class Autonomous extends OpMode {
     public void init_loop(){
         toggle.gamepadUpdate();
         runnerBot.enableVision();
-        toggle.setGamePose();
+        toggle.autonSetup();
         telemetry.addData("Game Init Position \t", runnerBot.driveTrain.getGamePosition());
+        telemetry.addData("Pose \t", "\n X \t"
+                + runnerBot.driveTrain.pose.position.x + "\n Y \t"
+                + runnerBot.driveTrain.pose.position.y + "\n Heading \t"
+                + Math.toDegrees(runnerBot.driveTrain.pose.heading.log()));
+        telemetry.addData("Spike Tape Index \t", runnerBot.driveTrain.getSpikeIndex());
     }
     @Override
     public void start(){
@@ -126,11 +131,11 @@ public class Autonomous extends OpMode {
     public void purplePixelRed(){
         switch (autonIndex){
             case 0:
-                goToRed();
+                toTapeRed();
                 autonIndex++;
                 break;
             case 1:
-                if (!toRed.run(new TelemetryPacket())) {
+                if (!toTape.run(new TelemetryPacket())) {
                     autonState = AutonState.DRIVE_FROM_START;
                     autonIndex++;
                 }
@@ -193,4 +198,28 @@ public class Autonomous extends OpMode {
     public AutonState getAutonState() {
         return autonState;
     }
+
+    public void toTapeRed(){
+        goToRed();
+        if(runnerBot.driveTrain.getSpikeIndex() == 1) {
+            toTape = new SequentialAction(runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
+                    .splineToLinearHeading(leftSpikeTape, 0)
+                    .build()
+            );
+        }
+        else if(runnerBot.driveTrain.getSpikeIndex() == 2){
+            toTape = toRed;
+
+        }
+        else if(runnerBot.driveTrain.getSpikeIndex() == 3) {
+            toTape = new SequentialAction(runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
+                    .splineToLinearHeading(rightSpikeTape, 0)
+                    .build()
+            );
+        }
+
+    }
+
+
+
 }

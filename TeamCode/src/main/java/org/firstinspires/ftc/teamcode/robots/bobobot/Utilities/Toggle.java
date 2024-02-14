@@ -82,7 +82,7 @@ public class Toggle {
     }
 
 
-    public void setGamePose(){
+    public void autonSetup(){
         if(stickyGamepad1.b){
             runnerBot.driveTrain.setPose(Constants.Position.START_LEFT_RED);
             DriveTrain.gamePosition = Constants.Position.START_LEFT_RED;
@@ -101,6 +101,10 @@ public class Toggle {
         if(stickyGamepad1.a){
             runnerBot.driveTrain.setPose(Constants.Position.START_LEFT_BLUE);
             DriveTrain.gamePosition = Constants.Position.START_LEFT_BLUE;
+        }
+
+        if(stickyGamepad1.right_bumper){
+            runnerBot.driveTrain.changeIndex();
         }
     }
 

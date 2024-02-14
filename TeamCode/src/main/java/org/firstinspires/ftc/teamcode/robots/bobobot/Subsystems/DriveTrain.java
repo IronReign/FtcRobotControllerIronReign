@@ -35,6 +35,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public static int turnToTest = 0;
     public static double turnToSpeed= .8;
     public static Constants.Position gamePosition = null;
+    public int spikeIndex = 2;
     public DriveTrain(HardwareMap hardwareMap, RunnerBot runnerBot) {
         super(hardwareMap, new Pose2d(0, 0, 0));
         this.runnerBot = runnerBot;
@@ -58,6 +59,23 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         updatePoseEstimate();
     }
 
+    public void changeIndex(){
+        switch(spikeIndex){
+            case 1:
+                spikeIndex++;
+                break;
+            case 2:
+                spikeIndex++;
+                break;
+            case 3:
+                spikeIndex = 1;
+                break;
+        }
+    }
+
+    public int getSpikeIndex(){
+        return spikeIndex;
+    }
     public void strafe() {
         Pose2d startPosition = pose;
         Actions.runBlocking(
@@ -134,7 +152,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
                 robotSpeed = .8;
                 mode++;
                 speedModeIsOn = true;
-                runnerBot.intake.armWristIn();
                 break;
             case 1: //slow
                 robotSpeed = 0.45;
