@@ -182,7 +182,7 @@ public class Outtake implements Subsystem {
             if (top < 0 && bottom < 0 || top > 0 && bottom > 0)
                 theta = Math.asin(Math.sqrt(top / bottom));
             else if (top < 0) {
-                int targetPos = (int) (slide.getCurrentPosition() + Math.sqrt(Math.abs(top) + 1 * ticksPerInch));
+                int targetPos = (int) (slide.getCurrentPosition() + Math.sqrt(Math.abs(top)* ticksPerInch + 1 * ticksPerInch));
                 if(targetPos > slidePositionMax) //if outside of the slides range fail
                     return false;
                 slide.setTargetPosition(targetPos); //move the slide to make the final position possible
@@ -190,7 +190,7 @@ public class Outtake implements Subsystem {
                 bottom = Math.pow(x - armBase, 2) - Math.pow(targetPos * ticksPerInch * Math.sin(armTheta), 2);
                 theta = Math.asin(Math.sqrt(top / bottom));
             } else {
-                int targetPos = (int) (slide.getCurrentPosition() + Math.sqrt(Math.abs(bottom) + 1 * ticksPerInch));
+                int targetPos = (int) (slide.getCurrentPosition() + Math.sqrt(Math.abs(bottom) * ticksPerInch + 1 * ticksPerInch));
                 if(targetPos > slidePositionMax) //if outside of the slides range fail
                     return false;
                 slide.setTargetPosition(targetPos); //move the slide to make the final position possible
