@@ -185,7 +185,7 @@ public class Field {
             actionBuilder =
             preferredRoute.addToPath(actionBuilder, robotPosition);
             actionBuilder = actionBuilder
-                    .setReversed(!reverseSplines)
+                    .setReversed(reverseSplines)
                     .splineTo(poi.getPose().position, poi.getPose().heading)
                     .turnTo(poi.getPose().heading);
         }

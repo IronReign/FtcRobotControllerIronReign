@@ -86,14 +86,19 @@ public class TeleOpMeepMeep {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        Pose2d p = field.WING_INTAKE.getPose();
+        int randomizer = 3; //1, 2 or 3
+        Pose2d p;
+
+        startingPosition = Position.START_RIGHT_BLUE;
+        p = field.WING_INTAKE.getPose();
+        selectedPath = setPath(startingPosition, randomizer);
         System.out.println("selected path:\t" + selectedPath);
         System.out.println("audience intermediate:\t" + audienceIntermediate);
         System.out.println(autonPaths[2][4]);
 
         Action bot1Action, bot2Action, bot3Action, bot4Action;
         bot1Action =
-                field.pathToPOI(p, myBot, field.SCORE, 1);
+                field.pathToPOI(p, myBot, field.SCORE, 5);
 
 //                myBot.getDrive().actionBuilder(p)
 //
