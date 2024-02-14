@@ -173,6 +173,39 @@ public class Outtake implements Subsystem {
         articulation = Articulation.MANUAL;
     }
 
+    //should use the calculated IK formula to move to the field coordinate in inches (x, z)
+    public boolean goToPoint(int x, int z) {
+        try {
+            double theta = 0;
+            double top = Math.pow(z - armHeight, 2) - Math.pow(slide.getCurrentPosition() * ticksPerInch * Math.sin(armTheta), 2);
+            double bottom = Math.pow(x - armBase, 2) - Math.pow(slide.getCurrentPosition() * ticksPerInch * Math.sin(armTheta), 2);
+            if (top < 0 && bottom < 0 || top > 0 && bottom > 0)
+                theta = Math.asin(Math.sqrt(top / bottom));
+            else if (top < 0) {
+                int targetPos = (int) (slide.getCurrentPosition() + Math.sqrt(Math.abs(top) + 1 * ticksPerInch));
+                if(targetPos > slidePositionMax) //if outside of the slides range fail
+                    return false;
+                slide.setTargetPosition(targetPos); //move the slide to make the final position possible
+                top = Math.pow(z - armHeight, 2) - Math.pow(targetPos * ticksPerInch * Math.sin(armTheta), 2);
+                bottom = Math.pow(x - armBase, 2) - Math.pow(targetPos * ticksPerInch * Math.sin(armTheta), 2);
+                theta = Math.asin(Math.sqrt(top / bottom));
+            } else {
+                int targetPos = (int) (slide.getCurrentPosition() + Math.sqrt(Math.abs(bottom) + 1 * ticksPerInch));
+                if(targetPos > slidePositionMax) //if outside of the slides range fail
+                    return false;
+                slide.setTargetPosition(targetPos); //move the slide to make the final position possible
+                top = Math.pow(z - armHeight, 2) - Math.pow(targetPos * ticksPerInch * Math.sin(armTheta), 2);
+                bottom = Math.pow(x - armBase, 2) - Math.pow(targetPos * ticksPerInch * Math.sin(armTheta), 2);
+                theta = Math.asin(Math.sqrt(top / bottom));
+            }
+            flipper.setTargetAngle(theta); // move the flipper angle to the calculated angle
+            return true;
+        }
+        catch(ArithmeticException e) { //if the math throws an exception because of impossible trig fail
+            return false;
+        }
+    }
+
     public int ingestPositionIndex = 0;
     public long ingestPositionTimer = 0;
 
