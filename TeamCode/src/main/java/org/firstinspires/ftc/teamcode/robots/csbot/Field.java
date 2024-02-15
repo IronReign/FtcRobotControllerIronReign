@@ -16,6 +16,8 @@ import java.lang.Math;
 import java.util.*;
 
 public class Field {
+
+    public static final double FIELD_INCHES_PER_GRID = 23.5;
     public boolean finalized = false;
     List<Zone> zones;
     List<SubZone> subZones;
@@ -24,8 +26,6 @@ public class Field {
     //indexes correspond to red route numbering
     public List<CrossingRoute> crossingRoutes = new ArrayList<>();
 
-    //shouldn't iterate through POIS, they're selectable destinations
-    //todo - maybe implement w/ a map?
     POI HANG;
     POI HANG_PREP;
     POI WING_INTAKE;
@@ -46,8 +46,8 @@ public class Field {
 
     public enum Zone {
         AUDIENCE(Field.MIN_X_VALUE, -1.5, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "AUDIENCE"),
-        BACKSTAGE(.5, Field.MAX_X_VALUE, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "BACKSTAGE"),
-        RIGGING(-1.5, .5, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "RIGGING");
+        BACKSTAGE(.501, Field.MAX_X_VALUE, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "BACKSTAGE"),
+        RIGGING(-1.5, .501, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "RIGGING");
 
         public double x1;
         public double x2;
@@ -72,6 +72,7 @@ public class Field {
         public boolean withinZone(Pose2d pose) {
             List<Double> xVals = Arrays.asList(pose.position.x/FIELD_INCHES_PER_GRID, x1, x2);
             List<Double> yVals = Arrays.asList(pose.position.y/FIELD_INCHES_PER_GRID, y1, y2);
+
             if(
                 //if the pose is not an extrema of the list, it's within the bounds of the list
                     !(
@@ -88,7 +89,7 @@ public class Field {
 
     public boolean isRed = true;
 
-    public void init_loop() {
+        public void init_loop() {
         isRed = alliance.getMod();
     }
     public void finalizeField() {
@@ -96,15 +97,15 @@ public class Field {
         zones = Zone.getNamedZones();
         subZones = SubZone.getNamedSubZones(isRed);
         int allianceMultiplier = isRed? 1 : -1;
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, -2.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, -2.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 0: 6)));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, -1.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, -1.5  * allianceMultiplier, STANDARD_HEADING), (isRed? 1: 5)));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5,  -.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5,  -.5* allianceMultiplier, STANDARD_HEADING), (isRed? 2: 4)));
+        crossingRoutes.add(new CrossingRoute(P2D(-1.5, -2.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, -2.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 0: 6), this));
+        crossingRoutes.add(new CrossingRoute(P2D(-1.5, -1.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, -1.5  * allianceMultiplier, STANDARD_HEADING), (isRed? 1: 5), this));
+        crossingRoutes.add(new CrossingRoute(P2D(-1.5,  -.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5,  -.5* allianceMultiplier, STANDARD_HEADING), (isRed? 2: 4), this));
 //          DIAGONAL ROUTE
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, .5 * allianceMultiplier, isRed? 153.434948823 : 206.565051177), P2D(3.5, -.5 * allianceMultiplier, isRed? 153.434948823 : 206.565051177), 3));
+        crossingRoutes.add(new CrossingRoute(P2D(-1.5, .5 * allianceMultiplier, isRed? 153.434948823 : 206.565051177), P2D(.5, -.5 * allianceMultiplier, isRed? 153.434948823 : 206.565051177), 3, this));
 //
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, .5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, .5 * allianceMultiplier, STANDARD_HEADING), (isRed? 4: 2)));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, 1.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, 1.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 5: 1)));
-            crossingRoutes.add(new CrossingRoute(P2D(1.5, 2.5 * allianceMultiplier, STANDARD_HEADING), P2D(3.5, 2.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 6: 0)));
+        crossingRoutes.add(new CrossingRoute(P2D(-1.5, .5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, .5 * allianceMultiplier, STANDARD_HEADING), (isRed? 4: 2), this));
+        crossingRoutes.add(new CrossingRoute(P2D(-1.5, 1.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, 1.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 5: 1), this));
+        crossingRoutes.add(new CrossingRoute(P2D(-1.5, 2.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, 2.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 6: 0), this));
 
 
         HANG = isRed? POI.HANG : POI.HANG.flipOnX();
@@ -129,25 +130,18 @@ public class Field {
             double zoneHeight = Math.max(zone.x1, zone.x2) * FIELD_INCHES_PER_GRID - zoneX;
             double zoneWidth = Math.max(zone.y1, zone.y2) * FIELD_INCHES_PER_GRID - zoneY;
             if (System.currentTimeMillis()/1000 % 2 == 0) {
-                c.setAlpha(.5);
                 c.setFill("green");
                 c.fillRect(zoneX, zoneY, zoneHeight, zoneWidth);
 
             }
-            c.setAlpha(100);
         }
     }
 
-    int getCrossingRouteArrayIndex(int crossingRouteIndex){
-        return isRed? crossingRouteIndex : 6 - crossingRouteIndex;
-    }
-
-    //swap to pathtoPOI(pose, destinationpoi)
-
     public SequentialAction pathToPOI(Pose2d robotPosition, Robot robot, POI poi, int preferredRouteIndex){
+
         Zone startZone = getZone(robotPosition);
         Zone endZone = poi.getZone();
-        //ROBOT DOES NOTHING IF THE STARTZONE IS IN THE RIGGING
+        //robot does nothing if startzone is in rigging
         if(startZone == Zone.RIGGING)
             return new SequentialAction();
 
@@ -155,25 +149,29 @@ public class Field {
 
         boolean needsCrossingRoute = !startZone.equals(endZone);
 
-        //to ensure that splines aren't too wonky, draw a line from start to end
-        //and add the midpoint of the line as the end and start of two diff splines
-        if(!needsCrossingRoute) {
-            Pose2d midpoint = new Pose2d(new Vector2d((poi.getPose().position.x + robotPosition.position.x)/2,(poi.getPose().position.y + robotPosition.position.y)/2), (wrapAngle(poi.getPose().heading.log()) + wrapAngle(robotPosition.heading.log()))/2);
-            actionBuilder
-                    .splineTo(midpoint.position, midpoint.heading)
-                    .splineTo(poi.getPose().position, poi.getPose().heading)
-                    .build();
+        boolean reverseSplines = startZone.equals(Zone.AUDIENCE);
+
+
+        if (needsCrossingRoute) {
+            CrossingRoute preferredRoute = crossingRoutes.get(preferredRouteIndex);
+            //spline to CrossingRoute
+            actionBuilder =
+                    actionBuilder
+                            .setReversed(reverseSplines)
+                            .splineTo(preferredRoute.getEntryPose(robotPosition).position, preferredRoute.ROUTE_HEADING_RAD + (reverseSplines ? Math.PI : 0));
+
+            //run preferredRoute
+            actionBuilder =
+                    preferredRoute.addToPath(actionBuilder, robotPosition);
         }
-        else {
-            CrossingRoute preferredRoute = crossingRoutes.get(getCrossingRouteArrayIndex(preferredRouteIndex));
-            actionBuilder
-                    .splineTo(preferredRoute.getEntryPose(robotPosition).position, preferredRoute.ROUTE_HEADING_RAD);
-            preferredRoute.addToPath(actionBuilder, robotPosition)
-                    .splineTo(poi.getPose().position, poi.getPose().heading);
-        }
+        //spline to destination
+        actionBuilder =
+                actionBuilder
+                        .setReversed(reverseSplines)
+                        .splineToSplineHeading(poi.getPose(), poi.getPose().heading);
 
         return new SequentialAction(
-            actionBuilder.build()
+                actionBuilder.build()
         );
     }
 
@@ -200,11 +198,14 @@ public class Field {
             if(k.withinZone(robotPosition))
                 return k;
         }
-
         //SHOULD NEVER HAPPEN BC ZONES BLANKET THE WHOLE FIELD
-        return null;
+        throw new RuntimeException("robot's outside the virtual field");
+    }
+    public static double wrapAngle(double angle) {
+        return ((angle % 360) + 360) % 360;
     }
 
+    //get SubZones at robotPosition
     public ArrayList<SubZone> getSubZones(Pose2d robotPosition) {
         ArrayList<SubZone> temp = new ArrayList<>();
         for(SubZone k : subZones) {
@@ -214,6 +215,8 @@ public class Field {
         return temp;
     }
 
+
+    //get POIs at robotPosition
     public POI getPOI(Pose2d robotPosition) {
         List<POI> temp = Arrays.asList(HANG, HANG_PREP, SCORE, WING_INTAKE);
         for(POI poi : temp) {
@@ -223,7 +226,9 @@ public class Field {
         return null;
     }
 
-
+    public static Pose2d P2D (double x, double y, double deg) {
+        return new Pose2d(x * FIELD_INCHES_PER_GRID, y * FIELD_INCHES_PER_GRID, Math.toRadians(deg));
+    }
 }
 
 class CrossingRoute {
@@ -231,13 +236,15 @@ class CrossingRoute {
     Pose2d backstageSide;
     double ROUTE_HEADING_RAD;
     int index;
+    Field field;
 
-    public CrossingRoute(Pose2d audienceSide, Pose2d backstageSide, int index){
+    public CrossingRoute(Pose2d audienceSide, Pose2d backstageSide, int index, Field field){
         this.audienceSide = audienceSide;
         this.backstageSide = backstageSide;
         //should be the same for both poses because crossing routes are linear
         ROUTE_HEADING_RAD = audienceSide.heading.log();
         this.index = index;
+        this.field = field;
     }
 
     //return the shortest distance between a given pose and either endpoint in field grids
@@ -247,29 +254,32 @@ class CrossingRoute {
         return distanceToBackstageSide > distanceToAudienceSide?  distanceToAudienceSide : distanceToBackstageSide;
     }
 
-    //return the closest entry point to a given pose
+    //return the closest endpoint to a given pose
     public Pose2d getEntryPose(Pose2d pose) {
-        double distanceToAudienceSide = Math.hypot(Math.abs(pose.position.x - audienceSide.position.x), Math.abs(pose.position.y - audienceSide.position.x)) / FIELD_INCHES_PER_GRID;
-        double distanceToBackstageSide = Math.hypot(Math.abs(pose.position.x - backstageSide.position.x), Math.abs(pose.position.y - backstageSide.position.x)) / FIELD_INCHES_PER_GRID;
-        return distanceToBackstageSide > distanceToAudienceSide?  audienceSide : backstageSide;
+        if(field.getZone(pose).equals(Field.Zone.AUDIENCE))
+            return audienceSide;
+        return backstageSide;
     }
+
+    //returns the farthest endpoint to a given pose
     public Pose2d getExitPose(Pose2d pose) {
-        double distanceToAudienceSide = Math.hypot(Math.abs(pose.position.x - audienceSide.position.x), Math.abs(pose.position.y - audienceSide.position.x)) / FIELD_INCHES_PER_GRID;
-        double distanceToBackstageSide = Math.hypot(Math.abs(pose.position.x - backstageSide.position.x), Math.abs(pose.position.y - backstageSide.position.x)) / FIELD_INCHES_PER_GRID;
-        return distanceToBackstageSide > distanceToAudienceSide?  backstageSide : audienceSide;
+        if(field.getZone(pose).equals(Field.Zone.AUDIENCE))
+            return backstageSide;
+        return audienceSide;
     }
 
     public int getIndex() {
         return index;
     }
 
-    //assumes robot is at the start of a crossing route and adds the whole route path to the actionbuilder
+    //assumes robot is at the start of a crossing route and adds the whole route path to the actionBuilder
     public TrajectoryActionBuilder addToPath(TrajectoryActionBuilder actionBuilder, Pose2d startPose) {
-        //trying to preempt the turnTo existing heading exception w/ roughly 2deg tolerance
-        if(!withinError(startPose.heading.log(), ROUTE_HEADING_RAD, .05))
-            actionBuilder.turnTo(ROUTE_HEADING_RAD);
-        actionBuilder.strafeTo(getExitPose(startPose).position);
+        actionBuilder = actionBuilder.strafeTo(getExitPose(startPose).position);
         return actionBuilder;
+    }
+
+    public static boolean withinError(double value, double target, double error){
+        return (Math.abs(target-value) <= error);
     }
 
 }

@@ -1,7 +1,6 @@
 package com.example.meepmeeptesting;
 
 import static com.example.meepmeeptesting.Field.FIELD_INCHES_PER_GRID;
-import static com.example.meepmeeptesting.TeleOpMeepMeep.P2D;
 import static com.example.meepmeeptesting.TeleOpMeepMeep.field;
 
 import com.acmerobotics.roadrunner.Pose2d;
@@ -26,8 +25,6 @@ public class Field {
     //indexes correspond to red route numbering
     public List<CrossingRoute> crossingRoutes = new ArrayList<>();
 
-    //shouldn't iterate through POIS, they're selectable destinations
-    //todo - maybe implement w/ a map?
     POI HANG;
     POI HANG_PREP;
     POI WING_INTAKE;
@@ -74,9 +71,6 @@ public class Field {
         public boolean withinZone(Pose2d pose) {
             List<Double> xVals = Arrays.asList(pose.position.x/FIELD_INCHES_PER_GRID, x1, x2);
             List<Double> yVals = Arrays.asList(pose.position.y/FIELD_INCHES_PER_GRID, y1, y2);
-            System.out.println(pose.position.x / FIELD_INCHES_PER_GRID);
-            System.out.println(pose.position.y / FIELD_INCHES_PER_GRID);
-            System.out.println("" + Collections.min(xVals) + " " + Collections.max(xVals) + " " + Collections.min(yVals) + " " + Collections.max(yVals));
 
             if(
                 //if the pose is not an extrema of the list, it's within the bounds of the list
@@ -144,51 +138,38 @@ public class Field {
         }
     }*/
 
-    int getCrossingRouteArrayIndex(int crossingRouteIndex){
-        return isRed? crossingRouteIndex : 6 - crossingRouteIndex;
-    }
-
     public SequentialAction pathToPOI(Pose2d robotPosition, RoadRunnerBotEntity robot, POI poi, int preferredRouteIndex){
-        System.out.println(robotPosition);
 
         Zone startZone = getZone(robotPosition);
         Zone endZone = poi.getZone();
-        System.out.println("START: " + startZone + "\t end : " + endZone);
-        //ROBOT DOES NOTHING IF THE STARTZONE IS IN THE RIGGING
+        //robot does nothing if startzone is in rigging
         if(startZone == Zone.RIGGING)
             return new SequentialAction();
 
         TrajectoryActionBuilder actionBuilder = robot.getDrive().actionBuilder(robotPosition);
 
         boolean needsCrossingRoute = !startZone.equals(endZone);
-        System.out.println(needsCrossingRoute);
 
-        //to ensure that splines aren't too wonky, draw a line from start to end
-        //and add the midpoint of the line as the end and start of two diff splines
-        if(!needsCrossingRoute) {
-            Pose2d midpoint = new Pose2d(new Vector2d((poi.getPose().position.x + robotPosition.position.x)/2,(poi.getPose().position.y + robotPosition.position.y)/2), (wrapAngle(poi.getPose().heading.log()) + wrapAngle(robotPosition.heading.log()))/2);
-            actionBuilder =
-            actionBuilder
-                    .setReversed(false)
-//                    .splineTo(midpoint.position, midpoint.heading)
-                    .splineTo(poi.getPose().position, poi.getPose().heading);
-        }
-        else {
-            boolean reverseSplines = startZone.equals(Zone.AUDIENCE);
+        boolean reverseSplines = startZone.equals(Zone.AUDIENCE);
+
+
+        if (needsCrossingRoute) {
             CrossingRoute preferredRoute = crossingRoutes.get(preferredRouteIndex);
+            //spline to CrossingRoute
             actionBuilder =
-            actionBuilder
-                    .setReversed(reverseSplines)
-                    .splineTo(preferredRoute.getEntryPose(robotPosition).position, preferredRoute.ROUTE_HEADING_RAD + (reverseSplines? Math.PI : 0) )
-//                    .setReversed(false);
-            ;
+                    actionBuilder
+                            .setReversed(reverseSplines)
+                            .splineTo(preferredRoute.getEntryPose(robotPosition).position, preferredRoute.ROUTE_HEADING_RAD + (reverseSplines ? Math.PI : 0));
+
+            //run preferredRoute
             actionBuilder =
-            preferredRoute.addToPath(actionBuilder, robotPosition);
-            actionBuilder = actionBuilder
-                    .setReversed(reverseSplines)
-                    .splineTo(poi.getPose().position, poi.getPose().heading)
-                    .turnTo(poi.getPose().heading);
+                    preferredRoute.addToPath(actionBuilder, robotPosition);
         }
+        //spline to destination
+        actionBuilder =
+        actionBuilder
+                .setReversed(reverseSplines)
+                .splineToSplineHeading(poi.getPose(), poi.getPose().heading);
 
         return new SequentialAction(
             actionBuilder.build()
@@ -217,16 +198,15 @@ public class Field {
         for(Zone k : zones) {
             if(k.withinZone(robotPosition))
                 return k;
-            else System.out.println(k.name + ": doesn't work");
         }
-
         //SHOULD NEVER HAPPEN BC ZONES BLANKET THE WHOLE FIELD
-        return null;
+        throw new RuntimeException("robot's outside the virtual field");
     }
     public static double wrapAngle(double angle) {
         return ((angle % 360) + 360) % 360;
     }
 
+    //get SubZones at robotPosition
     public ArrayList<SubZone> getSubZones(Pose2d robotPosition) {
         ArrayList<SubZone> temp = new ArrayList<>();
         for(SubZone k : subZones) {
@@ -236,6 +216,8 @@ public class Field {
         return temp;
     }
 
+
+    //get POIs at robotPosition
     public POI getPOI(Pose2d robotPosition) {
         List<POI> temp = Arrays.asList(HANG, HANG_PREP, SCORE, WING_INTAKE);
         for(POI poi : temp) {
@@ -245,7 +227,9 @@ public class Field {
         return null;
     }
 
-
+    public static Pose2d P2D (double x, double y, double deg) {
+        return new Pose2d(x * FIELD_INCHES_PER_GRID, y * FIELD_INCHES_PER_GRID, Math.toRadians(deg));
+    }
 }
 
 class CrossingRoute {
@@ -269,36 +253,27 @@ class CrossingRoute {
         return distanceToBackstageSide > distanceToAudienceSide?  distanceToAudienceSide : distanceToBackstageSide;
     }
 
-    //return the closest entry point to a given pose
+    //return the closest endpoint to a given pose
     public Pose2d getEntryPose(Pose2d pose) {
         if(field.getZone(pose).equals(Field.Zone.AUDIENCE))
             return audienceSide;
         return backstageSide;
-//        double distanceToAudienceSide = Math.hypot(Math.abs(pose.position.x - audienceSide.position.x), Math.abs(pose.position.y - audienceSide.position.x)) / FIELD_INCHES_PER_GRID;
-//        double distanceToBackstageSide = Math.hypot(Math.abs(pose.position.x - backstageSide.position.x), Math.abs(pose.position.y - backstageSide.position.x)) / FIELD_INCHES_PER_GRID;
-//        return distanceToBackstageSide > distanceToAudienceSide?  audienceSide : backstageSide;
     }
+
+    //returns the farthest endpoint to a given pose
     public Pose2d getExitPose(Pose2d pose) {
         if(field.getZone(pose).equals(Field.Zone.AUDIENCE))
             return backstageSide;
         return audienceSide;
-//        double distanceToAudienceSide = Math.hypot(Math.abs(pose.position.x - audienceSide.position.x), Math.abs(pose.position.y - audienceSide.position.x)) / FIELD_INCHES_PER_GRID;
-//        double distanceToBackstageSide = Math.hypot(Math.abs(pose.position.x - backstageSide.position.x), Math.abs(pose.position.y - backstageSide.position.x)) / FIELD_INCHES_PER_GRID;
-//        return distanceToBackstageSide > distanceToAudienceSide?  backstageSide : audienceSide;
     }
 
     public int getIndex() {
         return index;
     }
 
-    //assumes robot is at the start of a crossing route and adds the whole route path to the actionbuilder
+    //assumes robot is at the start of a crossing route and adds the whole route path to the actionBuilder
     public TrajectoryActionBuilder addToPath(TrajectoryActionBuilder actionBuilder, Pose2d startPose) {
-        //trying to preempt the turnTo existing heading exception w/ roughly 2deg tolerance
-//        if(!withinError(startPose.heading.log(), ROUTE_HEADING_RAD, .05))
-//            actionBuilder = actionBuilder.turnTo(ROUTE_HEADING_RAD);
-
         actionBuilder = actionBuilder.strafeTo(getExitPose(startPose).position);
-        System.out.println(getEntryPose(startPose));
         return actionBuilder;
     }
 

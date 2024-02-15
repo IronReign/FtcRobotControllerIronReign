@@ -10,7 +10,7 @@ public class POI {
     //also needs actual testing
     public static double POI_ERROR_RADIUS = .25;
 
-    public static POI WING_INTAKE = new POI(-2.1, 1.1, 90, "WING_INTAKE", Field.Zone.AUDIENCE);
+    public static POI WING_INTAKE = new POI(-2.1, 1.5, 90, "WING_INTAKE", Field.Zone.AUDIENCE);
     public static POI HANG_PREP = new POI(.6, -1.5, 180, "HANG_PREP", Field.Zone.BACKSTAGE);
     public static POI HANG = new POI(-0.5, -1.5, 180, "HANG", Field.Zone.RIGGING);
     public static POI SCORE = new POI(1.65, -1.5, 180, "SCORE", Field.Zone.BACKSTAGE);
@@ -20,7 +20,6 @@ public class POI {
     public static POI APRILTAG4 = new POI(61.728/FIELD_INCHES_PER_GRID, -29.344/FIELD_INCHES_PER_GRID, 180, "APRILTAG4", Field.Zone.BACKSTAGE);
     public static POI APRILTAG5 = new POI(61.728/FIELD_INCHES_PER_GRID, -35.344/FIELD_INCHES_PER_GRID, 180, "APRILTAG5", Field.Zone.BACKSTAGE);
     public static POI APRILTAG6 = new POI(61.728/FIELD_INCHES_PER_GRID, -40.344/FIELD_INCHES_PER_GRID, 180, "APRILTAG6", Field.Zone.BACKSTAGE);
-
 
     POI(double x, double y, double heading, String name, Field.Zone parent) {
         this.parent = parent;
