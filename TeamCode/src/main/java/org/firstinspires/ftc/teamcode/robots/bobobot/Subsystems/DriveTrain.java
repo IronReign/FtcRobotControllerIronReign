@@ -29,13 +29,14 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public double imuAngle;
     private double targetHeading;
     public static PIDController headingPID;
-    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0, .2, 0);
+    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0, .1854, 0);
     public static double HEADING_PID_TOLERANCE = .04; //this is a percentage of the input range .063 of 2PI is 1 degree
     private double PIDCorrection, PIDError;
     public static int turnToTest = 0;
     public static double turnToSpeed= .8;
     public static Constants.Position gamePosition = null;
-    public int spikeIndex = 2;
+    public int spikeIndex = 1;
+    public int turn = 90;
     public DriveTrain(HardwareMap hardwareMap, RunnerBot runnerBot) {
         super(hardwareMap, new Pose2d(0, 0, 0));
         this.runnerBot = runnerBot;
@@ -63,16 +64,22 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         switch(spikeIndex){
             case 1:
                 spikeIndex++;
+                turn = 180;
                 break;
             case 2:
                 spikeIndex++;
+                turn = 0;
                 break;
             case 3:
                 spikeIndex = 1;
+                turn = 90;
                 break;
         }
     }
 
+    public int getTurn(){
+        return turn;
+    }
     public int getSpikeIndex(){
         return spikeIndex;
     }
