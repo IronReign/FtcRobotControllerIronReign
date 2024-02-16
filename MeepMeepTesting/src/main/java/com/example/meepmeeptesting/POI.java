@@ -13,13 +13,22 @@ public class POI {
     public static POI WING_INTAKE = new POI(-2.1, 1.5, 90, "WING_INTAKE", Field.Zone.AUDIENCE);
     public static POI HANG_PREP = new POI(.6, -1.5, 180, "HANG_PREP", Field.Zone.BACKSTAGE);
     public static POI HANG = new POI(-0.5, -1.5, 180, "HANG", Field.Zone.RIGGING);
-    public static POI SCORE = new POI(1.65, -1.5, 180, "SCORE", Field.Zone.BACKSTAGE);
+
+    //SCORE NUMBER CORRESPONDS TO THE APRILTAGINDEX
+    public static POI SCORE1 = new POI(1.5, 40.344/FIELD_INCHES_PER_GRID, 180, "SCORE1", Field.Zone.BACKSTAGE);
+    public static POI SCORE2 = new POI(1.5, 35.344/FIELD_INCHES_PER_GRID, 180, "SCORE2", Field.Zone.BACKSTAGE);
+    public static POI SCORE3 = new POI(1.5, 29.344/FIELD_INCHES_PER_GRID, 180, "SCORE3", Field.Zone.BACKSTAGE);
+    public static POI SCORE4 = new POI(1.5, -29.344/FIELD_INCHES_PER_GRID, 180, "SCORE4", Field.Zone.BACKSTAGE);
+    public static POI SCORE5 = new POI(1.5, -35.344/FIELD_INCHES_PER_GRID, 180, "SCORE5", Field.Zone.BACKSTAGE);
+    public static POI SCORE6 = new POI(1.5, -40.344/FIELD_INCHES_PER_GRID, 180, "SCORE6", Field.Zone.BACKSTAGE);
     public static POI APRILTAG1 = new POI(61.728/FIELD_INCHES_PER_GRID, 40.344/FIELD_INCHES_PER_GRID, 180, "APRILTAG1", Field.Zone.BACKSTAGE);
     public static POI APRILTAG2 = new POI(61.728/FIELD_INCHES_PER_GRID, 35.344/FIELD_INCHES_PER_GRID, 180, "APRILTAG2", Field.Zone.BACKSTAGE);
     public static POI APRILTAG3 = new POI(61.728/FIELD_INCHES_PER_GRID, 29.344/FIELD_INCHES_PER_GRID, 180, "APRILTAG3", Field.Zone.BACKSTAGE);
     public static POI APRILTAG4 = new POI(61.728/FIELD_INCHES_PER_GRID, -29.344/FIELD_INCHES_PER_GRID, 180, "APRILTAG4", Field.Zone.BACKSTAGE);
     public static POI APRILTAG5 = new POI(61.728/FIELD_INCHES_PER_GRID, -35.344/FIELD_INCHES_PER_GRID, 180, "APRILTAG5", Field.Zone.BACKSTAGE);
     public static POI APRILTAG6 = new POI(61.728/FIELD_INCHES_PER_GRID, -40.344/FIELD_INCHES_PER_GRID, 180, "APRILTAG6", Field.Zone.BACKSTAGE);
+
+    public static POI BACKSTAGE_INTERMEDIATE = new POI(1.5, -.5, 180, "AUDIENCE_INTERMEDIATE", Field.Zone.BACKSTAGE);
 
     POI(double x, double y, double heading, String name, Field.Zone parent) {
         this.parent = parent;

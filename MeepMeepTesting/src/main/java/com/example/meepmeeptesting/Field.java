@@ -6,7 +6,6 @@ import static com.example.meepmeeptesting.TeleOpMeepMeep.field;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
 import java.util.ArrayList;
@@ -28,9 +27,9 @@ public class Field {
     POI HANG;
     POI HANG_PREP;
     POI WING_INTAKE;
-    POI SCORE;
-
     POI APRILTAG1, APRILTAG2, APRILTAG3, APRILTAG4, APRILTAG5, APRILTAG6;
+    POI SCORE1, SCORE2, SCORE3, SCORE4, SCORE5, SCORE6;
+    POI BACKSTAGE_INTERMEDIATE;
 
 
     //all values are in field grids
@@ -110,13 +109,22 @@ public class Field {
         HANG = isRed? POI.HANG : POI.HANG.flipOnX();
         HANG_PREP = isRed? POI.HANG_PREP : POI.HANG_PREP.flipOnX();
         WING_INTAKE = isRed? POI.WING_INTAKE : POI.WING_INTAKE.flipOnX();
-        SCORE = isRed? POI.SCORE : POI.SCORE.flipOnX();
+        BACKSTAGE_INTERMEDIATE = isRed? POI.BACKSTAGE_INTERMEDIATE : POI.BACKSTAGE_INTERMEDIATE.flipOnX();
+
         APRILTAG1 = POI.APRILTAG1;
         APRILTAG2 = POI.APRILTAG2;
         APRILTAG3 = POI.APRILTAG3;
         APRILTAG4 = POI.APRILTAG4;
         APRILTAG5 = POI.APRILTAG5;
         APRILTAG6 = POI.APRILTAG6;
+
+        SCORE1 = POI.SCORE1;
+        SCORE2 = POI.SCORE2;
+        SCORE3 = POI.SCORE3;
+        SCORE4 = POI.SCORE4;
+        SCORE5 = POI.SCORE5;
+        SCORE6 = POI.SCORE6;
+
     }
 
    /* public void update(TelemetryPacket packet, Robot robot) {
@@ -138,12 +146,11 @@ public class Field {
         }
     }*/
 
-    public SequentialAction pathToPOI(Pose2d robotPosition, RoadRunnerBotEntity robot, POI poi, int preferredRouteIndex){
-
+    public SequentialAction pathToPose(Pose2d robotPosition, RoadRunnerBotEntity robot, Pose2d targetPosition, int preferredRouteIndex) {
         Zone startZone = getZone(robotPosition);
-        Zone endZone = poi.getZone();
+        Zone endZone = getZone(targetPosition);
         //robot does nothing if startzone is in rigging
-        if(startZone == Zone.RIGGING)
+        if (startZone == Zone.RIGGING)
             return new SequentialAction();
 
         TrajectoryActionBuilder actionBuilder = robot.getDrive().actionBuilder(robotPosition);
@@ -152,9 +159,9 @@ public class Field {
 
         boolean reverseSplines = startZone.equals(Zone.AUDIENCE);
 
+        CrossingRoute preferredRoute = crossingRoutes.get(preferredRouteIndex);
 
         if (needsCrossingRoute) {
-            CrossingRoute preferredRoute = crossingRoutes.get(preferredRouteIndex);
             //spline to CrossingRoute
             actionBuilder =
                     actionBuilder
@@ -166,14 +173,29 @@ public class Field {
                     preferredRoute.addToPath(actionBuilder, robotPosition);
         }
         //spline to destination
-        actionBuilder =
-        actionBuilder
-                .setReversed(reverseSplines)
-                .splineToSplineHeading(poi.getPose(), poi.getPose().heading);
+
+        actionBuilder = actionBuilder
+                    .setReversed(reverseSplines);
+
+        double finalStartPoseY = preferredRoute.getExitPose(robotPosition).position.y;
+        //if targetPos is backstageSide and robot is coming from the other (y-direction) side of the field,
+        //go through a backstageintermediate pose to avoid hitting the backdrop
+
+        //reverseSplines means targetPos is backstageSide
+        if(reverseSplines && (finalStartPoseY / Math.abs(finalStartPoseY) != (targetPosition.position.y / (Math.abs(targetPosition.position.y))))){
+            actionBuilder = actionBuilder
+                    .splineTo(field.BACKSTAGE_INTERMEDIATE.getPose().position, 0);
+        }
+        actionBuilder = actionBuilder
+                .splineToSplineHeading(targetPosition, targetPosition.heading);
 
         return new SequentialAction(
-            actionBuilder.build()
+                actionBuilder.build()
         );
+    }
+
+    public SequentialAction pathToPOI(Pose2d robotPosition, RoadRunnerBotEntity robot, POI poi, int preferredRouteIndex){
+        return pathToPose(robotPosition, robot, poi.getPose(), preferredRouteIndex);
     }
 
     public Pose2d getAprilTagPose(int id) {
@@ -219,7 +241,7 @@ public class Field {
 
     //get POIs at robotPosition
     public POI getPOI(Pose2d robotPosition) {
-        List<POI> temp = Arrays.asList(HANG, HANG_PREP, SCORE, WING_INTAKE);
+        List<POI> temp = Arrays.asList(HANG, HANG_PREP, SCORE1, SCORE2, SCORE3, SCORE4, SCORE5, SCORE6, WING_INTAKE);
         for(POI poi : temp) {
             if(poi.atPOI(robotPosition))
                 return poi;
