@@ -199,7 +199,7 @@ public class Field {
                 return k;
         }
         //SHOULD NEVER HAPPEN BC ZONES BLANKET THE WHOLE FIELD
-        throw new RuntimeException("robot's outside the virtual field");
+        return null;
     }
     public static double wrapAngle(double angle) {
         return ((angle % 360) + 360) % 360;
