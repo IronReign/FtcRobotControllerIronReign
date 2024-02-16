@@ -15,6 +15,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.robots.bobobot.DebugBot;
 import org.firstinspires.ftc.teamcode.robots.bobobot.RoadRunning.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Utilities.Constants;
@@ -26,8 +27,11 @@ import java.util.Map;
 @Config(value = "BoadBunner")
 public class DriveTrain extends MecanumDrive implements Subsystem {
     public RunnerBot runnerBot;
+    public DebugBot debugBot;
     public double imuAngle;
-    private double targetHeading;
+    public double imuAngleP;
+    public double imuAngleR;
+    public double targetHeading;
     public static PIDController headingPID;
     public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0, .1854, 0);
     public static double HEADING_PID_TOLERANCE = .04; //this is a percentage of the input range .063 of 2PI is 1 degree
@@ -36,7 +40,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public static double turnToSpeed= .8;
     public static Constants.Position gamePosition = null;
     public int spikeIndex = 1;
-    public int turn = 90;
+    public int turn = -90;
     public DriveTrain(HardwareMap hardwareMap, RunnerBot runnerBot) {
         super(hardwareMap, new Pose2d(0, 0, 0));
         this.runnerBot = runnerBot;
@@ -48,6 +52,20 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         headingPID.setTolerance(HEADING_PID_TOLERANCE);
         headingPID.enable();
     }
+
+    public DriveTrain(HardwareMap hardwareMap, DebugBot debugBot) {
+        super(hardwareMap, new Pose2d(0, 0, 0));
+        this.debugBot = debugBot;
+        headingPID = new PIDController(HEADING_PID_PWR);
+        headingPID.setInputRange(0, 360);
+        headingPID.setOutputRange(-1, 1);
+        headingPID.setIntegralCutIn(4);
+        headingPID.setContinuous(true);
+        headingPID.setTolerance(HEADING_PID_TOLERANCE);
+        headingPID.enable();
+    }
+
+
 
     public void drive(double x, double y, double theta) {
         setDrivePowers(new PoseVelocity2d(
@@ -64,15 +82,15 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         switch(spikeIndex){
             case 1:
                 spikeIndex++;
-                turn = 180;
+                turn = 0;
                 break;
             case 2:
                 spikeIndex++;
-                turn = 0;
+                turn = 90;
                 break;
             case 3:
                 spikeIndex = 1;
-                turn = 90;
+                turn = -90;
                 break;
         }
     }
@@ -108,7 +126,9 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     @Override
     public void update(Canvas fieldOverlay) {
         updatePoseEstimate();
-        imuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.getMod()? -90 : 90);
+        imuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        imuAngleP = imu.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES);
+        imuAngleR = imu.getRobotYawPitchRollAngles().getRoll(AngleUnit.DEGREES);
         if (turnToTest!=0) turnUntilDegreesIMU(turnToTest,turnToSpeed);
     }
 
@@ -121,7 +141,9 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
 
         Map<String, Object> telemetryMap = new HashMap<>();
-        telemetryMap.put("Imu angle", imuAngle);
+        telemetryMap.put("IMU Angle", imuAngle);
+        telemetryMap.put("IMU Angle Pitch", imuAngleP);
+        telemetryMap.put("IMU Angle Roll", imuAngleR);
         telemetryMap.put("X in Field Coordinates \t", pose.position.x / Constants.FIELD_INCHES_PER_GRID);
         telemetryMap.put("Y in Field Coordinates \t", pose.position.y / Constants.FIELD_INCHES_PER_GRID);
         telemetryMap.put("Game Init Position \t",getGamePosition());
@@ -214,8 +236,17 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
             return false;
         }
     }
+
     public boolean getDebug(){
         return debug;
+    }
+
+    public double getTargetHeading(){
+        return targetHeading;
+    }
+
+    public double getImuAngle() {
+        return imuAngle;
     }
 
     public Constants.Position getGamePosition(){

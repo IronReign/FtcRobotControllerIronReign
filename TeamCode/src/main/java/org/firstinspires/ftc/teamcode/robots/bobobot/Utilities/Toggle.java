@@ -3,6 +3,9 @@ package org.firstinspires.ftc.teamcode.robots.bobobot.Utilities;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import static org.firstinspires.ftc.teamcode.robots.bobobot.BoboDebugOp.debugbot;
+import static org.firstinspires.ftc.teamcode.robots.bobobot.BoboDebugOp.turn0;
+import static org.firstinspires.ftc.teamcode.robots.bobobot.BoboDebugOp.turn180;
+import static org.firstinspires.ftc.teamcode.robots.bobobot.BoboDebugOp.turn90;
 
 import org.firstinspires.ftc.teamcode.robots.bobobot.BoboRunnerOp;
 import org.firstinspires.ftc.teamcode.robots.bobobot.Subsystems.DriveTrain;
@@ -37,13 +40,27 @@ public class Toggle {
 
     public void runTest(){
         if(stickyGamepad2.a){
-            debugbot.motorDebug.motorDebugTest();
+            //debugbot.motorDebug.motorDebugTest();
         }
     }
 
+    public void turnTest1(){
+        if(stickyGamepad1.y){
+            turn90 = !turn90;
+        }
+    }
 
+    public void turnTest2(){
+        if(stickyGamepad1.x){
+            turn180 = !turn180;
+        }
+    }
 
-
+    public void turnTest3(){
+        if(stickyGamepad1.b){
+            turn0 = !turn0;
+        }
+    }
 
     public void intake(){
         if(gamepad1.b){
@@ -111,6 +128,20 @@ public class Toggle {
     public void drone(){
         if(gamepad1.y){
             BoboRunnerOp.runnerBot.drone.droneRelease();
+        }
+    }
+
+    int stateIndex = 0;
+    public void switchState(boolean state){
+        switch(stateIndex){
+            case 0:
+                state = true;
+                stateIndex++;
+                break;
+            case 1:
+                state = false;
+                stateIndex = 0;
+                break;
         }
     }
 }
