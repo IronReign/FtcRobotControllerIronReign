@@ -362,7 +362,7 @@ public class Outtake implements Subsystem {
         //allow real-time flipper speed changes
         flipper.setSpeed(FLIPPER_JOINT_SPEED);
         //actually instruct actuators to go to desired targets
-//        flipper.update();
+        flipper.update();
         slide.setTargetPosition(slideTargetPosition);
         //compute values for kinematics
         double rotTheta = -flipper.getCurrentAngle() -180;
@@ -394,7 +394,7 @@ public class Outtake implements Subsystem {
         telemetryMap.put("arm location", "("+armX+", "+armZ+")");
         telemetryMap.put("arm theta", armTheta);
 
-        telemetryMap.put("IK variables", "top: "+top+" bottom: "+bottom+" theta: "+theta);
+        telemetryMap.put("IK variables", "top: "+top+" bottom: "+bottom+" theta: "+theta+" frac: "+frac);
         return telemetryMap;
     }
 

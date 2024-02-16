@@ -193,7 +193,7 @@ public class DriverControls {
         }
 
         if(stickyGamepad2.dpad_up) {
-            robot.outtake.goToPoint(20, 30);
+            robot.outtake.goToPoint(20, 20);
         }
 
         if(stickyGamepad2.a) {
