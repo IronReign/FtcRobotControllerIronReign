@@ -192,6 +192,10 @@ public class DriverControls {
             }
         }
 
+        if(stickyGamepad2.dpad_up) {
+            robot.outtake.goToPoint(20, 30);
+        }
+
         if(stickyGamepad2.a) {
             robot.skyhook.articulate(Skyhook.Articulation.INIT);
         }
