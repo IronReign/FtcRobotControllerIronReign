@@ -26,10 +26,14 @@ public class Intake implements Subsystem {
     private Joint wrist = null;
     public static double OPENCLAW = Utils.servoNormalize(900);
     public static double CLOSECLAW = Utils.servoNormalize(1500);
-    public static double WRIST_MIN = Utils.servoNormalize(1925);
-    public static double WRIST_MAX = Utils.servoNormalize(1370);
-    public static double WRIST_SCORE_1 = Utils.servoNormalize(1880);
+    public static double WRIST_MIN = Utils.servoNormalize(1597);
+    public static double denormMin = Utils.servoDenormalize(WRIST_MIN);
+    public static double WRIST_MAX = Utils.servoNormalize(899);
+    public static double denormMax = Utils.servoDenormalize(WRIST_MAX);
+    public static double WRIST_SCORE_1 = Utils.servoNormalize(1730);
     public static double WRIST_PIXEL = WRIST_SCORE_1;
+
+    public static double MOTOR_INIT_PWR = -.1;
     private boolean initalized;
 
     public enum WristArticulation{
@@ -56,7 +60,7 @@ public class Intake implements Subsystem {
         clawWrist = this.hardwareMap.get(Servo.class, "clawWrist");
         initalized = false;
         clawArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        clawArm.setPower(-.1);
+        clawArm.setPower(MOTOR_INIT_PWR);
         clawState = ClawState.INIT;
         armState = ArmState.INIT;
         wristArticulation = WristArticulation.INIT;

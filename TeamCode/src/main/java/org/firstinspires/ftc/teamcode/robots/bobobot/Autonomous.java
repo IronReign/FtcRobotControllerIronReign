@@ -29,6 +29,7 @@ public class Autonomous extends OpMode {
     FtcDashboard dashboard;
     Toggle toggle;
     public static int autonIndex;
+    public int visionProviderIndex;
     public static int stageIndex;
     public enum AutonState{
         DRIVE_FROM_START, TURN, DRIVE_THRU, DRIVE_TO_BACKDROP, INIT, PURPLE_PIXEL_DROP
@@ -41,6 +42,8 @@ public class Autonomous extends OpMode {
     public static double GO_TO_Y_RED = -36;
     public static double GO_TO_Y_BLUE = -GO_TO_Y_RED;
     public static double turnToSpeed = .4;
+
+    public static int turnTo;
     public AutonState autonState;
     private Action
     toRed, toBlue, toTape, strafeToBackRed, strafeToBackBlue, toBack;
@@ -54,25 +57,31 @@ public class Autonomous extends OpMode {
         autonState = AutonState.INIT;
         dashTelemetry.setMsTransmissionInterval(25);
         autonIndex = 0;
-        runnerBot.driveTrain.setPose(Constants.Position.START_RIGHT_RED);
+        //runnerBot.driveTrain.setPose(Constants.Position.START_RIGHT_RED);
         runnerBot.start();
     }
     @Override
     public void init_loop(){
         toggle.gamepadUpdate();
         runnerBot.enableVision();
+        updateIndexOffsets();
         toggle.autonSetup();
         telemetry.addData("Game Init Position \t", runnerBot.driveTrain.getGamePosition());
+        telemetry.addData("Game Alliance \t", runnerBot.driveTrain.getAlliance());
         telemetry.addData("Pose \t", "\n X \t"
                 + runnerBot.driveTrain.pose.position.x + "\n Y \t"
                 + runnerBot.driveTrain.pose.position.y + "\n Heading \t"
                 + Math.toDegrees(runnerBot.driveTrain.pose.heading.log()));
-        telemetry.addData("Spike Tape Index \t", runnerBot.driveTrain.getSpikeIndex());
-        telemetry.addData("Set Turn \t", runnerBot.driveTrain.getTurn());
+        telemetry.addData("visionProviderIndex", visionProviderIndex);
+        telemetry.addData("Turn To Degrees? \t", turnTo);
+        telemetry.addData("Target Index \t", targetIndex);
+        telemetry.addData("Red Alliance? \t", Constants.Alliance.RED.getMod());
+        telemetry.addData("Blue Alliance \t", Constants.Alliance.BLUE.getMod());
+
     }
     @Override
     public void start(){
-
+        runnerBot.visionProvider.shutdownVision();
 
     }
     @Override
@@ -89,6 +98,7 @@ public class Autonomous extends OpMode {
         toRed = new SequentialAction(
                 runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
                         .lineToY(GO_TO_Y_RED)
+                        //.turn(Math.toRadians(turnTo))
                         .build()
         );
     }
@@ -97,6 +107,7 @@ public class Autonomous extends OpMode {
         toBlue = new SequentialAction(
                 runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
                         .lineToY(GO_TO_Y_BLUE)
+                        //.turn(Math.toRadians(turnTo))
                         .build()
         );
     }
@@ -139,10 +150,10 @@ public class Autonomous extends OpMode {
                 }
                 break;
             case 2:
-                if(runnerBot.driveTrain.turnUntilDegreesIMU(runnerBot.driveTrain.getTurn(),turnToSpeed) && runnerBot.driveTrain.getSpikeIndex() != 2){
+                if(targetIndex != 2 && runnerBot.driveTrain.turnUntilDegreesIMU(turnTo,turnToSpeed) ){
                     autonIndex++;
                 }
-                else if (runnerBot.driveTrain.getSpikeIndex() == 2){
+                else if (targetIndex == 2){
                     autonIndex++;
                 }
 
@@ -174,10 +185,10 @@ public class Autonomous extends OpMode {
                 }
                 break;
             case 2:
-                if(runnerBot.driveTrain.turnUntilDegreesIMU(runnerBot.driveTrain.getTurn(),turnToSpeed) && runnerBot.driveTrain.getSpikeIndex() != 2){
+                if( targetIndex!= 2 && runnerBot.driveTrain.turnUntilDegreesIMU(turnTo,turnToSpeed)){
                     autonIndex++;
                 }
-                else if (runnerBot.driveTrain.getSpikeIndex() == 2){
+                else if (targetIndex == 2){
                     autonIndex++;
                 }
             case 3:
@@ -215,13 +226,13 @@ public class Autonomous extends OpMode {
                 purplePixelRed();
                 break;
             case START_RIGHT_RED:
-                runGameRed();
+                purplePixelRed();
                 break;
             case START_LEFT_BLUE:
                 purplePixelBlue();
                 break;
             case START_RIGHT_BLUE:
-                runGameBlue();
+                purplePixelBlue();
         }
     }
 
@@ -273,4 +284,71 @@ public class Autonomous extends OpMode {
         backBlue();
         toBack = strafeToBackBlue;
     }
+    public static int targetIndex;
+    public void updateIndexOffsets(){
+        visionProviderIndex = runnerBot.visionProvider.getMostFrequentPosition().getIndex();
+        targetIndex = visionProviderIndex + 1;
+
+        if(runnerBot.driveTrain.getGamePosition().equals(Constants.Position.START_RIGHT_RED)){
+            if(targetIndex == 3){
+                //runnerBot.visionProvider.shutdownVision();
+                turnTo = 90;
+            }
+            if(targetIndex == 2){
+                //runnerBot.visionProvider.shutdownVision();
+                turnTo = 30;
+            }
+            if(targetIndex == 1){
+                //runnerBot.visionProvider.shutdownVision();
+                turnTo = -90;
+            }
+        }
+
+        if(runnerBot.driveTrain.getGamePosition().equals(Constants.Position.START_LEFT_RED)){
+            if(targetIndex == 3){
+                //runnerBot.visionProvider.shutdownVision();
+                turnTo = 90;
+            }
+            if(targetIndex == 2){
+                //runnerBot.visionProvider.shutdownVision();
+                turnTo = 30;
+            }
+            if(targetIndex == 1){
+                //runnerBot.visionProvider.shutdownVision();
+                turnTo = -90;
+            }
+        }
+
+        if(runnerBot.driveTrain.getGamePosition().equals(Constants.Position.START_RIGHT_BLUE)){
+            if(targetIndex == 3){
+                //runnerBot.visionProvider.shutdownVision();
+                turnTo = 90;
+            }
+            if(targetIndex == 2){
+                //runnerBot.visionProvider.shutdownVision();
+                turnTo = 30;
+            }
+            if(targetIndex == 1){
+                //runnerBot.visionProvider.shutdownVision();
+                turnTo = -90;
+            }
+
+        if(runnerBot.driveTrain.getGamePosition().equals((Constants.Position.START_LEFT_BLUE))){
+            if(targetIndex == 3){
+                //runnerBot.visionProvider.shutdownVision();
+                turnTo = 90;
+                }
+            if(targetIndex == 2){
+                //runnerBot.visionProvider.shutdownVision();
+                turnTo = 30;
+                }
+            if(targetIndex == 1){
+                //runnerBot.visionProvider.shutdownVision();
+                turnTo = -90;
+                }
+            }
+        }
+    }
+
+
 }

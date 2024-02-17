@@ -38,11 +38,12 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public static double PID_P = 0;
     public static double PID_D = .75;
     public static int PurpleTurn = 90;
-    public static double HEADING_PID_TOLERANCE = .04; //this is a percentage of the input range .063 of 2PI is 1 degree
+    public static double HEADING_PID_TOLERANCE = .10; //this is a percentage of the input range .063 of 2PI is 1 degree
     private double PIDCorrection, PIDError;
     public static int turnToTest = 0;
     public static double turnToSpeed= .8;
-    public static Constants.Position gamePosition = null;
+    public static Constants.Position gamePosition = Constants.Position.START_RIGHT_RED;
+    public static Constants.Alliance alliance = Constants.Alliance.RED;
     public int spikeIndex = 1;
     public int turn = 0;
     public DriveTrain(HardwareMap hardwareMap, RunnerBot runnerBot) {
@@ -256,5 +257,9 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
     public Constants.Position getGamePosition(){
         return gamePosition;
+    }
+
+    public Constants.Alliance getAlliance() {
+        return alliance;
     }
 }

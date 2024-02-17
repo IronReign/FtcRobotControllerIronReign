@@ -103,21 +103,31 @@ public class Toggle {
         if(stickyGamepad1.b){
             runnerBot.driveTrain.setPose(Constants.Position.START_LEFT_RED);
             DriveTrain.gamePosition = Constants.Position.START_LEFT_RED;
+            DriveTrain.alliance = Constants.Alliance.RED;
+            //runnerBot.visionProvider.setRedAlliance(true);
         }
 
         if(stickyGamepad1.y){
             runnerBot.driveTrain.setPose(Constants.Position.START_RIGHT_RED);
             DriveTrain.gamePosition = Constants.Position.START_RIGHT_RED;
+            DriveTrain.alliance = Constants.Alliance.RED;
+            //runnerBot.visionProvider.setRedAlliance(true);
         }
 
         if(stickyGamepad1.x){
             runnerBot.driveTrain.setPose(Constants.Position.START_RIGHT_BLUE);
             DriveTrain.gamePosition = Constants.Position.START_RIGHT_BLUE;
+            DriveTrain.alliance = Constants.Alliance.BLUE;
+            //runnerBot.visionProvider.setRedAlliance(false);
+
         }
 
         if(stickyGamepad1.a){
             runnerBot.driveTrain.setPose(Constants.Position.START_LEFT_BLUE);
             DriveTrain.gamePosition = Constants.Position.START_LEFT_BLUE;
+            DriveTrain.alliance = Constants.Alliance.BLUE;
+            //runnerBot.visionProvider.setRedAlliance(false);
+
         }
 
         if(stickyGamepad1.right_bumper){

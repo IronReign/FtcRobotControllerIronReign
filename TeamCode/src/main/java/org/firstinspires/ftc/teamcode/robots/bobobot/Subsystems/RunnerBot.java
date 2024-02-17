@@ -82,9 +82,10 @@ public class RunnerBot implements Subsystem{
         }
     }
 
+
     public void createVisionProvider() {
         try {
-            visionProvider = VisionProviders.VISION_PROVIDERS[visionProviderIndex].newInstance().setRedAlliance(alliance== Constants.Alliance.RED);
+            visionProvider = VisionProviders.VISION_PROVIDERS[visionProviderIndex].newInstance().setRedAlliance(true);
         } catch (IllegalAccessException | InstantiationException e) {
             throw new RuntimeException("Error while instantiating vision provider");
         }
