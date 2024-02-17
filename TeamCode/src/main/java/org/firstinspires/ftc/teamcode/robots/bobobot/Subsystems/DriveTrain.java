@@ -34,13 +34,17 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public double targetHeading;
     public static PIDController headingPID;
     public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0, .1854, 0);
+    public static double PID_I = .4;
+    public static double PID_P = 0;
+    public static double PID_D = .75;
+    public static int PurpleTurn = 90;
     public static double HEADING_PID_TOLERANCE = .04; //this is a percentage of the input range .063 of 2PI is 1 degree
     private double PIDCorrection, PIDError;
     public static int turnToTest = 0;
     public static double turnToSpeed= .8;
     public static Constants.Position gamePosition = null;
     public int spikeIndex = 1;
-    public int turn = -90;
+    public int turn = 0;
     public DriveTrain(HardwareMap hardwareMap, RunnerBot runnerBot) {
         super(hardwareMap, new Pose2d(0, 0, 0));
         this.runnerBot = runnerBot;
@@ -86,11 +90,11 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
                 break;
             case 2:
                 spikeIndex++;
-                turn = 90;
+                turn = -PurpleTurn;
                 break;
             case 3:
                 spikeIndex = 1;
-                turn = -90;
+                turn = PurpleTurn;
                 break;
         }
     }
@@ -216,11 +220,12 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     }
     public boolean turnUntilDegreesIMU(double turnAngle, double maxSpeed) {
         targetHeading = wrapAngle(turnAngle);
-        headingPID.setPID(HEADING_PID_PWR);
+        headingPID.setPID(new PIDCoefficients(PID_P,PID_I, PID_D));
         headingPID.setInput(imuAngle);
         headingPID.setSetpoint(targetHeading);
         headingPID.setOutputRange(-maxSpeed, maxSpeed);
         headingPID.setTolerance(HEADING_PID_TOLERANCE);
+        headingPID.setContinuous();
         double correction = headingPID.performPID();
         PIDCorrection = correction;
         PIDError = headingPID.getError();

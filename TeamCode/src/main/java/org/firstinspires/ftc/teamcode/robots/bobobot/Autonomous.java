@@ -5,6 +5,7 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
@@ -21,12 +22,14 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
 import java.util.Map;
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name= "BobotAutonomous")
+@Config(value = "BoadBunnerAuto")
 public class Autonomous extends OpMode {
     private RunnerBot runnerBot;
     MultipleTelemetry dashTelemetry;
     FtcDashboard dashboard;
     Toggle toggle;
     public static int autonIndex;
+    public static int stageIndex;
     public enum AutonState{
         DRIVE_FROM_START, TURN, DRIVE_THRU, DRIVE_TO_BACKDROP, INIT, PURPLE_PIXEL_DROP
     }
@@ -36,9 +39,11 @@ public class Autonomous extends OpMode {
 
     public static double GO_TO_X_RED;
     public static double GO_TO_Y_RED = -36;
+    public static double GO_TO_Y_BLUE = -GO_TO_Y_RED;
+    public static double turnToSpeed = .4;
     public AutonState autonState;
     private Action
-    audienceRed, toRed, toBlue, toTape;
+    toRed, toBlue, toTape, strafeToBackRed, strafeToBackBlue, toBack;
 
     @Override
     public void init(){
@@ -72,19 +77,10 @@ public class Autonomous extends OpMode {
     }
     @Override
     public void loop(){
-        purplePixelRed();
-        /* switch(runnerBot.driveTrain.getGamePosition()){
-            case START_LEFT_RED:
-                break;
-            case START_RIGHT_RED:
-                break;
-            case START_LEFT_BLUE:
-                break;
-            case START_RIGHT_BLUE:
-
-        }*/
+        Auton(runnerBot.driveTrain.getGamePosition());
         telemetry.addData("Auton State \t", getAutonState());
         telemetry.addData("Auton Index \t", autonIndex);
+        telemetry.addData("Stage Index", stageIndex);
         update();
         dashTelemetry.update();
     }
@@ -100,7 +96,7 @@ public class Autonomous extends OpMode {
     public void goToBlue(){
         toBlue = new SequentialAction(
                 runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
-                        .lineToY(-GO_TO_Y_RED)
+                        .lineToY(GO_TO_Y_BLUE)
                         .build()
         );
     }
@@ -143,7 +139,7 @@ public class Autonomous extends OpMode {
                 }
                 break;
             case 2:
-                if(runnerBot.driveTrain.turnUntilDegreesIMU(runnerBot.driveTrain.getTurn(),0.8) && runnerBot.driveTrain.getSpikeIndex() != 2){
+                if(runnerBot.driveTrain.turnUntilDegreesIMU(runnerBot.driveTrain.getTurn(),turnToSpeed) && runnerBot.driveTrain.getSpikeIndex() != 2){
                     autonIndex++;
                 }
                 else if (runnerBot.driveTrain.getSpikeIndex() == 2){
@@ -168,43 +164,36 @@ public class Autonomous extends OpMode {
     public void purplePixelBlue(){
         switch (autonIndex){
             case 0:
-                goToBlue();
+                toTapeBlue();
                 autonIndex++;
                 break;
             case 1:
-                if (!toBlue.run(new TelemetryPacket())) {
+                if (!toTape.run(new TelemetryPacket())) {
                     autonState = AutonState.DRIVE_FROM_START;
                     autonIndex++;
                 }
                 break;
             case 2:
+                if(runnerBot.driveTrain.turnUntilDegreesIMU(runnerBot.driveTrain.getTurn(),turnToSpeed) && runnerBot.driveTrain.getSpikeIndex() != 2){
+                    autonIndex++;
+                }
+                else if (runnerBot.driveTrain.getSpikeIndex() == 2){
+                    autonIndex++;
+                }
+            case 3:
                 runnerBot.intake.armWristOut();
                 autonState = AutonState.PURPLE_PIXEL_DROP;
                 futureTimer = futureTime(2);
                 autonIndex++;
                 break;
-            case 3:
+            case 4:
                 if(isPast(futureTimer)) {
                     runnerBot.intake.closeClaw();
                 }
                 break;
         }
     }
-    public void runBack() {
-        switch(autonIndex) {
-            case 0:
-                if(runnerBot.driveTrain.turnUntilDegreesIMU(0,.8)){
-                runnerBot.driveTrain.pose = new Pose2d(new Vector2d(runnerBot.driveTrain.pose.position.x, runnerBot.driveTrain.pose.position.y),Math.toRadians(runnerBot.driveTrain.imuAngle));
-                autonIndex++;
-                }
-                goToRed();
-                break;
-            case 1:
-                if(!toRed.run(new TelemetryPacket())) {
-                    break;
-                }
-        }
-    }
+
 
     public AutonState getAutonState() {
         return autonState;
@@ -215,6 +204,73 @@ public class Autonomous extends OpMode {
         toTape = toRed;
     }
 
+    public void toTapeBlue(){
+        goToBlue();
+        toTape = toBlue;
+    }
 
+    public void Auton(Constants.Position position){
+         switch(position){
+            case START_LEFT_RED:
+                purplePixelRed();
+                break;
+            case START_RIGHT_RED:
+                runGameRed();
+                break;
+            case START_LEFT_BLUE:
+                purplePixelBlue();
+                break;
+            case START_RIGHT_BLUE:
+                runGameBlue();
+        }
+    }
 
+    public void runGameRed(){
+        switch (stageIndex){
+            case 0:
+                purplePixelRed();
+                runFullRed();
+                stageIndex++;
+                break;
+            case 1:
+                if(!toBack.run(new TelemetryPacket()))
+                    break;
+        }
+    }
+
+    public void runGameBlue(){
+        switch (stageIndex){
+            case 0:
+                purplePixelBlue();
+                runFullBlue();
+                stageIndex++;
+                break;
+            case 1:
+                if(!toBack.run(new TelemetryPacket()))
+                    break;
+        }
+    }
+    public void backBlue(){
+        strafeToBackBlue = new SequentialAction(runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
+                .lineToX(43)
+                .build()
+        );
+    }
+
+    public void backRed(){
+        strafeToBackRed = new SequentialAction(runnerBot.driveTrain.actionBuilder(runnerBot.driveTrain.pose)
+                .lineToX(43)
+                .build()
+        );
+    }
+
+    public void runFullRed(){
+        backRed();
+        toBack = strafeToBackRed;
+    }
+
+    public void runFullBlue(){
+        backBlue();
+        toBack = strafeToBackBlue;
+    }
 }
