@@ -10,6 +10,8 @@ import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
+import java.util.ArrayList;
+
 
 enum Position {
     ORIGIN_DEFAULT (new Pose2d(0, 0, 0)), //this if used will reset the origin to FTC Dashboard's default
@@ -51,58 +53,63 @@ public class EndgameMeepMeep {
                 .build();
         boolean red = true;
 
-        Pose2d p = Position.START_RIGHT_RED.getPose();
-//      4   3       field quadrants
-//      2   1
-        int quadrant = p.position.x >= 0 && p.position.y <= 0 ? 1 :  p.position.y <= 0 && p.position.x < 0 ? 2 : p.position.x >= 0 && p.position.y > 0 ? 4 : 3;
-        System.out.println(quadrant);
-        Action bot1Action = myBot.getDrive().actionBuilder(p).build();
-        switch (quadrant) {
-            case 1:
-                bot1Action = myBot.getDrive().actionBuilder(p)
-                .strafeToLinearHeading(new Vector2d(12, red ? -35 : 35), Math.toRadians(180))
-                .waitSeconds(2)
-                .strafeToLinearHeading(new Vector2d(-16, red ? -35 : 35), Math.toRadians(180))
-                .waitSeconds(2)
-                .build();
-                break;
-            case 2:
+        Pose2d p = Position.START_LEFT_BLUE.getPose();
+        Action bot1Action;
+        ArrayList<SubZone> arr = field.getSubZones(p);
+        if(arr.contains(SubZone.BACKDROP)) {
+            bot1Action = myBot.getDrive().actionBuilder(p)
+                    .strafeToLinearHeading(new Vector2d(12, red ? -35 : 35), Math.toRadians(180))
+                    .waitSeconds(2)
+                    .strafeToLinearHeading(new Vector2d(-16, red ? -35 : 35), Math.toRadians(180))
+                    .waitSeconds(2)
+                    .build();
+        }
+        else if(arr.contains(SubZone.WING)) {
+            bot1Action = myBot.getDrive().actionBuilder(p)
+                    .setReversed(true)
+                    .splineTo(new Vector2d(1*FIELD_INCHES_PER_GRID, -.5*FIELD_INCHES_PER_GRID), 0)
+                    .strafeToLinearHeading(new Vector2d(1*FIELD_INCHES_PER_GRID, -.5*FIELD_INCHES_PER_GRID),  Math.toRadians(180))
+                    .setReversed(false)
+                    .splineTo(new Vector2d(12, red ? -35 : 35), Math.toRadians(180))
+                    .waitSeconds(2)
+                    .strafeToLinearHeading(new Vector2d(-16, red ? -35 : 35), Math.toRadians(180))
+                    .waitSeconds(2)
+                    .build();
+        }
+        else {
+            if(field.getZone(p) == Field.Zone.AUDIENCE) {
                 bot1Action = myBot.getDrive().actionBuilder(p)
                         .setReversed(true)
-                        .splineTo(new Vector2d(-1.5*FIELD_INCHES_PER_GRID, -2.5*FIELD_INCHES_PER_GRID), 0)
-                        .splineTo(new Vector2d(1*FIELD_INCHES_PER_GRID, -2.5*FIELD_INCHES_PER_GRID), 0)
+                        .splineTo(new Vector2d(-1.5 * FIELD_INCHES_PER_GRID, -2.5 * FIELD_INCHES_PER_GRID), 0)
+                        .splineTo(new Vector2d(1 * FIELD_INCHES_PER_GRID, -2.5 * FIELD_INCHES_PER_GRID), 0)
                         .setReversed(false)
                         .strafeToLinearHeading(new Vector2d(12, red ? -35 : 35), Math.toRadians(180))
                         .waitSeconds(2)
                         .strafeToLinearHeading(new Vector2d(-16, red ? -35 : 35), Math.toRadians(180))
                         .waitSeconds(2)
                         .build();
-                break;
-            case 3:
+            }
+            else if(field.getZone(p) == Field.Zone.BACKSTAGE){
                 bot1Action = myBot.getDrive().actionBuilder(p)
                         .setReversed(true)
-                        .splineTo(new Vector2d(-1*FIELD_INCHES_PER_GRID, -.5*FIELD_INCHES_PER_GRID), 0)
-                        .splineTo(new Vector2d(1*FIELD_INCHES_PER_GRID, -.5*FIELD_INCHES_PER_GRID), 0)
-                        .strafeToLinearHeading(new Vector2d(1*FIELD_INCHES_PER_GRID, -.5*FIELD_INCHES_PER_GRID),  Math.toRadians(180))
+                        .splineTo(new Vector2d(-1 * FIELD_INCHES_PER_GRID, -.5 * FIELD_INCHES_PER_GRID), 0)
+                        .splineTo(new Vector2d(1 * FIELD_INCHES_PER_GRID, -.5 * FIELD_INCHES_PER_GRID), 0)
+                        .strafeToLinearHeading(new Vector2d(1 * FIELD_INCHES_PER_GRID, -.5 * FIELD_INCHES_PER_GRID), Math.toRadians(180))
                         .setReversed(false)
                         .strafeToLinearHeading(new Vector2d(12, red ? -35 : 35), Math.toRadians(180))
                         .waitSeconds(2)
                         .strafeToLinearHeading(new Vector2d(-16, red ? -35 : 35), Math.toRadians(180))
                         .waitSeconds(2)
                         .build();
-                break;
-            case 4:
+            }
+            else {
                 bot1Action = myBot.getDrive().actionBuilder(p)
-                        .setReversed(true)
-                        .splineTo(new Vector2d(1*FIELD_INCHES_PER_GRID, -.5*FIELD_INCHES_PER_GRID), 0)
-                        .strafeToLinearHeading(new Vector2d(1*FIELD_INCHES_PER_GRID, -.5*FIELD_INCHES_PER_GRID),  Math.toRadians(180))
-                        .setReversed(false)
-                        .splineTo(new Vector2d(12, red ? -35 : 35), Math.toRadians(180))
+                        .strafeToLinearHeading(new Vector2d(12, red ? -35 : 35), Math.toRadians(180))
                         .waitSeconds(2)
                         .strafeToLinearHeading(new Vector2d(-16, red ? -35 : 35), Math.toRadians(180))
                         .waitSeconds(2)
                         .build();
-                break;
+            }
         }
         myBot.runAction(bot1Action);
 
