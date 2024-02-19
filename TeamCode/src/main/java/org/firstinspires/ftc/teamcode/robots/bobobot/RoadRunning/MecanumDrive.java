@@ -49,7 +49,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.Localizer;
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.ThreeDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.robots.bobobot.RoadRunning.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.messages.MecanumEncodersMessage;
@@ -72,17 +72,17 @@ public class MecanumDrive {
                 RevHubOrientationOnRobot.UsbFacingDirection.UP;
 
         // drive model parameters
-        public double inPerTick = (23.5*4)/(32340.0); //experimentally determined by Alex with a push test - but probably needs fine tuning
-        public double lateralInPerTick = 0.001482489735800989;
-        public double trackWidthTicks =   3867.4313166486;
+        public double inPerTick = (23.5*4)/(32130.5); //experimentally determined by Alex with a push test - but probably needs fine tuning
+        public double lateralInPerTick = 0.0008388254506407933;
+        public double trackWidthTicks =   3784.63483581392;
 
         // feedforward parameters (in tick units)
-        public double kS =  1.7218069693029148;
-        public double kV =  0.0004051243307803866;
-        public double kA = 0.00000043;
+        public double kS =  1.3166962736977004;
+        public double kV =  0.0004070155179727504;
+        public double kA = 5.83e-7;
 
         // path profile parameters (in inches)
-        public double maxWheelVel = 50;
+        public double maxWheelVel = 25;
         public double minProfileAccel = -30;
         public double maxProfileAccel = 50;
 
