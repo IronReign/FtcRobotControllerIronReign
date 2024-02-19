@@ -198,7 +198,7 @@ public class Field {
             if(k.withinZone(robotPosition))
                 return k;
         }
-        //SHOULD NEVER HAPPEN BC ZONES BLANKET THE WHOLE FIELD
+
         return null;
     }
     public static double wrapAngle(double angle) {

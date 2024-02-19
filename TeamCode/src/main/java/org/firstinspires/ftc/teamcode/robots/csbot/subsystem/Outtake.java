@@ -204,7 +204,7 @@ public class Outtake implements Subsystem {
                 theta = Math.asin(frac);
             }
             if(theta != Double.NaN) {
-                flipper.setTargetAngle(theta); // move the flipper angle to the calculated angle
+//                flipper.setTargetAngle(Math.toDegrees(theta)); // move the flipper angle to the calculated angle
                 return true;
             }
             else
