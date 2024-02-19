@@ -33,11 +33,13 @@ public class Outtake implements Subsystem {
 
     //Kinematics values in inches
     public static double armLength = 17.5;
-    public static double armBase = 16.5;
-    public static double armHeight = 9;
-    public static double armTheta = Math.atan2(9, 16.5);
+    public static double armBase = 15.75;
+    public static double armHeight = 10.625;
+    public static double armTheta = Math.atan2(armBase, armHeight);
 
-    public static double armX, armY;
+    public static double armX, armZ;
+
+    private double theta, top, bottom, frac;
 
     public static int flipperPosition = 1888;
 
@@ -171,6 +173,46 @@ public class Outtake implements Subsystem {
 //        pixelFlipper = this.hardwareMap.get(Servo.class, "pixelFlipper");
 
         articulation = Articulation.MANUAL;
+    }
+
+    //should use the calculated IK formula to move to the field coordinate in inches (x, z)
+    public boolean goToPoint(int x, int z) {
+        try {
+            theta = 0;
+            top = Math.pow(z - armHeight, 2) - Math.pow(slide.getCurrentPosition() * ticksPerInch * Math.sin(armTheta) - armHeight, 2);
+            bottom = Math.pow(x - armBase, 2) - Math.pow(slide.getCurrentPosition() * ticksPerInch * Math.sin(armTheta) - armBase, 2);
+            frac = Math.sqrt(top/bottom);
+            if (top < 0 && bottom < 0 || top > 0 && bottom > 0)
+                theta = Math.asin(frac);
+            else if (top < 0) {
+                int targetPos = (int) (slide.getCurrentPosition() + Math.sqrt(Math.abs(top)* ticksPerInch + 1 * ticksPerInch));
+                if(targetPos > slidePositionMax) //if outside of the slides range fail
+                    return false;
+                slideTargetPosition = targetPos; //move the slide to make the final position possible
+                top = Math.pow(z - armHeight, 2) - Math.pow(targetPos * ticksPerInch * Math.sin(armTheta) - armHeight, 2);
+                bottom = Math.pow(x - armBase, 2) - Math.pow(targetPos * ticksPerInch * Math.sin(armTheta) - armBase, 2);
+                frac = Math.sqrt(top/bottom);
+                theta = Math.asin(frac);
+            } else {
+                int targetPos = (int) (slide.getCurrentPosition() + Math.sqrt(Math.abs(bottom) * ticksPerInch + 1 * ticksPerInch));
+                if(targetPos > slidePositionMax) //if outside of the slides range fail
+                    return false;
+                slideTargetPosition = targetPos; //move the slide to make the final position possible
+                top = Math.pow(z - armHeight, 2) - Math.pow(targetPos * ticksPerInch * Math.sin(armTheta) - armHeight, 2);
+                bottom = Math.pow(x - armBase, 2) - Math.pow(targetPos * ticksPerInch * Math.sin(armTheta) - armBase, 2);
+                frac = Math.sqrt(top/bottom);
+                theta = Math.asin(frac);
+            }
+            if(theta != Double.NaN) {
+                flipper.setTargetAngle(theta); // move the flipper angle to the calculated angle
+                return true;
+            }
+            else
+                return false;
+        }
+        catch(ArithmeticException e) { //if the math throws an exception because of impossible trig fail
+            return false;
+        }
     }
 
     public int ingestPositionIndex = 0;
@@ -323,13 +365,13 @@ public class Outtake implements Subsystem {
         flipper.update();
         slide.setTargetPosition(slideTargetPosition);
         //compute values for kinematics
-        double rotTheta = -flipper.getTargetAngle() -180;
-        double rotX = armLength*Math.cos(Utils.degreeToRad(armTheta)) + (slide.getCurrentPosition()/ticksPerInch)*Math.cos(Utils.degreeToRad(armTheta));
-        double rotY = armLength*Math.sin(Utils.degreeToRad(armTheta)) + (slide.getCurrentPosition()/ticksPerInch)*Math.sin(Utils.degreeToRad(armTheta));
-        double x = (slide.getCurrentPosition()/ticksPerInch)*Math.cos(Utils.degreeToRad(armTheta));
-        double y = (slide.getCurrentPosition()/ticksPerInch)*Math.sin(Utils.degreeToRad(armTheta));
-        armX = (rotX-(y-rotY)*Math.sin(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.cos(Utils.degreeToRad(rotTheta)));
-        armY = (rotY+(y-rotY)*Math.cos(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.sin(Utils.degreeToRad(rotTheta)));
+        double rotTheta = -flipper.getCurrentAngle() -180;
+        double rotX = armLength*Math.cos(armTheta) + (slide.getCurrentPosition()/ticksPerInch)*Math.cos(armTheta);
+        double rotZ = armLength*Math.sin(armTheta) + (slide.getCurrentPosition()/ticksPerInch)*Math.sin(armTheta);
+        double x = (slide.getCurrentPosition()/ticksPerInch)*Math.cos(armTheta);
+        double z = (slide.getCurrentPosition()/ticksPerInch)*Math.sin(armTheta);
+        armX = (rotX-(z-rotZ)*Math.sin(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.cos(Utils.degreeToRad(rotTheta)));
+        armZ = (rotZ+(z-rotZ)*Math.cos(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.sin(Utils.degreeToRad(rotTheta)));
     }
 
     @Override
@@ -349,7 +391,10 @@ public class Outtake implements Subsystem {
         telemetryMap.put("flipper ticks", flipperPosition);
         telemetryMap.put("flipper angle", flipper.getCurrentAngle());
         telemetryMap.put("flipper target angle", flipper.getTargetAngle());
-        telemetryMap.put("arm location", "("+armX+", "+armY+")");
+        telemetryMap.put("arm location", "("+armX+", "+armZ+")");
+        telemetryMap.put("arm theta", armTheta);
+
+        telemetryMap.put("IK variables", "top: "+top+" bottom: "+bottom+" theta: "+theta+" frac: "+frac);
         return telemetryMap;
     }
 

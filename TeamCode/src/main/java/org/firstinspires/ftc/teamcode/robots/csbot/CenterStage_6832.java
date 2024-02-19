@@ -24,7 +24,7 @@ public class CenterStage_6832 extends OpMode {
 
     private static final double LOW_BATTERY_VOLTAGE = 12;
     private ElapsedTime runtime = new ElapsedTime();
-    static long totalRunTime;
+    public static long totalRunTime;
     //COMPONENTS
     public static Robot robot;
     static Autonomous auton;

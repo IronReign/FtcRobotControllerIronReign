@@ -1,8 +1,9 @@
 package org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
-import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
+import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreAuto.alliance;
+import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.gameState;
+//import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
+import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.gameState;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -14,7 +15,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
+//import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.PositionCache;
@@ -189,7 +191,7 @@ public class Robot implements Subsystem {
     public void resetRobotPosFromCache(double loggerTimeoutMinutes, boolean ignoreCache) {
         if(!ignoreCache) {
             fetchCachedCSPosition();
-            if (gameState.equals(CenterStage_6832.GameState.TELE_OP) || gameState.equals((CenterStage_6832.GameState.TEST))) {
+            if (gameState.equals(CoreTele.GameState.TELE_OP) || gameState.equals((CoreTele.GameState.TEST))) {
                 int loggerTimeout = (int) (loggerTimeoutMinutes * 60000);
                 if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
                     //apply cached position
@@ -325,7 +327,7 @@ public class Robot implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("Behavior", curBehavior);
-        telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
+//        telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
         telemetryMap.put("Ingest Stage", ingestStage);
         telemetryMap.put("initPositionIndex", initPositionIndex);
 //        telemetryMap.put("MemoryPose", positionCache.readPose());

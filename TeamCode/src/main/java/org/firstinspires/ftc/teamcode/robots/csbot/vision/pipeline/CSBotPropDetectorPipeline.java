@@ -49,7 +49,7 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
     private volatile int largestX, largestY;
     private double largestArea;
     private volatile Position lastPosition;
-    private boolean isRedAlliance = false;
+    public boolean isRedAlliance = false;
 
     // Constants
     public static int VIEW_OPEN_CV_PIPELINE_STAGE = 6;

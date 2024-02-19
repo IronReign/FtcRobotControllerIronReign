@@ -24,17 +24,20 @@ public class DriverControls {
     public static boolean fieldOrientedDrive = false;
     public static double DEADZONE = 0.1;
 
-    public boolean visionProviderFinalized = robot.visionProviderFinalized;
+    public boolean visionProviderFinalized;
     boolean droneSet = true;
+    Robot robot;
 
     Gamepad gamepad1, gamepad2;
     private StickyGamepad stickyGamepad1, stickyGamepad2;
 
-    DriverControls(Gamepad pad1, Gamepad pad2) {
+    DriverControls(Gamepad pad1, Gamepad pad2, Robot robot) {
         gamepad1 = pad1;
         gamepad2 = pad2;
         stickyGamepad1 = new StickyGamepad(gamepad1);
         stickyGamepad2 = new StickyGamepad(gamepad2);
+        this.robot = robot;
+        visionProviderFinalized = robot.visionProviderFinalized;
     }
 
     public void init_loop() {
@@ -46,26 +49,29 @@ public class DriverControls {
         if(stickyGamepad1.dpad_up) {
             robot.visionProviderFinalized = !robot.visionProviderFinalized;
         }
-
-        if(stickyGamepad1.a) {
-            CoreTele.initPosition = true;
-        }
+//
+//        if(stickyGamepad1.a) {
+//            CoreTele.initPosition = true;
+//        }
 
         if (stickyGamepad1.y)
             robot.arm.GripOuterToggle();
         //robot.arm.GripNeither();
-
-        if (stickyGamepad1.x)
-            robot.arm.GripInnerToggle();
+//
+//        if (stickyGamepad1.x)
+//            robot.arm.GripInnerToggle();
         //robot.arm.GripBoth();
 
 
         if(stickyGamepad1.guide) {
             robot.initPositionIndex ++;
         }
-
-        if(stickyGamepad2.a) {
-
+//todo - these are not enough to change the alliance
+        if(stickyGamepad1.right_bumper) {
+            CoreAuto.alliance = Constants.Alliance.RED;
+        }
+        if(stickyGamepad1.left_bumper) {
+            CoreAuto.alliance = Constants.Alliance.BLUE;
         }
 
 
@@ -220,7 +226,6 @@ public class DriverControls {
             if (CoreTele.gameStateIndex < 0)
                 CoreTele.gameStateIndex = CoreTele.GameState.getNumGameStates() - 1;
             CoreTele.gameStateIndex %= CoreTele.GameState.getNumGameStates();
-            CoreTele.gameState = CoreTele.GameState.getGameState(CoreTele.gameStateIndex);
         }
 
         if (stickyGamepad1.back || stickyGamepad2.back)
