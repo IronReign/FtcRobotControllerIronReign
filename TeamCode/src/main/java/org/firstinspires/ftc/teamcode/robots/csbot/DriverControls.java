@@ -44,7 +44,7 @@ public class DriverControls {
     public void init_loop() {
         updateStickyGamepads();
         if (stickyGamepad1.left_stick_button) {
-            robot.createVisionProvider();
+            robot.createVisionProviders();
         }
 
         if(stickyGamepad1.dpad_up) {
@@ -292,7 +292,7 @@ public class DriverControls {
             if (!visionProviderFinalized) {
                 if (stickyGamepad1.dpad_left || stickyGamepad2.dpad_left) {
                     visionProviderIndex = (visionProviderIndex + 1) % VisionProviders.VISION_PROVIDERS.length; // switch vision provider
-                    robot.createVisionProvider();
+                    robot.createVisionProviders();
                 }
                 if (stickyGamepad1.dpad_up || stickyGamepad2.dpad_up) {
 //                    robot.visionProviderBack.initializeVision(hardwareMap); // this is blocking

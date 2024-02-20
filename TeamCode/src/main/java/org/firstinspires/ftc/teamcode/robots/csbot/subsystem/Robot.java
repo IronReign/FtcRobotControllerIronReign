@@ -4,7 +4,6 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.allia
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -22,7 +21,6 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
-import org.firstinspires.ftc.teamcode.robots.csbot.Field;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.PositionCache;
@@ -46,12 +44,9 @@ public class  Robot implements Subsystem {
     public DriveTrain driveTrain;
     public Skyhook skyhook;
     public Intake intake;
-    public VisionProvider visionProviderBack = null;
+    public VisionProvider visionProviderBack, visionProviderFront;
     public static boolean visionOn = true;
     public Outtake outtake;
-    //TODO - create a field
-//    public Field field;
-
     public static boolean updatePositionCache = false;
     public PositionCache positionCache;
     public CSPosition currPosition;
@@ -112,7 +107,7 @@ public class  Robot implements Subsystem {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
         //initialize vision
-        createVisionProvider();
+        createVisionProviders();
 
         positionCache = new PositionCache(5);
 
@@ -172,7 +167,7 @@ public class  Robot implements Subsystem {
     public void enableVision() {
         if (visionOn) {
             if (!visionProviderFinalized) {
-                createVisionProvider();
+                createVisionProviders();
                 visionProviderBack.initializeVision(hardwareMap, this);
                 visionProviderFinalized = true;
 
@@ -493,7 +488,7 @@ public class  Robot implements Subsystem {
     }
     //end getTelemetry
 
-    public void createVisionProvider() {
+    public void createVisionProviders() {
         try {
             visionProviderBack = VisionProviders.VISION_PROVIDERS[visionProviderIndex].newInstance().setRedAlliance(alliance==Constants.Alliance.RED);
         } catch (IllegalAccessException | InstantiationException e) {
