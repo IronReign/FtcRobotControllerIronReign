@@ -149,7 +149,6 @@ public class  Robot implements Subsystem {
         }
 
         articulate(articulation);
-        //TODO - DELETE
         driveTrain.updatePoseEstimate();
 
         drawRobot(fieldOverlay, driveTrain.pose);

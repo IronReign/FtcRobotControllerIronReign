@@ -121,7 +121,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
     public double distanceSensorHeading() {
         double big = Math.max(leftDistanceSensorValue, rightDistanceSensorValue);
-        double small = Math.max(rightDistanceSensorValue, leftDistanceSensorValue);
+        double small = Math.min(rightDistanceSensorValue, leftDistanceSensorValue);
         double diffAngle = Math.toDegrees(Math.atan2(big - small, DISTANCE_BETWEEN_DISTANCE_SENSORS));
         return -diffAngle;
     }
