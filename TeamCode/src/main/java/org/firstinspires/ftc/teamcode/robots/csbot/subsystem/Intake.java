@@ -423,7 +423,7 @@ public class Intake implements Subsystem {
         telemetryMap.put("ingest pixel height", ingestPixelHeight);
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("manual beater bar on?", manualBeaterEnable);
-        telemetryMap.put("beater bar amps", beater.getPower());
+        telemetryMap.put("beater bar amps", Robot.sensors.beaterBarAmps);
         telemetryMap.put("beater bar velocity", beater.getVelocity());
         telemetryMap.put("beater bar target velocity", beaterTargetVelocity);
         telemetryMap.put("angle controller position", Utils.servoDenormalize(angle.getPosition()));

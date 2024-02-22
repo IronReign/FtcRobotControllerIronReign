@@ -133,7 +133,7 @@ public class Skyhook implements Subsystem {
             case 1:
                 skyhookRightTicks = SKYHOOK_LAUNCH_TICKS;
                 skyhookLeftTicks = SKYHOOK_LAUNCH_TICKS;
-                if(withinError(skyhookIMU.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES), 132, 3)) {
+                if(withinError(Robot.sensors.skyhookIMUPitch, 132, 3)) {
                     skyhookLeftTicks = getSkyhookLeftTicksCurrent();
                     skyhookRightTicks = getSkyhookRightTicksCurrent();
                     launchTimer = futureTime(.7);
@@ -197,8 +197,8 @@ public class Skyhook implements Subsystem {
         telemetryMap.put("droneTicks", droneServoTicks);
         telemetryMap.put("droneStage", launchIndex);
 //        telemetryMap.put("skyhookIMU", skyhookIMU.getRobotYawPitchRollAngles());
-        telemetryMap.put("Skyhook Left Memory Position", robot.positionCache.readPose().getSkyhookLeftTicks());
-        telemetryMap.put("Skyhook Right Memory Position", robot.positionCache.readPose().getSkyhookRightTicks());
+//        telemetryMap.put("Skyhook Left Memory Position", robot.positionCache.readPose().getSkyhookLeftTicks());
+//        telemetryMap.put("Skyhook Right Memory Position", robot.positionCache.readPose().getSkyhookRightTicks());
 
         return telemetryMap;
     }

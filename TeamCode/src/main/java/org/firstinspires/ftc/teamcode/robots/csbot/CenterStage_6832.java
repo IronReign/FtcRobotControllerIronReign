@@ -296,8 +296,6 @@ public class CenterStage_6832 extends OpMode {
         forwardSmoother.setSmoothingFactor(FORWARD_SMOOTHING_FACTOR);
         rotateSmoother.setSmoothingFactor(ROTATE_SMOOTHING_FACTOR);
 
-        //TODO - implement field target & current position to telemetry
-
 
         TelemetryPacket packet = new TelemetryPacket();
 
@@ -312,11 +310,13 @@ public class CenterStage_6832 extends OpMode {
         if(initializing) {
             opModeTelemetryMap.put("Starting Position", startingPosition);
         }
-        if(field.finalized) {
-            field.update(packet, robot);
-            opModeTelemetryMap.put("Current Robot Zone", field.getZone(robot.driveTrain.pose));
-            opModeTelemetryMap.put("Current Robot SubZones", field.getSubZones(robot.driveTrain.pose));
-            opModeTelemetryMap.put("Current Robot POI", field.getPOI(robot.driveTrain.pose));
+        if(debugTelemetryEnabled) {
+            if (field.finalized) {
+                field.update(packet, robot);
+                opModeTelemetryMap.put("Current Robot Zone", field.getZone(robot.driveTrain.pose));
+                opModeTelemetryMap.put("Current Robot SubZones", field.getSubZones(robot.driveTrain.pose));
+                opModeTelemetryMap.put("Current Robot POI", field.getPOI(robot.driveTrain.pose));
+            }
         }
 
         opModeTelemetryMap.put("Battery Voltage", averageVoltage);
@@ -336,34 +336,35 @@ public class CenterStage_6832 extends OpMode {
 //                handleTelemetry(robot.visionProviderBack.getTelemetry(true), robot.visionProviderBack.getTelemetryName(), packet);
                 break;
         }
-
         //handle this class' telemetry
         handleTelemetry(opModeTelemetryMap,  gameState.getName(), packet);
 
-        //handle robot telemetry
-        handleTelemetry(robot.getTelemetry(debugTelemetryEnabled), robot.getTelemetryName(), packet);
+        if(debugTelemetryEnabled) {
+            //handle robot telemetry
+            handleTelemetry(robot.getTelemetry(debugTelemetryEnabled), robot.getTelemetryName(), packet);
 
-        for(TelemetryProvider telemetryProvider: robot.subsystems)
-            handleTelemetry(telemetryProvider.getTelemetry(debugTelemetryEnabled), telemetryProvider.getTelemetryName(), packet);
+            for (TelemetryProvider telemetryProvider : robot.subsystems)
+                handleTelemetry(telemetryProvider.getTelemetry(debugTelemetryEnabled), telemetryProvider.getTelemetryName(), packet);
 
-        Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
-        visionTelemetryMap.put("Backend",
-                Misc.formatInvariant("%s (%s)",
-                        VisionProviders.VISION_PROVIDERS[Robot.backVisionProviderIndex].getSimpleName(),
-                        robot.visionProviderFinalized ?
-                                "finalized" :
-                                System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
-                )
-        );
+            Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
+            visionTelemetryMap.put("Backend",
+                    Misc.formatInvariant("%s (%s)",
+                            VisionProviders.VISION_PROVIDERS[Robot.backVisionProviderIndex].getSimpleName(),
+                            robot.visionProviderFinalized ?
+                                    "finalized" :
+                                    System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
+                    )
+            );
 
-        handleTelemetry(visionTelemetryMap, "BACK VISION - \t" + robot.visionProviderBack.getTelemetryName(), packet);
-        handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
-        packet.put("imu/roadrunner error", robot.driveTrain.imuRoadrunnerError);
-        packet.put("imu angle", robot.driveTrain.imuAngle);
-        packet.put("roadrunner angle", Math.toDegrees(robot.driveTrain.pose.heading.toDouble()));
+            handleTelemetry(visionTelemetryMap, "BACK VISION - \t" + robot.visionProviderBack.getTelemetryName(), packet);
+            handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
+            packet.put("imu/roadrunner error", robot.driveTrain.imuRoadrunnerError);
+            packet.put("imu angle", robot.driveTrain.imuAngle);
+            packet.put("roadrunner angle", Math.toDegrees(robot.driveTrain.pose.heading.toDouble()));
 
 
-        dashboard.sendTelemetryPacket(packet);
+            dashboard.sendTelemetryPacket(packet);
+        }
         telemetry.update();
 
         updateLiveStates();

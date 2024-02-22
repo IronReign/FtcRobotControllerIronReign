@@ -21,6 +21,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Sensors;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Skyhook;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
@@ -514,7 +515,7 @@ public class Autonomous implements TelemetryProvider {
         TelemetryPacket packet = new TelemetryPacket();
         switch (autonIndex) {
                 case 0:
-                    robot.driveTrain.distanceSensorsEnabled = false;
+                    Sensors.distanceSensorsEnabled = false;
                     driveToPurplePixelBuild();
 
                     robot.intake.articulate(Intake.Articulation.INIT);
@@ -604,7 +605,7 @@ public class Autonomous implements TelemetryProvider {
                 case 11:
                     autonState = AutonState.SCORE_DRIVE;
                     if(robot.outtake.articulation.equals(Outtake.Articulation.TRAVEL)) {
-                        robot.driveTrain.distanceSensorsEnabled = true;
+                        Sensors.distanceSensorsEnabled = true;
                         autonIndex++;
                         futureTimer = futureTime(2);
                     }
@@ -616,7 +617,7 @@ public class Autonomous implements TelemetryProvider {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                         robot.articulate(Robot.Articulation.TRAVEL);
                         robot.outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
-                        robot.driveTrain.distanceSensorsEnabled = false;
+                        Sensors.distanceSensorsEnabled = false;
                         driveToPixelStackBuild();
                         MecanumDrive.PARAMS.maxWheelVel = 25;
                         futureTimer = futureTime(1);

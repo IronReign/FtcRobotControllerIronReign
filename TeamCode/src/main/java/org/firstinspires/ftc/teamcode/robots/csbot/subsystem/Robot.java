@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
@@ -41,7 +42,7 @@ public class  Robot implements Subsystem {
 
     //components and subsystems
     public Subsystem[] subsystems;
-    public Sensors sensors;
+    public static Sensors sensors;
     public DriveTrain driveTrain;
     public Skyhook skyhook;
     public Intake intake;
@@ -122,7 +123,7 @@ public class  Robot implements Subsystem {
         sensors = new Sensors(this);
 
 
-        subsystems = new Subsystem[]{driveTrain, intake, outtake, skyhook};
+        subsystems = new Subsystem[]{driveTrain, intake, outtake, skyhook, sensors};
         subsystemUpdateTimes = new long[subsystems.length];
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
@@ -155,6 +156,7 @@ public class  Robot implements Subsystem {
         articulate(articulation);
         driveTrain.updatePoseEstimate();
 
+        if(debugTelemetryEnabled)
         drawRobot(fieldOverlay, driveTrain.pose);
 
         //update subsystems

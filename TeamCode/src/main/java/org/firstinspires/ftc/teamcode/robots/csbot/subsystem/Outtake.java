@@ -25,7 +25,7 @@ public class Outtake implements Subsystem {
     HardwareMap hardwareMap;
     Robot robot;
 
-    private DcMotorEx slide = null;
+    public DcMotorEx slide = null;
     private Servo pixelFlipper = null;
     public Joint flipper;
     public Joint elevator;
@@ -199,13 +199,13 @@ public class Outtake implements Subsystem {
     public boolean goToPoint(int x, int z) {
         try {
             theta = 0;
-            top = Math.pow(z - armHeight, 2) - Math.pow(slide.getCurrentPosition() * ticksPerInch * Math.sin(armTheta) - armHeight, 2);
-            bottom = Math.pow(x - armBase, 2) - Math.pow(slide.getCurrentPosition() * ticksPerInch * Math.sin(armTheta) - armBase, 2);
+            top = Math.pow(z - armHeight, 2) - Math.pow(Robot.sensors.outtakeSlideTicks * ticksPerInch * Math.sin(armTheta) - armHeight, 2);
+            bottom = Math.pow(x - armBase, 2) - Math.pow(Robot.sensors.outtakeSlideTicks * ticksPerInch * Math.sin(armTheta) - armBase, 2);
             frac = Math.sqrt(top/bottom);
             if (top < 0 && bottom < 0 || top > 0 && bottom > 0)
                 theta = Math.asin(frac);
             else if (top < 0) {
-                int targetPos = (int) (slide.getCurrentPosition() + Math.sqrt(Math.abs(top)* ticksPerInch + 1 * ticksPerInch));
+                int targetPos = (int) (Robot.sensors.outtakeSlideTicks + Math.sqrt(Math.abs(top)* ticksPerInch + 1 * ticksPerInch));
                 if(targetPos > slidePositionMax) //if outside of the slides range fail
                     return false;
                 slideTargetPosition = targetPos; //move the slide to make the final position possible
@@ -214,7 +214,7 @@ public class Outtake implements Subsystem {
                 frac = Math.sqrt(top/bottom);
                 theta = Math.asin(frac);
             } else {
-                int targetPos = (int) (slide.getCurrentPosition() + Math.sqrt(Math.abs(bottom) * ticksPerInch + 1 * ticksPerInch));
+                int targetPos = (int) (Robot.sensors.outtakeSlideTicks + Math.sqrt(Math.abs(bottom) * ticksPerInch + 1 * ticksPerInch));
                 if(targetPos > slidePositionMax) //if outside of the slides range fail
                     return false;
                 slideTargetPosition = targetPos; //move the slide to make the final position possible
@@ -245,7 +245,7 @@ public class Outtake implements Subsystem {
                 ingestPositionIndex++;
                 break;
             case 1: //lower the outtake to intake position
-                if (between(slide.getCurrentPosition(), slidePositionPreDock + 10, slidePositionPreDock - 10)) {
+                if (between(Robot.sensors.outtakeSlideTicks, slidePositionPreDock + 10, slidePositionPreDock - 10)) {
                     flipper.setSpeed(FLIPPER_JOINT_SPEED);
                     setTargetAngle(FLIPPER_DOCK_ANGLE*.75);
                     ingestPositionTimer = futureTime(.85);
@@ -301,7 +301,7 @@ public class Outtake implements Subsystem {
         switch (backdropPrepStage) {
             case 0:
 //                slideTargetPosition = slidePositionPreDock;
-//                if (withinError(slide.getCurrentPosition(), slidePositionPreDock, 30)) {
+//                if (withinError(Robot.sensors.outtakeSlideTicks(), slidePositionPreDock, 30)) {
                     backdropPrepTimer = futureTime(1);
                     backdropPrepStage++;
 //                }
@@ -314,7 +314,7 @@ public class Outtake implements Subsystem {
                 break;
             case 2:
 //                slideTargetPosition = slidePositionDocked;
-//                if (withinError(slide.getCurrentPosition(), slidePositionDocked, 30)) {
+//                if (withinError(Robot.sensors.outtakeSlideTicks(), slidePositionDocked, 30)) {
                     backdropPrepStage++;
 //                }
                 break;
@@ -387,10 +387,10 @@ public class Outtake implements Subsystem {
         armTheta = getArmTheta(elevator.getCurrentAngle());
         //compute values for kinematics
         double rotTheta = -flipper.getCurrentAngle() -180;
-        double rotX = armLength*Math.cos(armTheta) + (slide.getCurrentPosition()/ticksPerInch)*Math.cos(armTheta);
-        double rotZ = armLength*Math.sin(armTheta) + (slide.getCurrentPosition()/ticksPerInch)*Math.sin(armTheta);
-        double x = (slide.getCurrentPosition()/ticksPerInch)*Math.cos(armTheta);
-        double z = (slide.getCurrentPosition()/ticksPerInch)*Math.sin(armTheta);
+        double rotX = armLength*Math.cos(armTheta) + (Robot.sensors.outtakeSlideTicks/ticksPerInch)*Math.cos(armTheta);
+        double rotZ = armLength*Math.sin(armTheta) + (Robot.sensors.outtakeSlideTicks/ticksPerInch)*Math.sin(armTheta);
+        double x = (Robot.sensors.outtakeSlideTicks/ticksPerInch)*Math.cos(armTheta);
+        double z = (Robot.sensors.outtakeSlideTicks/ticksPerInch)*Math.sin(armTheta);
         armX = (rotX-(z-rotZ)*Math.sin(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.cos(Utils.degreeToRad(rotTheta)));
         armZ = (rotZ+(z-rotZ)*Math.cos(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.sin(Utils.degreeToRad(rotTheta)));
     }
@@ -406,8 +406,8 @@ public class Outtake implements Subsystem {
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("ingest stage", ingestPositionIndex);
         telemetryMap.put("slide target position", slideTargetPosition);
-        telemetryMap.put("slide actual position", slide.getCurrentPosition());
-        telemetryMap.put("slide actual position (inches)", slide.getCurrentPosition()/ticksPerInch);
+        telemetryMap.put("slide actual position", Robot.sensors.outtakeSlideTicks);
+        telemetryMap.put("slide actual position (inches)", Robot.sensors.outtakeSlideTicks/ticksPerInch);
 //        telemetryMap.put("flipper location", Utils.servoDenormalize(pixelFlipper.getPosition()));
         telemetryMap.put("flipper ticks", flipperPosition);
         telemetryMap.put("flipper angle", flipper.getCurrentAngle());
