@@ -28,6 +28,7 @@ public class Outtake implements Subsystem {
     private DcMotorEx slide = null;
     private Servo pixelFlipper = null;
     public Joint flipper;
+    public Joint elevator;
 
     public static double ticksPerInch = 130.593132; // determined experimentally using a average distance and ticks
 
@@ -35,7 +36,10 @@ public class Outtake implements Subsystem {
     public static double armLength = 17.5;
     public static double armBase = 15.75;
     public static double armHeight = 10.625;
-    public static double armTheta = Math.atan2(armBase, armHeight);
+    public static double armTheta;
+    public static double elevatorBottomBone = 4.505;
+    public static double elevatorTopBone = 4.505;
+    public static double armLengthToElevator = 13;
 
     public static double armX, armZ;
 
@@ -74,6 +78,17 @@ public class Outtake implements Subsystem {
     public static double FLIPPER_TRAVEL_ANGLE = 28;
     public static int FLIPPER_ADJUST_ANGLE = 5;
     public static double FLIPPER_DOCK_ANGLE = 0;
+
+    //ELEVATOR JOINT VARIABLES TODO tune these value
+    public static int ELEVATOR_HOME_POSITION = 1888;
+    public static double ELEVATOR_PWM_PER_DEGREE = -7.35;
+    //IN DEGREES PER SECOND
+    public static double ELEVATOR_START_ANGLE = 51;
+
+    public static double ELEVATOR_JOINT_SPEED = 75;
+
+    public static double ELEVATOR_MIN_ANGLE = 0;
+    public static double ELEVATOR_MAX_ANGLE = 145;
 
     private boolean flipped = false;
 
@@ -164,6 +179,7 @@ public class Outtake implements Subsystem {
         this.hardwareMap = hardwareMap;
         this.robot = robot;
         flipper = new Joint(hardwareMap, "pixelFlipper", false, FLIPPER_HOME_POSITION, FLIPPER_PWM_PER_DEGREE, FLIPPER_MIN_ANGLE, FLIPPER_MAX_ANGLE, FLIPPER_START_ANGLE, FLIPPER_JOINT_SPEED);
+        elevator = new Joint(hardwareMap, "elevator", false, ELEVATOR_HOME_POSITION, ELEVATOR_PWM_PER_DEGREE, ELEVATOR_MIN_ANGLE, ELEVATOR_MAX_ANGLE, ELEVATOR_START_ANGLE, ELEVATOR_JOINT_SPEED);
         slide = this.hardwareMap.get(DcMotorEx.class, "slide");
         slide.setMotorEnable();
         slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -173,6 +189,10 @@ public class Outtake implements Subsystem {
 //        pixelFlipper = this.hardwareMap.get(Servo.class, "pixelFlipper");
 
         articulation = Articulation.MANUAL;
+    }
+
+    public double getArmTheta(double theta) {
+        return (theta*(Math.sqrt(Math.pow(elevatorTopBone, 2) + Math.pow(elevatorBottomBone, 2) - 2*elevatorBottomBone*elevatorTopBone*Math.cos(theta))/(2*Math.sin(theta))))/armLengthToElevator;
     }
 
     //should use the calculated IK formula to move to the field coordinate in inches (x, z)
@@ -364,6 +384,7 @@ public class Outtake implements Subsystem {
         //actually instruct actuators to go to desired targets
         flipper.update();
         slide.setTargetPosition(slideTargetPosition);
+        armTheta = getArmTheta(elevator.getCurrentAngle());
         //compute values for kinematics
         double rotTheta = -flipper.getCurrentAngle() -180;
         double rotX = armLength*Math.cos(armTheta) + (slide.getCurrentPosition()/ticksPerInch)*Math.cos(armTheta);

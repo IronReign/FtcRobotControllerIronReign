@@ -57,10 +57,10 @@ public abstract class VisionProvider implements TelemetryProvider {
         return this;
     }
 
-    abstract public void initializeVision(HardwareMap hardwareMap);
+    abstract public void initializeVision(HardwareMap hardwareMap, boolean isFront);
 
-    public void initializeVision(HardwareMap hardwareMap, Robot robot){
-        initializeVision(hardwareMap);
+    public void initializeVision(HardwareMap hardwareMap, Robot robot, boolean isFront){
+        initializeVision(hardwareMap, isFront);
     }
     public void initializeVision(HardwareMap hardwareMap, RunnerBot robot){
         initializeVision(hardwareMap);

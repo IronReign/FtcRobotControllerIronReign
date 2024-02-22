@@ -4,7 +4,6 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.allia
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -22,7 +21,6 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
-import org.firstinspires.ftc.teamcode.robots.csbot.Field;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.PositionCache;
@@ -46,13 +44,11 @@ public class  Robot implements Subsystem {
     public DriveTrain driveTrain;
     public Skyhook skyhook;
     public Intake intake;
-    public VisionProvider visionProviderBack = null;
+    public VisionProvider visionProviderBack, visionProviderFront;
     public static boolean visionOn = true;
     public Outtake outtake;
-    //TODO - create a field
-//    public Field field;
-
     public static boolean updatePositionCache = false;
+    public static boolean frontVision = false;
     public PositionCache positionCache;
     public CSPosition currPosition;
 
@@ -60,7 +56,8 @@ public class  Robot implements Subsystem {
 
     //vision variables
     public boolean visionProviderFinalized = false;
-    public static int visionProviderIndex = 2;
+    public static int backVisionProviderIndex = 2;
+    public static int frontVisionProviderIndex = 2;
     public double aprilTagRelocalizationX = 0;
     public double aprilTagRelocalizationY = 0;
     //REMOVE
@@ -112,7 +109,7 @@ public class  Robot implements Subsystem {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
         //initialize vision
-        createVisionProvider();
+        createVisionProviders();
 
         positionCache = new PositionCache(5);
 
@@ -129,7 +126,7 @@ public class  Robot implements Subsystem {
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
         articulation = Robot.Articulation.MANUAL;
-         visionProviderIndex = 2;
+         backVisionProviderIndex = 2;
 
 //        field = new Field(true);
     }
@@ -154,7 +151,6 @@ public class  Robot implements Subsystem {
         }
 
         articulate(articulation);
-        //TODO - DELETE
         driveTrain.updatePoseEstimate();
 
         drawRobot(fieldOverlay, driveTrain.pose);
@@ -172,12 +168,16 @@ public class  Robot implements Subsystem {
     public void enableVision() {
         if (visionOn) {
             if (!visionProviderFinalized) {
-                createVisionProvider();
-                visionProviderBack.initializeVision(hardwareMap, this);
+                createVisionProviders();
+                visionProviderBack.initializeVision(hardwareMap, this, false);
+                visionProviderFront.initializeVision(hardwareMap, this, true);
                 visionProviderFinalized = true;
 
             }
-            visionProviderBack.update();
+            if(frontVision) {
+                visionProviderFront.update();
+            }
+            else visionProviderBack.update();
         }
     }
 
@@ -271,14 +271,14 @@ public class  Robot implements Subsystem {
 
     public void switchVisionProviders() {
         visionProviderBack.shutdownVision();
-        if (visionProviderIndex == 2) {
+        if (backVisionProviderIndex == 2) {
             //switch to AprilTags
-            visionProviderIndex = 0;
+            backVisionProviderIndex = 0;
             visionProviderFinalized = false;
 
-        } else if (visionProviderIndex == 0) {
+        } else if (backVisionProviderIndex == 0) {
             //switch back to ColorBlob
-            visionProviderIndex = 2;
+            backVisionProviderIndex = 2;
             visionProviderFinalized = false;
         }
     }
@@ -493,9 +493,10 @@ public class  Robot implements Subsystem {
     }
     //end getTelemetry
 
-    public void createVisionProvider() {
+    public void createVisionProviders() {
         try {
-            visionProviderBack = VisionProviders.VISION_PROVIDERS[visionProviderIndex].newInstance().setRedAlliance(alliance==Constants.Alliance.RED);
+            visionProviderBack = VisionProviders.VISION_PROVIDERS[backVisionProviderIndex].newInstance().setRedAlliance(alliance.getMod());
+            visionProviderFront = VisionProviders.VISION_PROVIDERS[frontVisionProviderIndex].newInstance().setRedAlliance(alliance.getMod());
         } catch (IllegalAccessException | InstantiationException e) {
             throw new RuntimeException("Error while instantiating vision provider");
         }

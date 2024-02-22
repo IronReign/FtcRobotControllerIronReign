@@ -9,10 +9,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.csbot.vision.pipeline.CSBotPropDetectorPipeline;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Position;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.pipeline.PixelStackDetectorPipeline;
 import org.firstinspires.ftc.teamcode.util.Vector2;
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
@@ -34,11 +34,11 @@ import java.util.Map;
  * @author Iron Reign Coding Team
  */
 
-@Config  (value = "AA_CSBotPropDetectorProvider")
-public class CSBotPropDetectorProvider extends VisionProvider {
+@Config  (value = "AA_CSBotPixelStackDetectorProvider")
+public class PixelStackDetectorProvider extends VisionProvider {
     private Bitmap noCameraBitmap;
     private OpenCvCamera camera;
-    public CSBotPropDetectorPipeline pipeline;
+    public PixelStackDetectorPipeline pipeline;
     private volatile boolean cameraOpened;
     private List<Target> frameDetections = new ArrayList<>();
     public List<Target> getFrameDetections() {
@@ -48,14 +48,14 @@ public class CSBotPropDetectorProvider extends VisionProvider {
     private long lastFrameTimestamp;
 
     // Constants
-    private static final String TELEMETRY_NAME = "Prop Detector Vision Provider";
+    private static final String TELEMETRY_NAME = "Pixel Stack Detector Vision Provider";
     public static int WEBCAM_WIDTH = 1280;
     public static int WEBCAM_HEIGHT = 720;
     public static double distanceThreshold = 6; //this is in inches - detections closer than this threshold are considered duplicates
 
     @Override
     public void initializeVision(HardwareMap hardwareMap, boolean isFront) {
-        pipeline = new CSBotPropDetectorPipeline(isRedAlliance);
+        pipeline = new PixelStackDetectorPipeline();
         if(!isFront) {
             camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"));
         }
@@ -85,12 +85,12 @@ public class CSBotPropDetectorProvider extends VisionProvider {
     @Override
     public void shutdownVision() {
 //        if(cameraOpened) {
-            try {
-                camera.stopStreaming();
-                camera.closeCameraDevice();
-            } catch(Exception e) {
+        try {
+            camera.stopStreaming();
+            camera.closeCameraDevice();
+        } catch(Exception e) {
 
-            }
+        }
 //        }
 //        cameraOpened = false;
     }

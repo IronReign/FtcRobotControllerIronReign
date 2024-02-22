@@ -53,9 +53,12 @@ public class AprilTagProvider extends VisionProvider {
     // UNITS ARE METERS
     double tagsize = 0.0508; //tag size on iron reign signal sleeve
     @Override
-    public void initializeVision(HardwareMap hardwareMap) {
+    public void initializeVision(HardwareMap hardwareMap, boolean isFront) {
         pipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
-        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"));
+        if(!isFront) {
+            camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"));
+        }
+        else camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 2"));
 
         noCameraBitmap = Bitmap.createBitmap(320, 240, Bitmap.Config.RGB_565);
         Mat noCameraMat = new Mat(240, 320, CvType.CV_8UC3);

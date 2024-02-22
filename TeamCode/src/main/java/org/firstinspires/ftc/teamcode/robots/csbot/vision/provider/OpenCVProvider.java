@@ -40,10 +40,13 @@ public class OpenCVProvider extends VisionProvider {
     public static int WEBCAM_HEIGHT = 480;
 
     @Override
-    public void initializeVision(HardwareMap hardwareMap) {
+    public void initializeVision(HardwareMap hardwareMap, boolean isFront) {
         pipeline = new OpenCVPipeline();
-        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"));
-
+        if(!isFront) {
+            camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"));
+        }
+        else camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 2"));
+        
         noCameraBitmap = Bitmap.createBitmap(320, 240, Bitmap.Config.RGB_565);
         Mat noCameraMat = new Mat(240, 320, CvType.CV_8UC3);
         Imgproc.putText(noCameraMat, "Webcam Could", new Point(40, 110), Imgproc.FONT_HERSHEY_SIMPLEX,
