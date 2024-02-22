@@ -18,6 +18,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.allia
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.wrapAngle;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Sensors.distanceSensorsEnabled;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -60,7 +61,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     private double PIDCorrection, PIDError;
     public static int turnToTest = 0;
     public static double turnToSpeed=.8; //max angular speed for turn
-    public boolean distanceSensorsEnabled = true;
     private static final double DISTANCE_BETWEEN_DISTANCE_SENSORS = 14;
 
 
@@ -101,11 +101,11 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
     @Override
     public void update(Canvas c) {
-        imuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.getMod()? -90 : 90);
+        imuAngle = Robot.sensors.driveIMUYaw;
         imuRoadrunnerError = imuAngle - Math.toDegrees(pose.heading.log());
         if(distanceSensorsEnabled) {
-            rightDistanceSensorValue = rightDistanceSensor.getDistance(DistanceUnit.INCH);
-            leftDistanceSensorValue = leftDistanceSensor.getDistance(DistanceUnit.INCH);
+            rightDistanceSensorValue = Robot.sensors.rightDistSensorValue;
+            leftDistanceSensorValue = Robot.sensors.leftDistSensorValue;
         }
         updatePoseEstimate();
 
