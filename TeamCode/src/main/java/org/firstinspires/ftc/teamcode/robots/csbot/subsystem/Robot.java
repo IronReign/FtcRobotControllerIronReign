@@ -41,6 +41,7 @@ public class  Robot implements Subsystem {
 
     //components and subsystems
     public Subsystem[] subsystems;
+    public Sensors sensors;
     public DriveTrain driveTrain;
     public Skyhook skyhook;
     public Intake intake;
@@ -118,6 +119,7 @@ public class  Robot implements Subsystem {
         intake = new Intake(hardwareMap, this);
         outtake = new Outtake(hardwareMap, this);
         skyhook = new Skyhook(hardwareMap, this);
+        sensors = new Sensors(this);
 
 
         subsystems = new Subsystem[]{driveTrain, intake, outtake, skyhook};
@@ -438,9 +440,10 @@ public class  Robot implements Subsystem {
         switch (ingestStage) {
             case 0:
                 outtake.articulate(Outtake.Articulation.INGEST_FROM_TRAVEL);
+                ingestTimer = futureTime(.5);
                 ingestStage++;
             case 1: //wait for outake to dock before proceeding
-                if (outtake.articulation == Outtake.Articulation.MANUAL) {
+                if (outtake.articulation == Outtake.Articulation.MANUAL || isPast(ingestTimer)) {
                     //intake can start eating
                     intake.articulate(Intake.Articulation.INGEST);
                     ingestStage++;

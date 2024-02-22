@@ -23,17 +23,17 @@ public class Intake implements Subsystem {
     public static int LEFT_DIVERTER_OPEN = 1850;
     public static int LEFT_DIVERTER_CLOSED = 1340;
     public static int RIGHT_DIVERTER_CLOSED = 1500;
-    public static int ANGLE_GROUND = 1325; //where the intake hits the ground
+    public static int ANGLE_GROUND = 2024; //where the intake hits the ground
     public static int ANGLE_INGEST_INCREMENT = 20;
-    public static int ANGLE_MIN = ANGLE_GROUND - ANGLE_INGEST_INCREMENT;
+    public static int ANGLE_MIN = ANGLE_GROUND + ANGLE_INGEST_INCREMENT;
     public static int ANGLE_MAX = ANGLE_GROUND + 835;
-    public static int ANGLE_START = ANGLE_MAX;
+    public static int ANGLE_START = 1120;
     public static int ANGLE_INGEST_GROUND = ANGLE_GROUND;
 
-    public static int ANGLE_EJECT = ANGLE_GROUND + 100;
-    public static int ANGLE_HANG = ANGLE_GROUND + 200; //1515+ INTAKE_OFFSET;
-    public static int ANGLE_SWALLOW = ANGLE_GROUND + 525;//1810 + INTAKE_OFFSET;
-    public static int ANGLE_TRAVEL = ANGLE_GROUND + 335;//1750+ INTAKE_OFFSET; //safe to travel through backstage door
+    public static int ANGLE_EJECT = ANGLE_GROUND - 100;
+    public static int ANGLE_HANG = ANGLE_GROUND - 200;
+    public static int ANGLE_SWALLOW = ANGLE_GROUND - 525;
+    public static int ANGLE_TRAVEL = ANGLE_GROUND - 335; //safe to travel through backstage door
     public static double TIME_SWALLOW = 1;
     public static double TIME_EJECT = .5;
 
@@ -51,7 +51,7 @@ public class Intake implements Subsystem {
 
     private double beaterTargetVelocity = 0;
 
-    private static int angleTarget = ANGLE_GROUND;
+    public static int angleTarget = ANGLE_GROUND;
     private int ingestPixelHeight = 0;  //the height at which to start ingesting pixels. Normally 0 for ground but could be 4 for top pixel in a stack
 
     public int getIngestPixelHeight() {
@@ -170,6 +170,7 @@ public class Intake implements Subsystem {
             beater = hardwareMap.get(DcMotorEx.class, "intakeBeater");
             beater.setDirection(DcMotorSimple.Direction.REVERSE);
             angle = hardwareMap.get(Servo.class, "intakeAngle");
+//            angle.setDirection(Servo.Direction.REVERSE);
 
             beater.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }

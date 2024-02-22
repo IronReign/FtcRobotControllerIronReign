@@ -16,6 +16,7 @@
             <Servo name="intakeAngle" port="0" />
             <Servo name="diverterLeft" port="1" />
             <Servo name="droneLauncher" port="2" />
+            <Servo name="elevator" port="3" />
             <RevRobotics40HDHexMotor name="intakeBeater" port="1" />
             <RevRobotics40HDHexMotor name="slide" port="2"/>
             <RevRoboticsCoreHexMotor name="kareem" port="3"/>
