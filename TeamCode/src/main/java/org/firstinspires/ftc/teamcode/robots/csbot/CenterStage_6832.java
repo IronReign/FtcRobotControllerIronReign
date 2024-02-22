@@ -84,7 +84,7 @@ public class CenterStage_6832 extends OpMode {
 
     }
 
-    public static GameState gameState = GameState.TELE_OP;
+    public static GameState gameState = GameState.AUTONOMOUS;
     static public int gameStateIndex;
 
 
