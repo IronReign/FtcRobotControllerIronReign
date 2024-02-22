@@ -8,7 +8,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameS
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionOn;
-import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionProviderIndex;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.backVisionProviderIndex;
 
 import android.annotation.SuppressLint;
 
@@ -291,7 +291,7 @@ public class DriverControls {
         if (!active) {
             if (!visionProviderFinalized) {
                 if (stickyGamepad1.dpad_left || stickyGamepad2.dpad_left) {
-                    visionProviderIndex = (visionProviderIndex + 1) % VisionProviders.VISION_PROVIDERS.length; // switch vision provider
+                    backVisionProviderIndex = (backVisionProviderIndex + 1) % VisionProviders.VISION_PROVIDERS.length; // switch vision provider
                     robot.createVisionProviders();
                 }
                 if (stickyGamepad1.dpad_up || stickyGamepad2.dpad_up) {

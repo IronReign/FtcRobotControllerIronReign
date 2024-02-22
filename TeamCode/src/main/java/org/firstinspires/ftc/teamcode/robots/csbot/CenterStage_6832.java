@@ -157,6 +157,7 @@ public class CenterStage_6832 extends OpMode {
         robot.enableVision();
 
         robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
+        robot.visionProviderFront.setRedAlliance(startingPosition.getMod());
 
 
         auton.saveRandomizer(robot.visionProviderBack.getMostFrequentPosition().getIndex());
@@ -164,7 +165,7 @@ public class CenterStage_6832 extends OpMode {
 
         robot.driveTrain.updatePoseEstimate();
 
-        telemetry.addData("visionProviderIndex", Robot.visionProviderIndex);
+        telemetry.addData("visionProviderIndex", Robot.backVisionProviderIndex);
         telemetry.addData("visionProviderOnRed", robot.visionProviderBack.isRedAlliance);
         telemetry.addData("blobLocation", robot.visionProviderBack.getMostFrequentPosition().getIndex());
         telemetry.addData("fetched", robot.fetched);
@@ -323,7 +324,7 @@ public class CenterStage_6832 extends OpMode {
         opModeTelemetryMap.put("Last Loop Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageLoopTime * 1e-6), (int) (1 / (averageLoopTime * 1e-9))));
         opModeTelemetryMap.put("Average Robot Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageUpdateTime * 1e-6), (int) (1 / (averageUpdateTime * 1e-9))));
         opModeTelemetryMap.put("Last Robot Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (updateTime * 1e-6), (int) (1 / (updateTime * 1e-9))));
-
+        opModeTelemetryMap.put("Last Centerstage Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (updateTime * 1e-6), (int) (1 / (updateTime * 1e-9))));
         //IF NECESSARY, ADD TELEMETRY FOR EACH GAME STATE
         switch(gameState) {
             case TELE_OP:
@@ -348,14 +349,15 @@ public class CenterStage_6832 extends OpMode {
         Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
         visionTelemetryMap.put("Backend",
                 Misc.formatInvariant("%s (%s)",
-                        VisionProviders.VISION_PROVIDERS[Robot.visionProviderIndex].getSimpleName(),
+                        VisionProviders.VISION_PROVIDERS[Robot.backVisionProviderIndex].getSimpleName(),
                         robot.visionProviderFinalized ?
                                 "finalized" :
                                 System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
                 )
         );
 
-        handleTelemetry(visionTelemetryMap, robot.visionProviderBack.getTelemetryName(), packet);
+        handleTelemetry(visionTelemetryMap, "BACK VISION - \t" + robot.visionProviderBack.getTelemetryName(), packet);
+        handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
         packet.put("imu/roadrunner error", robot.driveTrain.imuRoadrunnerError);
         packet.put("imu angle", robot.driveTrain.imuAngle);
         packet.put("roadrunner angle", Math.toDegrees(robot.driveTrain.pose.heading.toDouble()));

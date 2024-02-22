@@ -23,5 +23,6 @@
             <Servo name="pixelFlipper" port="5" />
         </LynxModule>
     </LynxUsbDevice>
+    <Webcam name="Webcam 2" serialNumber="6E1F05D0" />
     <Webcam name="Webcam 1" serialNumber="VendorProduct:vendor=0x046d|product=0x0825|connection=" />
 </Robot>

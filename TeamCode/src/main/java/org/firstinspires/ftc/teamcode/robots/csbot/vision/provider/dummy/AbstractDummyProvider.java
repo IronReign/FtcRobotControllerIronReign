@@ -11,7 +11,7 @@ import java.util.Map;
 
 public abstract class AbstractDummyProvider extends VisionProvider {
     @Override
-    public void initializeVision(HardwareMap hardwareMap) {
+    public void initializeVision(HardwareMap hardwareMap, boolean isFront) {
 
     }
 
