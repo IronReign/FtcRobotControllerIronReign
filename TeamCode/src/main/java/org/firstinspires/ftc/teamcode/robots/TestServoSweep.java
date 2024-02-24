@@ -32,6 +32,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
+
 /**
  * This OpMode scans a single servo back and forwards until Stop is pressed.
  * The code is structured as a LinearOpMode
@@ -54,12 +56,12 @@ public class TestServoSweep extends LinearOpMode {
     static final double MAX_POS     =  0.6;     // Maximum rotational position
     static final double MIN_POS     =  0.4;     // Minimum rotational position
     public static double minPosition = 0;
-    public static double maxPosition = 1500;
+    public static double maxPosition = 1;
 
 
     // Define class members
     Servo servo1, servo2;
-    double  position = (maxPosition - minPosition) / 2; // Start at halfway position
+    public static double  position = (maxPosition - minPosition) / 2; // Start at halfway position
     boolean rampUp = true;
     boolean goToMax = false;
 
@@ -71,7 +73,7 @@ public class TestServoSweep extends LinearOpMode {
         // Connect to servo (Assume PushBot Left Hand)
         // Change the text in quotes to match any servo name on your robot.
         servo1 = hardwareMap.get(Servo.class, "servo1");
-        servo2 = hardwareMap.get(Servo.class, "servo2");
+//        servo2 = hardwareMap.get(Servo.class, "servo2");
         // Wait for the start button
         telemetry.addData(">", "Press Start to test Servo." );
         telemetry.update();
@@ -100,7 +102,7 @@ public class TestServoSweep extends LinearOpMode {
 
             // Set the servo to the new position and pause;
             servo1.setPosition(position);
-            servo2.setPosition(position);
+//            servo2.setPosition(position);
 
             sleep(CYCLE_MS);
             idle();

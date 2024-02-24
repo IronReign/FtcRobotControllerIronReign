@@ -2,8 +2,8 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.DriveTrain.turnToSpeed;
-import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.FLIPPER_JOINT_SPEED;
-import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.FLIPPER_TRAVEL_ANGLE;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.ELBOW_JOINT_SPEED;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.ELBOW_TRAVEL_ANGLE;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -538,14 +538,14 @@ public class Autonomous implements TelemetryProvider {
                 case 2:
                     autonState = AutonState.SCORE_GROUND;
                     if (!sweep.run(packet)) {
-                        robot.outtake.flipper.setSpeed(Outtake.FLIPPER_JOINT_SPEED * .5);
+                        robot.outtake.elbow.setSpeed(Outtake.ELBOW_JOINT_SPEED * .5);
                         robot.intake.articulate(Intake.Articulation.EJECT);
                         autonIndex++;
                     }
                     break;
                 case 3:
                     if (robot.intake.readyForTravel()) {
-                        robot.outtake.setTargetAngle(FLIPPER_TRAVEL_ANGLE);
+                        robot.outtake.setTargetAngle(ELBOW_TRAVEL_ANGLE);
                         driveToYellowPixelBuild();
                         autonIndex++;
                     }
@@ -560,7 +560,7 @@ public class Autonomous implements TelemetryProvider {
                 case 5:
                     autonState = AutonState.TRAVEL_BACKDROP;
                     if (!driveToYellowPixel.run(packet)) {
-                        robot.outtake.flipper.setSpeed(FLIPPER_JOINT_SPEED);
+                        robot.outtake.elbow.setSpeed(ELBOW_JOINT_SPEED);
                         autonIndex++;
                     }
                     break;

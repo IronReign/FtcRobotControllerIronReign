@@ -2,7 +2,7 @@
 <Robot type="FirstInspires-FTC">
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Control Hub" port="173">
-            <Servo name="diverterRight" port="5" />
+            <Servo name="servo1" port="0" />
             <REV_VL53L0X_RANGE_SENSOR name="backDistRight" port="0" bus="0" />
             <AdafruitBNO055IMU name="skyhookIMU" port="1" bus="1" />
             <REV_VL53L0X_RANGE_SENSOR name="backDistLeft" port="2" bus="0" />
@@ -13,7 +13,6 @@
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
         </LynxModule>
         <LynxModule name="Expansion Hub 1" port="1">
-            <Servo name="servo1" port="4" />
             <Servo name="servo2" port="5" />
             <RevRobotics40HDHexMotor name="intakeBeater" port="1" />
             <RevRobotics40HDHexMotor name="slide" port="2"/>

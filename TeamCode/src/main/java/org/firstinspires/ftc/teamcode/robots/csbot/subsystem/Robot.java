@@ -23,7 +23,6 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
@@ -157,7 +156,7 @@ public class  Robot implements Subsystem {
         driveTrain.updatePoseEstimate();
 
         if(debugTelemetryEnabled)
-        drawRobot(fieldOverlay, driveTrain.pose);
+            drawRobot(fieldOverlay, driveTrain.pose);
 
         //update subsystems
         for (int i = 0; i < subsystems.length; i++) {
@@ -329,7 +328,7 @@ public class  Robot implements Subsystem {
 //                }
                 break;
             case 3:
-                outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
+                outtake.setTargetAngle(Outtake.ELBOW_START_ANGLE);
                 //                if (isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
 //                    initPositionIndex ++;
