@@ -444,7 +444,7 @@ public class  Robot implements Subsystem {
                 ingestTimer = futureTime(.5);
                 ingestStage++;
             case 1: //wait for outake to dock before proceeding
-                if (outtake.articulation == Outtake.Articulation.MANUAL || isPast(ingestTimer)) {
+                if (outtake.articulation == Outtake.Articulation.MANUAL) {
                     //intake can start eating
                     intake.articulate(Intake.Articulation.INGEST);
                     ingestStage++;

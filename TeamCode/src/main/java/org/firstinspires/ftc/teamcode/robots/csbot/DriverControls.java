@@ -166,7 +166,7 @@ public class DriverControls {
             robot.outtake.goToPoint(20, 20);
         }
         if(stickyGamepad2.a) {
-            robot.skyhook.articulate(Skyhook.Articulation.INIT);
+            robot.skyhook.articulate(Skyhook.Articulation.GAME);
         }
         if(stickyGamepad2.x) {
             robot.articulate(Robot.Articulation.LAUNCH_DRONE);

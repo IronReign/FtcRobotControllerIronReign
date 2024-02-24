@@ -67,20 +67,20 @@ public class Outtake implements Subsystem {
     public static int ELBOW_HOME_POSITION = 1888;
     public static double ELBOW_PWM_PER_DEGREE = -7.35;
     //IN DEGREES PER SECOND
-    public static double ELBOW_START_ANGLE = 51;
+    public static double ELBOW_START_ANGLE = 25;
 
     public static double ELBOW_JOINT_SPEED = 75;
 
-    public static double ELBOW_MIN_ANGLE = 0;
-    public static double ELBOW_SCORE_ANGLE = 145;
+    public static double ELBOW_MIN_ANGLE = -15;
+    public static double ELBOW_SCORE_ANGLE = 95;
     public static double ELBOW_MAX_ANGLE = 145;
-    public static double ELBOW_PRE_SCORE_ANGLE = 145;
-    public static double ELBOW_TRAVEL_ANGLE = 28;
+    public static double ELBOW_PRE_SCORE_ANGLE = 95;
+    public static double ELBOW_TRAVEL_ANGLE = 20;
     public static int ELBOW_ADJUST_ANGLE = 5;
-    public static double ELBOW_DOCK_ANGLE = 0;
+    public static double ELBOW_DOCK_ANGLE = -15;
 
     //ELEVATOR JOINT VARIABLES TODO tune these value
-    public static int ELEVATOR_HOME_POSITION = 870;
+    public static int ELEVATOR_HOME_POSITION = 1027;
     public static double ELEVATOR_PWM_PER_DEGREE = -7.35;
     //IN DEGREES PER SECOND
     public static double ELEVATOR_START_ANGLE = 51;
@@ -259,7 +259,7 @@ public class Outtake implements Subsystem {
             case 1: //lower the outtake to intake position
                 if (between(Robot.sensors.outtakeSlideTicks, slidePositionPreDock + 10, slidePositionPreDock - 10)) {
                     elbow.setSpeed(ELBOW_JOINT_SPEED);
-                    setTargetAngle(ELBOW_DOCK_ANGLE *.75);
+                    setTargetAngle(ELBOW_DOCK_ANGLE);
                     ingestPositionTimer = futureTime(.85);
                     ingestPositionIndex++;
                 }
@@ -395,6 +395,7 @@ public class Outtake implements Subsystem {
         elbow.setSpeed(ELBOW_JOINT_SPEED);
         //actually instruct actuators to go to desired targets
         elbow.update();
+        wrist.update();
         slide.setTargetPosition(slideTargetPosition);
         armTheta = getArmTheta(elevator.getCurrentAngle());
         //compute values for kinematics

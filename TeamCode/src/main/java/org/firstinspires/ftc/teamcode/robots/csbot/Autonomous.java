@@ -317,6 +317,12 @@ public class Autonomous implements TelemetryProvider {
         autonIndex = 0;
         if(randomizer == 0)
             randomizer = 2;
+        if(randomizer == 3){
+            randomizer = 1;
+        }
+        if(randomizer == 1){
+            randomizer = 3;
+        }
         if(!driverSide) {
             aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
             audienceIntermediate = P2D(1,.5,-10);
@@ -519,7 +525,7 @@ public class Autonomous implements TelemetryProvider {
                     driveToPurplePixelBuild();
 
                     robot.intake.articulate(Intake.Articulation.INIT);
-                    futureTimer = futureTime(0);//delay for auton start
+                    futureTimer = futureTime(5);//delay for auton start
                     autonIndex++;
                     break;
                 case 1:
