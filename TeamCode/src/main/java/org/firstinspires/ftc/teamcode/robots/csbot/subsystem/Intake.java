@@ -20,22 +20,22 @@ import java.util.Map;
 @Config(value = "AA_CS_INTAKE")
 public class Intake implements Subsystem {
     public static int RIGHT_DIVERTER_OPEN = 1010;
-    public static int LEFT_DIVERTER_OPEN = 1850;
-    public static int LEFT_DIVERTER_CLOSED = 1340;
+    public static int LEFT_DIVERTER_OPEN = 1340;
+    public static int LEFT_DIVERTER_CLOSED = 1850;
     public static int RIGHT_DIVERTER_CLOSED = 1500;
-    public static int ANGLE_GROUND = 2024; //where the intake hits the ground
+    public static int ANGLE_GROUND = 2120; //where the intake hits the ground
     public static int ANGLE_INGEST_INCREMENT = 20;
     public static int ANGLE_MIN = ANGLE_GROUND + ANGLE_INGEST_INCREMENT;
     public static int ANGLE_MAX = ANGLE_GROUND + 835;
-    public static int ANGLE_START = 1120;
+    public static int ANGLE_START = 1190;
     public static int ANGLE_INGEST_GROUND = ANGLE_GROUND;
 
-    public static int ANGLE_EJECT = ANGLE_GROUND - 100;
+    public static int ANGLE_EJECT = 1500;
     public static int ANGLE_HANG = ANGLE_GROUND - 200;
-    public static int ANGLE_SWALLOW = ANGLE_GROUND - 525;
+    public static int ANGLE_SWALLOW = 1300;
     public static int ANGLE_TRAVEL = ANGLE_GROUND - 335; //safe to travel through backstage door
     public static double TIME_SWALLOW = 1;
-    public static double TIME_EJECT = .5;
+    public static double TIME_EJECT = 2;
 
     //CONSTANTS
     HardwareMap hardwareMap;
@@ -368,7 +368,7 @@ public class Intake implements Subsystem {
         switch (ejectState){
             case 0: //todo timing values in eject() have not been validated
                 setAngle(ANGLE_EJECT);
-                ejectTimer = futureTime(.3); //time for angle to set
+                ejectTimer = futureTime(.5); //time for angle to set
                 ejectState++;
                 break;
             case 1:

@@ -8,7 +8,6 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameS
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionOn;
-import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.backVisionProviderIndex;
 
 import android.annotation.SuppressLint;
 
@@ -21,7 +20,6 @@ import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Skyhook;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
-import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 
 public class DriverControls {
     //CONSTANTS
@@ -43,36 +41,8 @@ public class DriverControls {
 
     public void init_loop() {
         updateStickyGamepads();
-        if (stickyGamepad1.left_stick_button) {
-            robot.createVisionProviders();
-        }
-
-        if(stickyGamepad1.dpad_up) {
-            robot.visionProviderFinalized = !robot.visionProviderFinalized;
-        }
-
-        if(stickyGamepad1.a) {
-            CenterStage_6832.initPosition = true;
-        }
-
-        if(stickyGamepad1.y) {
-            if(gameState.isAutonomous()) {
-                robot.driveTrain.setPose(startingPosition);
-            }
-        }
-
-        if(stickyGamepad1.guide) {
-            robot.initPositionIndex ++;
-        }
-
-        if(stickyGamepad2.a) {
-            robot.skyhook.articulate(Skyhook.Articulation.INIT);
-        }
-
-
         handleStateSwitch();
         handlePregameControls();
-//        handleVisionProviderSwitch();
     }
 
     public void updateStickyGamepads() {
@@ -102,10 +72,10 @@ public class DriverControls {
         //GAMEPAD 1 CONTROLS
         // ------------------------------------------------------------------
         if (gamepad1.left_trigger > .1) {
-            robot.outtake.adjustFlipper(-robot.outtake.FLIPPER_ADJUST_ANGLE);
+            robot.outtake.adjustFlipper(-robot.outtake.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad1.right_trigger > .1) {
-            robot.outtake.adjustFlipper(robot.outtake.FLIPPER_ADJUST_ANGLE);
+            robot.outtake.adjustFlipper(robot.outtake.ELBOW_ADJUST_ANGLE);
         }
         if (stickyGamepad1.a) {
             if(robot.articulation == Robot.Articulation.TRAVEL)
@@ -165,7 +135,7 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.dpad_down) {
-            robot.outtake.setTargetAngle(Outtake.FLIPPER_TRAVEL_ANGLE);
+            robot.outtake.setTargetAngle(Outtake.ELBOW_TRAVEL_ANGLE);
         }
 
         if(stickyGamepad1.guide && /*CenterStage_6832.totalRunTime > 110 &&*/ field.getZone(robot.driveTrain.pose) == Field.Zone.BACKSTAGE) {
@@ -178,11 +148,9 @@ public class DriverControls {
         if(stickyGamepad2.guide) {
             robot.driveTrain.pose = new Pose2d(robot.driveTrain.pose.position, robot.driveTrain.imuAngle);
         }
-
         if(stickyGamepad2.b) {
             fieldOrientedDrive  = !fieldOrientedDrive;
         }
-
         if(stickyGamepad2.y) {
             if(robot.skyhook.articulation.equals(Skyhook.Articulation.PREP_FOR_HANG)) {
                 robot.articulate(Robot.Articulation.HANG);
@@ -191,15 +159,15 @@ public class DriverControls {
                 robot.articulate(Robot.Articulation.PREP_FOR_HANG);
             }
         }
-
+        if(stickyGamepad2.dpad_down) {
+            debugTelemetryEnabled = !debugTelemetryEnabled;
+        }
         if(stickyGamepad2.dpad_up) {
             robot.outtake.goToPoint(20, 20);
         }
-
         if(stickyGamepad2.a) {
-            robot.skyhook.articulate(Skyhook.Articulation.INIT);
+            robot.skyhook.articulate(Skyhook.Articulation.GAME);
         }
-
         if(stickyGamepad2.x) {
             robot.articulate(Robot.Articulation.LAUNCH_DRONE);
         }
@@ -276,37 +244,25 @@ public class DriverControls {
 
         }
 
-
+        if(stickyGamepad1.dpad_up) {
+            robot.visionProviderFinalized = !robot.visionProviderFinalized;
+        }
+        if(stickyGamepad1.y) {
+            if(gameState.isAutonomous()) {
+                robot.driveTrain.setPose(startingPosition);
+            }
+        }
+        if(stickyGamepad1.guide) {
+            robot.initPositionIndex ++;
+        }
         if (stickyGamepad1.dpad_left || stickyGamepad2.dpad_left)
             startingPosition = alliance == Constants.Alliance.RED ? Constants.Position.START_LEFT_RED : Constants.Position.START_LEFT_BLUE;
 
         if (stickyGamepad1.dpad_right || stickyGamepad2.dpad_right)
             startingPosition = alliance == Constants.Alliance.RED ? Constants.Position.START_RIGHT_RED : Constants.Position.START_RIGHT_BLUE;
 
-        if (stickyGamepad1.dpad_up || stickyGamepad2.dpad_up)
+        if (stickyGamepad1.a || stickyGamepad2.a)
             debugTelemetryEnabled = !debugTelemetryEnabled;
-    }
-
-    public void handleVisionProviderSwitch() {
-        if (!active) {
-            if (!visionProviderFinalized) {
-                if (stickyGamepad1.dpad_left || stickyGamepad2.dpad_left) {
-                    backVisionProviderIndex = (backVisionProviderIndex + 1) % VisionProviders.VISION_PROVIDERS.length; // switch vision provider
-                    robot.createVisionProviders();
-                }
-                if (stickyGamepad1.dpad_up || stickyGamepad2.dpad_up) {
-//                    robot.visionProviderBack.initializeVision(hardwareMap); // this is blocking
-                    visionProviderFinalized = true;
-                }
-            } else if (stickyGamepad1.dpad_up || stickyGamepad2.dpad_up) {
-                robot.visionProviderBack.shutdownVision(); // also blocking, but should be very quick
-                visionProviderFinalized = false;
-            }
-        } else if ((stickyGamepad1.dpad_right || stickyGamepad2.dpad_right) && visionProviderFinalized) {
-            robot.visionProviderBack.saveDashboardImage();
-        }
-        if (visionProviderFinalized)
-            robot.visionProviderBack.update();
     }
 
 

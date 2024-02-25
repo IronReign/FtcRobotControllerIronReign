@@ -89,7 +89,8 @@ public class CenterStage_6832 extends OpMode {
 
 
     //CONSTANTS FOR GAME
-    public static boolean DEFAULT_DEBUG_TELEMETRY_ENABLED = false;
+    //CHANGE THIS RIGHT BEFORE GAMES/TUNING
+    public static boolean DEFAULT_DEBUG_TELEMETRY_ENABLED = true;
     public static Constants.Alliance alliance = Constants.Alliance.RED;
     public static Constants.Position startingPosition = Constants.Position.START_LEFT_RED;
     long startTime;
@@ -213,7 +214,7 @@ public class CenterStage_6832 extends OpMode {
         }
 
         if(gameState.equals(GameState.TELE_OP)){
-            robot.outtake.setTargetAngle(Outtake.FLIPPER_TRAVEL_ANGLE);
+            robot.outtake.setTargetAngle(Outtake.ELBOW_TRAVEL_ANGLE);
             robot.articulate(Robot.Articulation.TRAVEL);
         }
 

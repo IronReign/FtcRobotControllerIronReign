@@ -4,7 +4,6 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.between;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
@@ -27,7 +26,8 @@ public class Outtake implements Subsystem {
 
     public DcMotorEx slide = null;
     private Servo pixelFlipper = null;
-    public Joint flipper;
+    public Joint elbow;
+    public Joint wrist;
     public Joint elevator;
 
     public static double ticksPerInch = 130.593132; // determined experimentally using a average distance and ticks
@@ -63,24 +63,24 @@ public class Outtake implements Subsystem {
     public static int UNTUCK_SLIDE_POSITION = 500;
     public static boolean TEMP_FLIPPER_TUNE = false;
 
-    //FLIPPER JOINT VARIABLES
-    public static int FLIPPER_HOME_POSITION = 1888;
-    public static double FLIPPER_PWM_PER_DEGREE = -7.35;
+    //ELBOW JOINT VARIABLES
+    public static int ELBOW_HOME_POSITION = 1888;
+    public static double ELBOW_PWM_PER_DEGREE = -7.35;
     //IN DEGREES PER SECOND
-    public static double FLIPPER_START_ANGLE = 51;
+    public static double ELBOW_START_ANGLE = 25;
 
-    public static double FLIPPER_JOINT_SPEED = 75;
+    public static double ELBOW_JOINT_SPEED = 75;
 
-    public static double FLIPPER_MIN_ANGLE = 0;
-    public static double FLIPPER_SCORE_ANGLE = 145;
-    public static double FLIPPER_MAX_ANGLE = 145;
-    public static double FLIPPER_PRE_SCORE_ANGLE = 145;
-    public static double FLIPPER_TRAVEL_ANGLE = 28;
-    public static int FLIPPER_ADJUST_ANGLE = 5;
-    public static double FLIPPER_DOCK_ANGLE = 0;
+    public static double ELBOW_MIN_ANGLE = -15;
+    public static double ELBOW_SCORE_ANGLE = 95;
+    public static double ELBOW_MAX_ANGLE = 145;
+    public static double ELBOW_PRE_SCORE_ANGLE = 95;
+    public static double ELBOW_TRAVEL_ANGLE = 20;
+    public static int ELBOW_ADJUST_ANGLE = 5;
+    public static double ELBOW_DOCK_ANGLE = -15;
 
     //ELEVATOR JOINT VARIABLES TODO tune these value
-    public static int ELEVATOR_HOME_POSITION = 1888;
+    public static int ELEVATOR_HOME_POSITION = 1027;
     public static double ELEVATOR_PWM_PER_DEGREE = -7.35;
     //IN DEGREES PER SECOND
     public static double ELEVATOR_START_ANGLE = 51;
@@ -89,6 +89,17 @@ public class Outtake implements Subsystem {
 
     public static double ELEVATOR_MIN_ANGLE = 0;
     public static double ELEVATOR_MAX_ANGLE = 145;
+
+    //WRIST JOINT VARIABLES TODO tune these value
+    public static int WRIST_HOME_POSITION = 850;
+    public static double WRIST_PWM_PER_DEGREE = -7.35;
+    //IN DEGREES PER SECOND
+    public static double WRIST_START_ANGLE = 51;
+
+    public static double WRIST_JOINT_SPEED = 75;
+
+    public static double WRIST_MIN_ANGLE = 0;
+    public static double WRIST_MAX_ANGLE = 145;
 
     private boolean flipped = false;
 
@@ -104,7 +115,7 @@ public class Outtake implements Subsystem {
             case MANUAL:
                 break;
             case BACKDROP:
-                flipper.setTargetAngle(FLIPPER_SCORE_ANGLE);
+                elbow.setTargetAngle(ELBOW_SCORE_ANGLE);
                 articulation = Articulation.TRAVEL;
                 break;
             case TRAVEL:
@@ -172,14 +183,15 @@ public class Outtake implements Subsystem {
     public Articulation articulation;
 
     public void setTargetAngle(double angle) {
-        flipper.setTargetAngle(angle);
+        elbow.setTargetAngle(angle);
     }
 
     public Outtake(HardwareMap hardwareMap, Robot robot) {
         this.hardwareMap = hardwareMap;
         this.robot = robot;
-        flipper = new Joint(hardwareMap, "pixelFlipper", false, FLIPPER_HOME_POSITION, FLIPPER_PWM_PER_DEGREE, FLIPPER_MIN_ANGLE, FLIPPER_MAX_ANGLE, FLIPPER_START_ANGLE, FLIPPER_JOINT_SPEED);
+        elbow = new Joint(hardwareMap, "elbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         elevator = new Joint(hardwareMap, "elevator", false, ELEVATOR_HOME_POSITION, ELEVATOR_PWM_PER_DEGREE, ELEVATOR_MIN_ANGLE, ELEVATOR_MAX_ANGLE, ELEVATOR_START_ANGLE, ELEVATOR_JOINT_SPEED);
+        wrist = new Joint(hardwareMap, "wrist", false, WRIST_HOME_POSITION, WRIST_PWM_PER_DEGREE, WRIST_MIN_ANGLE, WRIST_MAX_ANGLE, WRIST_START_ANGLE, WRIST_JOINT_SPEED);
         slide = this.hardwareMap.get(DcMotorEx.class, "slide");
         slide.setMotorEnable();
         slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -246,15 +258,15 @@ public class Outtake implements Subsystem {
                 break;
             case 1: //lower the outtake to intake position
                 if (between(Robot.sensors.outtakeSlideTicks, slidePositionPreDock + 10, slidePositionPreDock - 10)) {
-                    flipper.setSpeed(FLIPPER_JOINT_SPEED);
-                    setTargetAngle(FLIPPER_DOCK_ANGLE*.75);
+                    elbow.setSpeed(ELBOW_JOINT_SPEED);
+                    setTargetAngle(ELBOW_DOCK_ANGLE);
                     ingestPositionTimer = futureTime(.85);
                     ingestPositionIndex++;
                 }
                 break;
             case 2: //give enough time to pull down flipper, then slide to intake dock
                 if (isPast(ingestPositionTimer)) {
-                    flipper.setSpeed(FLIPPER_JOINT_SPEED);
+                    elbow.setSpeed(ELBOW_JOINT_SPEED);
                     setSlideTargetPosition(slidePositionDocked);
                     ingestPositionIndex = 0;
                     return true;
@@ -270,14 +282,14 @@ public class Outtake implements Subsystem {
     boolean travelFromIngest() {
         switch (travelStage) {
             case 0: //begin undock
-                setTargetAngle(FLIPPER_DOCK_ANGLE);
+                setTargetAngle(ELBOW_DOCK_ANGLE);
                 setSlideTargetPosition(slidePositionPreDock);
                 travelTimer = futureTime(.5);
                 travelStage++;
                 break;
             case 1: //complete undock
                 if (isPast(travelTimer)) {
-                    setTargetAngle(FLIPPER_TRAVEL_ANGLE);
+                    setTargetAngle(ELBOW_TRAVEL_ANGLE);
                     travelTimer = futureTime(.5);
                     travelStage++;
                 }
@@ -307,7 +319,7 @@ public class Outtake implements Subsystem {
 //                }
                 break;
             case 1:
-                flipper.setTargetAngle(FLIPPER_PRE_SCORE_ANGLE);
+                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
                 if (isPast(backdropPrepTimer)) {
                     backdropPrepStage++;
                 }
@@ -332,8 +344,8 @@ public class Outtake implements Subsystem {
     boolean travelFromBackdrop() {
         switch (travelStageBack) { //robot should have already placed the intake into travel position
             case 0:
-                FLIPPER_PRE_SCORE_ANGLE = flipper.getCurrentAngle();
-                setTargetAngle(FLIPPER_TRAVEL_ANGLE);
+                ELBOW_PRE_SCORE_ANGLE = elbow.getCurrentAngle();
+                setTargetAngle(ELBOW_TRAVEL_ANGLE);
                 setSlideTargetPosition(0);
                 travelTimer = futureTime(.5);
                 travelStageBack++;
@@ -360,15 +372,15 @@ public class Outtake implements Subsystem {
     }
 
     public void adjustFlipper(int angle) {
-        flipper.setTargetAngle(flipper.getCurrentAngle() + angle);
+        elbow.setTargetAngle(elbow.getCurrentAngle() + angle);
     }
 
 
     public void flipperTest() {
         if (TEMP_FLIPPER_TUNE) {
-            flipper.setTargetAngle(flipper.getCurrentAngle() + 1);
+            elbow.setTargetAngle(elbow.getCurrentAngle() + 1);
         } else
-            flipper.setTargetAngle(flipper.getCurrentAngle() - 1);
+            elbow.setTargetAngle(elbow.getCurrentAngle() - 1);
     }
 
     public int getSlideTargetPosition() {
@@ -380,13 +392,14 @@ public class Outtake implements Subsystem {
         //compute the current articulation/behavior
         articulate();
         //allow real-time flipper speed changes
-        flipper.setSpeed(FLIPPER_JOINT_SPEED);
+        elbow.setSpeed(ELBOW_JOINT_SPEED);
         //actually instruct actuators to go to desired targets
-        flipper.update();
+        elbow.update();
+        wrist.update();
         slide.setTargetPosition(slideTargetPosition);
         armTheta = getArmTheta(elevator.getCurrentAngle());
         //compute values for kinematics
-        double rotTheta = -flipper.getCurrentAngle() -180;
+        double rotTheta = -elbow.getCurrentAngle() -180;
         double rotX = armLength*Math.cos(armTheta) + (Robot.sensors.outtakeSlideTicks/ticksPerInch)*Math.cos(armTheta);
         double rotZ = armLength*Math.sin(armTheta) + (Robot.sensors.outtakeSlideTicks/ticksPerInch)*Math.sin(armTheta);
         double x = (Robot.sensors.outtakeSlideTicks/ticksPerInch)*Math.cos(armTheta);
@@ -410,8 +423,8 @@ public class Outtake implements Subsystem {
         telemetryMap.put("slide actual position (inches)", Robot.sensors.outtakeSlideTicks/ticksPerInch);
 //        telemetryMap.put("flipper location", Utils.servoDenormalize(pixelFlipper.getPosition()));
         telemetryMap.put("flipper ticks", flipperPosition);
-        telemetryMap.put("flipper angle", flipper.getCurrentAngle());
-        telemetryMap.put("flipper target angle", flipper.getTargetAngle());
+        telemetryMap.put("flipper angle", elbow.getCurrentAngle());
+        telemetryMap.put("flipper target angle", elbow.getTargetAngle());
         telemetryMap.put("arm location", "("+armX+", "+armZ+")");
         telemetryMap.put("arm theta", armTheta);
 

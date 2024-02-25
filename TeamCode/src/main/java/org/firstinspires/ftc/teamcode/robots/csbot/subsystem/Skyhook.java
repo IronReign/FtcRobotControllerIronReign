@@ -28,7 +28,7 @@ public class Skyhook implements Subsystem {
     Robot robot;
     public static int skyhookRightTicks = 0;
     public static int skyhookLeftTicks = 0;
-    public static int SKYHOOK_HANG_TICKS = 300;
+    public static int SKYHOOK_HANG_TICKS = 450;
     public static int SKYHOOK_LAUNCH_TICKS = 340;
     public static int PREP_FOR_HANG_TICKS = 0;
     public int droneServoTicks = 1500;
@@ -40,7 +40,7 @@ public class Skyhook implements Subsystem {
     IMU skyhookIMU = null;
     public DcMotorExResetable skyhookLeft, skyhookRight;
     public Servo droneLauncher;
-    public static int SKYHOOK_INIT_TICKS = 500;
+    public static int SKYHOOK_INIT_TICKS = 700;
 
     public static double SKYHOOK_POWER = 1;
 
