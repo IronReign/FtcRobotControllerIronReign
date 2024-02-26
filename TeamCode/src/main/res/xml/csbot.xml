@@ -3,7 +3,6 @@
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Control Hub" port="173">
             <Servo name="diverterRight" port="5" />
-            <Servo name="droneLauncher" port="4" />
             <REV_VL53L0X_RANGE_SENSOR name="backDistRight" port="0" bus="0" />
             <AdafruitBNO055IMU name="skyhookIMU" port="1" bus="1" />
             <REV_VL53L0X_RANGE_SENSOR name="backDistLeft" port="2" bus="0" />
@@ -21,6 +20,7 @@
             <Servo name="wrist" port="4" />
             <Servo name="elevator" port="3" />
             <Servo name="elbow" port="2" />
+            <Servo name="droneLauncher" port="5" />
             <RevRobotics40HDHexMotor name="intakeBeater" port="1" />
             <RevRobotics40HDHexMotor name="slide" port="2"/>
             <RevRoboticsCoreHexMotor name="kareem" port="3"/>
