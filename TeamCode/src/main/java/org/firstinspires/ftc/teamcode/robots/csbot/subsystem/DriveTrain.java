@@ -56,7 +56,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public boolean imuTurnDone = false;
     private double targetHeading, targetVelocity = 0;
     public static PIDController headingPID;
-    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0, .11, 0.1);
+    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(.13, 0, 0.1);
     public static double HEADING_PID_TOLERANCE = .04; //this is a percentage of the input range .063 of 2PI is 1 degree
     private double PIDCorrection, PIDError;
     public static int turnToTest = 0;
@@ -225,11 +225,11 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("y in fieldCoords", pose.position.y / Constants.FIELD_INCHES_PER_GRID);
         telemetryMap.put("x in inches", pose.position.x);
         telemetryMap.put("y in inches", pose.position.y);
-        if(distanceSensorsEnabled) {
+
             telemetryMap.put("Right Distance Sensor Value", rightDistanceSensorValue);
             telemetryMap.put("Left Distance Sensor Value", leftDistanceSensorValue);
             telemetryMap.put("distance sensor heading", distanceSensorHeading());
-        }
+
         telemetryMap.put("heading", Math.toDegrees(pose.heading.log()));
         telemetryMap.put("Left Odometry Pod:\t", leftFront.getCurrentPosition());
         telemetryMap.put("Right Odometry Pod:\t", rightFront.getCurrentPosition());

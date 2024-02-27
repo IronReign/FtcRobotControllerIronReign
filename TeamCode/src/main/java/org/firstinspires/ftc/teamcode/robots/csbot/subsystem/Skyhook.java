@@ -34,7 +34,7 @@ public class Skyhook implements Subsystem {
     public int droneServoTicks = 1500;
     public static int DRONE_TENSION_TICKS = 1450;
     public static int DRONE_RELEASE_TICKS = 750;
-    public static int SKYHOOK_SAFE_TICKS = 900;
+    public static int SKYHOOK_SAFE_TICKS = 950;
     public static int SKYHOOK_UP_TICKS = 0;
     DcMotorEx kareem, jabbar;
     IMU skyhookIMU = null;
@@ -128,6 +128,7 @@ public class Skyhook implements Subsystem {
         switch (launchIndex) {
             case 0:
                 launchTimer = futureTime(SKYHOOK_LAUNCH_TIMER);
+                Sensors.skyhookIMUEnabled = true;
                 launchIndex ++;
                 break;
             case 1:
@@ -143,6 +144,7 @@ public class Skyhook implements Subsystem {
             case 2:
                 if(isPast(launchTimer)) {
                     releaseTheDrone();
+                    Sensors.skyhookIMUEnabled = false;
                     launchTimer = futureTime(SKYHOOK_LAUNCH_TIMER);
                     launchIndex++;
                 }

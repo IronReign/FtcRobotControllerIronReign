@@ -30,10 +30,10 @@ public class Intake implements Subsystem {
     public static int ANGLE_START = 1190;
     public static int ANGLE_INGEST_GROUND = ANGLE_GROUND;
 
-    public static int ANGLE_EJECT = 1500;
-    public static int ANGLE_HANG = ANGLE_GROUND - 200;
-    public static int ANGLE_SWALLOW = 1300;
-    public static int ANGLE_TRAVEL = ANGLE_GROUND - 335; //safe to travel through backstage door
+    public static int ANGLE_EJECT = 1450;
+    public static int ANGLE_HANG = 1450;
+    public static int ANGLE_SWALLOW = 1600;
+    public static int ANGLE_TRAVEL = 1500; //safe to travel through backstage door
     public static double TIME_SWALLOW = 1;
     public static double TIME_EJECT = 2;
 
@@ -47,7 +47,7 @@ public class Intake implements Subsystem {
     public boolean manualBeaterEject = false;
     public boolean manualBeaterEnable = false;
     public static double BEATER_INGEST_VELOCITY = 1700;
-    public static double BEATER_EJECT_VELOCITY = -700;
+    public static double BEATER_EJECT_VELOCITY = -800;
 
     private double beaterTargetVelocity = 0;
 

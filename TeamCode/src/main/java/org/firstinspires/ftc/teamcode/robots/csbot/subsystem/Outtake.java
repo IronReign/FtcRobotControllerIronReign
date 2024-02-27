@@ -67,14 +67,14 @@ public class Outtake implements Subsystem {
     public static int ELBOW_HOME_POSITION = 1888;
     public static double ELBOW_PWM_PER_DEGREE = -7.35;
     //IN DEGREES PER SECOND
-    public static double ELBOW_START_ANGLE = 25;
+    public static double ELBOW_START_ANGLE = 70;
 
     public static double ELBOW_JOINT_SPEED = 75;
 
     public static double ELBOW_MIN_ANGLE = -15;
-    public static double ELBOW_SCORE_ANGLE = 95;
+    public static double ELBOW_SCORE_ANGLE = 120;
     public static double ELBOW_MAX_ANGLE = 145;
-    public static double ELBOW_PRE_SCORE_ANGLE = 95;
+    public static double ELBOW_PRE_SCORE_ANGLE = 120;
     public static double ELBOW_TRAVEL_ANGLE = 20;
     public static int ELBOW_ADJUST_ANGLE = 5;
     public static double ELBOW_DOCK_ANGLE = -15;
