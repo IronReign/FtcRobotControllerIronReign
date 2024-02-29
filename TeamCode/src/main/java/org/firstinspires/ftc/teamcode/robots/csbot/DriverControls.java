@@ -135,7 +135,7 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.dpad_down) {
-            robot.outtake.setTargetAngle(Outtake.ELBOW_TRAVEL_ANGLE);
+            robot.outtake.setTargetAngle(Outtake.ELBOW_TRAVEL_ANGLE, Outtake.WRIST_TRAVEL_ANGLE, Outtake.ELEVATOR_START_ANGLE);
         }
 
         if(stickyGamepad1.guide && /*CenterStage_6832.totalRunTime > 110 &&*/ field.getZone(robot.driveTrain.pose) == Field.Zone.BACKSTAGE) {

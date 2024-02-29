@@ -4,6 +4,8 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.allia
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.DriveTrain.turnToSpeed;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.ELBOW_JOINT_SPEED;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.ELBOW_TRAVEL_ANGLE;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.ELEVATOR_START_ANGLE;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.WRIST_TRAVEL_ANGLE;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -551,7 +553,7 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 3:
                     if (robot.intake.readyForTravel()) {
-                        robot.outtake.setTargetAngle(ELBOW_TRAVEL_ANGLE);
+                        robot.outtake.setTargetAngle(ELBOW_TRAVEL_ANGLE, WRIST_TRAVEL_ANGLE, ELEVATOR_START_ANGLE);
                         driveToYellowPixelBuild();
                         autonIndex=20;
                     }
