@@ -214,7 +214,7 @@ public class CenterStage_6832 extends OpMode {
         }
 
         if(gameState.equals(GameState.TELE_OP)){
-            robot.outtake.setTargetAngle(Outtake.ELBOW_TRAVEL_ANGLE);
+            robot.outtake.setTargetAngle(Outtake.ELBOW_TRAVEL_ANGLE, Outtake.WRIST_TRAVEL_ANGLE, Outtake.ELEVATOR_START_ANGLE);
             robot.articulate(Robot.Articulation.TRAVEL);
         }
 
