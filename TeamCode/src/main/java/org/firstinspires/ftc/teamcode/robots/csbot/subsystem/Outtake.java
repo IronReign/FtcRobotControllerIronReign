@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.between;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
@@ -334,24 +335,25 @@ public class Outtake implements Subsystem {
     boolean backdropPrep() {
         switch (backdropPrepStage) {
             case 0:
-//                slideTargetPosition = slidePositionPreDock;
-//                if (withinError(Robot.sensors.outtakeSlideTicks(), slidePositionPreDock, 30)) {
+                slideTargetPosition = slidePositionPreDock;
+                if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionPreDock, 30)) {
                     backdropPrepTimer = futureTime(1);
                     backdropPrepStage++;
-//                }
+                }
                 break;
             case 1:
-//                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
-                elbowWristIK(5, 3);
+                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
+                wrist.setTargetAngle(WRIST_START_ANGLE);
+//                elbowWristIK(5, 3);
                 if (isPast(backdropPrepTimer)) {
                     backdropPrepStage++;
                 }
                 break;
             case 2:
                 slideTargetPosition = slidePositionScore;
-//                if (withinError(Robot.sensors.outtakeSlideTicks(), slidePositionDocked, 30)) {
+                if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionDocked, 30)) {
                     backdropPrepStage++;
-//                }
+                }
                 break;
             case 3:
                 backdropPrepStage = 0;
