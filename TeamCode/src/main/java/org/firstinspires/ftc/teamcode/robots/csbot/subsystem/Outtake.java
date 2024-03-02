@@ -15,7 +15,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Joint;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
-import org.firstinspires.ftc.teamcode.util.Vector2;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -42,8 +41,8 @@ public class Outtake implements Subsystem {
     public static double elevatorTopBone = 4.505;
     public static double armLengthToElevator = 13;
     public static double elbowLength = 6;
-    public static double wristlength = 9.5;
-    public static double armLength = elbowLength+wristlength;
+    public static double wristLength = 9.5;
+    public static double armLength = elbowLength+ wristLength;
 
     public static double armX, armZ;
     public static double elbowTargetAngle, wristTargetAngle;
@@ -218,10 +217,11 @@ public class Outtake implements Subsystem {
     }
 
     public boolean elbowWristIK(int x, int z) {
-        x=-x;
         z-=armHeight;
-        wristTargetAngle = Math.toDegrees(Math.acos((Math.pow(x, 2)+Math.pow(z, 2)-Math.pow(elbowLength, 2)-Math.pow(wristlength, 2))/(-2*elbowLength*wristlength)));
-        elbowTargetAngle = Math.toDegrees(Math.toRadians(27)+Math.acos(x/(Math.hypot(x, z)))-Math.asin((wristlength*Math.sin(wristTargetAngle))/Math.hypot(x, z)));
+        wristTargetAngle = Math.toDegrees(Math.acos((Math.pow(x, 2)+Math.pow(z, 2)-Math.pow(elbowLength, 2)-Math.pow(wristLength, 2))/(-2*elbowLength*wristLength)));
+        double b = Math.toDegrees(Math.acos((Math.pow(wristLength, 2)-Math.pow(elbowLength, 2)-Math.pow(x, 2)-Math.pow(z, 2))/(-2*elbowLength*Math.hypot(x, z))));
+        double a = Math.toDegrees(Math.atan(z/x));
+        elbowTargetAngle = 180+27-a-b;
         if(Double.isNaN(wristTargetAngle) || Double.isNaN(elbowTargetAngle)) {
             return false;
         }
@@ -342,9 +342,9 @@ public class Outtake implements Subsystem {
                 }
                 break;
             case 1:
-                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
-                wrist.setTargetAngle(WRIST_START_ANGLE);
-//                elbowWristIK(5, 3);
+//                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
+//                wrist.setTargetAngle(WRIST_START_ANGLE);
+                elbowWristIK(5, 13);
                 if (isPast(backdropPrepTimer)) {
                     backdropPrepStage++;
                 }

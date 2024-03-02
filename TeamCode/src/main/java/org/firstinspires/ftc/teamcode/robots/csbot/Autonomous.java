@@ -555,7 +555,7 @@ public class Autonomous implements TelemetryProvider {
                     if (robot.intake.readyForTravel()) {
                         robot.outtake.setTargetAngle(ELBOW_TRAVEL_ANGLE, WRIST_TRAVEL_ANGLE, ELEVATOR_START_ANGLE);
                         driveToYellowPixelBuild();
-                        autonIndex=20;
+                        autonIndex++;
                     }
                     break;
                 case 4:
