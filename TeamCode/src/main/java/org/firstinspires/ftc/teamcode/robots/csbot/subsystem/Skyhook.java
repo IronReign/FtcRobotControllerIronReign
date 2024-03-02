@@ -8,12 +8,14 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.DcMotorExResetable;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
+import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -34,8 +36,10 @@ public class Skyhook implements Subsystem {
     public int droneServoTicks = 1500;
     public static int DRONE_TENSION_TICKS = 1450;
     public static int DRONE_RELEASE_TICKS = 750;
-    public static int SKYHOOK_SAFE_TICKS = 950;
+    public static int SKYHOOK_SAFE_TICKS = 1200;
     public static int SKYHOOK_UP_TICKS = 0;
+    public PIDController droneLaunchPID;
+    public static PIDCoefficients droneLaunchCoefficients;
     DcMotorEx kareem, jabbar;
     IMU skyhookIMU = null;
     public DcMotorExResetable skyhookLeft, skyhookRight;

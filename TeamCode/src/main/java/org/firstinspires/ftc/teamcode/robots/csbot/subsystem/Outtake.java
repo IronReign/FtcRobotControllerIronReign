@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.between;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
@@ -14,7 +15,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Joint;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
-import org.firstinspires.ftc.teamcode.util.Vector2;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -41,8 +41,8 @@ public class Outtake implements Subsystem {
     public static double elevatorTopBone = 4.505;
     public static double armLengthToElevator = 13;
     public static double elbowLength = 6;
-    public static double wristlength = 9.5;
-    public static double armLength = elbowLength+wristlength;
+    public static double wristLength = 9.5;
+    public static double armLength = elbowLength+ wristLength;
 
     public static double armX, armZ;
     public static double elbowTargetAngle, wristTargetAngle;
@@ -217,10 +217,11 @@ public class Outtake implements Subsystem {
     }
 
     public boolean elbowWristIK(int x, int z) {
-        x=-x;
         z-=armHeight;
-        wristTargetAngle = Math.toDegrees(Math.acos((Math.pow(x, 2)+Math.pow(z, 2)-Math.pow(elbowLength, 2)-Math.pow(wristlength, 2))/(-2*elbowLength*wristlength)));
-        elbowTargetAngle = Math.toDegrees(Math.toRadians(27)+Math.acos(x/(Math.hypot(x, z)))-Math.asin((wristlength*Math.sin(wristTargetAngle))/Math.hypot(x, z)));
+        wristTargetAngle = Math.toDegrees(Math.acos((Math.pow(x, 2)+Math.pow(z, 2)-Math.pow(elbowLength, 2)-Math.pow(wristLength, 2))/(-2*elbowLength*wristLength)));
+        double b = Math.toDegrees(Math.acos((Math.pow(wristLength, 2)-Math.pow(elbowLength, 2)-Math.pow(x, 2)-Math.pow(z, 2))/(-2*elbowLength*Math.hypot(x, z))));
+        double a = Math.toDegrees(Math.atan(z/x));
+        elbowTargetAngle = 180+Math.toDegrees(Math.atan(armHeight/armBase))-a-b;
         if(Double.isNaN(wristTargetAngle) || Double.isNaN(elbowTargetAngle)) {
             return false;
         }
@@ -334,24 +335,25 @@ public class Outtake implements Subsystem {
     boolean backdropPrep() {
         switch (backdropPrepStage) {
             case 0:
-//                slideTargetPosition = slidePositionPreDock;
-//                if (withinError(Robot.sensors.outtakeSlideTicks(), slidePositionPreDock, 30)) {
+                slideTargetPosition = slidePositionPreDock;
+                if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionPreDock, 30)) {
                     backdropPrepTimer = futureTime(1);
                     backdropPrepStage++;
-//                }
+                }
                 break;
             case 1:
 //                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
-                elbowWristIK(5, 3);
+//                wrist.setTargetAngle(WRIST_START_ANGLE);
+                elbowWristIK(5, 13);
                 if (isPast(backdropPrepTimer)) {
                     backdropPrepStage++;
                 }
                 break;
             case 2:
                 slideTargetPosition = slidePositionScore;
-//                if (withinError(Robot.sensors.outtakeSlideTicks(), slidePositionDocked, 30)) {
+                if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionDocked, 30)) {
                     backdropPrepStage++;
-//                }
+                }
                 break;
             case 3:
                 backdropPrepStage = 0;
