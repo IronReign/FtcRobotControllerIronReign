@@ -85,6 +85,24 @@ public class Field {
         }
     }
 
+    public double bearingToPoseRad(Pose2d robotPose, Pose2d targetPose) {
+        Vector2 start = new Vector2(robotPose.position.x, robotPose.position.y);
+        Vector2 end = new Vector2(targetPose.position.x, targetPose.position.y);
+        return start.angleBetween(end);
+    }
+
+    public double bearingToPOIRad(Pose2d robotPose, POI endPOI){
+        return bearingToPoseRad(robotPose, endPOI.getPose());
+    }
+
+    public double bearingToPOIDeg(Pose2d robotPose, POI endPOI){
+        return Math.toDegrees(bearingToPOIRad(robotPose, endPOI));
+    }
+    public double bearingToPoseDeg(Pose2d robotPose, Pose2d endPose){
+        return Math.toDegrees(bearingToPoseRad(robotPose, endPose));
+    }
+
+
     public boolean isRed = true;
 
 //    public void init_loop() {
@@ -171,6 +189,7 @@ public class Field {
             //run preferredRoute
             actionBuilder =
                     preferredRoute.addToPath(actionBuilder, robotPosition);
+//                    .turnTo(bearingToPoseRad(preferredRoute.getExitPose(robotPosition), targetPosition));
         }
         //spline to destination
 
@@ -184,11 +203,13 @@ public class Field {
         //reverseSplines means targetPos is backstageSide
         if(reverseSplines && (finalStartPoseY / Math.abs(finalStartPoseY) != (targetPosition.position.y / (Math.abs(targetPosition.position.y))))){
             actionBuilder = actionBuilder
-                    .splineTo(field.BACKSTAGE_INTERMEDIATE.getPose().position, 0);
+                    .splineTo(field.BACKSTAGE_INTERMEDIATE.getPose().position, 0)
+                    .strafeToLinearHeading(targetPosition.position, targetPosition.heading);
         }
-        actionBuilder = actionBuilder
-                .splineToSplineHeading(targetPosition, targetPosition.heading);
-
+        else {
+            actionBuilder = actionBuilder
+                    .splineToLinearHeading(targetPosition, targetPosition.heading);
+        }
         return new SequentialAction(
                 actionBuilder.build()
         );

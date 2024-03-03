@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.DriveTrain.runTestPath;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.DriveTrain.testPathToScore;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.DriveTrain.testPathToWing;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.DriveTrain.turnToSpeed;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.ELBOW_JOINT_SPEED;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.ELBOW_TRAVEL_ANGLE;
@@ -89,6 +92,7 @@ public class Autonomous implements TelemetryProvider {
     int allianceDirection = -1;
     public static int selectedPath;
     double STANDARD_HEADING_RAD = Math.PI;
+    boolean testRunToWing = true;
 
     public static double FIELD_INCHES_PER_GRID = 23.5;
 
@@ -521,7 +525,22 @@ public class Autonomous implements TelemetryProvider {
 
     public boolean execute(FtcDashboard dashboard) {
         TelemetryPacket packet = new TelemetryPacket();
-        switch (autonIndex) {
+        if(runTestPath) {
+            if(testRunToWing) {
+                if (!testPathToWing.run(packet)) {
+                    robot.driveTrain.buildTestPathToScore();
+                    testRunToWing = false;
+                }
+            }
+            else {
+                if(!testPathToScore.run(packet)) {
+                    robot.driveTrain.buildTestPathToWing();
+                    testRunToWing = true;
+                }
+            }
+        }
+        else
+            switch (autonIndex) {
                 case 0:
                     Sensors.distanceSensorsEnabled = false;
                     driveToPurplePixelBuild();

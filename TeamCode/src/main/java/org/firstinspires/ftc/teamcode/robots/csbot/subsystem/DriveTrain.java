@@ -3,8 +3,6 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Rotation2d;
@@ -14,18 +12,12 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.wrapAngle;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Sensors.distanceSensorsEnabled;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 //todo this should not reference the reign version of MecanumDrive
-import org.firstinspires.ftc.teamcode.R;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.Field;
 import org.firstinspires.ftc.teamcode.robots.csbot.SubZone;
@@ -44,16 +36,15 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public static double GLOBAL_HEADING_DAMPENING = .7;
     public static double HEADING_DAMPENING = 0.5;
     public static double DRIVE_DAMPENING = 0.6;
-
-    public Articulation articulation;
-
     public DistanceSensor leftDistanceSensor, rightDistanceSensor;
     public double rightDistanceSensorValue = 0;
     public double leftDistanceSensorValue = 0;
     public double imuRoadrunnerError;
     public double imuAngle;
+    public static int testPreferredRouteIndex = 3;
 
     public boolean imuTurnDone = false;
+    public static boolean runTestPath = false;
     private double targetHeading, targetVelocity = 0;
     public static PIDController headingPID;
     public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(.04, 0, 0.1);
@@ -62,6 +53,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public static int turnToTest = 0;
     public static double turnToSpeed=.8; //max angular speed for turn
     private static final double DISTANCE_BETWEEN_DISTANCE_SENSORS = 14;
+
+    public static SequentialAction testPathToWing, testPathToScore;
 
 
     public boolean isHumanIsDriving() {
@@ -74,9 +67,11 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
     private boolean humanIsDriving=false;
 
-    public enum Articulation{
-        BACKSTAGE_DRIVE,
-        WING_DRIVE,
+    public void buildTestPathToWing() {
+        testPathToWing = field.pathToPOI(pose, field.WING_INTAKE, testPreferredRouteIndex, robot);
+    }
+    public void buildTestPathToScore() {
+        testPathToScore = field.pathToPOI(pose, field.SCORE6, testPreferredRouteIndex, robot);
     }
 
 
@@ -110,13 +105,12 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         updatePoseEstimate();
 
 //        update pose heading from imu regularly
-        if((int)(System.nanoTime() / 1e9) % 2 == 0){
-            pose = new Pose2d(pose.position, Math.toRadians(imuAngle));
-        }
+//        if((int)(System.nanoTime() / 1e9) % 2 == 0){
+//            pose = new Pose2d(pose.position, Math.toRadians(imuAngle));
+//        }
 
         //test imu based turning from dashboard - todo comment out when not needed
         if (turnToTest!=0) turnUntilDegreesIMU(turnToTest,turnToSpeed); //can target any angle but zero
-
     }
 
     public double distanceSensorHeading() {
@@ -244,6 +238,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("Right Front Motor Power", rightFront.getPower());
         telemetryMap.put("Right Back Motor Power", rightBack.getPower());
         telemetryMap.put("distanceSensorsEnabled?", distanceSensorsEnabled);
+        telemetryMap.put("testPath?", testPathToWing);
 
         return telemetryMap;
     }

@@ -21,7 +21,7 @@ public class TeleOpMeepMeep {
 
         MeepMeep meepMeep = new MeepMeep(800);
         field = new Field();
-        field.isRed = true;
+        field.isRed = false;
         field.finalizeField();
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
@@ -30,9 +30,9 @@ public class TeleOpMeepMeep {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        Pose2d p = field.WING_INTAKE    .getPose();
+        Pose2d p = field.WING_INTAKE.getPose();
         Action bot1Action =
-                field.pathToPOI(p, myBot, field.SCORE6, 6);
+                field.pathToPOI(p, myBot, field.SCORE1, 4);
 
         myBot.runAction(bot1Action);
 
