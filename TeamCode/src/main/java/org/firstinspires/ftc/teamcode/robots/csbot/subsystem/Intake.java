@@ -5,6 +5,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
@@ -43,6 +44,7 @@ public class Intake implements Subsystem {
     Servo diverterRight, diverterLeft;
     Servo angleLeft, angleRight;
     DcMotorEx beater;
+    DistanceSensor pixelSensorRight, pixelSensorLeft;
     public static boolean precisionAngle = false;
     public boolean manualBeaterEject = false;
     public boolean manualBeaterEnable = false;
@@ -171,6 +173,8 @@ public class Intake implements Subsystem {
             beater.setDirection(DcMotorSimple.Direction.REVERSE);
             angleLeft = hardwareMap.get(Servo.class, "intakeAngleLeft");
             angleRight = hardwareMap.get(Servo.class, "intakeAngleRight");
+            pixelSensorRight = hardwareMap.get(DistanceSensor.class, "rightPixelSensor");
+            pixelSensorLeft = hardwareMap.get(DistanceSensor.class, "leftPixelSensor");
 //            angle.setDirection(Servo.Direction.REVERSE);
             angleRight.setDirection(Servo.Direction.REVERSE);
             beater.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -325,9 +329,16 @@ public class Intake implements Subsystem {
     }
 
     public boolean ingest(int height){ //height is expected to be changed externally
+        Sensors.pixelSensorEnabled = true;
         setDiverters(pixelSensor, height);
         angleTarget = PixelStack.getByIndex(Range.clip(height-pixelSensor.count,0,4)).angle;
         beaterTargetVelocity = BEATER_INGEST_VELOCITY;
+        if(Robot.sensors.leftPixelSensorValue < 1) {
+            pixelSensorLeft();
+        }
+        if(Robot.sensors.rightPixelSensorValue < 1) {
+            pixelSensorRight();
+        }
         //if a pixel is detected
         if(pixelSensor.count>1) return true;
         return false;
@@ -426,6 +437,10 @@ public class Intake implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("pixelsensor state", pixelSensor.name());
+        if(Sensors.pixelSensorEnabled) {
+            telemetryMap.put("leftPixelSensor", Robot.sensors.leftPixelSensorValue);
+            telemetryMap.put("rightPixelSensor", Robot.sensors.rightPixelSensorValue);
+        }
         telemetryMap.put("ingest pixel height", ingestPixelHeight);
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("manual beater bar on?", manualBeaterEnable);

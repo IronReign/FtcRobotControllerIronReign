@@ -45,7 +45,7 @@ public class Outtake implements Subsystem {
     public static double armLength = elbowLength+ wristLength;
 
     public static double armX, armZ;
-    public static double elbowTargetAngle, wristTargetAngle;
+    public static double elbowTargetAngle, wristTargetAngle, elevatorTargetAngle;
     private double theta, top, bottom, frac;
 
     public static int flipperPosition = 1888;
@@ -61,11 +61,14 @@ public class Outtake implements Subsystem {
     public static int slidePositionPreDock = 500;
     public static int slidePositionDocked = 0;
     public static int slidePositionScore = 400;
+    public static double scoreZ = 7;
+    public static double scoreX = 5;
 
 
     int slideSpeed = 15;
     public static int UNTUCK_SLIDE_POSITION = 500;
     public static boolean TEMP_FLIPPER_TUNE = false;
+    public static double IK_ADJUST_INCHES = .2;
 
     //ELBOW JOINT VARIABLES
     public static int ELBOW_HOME_POSITION = 1888;
@@ -73,37 +76,39 @@ public class Outtake implements Subsystem {
     //IN DEGREES PER SECOND
     public static double ELBOW_START_ANGLE = 70;
 
-    public static double ELBOW_JOINT_SPEED = 75;
+    public static double ELBOW_JOINT_SPEED = 30;
 
     public static double ELBOW_MIN_ANGLE = -15;
     public static double ELBOW_SAFE_ANGLE = 15;
     public static double ELBOW_SCORE_ANGLE = 120;
-    public static double ELBOW_MAX_ANGLE = 145;
+    public static double ELBOW_MAX_ANGLE = 220;
     public static double ELBOW_PRE_SCORE_ANGLE = 120;
     public static double ELBOW_TRAVEL_ANGLE = 20;
     public static int ELBOW_ADJUST_ANGLE = 5;
+    public static int WRIST_ADJUST_ANGLE = 5;
+    public static int ELEVATOR_ADJUST_ANGLE = 5;
     public static double ELBOW_DOCK_ANGLE = -15;
 
     //ELEVATOR JOINT VARIABLES TODO tune these value
     public static int ELEVATOR_HOME_POSITION = 1027;
-    public static double ELEVATOR_PWM_PER_DEGREE = 7.35;
+    public static double ELEVATOR_PWM_PER_DEGREE = 7.35*(4.0/3);
     //IN DEGREES PER SECOND
     public static double ELEVATOR_START_ANGLE = 0;
 
     public static double ELEVATOR_JOINT_SPEED = 75;
 
     public static double ELEVATOR_MIN_ANGLE = 0;
-    public static double ELEVATOR_MAX_ANGLE = 145;
+    public static double ELEVATOR_MAX_ANGLE = 120;
 
     //WRIST JOINT VARIABLES TODO tune these value
     public static int WRIST_HOME_POSITION = 950;
     public static double WRIST_PWM_PER_DEGREE = 7.35;
     //IN DEGREES PER SECOND
     public static double WRIST_START_ANGLE = 0;
-    public static double WRIST_TRAVEL_ANGLE = 30;
+    public static double WRIST_TRAVEL_ANGLE = 50;
     public static double WRIST_SCORE_ANGLE = 180;
 
-    public static double WRIST_JOINT_SPEED = 75;
+    public static double WRIST_JOINT_SPEED = 30;
 
     public static double WRIST_MIN_ANGLE = 0;
     public static double WRIST_MAX_ANGLE = 180;
@@ -216,7 +221,7 @@ public class Outtake implements Subsystem {
         return (theta*(Math.sqrt(Math.pow(elevatorTopBone, 2) + Math.pow(elevatorBottomBone, 2) - 2*elevatorBottomBone*elevatorTopBone*Math.cos(theta))/(2*Math.sin(theta))))/armLengthToElevator;
     }
 
-    public boolean elbowWristIK(int x, int z) {
+    public boolean elbowWristIK(double x, double z) {
         z-=armHeight;
         wristTargetAngle = Math.toDegrees(Math.acos((Math.pow(x, 2)+Math.pow(z, 2)-Math.pow(elbowLength, 2)-Math.pow(wristLength, 2))/(-2*elbowLength*wristLength)));
         double b = Math.toDegrees(Math.acos((Math.pow(wristLength, 2)-Math.pow(elbowLength, 2)-Math.pow(x, 2)-Math.pow(z, 2))/(-2*elbowLength*Math.hypot(x, z))));
@@ -275,19 +280,13 @@ public class Outtake implements Subsystem {
 
     public boolean ingestFromTravel() { //should only call this if Travel was previously set
         switch (ingestPositionIndex) {
-            case 0: //position outtake to position scoopagon just clear of the intake belt
-                setSlideTargetPosition(slidePositionPreDock);
+            case 0: //lower the outtake to intake position
+                elbow.setSpeed(ELBOW_JOINT_SPEED);
+                setTargetAngle(ELBOW_DOCK_ANGLE, WRIST_START_ANGLE, ELEVATOR_START_ANGLE);
+                ingestPositionTimer = futureTime(.85);
                 ingestPositionIndex++;
                 break;
-            case 1: //lower the outtake to intake position
-                if (between(Robot.sensors.outtakeSlideTicks, slidePositionPreDock + 10, slidePositionPreDock - 10)) {
-                    elbow.setSpeed(ELBOW_JOINT_SPEED);
-                    setTargetAngle(ELBOW_DOCK_ANGLE, WRIST_START_ANGLE, ELEVATOR_START_ANGLE);
-                    ingestPositionTimer = futureTime(.85);
-                    ingestPositionIndex++;
-                }
-                break;
-            case 2: //give enough time to pull down flipper, then slide to intake dock
+            case 1: //give enough time to pull down flipper, then slide to intake dock
                 if (isPast(ingestPositionTimer)) {
                     elbow.setSpeed(ELBOW_JOINT_SPEED);
                     setSlideTargetPosition(slidePositionDocked);
@@ -338,14 +337,17 @@ public class Outtake implements Subsystem {
                 slideTargetPosition = slidePositionPreDock;
                 if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionPreDock, 30)) {
                     backdropPrepTimer = futureTime(1);
+                    Sensors.distanceSensorsEnabled = true;
                     backdropPrepStage++;
                 }
                 break;
             case 1:
 //                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
 //                wrist.setTargetAngle(WRIST_START_ANGLE);
-                elbowWristIK(5, 13);
+//                scoreX = (Robot.sensors.rightDistSensorValue+Robot.sensors.leftPixelSensorValue)/2;
+                elbowWristIK(scoreX, scoreZ);
                 if (isPast(backdropPrepTimer)) {
+                    Sensors.distanceSensorsEnabled = false;
                     backdropPrepStage++;
                 }
                 break;
@@ -396,9 +398,15 @@ public class Outtake implements Subsystem {
         slide.setTargetPosition(slideTargetPosition);
     }
 
-    public void adjustFlipper(int angle) {
+    public void adjustElbow(int angle) {
         elbow.setTargetAngle(elbow.getCurrentAngle() + angle);
     }
+
+    public void adjustWrist(int angle) {
+        wrist.setTargetAngle(wrist.getCurrentAngle() + angle);
+    }
+
+    public void adjustElevator(int angle) { elevator.setTargetAngle(elevator.getCurrentAngle() + angle); }
 
 
     public void flipperTest() {
@@ -421,6 +429,7 @@ public class Outtake implements Subsystem {
         //actually instruct actuators to go to desired targets
         elbow.update();
         wrist.update();
+        elevator.update();
         slide.setTargetPosition(slideTargetPosition);
         armTheta = getArmTheta(elevator.getCurrentAngle());
         //compute values for kinematics
@@ -452,10 +461,14 @@ public class Outtake implements Subsystem {
         telemetryMap.put("elbow target angle", elbow.getTargetAngle());
         telemetryMap.put("wrist angle", wrist.getCurrentAngle());
         telemetryMap.put("wrist target angle", wrist.getTargetAngle());
+        telemetryMap.put("elevator angle", elevator.getCurrentAngle());
+        telemetryMap.put("elavator target angle", elevator.getTargetAngle());
         telemetryMap.put("arm location", "("+armX+", "+armZ+")");
         telemetryMap.put("arm theta", armTheta);
         telemetryMap.put("wrist target angle", wristTargetAngle);
         telemetryMap.put("elbow target angle", elbowTargetAngle);
+        telemetryMap.put("elevator target angle", elevatorTargetAngle);
+        telemetryMap.put("ScoreX, ScoreZ", scoreX+", "+scoreZ);
         telemetryMap.put("IK variables", "top: "+top+" bottom: "+bottom+" theta: "+theta+" frac: "+frac);
         return telemetryMap;
     }

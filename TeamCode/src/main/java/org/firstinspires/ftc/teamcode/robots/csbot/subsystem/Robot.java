@@ -328,7 +328,7 @@ public class  Robot implements Subsystem {
 //                }
                 break;
             case 3:
-                outtake.setTargetAngle(Outtake.ELBOW_START_ANGLE, Outtake.WRIST_TRAVEL_ANGLE, Outtake.ELEVATOR_START_ANGLE);
+                outtake.setTargetAngle(Outtake.ELBOW_START_ANGLE, Outtake.WRIST_START_ANGLE, Outtake.ELEVATOR_START_ANGLE);
                 //                if (isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
 //                    initPositionIndex ++;
@@ -444,7 +444,7 @@ public class  Robot implements Subsystem {
                 ingestTimer = futureTime(.5);
                 ingestStage++;
             case 1: //wait for outake to dock before proceeding
-                if (outtake.articulation == Outtake.Articulation.MANUAL) {
+                if (isPast(ingestTimer)) {
                     //intake can start eating
                     intake.articulate(Intake.Articulation.INGEST);
                     ingestStage++;

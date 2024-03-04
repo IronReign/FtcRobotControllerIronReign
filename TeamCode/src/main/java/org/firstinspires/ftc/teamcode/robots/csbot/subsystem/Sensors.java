@@ -27,11 +27,12 @@ public class Sensors implements Subsystem {
     public double driveIMUYaw;
     public double beaterBarAmps;
     public int outtakeSlideTicks;
-
+    public double rightPixelSensorValue, leftPixelSensorValue;
 
     public static boolean skyhookIMUEnabled;
     public static boolean distanceSensorsEnabled;
     public static boolean driveIMUEnabled;
+    public static boolean pixelSensorEnabled;
 
     public Sensors(Robot robot){
         this.robot = robot;
@@ -54,6 +55,11 @@ public class Sensors implements Subsystem {
         }
         if(driveIMUEnabled){
             driveIMUYaw = robot.driveTrain.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.getMod()? -90 : 90);
+        }
+
+        if(pixelSensorEnabled) {
+            rightPixelSensorValue = robot.intake.pixelSensorRight.getDistance(DistanceUnit.INCH);
+            leftPixelSensorValue = robot.intake.pixelSensorLeft.getDistance(DistanceUnit.INCH);
         }
 
         //INTAKE

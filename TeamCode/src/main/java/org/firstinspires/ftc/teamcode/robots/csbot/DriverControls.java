@@ -71,11 +71,17 @@ public class DriverControls {
 
         //GAMEPAD 1 CONTROLS
         // ------------------------------------------------------------------
-        if (gamepad1.left_trigger > .1) {
-            robot.outtake.adjustFlipper(-robot.outtake.ELBOW_ADJUST_ANGLE);
+        if (gamepad2.left_trigger > .1) {
+            robot.outtake.scoreZ -= robot.outtake.IK_ADJUST_INCHES;
+            if(robot.outtake.scoreZ < 7)
+                robot.outtake.scoreZ = 7;
+            robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
-        if (gamepad1.right_trigger > .1) {
-            robot.outtake.adjustFlipper(robot.outtake.ELBOW_ADJUST_ANGLE);
+        if (gamepad2.right_trigger > .1) {
+            robot.outtake.scoreZ += robot.outtake.IK_ADJUST_INCHES;
+            if(robot.outtake.scoreZ > 50)
+                robot.outtake.scoreZ = 50;
+            robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
         if (stickyGamepad1.a) {
             if(robot.articulation == Robot.Articulation.TRAVEL)
@@ -158,6 +164,18 @@ public class DriverControls {
             else {
                 robot.articulate(Robot.Articulation.PREP_FOR_HANG);
             }
+        }
+        if (gamepad2.left_trigger > .1) {
+            robot.outtake.adjustElevator(-robot.outtake.ELEVATOR_ADJUST_ANGLE);
+        }
+        if (gamepad2.right_trigger > .1) {
+            robot.outtake.adjustElevator(robot.outtake.ELEVATOR_ADJUST_ANGLE);
+        }
+        if (gamepad2.left_bumper) {
+            robot.outtake.adjustWrist(-robot.outtake.WRIST_ADJUST_ANGLE);
+        }
+        if (gamepad2.right_bumper) {
+            robot.outtake.adjustWrist(robot.outtake.WRIST_ADJUST_ANGLE);
         }
         if(stickyGamepad2.dpad_down) {
             debugTelemetryEnabled = !debugTelemetryEnabled;
