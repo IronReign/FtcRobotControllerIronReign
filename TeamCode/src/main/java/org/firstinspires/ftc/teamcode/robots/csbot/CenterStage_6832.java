@@ -31,10 +31,12 @@ public class CenterStage_6832 extends OpMode {
     private FtcDashboard dashboard;
     public static Field field;
     DriverControls dc;
+    AutoNav autoNav;
 
 
     //GLOBAL STATES
     public static boolean active;
+    public boolean autoNavEnabled = false;
     public static boolean debugTelemetryEnabled;
     private boolean initializing;
     public boolean endGameHandled;
@@ -132,6 +134,7 @@ public class CenterStage_6832 extends OpMode {
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
         field = new Field();
+        autoNav = new AutoNav(robot, field);
 
         robot.updatePositionCache = false;
         robot.driveTrain.setPose(startingPosition);
@@ -250,14 +253,17 @@ public class CenterStage_6832 extends OpMode {
 
             switch(gameState) {
                 case AUTONOMOUS:
-                    if(auton.execute(dashboard )) gameState = GameState.TELE_OP;
+                    if(auton.execute(dashboard)) gameState = GameState.TELE_OP;
                     //auton.execute(dashboard);
                     break;
 
                 case TELE_OP:
+                    if(autoNavEnabled) {
+                        if(dc.joysticksInactive())
+                        autoNav.run(dashboard);
+                    }
                     dc.joystickDrive();
                     break;
-
                 case TEST:
                     dc.joystickDrive();
                     break;

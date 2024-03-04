@@ -23,6 +23,7 @@ public class Sensors implements Subsystem {
 
     public double rightDistSensorValue;
     public double leftDistSensorValue;
+    public double averageDistSensorValue;
     public double skyhookIMUPitch;
     public double driveIMUYaw;
     public double beaterBarAmps;
@@ -52,6 +53,7 @@ public class Sensors implements Subsystem {
         if(distanceSensorsEnabled) {
             rightDistSensorValue = robot.driveTrain.rightDistanceSensor.getDistance(DistanceUnit.INCH);
             leftDistSensorValue = robot.driveTrain.leftDistanceSensor.getDistance(DistanceUnit.INCH);
+            averageDistSensorValue = (leftDistSensorValue + rightDistSensorValue)/2;
         }
         if(driveIMUEnabled){
             driveIMUYaw = robot.driveTrain.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.getMod()? -90 : 90);

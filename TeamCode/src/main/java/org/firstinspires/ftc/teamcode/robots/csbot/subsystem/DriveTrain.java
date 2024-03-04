@@ -68,10 +68,10 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     private boolean humanIsDriving=false;
 
     public void buildTestPathToWing() {
-        testPathToWing = field.pathToPOI(pose, field.WING_INTAKE, testPreferredRouteIndex, robot);
+        testPathToWing = field.pathToPOI(robot, field.WING_INTAKE, testPreferredRouteIndex);
     }
     public void buildTestPathToScore() {
-        testPathToScore = field.pathToPOI(pose, field.SCORE6, testPreferredRouteIndex, robot);
+        testPathToScore = field.pathToPOI(robot, field.SCORE6, testPreferredRouteIndex);
     }
 
 

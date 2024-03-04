@@ -77,7 +77,7 @@ public class  Robot implements Subsystem {
     private int driveToDroneIndex = 0;
     public boolean autoEndgame = false;
 
-    public boolean selfDriving = true;
+    public boolean selfDriving = false;
 
     public enum Articulation {
         //beater bar, drivetrain, drone launcher, outtake

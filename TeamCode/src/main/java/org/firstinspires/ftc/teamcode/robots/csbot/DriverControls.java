@@ -67,6 +67,13 @@ public class DriverControls {
 
     }
 
+    public boolean joysticksInactive() {
+        return gamepad1.left_stick_x < DEADZONE && gamepad1.left_stick_y < DEADZONE
+                && gamepad1.right_stick_x < DEADZONE && gamepad1.right_stick_y < DEADZONE
+                && gamepad2.left_stick_x < DEADZONE && gamepad2.left_stick_y < DEADZONE
+                && gamepad2.right_stick_x < DEADZONE && gamepad2.right_stick_x < DEADZONE;
+    }
+
     public void joystickDrive() {
 
         //GAMEPAD 1 CONTROLS

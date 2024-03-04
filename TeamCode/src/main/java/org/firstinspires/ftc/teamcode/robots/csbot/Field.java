@@ -35,6 +35,8 @@ public class Field {
    public POI APRILTAG1, APRILTAG2, APRILTAG3, APRILTAG4, APRILTAG5, APRILTAG6;
    public POI SCORE1, SCORE2, SCORE3, SCORE4, SCORE5, SCORE6;
    public POI BACKSTAGE_INTERMEDIATE;
+   //INDEXES CORRESPOND WITH SCORELOCATION
+   public List<POI> scoreLocations = new ArrayList<POI>();
 
 
     //all values are in field grids
@@ -146,7 +148,13 @@ public class Field {
         SCORE4 = POI.SCORE4;
         SCORE5 = POI.SCORE5;
         SCORE6 = POI.SCORE6;
-
+        scoreLocations.add(new POI(0, 0, 0, "INDEXING_PLACEHOLDER", Zone.RIGGING));
+        scoreLocations.add(SCORE1);
+        scoreLocations.add(SCORE2);
+        scoreLocations.add(SCORE3);
+        scoreLocations.add(SCORE4);
+        scoreLocations.add(SCORE5);
+        scoreLocations.add(SCORE6);
     }
 
     public void update(TelemetryPacket packet, Robot robot) {
@@ -219,8 +227,8 @@ public class Field {
         );
     }
 
-    public SequentialAction pathToPOI(Pose2d robotPosition, POI poi, int preferredRouteIndex, Robot robot){
-        return pathToPose(robotPosition, poi.getPose(), preferredRouteIndex, robot);
+    public SequentialAction pathToPOI(Robot robot, POI poi, int preferredRouteIndex){
+        return pathToPose(robot.driveTrain.pose, poi.getPose(), preferredRouteIndex, robot);
     }
 
     public Pose2d getAprilTagPose(int id) {
