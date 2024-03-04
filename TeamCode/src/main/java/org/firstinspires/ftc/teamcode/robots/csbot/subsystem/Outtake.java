@@ -344,7 +344,7 @@ public class Outtake implements Subsystem {
             case 1:
 //                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
 //                wrist.setTargetAngle(WRIST_START_ANGLE);
-//                scoreX = (Robot.sensors.rightDistSensorValue+Robot.sensors.leftPixelSensorValue)/2;
+//                scoreX = (Robot.sensors.averageDistSensorValue);
                 elbowWristIK(scoreX, scoreZ);
                 if (isPast(backdropPrepTimer)) {
                     Sensors.distanceSensorsEnabled = false;

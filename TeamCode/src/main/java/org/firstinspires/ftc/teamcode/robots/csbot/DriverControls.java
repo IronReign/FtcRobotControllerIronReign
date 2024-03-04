@@ -78,13 +78,13 @@ public class DriverControls {
 
         //GAMEPAD 1 CONTROLS
         // ------------------------------------------------------------------
-        if (gamepad2.left_trigger > .1) {
+        if (gamepad1.left_trigger > .1) {
             robot.outtake.scoreZ -= robot.outtake.IK_ADJUST_INCHES;
             if(robot.outtake.scoreZ < 7)
                 robot.outtake.scoreZ = 7;
             robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
-        if (gamepad2.right_trigger > .1) {
+        if (gamepad1.right_trigger > .1) {
             robot.outtake.scoreZ += robot.outtake.IK_ADJUST_INCHES;
             if(robot.outtake.scoreZ > 50)
                 robot.outtake.scoreZ = 50;
