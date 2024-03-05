@@ -72,9 +72,9 @@ public class Outtake implements Subsystem {
 
     //ELBOW JOINT VARIABLES
     public static int ELBOW_HOME_POSITION = 1888;
-    public static double ELBOW_PWM_PER_DEGREE = -7.35;
+    public static double ELBOW_PWM_PER_DEGREE = -8.9111111111;
     //IN DEGREES PER SECOND
-    public static double ELBOW_START_ANGLE = 70;
+    public static double ELBOW_START_ANGLE = 0;
 
     public static double ELBOW_JOINT_SPEED = 30;
 
@@ -102,9 +102,9 @@ public class Outtake implements Subsystem {
 
     //WRIST JOINT VARIABLES TODO tune these value
     public static int WRIST_HOME_POSITION = 950;
-    public static double WRIST_PWM_PER_DEGREE = 7.35;
+    public static double WRIST_PWM_PER_DEGREE = 7.32222222222;
     //IN DEGREES PER SECOND
-    public static double WRIST_START_ANGLE = 0;
+    public static double WRIST_START_ANGLE = 75;
     public static double WRIST_TRAVEL_ANGLE = 50;
     public static double WRIST_SCORE_ANGLE = 180;
 

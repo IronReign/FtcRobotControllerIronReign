@@ -127,7 +127,7 @@ public class  Robot implements Subsystem {
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        articulation = Robot.Articulation.MANUAL;
+        articulation = Articulation.MANUAL;
          backVisionProviderIndex = 2;
 
 //        field = new Field(true);

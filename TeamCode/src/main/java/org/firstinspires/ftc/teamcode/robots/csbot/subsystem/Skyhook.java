@@ -44,7 +44,7 @@ public class Skyhook implements Subsystem {
     IMU skyhookIMU = null;
     public DcMotorExResetable skyhookLeft, skyhookRight;
     public Servo droneLauncher;
-    public static int SKYHOOK_INIT_TICKS = 700;
+    public static int SKYHOOK_INIT_TICKS = 800;
 
     public static double SKYHOOK_POWER = 1;
 

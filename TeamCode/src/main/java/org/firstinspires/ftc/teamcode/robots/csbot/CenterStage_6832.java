@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
@@ -260,7 +261,7 @@ public class CenterStage_6832 extends OpMode {
                 case TELE_OP:
                     if(autoNavEnabled) {
                         if(dc.joysticksInactive())
-                        autoNav.run(dashboard);
+                            autoNav.run(dashboard);
                     }
                     dc.joystickDrive();
                     break;
@@ -274,6 +275,7 @@ public class CenterStage_6832 extends OpMode {
 
                 case MANUAL_DIAGNOSTIC:
                     dc.manualDiagnosticMethods();
+                    robot.intake.articulate(Intake.Articulation.MANUAL);
                     robot.enableVision();
                     break;
 

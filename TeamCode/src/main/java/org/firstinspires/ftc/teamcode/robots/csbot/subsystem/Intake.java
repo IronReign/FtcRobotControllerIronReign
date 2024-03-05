@@ -31,7 +31,7 @@ public class Intake implements Subsystem {
     public static int ANGLE_START = 1190;
     public static int ANGLE_INGEST_GROUND = ANGLE_GROUND;
 
-    public static int ANGLE_EJECT = 1250;
+    public static int ANGLE_EJECT = 1800;
     public static int ANGLE_HANG = 1450;
     public static int ANGLE_SWALLOW = 1600;
     public static int ANGLE_TRAVEL = 1500; //safe to travel through backstage door
@@ -51,7 +51,7 @@ public class Intake implements Subsystem {
     public static double BEATER_INGEST_VELOCITY = 1700;
     public static double BEATER_EJECT_VELOCITY = -800;
 
-    private double beaterTargetVelocity = 0;
+    public static double beaterTargetVelocity = 0;
 
     public static int angleTarget = ANGLE_GROUND;
     private int ingestPixelHeight = 0;  //the height at which to start ingesting pixels. Normally 0 for ground but could be 4 for top pixel in a stack
@@ -382,8 +382,8 @@ public class Intake implements Subsystem {
     public boolean eject() {
         switch (ejectState){
             case 0: //todo timing values in eject() have not been validated
-                setAngle(ANGLE_EJECT);
-                ejectTimer = futureTime(.5); //time for angle to set
+                angleTarget = ANGLE_EJECT;
+                ejectTimer = futureTime(1); //time for angle to set
                 ejectState++;
                 break;
             case 1:

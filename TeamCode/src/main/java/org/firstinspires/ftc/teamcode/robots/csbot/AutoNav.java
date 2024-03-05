@@ -8,7 +8,6 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 
 public class AutoNav {
@@ -34,12 +33,12 @@ public class AutoNav {
         if(cycling) {
             if(intaking) {
                 //assuming wing intake for now
-                if (intake(packet, preferredRoute, true))
+                if (retrieve(packet, preferredRoute, true))
                     intaking = false;
             }
             else {
                 //assuming middle apriltag for now
-                if(outtake(packet, preferredRoute, 2));
+                if(deliver(packet, preferredRoute, 2))
                     intaking = true;
             }
         }
@@ -51,20 +50,20 @@ public class AutoNav {
         outtakeIndex = 0;
     }
 
-    SequentialAction pathToIntake;
+    SequentialAction pathToRetrieval;
     int intakeIndex = 0;
-    public boolean intake(TelemetryPacket packet, int preferredRoute, boolean wing) {
+    public boolean retrieve(TelemetryPacket packet, int preferredRoute, boolean wing) {
         switch (intakeIndex) {
             case 0:
                 //get poi for desired intake location, assuming wing for now
 //                if(wing)
                 POI poi = field.WING_INTAKE;
                 //build path
-                pathToIntake = field.pathToPOI(robot, poi, preferredRoute);
+                pathToRetrieval = field.pathToPOI(robot, poi, preferredRoute);
                 intakeIndex++;
                 break;
             case 1:
-                if(pathToIntake.run(packet)) {
+                if(pathToRetrieval.run(packet)) {
                     //set intake to ingest and drive forward very slowly
                     robot.articulate(Robot.Articulation.INGEST);
                     robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.1, 0), 0));
@@ -82,19 +81,19 @@ public class AutoNav {
         return false;
     }
 
-    public SequentialAction pathToOuttake;
+    public SequentialAction pathToDelivery;
     int outtakeIndex = 0;
-    public boolean outtake(TelemetryPacket packet, int preferredRoute, int targetIndex) {
+    public boolean deliver(TelemetryPacket packet, int preferredRoute, int targetIndex) {
         switch (outtakeIndex) {
             case 0:
                 //select outtake score locations
                 POI poi = alliance.getMod()? field.scoreLocations.get(targetIndex + 3) : field.scoreLocations.get(targetIndex);
                 //build path
-                pathToOuttake = field.pathToPOI(robot, poi, preferredRoute);
+                pathToDelivery = field.pathToPOI(robot, poi, preferredRoute);
                 intakeIndex++;
                 break;
             case 1:
-                if(pathToOuttake.run(packet)) {
+                if(pathToDelivery.run(packet)) {
                     //deploy outtake and drive backward very slowly
                     robot.articulate(Robot.Articulation.BACKDROP_PREP);
                     Robot.sensors.distanceSensorsEnabled = true;

@@ -95,6 +95,7 @@ public class Autonomous implements TelemetryProvider {
     boolean testRunToWing = true;
 
     public static double FIELD_INCHES_PER_GRID = 23.5;
+    public static double AUTON_START_DELAY = 1;
 
     double STANDARD_HEADING = 180;
     Pose2d aprilTagApproachPosition;
@@ -330,7 +331,7 @@ public class Autonomous implements TelemetryProvider {
             randomizer = 3;
         }
         if(!driverSide) {
-            aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
+            aprilTagApproachPosition = P2D(1.5,   1.7, STANDARD_HEADING);
             audienceIntermediate = P2D(1,.5,-10);
             audienceIntermediateForward = P2D(1.4, .3, STANDARD_HEADING);
             audienceIntermediateDeep = P2D(1.5,.5,-10);
@@ -546,7 +547,7 @@ public class Autonomous implements TelemetryProvider {
                     driveToPurplePixelBuild();
 
                     robot.intake.articulate(Intake.Articulation.INIT);
-                    futureTimer = futureTime(5);//delay for auton start
+                    futureTimer = futureTime(AUTON_START_DELAY);//delay for auton start
                     autonIndex++;
                     break;
                 case 1:
@@ -555,7 +556,7 @@ public class Autonomous implements TelemetryProvider {
                     if(isPast(futureTimer)) {
                         if (!driveToPurplePixel.run(packet)) {
                             robot.skyhook.articulate(Skyhook.Articulation.GAME);
-                        robot.intake.articulate(Intake.Articulation.DOWN);
+                        robot.intake.articulate(Intake.Articulation.EJECT);
                             sweepBuild();
                             autonIndex++;
                             break;
