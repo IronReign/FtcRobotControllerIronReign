@@ -15,7 +15,6 @@ public class AutoNav {
     Field field;
     public static boolean cycling;
     public static boolean intaking;
-    //todo - allow manipulation of this
     int preferredRoute = 3;
 
     AutoNav(Robot robot, Field field) {
@@ -43,6 +42,11 @@ public class AutoNav {
             }
         }
         dashboard.sendTelemetryPacket(packet);
+    }
+
+    public int setPreferredRoute(int preferredRoute) {
+        this.preferredRoute = preferredRoute;
+        return this.preferredRoute;
     }
 
     public void clearStates() {
@@ -119,5 +123,14 @@ public class AutoNav {
         }
         return false;
     }
+    public void assumeControl() {
+        //todo - I can't really think of anything else that needs to be done?
+        robot.enterTravel();
+        clearStates();
+    }
 
+    public void relinquishControl() {
+        //todo - I can't really think of anything else that needs to be done?
+        clearStates();
+    }
 }

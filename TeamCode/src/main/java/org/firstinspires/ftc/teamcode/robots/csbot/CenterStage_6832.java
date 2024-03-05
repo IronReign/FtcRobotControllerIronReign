@@ -37,7 +37,12 @@ public class CenterStage_6832 extends OpMode {
 
     //GLOBAL STATES
     public static boolean active;
-    public boolean autoNavEnabled = false;
+    //whether we have the ability to autonav or not
+    public static boolean AUTONAV_ENABLED = false;
+    //whether we are autonaving or not
+    public boolean autoNavOn = false;
+    //to handle transfer b/w driver and autonav
+    public static boolean autoNavInitialized = false;
     public static boolean debugTelemetryEnabled;
     private boolean initializing;
     public boolean endGameHandled;
@@ -92,7 +97,6 @@ public class CenterStage_6832 extends OpMode {
 
 
     //CONSTANTS FOR GAME
-    //CHANGE THIS RIGHT BEFORE GAMES/TUNING
     public static boolean DEFAULT_DEBUG_TELEMETRY_ENABLED = false;
     public static Constants.Alliance alliance = Constants.Alliance.RED;
     public static Constants.Position startingPosition = Constants.Position.START_LEFT_RED;
@@ -255,13 +259,28 @@ public class CenterStage_6832 extends OpMode {
             switch(gameState) {
                 case AUTONOMOUS:
                     if(auton.execute(dashboard)) gameState = GameState.TELE_OP;
-                    //auton.execute(dashboard);
                     break;
 
                 case TELE_OP:
-                    if(autoNavEnabled) {
-                        if(dc.joysticksInactive())
-                            autoNav.run(dashboard);
+                    if(AUTONAV_ENABLED) {
+                        if(autoNavOn) {
+                            if(dc.joysticksInactive()){
+                                //autonaving
+                                if(!autoNavInitialized){
+                                    autoNav.assumeControl();
+                                    //assumes diagonal route
+                                    autoNav.setPreferredRoute(3);
+                                    autoNavInitialized = true;
+                                }
+                                else autoNav.run(dashboard);
+                            }
+                            //autonav is interrupted
+                            else {
+                                autoNav.relinquishControl();
+                                autoNavInitialized = false;
+                                autoNavOn = false;
+                            }
+                        }
                     }
                     dc.joystickDrive();
                     break;
