@@ -76,6 +76,7 @@ public class Intake implements Subsystem {
         THREE(2, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT * 2 - 15),
         FOUR(3, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT * 3 - 15),
         FIVE(4, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT * 4 - 15);
+        //1880 is top pixel
 
         private final int value;
         private final int angle;
