@@ -78,6 +78,7 @@ public class DriverControls {
 
         //GAMEPAD 1 CONTROLS
         // ------------------------------------------------------------------
+        //todo any new controls for gamepad 1 go on "shift" -> means they have to have guide pressed at the same time as the button
         if (gamepad1.left_trigger > .1) {
             robot.outtake.scoreZ -= robot.outtake.IK_ADJUST_INCHES;
             if(robot.outtake.scoreZ < 7)
@@ -90,11 +91,19 @@ public class DriverControls {
                 robot.outtake.scoreZ = 50;
             robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
-        if (stickyGamepad1.a) {
+
+        if(shifted(stickyGamepad1) && stickyGamepad1.a) {
+            robot.skyhook.articulate(Skyhook.Articulation.GAME);
+        }
+        else if (stickyGamepad1.a) {
             if(robot.articulation == Robot.Articulation.TRAVEL)
                 robot.articulate(Robot.Articulation.INGEST);
         }
-        if (stickyGamepad1.b) {
+
+        if(shifted(stickyGamepad1) && stickyGamepad1.b) {
+            debugTelemetryEnabled = !debugTelemetryEnabled;
+        }
+        else if (stickyGamepad1.b) {
             robot.toggleBackdropPrep();
         }
 
@@ -123,8 +132,7 @@ public class DriverControls {
                 robot.articulate(Robot.Articulation.HANG);
             }
             else{
-
-                if(CenterStage_6832.totalRunTime > 110/*field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")*/) {
+                if(field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")) {
                     if(robot.intake.getIngestPixelHeight() != 4)
                         robot.intake.setIngestPixelHeight(4);
                     else if(robot.intake.getIngestPixelHeight() == 4)
@@ -136,7 +144,7 @@ public class DriverControls {
             }
         }
 
-        if (stickyGamepad1.x && CenterStage_6832.totalRunTime > 110/*field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")*/) {
+        if (stickyGamepad1.x && field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")) {
             robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
         }
         else if(stickyGamepad1.x) {
@@ -150,16 +158,27 @@ public class DriverControls {
         if (stickyGamepad1.dpad_down) {
             robot.outtake.setTargetAngle(Outtake.ELBOW_TRAVEL_ANGLE, Outtake.WRIST_TRAVEL_ANGLE, Outtake.ELEVATOR_START_ANGLE);
         }
-
-        if(stickyGamepad1.guide && /*CenterStage_6832.totalRunTime > 110 &&*/ field.getZone(robot.driveTrain.pose) == Field.Zone.BACKSTAGE) {
-            robot.autoEndgame = true;
-        }
         // ------------------------------------------------------------------
 
         //GAMEPAD 2 CONTROLS
         // ------------------------------------------------------------------
-        if(stickyGamepad2.guide) {
-            robot.driveTrain.pose = new Pose2d(robot.driveTrain.pose.position, robot.driveTrain.imuAngle);
+        if(stickyGamepad2.start) {
+            if(CenterStage_6832.AUTONAV_ENABLED) {
+                CenterStage_6832.autoNavOn = true;
+            }
+        }
+        else if(shifted(stickyGamepad2) && stickyGamepad2.start) {
+            robot.autoEndgame = true;
+        }
+        if(stickyGamepad2.dpad_left) {
+            if(CenterStage_6832.autoNav.setPreferredRoute(CenterStage_6832.autoNav.preferredRoute+1) > 6) {
+                CenterStage_6832.autoNav.setPreferredRoute(0);
+            }
+        }
+        if(stickyGamepad2.dpad_right) {
+            if(CenterStage_6832.autoNav.setPreferredRoute(CenterStage_6832.autoNav.preferredRoute-1) < 0) {
+                CenterStage_6832.autoNav.setPreferredRoute(6);
+            }
         }
         if(stickyGamepad2.b) {
             fieldOrientedDrive  = !fieldOrientedDrive;
@@ -171,6 +190,9 @@ public class DriverControls {
             else {
                 robot.articulate(Robot.Articulation.PREP_FOR_HANG);
             }
+        }
+        if(stickyGamepad2.x) {
+            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
         }
         if (gamepad2.left_trigger > .1) {
             robot.outtake.adjustElevator(-robot.outtake.ELEVATOR_ADJUST_ANGLE);
@@ -184,22 +206,12 @@ public class DriverControls {
         if (gamepad2.right_bumper) {
             robot.outtake.adjustWrist(robot.outtake.WRIST_ADJUST_ANGLE);
         }
-        if(stickyGamepad2.dpad_down) {
-            debugTelemetryEnabled = !debugTelemetryEnabled;
-        }
-        if(stickyGamepad2.dpad_up) {
-            robot.outtake.goToPoint(20, 20);
-        }
-        if(stickyGamepad2.a) {
-            robot.skyhook.articulate(Skyhook.Articulation.GAME);
-        }
-        if(stickyGamepad2.x) {
-            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
-        }
         // ------------------------------------------------------------------
 
-        //mu name is jimmy and i am a pickle and i am a potato and i need to sleep with my truffle oil to feel happiness
+    }
 
+    public boolean shifted(StickyGamepad gamepad) {
+        return gamepad.guide;
     }
 
     public void fieldOrientedDrive() {

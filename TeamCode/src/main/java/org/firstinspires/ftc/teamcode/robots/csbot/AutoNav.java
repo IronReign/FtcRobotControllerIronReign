@@ -9,8 +9,13 @@ import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.provider.AprilTagProvider;
 
-public class AutoNav {
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public class AutoNav implements TelemetryProvider{
     Robot robot;
     Field field;
     public static boolean cycling;
@@ -26,6 +31,17 @@ public class AutoNav {
 //        preferredRoute =
         clearStates();
     }
+
+    @Override
+    public Map<String, Object> getTelemetry(boolean debug) {
+        Map<String, Object> telemetryMap = new LinkedHashMap<>();
+        telemetryMap.put("Prefered Route", preferredRoute);
+        telemetryMap.put("Cycling", cycling);
+        return telemetryMap;
+    }
+
+    @Override
+    public String getTelemetryName() {return "AUTO_NAV";}
 
     public void run(FtcDashboard dashboard) {
         TelemetryPacket packet = new TelemetryPacket();

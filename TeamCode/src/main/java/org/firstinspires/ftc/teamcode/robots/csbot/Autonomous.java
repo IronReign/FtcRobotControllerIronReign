@@ -79,9 +79,7 @@ public class Autonomous implements TelemetryProvider {
     }
 
     @Override
-    public String getTelemetryName() {
-        return "AUTONOMOUS";
-    }
+    public String getTelemetryName() {return "AUTONOMOUS";}
 
     // autonomous routines
 

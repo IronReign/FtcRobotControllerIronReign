@@ -32,7 +32,7 @@ public class CenterStage_6832 extends OpMode {
     private FtcDashboard dashboard;
     public static Field field;
     DriverControls dc;
-    AutoNav autoNav;
+    static AutoNav autoNav;
 
 
     //GLOBAL STATES
@@ -40,7 +40,7 @@ public class CenterStage_6832 extends OpMode {
     //whether we have the ability to autonav or not
     public static boolean AUTONAV_ENABLED = false;
     //whether we are autonaving or not
-    public boolean autoNavOn = false;
+    public static boolean autoNavOn = false;
     //to handle transfer b/w driver and autonav
     public static boolean autoNavInitialized = false;
     public static boolean debugTelemetryEnabled;
