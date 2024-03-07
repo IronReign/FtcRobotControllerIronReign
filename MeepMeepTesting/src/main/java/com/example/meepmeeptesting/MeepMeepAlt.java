@@ -84,8 +84,154 @@ public class MeepMeepAlt {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        int randomizer = 1; //1, 2 or 3
+        int randomizer = 3; //1, 2 or 3
         Pose2d p;
+
+        /*startingPosition = Position.START_LEFT_RED;
+        p = startingPosition.getPose();
+        selectedPath = setPath(startingPosition, randomizer, driverSide);
+        System.out.println("selected path:\t" + selectedPath);
+        System.out.println("audience intermediate:\t" + audienceIntermediate);
+        System.out.println(autonPaths[2][4]);
+
+        Action bot1Action, bot2Action, bot3Action, bot4Action;
+            bot1Action =
+                    myBot.getDrive().actionBuilder(p)
+
+                            //step 1 - go to purple eject location
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                            .waitSeconds(1) //not needed in real path
+                            //step 2 - sweep team prop = lower intake, rotate and eject
+                            //for meepmeep this is just the rotation
+                            //step 3 - turn to get ready for next spline
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                            //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
+                            .setReversed(true)
+                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+                            .waitSeconds(1)
+                            //steps 6, 7, 8 - run to pixelstack
+                            .setReversed(false)
+                            .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
+                            .waitSeconds(1)
+                            //steps 9, 10, 11 - return to backdrop
+                            .setReversed(true)
+                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][11].position), switchSides(autonPaths[selectedPath][11].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
+                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+                            .waitSeconds(1)
+                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
+                            .build();
+        //bot2 - builder identical to bot1 - when adjusting the build, do it for bot1 and copy to the other bots
+        startingPosition = Position.START_RIGHT_BLUE;
+        p = startingPosition.getPose();
+        selectedPath = setPath(startingPosition, randomizer, driverSide);
+            bot2Action =
+                    myBot.getDrive().actionBuilder(p)
+
+                            //step 1 - go to purple eject location
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                            .waitSeconds(1) //not needed in real path
+                            //step 2 - sweep team prop = lower intake, rotate and eject
+                            //for meepmeep this is just the rotation
+                            //step 3 - turn to get ready for next spline
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                            //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
+                            .setReversed(true)
+                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+                            .waitSeconds(1)
+                            //steps 6, 7, 8 - run to pixelstack
+                            .setReversed(false)
+                            .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
+                            .waitSeconds(1)
+                            //steps 9, 10, 11 - return to backdrop
+                            .setReversed(true)
+                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][11].position), switchSides(autonPaths[selectedPath][11].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
+                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+                            .waitSeconds(1)
+                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
+                            .build();
+
+        startingPosition = Position.START_LEFT_BLUE;
+        p = startingPosition.getPose();
+        selectedPath = setPath(startingPosition, randomizer, driverSide);
+            bot3Action =
+                    myBot.getDrive().actionBuilder(p)
+
+                            //step 1 - go to purple eject location
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                            .waitSeconds(1) //not needed in real path
+                            //step 2 - sweep team prop = lower intake, rotate and eject
+                            //for meepmeep this is just the rotation
+                            //step 3 - turn to get ready for next spline
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                            //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
+                            .setReversed(true)
+                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+                            .waitSeconds(1)
+                            //steps 6, 7, 8 - run to pixelstack
+                            .setReversed(false)
+                            .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
+                            .waitSeconds(1)
+                            //steps 9, 10, 11 - return to backdrop
+                            .setReversed(true)
+                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][11].position), switchSides(autonPaths[selectedPath][11].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
+                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+                            .waitSeconds(1)
+                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
+                            .build();
+
+        startingPosition = Position.START_RIGHT_RED;
+        p = startingPosition.getPose();
+        selectedPath = setPath(startingPosition, randomizer, driverSide);
+            bot4Action =
+                    myBot.getDrive().actionBuilder(p)
+
+                            //step 1 - go to purple eject location
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                            .waitSeconds(1) //not needed in real path
+                            //step 2 - sweep team prop = lower intake, rotate and eject
+                            //for meepmeep this is just the rotation
+                            //step 3 - turn to get ready for next spline
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                            //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
+                            .setReversed(true)
+                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+                            .waitSeconds(1)
+                            //steps 6, 7, 8 - run to pixelstack
+                            .setReversed(false)
+                            .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
+                            .waitSeconds(1)
+                            //steps 9, 10, 11 - return to backdrop
+                            .setReversed(true)
+                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][11].position), switchSides(autonPaths[selectedPath][11].heading.log()))
+                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
+                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+                            .waitSeconds(1)
+                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
+                            .build();
+*/
 
         startingPosition = Position.START_LEFT_RED;
         p = startingPosition.getPose();
@@ -95,293 +241,145 @@ public class MeepMeepAlt {
         System.out.println(autonPaths[2][4]);
 
         Action bot1Action, bot2Action, bot3Action, bot4Action;
-        if(driverSide) {
-            bot1Action =
-                    myBot.getDrive().actionBuilder(p)
+        bot1Action =
+                myBot.getDrive().actionBuilder(p)
 
-                            //step 1 - go to purple eject location
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 2 - sweep team prop = lower intake, rotate and eject
-                            //for meepmeep this is just the rotation
-                            //step 3 - turn to get ready for next spline
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-                            //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            //steps 6, 7, 8 - run to pixelstack
-                            .setReversed(false)
-                            .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
-                            .waitSeconds(1)
-                            //steps 9, 10, 11 - return to backdrop
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][11].position), switchSides(autonPaths[selectedPath][11].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
-                            .build();
-        }
-        else {
-            bot1Action =
-                    myBot.getDrive().actionBuilder(p)
+                        //step 1 - go to purple eject location
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                        .waitSeconds(1) //not needed in real path
+                        //step 2 - sweep team prop = lower intake, rotate and eject
+                        //for meepmeep this is just the rotation
+                        //step 3 - turn to get ready for next spline
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                        //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
+                        .setReversed(true)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][6].position), STANDARD_HEADING_RAD)
+//                        .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+                        .waitSeconds(1)
+                        //steps 6, 7, 8 - run to pixelstack
+                        .setReversed(false)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][7].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][9].position), STANDARD_HEADING_RAD)
+                        .waitSeconds(1)
+                        //steps 9, 10, 11 - return to backdrop
+                        .setReversed(true)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][10].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][11].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][12].position), STANDARD_HEADING_RAD)
+                        .waitSeconds(1)
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
+                        .build();
 
-                            .setReversed(true)
-                            //step 1 - go to purple eject location
-                            .splineTo(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 2 - sweep team prop = lower intake, rotate and eject
-                            //for meepmeep this is just the rotation
-                            .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 3 - turn to get ready for next spline
-                            .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
-                            //steps 5 & 6 - travel through 1 or 2 final waypoints and then a final correction
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            //steps 8, 9 - run to pixelstack
-                            .setReversed(false)
-                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
-                            .waitSeconds(1)
-                            //steps 10, 12 - return to backdrop
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
-                            .build();
-        }
         //bot2 - builder identical to bot1 - when adjusting the build, do it for bot1 and copy to the other bots
         startingPosition = Position.START_RIGHT_BLUE;
         p = startingPosition.getPose();
         selectedPath = setPath(startingPosition, randomizer, driverSide);
-        if(driverSide) {
-            bot2Action =
-                    myBot.getDrive().actionBuilder(p)
+        bot2Action =
+                myBot.getDrive().actionBuilder(p)
 
-                            //step 1 - go to purple eject location
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 2 - sweep team prop = lower intake, rotate and eject
-                            //for meepmeep this is just the rotation
-                            //step 3 - turn to get ready for next spline
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-                            //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            //steps 6, 7, 8 - run to pixelstack
-                            .setReversed(false)
-                            .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
-                            .waitSeconds(1)
-                            //steps 9, 10, 11 - return to backdrop
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][11].position), switchSides(autonPaths[selectedPath][11].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
-                            .build();
-        }
-        else {
-            bot2Action =
-                    myBot.getDrive().actionBuilder(p)
-
-                            .setReversed(true)
-                            //step 1 - go to purple eject location
-                            .splineTo(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 2 - sweep team prop = lower intake, rotate and eject
-                            //for meepmeep this is just the rotation
-                            .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 3 - turn to get ready for next spline
-                            .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
-                            //steps 5 & 6 - travel through 1 or 2 final waypoints and then a final correction
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            //steps 8, 9 - run to pixelstack
-                            .setReversed(false)
-                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
-                            .waitSeconds(1)
-                            //steps 10, 12 - return to backdrop
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
-                            .build();
-        }
+                        //step 1 - go to purple eject location
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                        .waitSeconds(1) //not needed in real path
+                        //step 2 - sweep team prop = lower intake, rotate and eject
+                        //for meepmeep this is just the rotation
+                        //step 3 - turn to get ready for next spline
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                        //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
+                        .setReversed(true)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][6].position), STANDARD_HEADING_RAD)
+//                        .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+                        .waitSeconds(1)
+                        //steps 6, 7, 8 - run to pixelstack
+                        .setReversed(false)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][7].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][9].position), STANDARD_HEADING_RAD)
+                        .waitSeconds(1)
+                        //steps 9, 10, 11 - return to backdrop
+                        .setReversed(true)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][10].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][11].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][12].position), STANDARD_HEADING_RAD)
+                        .waitSeconds(1)
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
+                        .build();
 
         startingPosition = Position.START_LEFT_BLUE;
         p = startingPosition.getPose();
         selectedPath = setPath(startingPosition, randomizer, driverSide);
-        if(driverSide) {
-            bot3Action =
-                    myBot.getDrive().actionBuilder(p)
+        bot3Action =
+                myBot.getDrive().actionBuilder(p)
 
-                            //step 1 - go to purple eject location
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 2 - sweep team prop = lower intake, rotate and eject
-                            //for meepmeep this is just the rotation
-                            //step 3 - turn to get ready for next spline
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-                            //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            //steps 6, 7, 8 - run to pixelstack
-                            .setReversed(false)
-                            .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
-                            .waitSeconds(1)
-                            //steps 9, 10, 11 - return to backdrop
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][11].position), switchSides(autonPaths[selectedPath][11].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
-                            .build();
-        }
-        else {
-            bot3Action =
-                    myBot.getDrive().actionBuilder(p)
-
-                            .setReversed(true)
-                            //step 1 - go to purple eject location
-                            .splineTo(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 2 - sweep team prop = lower intake, rotate and eject
-                            //for meepmeep this is just the rotation
-                            .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 3 - turn to get ready for next spline
-                            .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
-                            //steps 5 & 6 - travel through 1 or 2 final waypoints and then a final correction
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            //steps 8, 9 - run to pixelstack
-                            .setReversed(false)
-                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
-                            .waitSeconds(1)
-                            //steps 10, 12 - return to backdrop
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
-                            .build();
-        }
+                        //step 1 - go to purple eject location
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                        .waitSeconds(1) //not needed in real path
+                        //step 2 - sweep team prop = lower intake, rotate and eject
+                        //for meepmeep this is just the rotation
+                        //step 3 - turn to get ready for next spline
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                        //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
+                        .setReversed(true)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][6].position), STANDARD_HEADING_RAD)
+//                        .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+                        .waitSeconds(1)
+                        //steps 6, 7, 8 - run to pixelstack
+                        .setReversed(false)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][7].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][9].position), STANDARD_HEADING_RAD)
+                        .waitSeconds(1)
+                        //steps 9, 10, 11 - return to backdrop
+                        .setReversed(true)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][10].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][11].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][12].position), STANDARD_HEADING_RAD)
+                        .waitSeconds(1)
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
+                        .build();
 
         startingPosition = Position.START_RIGHT_RED;
         p = startingPosition.getPose();
         selectedPath = setPath(startingPosition, randomizer, driverSide);
-        if(driverSide) {
-            bot4Action =
-                    myBot.getDrive().actionBuilder(p)
+        bot4Action =
+                myBot.getDrive().actionBuilder(p)
 
-                            //step 1 - go to purple eject location
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 2 - sweep team prop = lower intake, rotate and eject
-                            //for meepmeep this is just the rotation
-                            //step 3 - turn to get ready for next spline
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-                            //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            //steps 6, 7, 8 - run to pixelstack
-                            .setReversed(false)
-                            .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
-                            .waitSeconds(1)
-                            //steps 9, 10, 11 - return to backdrop
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][11].position), switchSides(autonPaths[selectedPath][11].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
-                            .build();
-        }
-        else {
-            bot4Action =
-                    myBot.getDrive().actionBuilder(p)
-
-                            .setReversed(true)
-                            //step 1 - go to purple eject location
-                            .splineTo(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 2 - sweep team prop = lower intake, rotate and eject
-                            //for meepmeep this is just the rotation
-                            .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 3 - turn to get ready for next spline
-                            .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
-                            //steps 5 & 6 - travel through 1 or 2 final waypoints and then a final correction
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            //steps 8, 9 - run to pixelstack
-                            .setReversed(false)
-                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
-                            .waitSeconds(1)
-                            //steps 10, 12 - return to backdrop
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
-                            .build();
-        }
-
+                        //step 1 - go to purple eject location
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                        .waitSeconds(1) //not needed in real path
+                        //step 2 - sweep team prop = lower intake, rotate and eject
+                        //for meepmeep this is just the rotation
+                        //step 3 - turn to get ready for next spline
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                        //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
+                        .setReversed(true)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][6].position), STANDARD_HEADING_RAD)
+//                        .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+                        .waitSeconds(1)
+                        //steps 6, 7, 8 - run to pixelstack
+                        .setReversed(false)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][7].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][9].position), STANDARD_HEADING_RAD)
+                        .waitSeconds(1)
+                        //steps 9, 10, 11 - return to backdrop
+                        .setReversed(true)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][10].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][11].position), STANDARD_HEADING_RAD)
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][12].position), STANDARD_HEADING_RAD)
+                        .waitSeconds(1)
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
+                        .build();
 
         myBot2.runAction(bot2Action);
         myBot3.runAction(bot3Action);
         myBot4.runAction(bot4Action);
         myBot.runAction(bot1Action);
-//
+
 
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_OFFICIAL)
