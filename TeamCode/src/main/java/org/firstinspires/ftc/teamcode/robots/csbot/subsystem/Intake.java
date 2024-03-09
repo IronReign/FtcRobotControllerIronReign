@@ -20,10 +20,10 @@ import java.util.Map;
 
 @Config(value = "AA_CS_INTAKE")
 public class Intake implements Subsystem {
-    public static int RIGHT_DIVERTER_OPEN = 1010;
-    public static int LEFT_DIVERTER_OPEN = 1340;
-    public static int LEFT_DIVERTER_CLOSED = 1850;
-    public static int RIGHT_DIVERTER_CLOSED = 1500;
+    public static int RIGHT_DIVERTER_OPEN = 1850;
+    public static int LEFT_DIVERTER_OPEN = 1050;
+    public static int LEFT_DIVERTER_CLOSED = 1650;
+    public static int RIGHT_DIVERTER_CLOSED = 1050;
     public static int ANGLE_GROUND = 2120; //where the intake hits the ground
     public static int ANGLE_INGEST_INCREMENT = 20;
     public static int ANGLE_MIN = ANGLE_GROUND + ANGLE_INGEST_INCREMENT;
@@ -203,6 +203,7 @@ public class Intake implements Subsystem {
         pixelSensor = pixelSensor.assertRight();
     }
     public void pixelSensorClear(){
+
         pixelSensor = pixelSensor.clear();
     }
 

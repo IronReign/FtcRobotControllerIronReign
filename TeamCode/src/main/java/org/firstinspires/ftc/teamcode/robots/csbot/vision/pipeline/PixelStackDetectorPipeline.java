@@ -258,7 +258,7 @@ public class PixelStackDetectorPipeline extends TimestampedOpenCvPipeline {
         Core.normalize(input, output, a, b, type);
     }
 
-    enum BlurType {
+    enum    BlurType {
         BOX("Box Blur"), GAUSSIAN("Gaussian Blur"), MEDIAN("Median Filter"),
         BILATERAL("Bilateral Filter");
 

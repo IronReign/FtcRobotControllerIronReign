@@ -282,7 +282,7 @@ public class Outtake implements Subsystem {
         switch (ingestPositionIndex) {
             case 0: //lower the outtake to intake position
                 elbow.setSpeed(ELBOW_JOINT_SPEED);
-                setTargetAngle(ELBOW_DOCK_ANGLE, WRIST_START_ANGLE, ELEVATOR_START_ANGLE);
+                setTargetAngle(ELBOW_DOCK_ANGLE, WRIST_MIN_ANGLE, ELEVATOR_START_ANGLE);
                 ingestPositionTimer = futureTime(.85);
                 ingestPositionIndex++;
                 break;
@@ -342,10 +342,10 @@ public class Outtake implements Subsystem {
                 }
                 break;
             case 1:
-//                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
-//                wrist.setTargetAngle(WRIST_START_ANGLE);
+                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
+                wrist.setTargetAngle(WRIST_START_ANGLE);
 //                scoreX = (Robot.sensors.averageDistSensorValue);
-                elbowWristIK(scoreX, scoreZ);
+//                elbowWristIK(scoreX, scoreZ);
                 if (isPast(backdropPrepTimer)) {
                     Sensors.distanceSensorsEnabled = false;
                     backdropPrepStage++;

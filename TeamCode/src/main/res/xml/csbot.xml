@@ -13,15 +13,17 @@
             <Servo name="intakeAngleRight" port="0" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
         </LynxModule>
-        <LynxModule name="Expansion Hub 1" port="1">
+    </LynxUsbDevice>
+    <LynxUsbDevice name="Expansion Hub Portal 1" serialNumber="DQ2D1L2I" parentModuleAddress="1">
+    <LynxModule name="Expansion Hub 1" port="1">
             <RevColorSensorV3 name="leftPixelSensor" port="0" bus="0" />
             <RevColorSensorV3 name="rightPixelSensor" port="0" bus="1" />
             <Servo name="intakeAngleLeft" port="0" />
             <Servo name="diverterLeft" port="1" />
-            <Servo name="wrist" port="4" />
-            <Servo name="elevator" port="3" />
-            <Servo name="elbow" port="2" />
-            <Servo name="droneLauncher" port="5" />
+            <Servo name="wrist" port="3" />
+            <Servo name="elevator" port="4" />
+            <Servo name="elbow" port="5" />
+            <Servo name="droneLauncher" port="2" />
             <RevRobotics40HDHexMotor name="intakeBeater" port="1" />
             <RevRobotics40HDHexMotor name="slide" port="2"/>
             <RevRoboticsCoreHexMotor name="kareem" port="3"/>

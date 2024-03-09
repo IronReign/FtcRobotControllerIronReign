@@ -320,12 +320,12 @@ public class Autonomous implements TelemetryProvider {
         autonIndex = 0;
         if(randomizer == 0)
             randomizer = 2;
-        if(randomizer == 3){
-            randomizer = 1;
-        }
-        if(randomizer == 1){
-            randomizer = 3;
-        }
+//        if(randomizer == 3){
+//            randomizer = 1;
+//        }
+//        if(randomizer == 1){
+//            randomizer = 3;
+//        }
         if(!driverSide) {
             aprilTagApproachPosition = P2D(1.5,   1.7, STANDARD_HEADING);
             audienceIntermediate = P2D(1,.5,-10);
@@ -552,7 +552,6 @@ public class Autonomous implements TelemetryProvider {
                     if(isPast(futureTimer)) {
                         if (!driveToPurplePixel.run(packet)) {
                             robot.skyhook.articulate(Skyhook.Articulation.GAME);
-                        robot.intake.articulate(Intake.Articulation.EJECT);
                             sweepBuild();
                             autonIndex++;
                             break;
