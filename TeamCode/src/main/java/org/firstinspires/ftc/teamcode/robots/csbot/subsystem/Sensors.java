@@ -55,6 +55,11 @@ public class Sensors implements Subsystem {
             leftDistSensorValue = robot.driveTrain.leftDistanceSensor.getDistance(DistanceUnit.INCH);
             averageDistSensorValue = (leftDistSensorValue + rightDistSensorValue)/2;
         }
+        else {
+            rightPixelSensorValue = 500;
+            leftDistSensorValue = 500;
+            averageDistSensorValue = (leftDistSensorValue + rightDistSensorValue)/2;
+        }
         if(driveIMUEnabled){
             driveIMUYaw = robot.driveTrain.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.getMod()? -90 : 90);
         }
@@ -62,6 +67,10 @@ public class Sensors implements Subsystem {
         if(pixelSensorEnabled) {
             rightPixelSensorValue = robot.intake.pixelSensorRight.getDistance(DistanceUnit.INCH);
             leftPixelSensorValue = robot.intake.pixelSensorLeft.getDistance(DistanceUnit.INCH);
+        }
+        else {
+            rightPixelSensorValue = 10;
+            leftPixelSensorValue = 10;
         }
 
         //INTAKE

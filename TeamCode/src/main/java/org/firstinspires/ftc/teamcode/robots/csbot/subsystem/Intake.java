@@ -27,13 +27,13 @@ public class Intake implements Subsystem {
     public static int ANGLE_GROUND = 2120; //where the intake hits the ground
     public static int ANGLE_INGEST_INCREMENT = 20;
     public static int ANGLE_MIN = ANGLE_GROUND + ANGLE_INGEST_INCREMENT;
-    public static int ANGLE_MAX = ANGLE_GROUND + 835;
+    public static int ANGLE_MAX = ANGLE_GROUND - 835;
     public static int ANGLE_START = 1190;
     public static int ANGLE_INGEST_GROUND = ANGLE_GROUND;
 
     public static int ANGLE_EJECT = 1800;
     public static int ANGLE_HANG = 1450;
-    public static int ANGLE_SWALLOW = 1600;
+    public static int ANGLE_SWALLOW = 1540;
     public static int ANGLE_TRAVEL = 1500; //safe to travel through backstage door
     public static double TIME_SWALLOW = 1;
     public static double TIME_EJECT = 2;
@@ -55,7 +55,8 @@ public class Intake implements Subsystem {
 
     public static int angleTarget = ANGLE_GROUND;
     private int ingestPixelHeight = 0;  //the height at which to start ingesting pixels. Normally 0 for ground but could be 4 for top pixel in a stack
-
+    private int ingestStage = 0;
+    private long ingestTimer = 0;
     public int getIngestPixelHeight() {
         return ingestPixelHeight;
     }
@@ -176,7 +177,6 @@ public class Intake implements Subsystem {
             angleRight = hardwareMap.get(Servo.class, "intakeAngleRight");
             pixelSensorRight = hardwareMap.get(DistanceSensor.class, "rightPixelSensor");
             pixelSensorLeft = hardwareMap.get(DistanceSensor.class, "leftPixelSensor");
-//            angle.setDirection(Servo.Direction.REVERSE);
             angleRight.setDirection(Servo.Direction.REVERSE);
             beater.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
@@ -331,18 +331,31 @@ public class Intake implements Subsystem {
     }
 
     public boolean ingest(int height){ //height is expected to be changed externally
-        Sensors.pixelSensorEnabled = true;
         setDiverters(pixelSensor, height);
-        angleTarget = PixelStack.getByIndex(Range.clip(height-pixelSensor.count,0,4)).angle;
-        beaterTargetVelocity = BEATER_INGEST_VELOCITY;
-        if(Robot.sensors.leftPixelSensorValue < 1) {
-            pixelSensorLeft();
+        angleTarget = PixelStack.getByIndex(Range.clip(height - pixelSensor.count, 0, 4)).angle;
+        switch(ingestStage) {
+            case 0:
+                beaterTargetVelocity = BEATER_INGEST_VELOCITY;
+                ingestTimer = futureTime(3);
+                ingestStage++;
+            case 1:
+                if(isPast(ingestTimer)) {
+                    Sensors.pixelSensorEnabled = true;
+                    if (Robot.sensors.leftPixelSensorValue < 1) {
+                        pixelSensorLeft();
+                    }
+                    if (Robot.sensors.rightPixelSensorValue < 1) {
+                        pixelSensorRight();
+                    }
+                    //if a pixel is detected
+                    if (pixelSensor.count > 1) {
+                        Sensors.pixelSensorEnabled = false;
+                        pixelSensorClear();
+                        ingestStage = 0;
+                        return true;
+                    }
+                }
         }
-        if(Robot.sensors.rightPixelSensorValue < 1) {
-            pixelSensorRight();
-        }
-        //if a pixel is detected
-        if(pixelSensor.count>1) return true;
         return false;
     }
     int swallowStage = 0;
@@ -354,7 +367,8 @@ public class Intake implements Subsystem {
                 //todo, add some safety checking, like is the scoopagon docked?
                 pixelSensorClear();
                 diverterState = DiverterState.DELIVER_BOTH;
-                setAngle(ANGLE_SWALLOW);
+//                setAngle(ANGLE_SWALLOW);
+                angleTarget = ANGLE_SWALLOW;
                 //todo are these needed? clunky way to allow override
                 manualBeaterEnable = false;
                 manualBeaterEject = false;

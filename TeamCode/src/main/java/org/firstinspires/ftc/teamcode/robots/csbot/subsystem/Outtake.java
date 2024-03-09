@@ -71,7 +71,7 @@ public class Outtake implements Subsystem {
     public static double IK_ADJUST_INCHES = .2;
 
     //ELBOW JOINT VARIABLES
-    public static int ELBOW_HOME_POSITION = 1888;
+    public static int ELBOW_HOME_POSITION = 2150;
     public static double ELBOW_PWM_PER_DEGREE = -8.9111111111;
     //IN DEGREES PER SECOND
     public static double ELBOW_START_ANGLE = 0;
@@ -83,7 +83,7 @@ public class Outtake implements Subsystem {
     public static double ELBOW_SCORE_ANGLE = 120;
     public static double ELBOW_MAX_ANGLE = 220;
     public static double ELBOW_PRE_SCORE_ANGLE = 120;
-    public static double ELBOW_TRAVEL_ANGLE = 20;
+    public static double ELBOW_TRAVEL_ANGLE = 0;
     public static int ELBOW_ADJUST_ANGLE = 5;
     public static int WRIST_ADJUST_ANGLE = 5;
     public static int ELEVATOR_ADJUST_ANGLE = 5;
@@ -102,9 +102,9 @@ public class Outtake implements Subsystem {
 
     //WRIST JOINT VARIABLES TODO tune these value
     public static int WRIST_HOME_POSITION = 950;
-    public static double WRIST_PWM_PER_DEGREE = 7.32222222222;
+    public static double WRIST_PWM_PER_DEGREE = 7.22222222222;
     //IN DEGREES PER SECOND
-    public static double WRIST_START_ANGLE = 75;
+    public static double WRIST_START_ANGLE = 0;
     public static double WRIST_TRAVEL_ANGLE = 50;
     public static double WRIST_SCORE_ANGLE = 180;
 
@@ -207,6 +207,7 @@ public class Outtake implements Subsystem {
         elevator = new Joint(hardwareMap, "elevator", false, ELEVATOR_HOME_POSITION, ELEVATOR_PWM_PER_DEGREE, ELEVATOR_MIN_ANGLE, ELEVATOR_MAX_ANGLE, ELEVATOR_START_ANGLE, ELEVATOR_JOINT_SPEED);
         wrist = new Joint(hardwareMap, "wrist", false, WRIST_HOME_POSITION, WRIST_PWM_PER_DEGREE, WRIST_MIN_ANGLE, WRIST_MAX_ANGLE, WRIST_START_ANGLE, WRIST_JOINT_SPEED);
         slide = this.hardwareMap.get(DcMotorEx.class, "slide");
+        wrist.setTargetAngle(WRIST_TRAVEL_ANGLE);
         slide.setMotorEnable();
         slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         slide.setTargetPosition(0);
@@ -282,7 +283,7 @@ public class Outtake implements Subsystem {
         switch (ingestPositionIndex) {
             case 0: //lower the outtake to intake position
                 elbow.setSpeed(ELBOW_JOINT_SPEED);
-                setTargetAngle(ELBOW_DOCK_ANGLE, WRIST_MIN_ANGLE, ELEVATOR_START_ANGLE);
+                setTargetAngle(ELBOW_DOCK_ANGLE, WRIST_START_ANGLE, ELEVATOR_START_ANGLE);
                 ingestPositionTimer = futureTime(.85);
                 ingestPositionIndex++;
                 break;
@@ -305,20 +306,22 @@ public class Outtake implements Subsystem {
         switch (travelStage) {
             case 0: //begin undock
                 setTargetAngle(ELBOW_DOCK_ANGLE, WRIST_START_ANGLE, ELEVATOR_START_ANGLE);
-//                setSlideTargetPosition(slidePositionPreDock);
+                setSlideTargetPosition(slidePositionPreDock);
                 travelTimer = futureTime(.5);
                 travelStage++;
                 break;
             case 1: //complete undock
                 if (isPast(travelTimer)) {
+                    wrist.setSpeed(50);
                     setTargetAngle(ELBOW_TRAVEL_ANGLE, WRIST_TRAVEL_ANGLE, ELEVATOR_START_ANGLE);
-                    travelTimer = futureTime(.5);
+                    travelTimer = futureTime(1);
                     travelStage++;
                 }
                 break;
             case 2: //tuck slide - todo this will get more complicated when outtake elevation is changeable
                 if (isPast(travelTimer)) {
-//                    setSlideTargetPosition(slidePositionDocked);
+                    wrist.setSpeed(30);
+                    setSlideTargetPosition(slidePositionDocked);
                     robot.articulate(Robot.Articulation.TRAVEL);
                     travelStage = 0;
                     return true;
@@ -342,10 +345,10 @@ public class Outtake implements Subsystem {
                 }
                 break;
             case 1:
-                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
-                wrist.setTargetAngle(WRIST_START_ANGLE);
+//                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
+//                wrist.setTargetAngle(WRIST_START_ANGLE);
 //                scoreX = (Robot.sensors.averageDistSensorValue);
-//                elbowWristIK(scoreX, scoreZ);
+                elbowWristIK(scoreX, scoreZ);
                 if (isPast(backdropPrepTimer)) {
                     Sensors.distanceSensorsEnabled = false;
                     backdropPrepStage++;
