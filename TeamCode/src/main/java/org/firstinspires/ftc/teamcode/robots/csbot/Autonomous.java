@@ -157,9 +157,8 @@ public class Autonomous implements TelemetryProvider {
                     robot.driveTrain.actionBuilder(robot.driveTrain.pose)
                             .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
                             .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                            .turnTo(STANDARD_HEADING_RAD)
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), STANDARD_HEADING_RAD)
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][6].position), STANDARD_HEADING_RAD)
                             .build()
             );
         }
@@ -179,9 +178,9 @@ public class Autonomous implements TelemetryProvider {
             approachBackdrop = new SequentialAction(
                     robot.driveTrain.actionBuilder(robot.driveTrain.pose)
                             .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][11].position), switchSides(autonPaths[selectedPath][11].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][10].position), STANDARD_HEADING_RAD)
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][11].position), STANDARD_HEADING_RAD)
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][12].position), STANDARD_HEADING_RAD)
                             .build()
             );
         }
@@ -223,7 +222,6 @@ public class Autonomous implements TelemetryProvider {
         else {
             sweep = new SequentialAction(
                     robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                            .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
                             .build()
             );
         }
@@ -262,9 +260,9 @@ public class Autonomous implements TelemetryProvider {
             driveToPixelStack = new SequentialAction(
                     robot.driveTrain.actionBuilder(robot.driveTrain.pose)
                             .setReversed(false)
-                            .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][7].position), STANDARD_HEADING_RAD)
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), STANDARD_HEADING_RAD)
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][9].position), STANDARD_HEADING_RAD)
                             .build()
             );
         }

@@ -146,14 +146,14 @@ public class MeepMeepTesting {
                         .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
                         .waitSeconds(1)
                         //steps 5, 6, 7, and 8 - run to pixelstack and back
-//                        .setReversed(false)
-//                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-//                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-//                        .waitSeconds(1)
-//                        .setReversed(true)
-//                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-//                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-//                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
+                        .setReversed(false)
+                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .waitSeconds(1)
+                        .setReversed(true)
+                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .build();
 
         startingPosition = Position.START_LEFT_BLUE;
@@ -178,14 +178,14 @@ public class MeepMeepTesting {
                         .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
                         .waitSeconds(1)
                         //steps 5, 6, 7, and 8 - run to pixelstack and back
-//                        .setReversed(false)
-//                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-//                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-//                        .waitSeconds(1)
-//                        .setReversed(true)
-//                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-//                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-//                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
+                        .setReversed(false)
+                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .waitSeconds(1)
+                        .setReversed(true)
+                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .build();
 
         startingPosition = Position.START_RIGHT_RED;
@@ -209,14 +209,14 @@ public class MeepMeepTesting {
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
                         .waitSeconds(1)
                         //steps 5, 6, 7, and 8 - run to pixelstack and back
-//                        .setReversed(false)
-//                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-//                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-//                        .waitSeconds(1)
-//                        .setReversed(true)
-//                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-//                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-//                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
+                        .setReversed(false)
+                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .waitSeconds(1)
+                        .setReversed(true)
+                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .build();
 
 
@@ -230,7 +230,7 @@ public class MeepMeepTesting {
         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_OFFICIAL)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(myBot)
+//                .addEntity(myBot)
                 .addEntity(myBot2)
                 .addEntity(myBot3)
                 .addEntity(myBot4);
