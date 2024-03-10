@@ -26,7 +26,7 @@ public class Outtake implements Subsystem {
     Robot robot;
 
     public DcMotorEx slide = null;
-    private Servo pixelFlipper = null;
+
     public Joint elbow;
     public Joint wrist;
     public Joint elevator;
@@ -71,12 +71,12 @@ public class Outtake implements Subsystem {
     public static double IK_ADJUST_INCHES = .2;
 
     //ELBOW JOINT VARIABLES
-    public static int ELBOW_HOME_POSITION = 2150;
-    public static double ELBOW_PWM_PER_DEGREE = -8.9111111111;
+    public static int ELBOW_HOME_POSITION = 2050;
+    public static double ELBOW_PWM_PER_DEGREE = -5.672222222222222;
     //IN DEGREES PER SECOND
     public static double ELBOW_START_ANGLE = 0;
 
-    public static double ELBOW_JOINT_SPEED = 30;
+    public static double ELBOW_JOINT_SPEED = 60;
 
     public static double ELBOW_MIN_ANGLE = -15;
     public static double ELBOW_SAFE_ANGLE = 15;
@@ -108,7 +108,7 @@ public class Outtake implements Subsystem {
     public static double WRIST_TRAVEL_ANGLE = 50;
     public static double WRIST_SCORE_ANGLE = 180;
 
-    public static double WRIST_JOINT_SPEED = 30;
+    public static double WRIST_JOINT_SPEED = 50;
 
     public static double WRIST_MIN_ANGLE = 0;
     public static double WRIST_MAX_ANGLE = 180;
