@@ -20,9 +20,9 @@ public class MeepMeepTesting {
     public enum Position {
         ORIGIN_DEFAULT (new Pose2d(0, 0, 0)), //this if used will reset the origin to FTC Dashboard's default
         START_LEFT_RED(P2D(-1.5, -2.6, -90)),
-        START_RIGHT_RED(P2D(.5, -2.6, -90)),
+        START_RIGHT_RED(P2D(.5, -2.6, 90)),
         START_RIGHT_BLUE(P2D(-1.5, 2.6, 90)),
-        START_LEFT_BLUE(P2D(.5, 2.6, 90));
+        START_LEFT_BLUE(P2D(.5, 2.6, -90));
         private final Pose2d pose;
 
         public boolean getMod() {
@@ -106,22 +106,22 @@ public class MeepMeepTesting {
                         //for meepmeep this is just the rotation
                         .waitSeconds(1) //not needed in real path
                         //step 3 - turn to get ready for next spline
-                        .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
+
                         //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
                         .setReversed(true)
                         .splineTo(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][3].heading.log()))
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-                        .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+
                         .waitSeconds(1)
                         //steps 5, 6, 7, and 8 - run to pixelstack and back
                         .setReversed(false)
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
                         .waitSeconds(1)
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][4].position).x, switchSides(autonPaths[selectedPath][4].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][4].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .build();
 
         //bot2 - builder identical to bot1 - when adjusting the build, do it for bot1 and copy to the other bots
@@ -138,21 +138,21 @@ public class MeepMeepTesting {
                         //for meepmeep this is just the rotation
                         .waitSeconds(1) //not needed in real path
                         //step 3 - turn to get ready for next spline
-                        .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
+
                         //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][3].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-                        .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+
                         .waitSeconds(1)
                         //steps 5, 6, 7, and 8 - run to pixelstack and back
                         .setReversed(false)
-                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
                         .waitSeconds(1)
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
                         .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .build();
 
@@ -164,27 +164,27 @@ public class MeepMeepTesting {
 
                         .setReversed(true)
                         //step 1 - go to purple eject location
-                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), STANDARD_HEADING_RAD)
                         .waitSeconds(1) //not needed in real path
                         //step 2 - sweep team prop = lower intake, rotate and eject
                         //for meepmeep this is just the rotation
                         .waitSeconds(1) //not needed in real path
                         //step 3 - turn to get ready for next spline
-                        .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
+
                         //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][3].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-                        .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+
                         .waitSeconds(1)
                         //steps 5, 6, 7, and 8 - run to pixelstack and back
                         .setReversed(false)
-                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
                         .waitSeconds(1)
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
                         .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .build();
 
@@ -202,20 +202,20 @@ public class MeepMeepTesting {
                         //for meepmeep this is just the rotation
                         .waitSeconds(1) //not needed in real path
                         //step 3 - turn to get ready for next spline
-                        .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
+
                         //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][3].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
                         .waitSeconds(1)
                         //steps 5, 6, 7, and 8 - run to pixelstack and back
                         .setReversed(false)
-                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                        .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
                         .waitSeconds(1)
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-                        .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
                         .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .build();
 
@@ -230,7 +230,7 @@ public class MeepMeepTesting {
         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_OFFICIAL)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-//                .addEntity(myBot)
+                .addEntity(myBot)
                 .addEntity(myBot2)
                 .addEntity(myBot3)
                 .addEntity(myBot4);
@@ -283,7 +283,7 @@ public class MeepMeepTesting {
             randomizer = 2;
         aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
         audienceIntermediate = P2D(1,.5,-10);
-        audienceIntermediateForward = P2D(1.4, .5, STANDARD_HEADING);
+        audienceIntermediateForward = P2D(1.5, .5, STANDARD_HEADING);
         audienceIntermediateDeep = P2D(1.5,.5,-10);
         allianceDirection = startingPosition.getMod()? -1 : 1;
 
