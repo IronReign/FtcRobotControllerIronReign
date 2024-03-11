@@ -105,7 +105,7 @@ public class Outtake implements Subsystem {
     public static double WRIST_PWM_PER_DEGREE = 7.22222222222;
     //IN DEGREES PER SECOND
     public static double WRIST_START_ANGLE = 0;
-    public static double WRIST_TRAVEL_ANGLE = 50;
+    public static double WRIST_TRAVEL_ANGLE = WRIST_START_ANGLE;
     public static double WRIST_SCORE_ANGLE = 180;
 
     public static double WRIST_JOINT_SPEED = 50;

@@ -56,7 +56,7 @@ public class Sensors implements Subsystem {
             averageDistSensorValue = (leftDistSensorValue + rightDistSensorValue)/2;
         }
         else {
-            rightPixelSensorValue = 500;
+            rightDistSensorValue = 500;
             leftDistSensorValue = 500;
             averageDistSensorValue = (leftDistSensorValue + rightDistSensorValue)/2;
         }

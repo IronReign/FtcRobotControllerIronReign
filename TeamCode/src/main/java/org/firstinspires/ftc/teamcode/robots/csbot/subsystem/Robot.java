@@ -364,7 +364,7 @@ public class  Robot implements Subsystem {
                 //TODO - WRITE A CALIBRATION ROUTINE
                 break;
             case INGEST:
-                if (Ingest()) {
+                if (ingest()) {
                     articulation = Articulation.TRAVEL_FROM_INGEST;
                 }
                 break;
@@ -385,14 +385,15 @@ public class  Robot implements Subsystem {
                 break;
             case TRAVEL_FROM_INGEST:
                 intake.articulate(Intake.Articulation.TRAVEL);
-                if (!(outtake.articulation==Outtake.Articulation.TRAVEL)) {
-                    outtake.articulate(Outtake.Articulation.TRAVEL_FROM_INGEST);
-                }
+                articulation = Articulation.TRAVEL;
+//                if (!(outtake.articulation==Outtake.Articulation.TRAVEL)) {
+//                    outtake.articulate(Outtake.Articulation.TRAVEL_FROM_INGEST);
+//                }
                 break;
             case TRAVEL_FROM_BACKDROP:
-                //assume intake is already in travel
-                outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
-                articulation = Articulation.TRAVEL;
+                if(travelFromBackdrop()) {
+                    articulation = Articulation.TRAVEL;
+                }
                 break;
             case BACKDROP_PREP:
                 intake.articulate(Intake.Articulation.TRAVEL);
@@ -433,11 +434,37 @@ public class  Robot implements Subsystem {
         }
     }
 
+    public static int travelFromBackdropStage = 0;
+    public static long travelFromBackdropTimer = 0;
+
+    public boolean travelFromBackdrop() {
+        switch (travelFromBackdropStage){
+            case 0:
+                intake.articulate(Intake.Articulation.DOWN);
+                travelFromBackdropTimer = futureTime(2);
+                travelFromBackdropStage++;
+                break;
+            case 1:
+                if(isPast(travelFromBackdropTimer)){
+                    outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
+                    travelFromBackdropTimer = futureTime(2);
+                    travelFromBackdropStage++;
+                }
+                break;
+            case 2:
+                if(isPast(travelFromBackdropTimer)){
+                    intake.articulate(Intake.Articulation.TRAVEL);
+                    travelFromBackdropStage = 0;
+                    return true;
+                }
+                break;
+        }
+        return false;
+    }
 
     public static int ingestStage = 0;
     public long ingestTimer = 0;
-
-    public boolean Ingest() {
+    public boolean ingest() {
         switch (ingestStage) {
             case 0:
                 outtake.articulate(Outtake.Articulation.INGEST_FROM_TRAVEL);
