@@ -100,28 +100,31 @@ public class MeepMeepTesting {
 
                         .setReversed(true)
                         //step 1 - go to purple eject location
-                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
                         .waitSeconds(1) //not needed in real path
                         //step 2 - sweep team prop = lower intake, rotate and eject
                         //for meepmeep this is just the rotation
                         .waitSeconds(1) //not needed in real path
                         //step 3 - turn to get ready for next spline
                         .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
+                        .waitSeconds(1) //not needed in real path
+                        //step 3 - turn to get ready for next spline
+                        .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
                         //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][3].heading.log()))
-                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
                         .waitSeconds(1)
-                        //steps 5, 6, 7, and 8 - run to pixelstack and back
+                        //steps 6, 7, 8, and 9 - run to pixelstack and back
                         .setReversed(false)
-                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
                         .waitSeconds(1)
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][4].position).x, switchSides(autonPaths[selectedPath][4].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
+                        .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .build();
 
         //bot2 - builder identical to bot1 - when adjusting the build, do it for bot1 and copy to the other bots
@@ -132,27 +135,30 @@ public class MeepMeepTesting {
                 myBot2.getDrive().actionBuilder(p)
                         .setReversed(true)
                         //step 1 - go to purple eject location
-                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
                         .waitSeconds(1) //not needed in real path
                         //step 2 - sweep team prop = lower intake, rotate and eject
                         //for meepmeep this is just the rotation
                         .waitSeconds(1) //not needed in real path
                         //step 3 - turn to get ready for next spline
                         .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
+                        .waitSeconds(1) //not needed in real path
+                        //step 3 - turn to get ready for next spline
+                        .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
                         //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][3].heading.log()))
-                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
                         .waitSeconds(1)
-                        //steps 5, 6, 7, and 8 - run to pixelstack and back
+                        //steps 6, 7, 8, and 9 - run to pixelstack and back
                         .setReversed(false)
-                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
                         .waitSeconds(1)
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
                         .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .build();
 
@@ -164,27 +170,30 @@ public class MeepMeepTesting {
 
                         .setReversed(true)
                         //step 1 - go to purple eject location
-                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
                         .waitSeconds(1) //not needed in real path
                         //step 2 - sweep team prop = lower intake, rotate and eject
                         //for meepmeep this is just the rotation
                         .waitSeconds(1) //not needed in real path
                         //step 3 - turn to get ready for next spline
                         .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
+                        .waitSeconds(1) //not needed in real path
+                        //step 3 - turn to get ready for next spline
+                        .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
                         //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][3].heading.log()))
-                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
                         .waitSeconds(1)
-                        //steps 5, 6, 7, and 8 - run to pixelstack and back
+                        //steps 6, 7, 8, and 9 - run to pixelstack and back
                         .setReversed(false)
-                        .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
                         .waitSeconds(1)
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
                         .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .build();
 
@@ -196,26 +205,30 @@ public class MeepMeepTesting {
 
                         .setReversed(true)
                         //step 1 - go to purple eject location
-                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
                         .waitSeconds(1) //not needed in real path
                         //step 2 - sweep team prop = lower intake, rotate and eject
                         //for meepmeep this is just the rotation
                         .waitSeconds(1) //not needed in real path
                         //step 3 - turn to get ready for next spline
                         .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
+                        .waitSeconds(1) //not needed in real path
+                        //step 3 - turn to get ready for next spline
+                        .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
                         //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][3].heading.log()))
-                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-                        .waitSeconds(1)
-                        //steps 5, 6, 7, and 8 - run to pixelstack and back
-                        .setReversed(false)
+                        .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                        .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
+                        .waitSeconds(1)
+                        //steps 6, 7, 8, and 9 - run to pixelstack and back
+                        .setReversed(false)
                         .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
                         .waitSeconds(1)
                         .setReversed(true)
-                        .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
                         .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+                        .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
                         .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .build();
 
@@ -230,7 +243,7 @@ public class MeepMeepTesting {
         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_OFFICIAL)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-//                .addEntity(myBot)
+                .addEntity(myBot)
                 .addEntity(myBot2)
                 .addEntity(myBot3)
                 .addEntity(myBot4);
@@ -290,73 +303,79 @@ public class MeepMeepTesting {
         //aprilTagAlign = new Pose2d (new Vector2d(switchSides(aprilTagApproachPosition.position).x,switchSides(aprilTagApproachPosition.position).y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
 //        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
 //        aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x-1,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
-        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), STANDARD_HEADING_RAD);
+        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), 0);
         aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x - 1,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)),
                 0);
-        aprilTagAlignCrossed = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), STANDARD_HEADING_RAD);
+        aprilTagAlignCrossed = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), Math.toRadians(-90));
         pixelStack = P2D(-2.25, .5, STANDARD_HEADING);
 
         //assemble the paths
-        autonPaths[1][1] = P2D(-2, .5, -90);
-        autonPaths[1][2] = P2D(0, 0, STANDARD_HEADING);
-        autonPaths[1][3] = audienceIntermediate;
-        autonPaths[1][4] = aprilTagAlign;
-        autonPaths[1][5] = audienceIntermediateForward;
-        autonPaths[1][6] = pixelStack;
-        autonPaths[1][7] = audienceIntermediate;
-        autonPaths[1][8] = aprilTagAlign;
+        autonPaths[1][1] = P2D(-2, .5, 90);
+        autonPaths[1][2] = P2D(0, 0, -90);
+        autonPaths[1][3] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[1][4] = audienceIntermediate;
+        autonPaths[1][5] = aprilTagAlign;
+        autonPaths[1][6] = audienceIntermediateForward;
+        autonPaths[1][7] = pixelStack;
+        autonPaths[1][8] = audienceIntermediate;
+        autonPaths[1][9] = aprilTagAlign;
 
-        autonPaths[2][1] = P2D(-1.2, .43, -90-35);
-        autonPaths[2][2] = P2D(0, 0, STANDARD_HEADING);
-        autonPaths[2][3] = audienceIntermediate;
-        autonPaths[2][4] = aprilTagAlign;
-        autonPaths[2][5] = audienceIntermediateForward;
-        autonPaths[2][6] = pixelStack;
-        autonPaths[2][7] = audienceIntermediate;
-        autonPaths[2][8] = aprilTagAlign;
+        autonPaths[2][1] = P2D(-1.2, .43, 47);
+        autonPaths[2][2] = P2D(0, 0, -90-35);
+        autonPaths[2][3] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[2][4] = audienceIntermediate;
+        autonPaths[2][5] = aprilTagAlign;
+        autonPaths[2][6] = audienceIntermediateForward;
+        autonPaths[2][7] = pixelStack;
+        autonPaths[2][8] = audienceIntermediate;
+        autonPaths[2][9] = aprilTagAlign;
 
-        autonPaths[3][1] = P2D(-1.7, 1, -30);
-        autonPaths[3][2] = P2D(0, 0, -130);
-        autonPaths[3][3] = audienceIntermediateDeep;
-        autonPaths[3][4] = aprilTagAlignCrossed;
-        autonPaths[3][5] = audienceIntermediateForward;
-        autonPaths[3][6] = pixelStack;
-        autonPaths[3][7] = audienceIntermediate;
-        autonPaths[3][8] = aprilTagAlign;
+        autonPaths[3][1] = P2D(-1.7, 1, 90);
+        autonPaths[3][2] = P2D(0, 0, -30);
+        autonPaths[3][3] = P2D(0, 0, -130);
+        autonPaths[3][4] = audienceIntermediateDeep;
+        autonPaths[3][5] = aprilTagAlignCrossed;
+        autonPaths[3][6] = audienceIntermediateForward;
+        autonPaths[3][7] = pixelStack;
+        autonPaths[3][8] = audienceIntermediate;
+        autonPaths[3][9] = aprilTagAlign;
 
-        autonPaths[4][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID+.3, 1.25, STANDARD_HEADING);
+        autonPaths[4][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID+.3, 1.25, 90);
         autonPaths[4][2] = P2D(0, 0, STANDARD_HEADING);
-        autonPaths[4][3] = aprilTagAlignClose;
-        autonPaths[4][4] = aprilTagAlign;
-        autonPaths[4][5] = audienceIntermediateForward;
-        autonPaths[4][6] = pixelStack;
-        autonPaths[4][7] = audienceIntermediate;
-        autonPaths[4][8] = aprilTagAlign;
+        autonPaths[4][3] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[4][4] = aprilTagAlignClose;
+        autonPaths[4][5] = aprilTagAlign;
+        autonPaths[4][6] = audienceIntermediateForward;
+        autonPaths[4][7] = pixelStack;
+        autonPaths[4][8] = audienceIntermediate;
+        autonPaths[4][9] = aprilTagAlign;
 
         autonPaths[5][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID, 1.8, 90);
-        autonPaths[5][2] = P2D(0, 0, 170);
-        autonPaths[5][3] = aprilTagAlignClose;
-        autonPaths[5][4] = aprilTagAlign;
-        autonPaths[5][5] = audienceIntermediateForward;
-        autonPaths[5][6] = pixelStack;
-        autonPaths[5][7] = audienceIntermediate;
-        autonPaths[5][8] = aprilTagAlign;
+        autonPaths[5][2] = P2D(0, 0, 90);
+        autonPaths[5][3] = P2D(0, 0, 170);
+        autonPaths[5][4] = aprilTagAlignClose;
+        autonPaths[5][5] = aprilTagAlign;
+        autonPaths[5][6] = audienceIntermediateForward;
+        autonPaths[5][7] = pixelStack;
+        autonPaths[5][8] = audienceIntermediate;
+        autonPaths[5][9] = aprilTagAlign;
 
-        autonPaths[6][1] = P2D(1.4, 41.2 / 23.5 , 125);
-        autonPaths[6][2] = P2D(0, 0, STANDARD_HEADING);
-        autonPaths[6][3] = aprilTagAlignClose;
-        autonPaths[6][4] = aprilTagAlign;
-        autonPaths[6][5] = audienceIntermediateForward;
-        autonPaths[6][6] = pixelStack;
-        autonPaths[6][7] = audienceIntermediate;
-        autonPaths[6][8] = aprilTagAlign;
+        autonPaths[6][1] = P2D(1.4, 41.2 / 23.5 , -15);
+        autonPaths[6][2] = P2D(0, 0, 125);
+        autonPaths[6][3] = P2D(0, 0, STANDARD_HEADING);
+        autonPaths[6][4] = aprilTagAlignClose;
+        autonPaths[6][5] = aprilTagAlign;
+        autonPaths[6][6] = audienceIntermediateForward;
+        autonPaths[6][7] = pixelStack;
+        autonPaths[6][8] = audienceIntermediate;
+        autonPaths[6][9] = aprilTagAlign;
 
         int rando = randomizer;
         if (allianceDirection==1 && randomizer==1) rando = 3;
         if (allianceDirection==1 && randomizer==3) rando = 1;
         int ret =  (startingPosition.equals(Position.START_RIGHT_RED)||startingPosition.equals(Position.START_LEFT_BLUE))?
                 3+rando :rando;
-        purplePixelLocations.add(new Vector2d(switchSides(autonPaths[ret][1].position).x + CENTROID_TO_PIXEL_DISTANCE*Math.cos(switchSides(autonPaths[ret][1].heading.log())), switchSides(autonPaths[ret][1].position).y + CENTROID_TO_PIXEL_DISTANCE*Math.sin(switchSides(autonPaths[ret][1].heading.log()))));
+        purplePixelLocations.add(new Vector2d(switchSides(autonPaths[ret][1].position).x + CENTROID_TO_PIXEL_DISTANCE*Math.cos(switchSides(autonPaths[ret][2].heading.log())), switchSides(autonPaths[ret][1].position).y + CENTROID_TO_PIXEL_DISTANCE*Math.sin(switchSides(autonPaths[ret][2].heading.log()))));
         return ret;
     }
 
