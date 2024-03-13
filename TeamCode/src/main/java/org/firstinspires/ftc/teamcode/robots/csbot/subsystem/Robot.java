@@ -407,7 +407,6 @@ public class  Robot implements Subsystem {
 
     public void toggleBackdropPrep(){
         if(articulation.equals(Articulation.BACKDROP)){
-
             articulation = Articulation.TRAVEL_FROM_BACKDROP;
         }
         else{
@@ -442,15 +441,12 @@ public class  Robot implements Subsystem {
         switch (travelFromBackdropStage){
             case 0:
                 intake.articulate(Intake.Articulation.DOWN);
-                travelFromBackdropTimer = futureTime(2);
                 travelFromBackdropStage++;
                 break;
             case 1:
-                if(isPast(travelFromBackdropTimer)){
-                    outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
-                    travelFromBackdropTimer = futureTime(2);
-                    travelFromBackdropStage++;
-                }
+                outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
+                travelFromBackdropTimer = futureTime(2);
+                travelFromBackdropStage++;
                 break;
             case 2:
                 if(isPast(travelFromBackdropTimer)){

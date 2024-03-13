@@ -67,6 +67,7 @@ public class Outtake implements Subsystem {
 
     int slideSpeed = 15;
     public static int UNTUCK_SLIDE_POSITION = 500;
+    public static double SLIDE_SPEED = 1500;
     public static boolean TEMP_FLIPPER_TUNE = false;
     public static double IK_ADJUST_INCHES = .2;
 
@@ -214,8 +215,7 @@ public class Outtake implements Subsystem {
         slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         slide.setTargetPosition(0);
         slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        slide.setPower(1);
-//        pixelFlipper = this.hardwareMap.get(Servo.class, "pixelFlipper");
+        slide.setVelocity(SLIDE_SPEED);
 
         articulation = Articulation.MANUAL;
     }
@@ -285,6 +285,7 @@ public class Outtake implements Subsystem {
         switch (ingestPositionIndex) {
             case 0: //lower the outtake to intake position
                 elbow.setSpeed(ELBOW_JOINT_SPEED);
+                wrist.setSpeed(WRIST_JOINT_SPEED);
                 setTargetAngle(ELBOW_DOCK_ANGLE, WRIST_START_ANGLE, ELEVATOR_START_ANGLE);
                 ingestPositionTimer = futureTime(.85);
                 ingestPositionIndex++;
@@ -376,14 +377,25 @@ public class Outtake implements Subsystem {
     boolean travelFromBackdrop() {
         switch (travelStageBack) { //robot should have already placed the intake into travel position
             case 0:
+                ELBOW_JOINT_SPEED = 120;
+                WRIST_JOINT_SPEED = 80;
                 ELBOW_PRE_SCORE_ANGLE = elbow.getCurrentAngle();
-                setTargetAngle(ELBOW_TRAVEL_ANGLE, WRIST_TRAVEL_ANGLE, ELEVATOR_START_ANGLE);
-                setSlideTargetPosition(0);
-                travelTimer = futureTime(.5);
+//                setTargetAngle(ELBOW_TRAVEL_ANGLE, wrist.getCurrentAngle()+40, ELEVATOR_START_ANGLE);
+//                travelTimer = futureTime(.5);
                 travelStageBack++;
                 break;
             case 1:
                 if (isPast(travelTimer)) {
+                    setTargetAngle(ELBOW_TRAVEL_ANGLE, WRIST_TRAVEL_ANGLE, ELEVATOR_START_ANGLE);
+                    travelTimer = futureTime(.5);
+                    travelStageBack++;
+                }
+                break;
+            case 2:
+                if(isPast(travelTimer)) {
+                    setSlideTargetPosition(0);
+                    ELBOW_JOINT_SPEED = 60;
+                    WRIST_JOINT_SPEED = 50;
                     travelStageBack = 0;
                     return true;
                 }
@@ -431,6 +443,8 @@ public class Outtake implements Subsystem {
         articulate();
         //allow real-time flipper speed changes
         elbow.setSpeed(ELBOW_JOINT_SPEED);
+        wrist.setSpeed(WRIST_JOINT_SPEED);
+        elevator.setSpeed(ELEVATOR_JOINT_SPEED);
         //actually instruct actuators to go to desired targets
         elbow.update();
         wrist.update();
