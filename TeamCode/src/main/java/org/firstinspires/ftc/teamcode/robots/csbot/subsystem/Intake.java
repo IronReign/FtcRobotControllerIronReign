@@ -26,9 +26,9 @@ public class Intake implements Subsystem {
     public static int RIGHT_DIVERTER_CLOSED = 1050;
     public static int ANGLE_GROUND = 1940; //where the intake hits the ground
     public static int ANGLE_INGEST_INCREMENT = 20;
-    public static int ANGLE_MIN = ANGLE_GROUND + ANGLE_INGEST_INCREMENT;
-    public static int ANGLE_MAX = ANGLE_GROUND - 835;
     public static int ANGLE_START = 1190;
+    public static int ANGLE_PWM_MAX = ANGLE_GROUND + ANGLE_INGEST_INCREMENT; //just below ground
+    public static int ANGLE_PWM_MIN = ANGLE_START;
     public static int ANGLE_INGEST_GROUND = ANGLE_GROUND;
 
     public static int ANGLE_EJECT = 1800;
@@ -49,11 +49,13 @@ public class Intake implements Subsystem {
     public boolean manualBeaterEject = false;
     public boolean manualBeaterEnable = false;
     public static double BEATER_INGEST_VELOCITY = 1700;
+
+    public static double BEATER_SWALLOW_VELOCITY = 300;
     public static double BEATER_EJECT_VELOCITY = -800;
 
     public static double beaterTargetVelocity = 0;
 
-    public static int angleTarget = ANGLE_GROUND;
+    int angleTarget = ANGLE_GROUND;
     private int ingestPixelHeight = 0;  //the height at which to start ingesting pixels. Normally 0 for ground but could be 4 for top pixel in a stack
     private int ingestStage = 0;
     private long ingestTimer = 0;
@@ -261,13 +263,9 @@ public class Intake implements Subsystem {
                 break;
             case DOWN:
                 angleTarget = ANGLE_EJECT;
-                angleLeft.setPosition(Utils.servoNormalize(angleTarget));
-                angleRight.setPosition(Utils.servoNormalize(angleTarget));
                 break;
             case INIT:
                 angleTarget = ANGLE_START;
-                angleLeft.setPosition(Utils.servoNormalize(angleTarget));
-                angleRight.setPosition(Utils.servoNormalize(angleTarget));
                 articulation = Articulation.MANUAL;
                 break;
         }
@@ -282,11 +280,11 @@ public class Intake implements Subsystem {
 
     public void setAngle(int pwm) {
         angleTarget = pwm;
-        if(angleTarget < ANGLE_MIN) {
-            angleTarget = ANGLE_MIN;
+        if(angleTarget < ANGLE_PWM_MIN) {
+            angleTarget = ANGLE_PWM_MIN;
         }
-        if(angleTarget > ANGLE_MAX) {
-            angleTarget = ANGLE_MAX;
+        if(angleTarget > ANGLE_PWM_MAX) {
+            angleTarget = ANGLE_PWM_MAX;
         }
     }
 
@@ -372,7 +370,7 @@ public class Intake implements Subsystem {
                 //todo are these needed? clunky way to allow override
                 manualBeaterEnable = false;
                 manualBeaterEject = false;
-                beaterTargetVelocity = BEATER_INGEST_VELOCITY;
+                beaterTargetVelocity = BEATER_SWALLOW_VELOCITY;
                 swallowTimer = futureTime(TIME_SWALLOW);
                 swallowStage++;
                 break;
@@ -427,12 +425,6 @@ public class Intake implements Subsystem {
 
     public double adjustAngle(double speed) {
         angleTarget += speed * (precisionAngle ? 10 : 100);
-
-
-        angleRight.setPosition(Utils.servoNormalize(angleTarget));
-
-        angleLeft.setPosition(
-        Utils.servoNormalize(angleTarget));
         return angleTarget;
     }
 

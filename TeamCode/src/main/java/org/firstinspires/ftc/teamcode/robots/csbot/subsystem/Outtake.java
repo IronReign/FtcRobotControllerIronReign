@@ -106,6 +106,8 @@ public class Outtake implements Subsystem {
     //IN DEGREES PER SECOND
     public static double WRIST_START_ANGLE = 0;
     public static double WRIST_TRAVEL_ANGLE = WRIST_START_ANGLE;
+
+    public static double WRIST_INIT_ANGLE = 70;
     public static double WRIST_SCORE_ANGLE = 180;
 
     public static double WRIST_JOINT_SPEED = 50;
@@ -207,7 +209,7 @@ public class Outtake implements Subsystem {
         elevator = new Joint(hardwareMap, "elevator", false, ELEVATOR_HOME_POSITION, ELEVATOR_PWM_PER_DEGREE, ELEVATOR_MIN_ANGLE, ELEVATOR_MAX_ANGLE, ELEVATOR_START_ANGLE, ELEVATOR_JOINT_SPEED);
         wrist = new Joint(hardwareMap, "wrist", false, WRIST_HOME_POSITION, WRIST_PWM_PER_DEGREE, WRIST_MIN_ANGLE, WRIST_MAX_ANGLE, WRIST_START_ANGLE, WRIST_JOINT_SPEED);
         slide = this.hardwareMap.get(DcMotorEx.class, "slide");
-        wrist.setTargetAngle(WRIST_TRAVEL_ANGLE);
+        wrist.setTargetAngle(WRIST_INIT_ANGLE);
         slide.setMotorEnable();
         slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         slide.setTargetPosition(0);
