@@ -62,7 +62,7 @@ public class PixelStackDetectorProvider extends VisionProvider {
         else camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 2"));
         noCameraBitmap = Bitmap.createBitmap(320, 240, Bitmap.Config.RGB_565);
         Mat noCameraMat = new Mat(240, 320, CvType.CV_8UC3);
-        Imgproc.putText(noCameraMat, "Webcam Could", new Point(40, 110), Imgproc.FONT_HERSHEY_SIMPLEX,
+        Imgproc.putText(noCameraMat, isFront? "Front Webcam Could": "Back Webcam Could", new Point(40, 110), Imgproc.FONT_HERSHEY_SIMPLEX,
                 1, new Scalar(255, 0, 0), 3);
         Imgproc.putText(noCameraMat, "Not Be Opened", new Point(40, 150), Imgproc.FONT_HERSHEY_SIMPLEX,
                 1, new Scalar(255, 0, 0), 3);

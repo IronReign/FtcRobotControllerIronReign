@@ -411,7 +411,7 @@ public class Intake implements Subsystem {
                 if (isPast(ejectTimer)){
                     beaterTargetVelocity = 0;
                     ejectState = 0;
-                    articulation = Articulation.TRAVEL;
+                    articulation = Articulation.INIT;
                     return true;
                 }
                 break;

@@ -127,6 +127,9 @@ public class Outtake implements Subsystem {
 
     public Articulation articulate() {
         switch (articulation) {
+            case START:
+                setTargetAngle(ELBOW_START_ANGLE, WRIST_INIT_ANGLE, ELEVATOR_START_ANGLE);
+                break;
             case MANUAL:
                 break;
             case BACKDROP:
@@ -182,7 +185,8 @@ public class Outtake implements Subsystem {
         TRAVEL_FROM_BACKDROP,
         BACKDROP_PREP,
         BACKDROP,
-        FOLD
+        FOLD,
+        START
     }
 
     public enum FlipperLocation {

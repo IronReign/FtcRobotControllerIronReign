@@ -43,6 +43,7 @@ public class CenterStage_6832 extends OpMode {
     public static boolean autoNavOn = false;
     //to handle transfer b/w driver and autonav
     public static boolean autoNavInitialized = false;
+    public static boolean frontAuton = true;
     public static boolean debugTelemetryEnabled;
     private boolean initializing;
     public boolean endGameHandled;

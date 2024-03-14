@@ -31,6 +31,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Skyhook;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.provider.AprilTagProvider;
 import org.firstinspires.ftc.teamcode.statemachine.StateMachine;
 
@@ -316,6 +317,7 @@ public class Autonomous implements TelemetryProvider {
     }
 
     public int setPath(Constants.Position startingPosition, int randomizer, boolean driverSide) { // 1, 2 or 3 for randomized prop
+        targetAprilTagIndex = alliance.getMod()? 3 + randomizer: randomizer;
         autonIndex = 0;
         if(randomizer == 0)
             randomizer = 2;
@@ -513,7 +515,6 @@ public class Autonomous implements TelemetryProvider {
 
 
     public boolean execute(FtcDashboard dashboard) {
-        Robot.frontVision = true;//todo undo if back camera is in use
         TelemetryPacket packet = new TelemetryPacket();
         if(runTestPath) {
             if(testRunToWing) {
@@ -532,9 +533,13 @@ public class Autonomous implements TelemetryProvider {
         else
             switch (autonIndex) {
                 case 0:
+                    CenterStage_6832.frontAuton = true; // TODO - HANDLE IF FRONT OR BACK AUTON
+                    Robot.frontVision = false;//todo undo if back camera is in use
+                    Robot.backVisionProviderIndex = 0;
+                    robot.visionProviderFinalized = false;
                     Sensors.distanceSensorsEnabled = false;
                     driveToPurplePixelBuild();
-
+                    robot.outtake.articulate(Outtake.Articulation.START);
                     robot.intake.articulate(Intake.Articulation.INIT);
                     futureTimer = futureTime(AUTON_START_DELAY);//delay for auton start
                     autonIndex++;
@@ -583,16 +588,15 @@ public class Autonomous implements TelemetryProvider {
 
                 case 6:
                     autonState = AutonState.IMU_TURN;
-                    if(true || robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING,turnToSpeed)) {
+                    if( robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING,turnToSpeed)) {
 //                        robot.driveTrain.pose = new Pose2d(new Vector2d(robot.driveTrain.pose.position.x, robot.driveTrain.pose.position.y), Math.toRadians(robot.driveTrain.imuAngle));
-                        robot.switchVisionProviders();
                         autonIndex++;
                     }
                     break;
                 case 7:
                     autonState = AutonState.APRILTAG_RELOCALIZE;
                     robot.enableVision();
-                    futureTimer = futureTime(2);
+                    futureTimer = futureTime(10);
                     autonIndex++;
                     break;
                 case 8:
@@ -631,8 +635,7 @@ public class Autonomous implements TelemetryProvider {
                     robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.2, 0), 0));
                     if(robot.driveTrain.rightDistanceSensorValue < 10 || isPast(futureTimer)) {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
-                        robot.articulate(Robot.Articulation.TRAVEL);
-                        robot.outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
+                        robot.articulate(Robot.Articulation.TRAVEL_FROM_BACKDROP);
                         Sensors.distanceSensorsEnabled = false;
                         driveToPixelStackBuild();
                         MecanumDrive.PARAMS.maxWheelVel = 25;

@@ -18,6 +18,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Sensors.dist
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 //todo this should not reference the reign version of MecanumDrive
+import org.firstinspires.ftc.teamcode.robots.csbot.Autonomous;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.Field;
 import org.firstinspires.ftc.teamcode.robots.csbot.SubZone;
@@ -105,6 +106,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         updatePoseEstimate();
 
 //        update pose heading from imu regularly
+//        if(Autonomous.autonIndex > 0)
 //        if((int)(System.nanoTime() / 1e9) % 2 == 0){
 //            pose = new Pose2d(pose.position, Math.toRadians(imuAngle));
 //        }
@@ -176,7 +178,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         Sensors.driveIMUEnabled = true;
         targetHeading = wrapAngle(turnAngle);
         headingPID.setPID(HEADING_PID_PWR);
-        headingPID.setInput(imuAngle);
+        headingPID.setInput(wrapAngle(imuAngle));
         headingPID.setSetpoint(targetHeading);
         headingPID.setOutputRange(-maxSpeed, maxSpeed);
         headingPID.setTolerance(HEADING_PID_TOLERANCE);

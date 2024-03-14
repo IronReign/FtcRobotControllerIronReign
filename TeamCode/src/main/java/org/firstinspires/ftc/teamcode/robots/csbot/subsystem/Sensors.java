@@ -9,6 +9,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
+import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 import org.slf4j.helpers.Util;
 
@@ -61,7 +62,7 @@ public class Sensors implements Subsystem {
             averageDistSensorValue = (leftDistSensorValue + rightDistSensorValue)/2;
         }
         if(driveIMUEnabled){
-            driveIMUYaw = robot.driveTrain.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.getMod()? -90 : 90);
+            driveIMUYaw = Utils.wrapAngle(robot.driveTrain.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.getMod()? -90 : 90) + (CenterStage_6832.frontAuton? 180: 0));
         }
 
         if(pixelSensorEnabled) {
