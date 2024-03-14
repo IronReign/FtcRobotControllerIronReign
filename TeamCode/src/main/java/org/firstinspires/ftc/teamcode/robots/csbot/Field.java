@@ -1,10 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
-import static org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils.withinError;
-import static org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils.wrapAngle;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -51,8 +47,8 @@ public class Field {
 
     public enum Zone {
         AUDIENCE(Field.MIN_X_VALUE, -1.5, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "AUDIENCE"),
-        BACKSTAGE(.501, Field.MAX_X_VALUE, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "BACKSTAGE"),
-        RIGGING(-1.5, .501, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "RIGGING");
+        BACKSTAGE(.5, Field.MAX_X_VALUE, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "BACKSTAGE"),
+        RIGGING(-1.5, .5, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "RIGGING");
 
         public double x1;
         public double x2;
@@ -112,7 +108,7 @@ public class Field {
 
 
     public void init_loop() {
-        isRed = alliance.getMod();
+        isRed = alliance.isRed();
     }
     public void finalizeField() {
         finalized = true;

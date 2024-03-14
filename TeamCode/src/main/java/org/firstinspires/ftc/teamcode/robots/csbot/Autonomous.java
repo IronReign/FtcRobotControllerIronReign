@@ -144,11 +144,9 @@ public class Autonomous implements TelemetryProvider {
         if(!Constants.driverSide) {
             driveToYellowPixel = new SequentialAction(
                     robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                            .turnTo(switchSides(autonPaths[selectedPath][3].heading.log()))
                             .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                            .turnTo(STANDARD_HEADING_RAD)
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
                             .build()
             );
         }
@@ -198,7 +196,7 @@ public class Autonomous implements TelemetryProvider {
         if(!Constants.driverSide) {
             if (selectedPath == 5) {
                 double intermediateAngle;
-                if (alliance.getMod()) {
+                if (alliance.isRed()) {
                     intermediateAngle = Math.toDegrees(10);
                 } else {
                     intermediateAngle = Math.toDegrees(-10);
@@ -233,7 +231,8 @@ public class Autonomous implements TelemetryProvider {
             driveToPurplePixel = new SequentialAction(
                     robot.driveTrain.actionBuilder(robot.driveTrain.pose)
                             .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                            //step 1 - go to purple eject location
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
                             .build()
             );
         }
@@ -272,7 +271,7 @@ public class Autonomous implements TelemetryProvider {
         if(!Constants.driverSide) {
             strafeToPark = new SequentialAction(
                     robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                            .strafeTo(new Vector2d(robot.driveTrain.pose.position.x, switchSides(autonPaths[selectedPath][5].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
+                            .strafeTo(new Vector2d(robot.driveTrain.pose.position.x, switchSides(autonPaths[selectedPath][4].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
                             .build()
             );
         }
@@ -313,7 +312,7 @@ public class Autonomous implements TelemetryProvider {
         return new Vector2d(v.x, allianceDirection*v.y);
     }
     public double switchSides(double r) {
-        return -allianceDirection*r;
+        return -allianceDirection * r;
     }
 
     public int setPath(Constants.Position startingPosition, int randomizer, boolean driverSide) { // 1, 2 or 3 for randomized prop
@@ -326,83 +325,77 @@ public class Autonomous implements TelemetryProvider {
 //        if(randomizer == 1){
 //            randomizer = 3;
 //        }
+        targetAprilTagIndex = alliance.isRed()? 3 + randomizer: randomizer;
         if(!driverSide) {
-            aprilTagApproachPosition = P2D(1.5,   1.7, STANDARD_HEADING);
+            aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
             audienceIntermediate = P2D(1,.5,-10);
-            audienceIntermediateForward = P2D(1.4, .3, STANDARD_HEADING);
+            audienceIntermediateForward = P2D(1.5, .5, STANDARD_HEADING);
             audienceIntermediateDeep = P2D(1.5,.5,-10);
             allianceDirection = startingPosition.getMod()? -1 : 1;
-            targetAprilTagIndex = targetIndex + (startingPosition.getMod()? 3 : 0);
+
             //aprilTagAlign = new Pose2d (new Vector2d(switchSides(aprilTagApproachPosition.position).x,switchSides(aprilTagApproachPosition.position).y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
-    //        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
-    //        aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x-1,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
-            aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), 0);
+//        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
+//        aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x-1,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
+            aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), STANDARD_HEADING_RAD);
             aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x - 1,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)),
                     0);
-            aprilTagAlignCrossed = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), Math.toRadians(-90));
-            pixelStack = P2D(-2.20 , .5, STANDARD_HEADING);
+            aprilTagAlignCrossed = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), STANDARD_HEADING_RAD);
+            pixelStack = P2D(-2.25, .5, STANDARD_HEADING);
 
             //assemble the paths
-            autonPaths[1][1] = P2D(-2, .5, 90);
-            autonPaths[1][2] = P2D(0, 0, -90);
-            autonPaths[1][3] = P2D(0, 0, STANDARD_HEADING);
-            autonPaths[1][4] = audienceIntermediate;
-            autonPaths[1][5] = aprilTagAlign;
-            autonPaths[1][6] = audienceIntermediateForward;
-            autonPaths[1][7] = pixelStack;
-            autonPaths[1][8] = audienceIntermediate;
-            autonPaths[1][9] = aprilTagAlign;
+            autonPaths[1][1] = P2D(-2, .5, -90);
+            autonPaths[1][2] = P2D(0, 0, STANDARD_HEADING);
+            autonPaths[1][3] = audienceIntermediate;
+            autonPaths[1][4] = aprilTagAlign;
+            autonPaths[1][5] = audienceIntermediateForward;
+            autonPaths[1][6] = pixelStack;
+            autonPaths[1][7] = audienceIntermediate;
+            autonPaths[1][8] = aprilTagAlign;
 
-            autonPaths[2][1] = P2D(-1.2, .43, 47);
-            autonPaths[2][2] = P2D(0, 0, -90-35);
-            autonPaths[2][3] = P2D(0, 0, STANDARD_HEADING);
-            autonPaths[2][4] = audienceIntermediate;
-            autonPaths[2][5] = aprilTagAlign;
-            autonPaths[2][6] = audienceIntermediateForward;
-            autonPaths[2][7] = pixelStack;
-            autonPaths[2][8] = audienceIntermediate;
-            autonPaths[2][9] = aprilTagAlign;
-            System.out.println(switchSides(aprilTagAlign.position).y);
+            autonPaths[2][1] = P2D(-1.2, .43, -90-35);
+            autonPaths[2][2] = P2D(0, 0, STANDARD_HEADING);
+            autonPaths[2][3] = audienceIntermediate;
+            autonPaths[2][4] = aprilTagAlign;
+            autonPaths[2][5] = audienceIntermediateForward;
+            autonPaths[2][6] = pixelStack;
+            autonPaths[2][7] = audienceIntermediate;
+            autonPaths[2][8] = aprilTagAlign;
 
-            autonPaths[3][1] = P2D(-1.7, 1, 90);
-            autonPaths[3][2] = P2D(0, 0, -30);
-            autonPaths[3][3] = P2D(0, 0, -130);
-            autonPaths[3][4] = audienceIntermediateDeep;
-            autonPaths[3][5] = aprilTagAlignCrossed;
-            autonPaths[3][6] = audienceIntermediateForward;
-            autonPaths[3][7] = pixelStack;
-            autonPaths[3][8] = audienceIntermediate;
-            autonPaths[3][9] = aprilTagAlign;
+            autonPaths[3][1] = P2D(-1.7, 1, -30);
+            autonPaths[3][2] = P2D(0, 0, -130);
+            autonPaths[3][3] = audienceIntermediateDeep;
+            autonPaths[3][4] = aprilTagAlignCrossed;
+            autonPaths[3][5] = audienceIntermediateForward;
+            autonPaths[3][6] = pixelStack;
+            autonPaths[3][7] = audienceIntermediate;
+            autonPaths[3][8] = aprilTagAlign;
 
-            autonPaths[4][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID+.3, 1.25, 90);
+            autonPaths[4][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID+.3, 1.25, STANDARD_HEADING);
             autonPaths[4][2] = P2D(0, 0, STANDARD_HEADING);
-            autonPaths[4][3] = P2D(0, 0, STANDARD_HEADING);
-            autonPaths[4][4] = aprilTagAlignClose;
-            autonPaths[4][5] = aprilTagAlign;
-            autonPaths[4][6] = audienceIntermediateForward;
-            autonPaths[4][7] = pixelStack;
-            autonPaths[4][8] = audienceIntermediate;
-            autonPaths[4][9] = aprilTagAlign;
+            autonPaths[4][3] = aprilTagAlignClose;
+            autonPaths[4][4] = aprilTagAlign;
+            autonPaths[4][5] = audienceIntermediateForward;
+            autonPaths[4][6] = pixelStack;
+            autonPaths[4][7] = audienceIntermediate;
+            autonPaths[4][8] = aprilTagAlign;
 
             autonPaths[5][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID, 1.8, 90);
-            autonPaths[5][2] = P2D(0, 0, 90);
-            autonPaths[5][3] = P2D(0, 0, 170);
-            autonPaths[5][4] = aprilTagAlignClose;
-            autonPaths[5][5] = aprilTagAlign;
-            autonPaths[5][6] = audienceIntermediateForward;
-            autonPaths[5][7] = pixelStack;
-            autonPaths[5][8] = audienceIntermediate;
-            autonPaths[5][9] = aprilTagAlign;
+            autonPaths[5][2] = P2D(0, 0, 170);
+            autonPaths[5][3] = aprilTagAlignClose;
+            autonPaths[5][4] = aprilTagAlign;
+            autonPaths[5][5] = audienceIntermediateForward;
+            autonPaths[5][6] = pixelStack;
+            autonPaths[5][7] = audienceIntermediate;
+            autonPaths[5][8] = aprilTagAlign;
 
-            autonPaths[6][1] = P2D(1.4, 41.2 / 23.5 , -15);
-            autonPaths[6][2] = P2D(0, 0, 125);
-            autonPaths[6][3] = P2D(0, 0, STANDARD_HEADING);
-            autonPaths[6][4] = aprilTagAlignClose;
-            autonPaths[6][5] = aprilTagAlign;
-            autonPaths[6][6] = audienceIntermediateForward;
-            autonPaths[6][7] = pixelStack;
-            autonPaths[6][8] = audienceIntermediate;
-            autonPaths[6][9] = aprilTagAlign;
+            autonPaths[6][1] = P2D(1.4, 41.2 / 23.5 , 125);
+            autonPaths[6][2] = P2D(0, 0, STANDARD_HEADING);
+            autonPaths[6][3] = aprilTagAlignClose;
+            autonPaths[6][4] = aprilTagAlign;
+            autonPaths[6][5] = audienceIntermediateForward;
+            autonPaths[6][6] = pixelStack;
+            autonPaths[6][7] = audienceIntermediate;
+            autonPaths[6][8] = aprilTagAlign;
         }
         else {
             aprilTagApproachPosition = P2D(1.5,1.5, STANDARD_HEADING);
@@ -539,9 +532,12 @@ public class Autonomous implements TelemetryProvider {
         else
             switch (autonIndex) {
                 case 0:
+                    Robot.frontVision = false; //could be front or back during init, but this is what'll be used for apriltag
+                    Robot.backVisionProviderIndex = 0; // forcing apriltag & refinalization
+                    robot.visionProviderFinalized = false;
                     Sensors.distanceSensorsEnabled = false;
                     driveToPurplePixelBuild();
-
+                    robot.outtake.articulate(Outtake.Articulation.START);
                     robot.intake.articulate(Intake.Articulation.INIT);
                     futureTimer = futureTime(AUTON_START_DELAY);//delay for auton start
                     autonIndex++;
@@ -560,7 +556,7 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 2:
                     autonState = AutonState.SCORE_GROUND;
-                    if (!sweep.run(packet)) {
+                    if (true || !sweep.run(packet)) {
                         robot.outtake.elbow.setSpeed(Outtake.ELBOW_JOINT_SPEED * .5);
                         robot.intake.articulate(Intake.Articulation.EJECT);
                         autonIndex++;
@@ -590,16 +586,15 @@ public class Autonomous implements TelemetryProvider {
 
                 case 6:
                     autonState = AutonState.IMU_TURN;
-                    if(robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING,turnToSpeed)) {
-                        robot.driveTrain.pose = new Pose2d(new Vector2d(robot.driveTrain.pose.position.x, robot.driveTrain.pose.position.y), Math.toRadians(robot.driveTrain.imuAngle));
-                        robot.switchVisionProviders();
-                        autonIndex ++;
+                    if( robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING,turnToSpeed)) {
+//                        robot.driveTrain.pose = new Pose2d(new Vector2d(robot.driveTrain.pose.position.x, robot.driveTrain.pose.position.y), Math.toRadians(robot.driveTrain.imuAngle));
+                        autonIndex++;
                     }
                     break;
                 case 7:
                     autonState = AutonState.APRILTAG_RELOCALIZE;
                     robot.enableVision();
-                    futureTimer = futureTime(2);
+                    futureTimer = futureTime(10);
                     autonIndex++;
                     break;
                 case 8:
@@ -638,8 +633,7 @@ public class Autonomous implements TelemetryProvider {
                     robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.2, 0), 0));
                     if(robot.driveTrain.rightDistanceSensorValue < 10 || isPast(futureTimer)) {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
-                        robot.articulate(Robot.Articulation.TRAVEL);
-                        robot.outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
+                        robot.articulate(Robot.Articulation.TRAVEL_FROM_BACKDROP);
                         Sensors.distanceSensorsEnabled = false;
                         driveToPixelStackBuild();
                         MecanumDrive.PARAMS.maxWheelVel = 25;

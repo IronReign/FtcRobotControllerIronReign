@@ -92,7 +92,7 @@ public class DriverControls {
             robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
 
-        if(shifted(stickyGamepad1) && stickyGamepad1.a) {
+        if(shifted(gamepad1) && stickyGamepad1.a) {
             robot.skyhook.articulate(Skyhook.Articulation.GAME);
         }
         else if (stickyGamepad1.a) {
@@ -100,7 +100,7 @@ public class DriverControls {
                 robot.articulate(Robot.Articulation.INGEST);
         }
 
-        if(shifted(stickyGamepad1) && stickyGamepad1.b) {
+        if(shifted(gamepad1) && stickyGamepad1.b) {
             debugTelemetryEnabled = !debugTelemetryEnabled;
         }
         else if (stickyGamepad1.b) {
@@ -132,7 +132,7 @@ public class DriverControls {
                 robot.articulate(Robot.Articulation.HANG);
             }
             else{
-                if(!shifted(stickyGamepad1)/*field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")*/) {
+                if(!shifted(gamepad1)/*field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")*/) {
                     if(robot.intake.getIngestPixelHeight() != 4)
                         robot.intake.setIngestPixelHeight(4);
                     else if(robot.intake.getIngestPixelHeight() == 4)
@@ -144,7 +144,7 @@ public class DriverControls {
             }
         }
 
-        if (stickyGamepad1.x && !shifted(stickyGamepad1)/*field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")*/) {
+        if (stickyGamepad1.x && !shifted(gamepad1)/*field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")*/) {
             robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
         }
         else if(stickyGamepad1.x) {
@@ -167,7 +167,7 @@ public class DriverControls {
                 CenterStage_6832.autoNavOn = true;
             }
         }
-        else if(shifted(stickyGamepad2) && stickyGamepad2.start) {
+        else if(shifted(gamepad1) && stickyGamepad2.start) {
             robot.autoEndgame = true;
         }
         if(stickyGamepad2.dpad_left) {
@@ -210,7 +210,7 @@ public class DriverControls {
 
     }
 
-    public boolean shifted(StickyGamepad gamepad) {
+    public boolean shifted(Gamepad gamepad) {
         return gamepad.guide;
     }
 
@@ -220,7 +220,7 @@ public class DriverControls {
                 Math.abs(gamepad1.right_stick_x ) > DEADZONE)
         {
             robot.driveTrain.setHumanIsDriving(true);
-            robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, alliance.getMod());
+            robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, alliance.isRed());
         }
         else if (robot.driveTrain.isHumanIsDriving()) robot.driveTrain.drive(0, 0, 0);
     }
@@ -259,14 +259,12 @@ public class DriverControls {
         if (stickyGamepad1.x || stickyGamepad2.x) {
             visionProviderFinalized = false;
             alliance = Constants.Alliance.BLUE;
-
-            startingPosition = startingPosition.getMod() == false ?
-                    startingPosition :
-                        startingPosition == Constants.Position.START_LEFT_RED ?
-                            Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
-                robot.visionProviderBack.setRedAlliance(false);
+                    startingPosition = startingPosition.getMod() == false ?
+                            startingPosition :
+                            startingPosition == Constants.Position.START_LEFT_RED ?
+                                    Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
+            robot.visionProviderBack.setRedAlliance(false);
 //            robot.visionProviderBack.initializeVision(hardwareMap); // this is blocking
-
 
         }
         if (stickyGamepad1.b || stickyGamepad2.b) {
@@ -304,8 +302,10 @@ public class DriverControls {
         if (stickyGamepad1.dpad_right || stickyGamepad2.dpad_right)
             startingPosition = alliance == Constants.Alliance.RED ? Constants.Position.START_RIGHT_RED : Constants.Position.START_RIGHT_BLUE;
 
-        if (stickyGamepad1.a || stickyGamepad2.a)
+        if (stickyGamepad1.a || stickyGamepad2.a) {
             debugTelemetryEnabled = !debugTelemetryEnabled;
+        }
+
     }
 
 

@@ -120,8 +120,7 @@ public class MeepMeepStrafeTesting {
                         .setReversed(true)
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][4].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
-                        .build();
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][4].position).x, switchSides(autonPaths[selectedPath][4].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))                        .build();
 
         //bot2 - builder identical to bot1 - when adjusting the build, do it for bot1 and copy to the other bots
         startingPosition = Position.START_RIGHT_BLUE;
@@ -153,8 +152,12 @@ public class MeepMeepStrafeTesting {
                         .setReversed(true)
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+<<<<<<< HEAD
                         .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][4].position).x, switchSides(autonPaths[selectedPath][4].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .build();
+=======
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][4].position).x, switchSides(autonPaths[selectedPath][4].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))                        .build();
+>>>>>>> upstream/main
 
         startingPosition = Position.START_LEFT_BLUE;
         p = startingPosition.getPose();
@@ -185,9 +188,13 @@ public class MeepMeepStrafeTesting {
                         .setReversed(true)
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+<<<<<<< HEAD
                         //.strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .strafeToLinearHeading(new Vector2d(parkBackDrop.position.x, -parkBackDrop.position.y), parkBackDrop.heading.log())
                         .build();
+=======
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][4].position).x, switchSides(autonPaths[selectedPath][4].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))                        .build();
+>>>>>>> upstream/main
 
         startingPosition = Position.START_RIGHT_RED;
         p = startingPosition.getPose();
@@ -217,8 +224,12 @@ public class MeepMeepStrafeTesting {
                         .setReversed(true)
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
+<<<<<<< HEAD
                         //.strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
                         .strafeToLinearHeading(parkBackDrop.position, parkBackDrop.heading.log())
+=======
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][4].position).x, switchSides(autonPaths[selectedPath][4].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
+>>>>>>> upstream/main
                         .build();
 
 

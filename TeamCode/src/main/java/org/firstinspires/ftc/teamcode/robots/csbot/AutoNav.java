@@ -10,7 +10,6 @@ import com.acmerobotics.roadrunner.Vector2d;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
-import org.firstinspires.ftc.teamcode.robots.csbot.vision.provider.AprilTagProvider;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -107,7 +106,7 @@ public class AutoNav implements TelemetryProvider{
         switch (outtakeIndex) {
             case 0:
                 //select outtake score locations
-                POI poi = alliance.getMod()? field.scoreLocations.get(targetIndex + 3) : field.scoreLocations.get(targetIndex);
+                POI poi = alliance.isRed()? field.scoreLocations.get(targetIndex + 3) : field.scoreLocations.get(targetIndex);
                 //build path
                 pathToDelivery = field.pathToPOI(robot, poi, preferredRoute);
                 intakeIndex++;

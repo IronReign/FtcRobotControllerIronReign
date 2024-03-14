@@ -28,7 +28,8 @@
             <RevRobotics40HDHexMotor name="slide" port="2"/>
             <RevRoboticsCoreHexMotor name="kareem" port="3"/>
             <RevRoboticsCoreHexMotor name="jabbar" port="0"/>
-        </LynxModule>
+        <LynxEmbeddedIMU name="eimu" port="0" bus="0" />
+    </LynxModule>
     </LynxUsbDevice>
     <Webcam name="Webcam 2" serialNumber="6E1F05D0" />
     <Webcam name="Webcam 1" serialNumber="VendorProduct:vendor=0x046d|product=0x0825|connection=" />
