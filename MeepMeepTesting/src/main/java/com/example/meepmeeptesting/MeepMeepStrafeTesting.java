@@ -43,6 +43,8 @@ public class MeepMeepStrafeTesting {
     static Pose2d audienceIntermediate;
     static Pose2d audienceIntermediateForward, audienceIntermediateDeep;
     static Pose2d aprilTagAlign, aprilTagAlignClose,  aprilTagAlignCrossed;
+
+    static Pose2d parkAudience, parkBackDrop;
     public static Pose2d pixelStack;
 
 
@@ -137,6 +139,7 @@ public class MeepMeepStrafeTesting {
 
                         //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
                         .setReversed(true)
+                        .turnTo(switchSides(autonPaths[selectedPath][5].heading.log()))
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
 
@@ -149,7 +152,9 @@ public class MeepMeepStrafeTesting {
                         .setReversed(true)
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][4].position).x, switchSides(autonPaths[selectedPath][4].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))                        .build();
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][4].position).x, switchSides(autonPaths[selectedPath][4].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
+                        .build();
+
 
         startingPosition = Position.START_LEFT_BLUE;
         p = startingPosition.getPose();
@@ -180,7 +185,10 @@ public class MeepMeepStrafeTesting {
                         .setReversed(true)
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][4].position).x, switchSides(autonPaths[selectedPath][4].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))                        .build();
+                        //.strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
+                        .strafeToLinearHeading(new Vector2d(parkBackDrop.position.x, -parkBackDrop.position.y), parkBackDrop.heading.log())
+                        .build();
+
 
         startingPosition = Position.START_RIGHT_RED;
         p = startingPosition.getPose();
@@ -210,7 +218,8 @@ public class MeepMeepStrafeTesting {
                         .setReversed(true)
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][4].position).x, switchSides(autonPaths[selectedPath][4].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
+                        //.strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][5].position).x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection*(selectedPath > 3? 1: -1)))
+                        .strafeToLinearHeading(parkBackDrop.position, parkBackDrop.heading.log())
                         .build();
 
 
@@ -280,6 +289,8 @@ public class MeepMeepStrafeTesting {
         audienceIntermediateForward = P2D(1.5, .5, STANDARD_HEADING);
         audienceIntermediateDeep = P2D(1.5,.5,-10);
         allianceDirection = startingPosition.getMod()? -1 : 1;
+        parkAudience = P2D(2.5, -0.5, STANDARD_HEADING);
+        parkBackDrop = P2D(1.5, -2.45, STANDARD_HEADING);
 
         //aprilTagAlign = new Pose2d (new Vector2d(switchSides(aprilTagApproachPosition.position).x,switchSides(aprilTagApproachPosition.position).y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
 //        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
