@@ -359,7 +359,7 @@ public class Outtake implements Subsystem {
                 break;
             case 2:
                 slideTargetPosition = slidePositionScore;
-                if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionDocked, 30)) {
+                if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionScore, 30)) {
                     backdropPrepStage++;
                 }
                 break;

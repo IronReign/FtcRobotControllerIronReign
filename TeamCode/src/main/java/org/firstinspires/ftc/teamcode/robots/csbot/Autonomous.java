@@ -124,7 +124,7 @@ public class Autonomous implements TelemetryProvider {
         this.robot = robot;
         this.hardwareMap = robot.hardwareMap;
         autonPaths = new Pose2d[7][13];
-        autonIndex = 6;
+        autonIndex = 0;
     }
 
     public static int INWARD_SCORING_ANGLE = -45;
@@ -590,10 +590,10 @@ public class Autonomous implements TelemetryProvider {
 
                 case 6:
                     autonState = AutonState.IMU_TURN;
-                    if(robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING,turnToSpeed)) {
-                        robot.driveTrain.pose = new Pose2d(new Vector2d(robot.driveTrain.pose.position.x, robot.driveTrain.pose.position.y), Math.toRadians(robot.driveTrain.imuAngle));
+                    if(true || robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING,turnToSpeed)) {
+//                        robot.driveTrain.pose = new Pose2d(new Vector2d(robot.driveTrain.pose.position.x, robot.driveTrain.pose.position.y), Math.toRadians(robot.driveTrain.imuAngle));
                         robot.switchVisionProviders();
-                        autonIndex =20;
+                        autonIndex++;
                     }
                     break;
                 case 7:

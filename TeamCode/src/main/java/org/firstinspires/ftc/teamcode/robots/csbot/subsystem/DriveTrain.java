@@ -47,8 +47,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public static boolean runTestPath = false;
     private double targetHeading, targetVelocity = 0;
     public static PIDController headingPID;
-    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0.005, 0, 0);
-    public static double HEADING_PID_TOLERANCE = .04; //this is a percentage of the input range .063 of 2PI is 1 degree
+    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0.01, 0.03, 0);
+    public static double HEADING_PID_TOLERANCE = .08; //this is a percentage of the input range .063 of 2PI is 1 degree
     private double PIDCorrection, PIDError;
     public static int turnToTest = 0;
     public static double turnToSpeed=.8; //max angular speed for turn
