@@ -70,7 +70,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
  */
 
 @TeleOp(name="Concept: IMU Orientation", group="Concept")
-@Disabled
+
 public class ConceptExploringIMUOrientation extends LinearOpMode {
     static RevHubOrientationOnRobot.LogoFacingDirection[] logoFacingDirections
             = RevHubOrientationOnRobot.LogoFacingDirection.values();
@@ -85,7 +85,7 @@ public class ConceptExploringIMUOrientation extends LinearOpMode {
     boolean orientationIsValid = true;
 
     @Override public void runOpMode() throws InterruptedException {
-        imu = hardwareMap.get(IMU.class, "imu");
+        imu = hardwareMap.get(IMU.class, "eimu");
         logoFacingDirectionPosition = 0; // Up
         usbFacingDirectionPosition = 2; // Forward
 

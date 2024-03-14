@@ -163,16 +163,12 @@ public class CenterStage_6832 extends OpMode {
 
         dc.init_loop();
         dc.robotOrientedDrive();
+        initVision();
 
-        robot.enableVision();
-
-        robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
-        robot.visionProviderFront.setRedAlliance(startingPosition.getMod());
-
-
+        //if driverside, always front, else only front on backstageside
+        frontAuton = Constants.driverSide? true: (startingPosition.equals(Constants.Position.START_RIGHT_RED) || startingPosition.equals(Constants.Position.START_LEFT_BLUE)) ? true : false;
         auton.saveRandomizer(robot.visionProviderBack.getMostFrequentPosition().getIndex());
         robot.initPosition();
-
         robot.driveTrain.updatePoseEstimate();
 
         telemetry.addData("visionProviderIndex", Robot.backVisionProviderIndex);
@@ -189,6 +185,12 @@ public class CenterStage_6832 extends OpMode {
     }
     //end init_loop()
 
+    private void initVision() {
+        robot.enableVision();
+        robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
+        robot.visionProviderFront.setRedAlliance(startingPosition.getMod());
+        robot.frontVision = frontAuton;
+    }
 
     @Override
     public void start() {
@@ -388,7 +390,7 @@ public class CenterStage_6832 extends OpMode {
             handleTelemetry(visionTelemetryMap, "BACK VISION - \t" + robot.visionProviderBack.getTelemetryName(), packet);
             handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
             packet.put("imu/roadrunner error", robot.driveTrain.imuRoadrunnerError);
-            packet.put("imu angle", robot.driveTrain.imuAngle);
+            packet.put("imu angle", robot.sensors.driveIMUYaw);
             packet.put("roadrunner angle", Math.toDegrees(robot.driveTrain.pose.heading.toDouble()));
 
 

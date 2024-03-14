@@ -523,8 +523,8 @@ public class  Robot implements Subsystem {
 
     public void createVisionProviders() {
         try {
-            visionProviderBack = VisionProviders.VISION_PROVIDERS[backVisionProviderIndex].newInstance().setRedAlliance(alliance.getMod());
-            visionProviderFront = VisionProviders.VISION_PROVIDERS[frontVisionProviderIndex].newInstance().setRedAlliance(alliance.getMod());
+            visionProviderBack = VisionProviders.VISION_PROVIDERS[backVisionProviderIndex].newInstance().setRedAlliance(alliance.isRed());
+            visionProviderFront = VisionProviders.VISION_PROVIDERS[frontVisionProviderIndex].newInstance().setRedAlliance(alliance.isRed());
         } catch (IllegalAccessException | InstantiationException e) {
             throw new RuntimeException("Error while instantiating vision provider");
         }

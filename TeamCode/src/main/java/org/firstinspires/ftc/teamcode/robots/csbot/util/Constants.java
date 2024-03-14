@@ -48,7 +48,7 @@ public class Constants {
         Alliance(boolean mod) {
             this.mod = mod;
         }
-        public boolean getMod() {
+        public boolean isRed() {
             return mod;
         }
         public void Toggle(){this.mod = !this.mod;}

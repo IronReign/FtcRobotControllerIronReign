@@ -31,7 +31,6 @@ import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Skyhook;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
-import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.provider.AprilTagProvider;
 import org.firstinspires.ftc.teamcode.statemachine.StateMachine;
 
@@ -197,7 +196,7 @@ public class Autonomous implements TelemetryProvider {
         if(!Constants.driverSide) {
             if (selectedPath == 5) {
                 double intermediateAngle;
-                if (alliance.getMod()) {
+                if (alliance.isRed()) {
                     intermediateAngle = Math.toDegrees(10);
                 } else {
                     intermediateAngle = Math.toDegrees(-10);
@@ -313,11 +312,10 @@ public class Autonomous implements TelemetryProvider {
         return new Vector2d(v.x, allianceDirection*v.y);
     }
     public double switchSides(double r) {
-        return -allianceDirection*r;
+        return -allianceDirection * r;
     }
 
     public int setPath(Constants.Position startingPosition, int randomizer, boolean driverSide) { // 1, 2 or 3 for randomized prop
-        targetAprilTagIndex = alliance.getMod()? 3 + randomizer: randomizer;
         autonIndex = 0;
         if(randomizer == 0)
             randomizer = 2;
@@ -327,6 +325,7 @@ public class Autonomous implements TelemetryProvider {
 //        if(randomizer == 1){
 //            randomizer = 3;
 //        }
+        targetAprilTagIndex = alliance.isRed()? 3 + randomizer: randomizer;
         if(!driverSide) {
             aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
             audienceIntermediate = P2D(1,.5,-10);
@@ -533,9 +532,8 @@ public class Autonomous implements TelemetryProvider {
         else
             switch (autonIndex) {
                 case 0:
-                    CenterStage_6832.frontAuton = true; // TODO - HANDLE IF FRONT OR BACK AUTON
-                    Robot.frontVision = false;//todo undo if back camera is in use
-                    Robot.backVisionProviderIndex = 0;
+                    Robot.frontVision = false; //could be front or back during init, but this is what'll be used for apriltag
+                    Robot.backVisionProviderIndex = 0; // forcing apriltag & refinalization
                     robot.visionProviderFinalized = false;
                     Sensors.distanceSensorsEnabled = false;
                     driveToPurplePixelBuild();

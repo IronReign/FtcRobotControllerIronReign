@@ -31,7 +31,7 @@ public class Intake implements Subsystem {
     public static int ANGLE_PWM_MIN = ANGLE_START;
     public static int ANGLE_INGEST_GROUND = ANGLE_GROUND;
 
-    public static int ANGLE_EJECT = 1800;
+    public static int ANGLE_EJECT = 1870;
     public static int ANGLE_HANG = 1450;
     public static int ANGLE_SWALLOW = 1540;
     public static int ANGLE_TRAVEL = 1500; //safe to travel through backstage door

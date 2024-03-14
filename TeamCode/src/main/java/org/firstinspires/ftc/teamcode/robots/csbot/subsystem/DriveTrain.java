@@ -21,6 +21,7 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import org.firstinspires.ftc.teamcode.robots.csbot.Autonomous;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.Field;
+import org.firstinspires.ftc.teamcode.robots.csbot.POI;
 import org.firstinspires.ftc.teamcode.robots.csbot.SubZone;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 //todo this should not reference reign's Constants
@@ -41,7 +42,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public double rightDistanceSensorValue = 0;
     public double leftDistanceSensorValue = 0;
     public double imuRoadrunnerError;
-    public double imuAngle;
     public static int testPreferredRouteIndex = 3;
 
     public boolean imuTurnDone = false;
@@ -52,7 +52,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public static double HEADING_PID_TOLERANCE = .08; //this is a percentage of the input range .063 of 2PI is 1 degree
     private double PIDCorrection, PIDError;
     public static int turnToTest = 0;
-    public static double turnToSpeed=.8; //max angular speed for turn
+    public static double turnToSpeed = .8; //max angular speed for turn
     private static final double DISTANCE_BETWEEN_DISTANCE_SENSORS = 14;
 
     public static SequentialAction testPathToWing, testPathToScore;
@@ -66,11 +66,12 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         this.humanIsDriving = humanIsDriving;
     }
 
-    private boolean humanIsDriving=false;
+    private boolean humanIsDriving = false;
 
     public void buildTestPathToWing() {
         testPathToWing = field.pathToPOI(robot, field.WING_INTAKE, testPreferredRouteIndex);
     }
+
     public void buildTestPathToScore() {
         testPathToScore = field.pathToPOI(robot, field.SCORE6, testPreferredRouteIndex);
     }
@@ -94,12 +95,10 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     //end constructor
 
 
-
     @Override
     public void update(Canvas c) {
-        imuAngle = Robot.sensors.driveIMUYaw;
-        imuRoadrunnerError = imuAngle - Math.toDegrees(pose.heading.log());
-        if(distanceSensorsEnabled) {
+        imuRoadrunnerError = Robot.sensors.driveIMUYaw - Math.toDegrees(pose.heading.log());
+        if (distanceSensorsEnabled) {
             rightDistanceSensorValue = Robot.sensors.rightDistSensorValue;
             leftDistanceSensorValue = Robot.sensors.leftDistSensorValue;
         }
@@ -112,7 +111,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 //        }
 
         //test imu based turning from dashboard - todo comment out when not needed
-        if (turnToTest!=0) turnUntilDegreesIMU(turnToTest,turnToSpeed); //can target any angle but zero
+        if (turnToTest != 0) turnUntilDegreesIMU(turnToTest, turnToSpeed); //can target any angle but zero
     }
 
     public double distanceSensorHeading() {
@@ -124,11 +123,11 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
 
     public void drive(double x, double y, double theta) {
-        if(CenterStage_6832.field.finalized) {
+        if (CenterStage_6832.field.finalized) {
             theta = CenterStage_6832.field.getZone(pose) == Field.Zone.BACKSTAGE ? theta * HEADING_DAMPENING : theta;
-            x = CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX())?
+            x = CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX()) ?
                     x * DRIVE_DAMPENING : x;
-            y = CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX())?
+            y = CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX()) ?
                     y * DRIVE_DAMPENING : y;
         }
 
@@ -143,30 +142,41 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         updatePoseEstimate();
     }
 
-    public void fieldOrientedDrive(double x, double y, double theta, boolean isRed){
+    public void distanceSensorRelocalize() {
+        //theoretically any apriltag
+        pose = new Pose2d(new Vector2d(POI.APRILTAG1.pose.position.x - robot.sensors.averageDistSensorValue, pose.position.y), distanceSensorHeading());
+    }
+
+    public void fieldOrientedDrive(double x, double y, double theta, boolean isRed) {
         theta = theta * GLOBAL_HEADING_DAMPENING;
-        if(CenterStage_6832.field.finalized) {
+        if (CenterStage_6832.field.finalized) {
             theta = (CenterStage_6832.field.getZone(pose) == Field.Zone.BACKSTAGE ||
                     field.getSubZones(pose).contains(SubZone.PICKUP) ||
                     field.getSubZones(pose).contains(SubZone.PICKUP.flipOnX()) ||
                     field.getSubZones(pose).contains(SubZone.WING)) ||
                     field.getSubZones(pose).contains(SubZone.WING.flipOnX()) ?
                     theta * HEADING_DAMPENING : theta;
-            x = CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX())?
+            x = ((field.getSubZones(pose).contains(SubZone.BACKDROP) || field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX())
+                    ||
+                    field.getSubZones(pose).contains(SubZone.WING)) ||
+                    field.getSubZones(pose).contains(SubZone.WING.flipOnX())) ?
                     x * DRIVE_DAMPENING : x;
-            y = CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX())?
+            y = ((field.getSubZones(pose).contains(SubZone.BACKDROP) || field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX())
+                    ||
+                    field.getSubZones(pose).contains(SubZone.WING)) ||
+                    field.getSubZones(pose).contains(SubZone.WING.flipOnX())) ?
                     y * DRIVE_DAMPENING : y;
         }
         // Create a vector from the gamepad x/y inputs
         // Then, rotate that vector by the inverse of that heading
         Vector2d input = new Vector2d(
                 x,
-               y);
+                y);
         //additional rotation needed if blue alliance perspective
-        Rotation2d heading =(!isRed) ? pose.heading: pose.heading.plus(Math.PI);
+        Rotation2d heading = (!isRed) ? pose.heading : pose.heading.plus(Math.PI);
         input = heading.inverse().times(
                 new Vector2d(-input.x, input.y));
-        setDrivePowers(new PoseVelocity2d(input,-theta ));
+        setDrivePowers(new PoseVelocity2d(input, -theta));
         updatePoseEstimate();
     }
 
@@ -178,7 +188,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         Sensors.driveIMUEnabled = true;
         targetHeading = wrapAngle(turnAngle);
         headingPID.setPID(HEADING_PID_PWR);
-        headingPID.setInput(wrapAngle(imuAngle));
+        headingPID.setInput(wrapAngle(Robot.sensors.driveIMUYaw));
         headingPID.setSetpoint(targetHeading);
         headingPID.setOutputRange(-maxSpeed, maxSpeed);
         headingPID.setTolerance(HEADING_PID_TOLERANCE);
@@ -186,14 +196,15 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         PIDCorrection = correction;
         PIDError = headingPID.getError();
         setHumanIsDriving(false);
-        if(headingPID.onTarget()){
+        if (headingPID.onTarget()) {
             //turn meets accuracy target
             //todo is this a good time to update pose heading from imu?
+            pose = new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw));
             //stop
             Sensors.driveIMUEnabled = false;
             setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
             return imuTurnDone = true;
-        }else{
+        } else {
             headingPID.enable();
             setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
             return imuTurnDone = false;
@@ -222,16 +233,16 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("x in inches", pose.position.x);
         telemetryMap.put("y in inches", pose.position.y);
 
-            telemetryMap.put("Right Distance Sensor Value", rightDistanceSensorValue);
-            telemetryMap.put("Left Distance Sensor Value", leftDistanceSensorValue);
-            telemetryMap.put("distance sensor heading", distanceSensorHeading());
+        telemetryMap.put("Right Distance Sensor Value", rightDistanceSensorValue);
+        telemetryMap.put("Left Distance Sensor Value", leftDistanceSensorValue);
+        telemetryMap.put("distance sensor heading", distanceSensorHeading());
 
         telemetryMap.put("heading", Math.toDegrees(pose.heading.log()));
         telemetryMap.put("Left Odometry Pod:\t", leftFront.getCurrentPosition());
         telemetryMap.put("Right Odometry Pod:\t", rightFront.getCurrentPosition());
         telemetryMap.put("Cross Odometry Pod:\t", rightBack.getCurrentPosition());
         telemetryMap.put("imu vs roadrunner:\t", imuRoadrunnerError);
-        telemetryMap.put("imu:\t", imuAngle);
+        telemetryMap.put("imu:\t", Robot.sensors.driveIMUYaw);
         telemetryMap.put("PID Error:\t", PIDError);
         telemetryMap.put("PID Correction:\t", PIDCorrection);
         telemetryMap.put("imuTurnDone?", imuTurnDone);
