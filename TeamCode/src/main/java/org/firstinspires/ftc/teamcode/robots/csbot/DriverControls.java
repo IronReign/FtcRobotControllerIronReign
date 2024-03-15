@@ -130,13 +130,13 @@ public class DriverControls {
             if (robot.intake.isEating())
                 robot.intake.pixelSensorLeft();
             else
-                robot.outtake.moveSlide(5);
+                robot.outtake.moveSlide(-5);
         }
         if (gamepad1.right_bumper) {
             if (robot.intake.isEating())
                 robot.intake.pixelSensorRight();
             else
-                robot.outtake.moveSlide(-5);
+                robot.outtake.moveSlide(5);
         }
         
         if(stickyGamepad1.y) {
