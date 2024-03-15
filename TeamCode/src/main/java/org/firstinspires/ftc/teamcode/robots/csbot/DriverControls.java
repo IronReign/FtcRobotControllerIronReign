@@ -143,23 +143,23 @@ public class DriverControls {
                 robot.articulate(Robot.Articulation.HANG);
             }
             else{
-                if(!shifted(gamepad1)/*field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")*/) {
+                if(shifted(gamepad1)/*field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")*/) {
+                    robot.articulate(Robot.Articulation.PREP_FOR_HANG);
+                }
+                else {
                     if(robot.intake.getIngestPixelHeight() != 4)
                         robot.intake.setIngestPixelHeight(4);
                     else if(robot.intake.getIngestPixelHeight() == 4)
                         robot.intake.setIngestPixelHeight(0);
                 }
-                else {
-                    robot.articulate(Robot.Articulation.PREP_FOR_HANG);
-                }
             }
         }
 
-        if (stickyGamepad1.x && !shifted(gamepad1)/*field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")*/) {
-            robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
+        if (stickyGamepad1.x && shifted(gamepad1)/*field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")*/) {
+            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
         }
         else if(stickyGamepad1.x) {
-            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
+            robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
         }
 
         if(stickyGamepad1.dpad_up) {
