@@ -85,7 +85,12 @@ public class DriverControls {
             robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
         else if (gamepad1.left_trigger > .1) {
-            robot.outtake.scoreZ -= robot.outtake.IK_ADJUST_INCHES;
+            if(robot.outtake.elevator.getCurrentAngle() > 0 && robot.outtake.scoreZ == 21) {
+                robot.outtake.adjustElevator(-Outtake.ELEVATOR_ADJUST_ANGLE);
+            }
+            else {
+                robot.outtake.scoreZ -= robot.outtake.IK_ADJUST_INCHES;
+            }
             if(robot.outtake.scoreZ < 16)
                 robot.outtake.scoreZ = 16;
             robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
@@ -98,13 +103,15 @@ public class DriverControls {
         }
         else if (gamepad1.right_trigger > .1) {
             robot.outtake.scoreZ += robot.outtake.IK_ADJUST_INCHES;
-            if(robot.outtake.scoreZ > 30)
-                robot.outtake.scoreZ = 30;
+            if(robot.outtake.scoreZ > 21) {
+                robot.outtake.scoreZ = 21;
+                robot.outtake.adjustElevator(Outtake.ELEVATOR_ADJUST_ANGLE);
+            }
             robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
 
         if(shifted(gamepad1) && stickyGamepad1.a) {
-            robot.skyhook.articulate(Skyhook.Articulation.GAME);
+            robot.skyhook.articulate(Skyhook.Articulation.TRAVEL);
         }
         else if (stickyGamepad1.a) {
             if(robot.articulation == Robot.Articulation.TRAVEL)

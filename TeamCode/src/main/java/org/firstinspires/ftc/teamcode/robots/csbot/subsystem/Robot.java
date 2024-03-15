@@ -97,7 +97,7 @@ public class  Robot implements Subsystem {
 
     public void start() {
         if(!gameState.isAutonomous())
-            skyhook.articulate(Skyhook.Articulation.GAME);
+            skyhook.articulate(Skyhook.Articulation.TRAVEL);
         //TODO - articulate starting position
     }
     //end start

@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -11,7 +10,6 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.DcMotorExResetable;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
@@ -52,7 +50,7 @@ public class Skyhook implements Subsystem {
         HANG,
         LAUNCH,
         INIT,
-        GAME,
+        TRAVEL,
         MANUAL,
         PREP_FOR_HANG,
         UP
@@ -84,7 +82,7 @@ public class Skyhook implements Subsystem {
                 skyhookLeftTicks = PREP_FOR_HANG_TICKS;
                 skyhookRightTicks = PREP_FOR_HANG_TICKS;
                 break;
-            case GAME:
+            case TRAVEL:
                 skyhookRightTicks = SKYHOOK_SAFE_TICKS;
                 skyhookLeftTicks = SKYHOOK_SAFE_TICKS;
                 droneServoTicks = DRONE_TENSION_TICKS;

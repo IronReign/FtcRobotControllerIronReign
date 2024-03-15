@@ -105,10 +105,10 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         updatePoseEstimate();
 
 //        update pose heading from imu regularly
-//        if(Autonomous.autonIndex > 0)
-//        if((int)(System.nanoTime() / 1e9) % 2 == 0){
-//            pose = new Pose2d(pose.position, Math.toRadians(imuAngle));
-//        }
+        if(Autonomous.autonIndex > 0)
+        if((int)(System.nanoTime() / 1e9) % 2 == 0){
+            pose = new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw));
+        }
 
         //test imu based turning from dashboard - todo comment out when not needed
         if (turnToTest != 0) turnUntilDegreesIMU(turnToTest, turnToSpeed); //can target any angle but zero

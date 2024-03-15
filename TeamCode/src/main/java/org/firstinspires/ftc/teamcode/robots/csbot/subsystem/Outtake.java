@@ -392,15 +392,15 @@ public class Outtake implements Subsystem {
         slide.setTargetPosition(slideTargetPosition);
     }
 
-    public void adjustElbow(int angle) {
+    public void adjustElbow(double angle) {
         elbow.setTargetAngle(elbow.getCurrentAngle() + angle);
     }
 
-    public void adjustWrist(int angle) {
+    public void adjustWrist(double angle) {
         wrist.setTargetAngle(wrist.getCurrentAngle() + angle);
     }
 
-    public void adjustElevator(int angle) { elevator.setTargetAngle(elevator.getCurrentAngle() + angle); }
+    public void adjustElevator(double angle) { elevator.setTargetAngle(elevator.getCurrentAngle() + angle); }
 
 
     public void flipperTest() {

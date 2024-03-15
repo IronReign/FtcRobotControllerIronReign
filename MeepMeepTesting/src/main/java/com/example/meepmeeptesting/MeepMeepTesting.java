@@ -307,7 +307,7 @@ public class MeepMeepTesting {
         aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x - 1,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)),
                 0);
         aprilTagAlignCrossed = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), Math.toRadians(-90));
-        pixelStack = P2D(-2.25, .5, STANDARD_HEADING);
+        pixelStack = P2D(-2.4, .5, STANDARD_HEADING);
 
         //assemble the paths
         autonPaths[1][1] = P2D(-2, .5, 90);
