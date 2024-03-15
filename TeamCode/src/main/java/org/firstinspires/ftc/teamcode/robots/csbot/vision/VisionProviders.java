@@ -10,5 +10,5 @@ import org.firstinspires.ftc.teamcode.robots.csbot.vision.provider.dummy.RightDu
 
 public class VisionProviders {
     public static final Class<? extends VisionProvider>[] VISION_PROVIDERS =
-            new Class[]{AprilTagProvider.class,  PixelStackDetectorProvider.class, CSBotPropDetectorProvider.class, LeftDummyProvider.class, MiddleDummyProvider.class, RightDummyProvider.class,};
+            new Class[]{AprilTagProvider.class,  PixelStackDetectorProvider.class, CSBotPropDetectorProvider.class, LeftDummyProvider.class, MiddleDummyProvider.class, RightDummyProvider.class, OpenCVProvider.class};
 }

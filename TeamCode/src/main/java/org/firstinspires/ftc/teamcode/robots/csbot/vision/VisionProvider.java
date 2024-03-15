@@ -7,6 +7,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
 
@@ -118,7 +119,7 @@ public abstract class VisionProvider implements TelemetryProvider {
 
     abstract protected void updateVision();
 
-    public void update() {
+    public void update(boolean debugTelemetryEnabled) {
         updateVision();
 
         Position position = getPosition();
@@ -127,8 +128,10 @@ public abstract class VisionProvider implements TelemetryProvider {
             positions.add(0, position);
             updateMostFrequentPosition();
         }
-        if(canSendDashboardImage())
-            sendDashboardImage();
+        if(debugTelemetryEnabled) {
+            if (canSendDashboardImage())
+                sendDashboardImage();
+        }
     }
 
     public Position getMostFrequentPosition() {

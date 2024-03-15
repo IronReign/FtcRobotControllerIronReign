@@ -58,7 +58,7 @@ public class  Robot implements Subsystem {
     //vision variables
     public boolean visionProviderFinalized = false;
     public static int backVisionProviderIndex = 2;
-    public static int frontVisionProviderIndex = 2;
+    public static int frontVisionProviderIndex = 1;
     public double aprilTagRelocalizationX = 0;
     public double aprilTagRelocalizationY = 0;
     //REMOVE
@@ -67,7 +67,7 @@ public class  Robot implements Subsystem {
     public static double DISTANCE_FROM_CAMERA_TO_CENTER_X = 13;// In inches
 
     private long[] subsystemUpdateTimes;
-    private final List<LynxModule> hubs;
+    private List<LynxModule> hubs = null;
     public HardwareMap hardwareMap;
     private VoltageSensor batteryVoltageSensor;
     public Articulation articulation;
@@ -104,33 +104,34 @@ public class  Robot implements Subsystem {
 
 
     public Robot(HardwareMap hardwareMap, boolean simulated) {
-        this.hardwareMap = hardwareMap;
-        hubs = hardwareMap.getAll(LynxModule.class);
-        for (LynxModule module : hubs) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+        if(!simulated) {
+            this.hardwareMap = hardwareMap;
+            hubs = hardwareMap.getAll(LynxModule.class);
+            for (LynxModule module : hubs) {
+                module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+            }
+            //initialize vision
+            createVisionProviders();
+
+            positionCache = new PositionCache(5);
+
+            // initializing subsystems
+            driveTrain = new DriveTrain(hardwareMap, this, simulated);
+            intake = new Intake(hardwareMap, this);
+            outtake = new Outtake(hardwareMap, this);
+            skyhook = new Skyhook(hardwareMap, this);
+            sensors = new Sensors(this);
+
+
+            subsystems = new Subsystem[]{driveTrain, intake, outtake, skyhook, sensors};
+            subsystemUpdateTimes = new long[subsystems.length];
+
+            batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
+
+            articulation = Articulation.MANUAL;
+            backVisionProviderIndex = 2;
         }
-        //initialize vision
-        createVisionProviders();
 
-        positionCache = new PositionCache(5);
-
-        // initializing subsystems
-        driveTrain = new DriveTrain(hardwareMap, this, simulated);
-        intake = new Intake(hardwareMap, this);
-        outtake = new Outtake(hardwareMap, this);
-        skyhook = new Skyhook(hardwareMap, this);
-        sensors = new Sensors(this);
-
-
-        subsystems = new Subsystem[]{driveTrain, intake, outtake, skyhook, sensors};
-        subsystemUpdateTimes = new long[subsystems.length];
-
-        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
-
-        articulation = Articulation.MANUAL;
-         backVisionProviderIndex = 2;
-
-//        field = new Field(true);
     }
     //end constructor
 
@@ -178,9 +179,9 @@ public class  Robot implements Subsystem {
 
             }
             if(frontVision) {
-                visionProviderFront.update();
+                visionProviderFront.update(debugTelemetryEnabled);
             }
-            else visionProviderBack.update();
+            else visionProviderBack.update(debugTelemetryEnabled);
         }
     }
 
@@ -232,7 +233,7 @@ public class  Robot implements Subsystem {
                     return true;
                 }
         }
-            return false;
+        return false;
     }
 
     public void aprilTagRelocalization(int target) {
@@ -274,6 +275,7 @@ public class  Robot implements Subsystem {
 
     public void switchVisionProviders() {
         visionProviderBack.shutdownVision();
+        visionProviderFront.shutdownVision();
         if (backVisionProviderIndex == 2) {
             //switch to AprilTags
             backVisionProviderIndex = 0;
