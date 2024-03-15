@@ -290,7 +290,7 @@ public class MeepMeepStrafeTesting {
         audienceIntermediateDeep = P2D(1.5,.5,-10);
         allianceDirection = startingPosition.getMod()? -1 : 1;
         parkAudience = P2D(2.5, -0.5, STANDARD_HEADING);
-        parkBackDrop = P2D(1.5, -2.45, STANDARD_HEADING);
+        parkBackDrop = P2D(2, -2.45, STANDARD_HEADING);
 
         //aprilTagAlign = new Pose2d (new Vector2d(switchSides(aprilTagApproachPosition.position).x,switchSides(aprilTagApproachPosition.position).y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
 //        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);

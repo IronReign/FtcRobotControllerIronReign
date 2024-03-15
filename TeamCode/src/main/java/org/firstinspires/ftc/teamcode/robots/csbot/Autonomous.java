@@ -101,6 +101,7 @@ public class Autonomous implements TelemetryProvider {
     Pose2d driverSidePrep, driverSidePrepForward;
     Pose2d audienceIntermediateForward, audienceIntermediateDeep, pixelStackAudienceIntermediate, pixelStackAudienceIntermediateForward;
     Pose2d aprilTagAlign, aprilTagAlignClose, aprilTagAlignCrossed;
+    Pose2d parkAudience, parkBackDrop;
     Pose2d pixelStack;
 
 
@@ -167,8 +168,8 @@ public class Autonomous implements TelemetryProvider {
             approachBackdrop = new SequentialAction(
                     robot.driveTrain.actionBuilder(robot.driveTrain.pose)
                             .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
                             .build()
             );
         }
@@ -184,14 +185,14 @@ public class Autonomous implements TelemetryProvider {
         }
     }
 
-    public void parkBuild() {
+    public void parkBuild() {//todo possibly delete
         strafeToPark = new SequentialAction(
                 robot.driveTrain.actionBuilder(robot.driveTrain.pose)
                         .build()
         );
     }
 
-    public void sweepBuild() {
+    public void sweepBuild() {//todo remove if we switch to strafe for auton
         //we need to force the turn in one direction for these paths
         if(!Constants.driverSide) {
             if (selectedPath == 5) {
@@ -204,8 +205,6 @@ public class Autonomous implements TelemetryProvider {
 
                 sweep = new SequentialAction(
                         robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                                .turnTo(robot.driveTrain.pose.heading.log() + intermediateAngle)
-                                .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
                                 .build()
                 );
             }
@@ -213,7 +212,6 @@ public class Autonomous implements TelemetryProvider {
             else {
                 sweep = new SequentialAction(
                         robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                                .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
                                 .build());
             }
         }
@@ -250,8 +248,8 @@ public class Autonomous implements TelemetryProvider {
             driveToPixelStack = new SequentialAction(
                     robot.driveTrain.actionBuilder(robot.driveTrain.pose)
                             .setReversed(false)
-                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
+                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
                             .build()
             );
         }
@@ -271,7 +269,7 @@ public class Autonomous implements TelemetryProvider {
         if(!Constants.driverSide) {
             strafeToPark = new SequentialAction(
                     robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                            .strafeTo(new Vector2d(robot.driveTrain.pose.position.x, switchSides(autonPaths[selectedPath][4].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
+                            .strafeToLinearHeading(parkBackDrop.position, parkBackDrop.heading.log())
                             .build()
             );
         }
@@ -332,6 +330,8 @@ public class Autonomous implements TelemetryProvider {
             audienceIntermediateForward = P2D(1.5, .5, STANDARD_HEADING);
             audienceIntermediateDeep = P2D(1.5,.5,-10);
             allianceDirection = startingPosition.getMod()? -1 : 1;
+            parkAudience = P2D(2.5, -0.5, STANDARD_HEADING);
+            parkBackDrop = P2D(2, -2.45, STANDARD_HEADING);
 
             //aprilTagAlign = new Pose2d (new Vector2d(switchSides(aprilTagApproachPosition.position).x,switchSides(aprilTagApproachPosition.position).y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
 //        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
@@ -556,7 +556,7 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 2:
                     autonState = AutonState.SCORE_GROUND;
-                    if (true || !sweep.run(packet)) {
+                    if (true || !sweep.run(packet)) {//todo remove sweep for forward autons
                         robot.outtake.elbow.setSpeed(Outtake.ELBOW_JOINT_SPEED * .5);
                         robot.intake.articulate(Intake.Articulation.EJECT);
                         autonIndex++;
@@ -579,14 +579,13 @@ public class Autonomous implements TelemetryProvider {
                 case 5:
                     autonState = AutonState.TRAVEL_BACKDROP;
                     if (!driveToYellowPixel.run(packet)) {
-                        robot.outtake.elbow.setSpeed(ELBOW_JOINT_SPEED);
                         autonIndex++;
                     }
                     break;
 
                 case 6:
                     autonState = AutonState.IMU_TURN;
-                    if( robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING,turnToSpeed)) {
+                    if(robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING,turnToSpeed)) {
 //                        robot.driveTrain.pose = new Pose2d(new Vector2d(robot.driveTrain.pose.position.x, robot.driveTrain.pose.position.y), Math.toRadians(robot.driveTrain.imuAngle));
                         autonIndex++;
                     }
@@ -594,12 +593,12 @@ public class Autonomous implements TelemetryProvider {
                 case 7:
                     autonState = AutonState.APRILTAG_RELOCALIZE;
                     robot.enableVision();
-                    futureTimer = futureTime(10);
+                    futureTimer = futureTime(5);
                     autonIndex++;
                     break;
                 case 8:
                     robot.enableVision();
-                    if(isPast(futureTimer) && robot.getAprilTagDetections() != null) {
+                    if(isPast(futureTimer) || robot.getAprilTagDetections() != null) {
                         robot.aprilTagRelocalization(targetAprilTagIndex);
                         robot.switchVisionProviders();
                         aprilTagStrafeBuild();
@@ -617,15 +616,14 @@ public class Autonomous implements TelemetryProvider {
                     autonState = AutonState.SCORE_BACKDROP;
                     if(robot.outtake.articulation.equals(Outtake.Articulation.BACKDROP)) {
                         autonIndex++;
-                        futureTimer = futureTime(.25);
                     }
                     break;
                 case 11:
                     autonState = AutonState.SCORE_DRIVE;
                     if(robot.outtake.articulation.equals(Outtake.Articulation.TRAVEL)) {
                         Sensors.distanceSensorsEnabled = true;
-                        autonIndex++;
                         futureTimer = futureTime(2);
+                        autonIndex++;
                     }
                     break;
                 case 12:
@@ -643,55 +641,55 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 13:
                     autonState = AutonState.DRIVE_TO_PIXEL_STACK;
-//                    if(isPast(futureTimer))
-//                    if (!driveToPixelStack.run(packet)) {
-//                        MecanumDrive.PARAMS.maxWheelVel = 50;
-//                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.1, 0), 0));
-                        autonIndex++;
-//                    }
+                    if(isPast(futureTimer))
+                        if (!driveToPixelStack.run(packet)) {
+                            robot.intake.setIngestPixelHeight(4);
+                            robot.articulate(Robot.Articulation.INGEST);
+                            futureTimer = futureTime(4);
+                            autonIndex++;
+                        }
                     break;
                 case 14:
-//                    autonState = AutonState.GET_FROM_PIXEL_STACK;
-//                    robot.intake.setIngestPixelHeight(4);
-//                    robot.articulate(Robot.Articulation.INGEST);
-//                    futureTimer = futureTime(1.5);
-//                    if(isPast(futureTimer)) {
-//                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
-//                        robot.intake.setIngestPixelHeight(3);
-//                        futureTimer = futureTime(1);
+                    autonState = AutonState.GET_FROM_PIXEL_STACK;
+                    if(isPast(futureTimer)) {
+                        robot.intake.articulate(Intake.Articulation.SWALLOW);
+                        approachBackdropBuild();
                         autonIndex++;
-//                    }
+                    }
                     break;
                 case 15:
-//                    if(isPast(futureTimer)) {
-//                          robot.intake.articulate(Intake.Articulation.SWALLOW);
-//                          approachBackdropBuild();
-                            autonIndex++;
-//                    }
+                    autonState = AutonState.TRAVEL_BACKDROP;
+                    if (!approachBackdrop.run(packet)) {
+                        robot.articulate(Robot.Articulation.BACKDROP_PREP);
+                        autonIndex++;
+                    }
                     break;
                 case 16:
-                    autonState = AutonState.TRAVEL_BACKDROP;
-//                    if (!approachBackdrop.run(packet)) {
+                    autonState = AutonState.SCORE_BACKDROP;
+                    if(robot.outtake.articulation.equals(Outtake.Articulation.BACKDROP)) {
                         autonIndex++;
-//                    }
+                    }
                     break;
                 case 17:
-                    autonState = AutonState.SCORE_BACKDROP;
-//                    if(robot.outtake.articulation.equals(Outtake.Articulation.BACKDROP)) {
+                    autonState = AutonState.SCORE_DRIVE;
+                    if(robot.outtake.articulation.equals(Outtake.Articulation.TRAVEL)) {
+                        Sensors.distanceSensorsEnabled = true;
+                        futureTimer = futureTime(2);
                         autonIndex++;
-//                   }
+                    }
                     break;
                 case 18:
                     autonState = AutonState.SCORE_DRIVE;
-//                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.3, 0), 0));
-//                    if(robot.driveTrain.backDistanceSensorValue < 7) {
-//                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
-//                        robot.articulate(Robot.Articulation.TRAVEL);
-//                        robot.outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
-//                        futureTimer = futureTime(1);
+                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.2, 0), 0));
+                    if(robot.driveTrain.rightDistanceSensorValue < 10 || isPast(futureTimer)) {
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                        robot.articulate(Robot.Articulation.TRAVEL_FROM_BACKDROP);
+                        Sensors.distanceSensorsEnabled = false;
                         strafeToParkBuild();
+                        MecanumDrive.PARAMS.maxWheelVel = 25;
+                        futureTimer = futureTime(1);
                         autonIndex++;
-//                    }
+                    }
                     break;
                 case 19:
                     autonState = AutonState.PARK;

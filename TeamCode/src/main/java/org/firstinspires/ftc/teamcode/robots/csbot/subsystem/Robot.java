@@ -380,8 +380,8 @@ public class  Robot implements Subsystem {
                 break;
             case LAUNCH_DRONE:
 //                if(driveTrain.driveToDrone()) {
-                    skyhook.articulate(Skyhook.Articulation.LAUNCH);
-                    articulation = Articulation.MANUAL;
+                skyhook.articulate(Skyhook.Articulation.LAUNCH);
+                articulation = Articulation.MANUAL;
 //                }
                 break;
             case TRAVEL_FROM_INGEST:
@@ -392,17 +392,36 @@ public class  Robot implements Subsystem {
 //                }
                 break;
             case TRAVEL_FROM_BACKDROP:
-                if(travelFromBackdrop()) {
+                if (travelFromBackdrop()) {
                     articulation = Articulation.TRAVEL;
                 }
                 break;
             case BACKDROP_PREP:
-                intake.articulate(Intake.Articulation.TRAVEL);
-                outtake.articulate(Outtake.Articulation.BACKDROP_PREP);
-                articulation = Articulation.BACKDROP;
+                if (backdropPrep()) {
+                    intake.articulate(Intake.Articulation.TRAVEL);
+                    articulation = Articulation.BACKDROP;
+                }
                 break;
         }
         return articulation;
+    }
+    int backdropPrepIndex = 0;
+    long backdropPrepTimer = 0;
+    private boolean backdropPrep() {
+        switch(backdropPrepIndex) {
+            case 0:
+                intake.articulate(Intake.Articulation.EJECT);
+                outtake.articulate(Outtake.Articulation.BACKDROP_PREP);
+                backdropPrepTimer = futureTime(.5);
+                backdropPrepIndex++;
+                break;
+            case 1:
+                if (isPast(backdropPrepTimer)) {
+                    backdropPrepIndex = 0;
+                    return true;
+                }
+        }
+        return false;
     }
 
     public void toggleBackdropPrep(){

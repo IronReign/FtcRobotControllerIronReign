@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
-import static org.firstinspires.ftc.teamcode.util.utilMethods.between;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
@@ -11,7 +10,6 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Joint;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
@@ -31,7 +29,7 @@ public class Outtake implements Subsystem {
     public Joint wrist;
     public Joint elevator;
 
-    public static double ticksPerInch = 130.593132; // determined experimentally using a average distance and ticks
+    public static double slideTicksPerInch = 130.593132; // determined experimentally using a average distance and ticks
 
     //Kinematics values in inches
     public static double armBase = 15.75;
@@ -49,6 +47,7 @@ public class Outtake implements Subsystem {
     private double theta, top, bottom, frac;
 
     public static int flipperPosition = 1888;
+    private boolean ikCalculated;
 
 
     public void setSlideTargetPosition(int slideTargetPosition) {
@@ -61,8 +60,8 @@ public class Outtake implements Subsystem {
     public static int slidePositionPreDock = 500;
     public static int slidePositionDocked = 0;
     public static int slidePositionScore = 400;
-    public static double scoreZ = 7;
-    public static double scoreX = 5;
+    public static double scoreZ = 16;
+    public static double scoreX = 4;
 
 
     int slideSpeed = 15;
@@ -133,7 +132,6 @@ public class Outtake implements Subsystem {
             case MANUAL:
                 break;
             case BACKDROP:
-                elbow.setTargetAngle(ELBOW_SCORE_ANGLE);
                 articulation = Articulation.TRAVEL;
                 break;
             case TRAVEL:
@@ -220,6 +218,8 @@ public class Outtake implements Subsystem {
         slide.setTargetPosition(0);
         slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slide.setVelocity(SLIDE_SPEED);
+        scoreX = 4;
+        scoreZ = 16;
 
         articulation = Articulation.MANUAL;
     }
@@ -229,8 +229,13 @@ public class Outtake implements Subsystem {
     }
 
     public boolean elbowWristIK(double x, double z) {
+        armTheta = Math.atan2(armHeight, armBase);
+        x = x/Math.cos(armTheta);
+        z = z/Math.cos(armTheta);
+//        x-=(slide.getCurrentPosition()/slideTicksPerInch)*Math.cos(armTheta);
+        z-=(slide.getCurrentPosition()/slideTicksPerInch)*Math.sin(armTheta);
         z-=armHeight;
-        wristTargetAngle = Math.toDegrees(Math.acos((Math.pow(x, 2)+Math.pow(z, 2)-Math.pow(elbowLength, 2)-Math.pow(wristLength, 2))/(-2*elbowLength*wristLength)));
+        wristTargetAngle = Math.toDegrees(Math.acos((Math.pow(x, 2)+Math.pow(z, 2)-Math.pow(elbowLength, 2)-Math.pow(wristLength, 2))/(2*elbowLength*wristLength)));
         double b = Math.toDegrees(Math.acos((Math.pow(wristLength, 2)-Math.pow(elbowLength, 2)-Math.pow(x, 2)-Math.pow(z, 2))/(-2*elbowLength*Math.hypot(x, z))));
         double a = Math.toDegrees(Math.atan(z/x));
         elbowTargetAngle = 180+Math.toDegrees(Math.atan(armHeight/armBase))-a-b;
@@ -240,46 +245,6 @@ public class Outtake implements Subsystem {
         wrist.setTargetAngle(wristTargetAngle);
         elbow.setTargetAngle(elbowTargetAngle);
         return true;
-    }
-
-    //should use the calculated IK formula to move to the field coordinate in inches (x, z)
-    public boolean goToPoint(int x, int z) {
-        try {
-            theta = 0;
-            top = Math.pow(z - armHeight, 2) - Math.pow(Robot.sensors.outtakeSlideTicks * ticksPerInch * Math.sin(armTheta) - armHeight, 2);
-            bottom = Math.pow(x - armBase, 2) - Math.pow(Robot.sensors.outtakeSlideTicks * ticksPerInch * Math.sin(armTheta) - armBase, 2);
-            frac = Math.sqrt(top/bottom);
-            if (top < 0 && bottom < 0 || top > 0 && bottom > 0)
-                theta = Math.asin(frac);
-            else if (top < 0) {
-                int targetPos = (int) (Robot.sensors.outtakeSlideTicks + Math.sqrt(Math.abs(top)* ticksPerInch + 1 * ticksPerInch));
-                if(targetPos > slidePositionMax) //if outside of the slides range fail
-                    return false;
-                slideTargetPosition = targetPos; //move the slide to make the final position possible
-                top = Math.pow(z - armHeight, 2) - Math.pow(targetPos * ticksPerInch * Math.sin(armTheta) - armHeight, 2);
-                bottom = Math.pow(x - armBase, 2) - Math.pow(targetPos * ticksPerInch * Math.sin(armTheta) - armBase, 2);
-                frac = Math.sqrt(top/bottom);
-                theta = Math.asin(frac);
-            } else {
-                int targetPos = (int) (Robot.sensors.outtakeSlideTicks + Math.sqrt(Math.abs(bottom) * ticksPerInch + 1 * ticksPerInch));
-                if(targetPos > slidePositionMax) //if outside of the slides range fail
-                    return false;
-                slideTargetPosition = targetPos; //move the slide to make the final position possible
-                top = Math.pow(z - armHeight, 2) - Math.pow(targetPos * ticksPerInch * Math.sin(armTheta) - armHeight, 2);
-                bottom = Math.pow(x - armBase, 2) - Math.pow(targetPos * ticksPerInch * Math.sin(armTheta) - armBase, 2);
-                frac = Math.sqrt(top/bottom);
-                theta = Math.asin(frac);
-            }
-            if(theta != Double.NaN) {
-//                flipper.setTargetAngle(Math.toDegrees(theta)); // move the flipper angle to the calculated angle
-                return true;
-            }
-            else
-                return false;
-        }
-        catch(ArithmeticException e) { //if the math throws an exception because of impossible trig fail
-            return false;
-        }
     }
 
     public int ingestPositionIndex = 0;
@@ -348,6 +313,8 @@ public class Outtake implements Subsystem {
                 if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionPreDock, 30)) {
                     backdropPrepTimer = futureTime(1);
                     Sensors.distanceSensorsEnabled = true;
+                    ELBOW_JOINT_SPEED = 30;
+                    WRIST_JOINT_SPEED = 40;
                     backdropPrepStage++;
                 }
                 break;
@@ -355,9 +322,13 @@ public class Outtake implements Subsystem {
 //                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
 //                wrist.setTargetAngle(WRIST_START_ANGLE);
 //                scoreX = (Robot.sensors.averageDistSensorValue);
-                elbowWristIK(scoreX, scoreZ);
+                if(!ikCalculated) {
+                    elbowWristIK(scoreX, scoreZ);
+                    ikCalculated = true;
+                }
                 if (isPast(backdropPrepTimer)) {
                     Sensors.distanceSensorsEnabled = false;
+                    ikCalculated = false;
                     backdropPrepStage++;
                 }
                 break;
@@ -370,6 +341,8 @@ public class Outtake implements Subsystem {
             case 3:
                 backdropPrepStage = 0;
                 backdropPrepTimer = 0;
+                ELBOW_JOINT_SPEED = 60;
+                WRIST_JOINT_SPEED = 50;
                 return true;
 
         }
@@ -454,13 +427,14 @@ public class Outtake implements Subsystem {
         wrist.update();
         elevator.update();
         slide.setTargetPosition(slideTargetPosition);
-        armTheta = getArmTheta(elevator.getCurrentAngle());
+        armTheta = Math.atan2(armHeight, armBase);
+//        armTheta = getArmTheta(elevator.getCurrentAngle());
         //compute values for kinematics
         double rotTheta = -elbow.getCurrentAngle() -180;
-        double rotX = armLength*Math.cos(armTheta) + (Robot.sensors.outtakeSlideTicks/ticksPerInch)*Math.cos(armTheta);
-        double rotZ = armLength*Math.sin(armTheta) + (Robot.sensors.outtakeSlideTicks/ticksPerInch)*Math.sin(armTheta);
-        double x = (Robot.sensors.outtakeSlideTicks/ticksPerInch)*Math.cos(armTheta);
-        double z = (Robot.sensors.outtakeSlideTicks/ticksPerInch)*Math.sin(armTheta);
+        double rotX = armLength*Math.cos(armTheta) + (Robot.sensors.outtakeSlideTicks/ slideTicksPerInch)*Math.cos(armTheta);
+        double rotZ = armLength*Math.sin(armTheta) + (Robot.sensors.outtakeSlideTicks/ slideTicksPerInch)*Math.sin(armTheta);
+        double x = (Robot.sensors.outtakeSlideTicks/ slideTicksPerInch)*Math.cos(armTheta);
+        double z = (Robot.sensors.outtakeSlideTicks/ slideTicksPerInch)*Math.sin(armTheta);
         armX = (rotX-(z-rotZ)*Math.sin(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.cos(Utils.degreeToRad(rotTheta)));
         armZ = (rotZ+(z-rotZ)*Math.cos(Utils.degreeToRad(rotTheta))+(x-rotX)*Math.sin(Utils.degreeToRad(rotTheta)));
     }
@@ -477,7 +451,7 @@ public class Outtake implements Subsystem {
         telemetryMap.put("ingest stage", ingestPositionIndex);
         telemetryMap.put("slide target position", slideTargetPosition);
         telemetryMap.put("slide actual position", Robot.sensors.outtakeSlideTicks);
-        telemetryMap.put("slide actual position (inches)", Robot.sensors.outtakeSlideTicks/ticksPerInch);
+        telemetryMap.put("slide actual position (inches)", Robot.sensors.outtakeSlideTicks/ slideTicksPerInch);
 //        telemetryMap.put("flipper location", Utils.servoDenormalize(pixelFlipper.getPosition()));
         telemetryMap.put("elbow ticks", flipperPosition);
         telemetryMap.put("elbow angle", elbow.getCurrentAngle());

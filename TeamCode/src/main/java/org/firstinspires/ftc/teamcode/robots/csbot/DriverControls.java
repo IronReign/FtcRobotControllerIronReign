@@ -79,16 +79,28 @@ public class DriverControls {
         //GAMEPAD 1 CONTROLS
         // ------------------------------------------------------------------
         //todo any new controls for gamepad 1 go on "shift" -> means they have to have guide pressed at the same time as the button
-        if (gamepad1.left_trigger > .1) {
-            robot.outtake.scoreZ -= robot.outtake.IK_ADJUST_INCHES;
-            if(robot.outtake.scoreZ < 7)
-                robot.outtake.scoreZ = 7;
+        if (shifted(gamepad1) && gamepad1.left_trigger > .1) {
+            robot.outtake.scoreX -= robot.outtake.IK_ADJUST_INCHES;
+            if(robot.outtake.scoreX < 4)
+                robot.outtake.scoreX = 4;
             robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
-        if (gamepad1.right_trigger > .1) {
+        else if (gamepad1.left_trigger > .1) {
+            robot.outtake.scoreZ -= robot.outtake.IK_ADJUST_INCHES;
+            if(robot.outtake.scoreZ < 16)
+                robot.outtake.scoreZ = 16;
+            robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
+        }
+        if (shifted(gamepad1) && gamepad1.right_trigger > .1) {
+            robot.outtake.scoreX += robot.outtake.IK_ADJUST_INCHES;
+            if(robot.outtake.scoreX > 15)
+                robot.outtake.scoreX = 15;
+            robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
+        }
+        else if (gamepad1.right_trigger > .1) {
             robot.outtake.scoreZ += robot.outtake.IK_ADJUST_INCHES;
-            if(robot.outtake.scoreZ > 50)
-                robot.outtake.scoreZ = 50;
+            if(robot.outtake.scoreZ > 30)
+                robot.outtake.scoreZ = 30;
             robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
 
