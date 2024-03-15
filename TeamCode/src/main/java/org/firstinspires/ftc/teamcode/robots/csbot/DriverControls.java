@@ -78,7 +78,6 @@ public class DriverControls {
 
         //GAMEPAD 1 CONTROLS
         // ------------------------------------------------------------------
-        //todo any new controls for gamepad 1 go on "shift" -> means they have to have guide pressed at the same time as the button
         if (shifted(gamepad1) && gamepad1.left_trigger > .1) {
             robot.outtake.scoreX -= robot.outtake.IK_ADJUST_INCHES;
             if(robot.outtake.scoreX < 4)
@@ -168,7 +167,7 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.dpad_down) {
-            robot.outtake.setTargetAngle(Outtake.ELBOW_TRAVEL_ANGLE, Outtake.WRIST_TRAVEL_ANGLE, Outtake.ELEVATOR_START_ANGLE);
+            robot.outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
         }
         // ------------------------------------------------------------------
 
@@ -176,20 +175,20 @@ public class DriverControls {
         // ------------------------------------------------------------------
         if(stickyGamepad2.start) {
             if(CenterStage_6832.AUTONAV_ENABLED) {
-                CenterStage_6832.autoNavOn = true;
+                CenterStage_6832.autoNavOn = !CenterStage_6832.autoNavOn;
             }
         }
         else if(shifted(gamepad1) && stickyGamepad2.start) {
-            robot.autoEndgame = true;
+            robot.autoEndgame = !robot.autoEndgame;
         }
         if(stickyGamepad2.dpad_left) {
-            if(CenterStage_6832.autoNav.setPreferredRoute(CenterStage_6832.autoNav.preferredRoute+1) > 6) {
-                CenterStage_6832.autoNav.setPreferredRoute(0);
+            if(CenterStage_6832.autoNav.setPreferredRoute(CenterStage_6832.autoNav.preferredRoute-1) < 0) {
+                CenterStage_6832.autoNav.setPreferredRoute(6);
             }
         }
         if(stickyGamepad2.dpad_right) {
-            if(CenterStage_6832.autoNav.setPreferredRoute(CenterStage_6832.autoNav.preferredRoute-1) < 0) {
-                CenterStage_6832.autoNav.setPreferredRoute(6);
+            if(CenterStage_6832.autoNav.setPreferredRoute(CenterStage_6832.autoNav.preferredRoute+1) > 6) {
+                CenterStage_6832.autoNav.setPreferredRoute(0);
             }
         }
         if(stickyGamepad2.b) {
