@@ -64,7 +64,7 @@ public class DriverControls {
             Skyhook.SKYHOOK_SAFE_TICKS += 10;
         if(gamepad1.left_trigger > DEADZONE)
             Skyhook.SKYHOOK_SAFE_TICKS -= 10;
-        if(stickyGamepad1.a){
+        if(stickyGamepad1.y){
             Skyhook.testDroneLoaded = !Skyhook.testDroneLoaded;
         }
         if(stickyGamepad1.b){
