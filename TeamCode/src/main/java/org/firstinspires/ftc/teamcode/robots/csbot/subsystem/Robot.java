@@ -58,7 +58,7 @@ public class  Robot implements Subsystem {
     //vision variables
     public boolean visionProviderFinalized = false;
     public static int backVisionProviderIndex = 2;
-    public static int frontVisionProviderIndex = 1;
+    public static int frontVisionProviderIndex = 2;
     public double aprilTagRelocalizationX = 0;
     public double aprilTagRelocalizationY = 0;
     //REMOVE
@@ -235,6 +235,7 @@ public class  Robot implements Subsystem {
         }
         return false;
     }
+
 
     public void aprilTagRelocalization(int target) {
         ArrayList<AprilTagDetection> detections = getAprilTagDetections();

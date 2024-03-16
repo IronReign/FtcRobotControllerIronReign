@@ -19,6 +19,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.ExponentialSmoother;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.provider.AprilTagProvider;
 import org.firstinspires.ftc.teamcode.util.FTCPanels;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
 
@@ -91,6 +92,9 @@ public class VisionTestOpMode extends OpMode {
 
         long updateTime = (System.nanoTime() - updateStartTime);
         double averageUpdateTime = averageUpdateTimeSmoother.update(updateTime);
+        if(backVisionProviderIndex == 0 && backEnabled){
+            p.put("apriltag detections", ((AprilTagProvider)visionProviderBack).getDetections());
+        }
         p.put("Average Loop Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageUpdateTime * 1e-6), (int) (1 / (averageUpdateTime * 1e-9))));
         telemetry.addData("Average Loop Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageUpdateTime * 1e-6), (int) (1 / (averageUpdateTime * 1e-9))));
         dashboard.sendTelemetryPacket(p);

@@ -36,6 +36,7 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.MatOfPoint3f;
 import org.opencv.core.Point;
 import org.opencv.core.Point3;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.apriltag.AprilTagDetection;
@@ -52,6 +53,9 @@ public class AprilTagDetectionPipeline extends OpenCvPipeline
     private Mat grey = new Mat();
     private Mat dashboardMat = new Mat();
     private volatile Bitmap dashboardBitmap;
+
+    public static int TOP_LEFT_X = 0, TOP_LEFT_Y = 0;
+    public static int BOTTOM_RIGHT_X = 1280, BOTTOM_RIGHT_Y = 720;
 
     private ArrayList<AprilTagDetection> detections = new ArrayList<>();
 
@@ -118,8 +122,11 @@ public class AprilTagDetectionPipeline extends OpenCvPipeline
     @Override
     public Mat processFrame(Mat input)
     {
+        //crop input
+        Mat croppedInput = input.submat(new Rect(new Point(TOP_LEFT_X, TOP_LEFT_Y), new Point(BOTTOM_RIGHT_X, BOTTOM_RIGHT_Y)));
+
         // Convert to greyscale
-        Imgproc.cvtColor(input, grey, Imgproc.COLOR_RGBA2GRAY);
+        Imgproc.cvtColor(croppedInput, grey, Imgproc.COLOR_RGBA2GRAY);
 
         synchronized (decimationSync)
         {
@@ -181,15 +188,15 @@ public class AprilTagDetectionPipeline extends OpenCvPipeline
         {
             Pose pose = aprilTagPoseToOpenCvPose(detection.pose);
             //Pose pose = poseFromTrapezoid(detection.corners, cameraMatrix, tagsizeX, tagsizeY);
-            drawAxisMarker(input, tagsizeY/2.0, 6, pose.rvec, pose.tvec, cameraMatrix);
-            draw3dCubeMarker(input, tagsizeX, tagsizeX, tagsizeY, 5, pose.rvec, pose.tvec, cameraMatrix);
+            drawAxisMarker(croppedInput, tagsizeY/2.0, 6, pose.rvec, pose.tvec, cameraMatrix);
+            draw3dCubeMarker(croppedInput, tagsizeX, tagsizeX, tagsizeY, 5, pose.rvec, pose.tvec, cameraMatrix);
         }
-        dashboardMat = input;
+        dashboardMat = croppedInput;
         if (dashboardMat != null && !dashboardMat.empty()) {
             dashboardBitmap = Bitmap.createBitmap(dashboardMat.width(), dashboardMat.height(), Bitmap.Config.RGB_565);
             Utils.matToBitmap(dashboardMat, dashboardBitmap);
         }
-        return input;
+        return croppedInput;
     }
 
     public ArrayList<AprilTagDetection> getDetections() {

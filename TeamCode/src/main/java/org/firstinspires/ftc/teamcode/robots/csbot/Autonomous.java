@@ -46,7 +46,7 @@ public class Autonomous implements TelemetryProvider {
 
     public enum AutonState {
         INIT,
-        BACK_UP,
+        TRAVEL_TO_PURPLE,
         STRAFE,
         SCORE_GROUND,
         FIND_STANDARD_POSITION,
@@ -94,7 +94,7 @@ public class Autonomous implements TelemetryProvider {
     boolean testRunToWing = true;
 
     public static double FIELD_INCHES_PER_GRID = 23.5;
-    public static double AUTON_START_DELAY = 1;
+    public static double AUTON_START_DELAY = 0;
 
     double STANDARD_HEADING = 180;
     Pose2d aprilTagApproachPosition;
@@ -527,7 +527,7 @@ public class Autonomous implements TelemetryProvider {
                     autonIndex++;
                     break;
                 case 1:
-                    autonState = AutonState.BACK_UP;
+                    autonState = AutonState.TRAVEL_TO_PURPLE;
                     robot.intake.articulate(Intake.Articulation.INIT);
                     if (isPast(futureTimer)) {
                         if (!driveToPurplePixel.run(packet)) {
@@ -625,6 +625,7 @@ public class Autonomous implements TelemetryProvider {
                     autonState = AutonState.DRIVE_TO_PIXEL_STACK;
                     if (isPast(futureTimer))
                         if (!driveToPixelStack.run(packet)) {
+                            robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.1, 0), 0));
                             robot.intake.setIngestPixelHeight(4);
                             robot.articulate(Robot.Articulation.INGEST);
                             futureTimer = futureTime(4);
@@ -634,6 +635,7 @@ public class Autonomous implements TelemetryProvider {
                 case 14:
                     autonState = AutonState.GET_FROM_PIXEL_STACK;
                     if (isPast(futureTimer)) {
+                        robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                         robot.intake.articulate(Intake.Articulation.SWALLOW);
                         approachBackdropBuild();
                         autonIndex++;

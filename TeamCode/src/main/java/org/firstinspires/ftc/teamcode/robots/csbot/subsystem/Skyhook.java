@@ -2,6 +2,9 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -17,9 +20,10 @@ import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.wrapAngle;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
 
 @Config(value = "AA_CS_SKYHOOK")
@@ -32,14 +36,18 @@ public class Skyhook implements Subsystem {
     public static int SKYHOOK_LAUNCH_TICKS = 340;
     public static int PREP_FOR_HANG_TICKS = 0;
     public int droneServoTicks = 1500;
-    public static int DRONE_TENSION_TICKS = 1450;
-    public static int DRONE_RELEASE_TICKS = 750;
+    public static int DRONE_TENSION_TICKS = 1435;
+    public static int DRONE_RELEASE_TICKS = 2105;
     public static int SKYHOOK_SAFE_TICKS = 1200;
     public static int SKYHOOK_UP_TICKS = 0;
-    public PIDController droneLaunchPID;
+    public PIDController dronelaunchPID;
+    public static PIDCoefficients DRONELAUNCH_PID_PWR = new PIDCoefficients(0.03, 0.04, 0);
+    public static double DRONELAUNCH_PID_TOLERANCE = .08;
     public static PIDCoefficients droneLaunchCoefficients;
+    private double PIDCorrection, PIDError;
+    public static double DRONE_LAUNCH_ANGLE = 57;
     DcMotorEx kareem, jabbar;
-    IMU skyhookIMU = null;
+    IMU skyhookIMU;
     public DcMotorExResetable skyhookLeft, skyhookRight;
     public Servo droneLauncher;
     public static int SKYHOOK_INIT_TICKS = 800;
@@ -134,19 +142,29 @@ public class Skyhook implements Subsystem {
                 launchIndex ++;
                 break;
             case 1:
-                skyhookRightTicks = SKYHOOK_LAUNCH_TICKS;
-                skyhookLeftTicks = SKYHOOK_LAUNCH_TICKS;
-                if(withinError(Robot.sensors.skyhookIMUPitch, 132, 3)) {
-                    skyhookLeftTicks = getSkyhookLeftTicksCurrent();
-                    skyhookRightTicks = getSkyhookRightTicksCurrent();
-                    launchTimer = futureTime(.7);
-                    launchIndex ++;
+                launchIndex ++;
+                dronelaunchPID.setPID(DRONELAUNCH_PID_PWR);
+                dronelaunchPID.setInput(wrapAngle(Robot.sensors.skyhookIMUPitch));
+                dronelaunchPID.setSetpoint(DRONE_LAUNCH_ANGLE);
+                dronelaunchPID.setOutputRange(-.8, .8);
+                dronelaunchPID.setTolerance(DRONELAUNCH_PID_TOLERANCE);
+                double correction = dronelaunchPID.performPID();
+                PIDCorrection = correction;
+                PIDError = dronelaunchPID.getError();
+                if (dronelaunchPID.onTarget()) {
+//                    skyhookRight.setVelocity();
+//                    skyhookLeft.setVelocity();
+                    Sensors.skyhookIMUEnabled = false;
+                } else {
+                    dronelaunchPID.enable();
+//                    skyhookRight.setVelocity();
+//                    skyhookLeft.setVelocity();
                 }
                 break;
             case 2:
                 if(isPast(launchTimer)) {
                     releaseTheDrone();
-                    Sensors.skyhookIMUEnabled = false;
+//                    Sensors.skyhookIMUEnabled = false;
                     launchTimer = futureTime(SKYHOOK_LAUNCH_TIMER);
                     launchIndex++;
                 }
@@ -200,7 +218,7 @@ public class Skyhook implements Subsystem {
         telemetryMap.put("jabbarActual", jabbar.getCurrentPosition());
         telemetryMap.put("droneTicks", droneServoTicks);
         telemetryMap.put("droneStage", launchIndex);
-//        telemetryMap.put("skyhookIMU", skyhookIMU.getRobotYawPitchRollAngles());
+        telemetryMap.put("skyhookIMU", robot.sensors.skyhookIMUPitch);
 //        telemetryMap.put("Skyhook Left Memory Position", robot.positionCache.readPose().getSkyhookLeftTicks());
 //        telemetryMap.put("Skyhook Right Memory Position", robot.positionCache.readPose().getSkyhookRightTicks());
 

@@ -167,7 +167,12 @@ public class CenterStage_6832 extends OpMode {
 
         //if driverside, always front, else only front on backstageside
         frontAuton = Constants.driverSide? true: (startingPosition.equals(Constants.Position.START_RIGHT_RED) || startingPosition.equals(Constants.Position.START_LEFT_BLUE)) ? true : false;
-        auton.saveRandomizer(robot.visionProviderBack.getMostFrequentPosition().getIndex());
+
+        int blobLocation = robot.visionProviderBack.getMostFrequentPosition().getIndex();
+        if(frontAuton && blobLocation == -1) {
+            blobLocation = 2;
+        }
+        auton.saveRandomizer(blobLocation);
         robot.initPosition();
         robot.driveTrain.updatePoseEstimate();
 
@@ -297,6 +302,8 @@ public class CenterStage_6832 extends OpMode {
 
                 case MANUAL_DIAGNOSTIC:
                     dc.manualDiagnosticMethods();
+                    robot.skyhook.skyhookLeft.setMotorDisable();
+                    robot.skyhook.skyhookRight.setMotorDisable();
                     robot.intake.articulate(Intake.Articulation.MANUAL);
                     robot.enableVision();
                     break;

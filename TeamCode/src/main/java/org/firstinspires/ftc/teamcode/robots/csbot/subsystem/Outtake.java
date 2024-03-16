@@ -90,7 +90,7 @@ public class Outtake implements Subsystem {
     public static double ELBOW_DOCK_ANGLE = -15;
 
     //ELEVATOR JOINT VARIABLES TODO tune these value
-    public static int ELEVATOR_HOME_POSITION = 1027;
+    public static int ELEVATOR_HOME_POSITION = 950;
     public static double ELEVATOR_PWM_PER_DEGREE = 7.35*(4.0/3);
     //IN DEGREES PER SECOND
     public static double ELEVATOR_START_ANGLE = 0;
