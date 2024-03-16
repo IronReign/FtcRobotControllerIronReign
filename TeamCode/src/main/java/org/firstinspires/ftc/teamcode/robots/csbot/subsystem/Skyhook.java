@@ -34,6 +34,7 @@ public class Skyhook implements Subsystem {
     public static int skyhookLeftTicks = 0;
     public static int SKYHOOK_HANG_TICKS = 450;
     public static int SKYHOOK_LAUNCH_TICKS = 340;
+    public static boolean testDroneLoaded = false;
     public static int PREP_FOR_HANG_TICKS = 0;
     public int droneServoTicks = 1500;
     public static int DRONE_TENSION_TICKS = 1435;
@@ -93,7 +94,10 @@ public class Skyhook implements Subsystem {
             case TRAVEL:
                 skyhookRightTicks = SKYHOOK_SAFE_TICKS;
                 skyhookLeftTicks = SKYHOOK_SAFE_TICKS;
-                droneServoTicks = DRONE_TENSION_TICKS;
+                if(!testDroneLoaded)
+                    droneServoTicks = DRONE_TENSION_TICKS;
+                else
+                    droneServoTicks = DRONE_RELEASE_TICKS;
                 break;
             case LAUNCH:
                 if(launch()) {

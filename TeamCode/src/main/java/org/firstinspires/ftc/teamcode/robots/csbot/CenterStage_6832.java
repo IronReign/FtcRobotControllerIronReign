@@ -302,10 +302,7 @@ public class CenterStage_6832 extends OpMode {
 
                 case MANUAL_DIAGNOSTIC:
                     dc.manualDiagnosticMethods();
-                    robot.skyhook.skyhookLeft.setMotorDisable();
-                    robot.skyhook.skyhookRight.setMotorDisable();
                     robot.intake.articulate(Intake.Articulation.MANUAL);
-                    robot.enableVision();
                     break;
 
                 case SQUARE:

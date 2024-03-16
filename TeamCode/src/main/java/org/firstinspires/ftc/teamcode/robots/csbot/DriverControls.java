@@ -17,6 +17,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Sensors;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Skyhook;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
@@ -57,6 +58,13 @@ public class DriverControls {
 
         if (stickyGamepad1.guide) {
             robot.switchVisionProviders();
+        }
+
+        if(stickyGamepad1.a){
+            Skyhook.testDroneLoaded = !Skyhook.testDroneLoaded;
+        }
+        if(stickyGamepad1.b){
+            Sensors.skyhookIMUEnabled = !Sensors.skyhookIMUEnabled;
         }
 
         if(stickyGamepad1.left_stick_button) {
