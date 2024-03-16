@@ -60,6 +60,10 @@ public class DriverControls {
             robot.switchVisionProviders();
         }
 
+        if(gamepad1.right_trigger > DEADZONE)
+            Skyhook.SKYHOOK_SAFE_TICKS += 10;
+        if(gamepad1.left_trigger > DEADZONE)
+            Skyhook.SKYHOOK_SAFE_TICKS -= 10;
         if(stickyGamepad1.a){
             Skyhook.testDroneLoaded = !Skyhook.testDroneLoaded;
         }
