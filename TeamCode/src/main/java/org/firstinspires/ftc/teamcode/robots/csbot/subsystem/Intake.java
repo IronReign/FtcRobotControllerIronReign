@@ -52,6 +52,7 @@ public class Intake implements Subsystem {
 
     public static double BEATER_SWALLOW_VELOCITY = 300;
     public static double BEATER_EJECT_VELOCITY = -800;
+    public static double BEATER_SETTLE_EJECT_VELOCITY = -400;
 
     public static double beaterTargetVelocity = 0;
 
@@ -149,6 +150,7 @@ public class Intake implements Subsystem {
         MANUAL,
         HANG,
         SWALLOW,
+        SETTLE,
         DOWN,
         INIT
 
@@ -243,6 +245,10 @@ public class Intake implements Subsystem {
                 break;
             case SWALLOW:
                 if (swallow())
+                    articulation = Articulation.TRAVEL;
+                break;
+            case SETTLE:
+                if(settle())
                     articulation = Articulation.TRAVEL;
                 break;
             case HANG:
@@ -383,6 +389,51 @@ public class Intake implements Subsystem {
                 swallowStage=0;
                 //don't need to set next angle since that's the job of the state this resolves to
                 return true;
+        }
+        return false;
+    }
+    int settleStage = 0;
+    long settleTimer;
+    int settleRepeats = 0;
+    public boolean settle() {
+        switch (settleStage){
+            case 0:
+                angleTarget = ANGLE_SWALLOW;
+                if(settleRepeats == 0)
+                    settleRepeats = 3;
+                manualBeaterEnable = false;
+                manualBeaterEject = false;
+                beaterTargetVelocity = BEATER_SWALLOW_VELOCITY;
+                settleTimer = futureTime(TIME_SWALLOW);
+                swallowStage++;
+                break;
+            case 1:
+                if (isPast(settleTimer))
+                    swallowStage++;
+                break;
+            case 2:
+                beaterTargetVelocity = 0;
+            case 3:
+                angleTarget = ANGLE_EJECT;
+                ejectTimer = futureTime(.25); //time for angle to set
+                ejectState++;
+                break;
+            case 4:
+                if (isPast(ejectTimer)){
+                    beaterTargetVelocity = BEATER_SETTLE_EJECT_VELOCITY;
+                    ejectTimer = futureTime(.5);
+                    ejectState++;
+                }
+                break;
+            case 5:
+                if (isPast(ejectTimer)){
+                    beaterTargetVelocity = 0;
+                    settleStage=0;
+                    settleRepeats--;
+                    if(settleRepeats == 0)
+                        return true;
+                }
+                break;
         }
         return false;
     }

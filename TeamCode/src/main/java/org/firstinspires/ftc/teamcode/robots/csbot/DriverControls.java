@@ -182,7 +182,7 @@ public class DriverControls {
         }
 
         if(stickyGamepad1.dpad_up) {
-            robot.intake.articulate(Intake.Articulation.SWALLOW);
+            robot.intake.articulate(Intake.Articulation.SETTLE);
         }
 
         if (stickyGamepad1.dpad_down) {
