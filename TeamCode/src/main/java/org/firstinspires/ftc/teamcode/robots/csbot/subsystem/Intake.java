@@ -398,6 +398,8 @@ public class Intake implements Subsystem {
     public boolean settle() {
         switch (settleStage){
             case 0:
+                pixelSensorClear();
+                diverterState = DiverterState.DELIVER_BOTH;
                 angleTarget = ANGLE_SWALLOW;
                 if(settleRepeats == 0)
                     settleRepeats = 3;
@@ -413,19 +415,15 @@ public class Intake implements Subsystem {
                 break;
             case 2:
                 beaterTargetVelocity = 0;
-            case 3:
-                angleTarget = ANGLE_SWALLOW;
-                settleTimer = futureTime(.25); //time for angle to set
                 settleStage++;
-                break;
-            case 4:
+            case 3:
                 if (isPast(ejectTimer)){
                     beaterTargetVelocity = BEATER_SETTLE_EJECT_VELOCITY;
                     settleTimer = futureTime(.5);
                     settleStage++;
                 }
                 break;
-            case 5:
+            case 4:
                 if (isPast(ejectTimer)){
                     beaterTargetVelocity = 0;
                     settleStage=0;
