@@ -405,24 +405,24 @@ public class Intake implements Subsystem {
                 manualBeaterEject = false;
                 beaterTargetVelocity = BEATER_SWALLOW_VELOCITY;
                 settleTimer = futureTime(TIME_SWALLOW);
-                swallowStage++;
+                settleStage++;
                 break;
             case 1:
                 if (isPast(settleTimer))
-                    swallowStage++;
+                    settleStage++;
                 break;
             case 2:
                 beaterTargetVelocity = 0;
             case 3:
                 angleTarget = ANGLE_SWALLOW;
-                ejectTimer = futureTime(.25); //time for angle to set
-                ejectState++;
+                settleTimer = futureTime(.25); //time for angle to set
+                settleStage++;
                 break;
             case 4:
                 if (isPast(ejectTimer)){
                     beaterTargetVelocity = BEATER_SETTLE_EJECT_VELOCITY;
-                    ejectTimer = futureTime(.5);
-                    ejectState++;
+                    settleTimer = futureTime(.5);
+                    settleStage++;
                 }
                 break;
             case 5:
