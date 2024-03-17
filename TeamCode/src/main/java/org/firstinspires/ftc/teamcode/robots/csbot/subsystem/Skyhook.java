@@ -2,9 +2,6 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.PoseVelocity2d;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -34,11 +31,11 @@ public class Skyhook implements Subsystem {
     public static int skyhookLeftTicks = 0;
     public static int SKYHOOK_HANG_TICKS = 450;
     public static int SKYHOOK_LAUNCH_TICKS = 340;
-    public static boolean testDroneLoaded = false;
+    public static boolean droneLoaded = true;
     public static int PREP_FOR_HANG_TICKS = 0;
     public int droneServoTicks = 1500;
     public static int DRONE_TENSION_TICKS = 1435;
-    public static int DRONE_RELEASE_TICKS = 2105;
+    public static int DRONE_RELEASE_TICKS = 1700;
     public static int SKYHOOK_SAFE_TICKS = 1200;
     public static int SKYHOOK_UP_TICKS = 0;
     public PIDController dronelaunchPID;
@@ -85,6 +82,10 @@ public class Skyhook implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
+        if(droneLoaded)
+            droneServoTicks = DRONE_TENSION_TICKS;
+        else
+            droneServoTicks = DRONE_RELEASE_TICKS;
 
         switch (articulation) {
             case PREP_FOR_HANG:
@@ -94,10 +95,6 @@ public class Skyhook implements Subsystem {
             case TRAVEL:
                 skyhookRightTicks = SKYHOOK_SAFE_TICKS;
                 skyhookLeftTicks = SKYHOOK_SAFE_TICKS;
-                if(!testDroneLoaded)
-                    droneServoTicks = DRONE_TENSION_TICKS;
-                else
-                    droneServoTicks = DRONE_RELEASE_TICKS;
                 break;
             case LAUNCH:
                 if(launch()) {

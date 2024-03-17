@@ -65,7 +65,7 @@ public class DriverControls {
         if(gamepad1.left_trigger > DEADZONE)
             Skyhook.SKYHOOK_SAFE_TICKS -= 10;
         if(stickyGamepad1.y){
-            Skyhook.testDroneLoaded = !Skyhook.testDroneLoaded;
+            Skyhook.droneLoaded = !Skyhook.droneLoaded;
         }
         if(stickyGamepad1.b){
             Sensors.skyhookIMUEnabled = !Sensors.skyhookIMUEnabled;
@@ -309,9 +309,6 @@ public class DriverControls {
 
         }
 
-        if(stickyGamepad1.dpad_up) {
-            robot.visionProviderFinalized = !robot.visionProviderFinalized;
-        }
         if(stickyGamepad1.y) {
             if(gameState.isAutonomous()) {
                 robot.driveTrain.setPose(startingPosition);
@@ -326,6 +323,15 @@ public class DriverControls {
         if(stickyGamepad1.guide) {
             robot.initPositionIndex ++;
         }
+
+        if(stickyGamepad1.dpad_up) {
+            robot.visionProviderFinalized = !robot.visionProviderFinalized;
+        }
+
+        if(stickyGamepad1.dpad_down){
+            Skyhook.droneLoaded = !Skyhook.droneLoaded;
+        }
+
         if (stickyGamepad1.dpad_left || stickyGamepad2.dpad_left)
             startingPosition = alliance == Constants.Alliance.RED ? Constants.Position.START_LEFT_RED : Constants.Position.START_LEFT_BLUE;
 
