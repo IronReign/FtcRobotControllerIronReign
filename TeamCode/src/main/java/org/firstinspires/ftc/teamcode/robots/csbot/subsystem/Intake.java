@@ -414,7 +414,7 @@ public class Intake implements Subsystem {
             case 2:
                 beaterTargetVelocity = 0;
             case 3:
-                angleTarget = ANGLE_EJECT;
+                angleTarget = ANGLE_SWALLOW;
                 ejectTimer = futureTime(.25); //time for angle to set
                 ejectState++;
                 break;
