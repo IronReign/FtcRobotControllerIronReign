@@ -71,6 +71,13 @@ public class Skyhook implements Subsystem {
         droneLauncher = hardwareMap.get(Servo.class, "droneLauncher");
         droneServoTicks = DRONE_TENSION_TICKS;
         skyhookIMU = hardwareMap.get(IMU.class, "skyhookIMU");
+        dronelaunchPID = new PIDController(DRONELAUNCH_PID_PWR);
+        dronelaunchPID.setInputRange(0, 360);
+        dronelaunchPID.setOutputRange(-1, 1);
+        dronelaunchPID.setIntegralCutIn(4);
+        dronelaunchPID.setContinuous(true);
+        dronelaunchPID.setTolerance(DRONELAUNCH_PID_TOLERANCE);
+        dronelaunchPID.enable();
         //skyhookRightTicks = 0;
         //skyhookLeftTicks = 0;
     }

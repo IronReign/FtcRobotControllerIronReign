@@ -54,8 +54,8 @@ public class AprilTagDetectionPipeline extends OpenCvPipeline
     private Mat dashboardMat = new Mat();
     private volatile Bitmap dashboardBitmap;
 
-    public static int TOP_LEFT_X = 0, TOP_LEFT_Y = 0;
-    public static int BOTTOM_RIGHT_X = 1280, BOTTOM_RIGHT_Y = 720;
+    public static int TOP_LEFT_X = 0, TOP_LEFT_Y = 100;
+    public static int BOTTOM_RIGHT_X = 1280, BOTTOM_RIGHT_Y = 500;
 
     private ArrayList<AprilTagDetection> detections = new ArrayList<>();
 

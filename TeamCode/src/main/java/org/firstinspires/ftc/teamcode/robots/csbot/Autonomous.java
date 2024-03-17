@@ -68,6 +68,7 @@ public class Autonomous implements TelemetryProvider {
         telemetryMap.put("targetIndex", targetIndex);
         telemetryMap.put("targetAprilTag", targetAprilTagIndex);
         telemetryMap.put("selectedPath", selectedPath);
+        telemetryMap.put("driverside?", Constants.driverSide);
         if (autonState == AutonState.ALIGN_WITH_APRILTAG) {
             telemetryMap.put("apriltag index", ((AprilTagProvider) robot.visionProviderBack).getIndex());
         }
@@ -85,7 +86,7 @@ public class Autonomous implements TelemetryProvider {
     // autonomous routines
 
     public int targetIndex = 1;
-    public int targetAprilTagIndex = 1;
+    public static int targetAprilTagIndex = 1;
     public int visionProviderIndex;
     public double aprilTagOffset = .2;
     int allianceDirection = -1;
@@ -403,7 +404,7 @@ public class Autonomous implements TelemetryProvider {
             aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x - 1,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)),
                     0);
             aprilTagAlignCrossed = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), Math.toRadians(-90));
-            pixelStack = P2D(-2.4, driverSide?1.5:.5, STANDARD_HEADING);
+            pixelStack = P2D(-2.25, driverSide?1.5:.5, STANDARD_HEADING);
 
             //assemble the paths
             autonPaths[1][1] = P2D(-2, driverSide?1.75:.5, 90);
@@ -569,7 +570,7 @@ public class Autonomous implements TelemetryProvider {
                 case 6:
                     autonState = AutonState.IMU_TURN;
                     if (robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING, turnToSpeed)) {
-//                        robot.driveTrain.pose = new Pose2d(new Vector2d(robot.driveTrain.pose.position.x, robot.driveTrain.pose.position.y), Math.toRadians(robot.driveTrain.imuAngle));
+                        robot.driveTrain.pose = new Pose2d(new Vector2d(robot.driveTrain.pose.position.x, robot.driveTrain.pose.position.y), Math.toRadians(robot.sensors.driveIMUYaw));
                         autonIndex++;
                     }
                     break;

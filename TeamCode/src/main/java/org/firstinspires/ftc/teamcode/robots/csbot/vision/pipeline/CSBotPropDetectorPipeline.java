@@ -54,8 +54,8 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
 
     // Constants
     public static int VIEW_OPEN_CV_PIPELINE_STAGE = 6;
-    public static int TOP_LEFT_X = 0, TOP_LEFT_Y = 300;
-    public static int BOTTOM_RIGHT_X = 1280, BOTTOM_RIGHT_Y = 720;
+    public static int TOP_LEFT_X = 0, TOP_LEFT_Y = 0;
+    public static int BOTTOM_RIGHT_X = 1280, BOTTOM_RIGHT_Y = 600;
     public static double NORMALIZE_ALPHA = 51.0, NORMALIZE_BETA = 261.0;
     public static double BLUR_RADIUS = 7;
     public static double RED_ALLIANCE_HUE_MIN = 90, RED_ALLIANCE_HUE_MAX = 120;

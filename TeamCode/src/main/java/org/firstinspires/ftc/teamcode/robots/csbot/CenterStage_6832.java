@@ -169,17 +169,21 @@ public class CenterStage_6832 extends OpMode {
         //if driverside, always front, else only front on backstageside
         frontAuton = Constants.driverSide? true: (startingPosition.equals(Constants.Position.START_RIGHT_RED) || startingPosition.equals(Constants.Position.START_LEFT_BLUE)) ? true : false;
 
-        int blobLocation = robot.visionProviderBack.getMostFrequentPosition().getIndex();
+        int blobLocation;
+        if(frontAuton)
+            blobLocation = robot.visionProviderFront.getMostFrequentPosition().getIndex();
+        else
+            blobLocation = robot.visionProviderBack.getMostFrequentPosition().getIndex();
+
         if(frontAuton && blobLocation == -1) {
             blobLocation = 2;
         }
         auton.saveRandomizer(blobLocation);
+
         robot.initPosition();
         robot.driveTrain.updatePoseEstimate();
 
-        telemetry.addData("visionProviderIndex", Robot.backVisionProviderIndex);
-        telemetry.addData("visionProviderOnRed", robot.visionProviderBack.isRedAlliance);
-        telemetry.addData("blobLocation", robot.visionProviderBack.getMostFrequentPosition().getIndex());
+        telemetry.addData("blobLocation", blobLocation);
         telemetry.addData("fetched", robot.fetched);
         telemetry.addData("gameState", gameState);
         telemetry.addData("active", active);

@@ -181,8 +181,22 @@ public class DriverControls {
             robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
         }
 
-        if(stickyGamepad1.dpad_up) {
+        if(shifted(gamepad1) && gamepad1.dpad_up){
+            robot.backdropRelocalize();
+        }
+        else if(stickyGamepad1.dpad_up) {
             robot.intake.articulate(Intake.Articulation.SETTLE);
+        }
+
+        if(stickyGamepad1.dpad_left) {
+            if(CenterStage_6832.autoNav.setPreferredRoute(CenterStage_6832.autoNav.preferredRoute-1) < 0) {
+                CenterStage_6832.autoNav.setPreferredRoute(6);
+            }
+        }
+        if(stickyGamepad1.dpad_right) {
+            if(CenterStage_6832.autoNav.setPreferredRoute(CenterStage_6832.autoNav.preferredRoute+1) > 6) {
+                CenterStage_6832.autoNav.setPreferredRoute(0);
+            }
         }
 
         if (stickyGamepad1.dpad_down) {
@@ -197,7 +211,7 @@ public class DriverControls {
                 CenterStage_6832.autoNavOn = !CenterStage_6832.autoNavOn;
             }
         }
-        else if(shifted(gamepad1) && stickyGamepad2.start) {
+        else if(shifted(gamepad2) && stickyGamepad2.start) {
             CenterStage_6832.autoEndgameOn = !CenterStage_6832.autoEndgameOn;
         }
         if(stickyGamepad2.dpad_left) {
