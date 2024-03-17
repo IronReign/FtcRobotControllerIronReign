@@ -41,6 +41,7 @@ public class CenterStage_6832 extends OpMode {
     public static boolean AUTONAV_ENABLED = false;
     //whether we are autonaving or not
     public static boolean autoNavOn = false;
+    public static boolean autoEndgameOn = false;
     //to handle transfer b/w driver and autonav
     public static boolean autoNavInitialized = false;
     public static boolean frontAuton = true;
@@ -287,6 +288,18 @@ public class CenterStage_6832 extends OpMode {
                                 autoNav.relinquishControl();
                                 autoNavInitialized = false;
                                 autoNavOn = false;
+                                autoEndgameOn = false;
+                            }
+                        }
+                        if(autoEndgameOn) {
+                            if(dc.joysticksInactive()){
+                                autoNav.autoEndgame();
+                            }
+                            else {
+                                autoNav.relinquishControl();
+                                autoNavInitialized = false;
+                                autoNavOn = false;
+                                autoEndgameOn = false;
                             }
                         }
                     }

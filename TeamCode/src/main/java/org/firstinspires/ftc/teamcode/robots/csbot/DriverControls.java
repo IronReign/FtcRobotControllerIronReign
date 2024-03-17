@@ -198,7 +198,7 @@ public class DriverControls {
             }
         }
         else if(shifted(gamepad1) && stickyGamepad2.start) {
-            robot.autoEndgame = !robot.autoEndgame;
+            CenterStage_6832.autoEndgameOn = !CenterStage_6832.autoEndgameOn;
         }
         if(stickyGamepad2.dpad_left) {
             if(CenterStage_6832.autoNav.setPreferredRoute(CenterStage_6832.autoNav.preferredRoute-1) < 0) {
