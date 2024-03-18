@@ -240,11 +240,17 @@ public class Outtake implements Subsystem {
         double a = Math.toDegrees(Math.atan2(z, x));
         elbowTargetAngle = 180+Math.toDegrees(Math.atan2(armHeight, armBase))-a-b;
         if(Double.isNaN(wristTargetAngle) || Double.isNaN(elbowTargetAngle)) {
+            wristTargetAngle = 0;//maxes the height of the outtake
+            elbowTargetAngle = 90 + Math.toDegrees(Math.atan2(armHeight, armBase));// maxes the height of the outtake
+            wrist.setTargetAngle(wristTargetAngle);
+            elbow.setTargetAngle(elbowTargetAngle);
             return false;
         }
-        wrist.setTargetAngle(wristTargetAngle);
-        elbow.setTargetAngle(elbowTargetAngle);
-        return true;
+        else {
+            wrist.setTargetAngle(wristTargetAngle);
+            elbow.setTargetAngle(elbowTargetAngle);
+            return true;
+        }
     }
 
     public int ingestPositionIndex = 0;
