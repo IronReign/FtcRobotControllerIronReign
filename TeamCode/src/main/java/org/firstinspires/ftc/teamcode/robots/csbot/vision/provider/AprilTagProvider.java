@@ -38,8 +38,8 @@ public class AprilTagProvider extends VisionProvider {
 
     // Constants
     private static final String TELEMETRY_NAME = "April Tag Vision Provider";
-    public static int WEBCAM_WIDTH = 640;
-    public static int WEBCAM_HEIGHT = 480;
+    public static int WEBCAM_WIDTH = 1280;
+    public static int WEBCAM_HEIGHT = 720;
     static final double FEET_PER_METER = 3.28084;
 
     // Lens intrinsics

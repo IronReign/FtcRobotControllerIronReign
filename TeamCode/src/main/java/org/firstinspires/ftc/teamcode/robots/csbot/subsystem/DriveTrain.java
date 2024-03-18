@@ -53,7 +53,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     private double PIDCorrection, PIDError;
     public static int turnToTest = 0;
     public static double turnToSpeed = .8; //max angular speed for turn
-    private static final double DISTANCE_BETWEEN_DISTANCE_SENSORS = 14;
+    public static double DISTANCE_BETWEEN_DISTANCE_SENSORS = 14;
 
     public static SequentialAction testPathToWing, testPathToScore;
 
@@ -114,12 +114,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         if (turnToTest != 0) turnUntilDegreesIMU(turnToTest, turnToSpeed); //can target any angle but zero
     }
 
-    public double distanceSensorHeading() {
-        double big = Math.max(leftDistanceSensorValue, rightDistanceSensorValue);
-        double small = Math.min(rightDistanceSensorValue, leftDistanceSensorValue);
-        double diffAngle = Math.toDegrees(Math.atan2(big - small, DISTANCE_BETWEEN_DISTANCE_SENSORS));
-        return -diffAngle;
-    }
+
 
 
     public void drive(double x, double y, double theta) {
@@ -140,11 +135,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
                 theta
         ));
         updatePoseEstimate();
-    }
-
-    public void distanceSensorRelocalize() {
-        //theoretically any apriltag
-        pose = new Pose2d(new Vector2d(POI.APRILTAG1.pose.position.x - robot.sensors.averageDistSensorValue, pose.position.y), distanceSensorHeading());
     }
 
     public void fieldOrientedDrive(double x, double y, double theta, boolean isRed) {
@@ -233,9 +223,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("x in inches", pose.position.x);
         telemetryMap.put("y in inches", pose.position.y);
 
-        telemetryMap.put("Right Distance Sensor Value", rightDistanceSensorValue);
-        telemetryMap.put("Left Distance Sensor Value", leftDistanceSensorValue);
-        telemetryMap.put("distance sensor heading", distanceSensorHeading());
+        telemetryMap.put("Right Distance Sensor Value", robot.sensors.rightDistSensorValue);
+        telemetryMap.put("Left Distance Sensor Value", robot.sensors.leftDistSensorValue);
 
         telemetryMap.put("heading", Math.toDegrees(pose.heading.log()));
         telemetryMap.put("Left Odometry Pod:\t", leftFront.getCurrentPosition());

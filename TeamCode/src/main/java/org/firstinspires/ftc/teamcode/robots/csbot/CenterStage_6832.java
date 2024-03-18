@@ -38,9 +38,10 @@ public class CenterStage_6832 extends OpMode {
     //GLOBAL STATES
     public static boolean active;
     //whether we have the ability to autonav or not
-    public static boolean AUTONAV_ENABLED = false;
+    public static boolean AUTONAV_ENABLED = true;
     //whether we are autonaving or not
     public static boolean autoNavOn = false;
+    public static boolean autoEndgameOn = false;
     //to handle transfer b/w driver and autonav
     public static boolean autoNavInitialized = false;
     public static boolean frontAuton = true;
@@ -167,13 +168,22 @@ public class CenterStage_6832 extends OpMode {
 
         //if driverside, always front, else only front on backstageside
         frontAuton = Constants.driverSide? true: (startingPosition.equals(Constants.Position.START_RIGHT_RED) || startingPosition.equals(Constants.Position.START_LEFT_BLUE)) ? true : false;
-        auton.saveRandomizer(robot.visionProviderBack.getMostFrequentPosition().getIndex());
+
+        int blobLocation;
+        if(frontAuton)
+            blobLocation = robot.visionProviderFront.getMostFrequentPosition().getIndex();
+        else
+            blobLocation = robot.visionProviderBack.getMostFrequentPosition().getIndex();
+
+        if(frontAuton && blobLocation == -1) {
+            blobLocation = 2;
+        }
+        auton.saveRandomizer(blobLocation);
+
         robot.initPosition();
         robot.driveTrain.updatePoseEstimate();
 
-        telemetry.addData("visionProviderIndex", Robot.backVisionProviderIndex);
-        telemetry.addData("visionProviderOnRed", robot.visionProviderBack.isRedAlliance);
-        telemetry.addData("blobLocation", robot.visionProviderBack.getMostFrequentPosition().getIndex());
+        telemetry.addData("blobLocation", blobLocation);
         telemetry.addData("fetched", robot.fetched);
         telemetry.addData("gameState", gameState);
         telemetry.addData("active", active);
@@ -282,6 +292,18 @@ public class CenterStage_6832 extends OpMode {
                                 autoNav.relinquishControl();
                                 autoNavInitialized = false;
                                 autoNavOn = false;
+                                autoEndgameOn = false;
+                            }
+                        }
+                        if(autoEndgameOn) {
+                            if(dc.joysticksInactive()){
+                                autoNav.autoEndgame();
+                            }
+                            else {
+                                autoNav.relinquishControl();
+                                autoNavInitialized = false;
+                                autoNavOn = false;
+                                autoEndgameOn = false;
                             }
                         }
                     }
@@ -298,7 +320,6 @@ public class CenterStage_6832 extends OpMode {
                 case MANUAL_DIAGNOSTIC:
                     dc.manualDiagnosticMethods();
                     robot.intake.articulate(Intake.Articulation.MANUAL);
-                    robot.enableVision();
                     break;
 
                 case SQUARE:
@@ -359,6 +380,9 @@ public class CenterStage_6832 extends OpMode {
         //IF NECESSARY, ADD TELEMETRY FOR EACH GAME STATE
         switch(gameState) {
             case TELE_OP:
+                if(autoNavOn){
+                    handleTelemetry(autoNav.getTelemetry(debugTelemetryEnabled), autoNav.getTelemetryName(), packet);
+                }
                 break;
             case AUTONOMOUS:
                 handleTelemetry(auton.getTelemetry(debugTelemetryEnabled),  auton.getTelemetryName(), packet);

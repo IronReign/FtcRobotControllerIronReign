@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.allia
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
@@ -21,6 +22,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.csbot.AutoNav;
+import org.firstinspires.ftc.teamcode.robots.csbot.Autonomous;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.PositionCache;
@@ -58,13 +61,14 @@ public class  Robot implements Subsystem {
     //vision variables
     public boolean visionProviderFinalized = false;
     public static int backVisionProviderIndex = 2;
-    public static int frontVisionProviderIndex = 1;
+    public static int frontVisionProviderIndex = 2;
     public double aprilTagRelocalizationX = 0;
     public double aprilTagRelocalizationY = 0;
     //REMOVE
     public Pose2d aprilTagPose = new Pose2d(0, 0,0);
 
-    public static double DISTANCE_FROM_CAMERA_TO_CENTER_X = 13;// In inches
+    public static double DISTANCE_FROM_CAMERA_TO_CENTER_X = 16;// In inches
+    public static double DISTANCE_FROM_CAMERA_TO_CENTER_Y = 5.25;
 
     private long[] subsystemUpdateTimes;
     private List<LynxModule> hubs = null;
@@ -73,11 +77,31 @@ public class  Robot implements Subsystem {
     public Articulation articulation;
     public List<Target> targets = new ArrayList<Target>();
     public boolean fetched;
-    //auton end game variables
-    private int driveToDroneIndex = 0;
-    public boolean autoEndgame = false;
 
-    public boolean selfDriving = false;
+    public void backdropRelocalize() {
+        distanceSensorRelocalize();
+        frontVision = false;
+        if(backVisionProviderIndex == 0){
+        //assumes that the backvision is in apriltag
+        enableVision();
+        if(((AprilTagProvider)visionProviderBack).getDetections() != null) {
+            aprilTagRelocalization(Autonomous.targetAprilTagIndex);
+        }}
+        else{
+            visionProviderFinalized = false;
+            backVisionProviderIndex = 0;
+        }
+        //say bye bye to loop times
+    }
+
+    public void distanceSensorRelocalize() {
+        Sensors.distanceSensorsEnabled = true;
+        if(sensors.averageDistSensorValue < 30) {
+            double distDiff = Math.abs(sensors.rightDistSensorValue - sensors.leftDistSensorValue);
+            double heading = Math.PI - Math.asin(distDiff / Math.hypot(driveTrain.DISTANCE_BETWEEN_DISTANCE_SENSORS, distDiff));
+            driveTrain.pose = new Pose2d(driveTrain.pose.position, heading);
+            }
+        }
 
     public enum Articulation {
         //beater bar, drivetrain, drone launcher, outtake
@@ -149,10 +173,6 @@ public class  Robot implements Subsystem {
             positionCache.update(currPosition, false);
         }
 
-        if(autoEndgame && driveToDrone()) { //no no I swear this works
-            autoEndgame = false;
-        }
-
         articulate(articulation);
         driveTrain.updatePoseEstimate();
 
@@ -185,56 +205,6 @@ public class  Robot implements Subsystem {
         }
     }
 
-    private Action driveToDrone;
-    public void driveToDroneBuild() {
-        driveToDrone = new SequentialAction(
-                driveTrain.actionBuilder(driveTrain.pose)
-                        .splineTo(new Vector2d(23.5, CenterStage_6832.startingPosition.getMod()?-33:33), 0)
-                        .splineTo(new Vector2d(0, CenterStage_6832.startingPosition.getMod()?-33:33), 0)
-                        .build()
-        );
-    }
-
-    private long futureTimer = 0;
-    public boolean driveToDrone() {
-        switch (driveToDroneIndex) {
-            case 0:
-                if (driveToDrone == null) {
-                    driveToDroneBuild();
-                }
-                else if (!driveToDrone.run(new TelemetryPacket())) {
-                    driveToDrone = null;
-                    driveToDroneIndex++;
-                }
-                break;
-            case 1:
-                articulate(Robot.Articulation.LAUNCH_DRONE);
-                futureTimer = futureTime(5);
-                driveToDroneIndex++;
-                break;
-            case 2:
-                if (isPast(futureTimer)) {
-                    articulate(Robot.Articulation.PREP_FOR_HANG);
-                    futureTimer = futureTime(2);
-                    driveToDroneIndex++;
-                }
-                break;
-            case 3:
-                driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.2, 0), 0));
-                if (isPast(futureTimer)) {
-                    driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
-                    driveToDroneIndex++;
-                }
-                break;
-            case 4:
-                if (skyhook.articulation.equals(Skyhook.Articulation.PREP_FOR_HANG)) {
-                    articulate(Robot.Articulation.HANG);
-                    driveToDroneIndex = 0;
-                    return true;
-                }
-        }
-        return false;
-    }
 
     public void aprilTagRelocalization(int target) {
         ArrayList<AprilTagDetection> detections = getAprilTagDetections();
@@ -246,7 +216,7 @@ public class  Robot implements Subsystem {
             }
 
             aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
-            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37;
+            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
             aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, 0);
             driveTrain.pose = new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading);
         }
@@ -262,7 +232,7 @@ public class  Robot implements Subsystem {
     }
 
     private static void drawRobot(Canvas c, Pose2d t) {
-        final double ROBOT_RADIUS = 9;
+        final double ROBOT_RADIUS = 8;
 
         c.setStrokeWidth(1);
         c.strokeCircle(t.position.x, t.position.y, ROBOT_RADIUS);
@@ -349,6 +319,8 @@ public class  Robot implements Subsystem {
                 break;
             case 6:
                 intake.articulate(Intake.Articulation.INIT);
+            default:
+                break;
         }
     }
 

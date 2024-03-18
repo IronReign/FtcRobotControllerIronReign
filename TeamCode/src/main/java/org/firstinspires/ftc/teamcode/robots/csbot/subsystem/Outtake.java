@@ -90,7 +90,7 @@ public class Outtake implements Subsystem {
     public static double ELBOW_DOCK_ANGLE = -15;
 
     //ELEVATOR JOINT VARIABLES TODO tune these value
-    public static int ELEVATOR_HOME_POSITION = 1027;
+    public static int ELEVATOR_HOME_POSITION = 950;
     public static double ELEVATOR_PWM_PER_DEGREE = 7.35*(4.0/3);
     //IN DEGREES PER SECOND
     public static double ELEVATOR_START_ANGLE = 0;
@@ -237,8 +237,8 @@ public class Outtake implements Subsystem {
         z-=armHeight;
         wristTargetAngle = Math.toDegrees(Math.acos((Math.pow(x, 2)+Math.pow(z, 2)-Math.pow(elbowLength, 2)-Math.pow(wristLength, 2))/(2*elbowLength*wristLength)));
         double b = Math.toDegrees(Math.acos((Math.pow(wristLength, 2)-Math.pow(elbowLength, 2)-Math.pow(x, 2)-Math.pow(z, 2))/(-2*elbowLength*Math.hypot(x, z))));
-        double a = Math.toDegrees(Math.atan(z/x));
-        elbowTargetAngle = 180+Math.toDegrees(Math.atan(armHeight/armBase))-a-b;
+        double a = Math.toDegrees(Math.atan2(z, x));
+        elbowTargetAngle = 180+Math.toDegrees(Math.atan2(armHeight, armBase))-a-b;
         if(Double.isNaN(wristTargetAngle) || Double.isNaN(elbowTargetAngle)) {
             return false;
         }

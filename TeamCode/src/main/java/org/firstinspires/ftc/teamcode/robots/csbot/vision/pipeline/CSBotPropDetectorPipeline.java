@@ -50,11 +50,12 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
     private double largestArea;
     private volatile Position lastPosition;
     public boolean isRedAlliance = false;
+    public static boolean isFront = false;
 
     // Constants
     public static int VIEW_OPEN_CV_PIPELINE_STAGE = 6;
-    public static int TOP_LEFT_X = 0, TOP_LEFT_Y = 300;
-    public static int BOTTOM_RIGHT_X = 1280, BOTTOM_RIGHT_Y = 720;
+    public static int TOP_LEFT_X = 0, TOP_LEFT_Y = 0;
+    public static int BOTTOM_RIGHT_X = 1280, BOTTOM_RIGHT_Y = 600;
     public static double NORMALIZE_ALPHA = 51.0, NORMALIZE_BETA = 261.0;
     public static double BLUR_RADIUS = 7;
     public static double RED_ALLIANCE_HUE_MIN = 90, RED_ALLIANCE_HUE_MAX = 120;
@@ -66,7 +67,7 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
     public static double BLUE_ALLIANCE_HUE_MIN = 0, BLUE_ALLIANCE_HUE_MAX = 30;
     public static double BLUE_ALLIANCE_SATURATION_MIN = 90, BLUE_ALLIANCE_SATURATION_MAX = 190;
     public static double BLUE_ALLIANCE_VALUE_MIN = 100, BLUE_ALLIANCE_VALUE_MAX = 190;
-    public static double MIN_CONTOUR_AREA = 50;
+    public static double MIN_CONTOUR_AREA = 500;
     public static String BLUR = "Box Blur";
 
     public static int LEFT_THRESHOLD = 320;
@@ -85,6 +86,22 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
         largestY = -1;
         largestArea = -1;
         lastPosition = Position.HOLD;
+    }
+
+    public CSBotPropDetectorPipeline(boolean isRedAlliance, boolean isFront) {
+        this.isRedAlliance = isRedAlliance;
+        largestX = -1;
+        largestY = -1;
+        largestArea = -1;
+        lastPosition = Position.HOLD;
+        this.isFront = isFront;
+        if(isFront) {
+            BOTTOM_RIGHT_X = 800;
+        }
+        else {
+            BOTTOM_RIGHT_X = 1280;
+        }
+        BOTTOM_RIGHT_Y = 720;
     }
 
     volatile List<Target> detectedBlobs = new ArrayList<>(); //persist the most recent targets for access outside this thread

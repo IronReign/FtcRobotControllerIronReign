@@ -52,6 +52,7 @@ public class Intake implements Subsystem {
 
     public static double BEATER_SWALLOW_VELOCITY = 300;
     public static double BEATER_EJECT_VELOCITY = -800;
+    public static double BEATER_SETTLE_EJECT_VELOCITY = -400;
 
     public static double beaterTargetVelocity = 0;
 
@@ -59,12 +60,13 @@ public class Intake implements Subsystem {
     private int ingestPixelHeight = 0;  //the height at which to start ingesting pixels. Normally 0 for ground but could be 4 for top pixel in a stack
     private int ingestStage = 0;
     private long ingestTimer = 0;
+
     public int getIngestPixelHeight() {
         return ingestPixelHeight;
     }
 
     public void setIngestPixelHeight(int ingestPixelHeight) {
-        this.ingestPixelHeight = ingestPixelHeight < 0? 0 : ingestPixelHeight;
+        this.ingestPixelHeight = ingestPixelHeight < 0 ? 0 : ingestPixelHeight;
     }
 
     public void cleanArticulations() {
@@ -102,6 +104,7 @@ public class Intake implements Subsystem {
         }
 
     }
+
     public enum PixelSensor {
         NONE(0),
         LEFT(1),
@@ -116,30 +119,46 @@ public class Intake implements Subsystem {
         public int getCount() {
             return count;
         }
+
         public static PixelSensor getByIndex(int index) {
             return PixelSensor.values()[index];
         }
-        public static PixelSensor clear(){
+
+        public static PixelSensor clear() {
             return PixelSensor.NONE;
         }
 
-        public PixelSensor assertLeft(){
+        public PixelSensor assertLeft() {
             if (this.equals(PixelSensor.RIGHT) || this.equals(PixelSensor.BOTH))
                 return PixelSensor.BOTH;
             else
                 return PixelSensor.LEFT;
         }
-        public PixelSensor assertRight(){
+
+        public PixelSensor assertRight() {
             if (this.equals(PixelSensor.LEFT) || this.equals(PixelSensor.BOTH))
                 return PixelSensor.BOTH;
             else return PixelSensor.RIGHT;
         }
+
         //syntactic helpers
-        public boolean isBoth() {return (this.equals(PixelSensor.BOTH));}
-        public boolean isLeft() {return (this.equals(PixelSensor.LEFT));}
-        public boolean isRight() {return (this.equals(PixelSensor.RIGHT));}
-        public boolean isNone() {return (this.equals(PixelSensor.NONE));}
+        public boolean isBoth() {
+            return (this.equals(PixelSensor.BOTH));
+        }
+
+        public boolean isLeft() {
+            return (this.equals(PixelSensor.LEFT));
+        }
+
+        public boolean isRight() {
+            return (this.equals(PixelSensor.RIGHT));
+        }
+
+        public boolean isNone() {
+            return (this.equals(PixelSensor.NONE));
+        }
     }
+
     PixelSensor pixelSensor = PixelSensor.clear();
 
     public enum Articulation {
@@ -149,38 +168,40 @@ public class Intake implements Subsystem {
         MANUAL,
         HANG,
         SWALLOW,
+        SETTLE,
         DOWN,
         INIT
 
     }
 
-    public enum DiverterState{
+    public enum DiverterState {
         DELIVER_LEFT,
         DELIVER_RIGHT,
         DELIVER_BOTH
     }
+
     private DiverterState diverterState;
     public Articulation articulation;
     public static int numPixelsInStack = 5;
 
 
     public Intake(HardwareMap hardwareMap, Robot robot) {
-            this.hardwareMap = hardwareMap;
-            this.robot = robot;
-            articulation = Articulation.MANUAL;
-            diverterState = DiverterState.DELIVER_BOTH;
-            angleTarget = ANGLE_INGEST_GROUND;
+        this.hardwareMap = hardwareMap;
+        this.robot = robot;
+        articulation = Articulation.MANUAL;
+        diverterState = DiverterState.DELIVER_BOTH;
+        angleTarget = ANGLE_INGEST_GROUND;
 
-            diverterLeft = hardwareMap.get(Servo.class, "diverterRight");
-            diverterRight = hardwareMap.get(Servo.class, "diverterLeft");
-            beater = hardwareMap.get(DcMotorEx.class, "intakeBeater");
-            beater.setDirection(DcMotorSimple.Direction.REVERSE);
-            angleLeft = hardwareMap.get(Servo.class, "intakeAngleLeft");
-            angleRight = hardwareMap.get(Servo.class, "intakeAngleRight");
-            pixelSensorRight = hardwareMap.get(DistanceSensor.class, "rightPixelSensor");
-            pixelSensorLeft = hardwareMap.get(DistanceSensor.class, "leftPixelSensor");
-            angleRight.setDirection(Servo.Direction.REVERSE);
-            beater.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        diverterLeft = hardwareMap.get(Servo.class, "diverterRight");
+        diverterRight = hardwareMap.get(Servo.class, "diverterLeft");
+        beater = hardwareMap.get(DcMotorEx.class, "intakeBeater");
+        beater.setDirection(DcMotorSimple.Direction.REVERSE);
+        angleLeft = hardwareMap.get(Servo.class, "intakeAngleLeft");
+        angleRight = hardwareMap.get(Servo.class, "intakeAngleRight");
+        pixelSensorRight = hardwareMap.get(DistanceSensor.class, "rightPixelSensor");
+        pixelSensorLeft = hardwareMap.get(DistanceSensor.class, "leftPixelSensor");
+        angleRight.setDirection(Servo.Direction.REVERSE);
+        beater.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     @Override
@@ -193,18 +214,21 @@ public class Intake implements Subsystem {
         beater.setVelocity(beaterTargetVelocity);
     }
 
-    void pixelSensors(){
+    void pixelSensors() {
         //right now this is a virtual sensor operated by the drive team
         //and currently no implementation is required outside of DriverControls
         //this may change
     }
-    public void pixelSensorLeft(){
+
+    public void pixelSensorLeft() {
         pixelSensor = pixelSensor.assertLeft();
     }
-    public void pixelSensorRight(){
+
+    public void pixelSensorRight() {
         pixelSensor = pixelSensor.assertRight();
     }
-    public void pixelSensorClear(){
+
+    public void pixelSensorClear() {
 
         pixelSensor = pixelSensor.clear();
     }
@@ -214,7 +238,7 @@ public class Intake implements Subsystem {
         return articulation;
     }
 
-    public Articulation articulate(){
+    public Articulation articulate() {
         switch (articulation) {
             case TRAVEL: //intake should spend most of its time here
                 //the angle is one that compacts the robot as much as possible and still
@@ -226,23 +250,25 @@ public class Intake implements Subsystem {
                 manualBeaterEnable = false;
                 break;
             case MANUAL: //todo still need to refactor manual?
-                if(manualBeaterEnable) {
-                    if(!manualBeaterEject) {
+                if (manualBeaterEnable) {
+                    if (!manualBeaterEject) {
                         beater.setPower(1);
                         beaterTargetVelocity = BEATER_INGEST_VELOCITY;
-                    }
-                    else {
+                    } else {
                         beater.setPower(1);
-                        beaterTargetVelocity= BEATER_EJECT_VELOCITY;
+                        beaterTargetVelocity = BEATER_EJECT_VELOCITY;
                     }
-                }
-                else { //manual override was disabled externally, return to Travel
-                    manualBeaterEject=false;
+                } else { //manual override was disabled externally, return to Travel
+                    manualBeaterEject = false;
                     articulation = Articulation.TRAVEL;
                 }
                 break;
             case SWALLOW:
                 if (swallow())
+                    articulation = Articulation.TRAVEL;
+                break;
+            case SETTLE:
+                if (settle())
                     articulation = Articulation.TRAVEL;
                 break;
             case HANG:
@@ -252,12 +278,12 @@ public class Intake implements Subsystem {
                 articulation = Articulation.MANUAL;
                 break;
             case INGEST:
-                if(ingest(ingestPixelHeight)) {
+                if (ingest(ingestPixelHeight)) {
                     articulation = Articulation.SWALLOW;
                 }
                 break;
             case EJECT:
-                if(eject()) {
+                if (eject()) {
                     articulation = Articulation.TRAVEL;
                 }
                 break;
@@ -272,7 +298,7 @@ public class Intake implements Subsystem {
         return articulation;
     }
 
-    public boolean isEating(){
+    public boolean isEating() {
         if (articulation.equals(Articulation.INGEST) || articulation.equals(Articulation.SWALLOW))
             return true;
         else return false;
@@ -280,25 +306,25 @@ public class Intake implements Subsystem {
 
     public void setAngle(int pwm) {
         angleTarget = pwm;
-        if(angleTarget < ANGLE_PWM_MIN) {
+        if (angleTarget < ANGLE_PWM_MIN) {
             angleTarget = ANGLE_PWM_MIN;
         }
-        if(angleTarget > ANGLE_PWM_MAX) {
+        if (angleTarget > ANGLE_PWM_MAX) {
             angleTarget = ANGLE_PWM_MAX;
         }
     }
 
-    public void setDiverters(DiverterState diverterState){
+    public void setDiverters(DiverterState diverterState) {
         this.diverterState = diverterState;
     }
-    public void setDiverters(PixelSensor ps, int height){
+
+    public void setDiverters(PixelSensor ps, int height) {
         diverterState = DiverterState.DELIVER_BOTH;
 
-        if(height == 0) {
+        if (height == 0) {
             if (ps.isLeft()) diverterState = DiverterState.DELIVER_RIGHT;
             else if (ps.isRight()) diverterState = DiverterState.DELIVER_LEFT;
-        }
-        else {
+        } else {
             if (ps.isNone())
                 diverterState = DiverterState.DELIVER_LEFT;
             else if (ps.isLeft()) diverterState = DiverterState.DELIVER_RIGHT;
@@ -307,10 +333,12 @@ public class Intake implements Subsystem {
         //default to both
 
     }
-    public DiverterState getDiverters(){
+
+    public DiverterState getDiverters() {
         return diverterState;
     }
-    public boolean diverters(){
+
+    public boolean diverters() {
         switch (diverterState) {
             case DELIVER_BOTH:
                 diverterRight.setPosition(Utils.servoNormalize(RIGHT_DIVERTER_OPEN));
@@ -328,16 +356,16 @@ public class Intake implements Subsystem {
         return true;
     }
 
-    public boolean ingest(int height){ //height is expected to be changed externally
+    public boolean ingest(int height) { //height is expected to be changed externally
         setDiverters(pixelSensor, height);
         angleTarget = PixelStack.getByIndex(Range.clip(height - pixelSensor.count, 0, 4)).angle;
-        switch(ingestStage) {
+        switch (ingestStage) {
             case 0:
                 beaterTargetVelocity = BEATER_INGEST_VELOCITY;
                 ingestTimer = futureTime(3);
                 ingestStage++;
             case 1:
-                if(isPast(ingestTimer)) {
+                if (isPast(ingestTimer)) {
                     Sensors.pixelSensorEnabled = true;
                     if (Robot.sensors.leftPixelSensorValue < 1) {
                         pixelSensorLeft();
@@ -356,11 +384,12 @@ public class Intake implements Subsystem {
         }
         return false;
     }
+
     int swallowStage = 0;
     long swallowTimer;
 
     public boolean swallow() {
-        switch (swallowStage){
+        switch (swallowStage) {
             case 0://todo swallow timing values have not been validated
                 //todo, add some safety checking, like is the scoopagon docked?
                 pixelSensorClear();
@@ -380,9 +409,53 @@ public class Intake implements Subsystem {
                 break;
             case 2:
                 beaterTargetVelocity = 0; //stop beater
-                swallowStage=0;
+                swallowStage = 0;
                 //don't need to set next angle since that's the job of the state this resolves to
                 return true;
+        }
+        return false;
+    }
+
+    int settleStage = 0;
+    long settleTimer;
+    int settleRepeats = 0;
+
+    public boolean settle() {
+        switch (settleStage) {
+            case 0:
+                pixelSensorClear();
+                diverterState = DiverterState.DELIVER_BOTH;
+                angleTarget = ANGLE_SWALLOW;
+                if (settleRepeats == 0)
+                    settleRepeats = 1;
+                manualBeaterEnable = false;
+                manualBeaterEject = false;
+                beaterTargetVelocity = BEATER_SWALLOW_VELOCITY;
+                settleTimer = futureTime(TIME_SWALLOW);
+                settleStage++;
+                break;
+            case 1:
+                if (isPast(settleTimer))
+                    settleStage++;
+                break;
+            case 2:
+                beaterTargetVelocity = 0;
+                settleStage++;
+                break;
+            case 3:
+                beaterTargetVelocity = BEATER_SETTLE_EJECT_VELOCITY;
+                settleTimer = futureTime(.5);
+                settleStage++;
+                break;
+            case 4:
+                if (isPast(settleTimer)) {
+                    beaterTargetVelocity = 0;
+                    settleStage = 0;
+                    settleRepeats--;
+                    if (settleRepeats == 0)
+                        return true;
+                }
+                break;
         }
         return false;
     }
@@ -393,22 +466,23 @@ public class Intake implements Subsystem {
 
     int ejectState = 0;
     double ejectTimer = TIME_EJECT;
+
     public boolean eject() {
-        switch (ejectState){
+        switch (ejectState) {
             case 0: //todo timing values in eject() have not been validated
                 angleTarget = ANGLE_EJECT;
                 ejectTimer = futureTime(1); //time for angle to set
                 ejectState++;
                 break;
             case 1:
-                if (isPast(ejectTimer)){
+                if (isPast(ejectTimer)) {
                     beaterTargetVelocity = BEATER_EJECT_VELOCITY;
                     ejectTimer = futureTime(TIME_EJECT);
                     ejectState++;
                 }
                 break;
             case 2:
-                if (isPast(ejectTimer)){
+                if (isPast(ejectTimer)) {
                     beaterTargetVelocity = 0;
                     ejectState = 0;
                     articulation = Articulation.INIT;
@@ -432,7 +506,8 @@ public class Intake implements Subsystem {
     public void toggleBeaterEnable() {
         manualBeaterEnable = !manualBeaterEnable;
     }
-    public void toggleBeaterDirection(){
+
+    public void toggleBeaterDirection() {
         manualBeaterEject = !manualBeaterEject;
     }
 
@@ -445,7 +520,7 @@ public class Intake implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("pixelsensor state", pixelSensor.name());
-        if(Sensors.pixelSensorEnabled) {
+        if (Sensors.pixelSensorEnabled) {
             telemetryMap.put("leftPixelSensor", Robot.sensors.leftPixelSensorValue);
             telemetryMap.put("rightPixelSensor", Robot.sensors.rightPixelSensorValue);
         }

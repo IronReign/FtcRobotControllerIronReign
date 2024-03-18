@@ -84,154 +84,8 @@ public class MeepMeepAlt {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        int randomizer = 3; //1, 2 or 3
+        int randomizer = 2; //1, 2 or 3
         Pose2d p;
-
-        /*startingPosition = Position.START_LEFT_RED;
-        p = startingPosition.getPose();
-        selectedPath = setPath(startingPosition, randomizer, driverSide);
-        System.out.println("selected path:\t" + selectedPath);
-        System.out.println("audience intermediate:\t" + audienceIntermediate);
-        System.out.println(autonPaths[2][4]);
-
-        Action bot1Action, bot2Action, bot3Action, bot4Action;
-            bot1Action =
-                    myBot.getDrive().actionBuilder(p)
-
-                            //step 1 - go to purple eject location
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 2 - sweep team prop = lower intake, rotate and eject
-                            //for meepmeep this is just the rotation
-                            //step 3 - turn to get ready for next spline
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-                            //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            //steps 6, 7, 8 - run to pixelstack
-                            .setReversed(false)
-                            .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
-                            .waitSeconds(1)
-                            //steps 9, 10, 11 - return to backdrop
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][11].position), switchSides(autonPaths[selectedPath][11].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
-                            .build();
-        //bot2 - builder identical to bot1 - when adjusting the build, do it for bot1 and copy to the other bots
-        startingPosition = Position.START_RIGHT_BLUE;
-        p = startingPosition.getPose();
-        selectedPath = setPath(startingPosition, randomizer, driverSide);
-            bot2Action =
-                    myBot.getDrive().actionBuilder(p)
-
-                            //step 1 - go to purple eject location
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 2 - sweep team prop = lower intake, rotate and eject
-                            //for meepmeep this is just the rotation
-                            //step 3 - turn to get ready for next spline
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-                            //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            //steps 6, 7, 8 - run to pixelstack
-                            .setReversed(false)
-                            .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
-                            .waitSeconds(1)
-                            //steps 9, 10, 11 - return to backdrop
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][11].position), switchSides(autonPaths[selectedPath][11].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
-                            .build();
-
-        startingPosition = Position.START_LEFT_BLUE;
-        p = startingPosition.getPose();
-        selectedPath = setPath(startingPosition, randomizer, driverSide);
-            bot3Action =
-                    myBot.getDrive().actionBuilder(p)
-
-                            //step 1 - go to purple eject location
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 2 - sweep team prop = lower intake, rotate and eject
-                            //for meepmeep this is just the rotation
-                            //step 3 - turn to get ready for next spline
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-                            //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            //steps 6, 7, 8 - run to pixelstack
-                            .setReversed(false)
-                            .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
-                            .waitSeconds(1)
-                            //steps 9, 10, 11 - return to backdrop
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][11].position), switchSides(autonPaths[selectedPath][11].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
-                            .build();
-
-        startingPosition = Position.START_RIGHT_RED;
-        p = startingPosition.getPose();
-        selectedPath = setPath(startingPosition, randomizer, driverSide);
-            bot4Action =
-                    myBot.getDrive().actionBuilder(p)
-
-                            //step 1 - go to purple eject location
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
-                            .waitSeconds(1) //not needed in real path
-                            //step 2 - sweep team prop = lower intake, rotate and eject
-                            //for meepmeep this is just the rotation
-                            //step 3 - turn to get ready for next spline
-                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-                            //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][6].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            //steps 6, 7, 8 - run to pixelstack
-                            .setReversed(false)
-                            .splineTo(switchSides(autonPaths[selectedPath][7].position), switchSides(autonPaths[selectedPath][7].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][8].position), switchSides(autonPaths[selectedPath][8].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][9].position), switchSides(autonPaths[selectedPath][9].heading.log()))
-                            .waitSeconds(1)
-                            //steps 9, 10, 11 - return to backdrop
-                            .setReversed(true)
-                            .splineTo(switchSides(autonPaths[selectedPath][10].position), switchSides(autonPaths[selectedPath][10].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][11].position), switchSides(autonPaths[selectedPath][11].heading.log()))
-                            .splineTo(switchSides(autonPaths[selectedPath][12].position), switchSides(autonPaths[selectedPath][12].heading.log()))
-                            .turnTo(P2D(0, 0, STANDARD_HEADING).heading.log())
-                            .waitSeconds(1)
-                            .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
-                            .build();
-*/
 
         startingPosition = Position.START_LEFT_RED;
         p = startingPosition.getPose();
@@ -269,7 +123,7 @@ public class MeepMeepAlt {
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][11].position), STANDARD_HEADING_RAD)
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][12].position), STANDARD_HEADING_RAD)
                         .waitSeconds(1)
-                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection))
                         .build();
 
         //bot2 - builder identical to bot1 - when adjusting the build, do it for bot1 and copy to the other bots
@@ -304,7 +158,7 @@ public class MeepMeepAlt {
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][11].position), STANDARD_HEADING_RAD)
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][12].position), STANDARD_HEADING_RAD)
                         .waitSeconds(1)
-                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection))
                         .build();
 
         startingPosition = Position.START_LEFT_BLUE;
@@ -338,7 +192,7 @@ public class MeepMeepAlt {
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][11].position), STANDARD_HEADING_RAD)
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][12].position), STANDARD_HEADING_RAD)
                         .waitSeconds(1)
-                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection))
                         .build();
 
         startingPosition = Position.START_RIGHT_RED;
@@ -372,7 +226,7 @@ public class MeepMeepAlt {
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][11].position), STANDARD_HEADING_RAD)
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][12].position), STANDARD_HEADING_RAD)
                         .waitSeconds(1)
-                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection * (selectedPath > 3 ? 1 : -1)))
+                        .strafeTo(new Vector2d(switchSides(autonPaths[selectedPath][6].position).x, switchSides(autonPaths[selectedPath][6].position).y + 20 * allianceDirection))
                         .build();
 
         myBot2.runAction(bot2Action);
@@ -453,7 +307,7 @@ public class MeepMeepAlt {
         aprilTagAlignClose = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x - 1,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)),
                 0);
         aprilTagAlignCrossed = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((randomizer - 2) * -allianceDirection * aprilTagOffset)), Math.toRadians(-90));
-        pixelStack = P2D(-2.25, driverSide?1.5:.5, STANDARD_HEADING);
+        pixelStack = P2D(-2.4, driverSide?1.5:.5, STANDARD_HEADING);
 
         //assemble the paths
         autonPaths[1][1] = P2D(-2, driverSide?1.75:.5, 90);
