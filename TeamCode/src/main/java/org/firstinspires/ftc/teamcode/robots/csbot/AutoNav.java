@@ -27,6 +27,10 @@ public class AutoNav implements TelemetryProvider{
     public static boolean intaking;
     public static boolean backdropSide = true;
     int preferredRoute = 3;
+    int intakeIndex = 0;
+    int outtakeIndex = 0;
+
+
 
     AutoNav(Robot robot, Field field) {
         this.robot = robot;
@@ -41,8 +45,11 @@ public class AutoNav implements TelemetryProvider{
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
-        telemetryMap.put("Prefered Route", preferredRoute);
-        telemetryMap.put("Cycling", cycling);
+        telemetryMap.put("Prefered Route\t", preferredRoute);
+        telemetryMap.put("Cycling\t", cycling);
+        telemetryMap.put("intaking\t", intaking);
+        telemetryMap.put("intakeindex\t", intakeIndex);
+        telemetryMap.put("outtakeindex", outtakeIndex);
         return telemetryMap;
     }
 
@@ -77,7 +84,6 @@ public class AutoNav implements TelemetryProvider{
     }
 
     SequentialAction pathToRetrieval;
-    int intakeIndex = 0;
     public boolean retrieve(TelemetryPacket packet, int preferredRoute, boolean wing) {
         switch (intakeIndex) {
             case 0:
@@ -89,7 +95,7 @@ public class AutoNav implements TelemetryProvider{
                 intakeIndex++;
                 break;
             case 1:
-                if(pathToRetrieval.run(packet)) {
+                if(!pathToRetrieval.run(packet)) {
                     //set intake to ingest and drive forward very slowly
                     robot.articulate(Robot.Articulation.INGEST);
                     robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.1, 0), 0));
@@ -108,7 +114,6 @@ public class AutoNav implements TelemetryProvider{
     }
 
     public SequentialAction pathToDelivery;
-    int outtakeIndex = 0;
     public boolean deliver(TelemetryPacket packet, int preferredRoute, int targetIndex) {
         switch (outtakeIndex) {
             case 0:
@@ -119,7 +124,7 @@ public class AutoNav implements TelemetryProvider{
                 intakeIndex++;
                 break;
             case 1:
-                if(pathToDelivery.run(packet)) {
+                if(!pathToDelivery.run(packet)) {
                     //deploy outtake and drive backward very slowly
                     robot.articulate(Robot.Articulation.BACKDROP_PREP);
                     Robot.sensors.distanceSensorsEnabled = true;
@@ -129,7 +134,7 @@ public class AutoNav implements TelemetryProvider{
                 break;
             case 2:
                 //todo - change to a more robust exit condition, this assumes pixels have been scored when dist is small
-                if(robot.sensors.averageDistSensorValue < 10) {
+                if(robot.sensors.averageDistSensorValue < 8) {
                     Robot.sensors.distanceSensorsEnabled = false;
                     robot.articulate(Robot.Articulation.TRAVEL_FROM_BACKDROP);
                     outtakeIndex ++;
@@ -316,7 +321,7 @@ public class AutoNav implements TelemetryProvider{
                 }
                 break;
             case 4:
-                if(driveToHang.run(new TelemetryPacket())) {
+                if(!driveToHang.run(new TelemetryPacket())) {
                     autoEndgameIndex++;
                 }
                 break;

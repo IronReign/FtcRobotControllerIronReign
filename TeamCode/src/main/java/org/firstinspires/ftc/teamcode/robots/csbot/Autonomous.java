@@ -613,7 +613,7 @@ public class Autonomous implements TelemetryProvider {
                 case 12:
                     autonState = AutonState.SCORE_DRIVE;
                     robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.2, 0), 0));
-                    if (robot.driveTrain.rightDistanceSensorValue < 10 || isPast(futureTimer)) {
+                    if (robot.driveTrain.rightDistanceSensorValue < 8 || isPast(futureTimer)) {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                         robot.articulate(Robot.Articulation.TRAVEL_FROM_BACKDROP);
                         Sensors.distanceSensorsEnabled = false;
@@ -666,7 +666,7 @@ public class Autonomous implements TelemetryProvider {
                 case 18:
                     autonState = AutonState.SCORE_DRIVE;
                     robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.2, 0), 0));
-                    if (robot.driveTrain.rightDistanceSensorValue < 10 || isPast(futureTimer)) {
+                    if (robot.driveTrain.rightDistanceSensorValue < 8 || isPast(futureTimer)) {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                         robot.articulate(Robot.Articulation.TRAVEL_FROM_BACKDROP);
                         Sensors.distanceSensorsEnabled = false;

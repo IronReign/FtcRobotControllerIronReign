@@ -427,7 +427,7 @@ public class Intake implements Subsystem {
                 diverterState = DiverterState.DELIVER_BOTH;
                 angleTarget = ANGLE_SWALLOW;
                 if (settleRepeats == 0)
-                    settleRepeats = 3;
+                    settleRepeats = 1;
                 manualBeaterEnable = false;
                 manualBeaterEject = false;
                 beaterTargetVelocity = BEATER_SWALLOW_VELOCITY;

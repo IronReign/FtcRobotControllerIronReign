@@ -239,10 +239,10 @@ public class DriverControls {
             robot.articulate(Robot.Articulation.LAUNCH_DRONE);
         }
         if (gamepad2.left_trigger > .1) {
-            robot.outtake.adjustElevator(-robot.outtake.ELEVATOR_ADJUST_ANGLE);
+            robot.outtake.adjustElbow(-robot.outtake.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad2.right_trigger > .1) {
-            robot.outtake.adjustElevator(robot.outtake.ELEVATOR_ADJUST_ANGLE);
+            robot.outtake.adjustElbow(robot.outtake.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad2.left_bumper) {
             robot.outtake.adjustWrist(-robot.outtake.WRIST_ADJUST_ANGLE);
@@ -321,6 +321,9 @@ public class DriverControls {
                 robot.visionProviderBack.setRedAlliance(true);
 //            robot.visionProviderBack.initializeVision(hardwareMap); // this is blocking
 
+        }
+        if(stickyGamepad1.start){
+            Constants.driverSide = !Constants.driverSide;
         }
 
         if(stickyGamepad1.y) {

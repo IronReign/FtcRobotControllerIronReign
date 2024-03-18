@@ -38,7 +38,7 @@ public class CenterStage_6832 extends OpMode {
     //GLOBAL STATES
     public static boolean active;
     //whether we have the ability to autonav or not
-    public static boolean AUTONAV_ENABLED = false;
+    public static boolean AUTONAV_ENABLED = true;
     //whether we are autonaving or not
     public static boolean autoNavOn = false;
     public static boolean autoEndgameOn = false;
@@ -380,6 +380,9 @@ public class CenterStage_6832 extends OpMode {
         //IF NECESSARY, ADD TELEMETRY FOR EACH GAME STATE
         switch(gameState) {
             case TELE_OP:
+                if(autoNavOn){
+                    handleTelemetry(autoNav.getTelemetry(debugTelemetryEnabled), autoNav.getTelemetryName(), packet);
+                }
                 break;
             case AUTONOMOUS:
                 handleTelemetry(auton.getTelemetry(debugTelemetryEnabled),  auton.getTelemetryName(), packet);
