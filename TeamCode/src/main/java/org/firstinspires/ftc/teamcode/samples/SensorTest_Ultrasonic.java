@@ -29,13 +29,8 @@
 
 package org.firstinspires.ftc.teamcode.samples;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 /*
  * This file contains an example of an iterative (Non-Linear) "OpMode".
@@ -63,16 +58,20 @@ public class SensorTest_Ultrasonic extends OpMode
      */
     @Override
     public void init() {
-        ultra = new US_016Sensor(hardwareMap,0,1);
+        ultra = new US_016Sensor(hardwareMap);
     }
 
 
     @Override
     public void init_loop() {
-        telemetry.addData("Analog Voltage", ultra.analogInput.getVoltage());
-        telemetry.addData("Distance in Inches \t", ultra.analogInput.getVoltage() * ultra.INCHES_PER_VOLT);
-        telemetry.addData("Mode? \t", ultra.digitalChannel.getMode());
-        telemetry.addData("Digital State \t", ultra.digitalChannel.getState());
+        telemetry.addData("Analog Voltage Left", ultra.analogInputLeft.getVoltage());
+        telemetry.addData("Distance in Inches Left \t", ultra.analogInputLeft.getVoltage() * ultra.INCHES_PER_VOLT);
+        telemetry.addData("Left Mode? \t", ultra.digitalChannelLeft.getMode());
+        telemetry.addData("Left Digital State \t", ultra.digitalChannelLeft.getState());
+        telemetry.addData("Analog Voltage Right", ultra.analogInputRight.getVoltage());
+        telemetry.addData("Distance in Inches Right \t", ultra.analogInputRight.getVoltage() * ultra.INCHES_PER_VOLT);
+        telemetry.addData("Right Mode? \t", ultra.digitalChannelRight.getMode());
+        telemetry.addData("Right Digital State \t", ultra.digitalChannelRight.getState());
     }
 
     /*
