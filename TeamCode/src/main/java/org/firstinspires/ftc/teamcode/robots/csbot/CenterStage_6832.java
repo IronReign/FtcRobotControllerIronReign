@@ -31,7 +31,7 @@ public class CenterStage_6832 extends OpMode {
     static Autonomous auton;
     private FtcDashboard dashboard;
     public static Field field;
-    DriverControls dc;
+    public static DriverControls dc;
     static AutoNav autoNav;
 
 
@@ -170,10 +170,12 @@ public class CenterStage_6832 extends OpMode {
         frontAuton = Constants.driverSide? true: (startingPosition.equals(Constants.Position.START_RIGHT_RED) || startingPosition.equals(Constants.Position.START_LEFT_BLUE)) ? true : false;
 
         int blobLocation;
-        if(frontAuton)
+        if(frontAuton) {
             blobLocation = robot.visionProviderFront.getMostFrequentPosition().getIndex();
-        else
+        } else {
             blobLocation = robot.visionProviderBack.getMostFrequentPosition().getIndex();
+        }
+
 
         if(frontAuton && blobLocation == -1) {
             blobLocation = 2;
@@ -197,8 +199,8 @@ public class CenterStage_6832 extends OpMode {
 
     private void initVision() {
         robot.enableVision();
-        robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
-        robot.visionProviderFront.setRedAlliance(startingPosition.getMod());
+        robot.visionProviderBack.setRedAlliance(startingPosition.isRed());
+        robot.visionProviderFront.setRedAlliance(startingPosition.isRed());
         robot.frontVision = frontAuton;
     }
 

@@ -313,7 +313,7 @@ public class Autonomous implements TelemetryProvider {
             audienceIntermediate = P2D(1, .5, -10);
             audienceIntermediateForward = P2D(1.5, .5, STANDARD_HEADING);
             audienceIntermediateDeep = P2D(1.5, .5, -10);
-            allianceDirection = startingPosition.getMod() ? -1 : 1;
+            allianceDirection = startingPosition.isRed() ? -1 : 1;
             parkAudience = P2D(2.5, -0.5, STANDARD_HEADING);
             parkBackDrop = P2D(2, -2.45, STANDARD_HEADING);
 
@@ -395,7 +395,7 @@ public class Autonomous implements TelemetryProvider {
             driverSidePrep = P2D(1, 2.5, -10);
             driverSidePrepForward = P2D(1, 2.5, STANDARD_HEADING);
             audienceIntermediateDeep = P2D(driverSide?1:1.5,driverSide?2.5:.5,-10);
-            allianceDirection = startingPosition.getMod()? -1 : 1;
+            allianceDirection = startingPosition.isRed()? -1 : 1;
 
             //aprilTagAlign = new Pose2d (new Vector2d(switchSides(aprilTagApproachPosition.position).x,switchSides(aprilTagApproachPosition.position).y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
 //        aprilTagAlign = new Pose2d (new Vector2d(aprilTagApproachPosition.position.x,aprilTagApproachPosition.position.y + ((targetAprilTagIndex - 2) *-allianceDirection* aprilTagOffset)), 0);
@@ -613,13 +613,19 @@ public class Autonomous implements TelemetryProvider {
                 case 12:
                     autonState = AutonState.SCORE_DRIVE;
                     robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.2, 0), 0));
-                    if (robot.driveTrain.rightDistanceSensorValue < 8 || isPast(futureTimer)) {
+                    if (robot.sensors.averageDistSensorValue < 8 || isPast(futureTimer)) {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                         robot.articulate(Robot.Articulation.TRAVEL_FROM_BACKDROP);
                         Sensors.distanceSensorsEnabled = false;
-                        driveToPixelStackBuild();
-                        futureTimer = futureTime(1);
-                        autonIndex++;
+                        if(!alliance.isRed()){
+                            strafeToParkBuild();
+                            autonIndex = 19;
+                        }
+                        else {
+                            driveToPixelStackBuild();
+                            futureTimer = futureTime(1);
+                            autonIndex++;
+                        }
                     }
                     break;
                 case 13:

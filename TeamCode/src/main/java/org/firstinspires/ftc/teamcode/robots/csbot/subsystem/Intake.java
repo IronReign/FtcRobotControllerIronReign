@@ -13,6 +13,8 @@ import com.qualcomm.robotcore.util.Range;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
+import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
+import org.firstinspires.ftc.teamcode.robots.csbot.DriverControls;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 
 import java.util.LinkedHashMap;
@@ -37,6 +39,8 @@ public class Intake implements Subsystem {
     public static int ANGLE_TRAVEL = 1500; //safe to travel through backstage door
     public static double TIME_SWALLOW = 1;
     public static double TIME_EJECT = 2;
+    public boolean leftRumbled = false;
+    public boolean rightRumbled = false;
 
     //CONSTANTS
     HardwareMap hardwareMap;
@@ -368,13 +372,24 @@ public class Intake implements Subsystem {
                 if (isPast(ingestTimer)) {
                     Sensors.pixelSensorEnabled = true;
                     if (Robot.sensors.leftPixelSensorValue < 1) {
+                        if(!leftRumbled) {
+                            CenterStage_6832.dc.rumble(1, 500);
+                            leftRumbled = true;
+                        }
                         pixelSensorLeft();
                     }
                     if (Robot.sensors.rightPixelSensorValue < 1) {
+                        if(!rightRumbled) {
+                            CenterStage_6832.dc.rumble(1, 500);
+                            rightRumbled = true;
+                        }
                         pixelSensorRight();
                     }
                     //if a pixel is detected
                     if (pixelSensor.count > 1) {
+                        rightRumbled = false;
+                        leftRumbled = false;
+                        CenterStage_6832.dc.rumble(1, 2000);
                         Sensors.pixelSensorEnabled = false;
                         pixelSensorClear();
                         ingestStage = 0;

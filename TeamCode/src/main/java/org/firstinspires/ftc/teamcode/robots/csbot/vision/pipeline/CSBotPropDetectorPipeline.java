@@ -50,12 +50,13 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
     private double largestArea;
     private volatile Position lastPosition;
     public boolean isRedAlliance = false;
-    public static boolean isFront = false;
+    public boolean isFront = false;
 
     // Constants
     public static int VIEW_OPEN_CV_PIPELINE_STAGE = 6;
     public static int TOP_LEFT_X = 0, TOP_LEFT_Y = 0;
     public static int BOTTOM_RIGHT_X = 1280, BOTTOM_RIGHT_Y = 600;
+    public static int FRONTCAM_BOTTOM_RIGHT_X = 800;
     public static double NORMALIZE_ALPHA = 51.0, NORMALIZE_BETA = 261.0;
     public static double BLUR_RADIUS = 7;
     public static double RED_ALLIANCE_HUE_MIN = 90, RED_ALLIANCE_HUE_MAX = 120;
@@ -95,12 +96,6 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
         largestArea = -1;
         lastPosition = Position.HOLD;
         this.isFront = isFront;
-        if(isFront) {
-            BOTTOM_RIGHT_X = 800;
-        }
-        else {
-            BOTTOM_RIGHT_X = 1280;
-        }
         BOTTOM_RIGHT_Y = 720;
     }
 
@@ -114,7 +109,7 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
         frameCans.clear();
 
         // Step crop (stage 1):
-        cropOutput = input.submat(new Rect(new Point(TOP_LEFT_X, TOP_LEFT_Y), new Point(BOTTOM_RIGHT_X, BOTTOM_RIGHT_Y)));
+        cropOutput = input.submat(new Rect(new Point(TOP_LEFT_X, TOP_LEFT_Y), new Point(isFront? FRONTCAM_BOTTOM_RIGHT_X : BOTTOM_RIGHT_X, BOTTOM_RIGHT_Y)));
 
         // Step Normalize0 (stage 2):
         normalizeInput = cropOutput;

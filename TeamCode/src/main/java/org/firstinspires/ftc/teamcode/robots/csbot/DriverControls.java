@@ -86,6 +86,13 @@ public class DriverControls {
                 && gamepad2.right_stick_x < DEADZONE && gamepad2.right_stick_x < DEADZONE;
     }
 
+    public void rumble(int gamepad, int duration){
+        if(gamepad == 1)
+            gamepad1.rumble(duration);
+        else
+            gamepad2.rumble(duration);
+    }
+
     public void joystickDrive() {
 
         //GAMEPAD 1 CONTROLS
@@ -303,7 +310,7 @@ public class DriverControls {
         if (stickyGamepad1.x || stickyGamepad2.x) {
             visionProviderFinalized = false;
             alliance = Constants.Alliance.BLUE;
-                    startingPosition = startingPosition.getMod() == false ?
+                    startingPosition = startingPosition.isRed() == false ?
                             startingPosition :
                             startingPosition == Constants.Position.START_LEFT_RED ?
                                     Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
@@ -314,7 +321,7 @@ public class DriverControls {
         if (stickyGamepad1.b || stickyGamepad2.b) {
             alliance = Constants.Alliance.RED;
             visionProviderFinalized = false;
-            startingPosition = startingPosition.getMod() == true ?
+            startingPosition = startingPosition.isRed() == true ?
                     startingPosition :
                     startingPosition == Constants.Position.START_LEFT_BLUE ?
                             Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;

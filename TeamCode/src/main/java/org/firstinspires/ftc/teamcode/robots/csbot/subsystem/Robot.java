@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.dc;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
@@ -79,6 +80,7 @@ public class  Robot implements Subsystem {
     public boolean fetched;
 
     public void backdropRelocalize() {
+        driveTrain.RELOCALIZE_WITH_IMU = false;
         distanceSensorRelocalize();
         frontVision = false;
         if(backVisionProviderIndex == 0){
@@ -98,8 +100,11 @@ public class  Robot implements Subsystem {
         Sensors.distanceSensorsEnabled = true;
         if(sensors.averageDistSensorValue < 30) {
             double distDiff = Math.abs(sensors.rightDistSensorValue - sensors.leftDistSensorValue);
-            double heading = Math.PI - Math.asin(distDiff / Math.hypot(driveTrain.DISTANCE_BETWEEN_DISTANCE_SENSORS, distDiff));
+            double heading = Math.PI -
+                    Math.asin(distDiff / Math.hypot(driveTrain.DISTANCE_BETWEEN_DISTANCE_SENSORS, distDiff))
+                    *((sensors.leftDistSensorValue > sensors.rightDistSensorValue)? 1 : 1);
             driveTrain.pose = new Pose2d(driveTrain.pose.position, heading);
+            Sensors.distanceSensorsEnabled = false;
             }
         }
 
@@ -219,6 +224,8 @@ public class  Robot implements Subsystem {
             aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
             aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, 0);
             driveTrain.pose = new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading);
+            dc.rumble(1, 3000);
+            dc.rumble(2, 3000);
         }
     }
 

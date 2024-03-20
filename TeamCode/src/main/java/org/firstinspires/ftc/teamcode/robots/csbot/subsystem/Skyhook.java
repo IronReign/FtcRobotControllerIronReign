@@ -35,13 +35,12 @@ public class Skyhook implements Subsystem {
     public static int PREP_FOR_HANG_TICKS = 0;
     public int droneServoTicks = 1500;
     public static int DRONE_TENSION_TICKS = 1435;
-    public static int DRONE_RELEASE_TICKS = 1700;
+    public static int DRONE_RELEASE_TICKS = 1900;
     public static int SKYHOOK_SAFE_TICKS = 1200;
     public static int SKYHOOK_UP_TICKS = 0;
     public PIDController dronelaunchPID;
     public static PIDCoefficients DRONELAUNCH_PID_PWR = new PIDCoefficients(0.03, 0.04, 0);
     public static double DRONELAUNCH_PID_TOLERANCE = .08;
-    public static PIDCoefficients droneLaunchCoefficients;
     private double PIDCorrection, PIDError;
     public static double DRONE_LAUNCH_ANGLE = 57;
     DcMotorEx kareem, jabbar;
@@ -51,6 +50,7 @@ public class Skyhook implements Subsystem {
     public static int SKYHOOK_INIT_TICKS = 800;
 
     public static double SKYHOOK_POWER = 1;
+    private boolean manualDrone = true;
 
     public enum Articulation {
         HANG,
@@ -89,11 +89,12 @@ public class Skyhook implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
-        if(droneLoaded)
-            droneServoTicks = DRONE_TENSION_TICKS;
-        else
-            droneServoTicks = DRONE_RELEASE_TICKS;
-
+        if(manualDrone) {
+            if (droneLoaded)
+                droneServoTicks = DRONE_TENSION_TICKS;
+            else
+                droneServoTicks = DRONE_RELEASE_TICKS;
+        }
         switch (articulation) {
             case PREP_FOR_HANG:
                 skyhookLeftTicks = PREP_FOR_HANG_TICKS;
@@ -138,36 +139,40 @@ public class Skyhook implements Subsystem {
 
     public static long launchTimer = 0;
     public static int launchIndex = 0;
-    public static double SKYHOOK_LAUNCH_TIMER = 2;
+    public static double SKYHOOK_LAUNCH_TIMER = 3;
     public boolean launch() {
         droneLauncher.setPosition(Utils.servoNormalize(droneServoTicks));
         skyhookRight.setTargetPosition(skyhookRightTicks);
         skyhookLeft.setTargetPosition(skyhookLeftTicks);
         switch (launchIndex) {
             case 0:
+                manualDrone = false;
                 launchTimer = futureTime(SKYHOOK_LAUNCH_TIMER);
                 Sensors.skyhookIMUEnabled = true;
                 launchIndex ++;
                 break;
             case 1:
+                skyhookRightTicks = SKYHOOK_LAUNCH_TICKS;
+                skyhookLeftTicks = SKYHOOK_LAUNCH_TICKS;
                 launchIndex ++;
-                dronelaunchPID.setPID(DRONELAUNCH_PID_PWR);
-                dronelaunchPID.setInput(wrapAngle(Robot.sensors.skyhookIMUPitch));
-                dronelaunchPID.setSetpoint(DRONE_LAUNCH_ANGLE);
-                dronelaunchPID.setOutputRange(-.8, .8);
-                dronelaunchPID.setTolerance(DRONELAUNCH_PID_TOLERANCE);
-                double correction = dronelaunchPID.performPID();
-                PIDCorrection = correction;
-                PIDError = dronelaunchPID.getError();
-                if (dronelaunchPID.onTarget()) {
-//                    skyhookRight.setVelocity();
-//                    skyhookLeft.setVelocity();
-                    Sensors.skyhookIMUEnabled = false;
-                } else {
-                    dronelaunchPID.enable();
-//                    skyhookRight.setVelocity();
-//                    skyhookLeft.setVelocity();
-                }
+//                launchIndex ++;
+//                dronelaunchPID.setPID(DRONELAUNCH_PID_PWR);
+//                dronelaunchPID.setInput(wrapAngle(Robot.sensors.skyhookIMUPitch));
+//                dronelaunchPID.setSetpoint(DRONE_LAUNCH_ANGLE);
+//                dronelaunchPID.setOutputRange(-.8, .8);
+//                dronelaunchPID.setTolerance(DRONELAUNCH_PID_TOLERANCE);
+//                double correction = dronelaunchPID.performPID();
+//                PIDCorrection = correction;
+//                PIDError = dronelaunchPID.getError();
+//                if (dronelaunchPID.onTarget()) {
+////                    skyhookRight.setVelocity();
+////                    skyhookLeft.setVelocity();
+//                    Sensors.skyhookIMUEnabled = false;
+//                } else {
+//                    dronelaunchPID.enable();
+////                    skyhookRight.setVelocity();
+////                    skyhookLeft.setVelocity();
+//                }
                 break;
             case 2:
                 if(isPast(launchTimer)) {
@@ -178,12 +183,13 @@ public class Skyhook implements Subsystem {
                 }
                 break;
             case 3:
-                if(isPast(launchTimer)){
-                    resetDrone();
+//                if(isPast(launchTimer)){
+//                    resetDrone();
                     launchIndex++;
-                }
+//                }
                 break;
             case 4:
+                manualDrone = true;
                 launchIndex = 0;
                 return true;
 

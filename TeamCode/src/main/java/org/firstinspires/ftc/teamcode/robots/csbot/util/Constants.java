@@ -43,15 +43,15 @@ public class Constants {
     public enum Alliance {
         RED(true), BLUE(false);
 
-        private boolean mod;
+        private boolean isRed;
 
-        Alliance(boolean mod) {
-            this.mod = mod;
+        Alliance(boolean isRed) {
+            this.isRed = isRed;
         }
         public boolean isRed() {
-            return mod;
+            return isRed;
         }
-        public void Toggle(){this.mod = !this.mod;}
+        public void Toggle(){this.isRed = !this.isRed;}
     }
 
     public enum Position {
@@ -62,7 +62,7 @@ public class Constants {
         START_LEFT_BLUE(P2D(.5, 2.6, -90));
         private final Pose2d pose;
 
-        public boolean getMod() {
+        public boolean isRed() {
             return this.name() == START_LEFT_RED.name() || this.name() == START_RIGHT_RED.name() ?  true : false;
         }
 
