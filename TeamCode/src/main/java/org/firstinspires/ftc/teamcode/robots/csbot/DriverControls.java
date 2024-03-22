@@ -101,7 +101,7 @@ public class DriverControls {
             robot.outtake.scoreX -= robot.outtake.IK_ADJUST_INCHES;
             if(robot.outtake.scoreX < 4)
                 robot.outtake.scoreX = 4;
-            robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
+            robot.outtake.IKadjust(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
         else if (gamepad1.left_trigger > .1) {
             if(robot.outtake.elevator.getCurrentAngle() > 0 && robot.outtake.scoreZ == 16) {
@@ -113,13 +113,13 @@ public class DriverControls {
             if(robot.outtake.scoreZ < 16)
                 robot.outtake.scoreZ = 16;
             robot.outtake.elevatorIKAngle = robot.outtake.elevator.getTargetAngle();
-            robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
+            robot.outtake.IKadjust(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
         if (shifted(gamepad1) && gamepad1.right_trigger > .1) {
             robot.outtake.scoreX += robot.outtake.IK_ADJUST_INCHES;
             if(robot.outtake.scoreX > 15)
                 robot.outtake.scoreX = 15;
-            robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
+            robot.outtake.IKadjust(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
         else if (gamepad1.right_trigger > .1) {
             robot.outtake.scoreZ += robot.outtake.IK_ADJUST_INCHES;
@@ -128,7 +128,7 @@ public class DriverControls {
                 robot.outtake.adjustElevator(Outtake.ELEVATOR_ADJUST_ANGLE);
             }
             robot.outtake.elevatorIKAngle = robot.outtake.elevator.getTargetAngle();
-            robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
+            robot.outtake.IKadjust(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
 
         if(shifted(gamepad1) && stickyGamepad1.a) {

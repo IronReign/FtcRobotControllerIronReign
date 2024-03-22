@@ -49,7 +49,7 @@ public class Outtake implements Subsystem {
     private double theta, top, bottom, frac;
 
     public static int flipperPosition = 1888;
-    private boolean ikCalculated;
+    public static boolean ikCalculated = false;
 
 
     public void setSlideTargetPosition(int slideTargetPosition) {
@@ -62,9 +62,11 @@ public class Outtake implements Subsystem {
     public static int slidePositionPreDock = 500;
     public static int slidePositionDocked = 0;
     public static int slidePositionScore = 400;
-    public static double scoreZ = 16;
+    public static double scoreZ = 14;
     public static double scoreX = 4;
-    public static double elevatorIKAngle = 0;
+    public static double elevatorIKAngle = 10;
+    public static double wristIKAngle = 0;
+    public static double elbowIKAngle = 0;
 
 
     int slideSpeed = 15;
@@ -246,17 +248,39 @@ public class Outtake implements Subsystem {
         if(Double.isNaN(wristTargetAngle) || Double.isNaN(elbowTargetAngle)) {
             wristTargetAngle = 0;//maxes the height of the outtake
             elbowTargetAngle = 90 + Math.toDegrees(Math.atan2(armHeight, armBase));// maxes the height of the outtake
-            wrist.setTargetAngle(wristTargetAngle);
-            elbow.setTargetAngle(elbowTargetAngle);
+            wristIKAngle = wristTargetAngle;
+            elbowIKAngle = elbowTargetAngle;
             return false;
         }
         else {
-            wrist.setTargetAngle(wristTargetAngle);
-            elbow.setTargetAngle(elbowTargetAngle);
+            wristIKAngle = wristTargetAngle;
+            elbowIKAngle = elbowTargetAngle;
             return true;
         }
     }
 
+    public void IKadjust(double x, double z) {
+        armTheta = Math.atan2(armHeight, armBase);
+        x = x/Math.cos(armTheta);
+        z = z/Math.cos(armTheta);
+//        x-=(slide.getCurrentPosition()/slideTicksPerInch)*Math.cos(armTheta);
+        z-=(slide.getCurrentPosition()/slideTicksPerInch)*Math.sin(armTheta);
+        z-=armHeight;
+        wristTargetAngle = Math.toDegrees(Math.acos((Math.pow(x, 2)+Math.pow(z, 2)-Math.pow(elbowLength, 2)-Math.pow(wristLength, 2))/(2*elbowLength*wristLength)));
+        double b = Math.toDegrees(Math.acos((Math.pow(wristLength, 2)-Math.pow(elbowLength, 2)-Math.pow(x, 2)-Math.pow(z, 2))/(-2*elbowLength*Math.hypot(x, z))));
+        double a = Math.toDegrees(Math.atan2(z, x));
+        elbowTargetAngle = 180+Math.toDegrees(Math.atan2(armHeight, armBase))-a-b;
+        if(Double.isNaN(wristTargetAngle) || Double.isNaN(elbowTargetAngle)) {
+            wristTargetAngle = 0;//maxes the height of the outtake
+            elbowTargetAngle = 90 + Math.toDegrees(Math.atan2(armHeight, armBase));// maxes the height of the outtake
+            wrist.setTargetAngle(wristTargetAngle);
+            elbow.setTargetAngle(elbowTargetAngle);
+        }
+        else {
+            wrist.setTargetAngle(wristTargetAngle);
+            elbow.setTargetAngle( elbowTargetAngle);
+        }
+    }
     public int ingestPositionIndex = 0;
     public long ingestPositionTimer = 0;
 
@@ -320,35 +344,34 @@ public class Outtake implements Subsystem {
             case 0:
                 slideTargetPosition = slidePositionPreDock;
                 if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionPreDock, 30)) {
-                    backdropPrepTimer = futureTime(BACKDROP_PREP_TIMER);
 //                    Sensors.distanceSensorsEnabled = true;
                     ELBOW_JOINT_SPEED = 10;
                     WRIST_JOINT_SPEED = 20;
+                    elbowWristIK(scoreX, scoreZ);
                     backdropPrepStage++;
                 }
                 break;
             case 1:
-//                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
-//                wrist.setTargetAngle(WRIST_START_ANGLE);
                 elevator.setTargetAngle(elevatorIKAngle);
+                wrist.setTargetAngle(wristIKAngle);
+                backdropPrepTimer = futureTime(1);
+                backdropPrepStage ++;
 //                scoreX = (Robot.sensors.averageDistSensorValue);
-                if(!ikCalculated) {
-                    elbowWristIK(scoreX, scoreZ);
-                    ikCalculated = true;
-                }
-                if (isPast(backdropPrepTimer)) {
-//                    Sensors.distanceSensorsEnabled = false;
-                    ikCalculated = false;
+                break;
+            case 2:
+
+                if(isPast(backdropPrepTimer)) {
+                    elbow.setTargetAngle(elbowIKAngle);
                     backdropPrepStage++;
                 }
                 break;
-            case 2:
+            case 3:
                 slideTargetPosition = slidePositionScore;
                 if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionScore, 30)) {
                     backdropPrepStage++;
                 }
                 break;
-            case 3:
+            case 4:
                 backdropPrepStage = 0;
                 backdropPrepTimer = 0;
                 ELBOW_JOINT_SPEED = 60;
