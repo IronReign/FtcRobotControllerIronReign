@@ -104,7 +104,7 @@ public class DriverControls {
             robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
         else if (gamepad1.left_trigger > .1) {
-            if(robot.outtake.elevator.getCurrentAngle() > 0 && robot.outtake.scoreZ == 21) {
+            if(robot.outtake.elevator.getCurrentAngle() > 0 && robot.outtake.scoreZ == 16) {
                 robot.outtake.adjustElevator(-Outtake.ELEVATOR_ADJUST_ANGLE);
             }
             else {
@@ -112,6 +112,7 @@ public class DriverControls {
             }
             if(robot.outtake.scoreZ < 16)
                 robot.outtake.scoreZ = 16;
+            robot.outtake.elevatorIKAngle = robot.outtake.elevator.getTargetAngle();
             robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
         if (shifted(gamepad1) && gamepad1.right_trigger > .1) {
@@ -126,6 +127,7 @@ public class DriverControls {
                 robot.outtake.scoreZ = 21;
                 robot.outtake.adjustElevator(Outtake.ELEVATOR_ADJUST_ANGLE);
             }
+            robot.outtake.elevatorIKAngle = robot.outtake.elevator.getTargetAngle();
             robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
 
@@ -352,7 +354,7 @@ public class DriverControls {
             robot.visionProviderFinalized = !robot.visionProviderFinalized;
         }
 
-        if(stickyGamepad1.dpad_down){
+        if(stickyGamepad1.dpad_down || stickyGamepad2.dpad_down){
             Skyhook.droneLoaded = !Skyhook.droneLoaded;
         }
 

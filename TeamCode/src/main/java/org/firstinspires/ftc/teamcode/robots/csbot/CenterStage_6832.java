@@ -178,11 +178,11 @@ public class CenterStage_6832 extends OpMode {
 
 
         if(frontAuton && blobLocation == -1) {
-            blobLocation = 2;
+            blobLocation = alliance.isRed()?2:0;
         }
         auton.saveRandomizer(blobLocation);
-
-        robot.initPosition();
+        if(gameState.isAutonomous())
+            robot.initPosition();
         robot.driveTrain.updatePoseEstimate();
 
         telemetry.addData("blobLocation", blobLocation);
@@ -340,6 +340,7 @@ public class CenterStage_6832 extends OpMode {
 
     @Override
     public void stop(){
+        gameState = GameState.TELE_OP;
         robot.stop();
     }
 

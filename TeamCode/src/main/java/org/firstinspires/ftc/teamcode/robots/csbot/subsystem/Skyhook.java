@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -30,11 +31,11 @@ public class Skyhook implements Subsystem {
     public static int skyhookRightTicks = 0;
     public static int skyhookLeftTicks = 0;
     public static int SKYHOOK_HANG_TICKS = 450;
-    public static int SKYHOOK_LAUNCH_TICKS = 340;
+    public static int SKYHOOK_LAUNCH_TICKS = 750;
     public static boolean droneLoaded = true;
     public static int PREP_FOR_HANG_TICKS = 0;
     public int droneServoTicks = 1500;
-    public static int DRONE_TENSION_TICKS = 1435;
+    public static int DRONE_TENSION_TICKS = 1390;
     public static int DRONE_RELEASE_TICKS = 1900;
     public static int SKYHOOK_SAFE_TICKS = 1200;
     public static int SKYHOOK_UP_TICKS = 0;
@@ -45,6 +46,7 @@ public class Skyhook implements Subsystem {
     public static double DRONE_LAUNCH_ANGLE = 57;
     DcMotorEx kareem, jabbar;
     IMU skyhookIMU;
+    RevTouchSensor rightTouchSensor, leftTouchSensor;
     public DcMotorExResetable skyhookLeft, skyhookRight;
     public Servo droneLauncher;
     public static int SKYHOOK_INIT_TICKS = 800;
@@ -68,6 +70,8 @@ public class Skyhook implements Subsystem {
         this.hardwareMap = hardwareMap;
         this.robot = robot;
         initMotors();
+        leftTouchSensor = hardwareMap.get(RevTouchSensor.class, "leftTouchSensor");
+        rightTouchSensor = hardwareMap.get(RevTouchSensor.class, "rightTouchSensor");
         droneLauncher = hardwareMap.get(Servo.class, "droneLauncher");
         droneServoTicks = DRONE_TENSION_TICKS;
         skyhookIMU = hardwareMap.get(IMU.class, "skyhookIMU");
@@ -128,13 +132,15 @@ public class Skyhook implements Subsystem {
             SKYHOOK_POWER = 0;
             articulation = Articulation.MANUAL;
         }else {
-            skyhookRight.setTargetPosition(skyhookRightTicks);
-            skyhookLeft.setTargetPosition(skyhookLeftTicks);
+            if(!robot.initing) {
+                skyhookRight.setTargetPosition(skyhookRightTicks);
+                skyhookLeft.setTargetPosition(skyhookLeftTicks);
+            }
         }
-
-        skyhookLeft.setPower(SKYHOOK_POWER);
-        skyhookRight.setPower(SKYHOOK_POWER);
-
+        if(!robot.initing) {
+            skyhookLeft.setPower(SKYHOOK_POWER);
+            skyhookRight.setPower(SKYHOOK_POWER);
+        }
     }
 
     public static long launchTimer = 0;
@@ -220,16 +226,18 @@ public class Skyhook implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
 
+        telemetryMap.put("leftTouch", robot.sensors.leftTouchSensor);
+        telemetryMap.put("rightTouch", robot.sensors.rightTouchSensor);
+
         telemetryMap.put("skyhook right amps", skyhookRight.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("skyhook left amps", skyhookLeft.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("articulation", articulation);
         telemetryMap.put("skyhookLeftTicks", skyhookLeftTicks);
         telemetryMap.put("skyhookLeftActual", skyhookLeft.getCurrentPosition());
-        telemetryMap.put("kareemActual", kareem.getCurrentPosition());
         telemetryMap.put("skyhookLeftTarget", skyhookLeft.getTargetPosition());
-        telemetryMap.put("kareemTarget", kareem.getTargetPosition());
+        telemetryMap.put("skyhookRightTicks", skyhookRightTicks);
         telemetryMap.put("skyhookRightActual", skyhookRight.getCurrentPosition());
-        telemetryMap.put("jabbarActual", jabbar.getCurrentPosition());
+        telemetryMap.put("skyhookRightTarget", skyhookRight.getTargetPosition());
         telemetryMap.put("droneTicks", droneServoTicks);
         telemetryMap.put("droneStage", launchIndex);
         telemetryMap.put("skyhookIMU", robot.sensors.skyhookIMUPitch);

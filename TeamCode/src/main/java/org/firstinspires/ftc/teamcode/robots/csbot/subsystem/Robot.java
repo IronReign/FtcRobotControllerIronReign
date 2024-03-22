@@ -19,6 +19,7 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
@@ -47,6 +48,8 @@ public class  Robot implements Subsystem {
     public Subsystem[] subsystems;
     public static Sensors sensors;
     public DriveTrain driveTrain;
+    public static boolean drawFieldEnabled = true;
+
     public Skyhook skyhook;
     public Intake intake;
     public VisionProvider visionProviderBack, visionProviderFront;
@@ -70,6 +73,7 @@ public class  Robot implements Subsystem {
 
     public static double DISTANCE_FROM_CAMERA_TO_CENTER_X = 16;// In inches
     public static double DISTANCE_FROM_CAMERA_TO_CENTER_Y = 5.25;
+    public boolean initing = false;
 
     private long[] subsystemUpdateTimes;
     private List<LynxModule> hubs = null;
@@ -181,7 +185,7 @@ public class  Robot implements Subsystem {
         articulate(articulation);
         driveTrain.updatePoseEstimate();
 
-        if(debugTelemetryEnabled)
+        if(drawFieldEnabled)
             drawRobot(fieldOverlay, driveTrain.pose);
 
         //update subsystems
@@ -289,26 +293,61 @@ public class  Robot implements Subsystem {
     public void initPosition() {
         switch (initPositionIndex) {
             case 0:
+                initing = true;
                 intake.articulate(Intake.Articulation.MANUAL);
                 initPositionTimer = futureTime(1);
+                skyhook.skyhookLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                skyhook.skyhookRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                skyhook.skyhookRight.setPower(-1);
+                skyhook.skyhookLeft.setPower(-1);
                 initPositionIndex++;
                 break;
             case 1:
                 intake.setAngle(Intake.ANGLE_GROUND);
-//                if(isPast(initPositionTimer)) {
-//                    initPositionTimer = futureTime(1);
-//                    initPositionIndex ++;
+//                if(isPast(initPositionTimer)){
+                    initPositionIndex++;
 //                }
                 break;
             case 2:
                 outtake.slideTargetPosition = Outtake.UNTUCK_SLIDE_POSITION;
+                outtake.setTargetAngle(Outtake.ELBOW_START_ANGLE, Outtake.WRIST_INIT_ANGLE, Outtake.ELEVATOR_START_ANGLE);
+                Sensors.touchSensorsEnabled = true;
+//                skyhook.skyhookLeft.setVelocity(100);
+//                skyhook.skyhookRight.setVelocity(100);
+                initPositionIndex ++;
 //                if (isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
 //                    initPositionIndex ++;
 //                }
                 break;
             case 3:
-                outtake.setTargetAngle(Outtake.ELBOW_START_ANGLE, Outtake.WRIST_INIT_ANGLE, Outtake.ELEVATOR_START_ANGLE);
+                if(sensors.rightTouchSensor){
+                    skyhook.skyhookRight.setPower(0);
+
+                }
+                else skyhook.skyhookRight.setPower(-.08);
+
+                if(sensors.leftTouchSensor){
+                    skyhook.skyhookLeft.setPower(0);
+                }
+                else skyhook.skyhookLeft.setPower(-.2);
+
+                if(sensors.leftTouchSensor && sensors.rightTouchSensor){
+                    skyhook.skyhookRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    skyhook.skyhookRight.setVelocity(0);
+                    skyhook.skyhookRight.setPower(Skyhook.SKYHOOK_POWER);
+                    skyhook.skyhookRight.setTargetPosition(0);
+                    skyhook.skyhookRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    skyhook.skyhookRight.setPosition(0);
+                    skyhook.skyhookLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    skyhook.skyhookLeft.setVelocity(0);
+                    skyhook.skyhookLeft.setPower(Skyhook.SKYHOOK_POWER);
+                    skyhook.skyhookLeft.setTargetPosition(0);
+                    skyhook.skyhookLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    skyhook.skyhookLeft.setPosition(0);
+                    Sensors.touchSensorsEnabled = false;
+                    initPositionIndex ++;
+                }
                 //                if (isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
 //                    initPositionIndex ++;
@@ -316,12 +355,14 @@ public class  Robot implements Subsystem {
                 break;
             case 4:
                 outtake.slideTargetPosition = 0;
+                initPositionIndex ++;
                 break;
             case 5:
                 //todo load cached skyhook positions
                 //this is the only way to work across power cycles until we incorporate a limit switch calibration
-                skyhook.skyhookLeft.setPosition(0);
-                skyhook.skyhookRight.setPosition(0);
+//                skyhook.skyhookLeft.setPosition(0);
+//                skyhook.skyhookRight.setPosition(0);
+                initing = false;
                 skyhook.articulate(Skyhook.Articulation.INIT);
                 break;
             case 6:

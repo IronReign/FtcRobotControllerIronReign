@@ -60,8 +60,8 @@ public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
     public static double NORMALIZE_ALPHA = 51.0, NORMALIZE_BETA = 261.0;
     public static double BLUR_RADIUS = 7;
     public static double RED_ALLIANCE_HUE_MIN = 90, RED_ALLIANCE_HUE_MAX = 120;
-    public static double RED_ALLIANCE_SATURATION_MIN = 120, RED_ALLIANCE_SATURATION_MAX = 140;
-    public static double RED_ALLIANCE_VALUE_MIN = 110, RED_ALLIANCE_VALUE_MAX = 255;
+    public static double RED_ALLIANCE_SATURATION_MIN = 60, RED_ALLIANCE_SATURATION_MAX = 140;
+    public static double RED_ALLIANCE_VALUE_MIN = 100, RED_ALLIANCE_VALUE_MAX = 255;
 //    public static double BLUE_ALLIANCE_HUE_MIN = 0, BLUE_ALLIANCE_HUE_MAX = 50;
 //    public static double BLUE_ALLIANCE_SATURATION_MIN = 100, BLUE_ALLIANCE_SATURATION_MAX = 190;
 //    public static double BLUE_ALLIANCE_VALUE_MIN = 80, BLUE_ALLIANCE_VALUE_MAX = 180;

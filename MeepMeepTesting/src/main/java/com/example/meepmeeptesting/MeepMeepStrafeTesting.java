@@ -99,12 +99,12 @@ public class MeepMeepStrafeTesting {
 
                         .setReversed(true)
                         //step 1 - go to purple eject location
-                        .splineTo(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
                         .waitSeconds(1) //not needed in real path
                         //step 2 - sweep team prop = lower intake, rotate and eject
                         //for meepmeep this is just the rotation
                         .waitSeconds(1) //not needed in real path
-                        .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
+//                        .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
                         //step 3 - turn to get ready for next spline
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][3].heading.log()))
                         //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
@@ -132,12 +132,12 @@ public class MeepMeepStrafeTesting {
                 myBot2.getDrive().actionBuilder(p)
                         .setReversed(true)
                         //step 1 - go to purple eject location
-                        .splineTo(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
+                        .strafeToLinearHeading(switchSides(autonPaths[selectedPath][1].position), switchSides(autonPaths[selectedPath][1].heading.log()))
                         .waitSeconds(1) //not needed in real path
                         //step 2 - sweep team prop = lower intake, rotate and eject
                         //for meepmeep this is just the rotation
                         .waitSeconds(1) //not needed in real path
-                        .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
+//                        .turnTo(switchSides(autonPaths[selectedPath][2].heading.log()))
                         //step 3 - turn to get ready for next spline
                         .strafeToLinearHeading(switchSides(autonPaths[selectedPath][3].position), switchSides(autonPaths[selectedPath][3].heading.log()))
                         //steps 4 & 5 - travel through 1 or 2 final waypoints and then a final correction
@@ -282,7 +282,7 @@ public class MeepMeepStrafeTesting {
         if(randomizer == 0)
             randomizer = 2;
         aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
-        audienceIntermediate = P2D(1,.5,-10);
+        audienceIntermediate = P2D(1.5,.5,-10);
         audienceIntermediateForward = P2D(1.5, .5, STANDARD_HEADING);
         audienceIntermediateDeep = P2D(1.5,.5,-10);
         allianceDirection = startingPosition.getMod()? -1 : 1;
@@ -299,7 +299,7 @@ public class MeepMeepStrafeTesting {
         pixelStack = P2D(-2.25, .5, STANDARD_HEADING);
 
         //assemble the paths
-        autonPaths[1][1] = P2D(-2, .5, 90);
+        autonPaths[1][1] = P2D(-2, .5, -90);
         autonPaths[1][2] = P2D(0, 0, -90);
         autonPaths[1][3] = P2D(-1.7, .5, STANDARD_HEADING);
         autonPaths[1][4] = audienceIntermediate;
@@ -309,8 +309,8 @@ public class MeepMeepStrafeTesting {
         autonPaths[1][8] = audienceIntermediate;
         autonPaths[1][9] = aprilTagAlign;
 
-        autonPaths[2][1] = P2D(-1.2, .43, 47);
-        autonPaths[2][2] = P2D(0, 0, -90-35);
+        autonPaths[2][1] = P2D(-1.5, .3, -90);
+        autonPaths[2][2] = P2D(0, 0, -90);
         autonPaths[2][3] = P2D(-1.7, .5, STANDARD_HEADING);
         autonPaths[2][4] = audienceIntermediate;
         autonPaths[2][5] = aprilTagAlign;
@@ -319,7 +319,7 @@ public class MeepMeepStrafeTesting {
         autonPaths[2][8] = audienceIntermediate;
         autonPaths[2][9] = aprilTagAlign;
 
-        autonPaths[3][1] = P2D(-1.7, 1, 90);
+        autonPaths[3][1] = P2D(-1.7, 1, -30);
         autonPaths[3][2] = P2D(0, 0, -30);
         autonPaths[3][3] = P2D(-1.7, .5, STANDARD_HEADING);
         autonPaths[3][4] = audienceIntermediateDeep;

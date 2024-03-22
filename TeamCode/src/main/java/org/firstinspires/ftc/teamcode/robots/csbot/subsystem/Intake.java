@@ -26,7 +26,7 @@ public class Intake implements Subsystem {
     public static int LEFT_DIVERTER_OPEN = 1050;
     public static int LEFT_DIVERTER_CLOSED = 1650;
     public static int RIGHT_DIVERTER_CLOSED = 1050;
-    public static int ANGLE_GROUND = 1940; //where the intake hits the ground
+    public static int ANGLE_GROUND = 1980; //where the intake hits the ground
     public static int ANGLE_INGEST_INCREMENT = 20;
     public static int ANGLE_START = 1190;
     public static int ANGLE_PWM_MAX = ANGLE_GROUND + ANGLE_INGEST_INCREMENT; //just below ground
@@ -60,7 +60,7 @@ public class Intake implements Subsystem {
 
     public static double beaterTargetVelocity = 0;
 
-    int angleTarget = ANGLE_GROUND;
+    public static int angleTarget = ANGLE_GROUND;
     private int ingestPixelHeight = 0;  //the height at which to start ingesting pixels. Normally 0 for ground but could be 4 for top pixel in a stack
     private int ingestStage = 0;
     private long ingestTimer = 0;
@@ -80,7 +80,7 @@ public class Intake implements Subsystem {
     }
 
     public enum PixelStack {
-        GROUND(0, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT), //the minus is to force it harder into the tiles //1940
+        GROUND(0, ANGLE_INGEST_GROUND), //the minus is to force it harder into the tiles //1940
         TWO(1, ANGLE_INGEST_GROUND - (ANGLE_INGEST_INCREMENT + 10)), //1910
         THREE(2, ANGLE_INGEST_GROUND - (ANGLE_INGEST_INCREMENT * 2 + 10)), //1890
         FOUR(3, ANGLE_INGEST_GROUND - (ANGLE_INGEST_INCREMENT * 3 + 10)), //1870

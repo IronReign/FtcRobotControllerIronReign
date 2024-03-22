@@ -62,6 +62,7 @@ public class Outtake implements Subsystem {
     public static int slidePositionScore = 400;
     public static double scoreZ = 16;
     public static double scoreX = 4;
+    public static double elevatorIKAngle = 0;
 
 
     int slideSpeed = 15;
@@ -107,7 +108,7 @@ public class Outtake implements Subsystem {
     public static double WRIST_START_ANGLE = 0;
     public static double WRIST_TRAVEL_ANGLE = WRIST_START_ANGLE;
 
-    public static double WRIST_INIT_ANGLE = 70;
+    public static double WRIST_INIT_ANGLE = 60;
     public static double WRIST_SCORE_ANGLE = 180;
 
     public static double WRIST_JOINT_SPEED = 50;
@@ -218,6 +219,7 @@ public class Outtake implements Subsystem {
         slide.setTargetPosition(0);
         slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slide.setVelocity(SLIDE_SPEED);
+        elevatorIKAngle = 0;
         scoreX = 4;
         scoreZ = 16;
 
@@ -319,14 +321,15 @@ public class Outtake implements Subsystem {
                 if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionPreDock, 30)) {
                     backdropPrepTimer = futureTime(1);
 //                    Sensors.distanceSensorsEnabled = true;
-                    ELBOW_JOINT_SPEED = 30;
-                    WRIST_JOINT_SPEED = 40;
+                    ELBOW_JOINT_SPEED = 10;
+                    WRIST_JOINT_SPEED = 20;
                     backdropPrepStage++;
                 }
                 break;
             case 1:
 //                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
 //                wrist.setTargetAngle(WRIST_START_ANGLE);
+                elevator.setTargetAngle(elevatorIKAngle);
 //                scoreX = (Robot.sensors.averageDistSensorValue);
                 if(!ikCalculated) {
                     elbowWristIK(scoreX, scoreZ);

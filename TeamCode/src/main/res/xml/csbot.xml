@@ -4,6 +4,8 @@
         <LynxModule name="Control Hub" port="173">
             <Servo name="diverterRight" port="5" />
             <AdafruitBNO055IMU name="skyhookIMU" port="1" bus="1" />
+            <RevTouchSensor name="leftTouchSensor" port="1" />
+            <RevTouchSensor name="rightTouchSensor" port="3" />
             <RevRobotics20HDHexMotor name="rightFront" port="0" />
             <RevRobotics20HDHexMotor name="rightBack" port="1" />
             <RevRobotics20HDHexMotor name="leftBack" port="2" />
