@@ -98,7 +98,7 @@ public class Autonomous implements TelemetryProvider {
     boolean testRunToWing = true;
 
     public static double FIELD_INCHES_PER_GRID = 23.5;
-    public static double AUTON_START_DELAY = 5;
+    public static double AUTON_START_DELAY = 0;
 
     double STANDARD_HEADING = 180;
     Pose2d aprilTagApproachPosition;
@@ -305,7 +305,6 @@ public class Autonomous implements TelemetryProvider {
     }
 
     public int setPath(Constants.Position startingPosition, int randomizer, boolean driverSide) { // 1, 2 or 3 for randomized prop
-        autonIndex = 0;
         if (randomizer == 0)
             randomizer = 2;
 //        if(randomizer == 3){
@@ -587,7 +586,7 @@ public class Autonomous implements TelemetryProvider {
                 case 7:
                     autonState = AutonState.APRILTAG_RELOCALIZE;
                     robot.enableVision();
-                    futureTimer = futureTime(5);
+                    futureTimer = futureTime(0);
                     autonIndex++;
                     break;
                 case 8:
@@ -614,7 +613,7 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 11:
                     autonState = AutonState.SCORE_DRIVE;
-                    if (robot.outtake.articulation.equals(Outtake.Articulation.TRAVEL)) {
+                    if (robot.outtake.articulation.equals(Outtake.Articulation.TRAVEL_FROM_BACKDROP)) {
                         Sensors.distanceSensorsEnabled = true;
                         futureTimer = futureTime(2);
                         autonIndex++;

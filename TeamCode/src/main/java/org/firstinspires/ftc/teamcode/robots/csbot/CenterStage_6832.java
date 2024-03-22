@@ -171,7 +171,7 @@ public class CenterStage_6832 extends OpMode {
 
         int blobLocation;
         if(frontAuton) {
-            blobLocation = robot.visionProviderFront.getMostFrequentPosition().getIndex();
+            blobLocation = robot.visionProviderFront.getPosition().getIndex();
         } else {
             blobLocation = robot.visionProviderBack.getMostFrequentPosition().getIndex();
         }
