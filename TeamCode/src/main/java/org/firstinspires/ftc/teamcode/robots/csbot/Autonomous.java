@@ -259,7 +259,7 @@ public class Autonomous implements TelemetryProvider {
         if (!Constants.driverSide) {
             strafeToPark = new SequentialAction(
                     robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                            .strafeTo(new Vector2d(robot.driveTrain.pose.position.x, switchSides(autonPaths[selectedPath][5].position).y+20*-allianceDirection))
+                            .strafeTo(new Vector2d(robot.driveTrain.pose.position.x, switchSides(autonPaths[selectedPath][5].position).y+20*allianceDirection))
                             .build()
             );
         } else {
@@ -374,7 +374,7 @@ public class Autonomous implements TelemetryProvider {
             autonPaths[4][8] = audienceIntermediate;
             autonPaths[4][9] = aprilTagAlign;
 
-            autonPaths[5][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID, 1.7, 90);
+            autonPaths[5][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID, 1.6, 90);
             autonPaths[5][2] = P2D(0, 0, 170);
             autonPaths[5][3] = P2D(-1.7, .5, STANDARD_HEADING);
             autonPaths[5][4] = aprilTagAlignClose;
@@ -536,7 +536,10 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 1:
                     autonState = AutonState.TRAVEL_TO_PURPLE;
-                    robot.intake.articulate(Intake.Articulation.INIT);
+                    if(!(frontAuton&&targetIndex==2)) {
+                        robot.intake.articulate(Intake.Articulation.INIT);
+                    }
+                    else robot.intake.articulate(Intake.Articulation.DOWN);
                     if (isPast(futureTimer)) {
                         if (!driveToPurplePixel.run(packet)) {
                             robot.skyhook.articulate(Skyhook.Articulation.TRAVEL);
@@ -584,7 +587,7 @@ public class Autonomous implements TelemetryProvider {
                 case 7:
                     autonState = AutonState.APRILTAG_RELOCALIZE;
                     robot.enableVision();
-                    futureTimer = futureTime(0);
+                    futureTimer = futureTime(5);
                     autonIndex++;
                     break;
                 case 8:

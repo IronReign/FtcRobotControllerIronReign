@@ -208,9 +208,13 @@ public class DriverControls {
             }
         }
 
-        if (stickyGamepad1.dpad_down) {
+        if (shifted(gamepad1) && stickyGamepad1.dpad_down) {
+            fieldOrientedDrive = !fieldOrientedDrive;
+        }
+        else if(stickyGamepad1.dpad_down) {
             robot.outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
         }
+
         // ------------------------------------------------------------------
 
         //GAMEPAD 2 CONTROLS

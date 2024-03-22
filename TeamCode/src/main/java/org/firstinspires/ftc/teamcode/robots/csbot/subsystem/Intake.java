@@ -26,17 +26,17 @@ public class Intake implements Subsystem {
     public static int LEFT_DIVERTER_OPEN = 1050;
     public static int LEFT_DIVERTER_CLOSED = 1650;
     public static int RIGHT_DIVERTER_CLOSED = 1050;
-    public static int ANGLE_GROUND = 1980; //where the intake hits the ground
+    public static int ANGLE_GROUND = 2020; //where the intake hits the ground
     public static int ANGLE_INGEST_INCREMENT = 20;
-    public static int ANGLE_START = 1190;
+    public static int ANGLE_START = 995;
     public static int ANGLE_PWM_MAX = ANGLE_GROUND + ANGLE_INGEST_INCREMENT; //just below ground
     public static int ANGLE_PWM_MIN = ANGLE_START;
     public static int ANGLE_INGEST_GROUND = ANGLE_GROUND;
 
-    public static int ANGLE_EJECT = 1870;
-    public static int ANGLE_HANG = 1450;
-    public static int ANGLE_SWALLOW = 1540;
-    public static int ANGLE_TRAVEL = 1500; //safe to travel through backstage door
+    public static int ANGLE_EJECT = 1960;
+    public static int ANGLE_HANG = 1600;
+    public static int ANGLE_SWALLOW = 1390;
+    public static int ANGLE_TRAVEL = 1490; //safe to travel through backstage door
     public static double TIME_SWALLOW = 1;
     public static double TIME_EJECT = 2;
     public boolean leftRumbled = false;
@@ -55,7 +55,7 @@ public class Intake implements Subsystem {
     public static double BEATER_INGEST_VELOCITY = 1700;
 
     public static double BEATER_SWALLOW_VELOCITY = 300;
-    public static double BEATER_EJECT_VELOCITY = -800;
+    public static double BEATER_EJECT_VELOCITY = -500;
     public static double BEATER_SETTLE_EJECT_VELOCITY = -400;
 
     public static double beaterTargetVelocity = 0;
@@ -80,11 +80,11 @@ public class Intake implements Subsystem {
     }
 
     public enum PixelStack {
-        GROUND(0, ANGLE_INGEST_GROUND), //the minus is to force it harder into the tiles //1940
-        TWO(1, ANGLE_INGEST_GROUND - (ANGLE_INGEST_INCREMENT + 10)), //1910
-        THREE(2, ANGLE_INGEST_GROUND - (ANGLE_INGEST_INCREMENT * 2 + 10)), //1890
-        FOUR(3, ANGLE_INGEST_GROUND - (ANGLE_INGEST_INCREMENT * 3 + 10)), //1870
-        FIVE(4, ANGLE_INGEST_GROUND - (ANGLE_INGEST_INCREMENT * 4 + 10)); //1850
+        GROUND(0, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT), //the minus is to force it harder into the tiles //1940
+        TWO(1, ANGLE_INGEST_GROUND - (ANGLE_INGEST_INCREMENT)-5), //2000
+        THREE(2, ANGLE_INGEST_GROUND - (ANGLE_INGEST_INCREMENT * 2)), //1975
+        FOUR(3, ANGLE_INGEST_GROUND - (ANGLE_INGEST_INCREMENT * 3)), //1940
+        FIVE(4, ANGLE_INGEST_GROUND - (ANGLE_INGEST_INCREMENT * 4)-5); //1915
         //1880 is top pixel
 
         private final int value;
@@ -204,7 +204,8 @@ public class Intake implements Subsystem {
         angleRight = hardwareMap.get(Servo.class, "intakeAngleRight");
         pixelSensorRight = hardwareMap.get(DistanceSensor.class, "rightPixelSensor");
         pixelSensorLeft = hardwareMap.get(DistanceSensor.class, "leftPixelSensor");
-        angleRight.setDirection(Servo.Direction.REVERSE);
+        angleRight.setDirection(Servo.Direction.FORWARD);
+        angleLeft.setDirection(Servo.Direction.REVERSE);
         beater.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 

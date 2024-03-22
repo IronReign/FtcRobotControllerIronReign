@@ -35,8 +35,8 @@ public class Skyhook implements Subsystem {
     public static boolean droneLoaded = true;
     public static int PREP_FOR_HANG_TICKS = 0;
     public int droneServoTicks = 1500;
-    public static int DRONE_TENSION_TICKS = 1390;
-    public static int DRONE_RELEASE_TICKS = 1900;
+    public static int DRONE_TENSION_TICKS = 1200;
+    public static int DRONE_RELEASE_TICKS = 1600;
     public static int SKYHOOK_SAFE_TICKS = 1200;
     public static int SKYHOOK_UP_TICKS = 0;
     public PIDController dronelaunchPID;

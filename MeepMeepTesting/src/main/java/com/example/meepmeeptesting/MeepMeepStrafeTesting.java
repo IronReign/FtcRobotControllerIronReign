@@ -339,7 +339,7 @@ public class MeepMeepStrafeTesting {
         autonPaths[4][8] = audienceIntermediate;
         autonPaths[4][9] = aprilTagAlign;
 
-        autonPaths[5][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID, 1.8, 90);
+        autonPaths[5][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID, 1.7, 90);
         autonPaths[5][2] = P2D(0, 0, 170);
         autonPaths[5][3] = P2D(-1.7, .5, STANDARD_HEADING);
         autonPaths[5][4] = aprilTagAlignClose;
@@ -349,7 +349,7 @@ public class MeepMeepStrafeTesting {
         autonPaths[5][8] = audienceIntermediate;
         autonPaths[5][9] = aprilTagAlign;
 
-        autonPaths[6][1] = P2D(1.4, 41.2 / 23.5 , 125);
+        autonPaths[6][1] = P2D(1.5, 41.2 / 23.5 , 125);
         autonPaths[6][2] = P2D(0, 0, STANDARD_HEADING);
         autonPaths[6][3] = P2D(-1.7, .5, STANDARD_HEADING);
         autonPaths[6][4] = aprilTagAlignClose;
