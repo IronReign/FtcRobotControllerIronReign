@@ -362,7 +362,7 @@ public class Autonomous implements TelemetryProvider {
             autonPaths[3][8] = audienceIntermediate;
             autonPaths[3][9] = aprilTagAlign;
 
-            autonPaths[4][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID+.3, 1.25, STANDARD_HEADING);
+            autonPaths[4][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID+.2, 1.25, STANDARD_HEADING);
             autonPaths[4][2] = P2D(0, 0, STANDARD_HEADING);
             autonPaths[4][3] = P2D(-1.7, .5, STANDARD_HEADING);
             autonPaths[4][4] = aprilTagAlignClose;
@@ -372,7 +372,7 @@ public class Autonomous implements TelemetryProvider {
             autonPaths[4][8] = audienceIntermediate;
             autonPaths[4][9] = aprilTagAlign;
 
-            autonPaths[5][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID, 1.6, 90);
+            autonPaths[5][1] = P2D(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID, 1.7, 90);
             autonPaths[5][2] = P2D(0, 0, 170);
             autonPaths[5][3] = P2D(-1.7, .5, STANDARD_HEADING);
             autonPaths[5][4] = aprilTagAlignClose;
@@ -382,7 +382,7 @@ public class Autonomous implements TelemetryProvider {
             autonPaths[5][8] = audienceIntermediate;
             autonPaths[5][9] = aprilTagAlign;
 
-            autonPaths[6][1] = P2D(1.4, 41.2 / 23.5 , 125);
+            autonPaths[6][1] = P2D(.4, 1.75 , 35);
             autonPaths[6][2] = P2D(0, 0, STANDARD_HEADING);
             autonPaths[6][3] = P2D(-1.7, .5, STANDARD_HEADING);
             autonPaths[6][4] = aprilTagAlignClose;
@@ -425,7 +425,7 @@ public class Autonomous implements TelemetryProvider {
             autonPaths[1][11] = driverSidePrep;
             autonPaths[1][12] = aprilTagAlign;
 
-            autonPaths[2][1] = P2D(driverSide?-1.5:-1.2, driverSide?1.8:.43, 90);
+            autonPaths[2][1] = P2D(driverSide?-1.5:-1.2, driverSide?1.75:.43, 90);
             autonPaths[2][2] = P2D(0, 0, driverSide?90:-90-35);
             autonPaths[2][3] = P2D(0, 0, driverSide?-90:STANDARD_HEADING);
             autonPaths[2][4] = P2D(-2, 2.5, STANDARD_HEADING);
@@ -439,7 +439,7 @@ public class Autonomous implements TelemetryProvider {
             autonPaths[2][12] = aprilTagAlign;
             System.out.println(switchSides(aprilTagAlign.position).y);
 
-            autonPaths[3][1] = P2D(-1.6, driverSide?1.75:1, driverSide?45:90);
+            autonPaths[3][1] = P2D(-1.6, driverSide?1.75:1, driverSide?25:90);
             autonPaths[3][2] = P2D(0, 0, driverSide?45:-30);
             autonPaths[3][3] = P2D(0, 0, -130);
             autonPaths[3][4] = P2D(-2, 2.5, STANDARD_HEADING);
@@ -452,7 +452,7 @@ public class Autonomous implements TelemetryProvider {
             autonPaths[3][11] = driverSidePrep;
             autonPaths[3][12] = aprilTagAlign;
 
-            autonPaths[4][1] = P2D(driverSide?.8:(startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID+.3), driverSide?1.3:1.25, driverSide?180:90);
+            autonPaths[4][1] = P2D((startingPosition.getPose().position.x/FIELD_INCHES_PER_GRID+.2), 1.25, STANDARD_HEADING);
             autonPaths[4][2] = P2D(0, 0, STANDARD_HEADING);
             autonPaths[4][3] = P2D(0, 0, STANDARD_HEADING);
             autonPaths[4][4] = P2D(.81, 1.31, 180);
@@ -478,7 +478,7 @@ public class Autonomous implements TelemetryProvider {
             autonPaths[5][11] = driverSidePrep;
             autonPaths[5][12] = aprilTagAlign;
 
-            autonPaths[6][1] = P2D(driverSide?.4:1.4, driverSide?1.75:41.2 / 23.5 , driverSide?45:-15);
+            autonPaths[6][1] = P2D(.4, 1.75 , 35);
             autonPaths[6][2] = P2D(0, 0, driverSide?45:125);
             autonPaths[6][3] = P2D(0, 0, STANDARD_HEADING);
             autonPaths[6][4] = P2D(.51, 1.76, STANDARD_HEADING);
@@ -534,7 +534,7 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 1:
                     autonState = AutonState.TRAVEL_TO_PURPLE;
-                    if(!((frontAuton&&targetIndex==2) ||(Constants.driverSide && alliance.isRed() && targetIndex == 1))) {
+                    if(!frontAuton) {
                         robot.intake.articulate(Intake.Articulation.INIT);
                     }
                     else robot.intake.articulate(Intake.Articulation.DOWN);
@@ -584,25 +584,25 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 7:
                     autonState = AutonState.APRILTAG_RELOCALIZE;
-//                    robot.enableVision();
+                    robot.enableVision();
                     futureTimer = futureTime(0);
                     autonIndex++;
                     break;
                 case 8:
-//                    robot.enableVision();
-//                    if (isPast(futureTimer) || robot.getAprilTagDetections() != null) {
-//                        robot.aprilTagRelocalization(targetAprilTagIndex);
-//                        robot.switchVisionProviders();
-//                        aprilTagStrafeBuild();
+                    robot.enableVision();
+                    if (isPast(futureTimer) || robot.getAprilTagDetections() != null) {
+                        robot.aprilTagRelocalization(targetAprilTagIndex);
+                        robot.switchVisionProviders();
+                        aprilTagStrafeBuild();
                         autonIndex++;
-//                    }
+                    }
                     break;
                 case 9:
                     autonState = AutonState.APRILTAG_STRAFE;
-//                    if (!aprilTagStrafe.run(packet)) {
+                    if (!aprilTagStrafe.run(packet)) {
                         robot.articulate(Robot.Articulation.BACKDROP_PREP);
                         autonIndex++;
-//                    }
+                    }
                     break;
                 case 10:
                     autonState = AutonState.SCORE_BACKDROP;

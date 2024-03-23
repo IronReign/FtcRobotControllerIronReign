@@ -31,12 +31,12 @@ public class Skyhook implements Subsystem {
     public static int skyhookRightTicks = 0;
     public static int skyhookLeftTicks = 0;
     public static int SKYHOOK_HANG_TICKS = 450;
-    public static int SKYHOOK_LAUNCH_TICKS = 750;
+    public static int SKYHOOK_LAUNCH_TICKS = 560;
     public static boolean droneLoaded = true;
     public static int PREP_FOR_HANG_TICKS = 0;
     public int droneServoTicks = 1500;
     public static int DRONE_TENSION_TICKS = 1200;
-    public static int DRONE_RELEASE_TICKS = 1600;
+    public static int DRONE_RELEASE_TICKS = 2000;
     public static int SKYHOOK_SAFE_TICKS = 1200;
     public static int SKYHOOK_UP_TICKS = 0;
     public PIDController dronelaunchPID;
@@ -183,6 +183,7 @@ public class Skyhook implements Subsystem {
             case 2:
                 if(isPast(launchTimer)) {
                     releaseTheDrone();
+                    droneLoaded = false;
 //                    Sensors.skyhookIMUEnabled = false;
                     launchTimer = futureTime(SKYHOOK_LAUNCH_TIMER);
                     launchIndex++;

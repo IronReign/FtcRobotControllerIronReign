@@ -338,6 +338,7 @@ public class DriverControls {
         }
         if(stickyGamepad1.start){
             Constants.driverSide = !Constants.driverSide;
+            Constants.Position.resetStartPose();
         }
 
         if(stickyGamepad1.y) {

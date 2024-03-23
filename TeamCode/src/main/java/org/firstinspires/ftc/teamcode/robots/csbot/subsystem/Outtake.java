@@ -345,8 +345,9 @@ public class Outtake implements Subsystem {
                 slideTargetPosition = slidePositionPreDock;
                 if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionPreDock, 30)) {
 //                    Sensors.distanceSensorsEnabled = true;
-                    ELBOW_JOINT_SPEED = 20;
-                    WRIST_JOINT_SPEED = 0;
+                    ELBOW_JOINT_SPEED = 120;
+                    WRIST_JOINT_SPEED = 150;
+                    scoreX=5;
                     elbowWristIK(scoreX, scoreZ);
                     backdropPrepStage++;
                 }
@@ -369,11 +370,10 @@ public class Outtake implements Subsystem {
                 slideTargetPosition = slidePositionScore;
                 if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionScore, 30)) {
                     backdropPrepStage++;
-                    backdropPrepTimer = futureTime(1);
                 }
                 break;
             case 4:
-                if(isPast(backdropPrepTimer)) {
+                if(withinError(elbow.getCurrentAngle(), elbowIKAngle, 2) && withinError(wrist.getCurrentAngle(), wristIKAngle, 2)) {
                     backdropPrepStage = 0;
                     backdropPrepTimer = 0;
                     ELBOW_JOINT_SPEED = 60;

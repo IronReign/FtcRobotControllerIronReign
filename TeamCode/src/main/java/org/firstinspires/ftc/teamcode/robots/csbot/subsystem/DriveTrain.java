@@ -54,7 +54,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public static int turnToTest = 0;
     public static double turnToSpeed = .8; //max angular speed for turn
     public static double DISTANCE_BETWEEN_DISTANCE_SENSORS = 14;
-    public boolean RELOCALIZE_WITH_IMU = true;
+    public boolean RELOCALIZE_WITH_IMU = false;
 
     public static SequentialAction testPathToWing, testPathToScore;
 

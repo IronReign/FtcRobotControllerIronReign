@@ -178,7 +178,7 @@ public class CenterStage_6832 extends OpMode {
 
 
         if(frontAuton && blobLocation == -1) {
-            blobLocation = alliance.isRed()?2:0;
+            blobLocation = alliance.isRed()?0:2;
         }
         auton.saveRandomizer(blobLocation);
         if(gameState.isAutonomous())

@@ -60,7 +60,12 @@ public class Constants {
         START_RIGHT_RED(P2D(.5, -2.6, 90)),
         START_RIGHT_BLUE(P2D(-1.5, 2.6, driverSide?-90:90)),
         START_LEFT_BLUE(P2D(.5, 2.6, -90));
-        private final Pose2d pose;
+        private Pose2d pose;
+
+        public static void resetStartPose() {
+            START_LEFT_RED.pose = P2D(-1.5, -2.6, driverSide?90:-90);
+            START_RIGHT_BLUE.pose = P2D(-1.5, 2.6, driverSide?-90:90);
+        }
 
         public boolean isRed() {
             return this.name() == START_LEFT_RED.name() || this.name() == START_RIGHT_RED.name() ?  true : false;
