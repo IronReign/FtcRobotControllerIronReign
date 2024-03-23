@@ -90,7 +90,6 @@ public class Autonomous implements TelemetryProvider {
 
     public int targetIndex = 1;
     public static int targetAprilTagIndex = 1;
-    public int visionProviderIndex;
     public double aprilTagOffset = .2;
     int allianceDirection = -1;
     public static int selectedPath;
@@ -98,7 +97,7 @@ public class Autonomous implements TelemetryProvider {
     boolean testRunToWing = true;
 
     public static double FIELD_INCHES_PER_GRID = 23.5;
-    public static double AUTON_START_DELAY = 0;
+    public static double AUTON_START_DELAY = 5;
 
     double STANDARD_HEADING = 180;
     Pose2d aprilTagApproachPosition;
@@ -413,7 +412,7 @@ public class Autonomous implements TelemetryProvider {
             pixelStack = P2D(-2.25, driverSide?1.5:.5, STANDARD_HEADING);
 
             //assemble the paths
-            autonPaths[1][1] = P2D(-2, driverSide?1.75:.5, 90);
+            autonPaths[1][1] = P2D(-2, driverSide?1.9:.5, 90);
             autonPaths[1][2] = P2D(0, 0, driverSide?90:-90);
             autonPaths[1][3] = P2D(0, 0, driverSide?-90:STANDARD_HEADING);
             autonPaths[1][4] = P2D(-2, driverSide?2.5:.5, STANDARD_HEADING);
@@ -535,7 +534,7 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 1:
                     autonState = AutonState.TRAVEL_TO_PURPLE;
-                    if(!(frontAuton&&targetIndex==2)) {
+                    if(!((frontAuton&&targetIndex==2) ||(Constants.driverSide && alliance.isRed() && targetIndex == 1))) {
                         robot.intake.articulate(Intake.Articulation.INIT);
                     }
                     else robot.intake.articulate(Intake.Articulation.DOWN);
@@ -585,25 +584,25 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 7:
                     autonState = AutonState.APRILTAG_RELOCALIZE;
-                    robot.enableVision();
+//                    robot.enableVision();
                     futureTimer = futureTime(0);
                     autonIndex++;
                     break;
                 case 8:
-                    robot.enableVision();
-                    if (isPast(futureTimer) || robot.getAprilTagDetections() != null) {
-                        robot.aprilTagRelocalization(targetAprilTagIndex);
-                        robot.switchVisionProviders();
-                        aprilTagStrafeBuild();
+//                    robot.enableVision();
+//                    if (isPast(futureTimer) || robot.getAprilTagDetections() != null) {
+//                        robot.aprilTagRelocalization(targetAprilTagIndex);
+//                        robot.switchVisionProviders();
+//                        aprilTagStrafeBuild();
                         autonIndex++;
-                    }
+//                    }
                     break;
                 case 9:
                     autonState = AutonState.APRILTAG_STRAFE;
-                    if (!aprilTagStrafe.run(packet)) {
+//                    if (!aprilTagStrafe.run(packet)) {
                         robot.articulate(Robot.Articulation.BACKDROP_PREP);
                         autonIndex++;
-                    }
+//                    }
                     break;
                 case 10:
                     autonState = AutonState.SCORE_BACKDROP;
@@ -613,16 +612,16 @@ public class Autonomous implements TelemetryProvider {
                     break;
                 case 11:
                     autonState = AutonState.SCORE_DRIVE;
-                    if (robot.outtake.articulation.equals(Outtake.Articulation.TRAVEL_FROM_BACKDROP)) {
+//                    if (robot.outtake.articulation.equals(Outtake.Articulation.TRAVEL_FROM_BACKDROP)) {
                         Sensors.distanceSensorsEnabled = true;
-                        futureTimer = futureTime(2);
+                        futureTimer = futureTime(3);
                         autonIndex++;
-                    }
+//                    }
                     break;
                 case 12:
                     autonState = AutonState.SCORE_DRIVE;
                     robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.2, 0), 0));
-                    if (robot.sensors.leftDistSensorValue < SCORE_DRIVE_DISTANCE || robot.sensors.rightDistSensorValue < SCORE_DRIVE_DISTANCE/*|| isPast(futureTimer)*/) {
+                    if (robot.sensors.leftDistSensorValue < SCORE_DRIVE_DISTANCE || robot.sensors.rightDistSensorValue < SCORE_DRIVE_DISTANCE|| isPast(futureTimer)) {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                         robot.articulate(Robot.Articulation.TRAVEL_FROM_BACKDROP);
                         Sensors.distanceSensorsEnabled = false;

@@ -69,7 +69,7 @@ public class Outtake implements Subsystem {
     public static double elbowIKAngle = 0;
 
 
-    int slideSpeed = 15;
+    public static int slideSpeed = 15;
     public static int UNTUCK_SLIDE_POSITION = 500;
     public static double SLIDE_SPEED = 1500;
     public static boolean TEMP_FLIPPER_TUNE = false;
@@ -345,8 +345,8 @@ public class Outtake implements Subsystem {
                 slideTargetPosition = slidePositionPreDock;
                 if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionPreDock, 30)) {
 //                    Sensors.distanceSensorsEnabled = true;
-                    ELBOW_JOINT_SPEED = 10;
-                    WRIST_JOINT_SPEED = 20;
+                    ELBOW_JOINT_SPEED = 20;
+                    WRIST_JOINT_SPEED = 0;
                     elbowWristIK(scoreX, scoreZ);
                     backdropPrepStage++;
                 }
@@ -369,13 +369,16 @@ public class Outtake implements Subsystem {
                 slideTargetPosition = slidePositionScore;
                 if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionScore, 30)) {
                     backdropPrepStage++;
+                    backdropPrepTimer = futureTime(1);
                 }
                 break;
             case 4:
-                backdropPrepStage = 0;
-                backdropPrepTimer = 0;
-                ELBOW_JOINT_SPEED = 60;
-                WRIST_JOINT_SPEED = 50;
+                if(isPast(backdropPrepTimer)) {
+                    backdropPrepStage = 0;
+                    backdropPrepTimer = 0;
+                    ELBOW_JOINT_SPEED = 60;
+                    WRIST_JOINT_SPEED = 50;
+                }
                 return true;
 
         }
