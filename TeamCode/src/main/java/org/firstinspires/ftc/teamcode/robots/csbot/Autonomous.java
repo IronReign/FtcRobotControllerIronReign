@@ -412,7 +412,7 @@ public class Autonomous implements TelemetryProvider {
             pixelStack = P2D(-2.25, driverSide?1.5:.5, STANDARD_HEADING);
 
             //assemble the paths
-            autonPaths[1][1] = P2D(-2, driverSide?1.9:.5, 90);
+            autonPaths[1][1] = P2D(-1.9, driverSide?1.9:.5, 90);
             autonPaths[1][2] = P2D(0, 0, driverSide?90:-90);
             autonPaths[1][3] = P2D(0, 0, driverSide?-90:STANDARD_HEADING);
             autonPaths[1][4] = P2D(-2, driverSide?2.5:.5, STANDARD_HEADING);
@@ -571,13 +571,14 @@ public class Autonomous implements TelemetryProvider {
                 case 5:
                     autonState = AutonState.TRAVEL_BACKDROP;
                     if (!driveToYellowPixel.run(packet)) {
+                        futureTimer = futureTime(3);
                         autonIndex++;
                     }
                     break;
 
                 case 6:
                     autonState = AutonState.IMU_TURN;
-                    if (robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING, turnToSpeed)) {
+                    if (robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING, turnToSpeed) || isPast(futureTimer)) {
                         robot.driveTrain.pose = new Pose2d(new Vector2d(robot.driveTrain.pose.position.x, robot.driveTrain.pose.position.y), Math.toRadians(robot.sensors.driveIMUYaw));
                         autonIndex++;
                     }

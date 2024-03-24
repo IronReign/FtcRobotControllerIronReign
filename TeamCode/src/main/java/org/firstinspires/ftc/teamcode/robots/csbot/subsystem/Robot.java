@@ -293,6 +293,8 @@ public class  Robot implements Subsystem {
     public void initPosition() {
         switch (initPositionIndex) {
             case 0:
+                break;
+            case 1:
                 initing = true;
                 intake.articulate(Intake.Articulation.MANUAL);
                 initPositionTimer = futureTime(1);
@@ -302,13 +304,13 @@ public class  Robot implements Subsystem {
                 skyhook.skyhookLeft.setPower(-1);
                 initPositionIndex++;
                 break;
-            case 1:
+            case 2:
                 intake.setAngle(Intake.ANGLE_GROUND);
 //                if(isPast(initPositionTimer)){
                     initPositionIndex++;
 //                }
                 break;
-            case 2:
+            case 3:
                 outtake.slideTargetPosition = Outtake.UNTUCK_SLIDE_POSITION;
                 outtake.setTargetAngle(Outtake.ELBOW_START_ANGLE, Outtake.WRIST_INIT_ANGLE, Outtake.ELEVATOR_START_ANGLE);
                 Sensors.touchSensorsEnabled = true;
@@ -320,7 +322,7 @@ public class  Robot implements Subsystem {
 //                    initPositionIndex ++;
 //                }
                 break;
-            case 3:
+            case 4:
                 if(sensors.rightTouchSensor){
                     skyhook.skyhookRight.setPower(0);
 
@@ -353,11 +355,11 @@ public class  Robot implements Subsystem {
 //                    initPositionIndex ++;
 //                }
                 break;
-            case 4:
+            case 5:
                 outtake.slideTargetPosition = 0;
                 initPositionIndex ++;
                 break;
-            case 5:
+            case 6:
                 //todo load cached skyhook positions
                 //this is the only way to work across power cycles until we incorporate a limit switch calibration
 //                skyhook.skyhookLeft.setPosition(0);
@@ -365,7 +367,7 @@ public class  Robot implements Subsystem {
                 initing = false;
                 skyhook.articulate(Skyhook.Articulation.INIT);
                 break;
-            case 6:
+            case 7:
                 intake.articulate(Intake.Articulation.INIT);
             default:
                 break;

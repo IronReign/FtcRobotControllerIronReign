@@ -96,6 +96,7 @@ public class CenterStage_6832 extends OpMode {
 
     public static GameState gameState = GameState.AUTONOMOUS;
     static public int gameStateIndex;
+    public static boolean startAuton = true;
 
 
     //CONSTANTS FOR GAME
