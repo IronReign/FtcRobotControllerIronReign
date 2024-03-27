@@ -7,6 +7,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.slideSpeed;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionOn;
 
 import android.annotation.SuppressLint;
@@ -86,6 +87,13 @@ public class DriverControls {
                 && gamepad2.right_stick_x < DEADZONE && gamepad2.right_stick_x < DEADZONE;
     }
 
+    public void rumble(int gamepad, int duration){
+        if(gamepad == 1)
+            gamepad1.rumble(duration);
+        else
+            gamepad2.rumble(duration);
+    }
+
     public void joystickDrive() {
 
         //GAMEPAD 1 CONTROLS
@@ -94,10 +102,10 @@ public class DriverControls {
             robot.outtake.scoreX -= robot.outtake.IK_ADJUST_INCHES;
             if(robot.outtake.scoreX < 4)
                 robot.outtake.scoreX = 4;
-            robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
+            robot.outtake.IKadjust(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
         else if (gamepad1.left_trigger > .1) {
-            if(robot.outtake.elevator.getCurrentAngle() > 0 && robot.outtake.scoreZ == 21) {
+            if(robot.outtake.elevator.getCurrentAngle() > 0 && robot.outtake.scoreZ == 16) {
                 robot.outtake.adjustElevator(-Outtake.ELEVATOR_ADJUST_ANGLE);
             }
             else {
@@ -105,13 +113,14 @@ public class DriverControls {
             }
             if(robot.outtake.scoreZ < 16)
                 robot.outtake.scoreZ = 16;
-            robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
+            robot.outtake.elevatorIKAngle = robot.outtake.elevator.getTargetAngle();
+            robot.outtake.IKadjust(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
         if (shifted(gamepad1) && gamepad1.right_trigger > .1) {
             robot.outtake.scoreX += robot.outtake.IK_ADJUST_INCHES;
             if(robot.outtake.scoreX > 15)
                 robot.outtake.scoreX = 15;
-            robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
+            robot.outtake.IKadjust(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
         else if (gamepad1.right_trigger > .1) {
             robot.outtake.scoreZ += robot.outtake.IK_ADJUST_INCHES;
@@ -119,7 +128,8 @@ public class DriverControls {
                 robot.outtake.scoreZ = 21;
                 robot.outtake.adjustElevator(Outtake.ELEVATOR_ADJUST_ANGLE);
             }
-            robot.outtake.elbowWristIK(robot.outtake.scoreX, robot.outtake.scoreZ);
+            robot.outtake.elevatorIKAngle = robot.outtake.elevator.getTargetAngle();
+            robot.outtake.IKadjust(robot.outtake.scoreX, robot.outtake.scoreZ);
         }
 
         if(shifted(gamepad1) && stickyGamepad1.a) {
@@ -148,13 +158,13 @@ public class DriverControls {
             if (robot.intake.isEating())
                 robot.intake.pixelSensorLeft();
             else
-                robot.outtake.moveSlide(-5);
+                robot.outtake.slide.setTargetPosition(robot.outtake.getSlideTargetPosition() -5 * slideSpeed);
         }
         if (gamepad1.right_bumper) {
             if (robot.intake.isEating())
                 robot.intake.pixelSensorRight();
             else
-                robot.outtake.moveSlide(5);
+                robot.outtake.slide.setTargetPosition(robot.outtake.getSlideTargetPosition() +5 * slideSpeed);
         }
         
         if(stickyGamepad1.y) {
@@ -199,9 +209,13 @@ public class DriverControls {
             }
         }
 
-        if (stickyGamepad1.dpad_down) {
+        if (shifted(gamepad1) && stickyGamepad1.dpad_down) {
+            fieldOrientedDrive = !fieldOrientedDrive;
+        }
+        else if(stickyGamepad1.dpad_down) {
             robot.outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
         }
+
         // ------------------------------------------------------------------
 
         //GAMEPAD 2 CONTROLS
@@ -303,7 +317,7 @@ public class DriverControls {
         if (stickyGamepad1.x || stickyGamepad2.x) {
             visionProviderFinalized = false;
             alliance = Constants.Alliance.BLUE;
-                    startingPosition = startingPosition.getMod() == false ?
+                    startingPosition = startingPosition.isRed() == false ?
                             startingPosition :
                             startingPosition == Constants.Position.START_LEFT_RED ?
                                     Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
@@ -314,7 +328,7 @@ public class DriverControls {
         if (stickyGamepad1.b || stickyGamepad2.b) {
             alliance = Constants.Alliance.RED;
             visionProviderFinalized = false;
-            startingPosition = startingPosition.getMod() == true ?
+            startingPosition = startingPosition.isRed() == true ?
                     startingPosition :
                     startingPosition == Constants.Position.START_LEFT_BLUE ?
                             Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
@@ -324,6 +338,7 @@ public class DriverControls {
         }
         if(stickyGamepad1.start){
             Constants.driverSide = !Constants.driverSide;
+            Constants.Position.resetStartPose();
         }
 
         if(stickyGamepad1.y) {
@@ -345,7 +360,7 @@ public class DriverControls {
             robot.visionProviderFinalized = !robot.visionProviderFinalized;
         }
 
-        if(stickyGamepad1.dpad_down){
+        if(stickyGamepad1.dpad_down || stickyGamepad2.dpad_down){
             Skyhook.droneLoaded = !Skyhook.droneLoaded;
         }
 

@@ -31,7 +31,7 @@ public class CenterStage_6832 extends OpMode {
     static Autonomous auton;
     private FtcDashboard dashboard;
     public static Field field;
-    DriverControls dc;
+    public static DriverControls dc;
     static AutoNav autoNav;
 
 
@@ -96,6 +96,7 @@ public class CenterStage_6832 extends OpMode {
 
     public static GameState gameState = GameState.AUTONOMOUS;
     static public int gameStateIndex;
+    public static boolean startAuton = true;
 
 
     //CONSTANTS FOR GAME
@@ -170,17 +171,19 @@ public class CenterStage_6832 extends OpMode {
         frontAuton = Constants.driverSide? true: (startingPosition.equals(Constants.Position.START_RIGHT_RED) || startingPosition.equals(Constants.Position.START_LEFT_BLUE)) ? true : false;
 
         int blobLocation;
-        if(frontAuton)
-            blobLocation = robot.visionProviderFront.getMostFrequentPosition().getIndex();
-        else
+        if(frontAuton) {
+            blobLocation = robot.visionProviderFront.getPosition().getIndex();
+        } else {
             blobLocation = robot.visionProviderBack.getMostFrequentPosition().getIndex();
+        }
+
 
         if(frontAuton && blobLocation == -1) {
-            blobLocation = 2;
+            blobLocation = alliance.isRed()?0:2;
         }
         auton.saveRandomizer(blobLocation);
-
-        robot.initPosition();
+        if(gameState.isAutonomous())
+            robot.initPosition();
         robot.driveTrain.updatePoseEstimate();
 
         telemetry.addData("blobLocation", blobLocation);
@@ -197,8 +200,8 @@ public class CenterStage_6832 extends OpMode {
 
     private void initVision() {
         robot.enableVision();
-        robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
-        robot.visionProviderFront.setRedAlliance(startingPosition.getMod());
+        robot.visionProviderBack.setRedAlliance(startingPosition.isRed());
+        robot.visionProviderFront.setRedAlliance(startingPosition.isRed());
         robot.frontVision = frontAuton;
     }
 
@@ -338,6 +341,7 @@ public class CenterStage_6832 extends OpMode {
 
     @Override
     public void stop(){
+        gameState = GameState.TELE_OP;
         robot.stop();
     }
 

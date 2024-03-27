@@ -45,7 +45,7 @@ public class AutoNav implements TelemetryProvider{
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
-        telemetryMap.put("Prefered Route\t", preferredRoute);
+        telemetryMap.put("Preferred Route\t", preferredRoute);
         telemetryMap.put("Cycling\t", cycling);
         telemetryMap.put("intaking\t", intaking);
         telemetryMap.put("intakeindex\t", intakeIndex);

@@ -20,6 +20,8 @@ import java.util.Map;
 @Config(value = "AA_CS_OUTTAKE")
 public class Outtake implements Subsystem {
 
+    public static double TRAVEL_FROM_BACKDROP_TIMER = 1.2;
+    public static double BACKDROP_PREP_TIMER = .6;
     HardwareMap hardwareMap;
     Robot robot;
 
@@ -47,7 +49,7 @@ public class Outtake implements Subsystem {
     private double theta, top, bottom, frac;
 
     public static int flipperPosition = 1888;
-    private boolean ikCalculated;
+    public static boolean ikCalculated = false;
 
 
     public void setSlideTargetPosition(int slideTargetPosition) {
@@ -60,11 +62,14 @@ public class Outtake implements Subsystem {
     public static int slidePositionPreDock = 500;
     public static int slidePositionDocked = 0;
     public static int slidePositionScore = 400;
-    public static double scoreZ = 16;
+    public static double scoreZ = 14;
     public static double scoreX = 4;
+    public static double elevatorIKAngle = 10;
+    public static double wristIKAngle = 0;
+    public static double elbowIKAngle = 0;
 
 
-    int slideSpeed = 15;
+    public static int slideSpeed = 15;
     public static int UNTUCK_SLIDE_POSITION = 500;
     public static double SLIDE_SPEED = 1500;
     public static boolean TEMP_FLIPPER_TUNE = false;
@@ -107,7 +112,7 @@ public class Outtake implements Subsystem {
     public static double WRIST_START_ANGLE = 0;
     public static double WRIST_TRAVEL_ANGLE = WRIST_START_ANGLE;
 
-    public static double WRIST_INIT_ANGLE = 70;
+    public static double WRIST_INIT_ANGLE = 60;
     public static double WRIST_SCORE_ANGLE = 180;
 
     public static double WRIST_JOINT_SPEED = 50;
@@ -218,6 +223,7 @@ public class Outtake implements Subsystem {
         slide.setTargetPosition(0);
         slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slide.setVelocity(SLIDE_SPEED);
+        elevatorIKAngle = 0;
         scoreX = 4;
         scoreZ = 16;
 
@@ -242,32 +248,53 @@ public class Outtake implements Subsystem {
         if(Double.isNaN(wristTargetAngle) || Double.isNaN(elbowTargetAngle)) {
             wristTargetAngle = 0;//maxes the height of the outtake
             elbowTargetAngle = 90 + Math.toDegrees(Math.atan2(armHeight, armBase));// maxes the height of the outtake
-            wrist.setTargetAngle(wristTargetAngle);
-            elbow.setTargetAngle(elbowTargetAngle);
+            wristIKAngle = wristTargetAngle;
+            elbowIKAngle = elbowTargetAngle;
             return false;
         }
         else {
-            wrist.setTargetAngle(wristTargetAngle);
-            elbow.setTargetAngle(elbowTargetAngle);
+            wristIKAngle = wristTargetAngle;
+            elbowIKAngle = elbowTargetAngle;
             return true;
         }
     }
 
+    public void IKadjust(double x, double z) {
+        armTheta = Math.atan2(armHeight, armBase);
+        x = x/Math.cos(armTheta);
+        z = z/Math.cos(armTheta);
+//        x-=(slide.getCurrentPosition()/slideTicksPerInch)*Math.cos(armTheta);
+        z-=(slide.getCurrentPosition()/slideTicksPerInch)*Math.sin(armTheta);
+        z-=armHeight;
+        wristTargetAngle = Math.toDegrees(Math.acos((Math.pow(x, 2)+Math.pow(z, 2)-Math.pow(elbowLength, 2)-Math.pow(wristLength, 2))/(2*elbowLength*wristLength)));
+        double b = Math.toDegrees(Math.acos((Math.pow(wristLength, 2)-Math.pow(elbowLength, 2)-Math.pow(x, 2)-Math.pow(z, 2))/(-2*elbowLength*Math.hypot(x, z))));
+        double a = Math.toDegrees(Math.atan2(z, x));
+        elbowTargetAngle = 180+Math.toDegrees(Math.atan2(armHeight, armBase))-a-b;
+        if(Double.isNaN(wristTargetAngle) || Double.isNaN(elbowTargetAngle)) {
+            wristTargetAngle = 0;//maxes the height of the outtake
+            elbowTargetAngle = 90 + Math.toDegrees(Math.atan2(armHeight, armBase));// maxes the height of the outtake
+            wrist.setTargetAngle(wristTargetAngle);
+            elbow.setTargetAngle(elbowTargetAngle);
+        }
+        else {
+            wrist.setTargetAngle(wristTargetAngle);
+            elbow.setTargetAngle( elbowTargetAngle);
+        }
+    }
     public int ingestPositionIndex = 0;
     public long ingestPositionTimer = 0;
 
     public boolean ingestFromTravel() { //should only call this if Travel was previously set
         switch (ingestPositionIndex) {
             case 0: //lower the outtake to intake position
-                elbow.setSpeed(ELBOW_JOINT_SPEED);
-                wrist.setSpeed(WRIST_JOINT_SPEED);
+                ELBOW_JOINT_SPEED = 60;
+                WRIST_JOINT_SPEED = 50;
                 setTargetAngle(ELBOW_DOCK_ANGLE, WRIST_START_ANGLE, ELEVATOR_START_ANGLE);
                 ingestPositionTimer = futureTime(.85);
                 ingestPositionIndex++;
                 break;
             case 1: //give enough time to pull down flipper, then slide to intake dock
                 if (isPast(ingestPositionTimer)) {
-                    elbow.setSpeed(ELBOW_JOINT_SPEED);
                     setSlideTargetPosition(slidePositionDocked);
                     ingestPositionIndex = 0;
                     return true;
@@ -290,7 +317,8 @@ public class Outtake implements Subsystem {
                 break;
             case 1: //complete undock
                 if (isPast(travelTimer)) {
-                    wrist.setSpeed(50);
+                    ELBOW_JOINT_SPEED = 40;
+                    WRIST_JOINT_SPEED = 50;
                     setTargetAngle(ELBOW_TRAVEL_ANGLE, WRIST_TRAVEL_ANGLE, ELEVATOR_START_ANGLE);
                     travelTimer = futureTime(1);
                     travelStage++;
@@ -298,7 +326,6 @@ public class Outtake implements Subsystem {
                 break;
             case 2: //tuck slide - todo this will get more complicated when outtake elevation is changeable
                 if (isPast(travelTimer)) {
-                    wrist.setSpeed(30);
                     setSlideTargetPosition(slidePositionDocked);
                     robot.articulate(Robot.Articulation.TRAVEL);
                     travelStage = 0;
@@ -317,38 +344,41 @@ public class Outtake implements Subsystem {
             case 0:
                 slideTargetPosition = slidePositionPreDock;
                 if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionPreDock, 30)) {
-                    backdropPrepTimer = futureTime(1);
 //                    Sensors.distanceSensorsEnabled = true;
-                    ELBOW_JOINT_SPEED = 30;
-                    WRIST_JOINT_SPEED = 40;
+                    ELBOW_JOINT_SPEED = 120;
+                    WRIST_JOINT_SPEED = 150;
+                    scoreX=5;
+                    elbowWristIK(scoreX, scoreZ);
                     backdropPrepStage++;
                 }
                 break;
             case 1:
-//                elbow.setTargetAngle(ELBOW_PRE_SCORE_ANGLE);
-//                wrist.setTargetAngle(WRIST_START_ANGLE);
+                elevator.setTargetAngle(elevatorIKAngle);
+                wrist.setTargetAngle(wristIKAngle);
+                backdropPrepTimer = futureTime(1);
+                backdropPrepStage ++;
 //                scoreX = (Robot.sensors.averageDistSensorValue);
-                if(!ikCalculated) {
-                    elbowWristIK(scoreX, scoreZ);
-                    ikCalculated = true;
-                }
-                if (isPast(backdropPrepTimer)) {
-//                    Sensors.distanceSensorsEnabled = false;
-                    ikCalculated = false;
+                break;
+            case 2:
+
+                if(isPast(backdropPrepTimer)) {
+                    elbow.setTargetAngle(elbowIKAngle);
                     backdropPrepStage++;
                 }
                 break;
-            case 2:
+            case 3:
                 slideTargetPosition = slidePositionScore;
                 if (withinError(Robot.sensors.outtakeSlideTicks, slidePositionScore, 30)) {
                     backdropPrepStage++;
                 }
                 break;
-            case 3:
-                backdropPrepStage = 0;
-                backdropPrepTimer = 0;
-                ELBOW_JOINT_SPEED = 60;
-                WRIST_JOINT_SPEED = 50;
+            case 4:
+                if(withinError(elbow.getCurrentAngle(), elbowIKAngle, 2) && withinError(wrist.getCurrentAngle(), wristIKAngle, 2)) {
+                    backdropPrepStage = 0;
+                    backdropPrepTimer = 0;
+                    ELBOW_JOINT_SPEED = 60;
+                    WRIST_JOINT_SPEED = 50;
+                }
                 return true;
 
         }
@@ -360,8 +390,8 @@ public class Outtake implements Subsystem {
     boolean travelFromBackdrop() {
         switch (travelStageBack) { //robot should have already placed the intake into travel position
             case 0:
-                ELBOW_JOINT_SPEED = 100;
-                WRIST_JOINT_SPEED = 80;
+                ELBOW_JOINT_SPEED = 80;
+                WRIST_JOINT_SPEED = scoreZ > 30 ? 50: scoreZ > 18 ? 60 : 70;;
                 ELBOW_PRE_SCORE_ANGLE = elbow.getCurrentAngle();
 //                setTargetAngle(ELBOW_TRAVEL_ANGLE, wrist.getCurrentAngle()+40, ELEVATOR_START_ANGLE);
 //                travelTimer = futureTime(.5);
@@ -370,7 +400,7 @@ public class Outtake implements Subsystem {
             case 1:
                 if (isPast(travelTimer)) {
                     setTargetAngle(ELBOW_TRAVEL_ANGLE, WRIST_TRAVEL_ANGLE, ELEVATOR_START_ANGLE);
-                    travelTimer = futureTime(.5);
+                    travelTimer = futureTime(TRAVEL_FROM_BACKDROP_TIMER);
                     travelStageBack++;
                 }
                 break;
@@ -462,10 +492,13 @@ public class Outtake implements Subsystem {
         telemetryMap.put("elbow ticks", flipperPosition);
         telemetryMap.put("elbow angle", elbow.getCurrentAngle());
         telemetryMap.put("elbow target angle", elbow.getTargetAngle());
+        telemetryMap.put("elbow joint speed", ELBOW_JOINT_SPEED);
         telemetryMap.put("wrist angle", wrist.getCurrentAngle());
         telemetryMap.put("wrist target angle", wrist.getTargetAngle());
+        telemetryMap.put("wrist joint speed", WRIST_JOINT_SPEED);
         telemetryMap.put("elevator angle", elevator.getCurrentAngle());
-        telemetryMap.put("elavator target angle", elevator.getTargetAngle());
+        telemetryMap.put("elevator target angle", elevator.getTargetAngle());
+        telemetryMap.put("elevator joint speed", ELEVATOR_JOINT_SPEED);
         telemetryMap.put("arm location", "("+armX+", "+armZ+")");
         telemetryMap.put("arm theta", armTheta);
         telemetryMap.put("wrist target angle", wristTargetAngle);

@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.dc;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
@@ -18,6 +19,7 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
@@ -46,6 +48,8 @@ public class  Robot implements Subsystem {
     public Subsystem[] subsystems;
     public static Sensors sensors;
     public DriveTrain driveTrain;
+    public static boolean drawFieldEnabled = true;
+
     public Skyhook skyhook;
     public Intake intake;
     public VisionProvider visionProviderBack, visionProviderFront;
@@ -69,6 +73,7 @@ public class  Robot implements Subsystem {
 
     public static double DISTANCE_FROM_CAMERA_TO_CENTER_X = 16;// In inches
     public static double DISTANCE_FROM_CAMERA_TO_CENTER_Y = 5.25;
+    public boolean initing = false;
 
     private long[] subsystemUpdateTimes;
     private List<LynxModule> hubs = null;
@@ -79,6 +84,7 @@ public class  Robot implements Subsystem {
     public boolean fetched;
 
     public void backdropRelocalize() {
+        driveTrain.RELOCALIZE_WITH_IMU = false;
         distanceSensorRelocalize();
         frontVision = false;
         if(backVisionProviderIndex == 0){
@@ -98,8 +104,11 @@ public class  Robot implements Subsystem {
         Sensors.distanceSensorsEnabled = true;
         if(sensors.averageDistSensorValue < 30) {
             double distDiff = Math.abs(sensors.rightDistSensorValue - sensors.leftDistSensorValue);
-            double heading = Math.PI - Math.asin(distDiff / Math.hypot(driveTrain.DISTANCE_BETWEEN_DISTANCE_SENSORS, distDiff));
+            double heading = Math.PI -
+                    Math.asin(distDiff / Math.hypot(driveTrain.DISTANCE_BETWEEN_DISTANCE_SENSORS, distDiff))
+                    *((sensors.leftDistSensorValue > sensors.rightDistSensorValue)? 1 : 1);
             driveTrain.pose = new Pose2d(driveTrain.pose.position, heading);
+            Sensors.distanceSensorsEnabled = false;
             }
         }
 
@@ -176,7 +185,7 @@ public class  Robot implements Subsystem {
         articulate(articulation);
         driveTrain.updatePoseEstimate();
 
-        if(debugTelemetryEnabled)
+        if(drawFieldEnabled)
             drawRobot(fieldOverlay, driveTrain.pose);
 
         //update subsystems
@@ -219,6 +228,8 @@ public class  Robot implements Subsystem {
             aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
             aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, 0);
             driveTrain.pose = new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading);
+            dc.rumble(1, 3000);
+            dc.rumble(2, 3000);
         }
     }
 
@@ -282,42 +293,81 @@ public class  Robot implements Subsystem {
     public void initPosition() {
         switch (initPositionIndex) {
             case 0:
-                intake.articulate(Intake.Articulation.MANUAL);
-                initPositionTimer = futureTime(1);
-                initPositionIndex++;
                 break;
             case 1:
-                intake.setAngle(Intake.ANGLE_GROUND);
-//                if(isPast(initPositionTimer)) {
-//                    initPositionTimer = futureTime(1);
-//                    initPositionIndex ++;
-//                }
+                initing = true;
+                intake.articulate(Intake.Articulation.MANUAL);
+                initPositionTimer = futureTime(1);
+                skyhook.skyhookLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                skyhook.skyhookRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                skyhook.skyhookRight.setPower(-1);
+                skyhook.skyhookLeft.setPower(-1);
+                initPositionIndex++;
                 break;
             case 2:
+                intake.setAngle(Intake.ANGLE_GROUND);
+//                if(isPast(initPositionTimer)){
+                    initPositionIndex++;
+//                }
+                break;
+            case 3:
                 outtake.slideTargetPosition = Outtake.UNTUCK_SLIDE_POSITION;
+                outtake.setTargetAngle(Outtake.ELBOW_START_ANGLE, Outtake.WRIST_INIT_ANGLE, Outtake.ELEVATOR_START_ANGLE);
+                Sensors.touchSensorsEnabled = true;
+//                skyhook.skyhookLeft.setVelocity(100);
+//                skyhook.skyhookRight.setVelocity(100);
+                initPositionIndex ++;
 //                if (isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
 //                    initPositionIndex ++;
 //                }
                 break;
-            case 3:
-                outtake.setTargetAngle(Outtake.ELBOW_START_ANGLE, Outtake.WRIST_INIT_ANGLE, Outtake.ELEVATOR_START_ANGLE);
+            case 4:
+                if(sensors.rightTouchSensor){
+                    skyhook.skyhookRight.setPower(0);
+
+                }
+                else skyhook.skyhookRight.setPower(-.08);
+
+                if(sensors.leftTouchSensor){
+                    skyhook.skyhookLeft.setPower(0);
+                }
+                else skyhook.skyhookLeft.setPower(-.2);
+
+                if(sensors.leftTouchSensor && sensors.rightTouchSensor){
+                    skyhook.skyhookRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    skyhook.skyhookRight.setVelocity(0);
+                    skyhook.skyhookRight.setPower(Skyhook.SKYHOOK_POWER);
+                    skyhook.skyhookRight.setTargetPosition(0);
+                    skyhook.skyhookRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    skyhook.skyhookRight.setPosition(0);
+                    skyhook.skyhookLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    skyhook.skyhookLeft.setVelocity(0);
+                    skyhook.skyhookLeft.setPower(Skyhook.SKYHOOK_POWER);
+                    skyhook.skyhookLeft.setTargetPosition(0);
+                    skyhook.skyhookLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    skyhook.skyhookLeft.setPosition(0);
+                    Sensors.touchSensorsEnabled = false;
+                    initPositionIndex ++;
+                }
                 //                if (isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
 //                    initPositionIndex ++;
 //                }
                 break;
-            case 4:
-                outtake.slideTargetPosition = 0;
-                break;
             case 5:
-                //todo load cached skyhook positions
-                //this is the only way to work across power cycles until we incorporate a limit switch calibration
-                skyhook.skyhookLeft.setPosition(0);
-                skyhook.skyhookRight.setPosition(0);
-                skyhook.articulate(Skyhook.Articulation.INIT);
+                outtake.slideTargetPosition = 0;
+                initPositionIndex ++;
                 break;
             case 6:
+                //todo load cached skyhook positions
+                //this is the only way to work across power cycles until we incorporate a limit switch calibration
+//                skyhook.skyhookLeft.setPosition(0);
+//                skyhook.skyhookRight.setPosition(0);
+                initing = false;
+                skyhook.articulate(Skyhook.Articulation.INIT);
+                break;
+            case 7:
                 intake.articulate(Intake.Articulation.INIT);
             default:
                 break;

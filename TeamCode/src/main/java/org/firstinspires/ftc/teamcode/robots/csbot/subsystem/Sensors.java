@@ -20,6 +20,10 @@ public class Sensors implements Subsystem {
     public int skyhookRightTicks;
     public int skyhookLeftTicks;
 
+    public boolean leftTouchSensor = false;
+    public boolean rightTouchSensor = false;
+    public static boolean touchSensorsEnabled = false;
+
     public double rightDistSensorValue;
     public double leftDistSensorValue;
     public double averageDistSensorValue;
@@ -61,6 +65,11 @@ public class Sensors implements Subsystem {
         }
         if(driveIMUEnabled){
             driveIMUYaw = Utils.wrapAngle(robot.driveTrain.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.isRed()? -90 : 90) + (CenterStage_6832.frontAuton? 180: 0));
+        }
+
+        if(touchSensorsEnabled){
+            leftTouchSensor = robot.skyhook.leftTouchSensor.isPressed();
+            rightTouchSensor = robot.skyhook.rightTouchSensor.isPressed();
         }
 
         if(pixelSensorEnabled) {

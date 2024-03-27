@@ -36,8 +36,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
     public boolean trajectoryIsActive;
     public static double GLOBAL_HEADING_DAMPENING = .7;
-    public static double HEADING_DAMPENING = 0.5;
-    public static double DRIVE_DAMPENING = 0.6;
+    public static double HEADING_DAMPENING = 0.4;
+    public static double DRIVE_DAMPENING = 0.4;
     public DistanceSensor leftDistanceSensor, rightDistanceSensor;
     public double rightDistanceSensorValue = 0;
     public double leftDistanceSensorValue = 0;
@@ -54,6 +54,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public static int turnToTest = 0;
     public static double turnToSpeed = .8; //max angular speed for turn
     public static double DISTANCE_BETWEEN_DISTANCE_SENSORS = 14;
+    public boolean RELOCALIZE_WITH_IMU = false;
 
     public static SequentialAction testPathToWing, testPathToScore;
 
@@ -105,9 +106,10 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         updatePoseEstimate();
 
 //        update pose heading from imu regularly
-        if(Autonomous.autonIndex > 0)
-        if((int)(System.nanoTime() / 1e9) % 2 == 0){
-            pose = new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw));
+        if(RELOCALIZE_WITH_IMU) {
+            if ((int) (System.nanoTime() / 1e9) % 2 == 0) {
+                pose = new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw));
+            }
         }
 
         //test imu based turning from dashboard - todo comment out when not needed

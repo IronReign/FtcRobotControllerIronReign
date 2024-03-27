@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -30,27 +31,28 @@ public class Skyhook implements Subsystem {
     public static int skyhookRightTicks = 0;
     public static int skyhookLeftTicks = 0;
     public static int SKYHOOK_HANG_TICKS = 450;
-    public static int SKYHOOK_LAUNCH_TICKS = 340;
+    public static int SKYHOOK_LAUNCH_TICKS = 560;
     public static boolean droneLoaded = true;
     public static int PREP_FOR_HANG_TICKS = 0;
     public int droneServoTicks = 1500;
-    public static int DRONE_TENSION_TICKS = 1435;
-    public static int DRONE_RELEASE_TICKS = 1700;
+    public static int DRONE_TENSION_TICKS = 1200;
+    public static int DRONE_RELEASE_TICKS = 2000;
     public static int SKYHOOK_SAFE_TICKS = 1200;
     public static int SKYHOOK_UP_TICKS = 0;
     public PIDController dronelaunchPID;
     public static PIDCoefficients DRONELAUNCH_PID_PWR = new PIDCoefficients(0.03, 0.04, 0);
     public static double DRONELAUNCH_PID_TOLERANCE = .08;
-    public static PIDCoefficients droneLaunchCoefficients;
     private double PIDCorrection, PIDError;
     public static double DRONE_LAUNCH_ANGLE = 57;
     DcMotorEx kareem, jabbar;
     IMU skyhookIMU;
+    RevTouchSensor rightTouchSensor, leftTouchSensor;
     public DcMotorExResetable skyhookLeft, skyhookRight;
     public Servo droneLauncher;
     public static int SKYHOOK_INIT_TICKS = 800;
 
     public static double SKYHOOK_POWER = 1;
+    private boolean manualDrone = true;
 
     public enum Articulation {
         HANG,
@@ -68,6 +70,8 @@ public class Skyhook implements Subsystem {
         this.hardwareMap = hardwareMap;
         this.robot = robot;
         initMotors();
+        leftTouchSensor = hardwareMap.get(RevTouchSensor.class, "leftTouchSensor");
+        rightTouchSensor = hardwareMap.get(RevTouchSensor.class, "rightTouchSensor");
         droneLauncher = hardwareMap.get(Servo.class, "droneLauncher");
         droneServoTicks = DRONE_TENSION_TICKS;
         skyhookIMU = hardwareMap.get(IMU.class, "skyhookIMU");
@@ -89,11 +93,12 @@ public class Skyhook implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
-        if(droneLoaded)
-            droneServoTicks = DRONE_TENSION_TICKS;
-        else
-            droneServoTicks = DRONE_RELEASE_TICKS;
-
+        if(manualDrone) {
+            if (droneLoaded)
+                droneServoTicks = DRONE_TENSION_TICKS;
+            else
+                droneServoTicks = DRONE_RELEASE_TICKS;
+        }
         switch (articulation) {
             case PREP_FOR_HANG:
                 skyhookLeftTicks = PREP_FOR_HANG_TICKS;
@@ -127,63 +132,71 @@ public class Skyhook implements Subsystem {
             SKYHOOK_POWER = 0;
             articulation = Articulation.MANUAL;
         }else {
-            skyhookRight.setTargetPosition(skyhookRightTicks);
-            skyhookLeft.setTargetPosition(skyhookLeftTicks);
+            if(!robot.initing) {
+                skyhookRight.setTargetPosition(skyhookRightTicks);
+                skyhookLeft.setTargetPosition(skyhookLeftTicks);
+            }
         }
-
-        skyhookLeft.setPower(SKYHOOK_POWER);
-        skyhookRight.setPower(SKYHOOK_POWER);
-
+        if(!robot.initing) {
+            skyhookLeft.setPower(SKYHOOK_POWER);
+            skyhookRight.setPower(SKYHOOK_POWER);
+        }
     }
 
     public static long launchTimer = 0;
     public static int launchIndex = 0;
-    public static double SKYHOOK_LAUNCH_TIMER = 2;
+    public static double SKYHOOK_LAUNCH_TIMER = 3;
     public boolean launch() {
         droneLauncher.setPosition(Utils.servoNormalize(droneServoTicks));
         skyhookRight.setTargetPosition(skyhookRightTicks);
         skyhookLeft.setTargetPosition(skyhookLeftTicks);
         switch (launchIndex) {
             case 0:
+                manualDrone = false;
                 launchTimer = futureTime(SKYHOOK_LAUNCH_TIMER);
                 Sensors.skyhookIMUEnabled = true;
                 launchIndex ++;
                 break;
             case 1:
+                skyhookRightTicks = SKYHOOK_LAUNCH_TICKS;
+                skyhookLeftTicks = SKYHOOK_LAUNCH_TICKS;
                 launchIndex ++;
-                dronelaunchPID.setPID(DRONELAUNCH_PID_PWR);
-                dronelaunchPID.setInput(wrapAngle(Robot.sensors.skyhookIMUPitch));
-                dronelaunchPID.setSetpoint(DRONE_LAUNCH_ANGLE);
-                dronelaunchPID.setOutputRange(-.8, .8);
-                dronelaunchPID.setTolerance(DRONELAUNCH_PID_TOLERANCE);
-                double correction = dronelaunchPID.performPID();
-                PIDCorrection = correction;
-                PIDError = dronelaunchPID.getError();
-                if (dronelaunchPID.onTarget()) {
-//                    skyhookRight.setVelocity();
-//                    skyhookLeft.setVelocity();
-                    Sensors.skyhookIMUEnabled = false;
-                } else {
-                    dronelaunchPID.enable();
-//                    skyhookRight.setVelocity();
-//                    skyhookLeft.setVelocity();
-                }
+//                launchIndex ++;
+//                dronelaunchPID.setPID(DRONELAUNCH_PID_PWR);
+//                dronelaunchPID.setInput(wrapAngle(Robot.sensors.skyhookIMUPitch));
+//                dronelaunchPID.setSetpoint(DRONE_LAUNCH_ANGLE);
+//                dronelaunchPID.setOutputRange(-.8, .8);
+//                dronelaunchPID.setTolerance(DRONELAUNCH_PID_TOLERANCE);
+//                double correction = dronelaunchPID.performPID();
+//                PIDCorrection = correction;
+//                PIDError = dronelaunchPID.getError();
+//                if (dronelaunchPID.onTarget()) {
+////                    skyhookRight.setVelocity();
+////                    skyhookLeft.setVelocity();
+//                    Sensors.skyhookIMUEnabled = false;
+//                } else {
+//                    dronelaunchPID.enable();
+////                    skyhookRight.setVelocity();
+////                    skyhookLeft.setVelocity();
+//                }
                 break;
             case 2:
                 if(isPast(launchTimer)) {
                     releaseTheDrone();
+                    droneLoaded = false;
 //                    Sensors.skyhookIMUEnabled = false;
                     launchTimer = futureTime(SKYHOOK_LAUNCH_TIMER);
                     launchIndex++;
                 }
                 break;
             case 3:
-                if(isPast(launchTimer)){
-                    resetDrone();
+//                if(isPast(launchTimer)){
+//                    resetDrone();
                     launchIndex++;
-                }
+//                }
                 break;
             case 4:
+                manualDrone = true;
                 launchIndex = 0;
                 return true;
 
@@ -214,16 +227,18 @@ public class Skyhook implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
 
+        telemetryMap.put("leftTouch", robot.sensors.leftTouchSensor);
+        telemetryMap.put("rightTouch", robot.sensors.rightTouchSensor);
+
         telemetryMap.put("skyhook right amps", skyhookRight.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("skyhook left amps", skyhookLeft.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("articulation", articulation);
         telemetryMap.put("skyhookLeftTicks", skyhookLeftTicks);
         telemetryMap.put("skyhookLeftActual", skyhookLeft.getCurrentPosition());
-        telemetryMap.put("kareemActual", kareem.getCurrentPosition());
         telemetryMap.put("skyhookLeftTarget", skyhookLeft.getTargetPosition());
-        telemetryMap.put("kareemTarget", kareem.getTargetPosition());
+        telemetryMap.put("skyhookRightTicks", skyhookRightTicks);
         telemetryMap.put("skyhookRightActual", skyhookRight.getCurrentPosition());
-        telemetryMap.put("jabbarActual", jabbar.getCurrentPosition());
+        telemetryMap.put("skyhookRightTarget", skyhookRight.getTargetPosition());
         telemetryMap.put("droneTicks", droneServoTicks);
         telemetryMap.put("droneStage", launchIndex);
         telemetryMap.put("skyhookIMU", robot.sensors.skyhookIMUPitch);

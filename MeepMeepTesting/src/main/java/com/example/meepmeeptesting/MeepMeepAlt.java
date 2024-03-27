@@ -84,7 +84,7 @@ public class MeepMeepAlt {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        int randomizer = 2; //1, 2 or 3
+        int randomizer = 3; //1, 2 or 3
         Pose2d p;
 
         startingPosition = Position.START_LEFT_RED;
@@ -310,7 +310,7 @@ public class MeepMeepAlt {
         pixelStack = P2D(-2.4, driverSide?1.5:.5, STANDARD_HEADING);
 
         //assemble the paths
-        autonPaths[1][1] = P2D(-2, driverSide?1.75:.5, 90);
+        autonPaths[1][1] = P2D(-2, driverSide?1.85:.5, 90);
         autonPaths[1][2] = P2D(0, 0, driverSide?90:-90);
         autonPaths[1][3] = P2D(0, 0, driverSide?-90:STANDARD_HEADING);
         autonPaths[1][4] = P2D(-2, driverSide?2.5:.5, STANDARD_HEADING);

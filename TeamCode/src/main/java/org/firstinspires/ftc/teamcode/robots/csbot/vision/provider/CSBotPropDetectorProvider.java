@@ -129,6 +129,7 @@ public class CSBotPropDetectorProvider extends VisionProvider {
             telemetryMap.put("Theoretical max FPS", camera.getCurrentPipelineMaxFps());
             telemetryMap.put("X,Y of Largest Contour", Arrays.toString(pipeline.getLargestCoordinate()));
             telemetryMap.put("Area in pixels", pipeline.getLargestAreaPixels());
+            telemetryMap.put("isFront?", pipeline.isFront);
 
             for (Target can: frameDetections){
                 telemetryMap.put(Integer.toString(can.getTargetNumber())+"Timestamp", can.getTimeStamp());
