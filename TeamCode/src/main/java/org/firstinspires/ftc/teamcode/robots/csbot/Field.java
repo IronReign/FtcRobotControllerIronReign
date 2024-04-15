@@ -176,8 +176,9 @@ public class Field {
         Zone startZone = getZone(robotPosition);
         Zone endZone = getZone(targetPosition);
         //robot does nothing if startzone is in rigging
-        if (startZone == Zone.RIGGING)
-            return new SequentialAction();
+        //todo - bring this back in
+//        if (startZone == Zone.RIGGING)
+//            return new SequentialAction();
 
         TrajectoryActionBuilder actionBuilder = robot.driveTrain.actionBuilder(robotPosition);
 

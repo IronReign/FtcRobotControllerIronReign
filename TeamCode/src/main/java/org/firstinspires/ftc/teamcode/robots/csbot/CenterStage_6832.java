@@ -285,7 +285,7 @@ public class CenterStage_6832 extends OpMode {
                                 if(!autoNavInitialized){
                                     autoNav.assumeControl();
                                     //assumes diagonal route
-                                    autoNav.setPreferredRoute(3);
+                                    autoNav.setPreferredRoute(5);
                                     autoNavInitialized = true;
                                 }
                                 else autoNav.run(dashboard);

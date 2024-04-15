@@ -89,7 +89,7 @@ public class AutoNav implements TelemetryProvider{
             case 0:
                 //get poi for desired intake location, assuming wing for now
 //                if(wing)
-                POI poi = field.WING_INTAKE;
+                POI poi = POI.WING_INTAKE;
                 //build path
                 pathToRetrieval = field.pathToPOI(robot, poi, preferredRoute);
                 intakeIndex++;
@@ -118,7 +118,8 @@ public class AutoNav implements TelemetryProvider{
         switch (outtakeIndex) {
             case 0:
                 //select outtake score locations
-                POI poi = alliance.isRed()? field.scoreLocations.get(targetIndex + 3) : field.scoreLocations.get(targetIndex);
+//                POI poi = alliance.isRed()? field.scoreLocations.get(targetIndex + 3) : field.scoreLocations.get(targetIndex);
+                POI poi = field.scoreLocations.get(2);
                 //build path
                 pathToDelivery = field.pathToPOI(robot, poi, preferredRoute);
                 intakeIndex++;
