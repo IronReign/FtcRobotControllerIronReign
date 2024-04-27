@@ -62,7 +62,7 @@ public class Outtake implements Subsystem {
     public static int slidePositionPreDock = 500;
     public static int slidePositionDocked = 0;
     public static int slidePositionScore = 400;
-    public static double scoreZ = 14;
+    public static double scoreZ = 16;
     public static double scoreX = 4;
     public static double elevatorIKAngle = 10;
     public static double wristIKAngle = 0;
@@ -347,7 +347,7 @@ public class Outtake implements Subsystem {
 //                    Sensors.distanceSensorsEnabled = true;
                     ELBOW_JOINT_SPEED = 120;
                     WRIST_JOINT_SPEED = 150;
-                    scoreX=5;
+                    scoreX=7;
                     elbowWristIK(scoreX, scoreZ);
                     backdropPrepStage++;
                 }
