@@ -6,6 +6,7 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
@@ -20,13 +21,14 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Config(value = "AA_CSAUTONAV")
 public class AutoNav implements TelemetryProvider{
     Robot robot;
     Field field;
     public static boolean cycling;
     public static boolean intaking;
     public static boolean backdropSide = true;
-    int preferredRoute = 3;
+    int preferredRoute = 5;
     int intakeIndex = 0;
     int outtakeIndex = 0;
 
@@ -89,6 +91,7 @@ public class AutoNav implements TelemetryProvider{
             case 0:
                 //get poi for desired intake location, assuming wing for now
 //                if(wing)
+                //should be field.WING_INTAKE for correct flipping, this was used for half field testing
                 POI poi = POI.WING_INTAKE;
                 //build path
                 pathToRetrieval = field.pathToPOI(robot, poi, preferredRoute);
@@ -98,7 +101,7 @@ public class AutoNav implements TelemetryProvider{
                 if(!pathToRetrieval.run(packet)) {
                     //set intake to ingest and drive forward very slowly
                     robot.articulate(Robot.Articulation.INGEST);
-                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.1, 0), 0));
+                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.15, 0), 0));
                     intakeIndex ++;
                 }
                 break;
@@ -113,6 +116,7 @@ public class AutoNav implements TelemetryProvider{
         return false;
     }
 
+    long retrievalTimer = 0;
     public SequentialAction pathToDelivery;
     public boolean deliver(TelemetryPacket packet, int preferredRoute, int targetIndex) {
         switch (outtakeIndex) {
@@ -122,26 +126,35 @@ public class AutoNav implements TelemetryProvider{
                 POI poi = field.scoreLocations.get(2);
                 //build path
                 pathToDelivery = field.pathToPOI(robot, poi, preferredRoute);
-                intakeIndex++;
+                outtakeIndex++;
                 break;
             case 1:
                 if(!pathToDelivery.run(packet)) {
                     //deploy outtake and drive backward very slowly
                     robot.articulate(Robot.Articulation.BACKDROP_PREP);
-                    Robot.sensors.distanceSensorsEnabled = true;
-                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.1, 0), 0));
-                    intakeIndex ++;
+                    //backdrop prep just takes too long lmao
+                    retrievalTimer = futureTime(3);
+                    outtakeIndex ++;
                 }
                 break;
             case 2:
+                if(isPast(retrievalTimer)) {
+                    Robot.sensors.distanceSensorsEnabled = true;
+                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.15, 0), 0));
+                    outtakeIndex++;
+                }
+                break;
+            case 3:
+                robot.distanceSensorX();
                 //todo - change to a more robust exit condition, this assumes pixels have been scored when dist is small
-                if(robot.sensors.averageDistSensorValue < 8) {
+                if(robot.sensors.leftDistSensorValue < 6) {
+                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-0, 0), 0));
                     Robot.sensors.distanceSensorsEnabled = false;
                     robot.articulate(Robot.Articulation.TRAVEL_FROM_BACKDROP);
                     outtakeIndex ++;
                 }
                 break;
-            case 3:
+            case 4:
                 //our job's done here
                 if(robot.articulation.equals(Robot.Articulation.TRAVEL)) {
                     outtakeIndex = 0;

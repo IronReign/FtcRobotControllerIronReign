@@ -5,18 +5,13 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.dc;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.PoseVelocity2d;
-import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -24,7 +19,6 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.csbot.AutoNav;
 import org.firstinspires.ftc.teamcode.robots.csbot.Autonomous;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
@@ -39,10 +33,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 
 @Config(value = "AA_CSRobot")
-public class  Robot implements Subsystem {
+public class Robot implements Subsystem {
 
     //components and subsystems
     public Subsystem[] subsystems;
@@ -85,7 +80,7 @@ public class  Robot implements Subsystem {
 
     public void backdropRelocalize() {
         driveTrain.RELOCALIZE_WITH_IMU = false;
-        distanceSensorRelocalize();
+        distanceSensorHeading();
         frontVision = false;
         if(backVisionProviderIndex == 0){
         //assumes that the backvision is in apriltag
@@ -100,7 +95,12 @@ public class  Robot implements Subsystem {
         //say bye bye to loop times
     }
 
-    public void distanceSensorRelocalize() {
+    public void distanceSensorX(){
+        Vector2d newLocation = new Vector2d(field.APRILTAG1.pose.position.x - (driveTrain.leftDistanceSensorValue + 7), driveTrain.pose.position.y);
+        driveTrain.pose = new Pose2d(newLocation, driveTrain.pose.heading);
+    }
+
+    public void distanceSensorHeading() {
         Sensors.distanceSensorsEnabled = true;
         if(sensors.averageDistSensorValue < 30) {
             double distDiff = Math.abs(sensors.rightDistSensorValue - sensors.leftDistSensorValue);
