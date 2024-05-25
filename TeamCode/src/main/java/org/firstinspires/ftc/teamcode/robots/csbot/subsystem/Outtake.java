@@ -69,7 +69,7 @@ public class Outtake implements Subsystem {
     public static double elbowIKAngle = 0;
 
 
-    public static int slideSpeed = 15;jhfjhfhyxxyrxyx
+    public static int slideSpeed = 15;
     public static int UNTUCK_SLIDE_POSITION = 500;
     public static double SLIDE_SPEED = 1500;
     public static boolean TEMP_FLIPPER_TUNE = false;
