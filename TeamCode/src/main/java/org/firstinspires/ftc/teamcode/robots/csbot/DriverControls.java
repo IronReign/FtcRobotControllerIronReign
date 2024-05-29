@@ -345,6 +345,10 @@ public class DriverControls {
             Constants.Position.resetStartPose();
         }
 
+        if(stickyGamepad1.left_stick_button) {
+            Constants.runPixelStack = !Constants.runPixelStack;
+        }
+
         if(stickyGamepad1.y) {
             if(gameState.isAutonomous()) {
                 robot.driveTrain.setPose(startingPosition);

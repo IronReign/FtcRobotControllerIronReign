@@ -391,7 +391,7 @@ public class Outtake implements Subsystem {
         switch (travelStageBack) { //robot should have already placed the intake into travel position
             case 0:
                 ELBOW_JOINT_SPEED = 80;
-                WRIST_JOINT_SPEED = scoreZ > 30 ? 50: scoreZ > 18 ? 60 : 70;;
+                WRIST_JOINT_SPEED = scoreZ > 30 ? 50: scoreZ > 18 ? 60 : 60;//70;
                 ELBOW_PRE_SCORE_ANGLE = elbow.getCurrentAngle();
 //                setTargetAngle(ELBOW_TRAVEL_ANGLE, wrist.getCurrentAngle()+40, ELEVATOR_START_ANGLE);
 //                travelTimer = futureTime(.5);
