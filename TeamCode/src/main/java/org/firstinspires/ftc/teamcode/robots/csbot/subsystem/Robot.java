@@ -12,6 +12,7 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -56,6 +57,8 @@ public class Robot implements Subsystem {
     public CSPosition currPosition;
 
     public CSPosition fetchedPosition;
+    //relocalization
+    public boolean forward = false;
 
     //vision variables
     public boolean visionProviderFinalized = false;
@@ -124,8 +127,8 @@ public class Robot implements Subsystem {
         LAUNCH_DRONE,
         TRAVEL_FROM_BACKDROP,
         TRAVEL_FROM_INGEST,
-        TRAVEL
-
+        TRAVEL,
+        LINE;
     }
 
     public void start() {
@@ -377,6 +380,9 @@ public class Robot implements Subsystem {
     public Articulation articulate(Articulation target) {
         articulation = target;
         switch (this.articulation) {
+            case LINE:
+                lineTest();
+                break;
             case MANUAL:
                 break;
             case TRAVEL:
@@ -429,6 +435,34 @@ public class Robot implements Subsystem {
         }
         return articulation;
     }
+
+    int lineTestIndex = 0;
+    long lineTestTimer = 0;
+    public void lineTest() {
+        switch (lineTestIndex){
+            case 0:
+                forward = false;
+                lineTestTimer = futureTime(2);
+                driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.4, 0), 0));
+                lineTestIndex ++;
+                break;
+            case 1:
+                if(isPast(lineTestTimer)){
+                     forward = true;
+                    driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.4, 0), 0));
+                    lineTestTimer = futureTime(2);
+                    lineTestIndex ++;
+                }
+                break;
+            case 2:
+                if(isPast(lineTestTimer))
+                    lineTestIndex = 0;
+                forward = false;
+                break;
+
+        }
+    }
+
     int backdropPrepIndex = 0;
     long backdropPrepTimer = 0;
     private boolean backdropPrep() {
