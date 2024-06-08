@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.active;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.autoEndgameOn;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.autoNavOn;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
@@ -209,7 +210,10 @@ public class DriverControls {
                 CenterStage_6832.autoNav.setPreferredRoute(0);
             }
         }
-        if(stickyGamepad1.start){
+        if (shifted(gamepad1) && stickyGamepad1.start) {
+            autoEndgameOn = !autoEndgameOn;
+        }
+        else if(stickyGamepad1.start){
             autoNavOn = !autoNavOn;
         }
 
