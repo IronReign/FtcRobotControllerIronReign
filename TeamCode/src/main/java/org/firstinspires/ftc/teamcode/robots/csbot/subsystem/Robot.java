@@ -61,13 +61,13 @@ public class Robot implements Subsystem {
     public boolean forward = false;
 
     //vision variables
-    public boolean visionProviderFinalized = false;
-    public static int backVisionProviderIndex = 2;
-    public static int frontVisionProviderIndex = 2;
+    public static boolean visionProviderFinalized = false;
+    public static int backVisionProviderIndex = 0;
+    public static int frontVisionProviderIndex = 0;
     public double aprilTagRelocalizationX = 0;
     public double aprilTagRelocalizationY = 0;
     //REMOVE
-    public Pose2d aprilTagPose = new Pose2d(0, 0,0);
+    public Pose2d aprilTagPose = new Pose2d(0, 0, 0);
 
     public static double DISTANCE_FROM_CAMERA_TO_CENTER_X = 16;// In inches
     public static double DISTANCE_FROM_CAMERA_TO_CENTER_Y = 5.25;
@@ -85,35 +85,35 @@ public class Robot implements Subsystem {
         driveTrain.RELOCALIZE_WITH_IMU = false;
         distanceSensorHeading();
         frontVision = false;
-        if(backVisionProviderIndex == 0){
-        //assumes that the backvision is in apriltag
-        enableVision();
-        if(((AprilTagProvider)visionProviderBack).getDetections() != null) {
-            aprilTagRelocalization(Autonomous.targetAprilTagIndex);
-        }}
-        else{
+        if (backVisionProviderIndex == 0) {
+            //assumes that the backvision is in apriltag
+            enableVision();
+            if (((AprilTagProvider) visionProviderBack).getDetections() != null) {
+                aprilTagRelocalization(Autonomous.targetAprilTagIndex);
+            }
+        } else {
             visionProviderFinalized = false;
             backVisionProviderIndex = 0;
         }
         //say bye bye to loop times
     }
 
-    public void distanceSensorX(){
+    public void distanceSensorX() {
         Vector2d newLocation = new Vector2d(field.APRILTAG1.pose.position.x - (driveTrain.leftDistanceSensorValue + 7), driveTrain.pose.position.y);
         driveTrain.pose = new Pose2d(newLocation, driveTrain.pose.heading);
     }
 
     public void distanceSensorHeading() {
         Sensors.distanceSensorsEnabled = true;
-        if(sensors.averageDistSensorValue < 30) {
+        if (sensors.averageDistSensorValue < 30) {
             double distDiff = Math.abs(sensors.rightDistSensorValue - sensors.leftDistSensorValue);
             double heading = Math.PI -
                     Math.asin(distDiff / Math.hypot(driveTrain.DISTANCE_BETWEEN_DISTANCE_SENSORS, distDiff))
-                    *((sensors.leftDistSensorValue > sensors.rightDistSensorValue)? 1 : 1);
+                            * ((sensors.leftDistSensorValue > sensors.rightDistSensorValue) ? 1 : 1);
             driveTrain.pose = new Pose2d(driveTrain.pose.position, heading);
             Sensors.distanceSensorsEnabled = false;
-            }
         }
+    }
 
     public enum Articulation {
         //beater bar, drivetrain, drone launcher, outtake
@@ -132,7 +132,7 @@ public class Robot implements Subsystem {
     }
 
     public void start() {
-        if(!gameState.isAutonomous())
+        if (!gameState.isAutonomous())
             skyhook.articulate(Skyhook.Articulation.TRAVEL);
         //TODO - articulate starting position
     }
@@ -140,7 +140,7 @@ public class Robot implements Subsystem {
 
 
     public Robot(HardwareMap hardwareMap, boolean simulated) {
-        if(!simulated) {
+        if (!simulated) {
             this.hardwareMap = hardwareMap;
             hubs = hardwareMap.getAll(LynxModule.class);
             for (LynxModule module : hubs) {
@@ -165,7 +165,7 @@ public class Robot implements Subsystem {
             batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
             articulation = Articulation.MANUAL;
-            backVisionProviderIndex = 2;
+            backVisionProviderIndex = 0;
         }
 
     }
@@ -188,7 +188,7 @@ public class Robot implements Subsystem {
         articulate(articulation);
         driveTrain.updatePoseEstimate();
 
-        if(drawFieldEnabled)
+        if (drawFieldEnabled)
             drawRobot(fieldOverlay, driveTrain.pose);
 
         //update subsystems
@@ -210,26 +210,25 @@ public class Robot implements Subsystem {
                 visionProviderFinalized = true;
 
             }
-            if(frontVision) {
+            if (frontVision) {
                 visionProviderFront.update(debugTelemetryEnabled);
-            }
-            else visionProviderBack.update(debugTelemetryEnabled);
+            } else visionProviderBack.update(debugTelemetryEnabled);
         }
     }
 
 
     public void aprilTagRelocalization(int target) {
         ArrayList<AprilTagDetection> detections = getAprilTagDetections();
-        if(detections != null && detections.size() > 0) {
+        if (detections != null && detections.size() > 0) {
             AprilTagDetection targetTag = detections.get(0);
             for (AprilTagDetection detection : detections) {
-                if(Math.abs(detection.id-target) < Math.abs(targetTag.id-target))
+                if (Math.abs(detection.id - target) < Math.abs(targetTag.id - target))
                     targetTag = detection;
             }
 
             aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
             aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
-            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, 0);
+            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
             driveTrain.pose = new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading);
             dc.rumble(1, 3000);
             dc.rumble(2, 3000);
@@ -239,7 +238,7 @@ public class Robot implements Subsystem {
     public ArrayList<AprilTagDetection> getAprilTagDetections() {
         if (visionOn) {
             if (visionProviderFinalized) {
-                return ((AprilTagProvider)visionProviderBack).getDetections();
+                return ((AprilTagProvider) visionProviderBack).getDetections();
             }
         }
         return null;
@@ -278,7 +277,7 @@ public class Robot implements Subsystem {
     }
 
     public void resetRobotPosFromCache(double loggerTimeoutMinutes, boolean ignoreCache) {
-        if(!ignoreCache) {
+        if (!ignoreCache) {
             fetchCachedCSPosition();
             if (gameState.equals(CenterStage_6832.GameState.TELE_OP) || gameState.equals((CenterStage_6832.GameState.TEST))) {
                 int loggerTimeout = (int) (loggerTimeoutMinutes * 60000);
@@ -310,7 +309,7 @@ public class Robot implements Subsystem {
             case 2:
                 intake.setAngle(Intake.ANGLE_GROUND);
 //                if(isPast(initPositionTimer)){
-                    initPositionIndex++;
+                initPositionIndex++;
 //                }
                 break;
             case 3:
@@ -319,25 +318,23 @@ public class Robot implements Subsystem {
                 Sensors.touchSensorsEnabled = true;
 //                skyhook.skyhookLeft.setVelocity(100);
 //                skyhook.skyhookRight.setVelocity(100);
-                initPositionIndex ++;
+                initPositionIndex++;
 //                if (isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
 //                    initPositionIndex ++;
 //                }
                 break;
             case 4:
-                if(sensors.rightTouchSensor){
+                if (sensors.rightTouchSensor) {
                     skyhook.skyhookRight.setPower(0);
 
-                }
-                else skyhook.skyhookRight.setPower(-.08);
+                } else skyhook.skyhookRight.setPower(-.08);
 
-                if(sensors.leftTouchSensor){
+                if (sensors.leftTouchSensor) {
                     skyhook.skyhookLeft.setPower(0);
-                }
-                else skyhook.skyhookLeft.setPower(-.2);
+                } else skyhook.skyhookLeft.setPower(-.2);
 
-                if(sensors.leftTouchSensor && sensors.rightTouchSensor){
+                if (sensors.leftTouchSensor && sensors.rightTouchSensor) {
                     skyhook.skyhookRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     skyhook.skyhookRight.setVelocity(0);
                     skyhook.skyhookRight.setPower(Skyhook.SKYHOOK_POWER);
@@ -351,7 +348,7 @@ public class Robot implements Subsystem {
                     skyhook.skyhookLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     skyhook.skyhookLeft.setPosition(0);
                     Sensors.touchSensorsEnabled = false;
-                    initPositionIndex ++;
+                    initPositionIndex++;
                 }
                 //                if (isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
@@ -360,7 +357,7 @@ public class Robot implements Subsystem {
                 break;
             case 5:
                 outtake.slideTargetPosition = 0;
-                initPositionIndex ++;
+                initPositionIndex++;
                 break;
             case 6:
                 //todo load cached skyhook positions
@@ -371,6 +368,10 @@ public class Robot implements Subsystem {
                 skyhook.articulate(Skyhook.Articulation.INIT);
                 break;
             case 7:
+                if (gameState.equals(CenterStage_6832.GameState.RELOCALIZATION_TEST)) {
+                    backVisionProviderIndex = 0;
+                    visionProviderFinalized = false;
+                }
                 intake.articulate(Intake.Articulation.INIT);
             default:
                 break;
@@ -438,24 +439,25 @@ public class Robot implements Subsystem {
 
     int lineTestIndex = 0;
     long lineTestTimer = 0;
+
     public void lineTest() {
-        switch (lineTestIndex){
+        switch (lineTestIndex) {
             case 0:
                 forward = false;
                 lineTestTimer = futureTime(2);
                 driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.4, 0), 0));
-                lineTestIndex ++;
+                lineTestIndex++;
                 break;
             case 1:
-                if(isPast(lineTestTimer)){
-                     forward = true;
+                if (isPast(lineTestTimer)) {
+                    forward = true;
                     driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.4, 0), 0));
                     lineTestTimer = futureTime(2);
-                    lineTestIndex ++;
+                    lineTestIndex++;
                 }
                 break;
             case 2:
-                if(isPast(lineTestTimer))
+                if (isPast(lineTestTimer))
                     lineTestIndex = 0;
                 forward = false;
                 break;
@@ -465,8 +467,9 @@ public class Robot implements Subsystem {
 
     int backdropPrepIndex = 0;
     long backdropPrepTimer = 0;
+
     private boolean backdropPrep() {
-        switch(backdropPrepIndex) {
+        switch (backdropPrepIndex) {
             case 0:
                 intake.articulate(Intake.Articulation.EJECT);
                 outtake.articulate(Outtake.Articulation.BACKDROP_PREP);
@@ -482,11 +485,10 @@ public class Robot implements Subsystem {
         return false;
     }
 
-    public void toggleBackdropPrep(){
-        if(articulation.equals(Articulation.BACKDROP)){
+    public void toggleBackdropPrep() {
+        if (articulation.equals(Articulation.BACKDROP)) {
             articulation = Articulation.TRAVEL_FROM_BACKDROP;
-        }
-        else{
+        } else {
             articulation = Articulation.BACKDROP_PREP;
         }
     }
@@ -502,11 +504,11 @@ public class Robot implements Subsystem {
     //end stop
 
     public void cleanArticulations() {
-        if(articulation == Articulation.TRAVEL) {
+        if (articulation == Articulation.TRAVEL) {
             ingestStage = 0;
-            if(intake.articulation == Intake.Articulation.TRAVEL)
+            if (intake.articulation == Intake.Articulation.TRAVEL)
                 intake.cleanArticulations();
-            if(outtake.articulation == Outtake.Articulation.TRAVEL)
+            if (outtake.articulation == Outtake.Articulation.TRAVEL)
                 outtake.cleanArticulations();
         }
     }
@@ -515,7 +517,7 @@ public class Robot implements Subsystem {
     public static long travelFromBackdropTimer = 0;
 
     public boolean travelFromBackdrop() {
-        switch (travelFromBackdropStage){
+        switch (travelFromBackdropStage) {
             case 0:
                 intake.articulate(Intake.Articulation.DOWN);
                 travelFromBackdropStage++;
@@ -526,7 +528,7 @@ public class Robot implements Subsystem {
                 travelFromBackdropStage++;
                 break;
             case 2:
-                if(isPast(travelFromBackdropTimer)){
+                if (isPast(travelFromBackdropTimer)) {
                     intake.articulate(Intake.Articulation.TRAVEL);
                     travelFromBackdropStage = 0;
                     return true;
@@ -538,6 +540,7 @@ public class Robot implements Subsystem {
 
     public static int ingestStage = 0;
     public long ingestTimer = 0;
+
     public boolean ingest() {
         switch (ingestStage) {
             case 0:
@@ -555,7 +558,7 @@ public class Robot implements Subsystem {
                 if (!intake.isEating()) ingestStage++;
                 break;
             case 3:
-                ingestStage=0;
+                ingestStage = 0;
                 return true;
 
         }
@@ -563,13 +566,12 @@ public class Robot implements Subsystem {
     }
 
     public void enterTravel() {
-        if(articulation.equals(Articulation.BACKDROP)) {
+        if (articulation.equals(Articulation.BACKDROP)) {
             articulation = Articulation.TRAVEL_FROM_BACKDROP;
         }
-        if(articulation.equals(Articulation.INGEST)) {
+        if (articulation.equals(Articulation.INGEST)) {
             articulation = Articulation.TRAVEL_FROM_INGEST;
-        }
-        else{
+        } else {
             articulation = Articulation.TRAVEL;
         }
     }
@@ -581,9 +583,9 @@ public class Robot implements Subsystem {
         telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
         telemetryMap.put("wingIntakeIndex", ingestStage);
         telemetryMap.put("initPositionIndex", initPositionIndex);
-        telemetryMap.put("Vision On/Vision Provider Finalized", visionOn+" "+visionProviderFinalized);
-        telemetryMap.put("april tag relocalization point", "("+aprilTagRelocalizationX+", "+aprilTagRelocalizationY+")");
-        telemetryMap.put("april tag pose", "("+aprilTagPose.position.x+", "+aprilTagPose.position.y+")");
+        telemetryMap.put("Vision On/Vision Provider Finalized", visionOn + " " + visionProviderFinalized);
+        telemetryMap.put("april tag relocalization point", "(" + aprilTagRelocalizationX + ", " + aprilTagRelocalizationY + ")");
+        telemetryMap.put("april tag pose", "(" + aprilTagPose.position.x * 39.37 + ", " + aprilTagPose.position.y * 39.37 + ")");
 //        telemetryMap.put("MemoryPose", positionCache.readPose());
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();

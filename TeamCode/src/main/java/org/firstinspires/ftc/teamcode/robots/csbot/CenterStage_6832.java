@@ -187,7 +187,7 @@ public class CenterStage_6832 extends OpMode {
         if(gameState.isAutonomous())
             robot.initPosition();
         robot.driveTrain.updatePoseEstimate();
-
+        robot.enableVision();
         telemetry.addData("blobLocation", blobLocation);
         telemetry.addData("fetched", robot.fetched);
         telemetry.addData("gameState", gameState);
@@ -335,8 +335,10 @@ public class CenterStage_6832 extends OpMode {
                     auton.turn.execute();
                     break;
                 case RELOCALIZATION_TEST:
+                    robot.enableVision();
+                    robot.aprilTagRelocalization(2);
                     dc.joystickDrive();
-                    robot.articulate(Robot.Articulation.LINE);
+//                    robot.articulate(Robot.Articulation.LINE);
                     break;
             }
         }

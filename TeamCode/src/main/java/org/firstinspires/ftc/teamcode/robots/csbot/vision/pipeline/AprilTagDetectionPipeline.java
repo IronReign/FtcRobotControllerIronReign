@@ -55,7 +55,7 @@ public class AprilTagDetectionPipeline extends OpenCvPipeline
     private volatile Bitmap dashboardBitmap;
 
     public static int TOP_LEFT_X = 0, TOP_LEFT_Y = 100;
-    public static int BOTTOM_RIGHT_X = 1280, BOTTOM_RIGHT_Y = 500;
+    public static int BOTTOM_RIGHT_X = 640, BOTTOM_RIGHT_Y = 480;
 
     private ArrayList<AprilTagDetection> detections = new ArrayList<>();
 
@@ -122,6 +122,7 @@ public class AprilTagDetectionPipeline extends OpenCvPipeline
     @Override
     public Mat processFrame(Mat input)
     {
+
         //crop input
         Mat croppedInput = input.submat(new Rect(new Point(TOP_LEFT_X, TOP_LEFT_Y), new Point(BOTTOM_RIGHT_X, BOTTOM_RIGHT_Y)));
 
@@ -219,16 +220,6 @@ public class AprilTagDetectionPipeline extends OpenCvPipeline
     public ArrayList<AprilTagDetection> getLatestDetections()
     {
         return detections;
-    }
-
-    public ArrayList<AprilTagDetection> getDetectionsUpdate()
-    {
-        synchronized (detectionsUpdateSync)
-        {
-            ArrayList<AprilTagDetection> ret = detectionsUpdate;
-            detectionsUpdate = null;
-            return ret;
-        }
     }
 
     public int getLastDetectedIndex() {
