@@ -98,16 +98,19 @@ public class AprilTagProvider extends VisionProvider {
 
     @Override
     public Position getPosition() {
-        return cameraOpened ?
-                camera.getFrameCount() % 20 == 0?
-                        cachedPosition = pipeline.getLastPosition()
-                :cachedPosition
-        : Position.HOLD;
+//        return cameraOpened ?
+//                camera.getFrameCount() % 20 == 0?
+//                        cachedPosition = pipeline.getLastPosition()
+//                :cachedPosition
+//        : Position.HOLD;
+        return cameraOpened? pipeline.getLastPosition() : Position.HOLD;
     }
 
     public ArrayList<AprilTagDetection> getDetections() {
-        if(camera.getFrameCount() % 20 == 0) {
-            cachedDetections = pipeline.getDetections();
+        if(cameraOpened) {
+//            if (camera.getFrameCount() % 20 == 0) {
+                cachedDetections = pipeline.getDetections();
+//            }
         }
         return cachedDetections;
     }
@@ -134,7 +137,7 @@ public class AprilTagProvider extends VisionProvider {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = super.getTelemetry(debug);
 
-        if(debug && cameraOpened) {
+        if(cameraOpened) {
             telemetryMap.put("Frame Count", camera.getFrameCount());
             telemetryMap.put("FPS", Misc.formatInvariant("%.2f", camera.getFps()));
             telemetryMap.put("Total frame time ms", camera.getTotalFrameTimeMs());

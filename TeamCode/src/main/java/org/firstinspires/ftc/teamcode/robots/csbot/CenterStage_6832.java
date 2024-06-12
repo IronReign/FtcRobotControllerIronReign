@@ -335,8 +335,10 @@ public class CenterStage_6832 extends OpMode {
                     auton.turn.execute();
                     break;
                 case RELOCALIZATION_TEST:
-                    robot.enableVision();
-                    robot.aprilTagRelocalization(2);
+                    if(robot.visionOn) {
+                        robot.enableVision();
+                        robot.aprilTagRelocalization(2);
+                    }
                     dc.joystickDrive();
 //                    robot.articulate(Robot.Articulation.LINE);
                     break;
@@ -410,7 +412,22 @@ public class CenterStage_6832 extends OpMode {
         }
         //handle this class' telemetry
         handleTelemetry(opModeTelemetryMap,  gameState.getName(), packet);
+        Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
+        visionTelemetryMap.put("Backend",
+                Misc.formatInvariant("%s (%s)",
+                        VisionProviders.VISION_PROVIDERS[Robot.backVisionProviderIndex].getSimpleName(),
+                        robot.visionProviderFinalized ?
+                                "finalized" :
+                                System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
+                )
+        );
 
+        handleTelemetry(visionTelemetryMap, "BACK VISION - \t" + robot.visionProviderBack.getTelemetryName(), packet);
+        handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
+        telemetry.addData("apriltag pose x", robot.aprilTagPose.position.x);
+        telemetry.addData("apriltag pose y", robot.aprilTagPose.position.y);
+        telemetry.addData("robot x", robot.driveTrain.pose.position.x);
+        telemetry.addData("robot y", robot.driveTrain.pose.position.y);
         if(debugTelemetryEnabled) {
             //handle robot telemetry
             handleTelemetry(robot.getTelemetry(debugTelemetryEnabled), robot.getTelemetryName(), packet);
@@ -418,18 +435,7 @@ public class CenterStage_6832 extends OpMode {
             for (TelemetryProvider telemetryProvider : robot.subsystems)
                 handleTelemetry(telemetryProvider.getTelemetry(debugTelemetryEnabled), telemetryProvider.getTelemetryName(), packet);
 
-            Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
-            visionTelemetryMap.put("Backend",
-                    Misc.formatInvariant("%s (%s)",
-                            VisionProviders.VISION_PROVIDERS[Robot.backVisionProviderIndex].getSimpleName(),
-                            robot.visionProviderFinalized ?
-                                    "finalized" :
-                                    System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
-                    )
-            );
 
-            handleTelemetry(visionTelemetryMap, "BACK VISION - \t" + robot.visionProviderBack.getTelemetryName(), packet);
-            handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
             packet.put("imu/roadrunner error", robot.driveTrain.imuRoadrunnerError);
             packet.put("imu angle", robot.sensors.driveIMUYaw);
             packet.put("roadrunner angle", Math.toDegrees(robot.driveTrain.pose.heading.toDouble()));

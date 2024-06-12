@@ -38,6 +38,7 @@ import org.opencv.core.Point;
 import org.opencv.core.Point3;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.apriltag.AprilTagDetectorJNI;
@@ -122,83 +123,91 @@ public class AprilTagDetectionPipeline extends OpenCvPipeline
     @Override
     public Mat processFrame(Mat input)
     {
+//        if(System.nanoTime() % 1e9 == 0) {
 
-        //crop input
-        Mat croppedInput = input.submat(new Rect(new Point(TOP_LEFT_X, TOP_LEFT_Y), new Point(BOTTOM_RIGHT_X, BOTTOM_RIGHT_Y)));
+            //crop input
+            Mat croppedInput = input.submat(new Rect(new Point(TOP_LEFT_X, TOP_LEFT_Y), new Point(BOTTOM_RIGHT_X, BOTTOM_RIGHT_Y)));
+            Mat downscaled = new Mat();
+            Imgproc.resize(croppedInput, downscaled, new Size(320, 240));
+            // Convert to greyscale
+            Imgproc.cvtColor(downscaled, grey, Imgproc.COLOR_RGBA2GRAY);
 
-        // Convert to greyscale
-        Imgproc.cvtColor(croppedInput, grey, Imgproc.COLOR_RGBA2GRAY);
 
-        synchronized (decimationSync)
-        {
-            if(needToSetDecimation)
-            {
-                AprilTagDetectorJNI.setApriltagDetectorDecimation(nativeApriltagPtr, decimation);
-                needToSetDecimation = false;
+            synchronized (decimationSync) {
+                if (needToSetDecimation) {
+                    AprilTagDetectorJNI.setApriltagDetectorDecimation(nativeApriltagPtr, decimation);
+                    needToSetDecimation = false;
+                }
             }
-        }
 
-        // Run AprilTag
-        detections = AprilTagDetectorJNI.runAprilTagDetectorSimple(nativeApriltagPtr, grey, tagsize, fx, fy, cx, cy);
+            // Run AprilTag
+            detections = AprilTagDetectorJNI.runAprilTagDetectorSimple(nativeApriltagPtr, grey, tagsize, fx, fy, cx, cy);
 
-        synchronized (detectionsUpdateSync)
-        {
-            detectionsUpdate = detections;
-        }
+            synchronized (detectionsUpdateSync) {
+                detectionsUpdate = detections;
+            }
 
-        //KEEP HORIZONTAL CENTERMOST ONE FOR CENTERSTAGE GAME
         double min = Integer.MAX_VALUE;
         AprilTagDetection centermostDetection = new AprilTagDetection();
         for(AprilTagDetection detection : detections) {
             double detectionOffset = Math.abs(detection.center.x - 320);
-            if(detectionOffset < min) {
+            if (detectionOffset < min) {
                 min = detectionOffset;
                 centermostDetection = detection;
             }
         }
 
-    //        get the index of the centermost tag
-        switch (centermostDetection.id) {
-            case 1:
-                lastDetectedIndex = 1;
-                lastPosition = Position.LEFT;
-                break;
-            case 2:
-                lastDetectedIndex = 2;
-                lastPosition= Position.MIDDLE;
-                break;
-            case 3:
-                lastDetectedIndex = 3;
-                lastPosition= Position.RIGHT;
-                break;
-            case 4:
-                lastDetectedIndex = 4;
-                break;
-            case 5:
-                lastDetectedIndex = 5;
-                break;
-            case 6:
-                lastDetectedIndex = 6;
-                break;
-            default:
-                lastDetectedIndex = 0;
-                lastPosition= Position.NONE_FOUND;
-        }
+            //        get the index of the centermost tag
+            switch (centermostDetection.id) {
+                case 1:
+                    lastDetectedIndex = 1;
+                    lastPosition = Position.LEFT;
+                    break;
+                case 2:
+                    lastDetectedIndex = 2;
+                    lastPosition = Position.MIDDLE;
+                    break;
+                case 3:
+                    lastDetectedIndex = 3;
+                    lastPosition = Position.RIGHT;
+                    break;
+                case 4:
+                    lastDetectedIndex = 4;
+                    break;
+                case 5:
+                    lastDetectedIndex = 5;
+                    break;
+                case 6:
+                    lastDetectedIndex = 6;
+                    break;
+                default:
+                    lastDetectedIndex = 0;
+                    lastPosition = Position.NONE_FOUND;
+            }
 
-        for(AprilTagDetection detection : detections)
-        {
-            Pose pose = aprilTagPoseToOpenCvPose(detection.pose);
-            //Pose pose = poseFromTrapezoid(detection.corners, cameraMatrix, tagsizeX, tagsizeY);
-            drawAxisMarker(croppedInput, tagsizeY/2.0, 6, pose.rvec, pose.tvec, cameraMatrix);
-            draw3dCubeMarker(croppedInput, tagsizeX, tagsizeX, tagsizeY, 5, pose.rvec, pose.tvec, cameraMatrix);
+            for (AprilTagDetection detection : detections) {
+                Pose pose = aprilTagPoseToOpenCvPose(detection.pose);
+//                Pose pose = poseFromTrapezoid(detection.corners, cameraMatrix, tagsizeX, tagsizeY);
+                drawAxisMarker(downscaled, tagsizeY / 2.0, 6, pose.rvec, pose.tvec, cameraMatrix);
+                draw3dCubeMarker(downscaled, tagsizeX, tagsizeX, tagsizeY, 5, pose.rvec, pose.tvec, cameraMatrix);
+            }
+            dashboardMat = downscaled;
+            if (dashboardMat != null && !dashboardMat.empty()) {
+                dashboardBitmap = Bitmap.createBitmap(dashboardMat.width(), dashboardMat.height(), Bitmap.Config.RGB_565);
+                Utils.matToBitmap(dashboardMat, dashboardBitmap);
+            }
+            return downscaled;
         }
-        dashboardMat = croppedInput;
-        if (dashboardMat != null && !dashboardMat.empty()) {
-            dashboardBitmap = Bitmap.createBitmap(dashboardMat.width(), dashboardMat.height(), Bitmap.Config.RGB_565);
-            Utils.matToBitmap(dashboardMat, dashboardBitmap);
-        }
-        return croppedInput;
-    }
+//        else {
+//            dashboardMat = input;
+//            if (dashboardMat != null && !dashboardMat.empty()) {
+//                dashboardBitmap = Bitmap.createBitmap(dashboardMat.width(), dashboardMat.height(), Bitmap.Config.RGB_565);
+//                Utils.matToBitmap(dashboardMat, dashboardBitmap);
+//            }
+//        }
+//
+//        return input;
+//    }
 
     public ArrayList<AprilTagDetection> getDetections() {
         return detections;
