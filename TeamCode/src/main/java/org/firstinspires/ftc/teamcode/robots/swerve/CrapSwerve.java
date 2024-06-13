@@ -19,25 +19,30 @@ public class CrapSwerve implements Subsystem {
     Servo yaw;
 
     int goPosition;
-    int yawPosition;
+    public double goPower;
+    public int yawPosition = 1500;
 
     CrapSwerve(HardwareMap hardwareMap) {
         this.hardwareMap = hardwareMap;
         go = hardwareMap.get(DcMotorEx.class, "go");
         yaw = hardwareMap.get(Servo.class, "yaw");
         go.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        go.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        go.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        go.setMotorEnable();
     }
 
     @Override
     public void update(Canvas fieldOverlay) {
-        go.setTargetPosition(goPosition);
+        //go.setTargetPosition(goPosition);
+        go.setPower(goPower);
         yaw.setPosition(Utils.servoNormalize(yawPosition));
+
+        //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
     }
 
     @Override
     public void stop() {
-
+        go.setPower(0);
     }
 
     @Override
