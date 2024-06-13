@@ -44,7 +44,6 @@ public class Autonomous implements TelemetryProvider {
     public static double SCORE_DRIVE_DISTANCE = 3;
     private Robot robot;
     private HardwareMap hardwareMap;
-    public static boolean runPixelStack = false;
 
     public enum AutonState {
         INIT,
@@ -72,6 +71,7 @@ public class Autonomous implements TelemetryProvider {
         telemetryMap.put("selectedPath", selectedPath);
         telemetryMap.put("front auton", frontAuton);
         telemetryMap.put("driverside?", Constants.driverSide);
+        telemetryMap.put("to pixel stack?", Constants.runPixelStack);
         if (autonState == AutonState.ALIGN_WITH_APRILTAG) {
             telemetryMap.put("apriltag index", ((AprilTagProvider) robot.visionProviderBack).getIndex());
         }
@@ -626,7 +626,7 @@ public class Autonomous implements TelemetryProvider {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                         robot.articulate(Robot.Articulation.TRAVEL_FROM_BACKDROP);
                         Sensors.distanceSensorsEnabled = false;
-                        if(!runPixelStack){
+                        if(!Constants.runPixelStack){
                             strafeToParkBuild();
                             autonIndex = 21;
                         }

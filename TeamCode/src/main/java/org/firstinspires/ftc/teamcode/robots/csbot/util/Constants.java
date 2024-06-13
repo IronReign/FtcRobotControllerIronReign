@@ -22,6 +22,8 @@ public class Constants {
 
     public static boolean driverSide = false;
 
+    public static boolean runPixelStack = false;
+
 
     //----------------------------------------------------------------------------------------------
     // Control Constants

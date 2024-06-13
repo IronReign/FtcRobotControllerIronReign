@@ -34,22 +34,24 @@ public class AprilTagProvider extends VisionProvider {
     private OpenCvCamera camera;
     private AprilTagDetectionPipeline pipeline;
     private volatile boolean cameraOpened;
+    private ArrayList<AprilTagDetection> cachedDetections = null;
+    private Position cachedPosition = null;
     private volatile Position lastPosition;
 
     // Constants
     private static final String TELEMETRY_NAME = "April Tag Vision Provider";
-    public static int WEBCAM_WIDTH = 1280;
-    public static int WEBCAM_HEIGHT = 720;
+    public static int WEBCAM_WIDTH = 640;
+    public static int WEBCAM_HEIGHT = 480;
     static final double FEET_PER_METER = 3.28084;
 
     // Lens intrinsics
     // UNITS ARE PIXELS
-    // NOTE: this calibration is for the C920 webcam at 800x448.
+    // NOTE: this calibration is for the C270 webcam at 640x480.
     // You will need to do your own calibration for other configurations!
-    public static double fx = 578.272;
-    public static double fy = 578.272;
-    public static double cx = 402.145;
-    public static double cy = 221.506;
+    public static double fx = 822.317;
+    public static double fy = 822.317;
+    public static double cx = 319.495;
+    public static double cy = 242.502;
     // UNITS ARE METERS
     double tagsize = 0.0508; //tag size on iron reign signal sleeve
     @Override
@@ -59,7 +61,6 @@ public class AprilTagProvider extends VisionProvider {
             camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"));
         }
         else camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 2"));
-
         noCameraBitmap = Bitmap.createBitmap(320, 240, Bitmap.Config.RGB_565);
         Mat noCameraMat = new Mat(240, 320, CvType.CV_8UC3);
         Imgproc.putText(noCameraMat, isFront? "Front Webcam Could": "Back Webcam Could", new Point(40, 110), Imgproc.FONT_HERSHEY_SIMPLEX,
@@ -97,11 +98,21 @@ public class AprilTagProvider extends VisionProvider {
 
     @Override
     public Position getPosition() {
-        return cameraOpened ? pipeline.getLastPosition() : Position.HOLD;
+//        return cameraOpened ?
+//                camera.getFrameCount() % 20 == 0?
+//                        cachedPosition = pipeline.getLastPosition()
+//                :cachedPosition
+//        : Position.HOLD;
+        return cameraOpened? pipeline.getLastPosition() : Position.HOLD;
     }
 
     public ArrayList<AprilTagDetection> getDetections() {
-        return pipeline.getDetections();
+        if(cameraOpened) {
+//            if (camera.getFrameCount() % 20 == 0) {
+                cachedDetections = pipeline.getDetections();
+//            }
+        }
+        return cachedDetections;
     }
 
     public int getIndex() {
@@ -126,7 +137,7 @@ public class AprilTagProvider extends VisionProvider {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = super.getTelemetry(debug);
 
-        if(debug && cameraOpened) {
+        if(cameraOpened) {
             telemetryMap.put("Frame Count", camera.getFrameCount());
             telemetryMap.put("FPS", Misc.formatInvariant("%.2f", camera.getFps()));
             telemetryMap.put("Total frame time ms", camera.getTotalFrameTimeMs());

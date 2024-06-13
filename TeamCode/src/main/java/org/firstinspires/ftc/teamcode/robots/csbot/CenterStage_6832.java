@@ -10,6 +10,7 @@ import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Sensors;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.ExponentialSmoother;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
@@ -57,8 +58,8 @@ public class CenterStage_6832 extends OpMode {
         AUTONOMOUS("Autonomous", true), TELE_OP("Tele-Op"),
 
         //TEST & TEMP MODES
-        TEST("Test"), DEMO("Demo"), MANUAL_DIAGNOSTIC("Manual Diagnostic"), SQUARE("Square"), TURN("Turn");
-
+        TEST("Test"), DEMO("Demo"), MANUAL_DIAGNOSTIC("Manual Diagnostic"), SQUARE("Square"), TURN("Turn"),
+        RELOCALIZATION_TEST("Relocalize");
         private final String name;
         private final boolean autonomous;
 
@@ -78,6 +79,7 @@ public class CenterStage_6832 extends OpMode {
                 case 2: return GameState.TEST;
                 case 3: return GameState.DEMO;
                 case 4: return GameState.MANUAL_DIAGNOSTIC;
+                case 5: return GameState.RELOCALIZATION_TEST;
                 default: return GameState.TEST;
             }
         }
@@ -86,7 +88,7 @@ public class CenterStage_6832 extends OpMode {
             return name;
         }
 
-        public static int getNumGameStates() {return 5;}
+        public static int getNumGameStates() {return 6;}
 
         public boolean  isAutonomous() {
             return autonomous;
@@ -185,7 +187,7 @@ public class CenterStage_6832 extends OpMode {
         if(gameState.isAutonomous())
             robot.initPosition();
         robot.driveTrain.updatePoseEstimate();
-
+        robot.enableVision();
         telemetry.addData("blobLocation", blobLocation);
         telemetry.addData("fetched", robot.fetched);
         telemetry.addData("gameState", gameState);
@@ -331,6 +333,15 @@ public class CenterStage_6832 extends OpMode {
 
                 case TURN:
                     auton.turn.execute();
+                    break;
+                case RELOCALIZATION_TEST:
+                    if(robot.visionOn) {
+                        robot.enableVision();
+                        robot.aprilTagRelocalization(2);
+                    }
+                    dc.joystickDrive();
+//                    robot.articulate(Robot.Articulation.LINE);
+                    break;
             }
         }
         else {
@@ -383,6 +394,10 @@ public class CenterStage_6832 extends OpMode {
         opModeTelemetryMap.put("Last Centerstage Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (updateTime * 1e-6), (int) (1 / (updateTime * 1e-9))));
         //IF NECESSARY, ADD TELEMETRY FOR EACH GAME STATE
         switch(gameState) {
+            case RELOCALIZATION_TEST:
+                opModeTelemetryMap.put("forward?", robot.forward);
+                opModeTelemetryMap.put("sensorAvg", robot.sensors.averageDistSensorValue);
+                break;
             case TELE_OP:
                 if(autoNavOn){
                     handleTelemetry(autoNav.getTelemetry(debugTelemetryEnabled), autoNav.getTelemetryName(), packet);
@@ -397,7 +412,22 @@ public class CenterStage_6832 extends OpMode {
         }
         //handle this class' telemetry
         handleTelemetry(opModeTelemetryMap,  gameState.getName(), packet);
+        Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
+        visionTelemetryMap.put("Backend",
+                Misc.formatInvariant("%s (%s)",
+                        VisionProviders.VISION_PROVIDERS[Robot.backVisionProviderIndex].getSimpleName(),
+                        robot.visionProviderFinalized ?
+                                "finalized" :
+                                System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
+                )
+        );
 
+        handleTelemetry(visionTelemetryMap, "BACK VISION - \t" + robot.visionProviderBack.getTelemetryName(), packet);
+        handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
+        telemetry.addData("apriltag pose x", robot.aprilTagPose.position.x);
+        telemetry.addData("apriltag pose y", robot.aprilTagPose.position.y);
+        telemetry.addData("robot x", robot.driveTrain.pose.position.x);
+        telemetry.addData("robot y", robot.driveTrain.pose.position.y);
         if(debugTelemetryEnabled) {
             //handle robot telemetry
             handleTelemetry(robot.getTelemetry(debugTelemetryEnabled), robot.getTelemetryName(), packet);
@@ -405,21 +435,12 @@ public class CenterStage_6832 extends OpMode {
             for (TelemetryProvider telemetryProvider : robot.subsystems)
                 handleTelemetry(telemetryProvider.getTelemetry(debugTelemetryEnabled), telemetryProvider.getTelemetryName(), packet);
 
-            Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
-            visionTelemetryMap.put("Backend",
-                    Misc.formatInvariant("%s (%s)",
-                            VisionProviders.VISION_PROVIDERS[Robot.backVisionProviderIndex].getSimpleName(),
-                            robot.visionProviderFinalized ?
-                                    "finalized" :
-                                    System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
-                    )
-            );
 
-            handleTelemetry(visionTelemetryMap, "BACK VISION - \t" + robot.visionProviderBack.getTelemetryName(), packet);
-            handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
             packet.put("imu/roadrunner error", robot.driveTrain.imuRoadrunnerError);
             packet.put("imu angle", robot.sensors.driveIMUYaw);
             packet.put("roadrunner angle", Math.toDegrees(robot.driveTrain.pose.heading.toDouble()));
+            packet.put("left", robot.sensors.leftDistSensorValue);
+            packet.put("right", robot.sensors.rightDistSensorValue);
 
 
             dashboard.sendTelemetryPacket(packet);
