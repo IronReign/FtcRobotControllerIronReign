@@ -30,9 +30,9 @@ public class TeleOpMeepMeep {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        Pose2d p = field.WING_INTAKE.getPose();
+        Pose2d p = field.SCORE6.getPose();//field.WING_INTAKE.getPose();
         Action bot1Action =
-                field.pathToPOI(p, myBot, field.SCORE1, 4);
+                field.pathToPOI(p, myBot, field.WING_INTAKE, 4);
 
         myBot.runAction(bot1Action);
 

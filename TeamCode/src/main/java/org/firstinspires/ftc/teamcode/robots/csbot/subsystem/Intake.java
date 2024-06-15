@@ -38,7 +38,7 @@ public class Intake implements Subsystem {
     public static int ANGLE_SWALLOW = 1390;
     public static int ANGLE_TRAVEL = 1490; //safe to travel through backstage door
     public static double TIME_SWALLOW = 1;
-    public static double TIME_EJECT = 2;
+    public static double TIME_EJECT = .5;
     public boolean leftRumbled = false;
     public boolean rightRumbled = false;
 
@@ -55,7 +55,7 @@ public class Intake implements Subsystem {
     public static double BEATER_INGEST_VELOCITY = 1700;
 
     public static double BEATER_SWALLOW_VELOCITY = 300;
-    public static double BEATER_EJECT_VELOCITY = -500;
+    public static double BEATER_EJECT_VELOCITY = -700;
     public static double BEATER_SETTLE_EJECT_VELOCITY = -400;
 
     public static double beaterTargetVelocity = 0;
@@ -487,7 +487,7 @@ public class Intake implements Subsystem {
         switch (ejectState) {
             case 0: //todo timing values in eject() have not been validated
                 angleTarget = ANGLE_EJECT;
-                ejectTimer = futureTime(1); //time for angle to set
+                ejectTimer = futureTime(.5); //time for angle to set
                 ejectState++;
                 break;
             case 1:
