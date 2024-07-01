@@ -92,7 +92,7 @@ public class AutoNav implements TelemetryProvider{
                 //get poi for desired intake location, assuming wing for now
 //                if(wing)
                 //should be field.WING_INTAKE for correct flipping, this was used for half field testing
-                POI poi = POI.WING_INTAKE;
+                POI poi = field.WING_INTAKE;
                 //build path
                 pathToRetrieval = field.pathToPOI(robot, poi, preferredRoute);
                 intakeIndex++;
@@ -118,6 +118,7 @@ public class AutoNav implements TelemetryProvider{
 
     long retrievalTimer = 0;
     public SequentialAction pathToDelivery;
+    public SequentialAction aprilTagStrafe;
     public boolean deliver(TelemetryPacket packet, int preferredRoute, int targetIndex) {
         switch (outtakeIndex) {
             case 0:
@@ -129,7 +130,15 @@ public class AutoNav implements TelemetryProvider{
                 outtakeIndex++;
                 break;
             case 1:
+                robot.enableVision();
                 if(!pathToDelivery.run(packet)) {
+                    robot.aprilTagRelocalization(alliance.isRed()? 5 : 2);
+                    aprilTagStrafe = field.pathToPOI(robot, field.scoreLocations.get(alliance.isRed()? 5 : 2), preferredRoute);
+                    outtakeIndex ++;
+                }
+                break;
+            case 2:
+                if(!aprilTagStrafe.run(packet)){
                     //deploy outtake and drive backward very slowly
                     robot.articulate(Robot.Articulation.BACKDROP_PREP);
                     //backdrop prep just takes too long lmao
@@ -137,14 +146,14 @@ public class AutoNav implements TelemetryProvider{
                     outtakeIndex ++;
                 }
                 break;
-            case 2:
+            case 3:
                 if(isPast(retrievalTimer)) {
                     Robot.sensors.distanceSensorsEnabled = true;
                     robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(-.15, 0), 0));
                     outtakeIndex++;
                 }
                 break;
-            case 3:
+            case 4:
                 robot.distanceSensorX();
                 //todo - change to a more robust exit condition, this assumes pixels have been scored when dist is small
                 if(robot.sensors.leftDistSensorValue < 6) {
@@ -154,7 +163,7 @@ public class AutoNav implements TelemetryProvider{
                     outtakeIndex ++;
                 }
                 break;
-            case 4:
+            case 5:
                 //our job's done here
                 if(robot.articulation.equals(Robot.Articulation.TRAVEL)) {
                     outtakeIndex = 0;
@@ -356,6 +365,7 @@ public class AutoNav implements TelemetryProvider{
 
     public void relinquishControl() {
         //todo - I can't really think of anything else that needs to be done?
+        Robot.sensors.distanceSensorsEnabled = false;
         clearStates();
     }
 }
