@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.robots.swerve;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.qualcomm.robotcore.hardware.CRServoImpl;
+import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -16,16 +18,16 @@ public class CrapSwerve implements Subsystem {
 
     HardwareMap hardwareMap;
     DcMotorEx go;
-    Servo yaw;
+    CRServoImpl yaw;
 
     int goPosition;
     public double goPower;
-    public int yawPosition = 1500;
+    public double yawPower;
 
     CrapSwerve(HardwareMap hardwareMap) {
         this.hardwareMap = hardwareMap;
         go = hardwareMap.get(DcMotorEx.class, "go");
-        yaw = hardwareMap.get(Servo.class, "yaw");
+        yaw = hardwareMap.get(CRServoImpl.class, "yaw");
         go.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         go.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         go.setMotorEnable();
@@ -35,7 +37,7 @@ public class CrapSwerve implements Subsystem {
     public void update(Canvas fieldOverlay) {
         //go.setTargetPosition(goPosition);
         go.setPower(goPower);
-        yaw.setPosition(Utils.servoNormalize(yawPosition));
+        yaw.setPower(-yawPower);
 
         //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
     }
@@ -43,6 +45,7 @@ public class CrapSwerve implements Subsystem {
     @Override
     public void stop() {
         go.setPower(0);
+        yaw.setPower(0);
     }
 
     @Override
