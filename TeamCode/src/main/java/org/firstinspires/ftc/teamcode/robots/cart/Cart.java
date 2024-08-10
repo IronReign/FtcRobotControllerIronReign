@@ -26,30 +26,30 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package org.firstinspires.ftc.teamcode.robots.cart;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Func;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+
 import org.firstinspires.ftc.teamcode.R;
 import org.firstinspires.ftc.teamcode.RC;
 import org.firstinspires.ftc.teamcode.vision.colorblob.ColorBlobDetector;
 
 import java.util.Locale;
 
-import static org.firstinspires.ftc.robotcontroller.internal.GamepadRC.gamepadRC;
-
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
  * the tertiaryAuto or the teleop period of an FTC match. The names of OpModes appear on the menu
  * of the FTC Driver Station. When an selection is made from the menu, the corresponding OpMode
  * class is instantiated on the Robot Controller and executed.
+ *
  *
  * This particular OpMode just executes a basic Tank Drive Teleop for a PushBot
  * It includes all the skeletal structure that all linear OpModes contain.
@@ -58,10 +58,9 @@ import static org.firstinspires.ftc.robotcontroller.internal.GamepadRC.gamepadRC
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="CartHack", group="Linear Opmode")  // @Autonomous(...) is the other common choice
-//  @Autonomous
+@TeleOp(name="Cart", group="Linear Opmode")  // @Autonomous(...) is the other common choice
 
-public class CartHack extends OpMode {
+public class Cart extends OpMode {
 
     //hi im testing something
 
@@ -83,14 +82,6 @@ public class CartHack extends OpMode {
     private boolean bypassJoysticks = false;
     private long damperTimer = 0;
     private int direction = 1;  //-1 to reverse direction
-
-
-    //vision objects/vision-based variables
-    private ColorBlobDetector mDetector;
-    private int beaconConfig = 0;
-    private double vuPwr = 0;
-    public boolean vuFlashDemo = false;
-    boolean visionConfigured = false;
 
 
     //sensors/sensing-related variables
@@ -123,12 +114,12 @@ public class CartHack extends OpMode {
 
 
 
+
     /*
      * Code to run ONCE when the driver hits INIT
      */
     @Override
     public void init() {
-        telemetry.addData("Status", "Initialized");
 
         robot.init(this.hardwareMap);
 
@@ -136,8 +127,6 @@ public class CartHack extends OpMode {
         telemetry.update();
 
         configureDashboard();
-        //todo add back some vision stuff at some point - the vuforia stuff is all gone
-        mDetector = new ColorBlobDetector();
     }
 
     /*
@@ -146,10 +135,17 @@ public class CartHack extends OpMode {
     @Override
     public void init_loop() {
 
-            stateSwitch();
-            telemetry.addData("Status", "Initialized");
-            telemetry.update();
-        }
+        stateSwitch();
+
+//            else if(toggleAllowed(gamepad1.start, startBtn) && state==0){
+//                relicCodex.deactivate();
+//            }
+
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
+
+        //idle(); // Always call idle() at the bottom of your while(opModeIsActive()) loop
+    }
 
 
     /*
@@ -165,33 +161,27 @@ public class CartHack extends OpMode {
      */
     @Override
     public void loop() {
-            telemetry.update();
-            stateSwitch();
-            if(active) {
-                switch(state){
-                    case 0: //code for tele-op control
-                        joystickDrive();
-                        break;
-                    case 1: //this was target following mode
-                        break;
-                    case 2:
-
-                        break;
-                    case 3:
-
-                        break;
-                    default:
-                        robot.stopAll();
-                        break;
-                }
-                robot.updateSensors();
-            }
-            else {
-                robot.stopAll();
-            }
-
-            //idle(); // Always call idle() at the bottom of your while(opModeIsActive()) loop
+        telemetry.update();
+        stateSwitch();
+        if(active) {
+            robot.updateSensors();
+            joystickDrive();
         }
+        else {
+            robot.stopAll();
+        }
+
+        //idle(); // Always call idle() at the bottom of your while(opModeIsActive()) loop
+    }
+
+
+
+
+
+
+
+
+
 
     public void joystickDrive() {
 
@@ -213,10 +203,20 @@ public class CartHack extends OpMode {
             joystickDriveStarted = true;
         }
 
-        pwrFwd = direction * pwrDamper * gamepadRC.left_stick_y;
-        pwrRot = pwrDamper * gamepadRC.right_stick_x;
+        pwrFwd = direction * pwrDamper * gamepad1.left_stick_y;
+        pwrRot = pwrDamper * gamepad1.right_stick_x;
 
-        robot.driveMixerTank(pwrFwd, pwrRot, gamepadRC.right_bumper);
+        robot.driveMixerTank(pwrFwd, pwrRot, gamepad1.right_bumper);
+
+        if(gamepad1.right_trigger > .5){
+            robot.shoot();
+        }
+        else if(gamepad1.left_trigger > .5) {
+            robot.intake();
+        }
+        else {
+            robot.stopcannon();
+        }
 
     }
 
@@ -238,7 +238,7 @@ public class CartHack extends OpMode {
         */
 
         if(!active) {
-            if (toggleAllowed(gamepadRC.left_bumper, left_bumper)) {
+            if (toggleAllowed(gamepad1.left_bumper, left_bumper)) {
 
                 state--;
                 if (state < 0) {
@@ -247,7 +247,7 @@ public class CartHack extends OpMode {
                 active = false;
             }
 
-            if (toggleAllowed(gamepadRC.right_bumper, right_bumper)) {
+            if (toggleAllowed(gamepad1.right_bumper, right_bumper)) {
 
                 state++;
                 if (state > 10) {
@@ -257,7 +257,7 @@ public class CartHack extends OpMode {
             }
         }
 
-        if (toggleAllowed(gamepadRC.start, startBtn)) {
+        if (toggleAllowed(gamepad1.start, startBtn)) {
             active = !active;
         }
     }
@@ -326,9 +326,24 @@ public class CartHack extends OpMode {
                         return Integer.toString(state);
                     }
                 });
-
+//        telemetry.addLine()
+//                .addData("Kp", new Func<String>() {
+//                    @Override public String value() {
+//                        return "" + robot.getKpDrive();
+//                    }
+//                })
+//                .addData("Kd", new Func<String>() {
+//                    @Override public String value() {
+//                        return "" + robot.getKdDrive();
+//                    }
+//                });
+//
         telemetry.addLine()
-
+//                .addData("phone pos", new Func<String>() {
+//                    @Override public String value() {
+//                        return Integer.toString(robot.glyphSystem.maintainPhoneTilt());
+//                    }
+//                })
                 .addData("status", new Func<String>() {
                     @Override public String value() {
                         return robot.imu.getSystemStatus().toShortString();
@@ -339,6 +354,17 @@ public class CartHack extends OpMode {
                         return robot.imu.getCalibrationStatus().toString();
                     }
                 });
+
+//                .addData("Relic Codex", new Func<String>() {
+//                    @Override public String value() {
+//                        return getRelicCodexStr();
+//                    }
+//                })
+//                .addData("Relic Codex", new Func<String>() {
+//                    @Override public String value() {
+//                        return Integer.toString(savedVuMarkCodex);
+//                    }
+//                });
 
         telemetry.addLine()
                 .addData("left", new Func<String>() {
@@ -353,7 +379,24 @@ public class CartHack extends OpMode {
                 });
 
         telemetry.addLine()
-
+//                .addData("heading", new Func<String>() {
+//                    @Override public String value() {
+//                        return formatAngle(angles.angleUnit, angles.firstAngle);
+//                        return Double.toString(robot.getHeading());
+//                    }
+//                })
+//                .addData("pitch", new Func<String>() {
+//                    @Override public String value() {
+//                        return formatAngle(angles.angleUnit, angles.firstAngle);
+//                        return Double.toString(robot.getPitch());
+//                    }
+//                })
+//                .addData("roll", new Func<String>() {
+//                    @Override public String value() {
+//                        return formatAngle(angles.angleUnit, angles.firstAngle);
+//                        return Double.toString(robot.getRoll());
+//                    }
+//                });
                 .addData("PID Calc", new Func<String>() {
                     @Override public String value() {
                         return Double.toString(robot.drivePID.performPID() );
