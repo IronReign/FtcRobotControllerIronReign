@@ -30,7 +30,6 @@ public class CrapSwerve implements Subsystem {
     public double goPower;
     public double yawPower;
     PIDController yawController;
-    public int yawDegrees;
     public double ticksPerDegree = 4970.0/360;
     public double realYaw;
     public double targetYaw;
@@ -64,13 +63,16 @@ public class CrapSwerve implements Subsystem {
         yawController.setSetpoint(targetYaw);
         yawPower = yawController.performPID() * -1;
         yaw.setPower(yawPower);
-    //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
     }
 
     @Override
     public void stop() {
         go.setPower(0);
         yaw.setPower(0);
+    }
+
+    public void drawRobot() {
+
     }
 
     @Override
