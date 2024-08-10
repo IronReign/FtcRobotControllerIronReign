@@ -24,21 +24,17 @@ public static boolean dampenRotation = false;
     @Override
     public void loop() {
         robot.update(new Canvas());
-        telemetry.addData("encoder pos", robot.yawEncoder.getCurrentPosition());
-        telemetry.addData("dampen?: ", dampenRotation);
-        if(Math.hypot(gamepad1.right_stick_x, gamepad1.right_stick_y) > .0) {
-            robot.targetYaw = Math.toDegrees(Math.atan2(gamepad1.right_stick_x, gamepad1.right_stick_y)) + 180;
-            robot.goPower = (Math.hypot(gamepad1.right_stick_x, gamepad1.right_stick_y));
-        }
-        else {
-            robot.targetYaw = robot.realYaw;
-            robot.goPower = 0;
-        }
-        telemetry.addData("rl yaw", robot.realYaw);
-        telemetry.addData("tgt yaw", robot.targetYaw);
-        telemetry.addData("err", robot.yawController.getError());
-        telemetry.addData("yaw pwr", robot.yawPower);
+        robot.simplySwerve(gamepad1.left_stick_x, gamepad1.left_stick_y);
+        updateTelemetry();
+    }
 
+    public void updateTelemetry() {
+        telemetry.addData("raw encoder position", robot.yawEncoder.getCurrentPosition());
+//        telemetry.addData("dampen?: ", dampenRotation); -- use for direct drive
+        telemetry.addData("real yaw", robot.realYaw);
+        telemetry.addData("target yaw", robot.targetYaw);
+        telemetry.addData("yaw error", robot.yawController.getError());
+        telemetry.addData("yaw power", robot.yawPower);
     }
 
     public void directDrive() {

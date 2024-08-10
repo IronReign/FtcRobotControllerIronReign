@@ -52,12 +52,23 @@ public class CrapSwerve implements Subsystem {
         yawController.enable();
     }
 
+    public void simplySwerve(double x, double y) {
+        if(Math.hypot(x, y) > .2) {
+            targetYaw = Math.toDegrees(Math.atan2(x, y)) + 180;
+            goPower = (Math.hypot(x, y));
+        }
+        else {
+            targetYaw = realYaw;
+            goPower = 0;
+        }
+    }
+
     @Override
     public void update(Canvas fieldOverlay) {
         yawController.setPID(pidCoefficients);
-        //go.setTargetPosition(goPosition);
+//      go.setTargetPosition(goPosition);
         go.setPower(goPower);
-//        yaw.setPower(-yawPower);
+//      yaw.setPower(-yawPower);
         realYaw =  Utils.wrapAngle(yawEncoder.getCurrentPosition() / ticksPerDegree);
         yawController.setInput(realYaw);
         yawController.setSetpoint(targetYaw);
