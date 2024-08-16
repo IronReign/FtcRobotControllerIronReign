@@ -55,10 +55,10 @@ public class CrapSwerve implements Subsystem {
     }
 
     public void simplySwerve(double x, double y, double power) {
+        goPower = power;
         if(Math.hypot(x, y) > .2) {
             targetYaw = Math.toDegrees(Math.atan2(x, y)) + 180;
         }
-        goPower = power;
         else {
             targetYaw = realYaw;
             goPower = 0;
