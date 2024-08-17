@@ -56,12 +56,12 @@ public class Spine implements Subsystem {
         backRight.setPower(rightPower);
 
         if(Math.abs(lt) >= .3) {
-            if(muscleTicks < 2250)
-                muscleTicks += 20;
+            if(muscleTicks < 2240)
+                muscleTicks += 2;
         }
-        else if (Math.abs(rt) >= .3){
-            if(muscleTicks > 500)
-                muscleTicks -= 20;
+        if (Math.abs(rt) >= .3){
+            if(muscleTicks > 510)
+                muscleTicks -= 2;
         }
         muscle.setPosition(Utils.servoNormalize(muscleTicks));
     }
