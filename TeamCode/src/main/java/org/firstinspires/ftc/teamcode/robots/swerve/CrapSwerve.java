@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.robots.swerve;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Encoder;
 import com.qualcomm.robotcore.hardware.CRServoImpl;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
@@ -26,12 +28,11 @@ public class CrapSwerve implements Subsystem {
     CRServoImpl yaw;
 
     public DcMotorEx yawEncoder;
-    int goPosition;
+    public static boolean dampenRotation = false;
     public double goPower;
     public double yawPower;
     PIDController yawController;
-    public int yawDegrees;
-    public double ticksPerDegree = 4970.0/360;
+    public double ticksPerDegree = 4920.0/360;
     public double realYaw;
     public double targetYaw;
     public static PIDCoefficients pidCoefficients = new PIDCoefficients(.045, 0, 0.5);
@@ -53,24 +54,64 @@ public class CrapSwerve implements Subsystem {
         yawController.enable();
     }
 
-    @Override
-    public void update(Canvas fieldOverlay) {
+    public void simplySwerve(double x, double y, double power) {
+        goPower = power;
+        if(Math.hypot(x, y) > .2) {
+            targetYaw = Math.toDegrees(Math.atan2(x, y)) + 180;
+        }
+        else {
+            targetYaw = realYaw;
+            goPower = 0;
+        }
+
         yawController.setPID(pidCoefficients);
-        //go.setTargetPosition(goPosition);
         go.setPower(goPower);
-//        yaw.setPower(-yawPower);
         realYaw =  Utils.wrapAngle(yawEncoder.getCurrentPosition() / ticksPerDegree);
         yawController.setInput(realYaw);
         yawController.setSetpoint(targetYaw);
         yawPower = yawController.performPID() * -1;
         yaw.setPower(yawPower);
-    //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+    }
+
+    public void directDrive(boolean a, double y, double x) {
+        if(a) {
+            dampenRotation = !dampenRotation;
+        }
+        if(y > .05) {
+            goPower = y;
+        }
+        else goPower = 0;
+        if(Math.abs(x) > .05){
+            yawPower = dampenRotation ? x/4 : x;
+        }
+        else yawPower = 0;
+
+        //      go.setTargetPosition(goPosition);
+        //      yaw.setPower(-yawPower);
+
+    }
+
+    @Override
+    public void update(Canvas fieldOverlay) {
+        drawRobot(fieldOverlay);
     }
 
     @Override
     public void stop() {
         go.setPower(0);
         yaw.setPower(0);
+    }
+
+    public void drawRobot(Canvas c) {
+        final double ROBOT_RADIUS = 5;
+
+//        c.setStrokeWidth(1);
+//        c.strokeCircle(t.position.x, t.position.y, ROBOT_RADIUS);
+//
+//        Vector2d halfv = t.heading.vec().times(0.5 * ROBOT_RADIUS);
+//        Vector2d p1 = t.position.plus(halfv);
+//        Vector2d p2 = p1.plus(halfv);
+//        c.strokeLine(p1.x, p1.y, p2.x, p2.y);
     }
 
     @Override
