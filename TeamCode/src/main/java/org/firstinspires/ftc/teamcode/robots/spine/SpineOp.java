@@ -22,7 +22,7 @@ public class SpineOp extends  OpMode {
         @Override
         public void loop() {
             robot.update(new Canvas());
-            robot.directDrive(gamepad1.left_trigger, gamepad1.right_trigger, gamepad1.left_stick_y, -gamepad1.left_stick_x);
+            robot.directDrive(gamepad1.left_trigger, gamepad1.right_trigger, gamepad1.right_stick_y, -gamepad1.left_stick_x);
             telemetry.addData("muscle", robot.muscleTicks);
             telemetry.addData("rightPower", robot.rightPower);
             telemetry.addData("leftPower", robot.leftPower);
