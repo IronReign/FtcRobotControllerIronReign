@@ -22,7 +22,6 @@ public class Swerve implements Subsystem {
     DcMotorEx go;
     CRServoImpl yaw;
     ri2dbot robot;
-
     public DcMotorEx yawEncoder;
     public static boolean dampenRotation = false;
     public double goPower;
