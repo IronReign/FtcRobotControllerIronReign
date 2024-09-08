@@ -9,26 +9,28 @@ import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Subsystem;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ri2dbot implements Subsystem {
+public class Robot implements Subsystem {
 
-    public Subsystem [] subsystems;
+    public Subsystem[] subsystems;
     public Swerve swerve;
     public HardwareMap hardwareMap;
-    private long[] subsystemUpdateTimes;
+    public long[] subsystemUpdateTimes;
 
-    public ri2dbot(HardwareMap hardwareMap){
+    public Robot(HardwareMap hardwareMap){
         swerve = new Swerve(hardwareMap,this);
         subsystems = new Subsystem[]{swerve};
     }
 
     @Override
     public void update(Canvas fieldOverlay) {
-        for (int i = 0; i < subsystems.length; i++) {
-            Subsystem subsystem = subsystems[i];
-            long updateStartTime = System.nanoTime();
+        for (Subsystem subsystem : subsystems) {
             subsystem.update(fieldOverlay);
-            subsystemUpdateTimes[i] = System.nanoTime() - updateStartTime;
         }
+        handleTelemetry();
+    }
+
+    public void handleTelemetry() {
+
     }
 
     @Override
@@ -39,10 +41,7 @@ public class ri2dbot implements Subsystem {
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
-        for (int i = 0; i < subsystems.length; i++) {
-            String name = subsystems[i].getClass().getSimpleName();
-            telemetryMap.put(name + " Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (subsystemUpdateTimes[i] * 1e-6), (int) (1 / (subsystemUpdateTimes[i] * 1e-9))));
-        }
+
         return telemetryMap;
     }
 

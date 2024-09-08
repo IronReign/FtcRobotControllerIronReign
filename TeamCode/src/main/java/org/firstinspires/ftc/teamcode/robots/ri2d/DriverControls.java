@@ -6,13 +6,13 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 
-public class DCRI2D {
+public class DriverControls {
 
     public static double DEADZONE = 0.1;
     Gamepad gamepad1;
     private StickyGamepad stickyGamepad1;
 
-    public DCRI2D(Gamepad pad){
+    public DriverControls(Gamepad pad){
         gamepad1 = new Gamepad();
         stickyGamepad1 = new StickyGamepad(gamepad1);
 
@@ -31,6 +31,6 @@ public class DCRI2D {
 //                Math.abs(gamepad1.left_stick_y) > DEADZONE ||
 //                Math.abs(gamepad1.right_stick_x ) > DEADZONE)
 //        {
-        robot.swerve.simplySwerve(gamepad1.right_stick_x, gamepad1.left_stick_y);
+        robot.swerve.simplySwerve(gamepad1.left_stick_x, gamepad1.left_stick_y);
     }
 }

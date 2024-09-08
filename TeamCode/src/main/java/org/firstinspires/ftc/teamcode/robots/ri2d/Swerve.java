@@ -1,72 +1,87 @@
 package org.firstinspires.ftc.teamcode.robots.ri2d;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.gamepad1;
-
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.CRServoImpl;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
-import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 import org.firstinspires.ftc.teamcode.util.PIDController;
+import org.slf4j.helpers.Util;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Config(value = "ri2dSwerve")
 public class Swerve implements Subsystem {
     HardwareMap hardwareMap;
     DcMotorEx go;
-    CRServoImpl yaw;
-    ri2dbot robot;
+    CRServoImpl yawServo;
     public DcMotorEx yawEncoder;
-    public static boolean dampenRotation = false;
+    public DcMotorEx headingMotor;
+    public IMU headingIMU;
+    Robot robot;
+    PIDController steeringController;
+    public static PIDCoefficients steeringPIDCoefficients = new PIDCoefficients(.045, 0, 0.5);
+    public double steeringPIDInput;
+    public double realBearing;
+    public double targetBearing;
+    public double bearingPower;
     public double goPower;
-    public double yawPower;
-    PIDController yawController;
     public double ticksPerDegree = 4920.0/360;
-    public double realYaw;
-    public double targetYaw;
-    public static PIDCoefficients pidCoefficients = new PIDCoefficients(.045, 0, 0.5);
+    public double realHeading;
 
-    Swerve(HardwareMap hardwareMap, ri2dbot ri2d) {
+    public static boolean dampenRotation = false;
+
+    Swerve(HardwareMap hardwareMap, Robot ri2d) {
         this.hardwareMap = hardwareMap;
         go = hardwareMap.get(DcMotorEx.class, "go");
-        yaw = hardwareMap.get(CRServoImpl.class, "yaw");
+        headingMotor = hardwareMap.get(DcMotorEx.class, "turn");
+        yawServo = hardwareMap.get(CRServoImpl.class, "yaw");
         yawEncoder = hardwareMap.get(DcMotorEx.class, "encoder");
+        headingIMU = hardwareMap.get(IMU.class, "imu");
+        headingMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        headingMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         yawEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        headingIMU.resetYaw();
         go.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         go.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         go.setMotorEnable();
-        yawController = new PIDController(pidCoefficients);
-        yawController.setOutputRange(-.5, .5);
-        yawController.setContinuous();
-        yawController.setTolerance(50);
-        yawController.setInputRange(0, 360);
-        yawController.enable();
+        steeringController = new PIDController(steeringPIDCoefficients);
+        steeringController.setOutputRange(-.5, .5);
+        steeringController.setContinuous();
+        steeringController.setTolerance(50);
+        steeringController.setInputRange(0, 360);
+        steeringController.enable();
         robot = ri2d;
     }
 
     public void simplySwerve(double x, double y) {
-        goPower = y;
         if(Math.hypot(x, y) > .2) {
-            targetYaw = Math.toDegrees(Math.atan2(x, y)) + 180;
-        }
-        else {
-            targetYaw = realYaw;
-            goPower = 0;
+            goPower = Math.hypot(x, y);
+            targetBearing = Math.toDegrees(Math.atan2(x, y)) + 180;
         }
 
-        yawController.setPID(pidCoefficients);
+        else {
+            targetBearing = realBearing;
+            goPower = 0;
+        }
+        steeringController.setPID(steeringPIDCoefficients);
+        steeringController.setInput(realBearing);
+        realBearing =  Utils.wrapAngle(yawEncoder.getCurrentPosition() / ticksPerDegree);
+        steeringPIDInput = Utils.diffBetweenAnglesDeg(targetBearing, realHeading);
+        steeringController.setSetpoint(steeringPIDInput);
+        bearingPower = steeringController.performPID() * -1;
+
         go.setPower(goPower);
-        realYaw =  Utils.wrapAngle(yawEncoder.getCurrentPosition() / ticksPerDegree);
-        yawController.setInput(realYaw);
-        yawController.setSetpoint(targetYaw);
-        yawPower = yawController.performPID() * -1;
-        yaw.setPower(yawPower);
+        yawServo.setPower(bearingPower);
     }
 
     public void directDrive(boolean a, double y, double x) {
@@ -78,9 +93,9 @@ public class Swerve implements Subsystem {
         }
         else goPower = 0;
         if(Math.abs(x) > .05){
-            yawPower = dampenRotation ? x/4 : x;
+            bearingPower = dampenRotation ? x/4 : x;
         }
-        else yawPower = 0;
+        else bearingPower = 0;
 
         //      go.setTargetPosition(goPosition);
         //      yaw.setPower(-yawPower);
@@ -89,36 +104,28 @@ public class Swerve implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
-        drawRobot(fieldOverlay);
+        realHeading = headingIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+//        drawRobot(fieldOverlay);
     }
 
     @Override
     public void stop() {
         go.setPower(0);
-        yaw.setPower(0);
-    }
-
-    public void drawRobot(Canvas c) {
-        final double ROBOT_RADIUS = 5;
-
-//        c.setStrokeWidth(1);
-//        c.strokeCircle(t.position.x, t.position.y, ROBOT_RADIUS);
-//
-//        Vector2d halfv = t.heading.vec().times(0.5 * ROBOT_RADIUS);
-//        Vector2d p1 = t.position.plus(halfv);
-//        Vector2d p2 = p1.plus(halfv);
-//        c.strokeLine(p1.x, p1.y, p2.x, p2.y);
+        yawServo.setPower(0);
     }
 
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new HashMap<>();
-        telemetryMap.put("raw encoder position", robot.swerve.yawEncoder.getCurrentPosition());
-        telemetryMap.put("real yaw", robot.swerve.realYaw);
-        telemetryMap.put("target yaw", robot.swerve.targetYaw);
-        telemetryMap.put("yaw error", robot.swerve.yawController.getError());
-        telemetryMap.put("yaw power", robot.swerve.yawPower);
-        telemetryMap.put("goPower: ", robot.swerve.goPower);
+        telemetryMap.put("raw encoder position\n", yawEncoder.getCurrentPosition());
+        telemetryMap.put("real bearing\t", realBearing);
+        telemetryMap.put("target bearing\t", targetBearing);
+        telemetryMap.put("bearing error\t", steeringController.getError());
+        telemetryMap.put("bearing power\t", bearingPower);
+        telemetryMap.put("goPower\t", goPower);
+        telemetryMap.put("heading power\t", headingMotor.getPower());
+        telemetryMap.put("heading\t", headingIMU.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+        telemetryMap.put("steering pid input\t",steeringPIDInput);
         return telemetryMap;
     }
 
