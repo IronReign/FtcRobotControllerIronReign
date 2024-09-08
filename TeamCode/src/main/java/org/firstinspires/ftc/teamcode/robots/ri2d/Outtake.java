@@ -11,9 +11,9 @@ import java.util.Map;
 
 public class Outtake implements Subsystem {
     HardwareMap hardwareMap;
-    DcMotorEx linearSlide = null;
-    ri2dbot robot;
-    public Outtake(HardwareMap hardwareMap, ri2dbot ri2d){
+    DcMotorEx linearSlide;
+    Robot robot;
+    public Outtake(HardwareMap hardwareMap, Robot ri2d){
         this.hardwareMap = hardwareMap;
         linearSlide = hardwareMap.get(DcMotorEx.class, "linearSlide");
         linearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

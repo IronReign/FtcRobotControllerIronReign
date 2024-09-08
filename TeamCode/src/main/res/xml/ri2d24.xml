@@ -6,6 +6,7 @@
             <ContinuousRotationServo name="yaw" port="0" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
             <RevRoboticsUltraplanetaryHDHexMotor name="encoder" port="2" />
+            <RevRoboticsUltraplanetaryHDHexMotor name="turn" port="1" />
         </LynxModule>
     </LynxUsbDevice>
 </Robot>
