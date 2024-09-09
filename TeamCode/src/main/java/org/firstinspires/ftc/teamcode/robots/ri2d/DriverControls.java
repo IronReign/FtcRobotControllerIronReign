@@ -31,6 +31,9 @@ public class DriverControls {
 //                Math.abs(gamepad1.left_stick_y) > DEADZONE ||
 //                Math.abs(gamepad1.right_stick_x ) > DEADZONE)
 //        {
+        robot.leftHook.setVelocity(gamepad1.left_trigger * 10);
+        robot.rightHook.setVelocity(gamepad1.right_trigger * 10);
+        robot.swerve.incrementHeading(gamepad1.right_stick_x);
         robot.swerve.simplySwerve(gamepad1.left_stick_x, gamepad1.left_stick_y);
     }
 }

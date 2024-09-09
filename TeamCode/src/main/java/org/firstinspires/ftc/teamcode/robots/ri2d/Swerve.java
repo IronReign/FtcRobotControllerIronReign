@@ -29,7 +29,7 @@ public class Swerve implements Subsystem {
     public IMU headingIMU;
     Robot robot;
     PIDController steeringController;
-    public static PIDCoefficients steeringPIDCoefficients = new PIDCoefficients(.045, 0, 0.5);
+    public static PIDCoefficients steeringPIDCoefficients = new PIDCoefficients(.025, 0, 0.5);
     public double steeringPIDInput;
     public double realBearing;
     public double targetBearing;
@@ -132,5 +132,9 @@ public class Swerve implements Subsystem {
     @Override
     public String getTelemetryName() {
         return "Swerve";
+    }
+
+    public void incrementHeading(double right_stick_x) {
+        headingMotor.setVelocity(right_stick_x);
     }
 }

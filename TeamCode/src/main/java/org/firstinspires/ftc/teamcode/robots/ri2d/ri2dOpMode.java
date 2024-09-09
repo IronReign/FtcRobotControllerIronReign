@@ -4,6 +4,8 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.checkerframework.checker.units.qual.C;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
@@ -16,6 +18,7 @@ public class ri2dOpMode extends OpMode {
 
 
     public static Robot robot;
+    DcMotorEx leftHook, rightHook;
     public static DriverControls dc;
 
     @Override
