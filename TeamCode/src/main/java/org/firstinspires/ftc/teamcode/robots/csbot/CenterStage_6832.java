@@ -20,7 +20,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "0 CenterStage_6832", group = "Challenge")
-// @Autonomous(...) is the other common choice
 @Config(value = "AA_CS_6832")
 public class CenterStage_6832 extends OpMode {
 
