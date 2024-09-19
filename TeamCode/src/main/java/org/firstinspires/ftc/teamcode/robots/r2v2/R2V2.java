@@ -22,7 +22,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import java.util.List;
 import java.util.Map;
-// Hi, This is Nirjha.
+
 @Config("R2V2")
 @TeleOp(name = "R2V2", group = "Challenge")
 public class R2V2 extends OpMode {
