@@ -6,8 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

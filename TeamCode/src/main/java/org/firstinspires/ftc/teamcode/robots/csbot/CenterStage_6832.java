@@ -10,7 +10,6 @@ import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Sensors;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.ExponentialSmoother;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
@@ -264,7 +263,7 @@ public class CenterStage_6832 extends OpMode {
 
         if (active) {
             long currentTime = System.currentTimeMillis();
-            if (!endGameHandled && gameState == CenterStage_6832.GameState.TELE_OP && (currentTime - startTime) * 1e-3 >= 80) {
+            if (!endGameHandled && gameState == GameState.TELE_OP && (currentTime - startTime) * 1e-3 >= 80) {
                 //TODO - handle endgame actions
 //                robot.articulate(Robot.Articulation.START_END_GAME);
                 endGameHandled = true;

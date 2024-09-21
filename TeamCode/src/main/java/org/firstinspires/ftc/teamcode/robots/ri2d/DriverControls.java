@@ -4,7 +4,7 @@ import static org.firstinspires.ftc.teamcode.robots.ri2d.ri2dOpMode.robot;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 
-import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 
 public class DriverControls {
 

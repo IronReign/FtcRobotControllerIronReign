@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.vision.provider;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.wrapAngle;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.wrapAngle;
 
 import android.graphics.Bitmap;
 
@@ -9,10 +9,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.csbot.vision.pipeline.CSBotPropDetectorPipeline;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Position;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.pipeline.CSBotPropDetectorPipeline;
 import org.firstinspires.ftc.teamcode.util.Vector2;
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;

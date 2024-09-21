@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.util;
 import android.content.SharedPreferences;
 
-import com.acmerobotics.roadrunner.Pose2d;
 import com.google.gson.Gson;
 
 import org.firstinspires.ftc.teamcode.RC;

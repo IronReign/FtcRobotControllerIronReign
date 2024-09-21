@@ -1,27 +1,20 @@
 package org.firstinspires.ftc.teamcode;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.AVERAGE_LOOP_TIME_SMOOTHING_FACTOR;
-
-import android.graphics.Color;
-
-import androidx.annotation.ColorInt;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.AVERAGE_LOOP_TIME_SMOOTHING_FACTOR;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.ExponentialSmoother;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
-import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
-import org.firstinspires.ftc.teamcode.robots.csbot.vision.provider.AprilTagProvider;
-import org.firstinspires.ftc.teamcode.util.FTCPanels;
-import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.ExponentialSmoother;
+import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProviders;
+import org.firstinspires.ftc.teamcode.robots.deepthought.vision.provider.AprilTagProvider;
+import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProvider;
 
 @TeleOp()
 @Config(value = "visionTest")

@@ -12,20 +12,18 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.wrapAngle;
-import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Sensors.distanceSensorsEnabled;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.wrapAngle;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Sensors.distanceSensorsEnabled;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 //todo this should not reference the reign version of MecanumDrive
-import org.firstinspires.ftc.teamcode.robots.csbot.Autonomous;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.Field;
-import org.firstinspires.ftc.teamcode.robots.csbot.POI;
 import org.firstinspires.ftc.teamcode.robots.csbot.SubZone;
 import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
-//todo this should not reference reign's Constants
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
+//todo this should not reference reign's Constants
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.HashMap;

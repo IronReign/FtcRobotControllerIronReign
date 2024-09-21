@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.util;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.servoNormalize;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.servoNormalize;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PwmControl;

@@ -35,9 +35,9 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.PositionCache;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.ExponentialSmoother;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.PositionCache;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.ExponentialSmoother;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -51,7 +51,7 @@ public class PositionLoggerTest extends OpMode
     private FtcDashboard dashboard;
     TelemetryPacket packet = new TelemetryPacket();
     int n;
-    CSPosition testpos;
+    DTPosition testpos;
     private PositionCache positionCache = new PositionCache(5);
     long lastLoopClockTime, loopTime;
 
@@ -65,7 +65,7 @@ public class PositionLoggerTest extends OpMode
         dashboard = FtcDashboard.getInstance();
         dashboard.setTelemetryTransmissionInterval(25);
         loopTimeSmoother = new ExponentialSmoother(0.1);
-        CSPosition testread = positionCache.readPose();
+        DTPosition testread = positionCache.readPose();
         System.out.println("Timestamp: " + testread.getTimestamp());
     }
 
@@ -77,7 +77,7 @@ public class PositionLoggerTest extends OpMode
 
     @Override
     public void start() {
-        testpos = new CSPosition();
+        testpos = new DTPosition();
         testpos.setPose(new Pose2d(5, 6, 3.14));
         positionCache.writePose(testpos, false);
         telemetry.addData("Status", "Initialized");
@@ -109,7 +109,7 @@ public class PositionLoggerTest extends OpMode
 
     @Override
     public void stop() {
-        CSPosition testread = positionCache.readPose();
+        DTPosition testread = positionCache.readPose();
         System.out.println("Timestamp: " + testread.getTimestamp() );
     }
 

@@ -8,7 +8,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.robot.Robot;
 
-import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
 
 import java.io.File;
 import java.io.FileOutputStream;

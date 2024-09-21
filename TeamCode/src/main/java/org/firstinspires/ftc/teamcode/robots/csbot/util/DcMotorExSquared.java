@@ -108,7 +108,7 @@ This extension to DcMotorEx adds the ability to reset the encoder to any arbitra
      * is not the case that the use of PIDF with the F term as zero necessarily exhibits exactly the
      * same behavior as the use of the LegacyPID algorithm, though in practice they will be quite close.
      *
-     * Readers are reminded that {@link DcMotor.RunMode#RUN_TO_POSITION} mode makes use of <em>both</em>
+     * Readers are reminded that {@link RunMode#RUN_TO_POSITION} mode makes use of <em>both</em>
      * the coefficients set for RUN_TO_POSITION <em>and</em> the coefficients set for RUN_WITH_ENCODER,
      * due to the fact that internally the RUN_TO_POSITION logic calculates an on-the-fly velocity goal
      * on each control cycle, then (logically) runs the RUN_WITH_ENCODER logic. Because of that double-
@@ -122,7 +122,7 @@ This extension to DcMotorEx adds the ability to reset the encoder to any arbitra
     void setPIDFCoefficients(RunMode mode, PIDFCoefficients pidfCoefficients) throws UnsupportedOperationException;
 
     /**
-     * A shorthand for setting the PIDF coefficients for the {@link DcMotor.RunMode#RUN_USING_ENCODER}
+     * A shorthand for setting the PIDF coefficients for the {@link RunMode#RUN_USING_ENCODER}
      * mode. {@link MotorControlAlgorithm#PIDF} is used.
      *
      * @see #setPIDFCoefficients(RunMode, PIDFCoefficients)
@@ -130,10 +130,10 @@ This extension to DcMotorEx adds the ability to reset the encoder to any arbitra
     void setVelocityPIDFCoefficients(double p, double i, double d, double f);
 
     /**
-     * A shorthand for setting the PIDF coefficients for the {@link DcMotor.RunMode#RUN_TO_POSITION}
+     * A shorthand for setting the PIDF coefficients for the {@link RunMode#RUN_TO_POSITION}
      * mode. {@link MotorControlAlgorithm#PIDF} is used.
      *
-     * Readers are reminded that {@link DcMotor.RunMode#RUN_TO_POSITION} mode makes use of <em>both</em>
+     * Readers are reminded that {@link RunMode#RUN_TO_POSITION} mode makes use of <em>both</em>
      * the coefficients set for RUN_TO_POSITION <em>and</em> the coefficients set for RUN_WITH_ENCODER,
      * due to the fact that internally the RUN_TO_POSITION logic calculates an on-the-fly velocity goal
      * on each control cycle, then (logically) runs the RUN_WITH_ENCODER logic. Because of that double-

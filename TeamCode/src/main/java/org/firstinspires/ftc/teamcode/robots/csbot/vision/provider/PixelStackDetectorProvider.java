@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.vision.provider;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.wrapAngle;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.wrapAngle;
 
 import android.graphics.Bitmap;
 

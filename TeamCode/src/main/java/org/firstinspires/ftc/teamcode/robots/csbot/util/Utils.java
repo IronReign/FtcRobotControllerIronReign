@@ -1,9 +1,9 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.util;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.EPSILON;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.FIELD_INCHES_PER_GRID;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.JOYSTICK_DEADZONE;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.TRIGGER_DEADZONE;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants.EPSILON;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants.FIELD_INCHES_PER_GRID;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants.JOYSTICK_DEADZONE;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants.TRIGGER_DEADZONE;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;

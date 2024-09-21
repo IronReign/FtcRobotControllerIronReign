@@ -1,14 +1,13 @@
 package org.firstinspires.ftc.teamcode.robots.r2v2.util;
 
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.EPSILON;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.JOYSTICK_DEADZONE;
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Constants.TRIGGER_DEADZONE;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants.EPSILON;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants.JOYSTICK_DEADZONE;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants.TRIGGER_DEADZONE;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.statemachine.Stage;
 import org.firstinspires.ftc.teamcode.statemachine.StateMachine;
 

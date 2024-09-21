@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.util;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.P2D;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.P2D;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;

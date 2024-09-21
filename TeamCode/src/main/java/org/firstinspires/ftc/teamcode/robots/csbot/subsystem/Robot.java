@@ -1,11 +1,11 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.dc;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
-import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.dc;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.debugTelemetryEnabled;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 
 @Config(value = "AA_CSRobot")
