@@ -1,14 +1,15 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.frontAuton;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.DriveTrain.runTestPath;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.DriveTrain.testPathToScore;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.DriveTrain.testPathToWing;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.DriveTrain.turnToSpeed;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Outtake.ELBOW_TRAVEL_ANGLE;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Outtake.ELEVATOR_START_ANGLE;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Outtake.WRIST_TRAVEL_ANGLE;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.frontAuton;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.DriveTrain.runTestPath;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.DriveTrain.testPathToScore;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.DriveTrain.testPathToWing;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.DriveTrain.turnToSpeed;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.ELBOW_TRAVEL_ANGLE;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.ELEVATOR_START_ANGLE;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.WRIST_TRAVEL_ANGLE;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 

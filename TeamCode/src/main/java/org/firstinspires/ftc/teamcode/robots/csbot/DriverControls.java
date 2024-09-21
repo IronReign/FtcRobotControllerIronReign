@@ -1,14 +1,14 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.active;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.autoEndgameOn;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.autoNavOn;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.debugTelemetryEnabled;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.active;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.autoEndgameOn;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.autoNavOn;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Outtake.slideSpeed;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot.visionOn;
 
