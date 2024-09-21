@@ -327,7 +327,6 @@ public class Outtake implements Subsystem {
             case 2: //tuck slide - todo this will get more complicated when outtake elevation is changeable
                 if (isPast(travelTimer)) {
                     setSlideTargetPosition(slidePositionDocked);
-                    robot.articulate(Robot.Articulation.TRAVEL);
                     travelStage = 0;
                     return true;
                 }

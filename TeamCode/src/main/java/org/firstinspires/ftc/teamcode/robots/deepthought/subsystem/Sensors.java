@@ -46,11 +46,6 @@ public class Sensors implements Subsystem {
     }
 
     public void update(){
-        //SKYHOOK SENSORS
-        skyhookLeftTicks = robot.skyhook.skyhookLeft.getCurrentPosition();
-        skyhookRightTicks = robot.skyhook.skyhookRight.getCurrentPosition();
-        if(skyhookIMUEnabled)
-            skyhookIMUPitch = Utils.wrapAngle(robot.skyhook.skyhookIMU.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES));
 
         //DRIVETRAIN
         if(distanceSensorsEnabled) {
@@ -64,13 +59,9 @@ public class Sensors implements Subsystem {
             averageDistSensorValue = (leftDistSensorValue + rightDistSensorValue)/2;
         }
         if(driveIMUEnabled){
-            driveIMUYaw = Utils.wrapAngle(robot.driveTrain.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.isRed()? -90 : 90) + (IntoTheDeep_6832.frontAuton? 180: 0));
+            driveIMUYaw = Utils.wrapAngle(robot.driveTrain.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.isRed()? -90 : 90));
         }
 
-        if(touchSensorsEnabled){
-            leftTouchSensor = robot.skyhook.leftTouchSensor.isPressed();
-            rightTouchSensor = robot.skyhook.rightTouchSensor.isPressed();
-        }
 
         if(pixelSensorEnabled) {
             rightPixelSensorValue = robot.intake.pixelSensorRight.getDistance(DistanceUnit.INCH);
