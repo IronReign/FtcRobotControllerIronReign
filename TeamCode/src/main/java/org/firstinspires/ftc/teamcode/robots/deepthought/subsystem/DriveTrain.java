@@ -29,7 +29,7 @@ import org.firstinspires.ftc.teamcode.util.PIDController;
 import java.util.HashMap;
 import java.util.Map;
 
-@Config(value = "AA_CS_Drive_Train")
+@Config(value = "AA_ITD_Drive_Train")
 public class DriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
     public boolean trajectoryIsActive;

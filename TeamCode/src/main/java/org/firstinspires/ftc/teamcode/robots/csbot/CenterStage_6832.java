@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -18,6 +19,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Disabled
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "0 CenterStage_6832", group = "Challenge")
 @Config(value = "AA_CS_6832")
 public class CenterStage_6832 extends OpMode {

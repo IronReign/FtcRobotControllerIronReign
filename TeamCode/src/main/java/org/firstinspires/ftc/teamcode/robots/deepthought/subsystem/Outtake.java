@@ -17,7 +17,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Config(value = "AA_CS_OUTTAKE")
+@Config(value = "AA_ITD_OUTTAKE")
 public class Outtake implements Subsystem {
     HardwareMap hardwareMap;
     Robot robot;

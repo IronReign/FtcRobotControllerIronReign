@@ -86,6 +86,10 @@ public class DriverControls {
             debugTelemetryEnabled = !debugTelemetryEnabled;
         }
 
+        if (shifted(gamepad1) && stickyGamepad1.a) {
+            fieldOrientedDrive = !fieldOrientedDrive;
+        }
+
         if (fieldOrientedDrive) {
             fieldOrientedDrive();
         } else {
@@ -99,8 +103,11 @@ public class DriverControls {
             robot.outtake.setSlideTargetPosition(robot.outtake.getSlideTargetPosition() + 5 * slideSpeed);
         }
 
-        if (stickyGamepad1.y) {
-
+        if (gamepad1.y) {
+            robot.outtake.adjustElbow(Outtake.ELBOW_ADJUST_ANGLE);
+        }
+        if(gamepad1.x) {
+            robot.outtake.adjustElbow(-Outtake.ELBOW_ADJUST_ANGLE);
         }
 
 
