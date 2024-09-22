@@ -75,10 +75,10 @@ public class DriverControls {
         // ------------------------------------------------------------------
 
         if (gamepad1.left_trigger > .1) {
-            robot.outtake.adjustElevator(-Outtake.ELEVATOR_ADJUST_ANGLE);
+            robot.outtake.adjustWrist(-Outtake.ELEVATOR_ADJUST_ANGLE);
         }
         if (gamepad1.right_trigger > .1) {
-            robot.outtake.adjustElevator(Outtake.ELEVATOR_ADJUST_ANGLE);
+            robot.outtake.adjustWrist(Outtake.ELEVATOR_ADJUST_ANGLE);
         }
 
 
@@ -93,10 +93,10 @@ public class DriverControls {
         }
 
         if (gamepad1.left_bumper) {
-            robot.outtake.slide.setTargetPosition(robot.outtake.getSlideTargetPosition() - 5 * slideSpeed);
+            robot.outtake.setSlideTargetPosition(robot.outtake.getSlideTargetPosition() - 5 * slideSpeed);
         }
         if (gamepad1.right_bumper) {
-            robot.outtake.slide.setTargetPosition(robot.outtake.getSlideTargetPosition() + 5 * slideSpeed);
+            robot.outtake.setSlideTargetPosition(robot.outtake.getSlideTargetPosition() + 5 * slideSpeed);
         }
 
         if (stickyGamepad1.y) {
