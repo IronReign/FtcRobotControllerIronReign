@@ -114,6 +114,8 @@ public class Robot implements Subsystem {
         //beater bar, drivetrain, drone launcher, outtake
         MANUAL,
         CALIBRATE,
+        INTAKE,
+        OUTTAKE
     }
 
     public void start() {
@@ -169,7 +171,6 @@ public class Robot implements Subsystem {
 
         articulate(articulation);
         driveTrain.updatePoseEstimate();
-
 
 
         //update subsystems
@@ -273,11 +274,22 @@ public class Robot implements Subsystem {
     public static int initPositionIndex = 0;
     public long initPositionTimer;
 
-    public void calibrate() {
+    public boolean calibrate() {
         switch (initPositionIndex) {
+            case 0:
+                return true;
+        }
+        return false;
+    }
+
+    public static int intakeIndex = 0;
+    public boolean intake() {
+        switch (intakeIndex) {
             case 0:
                 break;
         }
+
+        return false;
     }
 
     public Articulation articulate(Articulation target) {
@@ -286,8 +298,13 @@ public class Robot implements Subsystem {
             case MANUAL:
                 break;
             case CALIBRATE:
-                //TODO - WRITE A CALIBRATION ROUTINE
+                if (calibrate())
+                    articulation = Articulation.MANUAL;
                 break;
+            case INTAKE:
+                if(intake())
+                break;
+            case OUTTAKE:
         }
         return articulation;
     }
