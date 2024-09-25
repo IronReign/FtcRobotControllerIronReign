@@ -16,6 +16,7 @@ import android.annotation.SuppressLint;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.DriveTrain;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Sensors;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
@@ -23,7 +24,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 
 public class DriverControls {
     //CONSTANTS
-    public static boolean fieldOrientedDrive = true;
+    public static boolean fieldOrientedDrive = false;
     public static double DEADZONE = 0.1;
 
     public boolean visionProviderFinalized = robot.visionProviderFinalized;
@@ -89,12 +90,15 @@ public class DriverControls {
         if (shifted(gamepad1) && stickyGamepad1.a) {
             fieldOrientedDrive = !fieldOrientedDrive;
         }
-
-        if (fieldOrientedDrive) {
-            fieldOrientedDrive();
-        } else {
-            robotOrientedDrive();
+        if (shifted(gamepad1) && stickyGamepad1.x) {
+            DriveTrain.roadRunnerDrive = !DriveTrain.roadRunnerDrive;
         }
+
+//        if (fieldOrientedDrive) {
+//            fieldOrientedDrive();
+//        } else {
+        robotOrientedDrive();
+//        }
 
         if (gamepad1.left_bumper) {
             robot.outtake.setSlideTargetPosition(robot.outtake.getSlideTargetPosition() - 5 * slideSpeed);
@@ -106,7 +110,7 @@ public class DriverControls {
         if (gamepad1.y) {
             robot.outtake.adjustElbow(Outtake.ELBOW_ADJUST_ANGLE);
         }
-        if(gamepad1.x) {
+        if (gamepad1.x) {
             robot.outtake.adjustElbow(-Outtake.ELBOW_ADJUST_ANGLE);
         }
 
@@ -142,18 +146,22 @@ public class DriverControls {
         if (Math.abs(gamepad1.left_stick_x) > DEADZONE ||
                 Math.abs(gamepad1.left_stick_y) > DEADZONE ||
                 Math.abs(gamepad1.right_stick_x) > DEADZONE) {
-            robot.driveTrain.setHumanIsDriving(true);
             robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, alliance.isRed());
-        } else if (robot.driveTrain.isHumanIsDriving()) robot.driveTrain.drive(0, 0, 0);
+        } else robot.driveTrain.drive(0, 0, 0);
     }
 
     public void robotOrientedDrive() {
-        if (Math.abs(gamepad1.left_stick_x) > DEADZONE ||
-                Math.abs(gamepad1.left_stick_y) > DEADZONE ||
-                Math.abs(gamepad1.right_stick_x) > DEADZONE) {
-            robot.driveTrain.setHumanIsDriving(true);
-            robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
-        } else if (robot.driveTrain.isHumanIsDriving()) robot.driveTrain.drive(0, 0, 0);
+        if (DriveTrain.roadRunnerDrive) {
+            if (Math.abs(gamepad1.left_stick_x) > DEADZONE ||
+                    Math.abs(gamepad1.left_stick_y) > DEADZONE ||
+                    Math.abs(gamepad1.right_stick_x) > DEADZONE) {
+                robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+            }
+            else
+                robot.driveTrain.drive(0, 0, 0);
+        }
+        else
+            robot.driveTrain.mecanumDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x);
     }
 
 

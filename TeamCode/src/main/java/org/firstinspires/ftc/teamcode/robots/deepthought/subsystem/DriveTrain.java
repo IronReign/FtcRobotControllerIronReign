@@ -41,6 +41,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public double leftDistanceSensorValue = 0;
     public double imuRoadrunnerError;
     public static int testPreferredRouteIndex = 3;
+    public static boolean roadRunnerDrive = true;
 
     public boolean imuTurnDone = false;
     public static boolean runTestPath = false;
@@ -96,24 +97,41 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
     @Override
     public void update(Canvas c) {
-        imuRoadrunnerError = Robot.sensors.driveIMUYaw - Math.toDegrees(pose.heading.log());
-        if (distanceSensorsEnabled) {
-            rightDistanceSensorValue = Robot.sensors.rightDistSensorValue;
-            leftDistanceSensorValue = Robot.sensors.leftDistSensorValue;
-        }
-        updatePoseEstimate();
+        if (roadRunnerDrive) {
+            imuRoadrunnerError = Robot.sensors.driveIMUYaw - Math.toDegrees(pose.heading.log());
+            if (distanceSensorsEnabled) {
+                rightDistanceSensorValue = Robot.sensors.rightDistSensorValue;
+                leftDistanceSensorValue = Robot.sensors.leftDistSensorValue;
+            }
+            updatePoseEstimate();
 
 //        update pose heading from imu regularly
-        if(RELOCALIZE_WITH_IMU) {
-            if ((int) (System.nanoTime() / 1e9) % 2 == 0) {
-                pose = new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw));
+            if (RELOCALIZE_WITH_IMU) {
+                if ((int) (System.nanoTime() / 1e9) % 2 == 0) {
+                    pose = new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw));
+                }
             }
-        }
 
-        //test imu based turning from dashboard - todo comment out when not needed
-        if (turnToTest != 0) turnUntilDegreesIMU(turnToTest, turnToSpeed); //can target any angle but zero
+            //test imu based turning from dashboard - todo comment out when not needed
+            if (turnToTest != 0) turnUntilDegreesIMU(turnToTest, turnToSpeed); //can target any angle but zero
+        }
     }
 
+
+    public void mecanumDrive(double x, double y, double theta) {
+        double forward = x;
+        double strafe = y;
+        double turn = theta;
+
+        double r = Math.hypot(strafe, forward);
+        double robotAngle = Math.atan2(forward, strafe) - Math.PI/4;
+        double rightX = -turn;
+        leftFront.setPower(r * Math.cos(robotAngle) - rightX);
+        rightFront.setPower(r * Math.sin(robotAngle) + rightX);
+        leftBack.setPower(r * Math.sin(robotAngle) - rightX);
+        rightBack.setPower(r * Math.cos(robotAngle) + rightX);
+
+    }
 
 
 
