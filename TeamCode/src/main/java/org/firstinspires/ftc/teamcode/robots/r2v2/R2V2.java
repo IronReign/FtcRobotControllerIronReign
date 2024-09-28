@@ -30,6 +30,7 @@ public class R2V2 extends OpMode {
     DcMotorEx counterBrake, steering, accelerator;
     Servo cameraServo;
     //variables
+    //hey this was alyssa
     double cameraErrorCorrection = 0;
     double cameraServoTarget = .5;
     static double camP = .1; //proportional multiplier for error correction
