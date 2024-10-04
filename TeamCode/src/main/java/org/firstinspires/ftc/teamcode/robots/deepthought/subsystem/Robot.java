@@ -303,6 +303,7 @@ public class Robot implements Subsystem {
                 break;
             case INTAKE:
                 if(intake())
+                    articulation = Articulation.MANUAL;
                 break;
             case OUTTAKE:
         }

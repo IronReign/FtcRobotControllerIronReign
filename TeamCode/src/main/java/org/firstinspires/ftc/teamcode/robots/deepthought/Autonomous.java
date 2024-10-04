@@ -1,11 +1,9 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought;
 
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.DriveTrain.runTestPath;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -25,31 +23,23 @@ public class Autonomous implements TelemetryProvider {
     private Robot robot;
     private HardwareMap hardwareMap;
 //
-//    public enum AutonState {
-//        INIT,
-//        TRAVEL_TO_PURPLE,
-//        STRAFE,
-//        SCORE_GROUND,
-//        FIND_STANDARD_POSITION,
-//        TRAVEL_BACKSTAGE,
-//        DONE,
-//        FIND_STANDARD_HEADING,
-//        TRAVEL_BACKDROP,
-//        ALIGN_WITH_APRILTAG,
-//        FIND_APRIL_TAG_HEADING, PREP_FOR_PARK, PARK, SCORE_DRIVE, DRIVE_TO_PIXEL_STACK, GET_FROM_PIXEL_STACK, APRILTAG_STRAFE, IMU_TURN, APRILTAG_RELOCALIZE, SCORE_BACKDROP
-//    }
+    public enum AutonState {
+        INIT,
+        DRIVE_TO_BASKET,
+        OUTTAKE_TO_BASKET,
+        DRIVE_TO_SUB,
 
-//    public AutonState autonState = AutonState.INIT;
+    }
+
+
+    public AutonState autonState = AutonState.INIT;
 
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
-//        telemetryMap.put("autonState", autonState);
-        telemetryMap.put("auton index", autonIndex);
-        telemetryMap.put("targetIndex", targetIndex);
-        telemetryMap.put("targetAprilTag", targetAprilTagIndex);
-        telemetryMap.put("selectedPath", selectedPath);
-        telemetryMap.put("visionProvider name", robot.visionProviderBack.getTelemetryName());
+        telemetryMap.put("autonState\t ", autonState);
+        telemetryMap.put("auton index\t", autonIndex);
+        telemetryMap.put("selectedPath\t", selectedPath);
         return telemetryMap;
     }
 
@@ -60,21 +50,16 @@ public class Autonomous implements TelemetryProvider {
 
     // autonomous routines
 
-    public int targetIndex = 1;
     public static int targetAprilTagIndex = 1;
     public static int selectedPath;
-    boolean testRunToWing = true;
+
 
     public static double FIELD_INCHES_PER_GRID = 23.5;
     public static double AUTON_START_DELAY = 0;
 
-    double STANDARD_HEADING = 180;
+
 //    Pose2d aprilTagApproachPosition;
 
-
-
-    //values to actually use
-    Pose2d[][] autonPaths;
 
 //    private Action driveToPurplePixel;
 
@@ -84,7 +69,6 @@ public class Autonomous implements TelemetryProvider {
     public Autonomous(Robot robot) {
         this.robot = robot;
         this.hardwareMap = robot.hardwareMap;
-        autonPaths = new Pose2d[7][13];
         autonIndex = 0;
     }
 
@@ -115,18 +99,31 @@ public class Autonomous implements TelemetryProvider {
     public long autonTimer = futureTime(10);
 
     public boolean execute(FtcDashboard dashboard) {
-        TelemetryPacket packet = new TelemetryPacket();
-        if (runTestPath) {
-
-        } else
             switch (autonIndex) {
                 case 0:
+                    autonState = AutonState.INIT;
                     robot.positionCache.update(new DTPosition(robot.driveTrain.pose), true);
-                    return true;
-
+                    autonTimer = futureTime(AUTON_START_DELAY);
+                    autonIndex++;
+                    break;
+                case 1:
+                    if (System.nanoTime() > autonTimer) {
+                        autonState = AutonState.DRIVE_TO_BASKET;
+                        autonIndex++;
+                    }
+                    break;
+                case 2:
+                    if(robot.driveTrain.strafeToPose(Field.basket) {
+                        autonState = AutonState.OUTTAKE_TO_BASKET;
+                        autonIndex++;
+                    }
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    break;
             }
-        dashboard.sendTelemetryPacket(packet);
         return false;
-    }
+
 
 }

@@ -17,23 +17,11 @@ public class Field {
     public static final double FIELD_INCHES_PER_GRID = 23.5;
     public boolean finalized = false;
     List<Zone> zones;
-    List<SubZone> subZones;
 
     public boolean isRed = true;
 
-
-    //indexes correspond to red route numbering
-    public List<CrossingRoute> crossingRoutes = new ArrayList<>();
-
-   public POI HANG;
-   public POI HANG_PREP;
-   public POI WING_INTAKE;
-   public POI APRILTAG1, APRILTAG2, APRILTAG3, APRILTAG4, APRILTAG5, APRILTAG6;
-   public POI SCORE1, SCORE2, SCORE3, SCORE4, SCORE5, SCORE6;
-   public POI BACKSTAGE_INTERMEDIATE;
-   //INDEXES CORRESPOND WITH SCORELOCATION
    public List<POI> scoreLocations = new ArrayList<POI>();
-
+   POI basket = new POI(0, 0, 0, "BASKET", Zone.AUDIENCE);
 
     //all values are in field grids
     public static final double MAX_Y_VALUE = 3;
@@ -113,44 +101,7 @@ public class Field {
     public void finalizeField() {
         finalized = true;
         zones = Zone.getNamedZones();
-        subZones = SubZone.getNamedSubZones(isRed);
         int allianceMultiplier = isRed? 1 : -1;
-        crossingRoutes.add(new CrossingRoute(P2D(-1.5, -2.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, -2.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 0: 6), this));
-        crossingRoutes.add(new CrossingRoute(P2D(-1.5, -1.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, -1.5  * allianceMultiplier, STANDARD_HEADING), (isRed? 1: 5), this));
-        crossingRoutes.add(new CrossingRoute(P2D(-1.5,  -.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5,  -.5* allianceMultiplier, STANDARD_HEADING), (isRed? 2: 4), this));
-//          DIAGONAL ROUTE
-        crossingRoutes.add(new CrossingRoute(P2D(-1.5, .5 * allianceMultiplier, isRed? 153.434948823 : 206.565051177), P2D(.5, -.5 * allianceMultiplier, isRed? 153.434948823 : 206.565051177), 3, this));
-//
-        crossingRoutes.add(new CrossingRoute(P2D(-1.5, .5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, .5 * allianceMultiplier, STANDARD_HEADING), (isRed? 4: 2), this));
-        crossingRoutes.add(new CrossingRoute(P2D(-1.5, 1.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, 1.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 5: 1), this));
-        crossingRoutes.add(new CrossingRoute(P2D(-1.5, 2.5 * allianceMultiplier, STANDARD_HEADING), P2D(.5, 2.5 * allianceMultiplier, STANDARD_HEADING), (isRed? 6: 0), this));
-
-
-        HANG = isRed? POI.HANG : POI.HANG.flipOnX();
-        HANG_PREP = isRed? POI.HANG_PREP : POI.HANG_PREP.flipOnX();
-        WING_INTAKE = isRed? POI.WING_INTAKE : POI.WING_INTAKE.flipOnX();
-        BACKSTAGE_INTERMEDIATE = isRed? POI.BACKSTAGE_INTERMEDIATE : POI.BACKSTAGE_INTERMEDIATE.flipOnX();
-
-        APRILTAG1 = POI.APRILTAG1;
-        APRILTAG2 = POI.APRILTAG2;
-        APRILTAG3 = POI.APRILTAG3;
-        APRILTAG4 = POI.APRILTAG4;
-        APRILTAG5 = POI.APRILTAG5;
-        APRILTAG6 = POI.APRILTAG6;
-
-        SCORE1 = POI.SCORE1;
-        SCORE2 = POI.SCORE2;
-        SCORE3 = POI.SCORE3;
-        SCORE4 = POI.SCORE4;
-        SCORE5 = POI.SCORE5;
-        SCORE6 = POI.SCORE6;
-        scoreLocations.add(new POI(0, 0, 0, "INDEXING_PLACEHOLDER", Zone.RIGGING));
-        scoreLocations.add(SCORE1);
-        scoreLocations.add(SCORE2);
-        scoreLocations.add(SCORE3);
-        scoreLocations.add(SCORE4);
-        scoreLocations.add(SCORE5);
-        scoreLocations.add(SCORE6);
     }
 
     public void update(TelemetryPacket packet, Robot robot) {
@@ -170,80 +121,6 @@ public class Field {
             }
             c.setAlpha(1);
         }
-    }
-
-    public SequentialAction pathToPose(Pose2d robotPosition, Pose2d targetPosition, int preferredRouteIndex, Robot robot) {
-        Zone startZone = getZone(robotPosition);
-        Zone endZone = getZone(targetPosition);
-        //robot does nothing if startzone is in rigging
-        //todo - bring this back in
-//        if (startZone == Zone.RIGGING)
-//            return new SequentialAction();
-
-        TrajectoryActionBuilder actionBuilder = robot.driveTrain.actionBuilder(robotPosition);
-
-        boolean needsCrossingRoute = !startZone.equals(endZone);
-
-        boolean reverseSplines = startZone.equals(Zone.AUDIENCE);
-
-        CrossingRoute preferredRoute = crossingRoutes.get(preferredRouteIndex);
-
-        if (needsCrossingRoute) {
-            //spline to CrossingRoute
-            actionBuilder =
-                    actionBuilder
-                            .setReversed(reverseSplines)
-                            .splineTo(preferredRoute.getEntryPose(robotPosition).position, preferredRoute.ROUTE_HEADING_RAD + (reverseSplines ? Math.PI : 0));
-
-            //run preferredRoute
-            actionBuilder =
-                    preferredRoute.addToPath(actionBuilder, robotPosition);
-//                    .turnTo(bearingToPoseRad(preferredRoute.getExitPose(robotPosition), targetPosition));
-        }
-        //spline to destination
-
-        actionBuilder = actionBuilder
-                .setReversed(reverseSplines);
-
-        double finalStartPoseY = preferredRoute.getExitPose(robotPosition).position.y;
-        //if targetPos is backstageSide and robot is coming from the other (y-direction) side of the field,
-        //go through a backstageintermediate pose to avoid hitting the backdrop
-
-        //reverseSplines means targetPos is backstageSide
-        if(reverseSplines && (finalStartPoseY / Math.abs(finalStartPoseY) != (targetPosition.position.y / (Math.abs(targetPosition.position.y))))){
-            actionBuilder = actionBuilder
-                    .splineTo(this.BACKSTAGE_INTERMEDIATE.getPose().position, 0)
-                    .strafeToLinearHeading(targetPosition.position, targetPosition.heading);
-        }
-        else {
-            actionBuilder = actionBuilder
-                    .splineToLinearHeading(targetPosition, targetPosition.heading);
-        }
-        return new SequentialAction(
-                actionBuilder.build()
-        );
-    }
-
-    public SequentialAction pathToPOI(Robot robot, POI poi, int preferredRouteIndex){
-        return pathToPose(robot.driveTrain.pose, poi.getPose(), preferredRouteIndex, robot);
-    }
-
-    public Pose2d getAprilTagPose(int id) {
-        switch(id){
-            case 1:
-                return APRILTAG1.pose;
-            case 2:
-                return APRILTAG2.pose;
-            case 3:
-                return APRILTAG3.pose;
-            case 4:
-                return APRILTAG4.pose;
-            case 5:
-                return APRILTAG5.pose;
-            case 6:
-                return APRILTAG6.pose;
-        }
-        return null;
     }
 
     public Zone getZone(Pose2d robotPosition) {
@@ -271,7 +148,7 @@ public class Field {
 
     //get POIs at robotPosition
     public POI getPOI(Pose2d robotPosition) {
-        List<POI> temp = Arrays.asList(HANG, HANG_PREP, SCORE1, SCORE2, SCORE3, SCORE4, SCORE5, SCORE6, WING_INTAKE);
+        List<POI> temp = Arrays.asList();
         for(POI poi : temp) {
             if(poi.atPOI(robotPosition))
                 return poi;

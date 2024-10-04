@@ -18,6 +18,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.DriveTrain;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Outtake;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Sensors;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
@@ -53,7 +54,6 @@ public class DriverControls {
 
     public void manualDiagnosticMethods() {
         robotOrientedDrive();
-
     }
 
     public boolean joysticksInactive() {
@@ -85,6 +85,10 @@ public class DriverControls {
 
         if (shifted(gamepad1) && stickyGamepad1.b) {
             debugTelemetryEnabled = !debugTelemetryEnabled;
+        }
+
+        if(gamepad1.a) {
+            robot.articulate(Robot.Articulation.INTAKE);
         }
 
         if (shifted(gamepad1) && stickyGamepad1.a) {
