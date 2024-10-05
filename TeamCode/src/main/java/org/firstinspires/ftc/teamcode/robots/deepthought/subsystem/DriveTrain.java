@@ -35,7 +35,6 @@ import java.util.Map;
 public class DriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
     public boolean trajectoryIsActive;
-    public TelemetryPacket packet;
     public static double GLOBAL_HEADING_DAMPENING = .7;
     public static double HEADING_DAMPENING = 0.4;
     public static double DRIVE_DAMPENING = 0.4;
@@ -77,10 +76,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     }
     //end constructor
 
-    public void acceptPacket(TelemetryPacket p) {
-        this.packet = p;
-    }
-
     @Override
     public void update(Canvas c) {
         if (roadRunnerDrive) {
@@ -103,11 +98,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         }
     }
 
-    public TelemetryPacket getPacket() {
-        return packet;
-    }
-
-
     public void mecanumDrive(double x, double y, double theta) {
         double forward = x;
         double strafe = y;
@@ -126,11 +116,11 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
     public void drive(double x, double y, double theta) {
         if (IntoTheDeep_6832.field.finalized) {
-            theta = IntoTheDeep_6832.field.getZone(pose) == Field.Zone.BACKSTAGE ? theta * HEADING_DAMPENING : theta;
-            x = IntoTheDeep_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || IntoTheDeep_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX()) ?
-                    x * DRIVE_DAMPENING : x;
-            y = IntoTheDeep_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || IntoTheDeep_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX()) ?
-                    y * DRIVE_DAMPENING : y;
+//            theta = IntoTheDeep_6832.field.getZone(pose) == Field.Zone.BACKSTAGE ? theta * HEADING_DAMPENING : theta;
+//            x = IntoTheDeep_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || IntoTheDeep_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX()) ?
+//                    x * DRIVE_DAMPENING : x;
+//            y = IntoTheDeep_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || IntoTheDeep_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX()) ?
+//                    y * DRIVE_DAMPENING : y;
         }
 
         trajectoryIsActive = false;
@@ -242,6 +232,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
     int strafeToPoseIndex = 0;
     SequentialAction strafeToPoseAction;
+    TelemetryPacket packet = new TelemetryPacket();
     public boolean strafeToPose(Pose2d pose2d) {
         if (roadRunnerDrive) {
             switch (strafeToPoseIndex) {

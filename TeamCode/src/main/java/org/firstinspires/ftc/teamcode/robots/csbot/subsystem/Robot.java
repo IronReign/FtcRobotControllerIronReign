@@ -98,8 +98,8 @@ public class Robot implements Subsystem {
     }
 
     public void distanceSensorX() {
-        Vector2d newLocation = new Vector2d(field.APRILTAG1.pose.position.x - (driveTrain.leftDistanceSensorValue + 7), driveTrain.pose.position.y);
-        driveTrain.pose = new Pose2d(newLocation, driveTrain.pose.heading);
+//        Vector2d newLocation = new Vector2d(field.APRILTAG1.pose.position.x - (driveTrain.leftDistanceSensorValue + 7), driveTrain.pose.position.y);
+//        driveTrain.pose = new Pose2d(newLocation, driveTrain.pose.heading);
     }
 
     public void distanceSensorHeading() {
@@ -217,22 +217,22 @@ public class Robot implements Subsystem {
 
 
     public void aprilTagRelocalization(int target) {
-        ArrayList<AprilTagDetection> detections = getAprilTagDetections();
-        if (detections != null && detections.size() > 0) {
-            AprilTagDetection targetTag = detections.get(0);
-            for (AprilTagDetection detection : detections) {
-                if (Math.abs(detection.id - target) < Math.abs(targetTag.id - target))
-                    targetTag = detection;
-            }
+//        ArrayList<AprilTagDetection> detections = getAprilTagDetections();
+//        if (detections != null && detections.size() > 0) {
+//            AprilTagDetection targetTag = detections.get(0);
+//            for (AprilTagDetection detection : detections) {
+//                if (Math.abs(detection.id - target) < Math.abs(targetTag.id - target))
+//                    targetTag = detection;
+//            }
 
-            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
-            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
-            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
-            driveTrain.pose = new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading);
-            dc.rumble(1, 3000);
-            dc.rumble(2, 3000);
+//            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
+//            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
+//            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
+//            driveTrain.pose = new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading);
+//            dc.rumble(1, 3000);
+//            dc.rumble(2, 3000);
         }
-    }
+
 
     public ArrayList<AprilTagDetection> getAprilTagDetections() {
         if (visionOn) {

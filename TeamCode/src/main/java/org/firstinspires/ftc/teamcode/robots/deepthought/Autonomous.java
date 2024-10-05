@@ -20,6 +20,7 @@ import java.util.Map;
 public class Autonomous implements TelemetryProvider {
 
     public static double SCORE_DRIVE_DISTANCE = 3;
+    public static int numCycles = 4;
     private Robot robot;
     private HardwareMap hardwareMap;
 //
@@ -39,6 +40,7 @@ public class Autonomous implements TelemetryProvider {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("autonState\t ", autonState);
         telemetryMap.put("auton index\t", autonIndex);
+        telemetryMap.put("num cycles\t", numCycles);
         telemetryMap.put("selectedPath\t", selectedPath);
         return telemetryMap;
     }
@@ -56,14 +58,6 @@ public class Autonomous implements TelemetryProvider {
 
     public static double FIELD_INCHES_PER_GRID = 23.5;
     public static double AUTON_START_DELAY = 0;
-
-
-//    Pose2d aprilTagApproachPosition;
-
-
-//    private Action driveToPurplePixel;
-
-    // misc. routines
     public StateMachine square, turn;
 
     public Autonomous(Robot robot) {
@@ -72,58 +66,54 @@ public class Autonomous implements TelemetryProvider {
         autonIndex = 0;
     }
 
- // TODO - EXAMPLE LOCATION MARKER
-
-//    public void driveToYellowPixelBuild() {
-//        if (!Constants.driverSide) {
-//            driveToYellowPixel = new SequentialAction(
-//                    robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-//                            .setReversed(true)
-//                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][6].heading.log()))
-//                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), switchSides(autonPaths[selectedPath][5].heading.log()))
-//                            .build()
-//            );
-//        } else {
-//            driveToYellowPixel = new SequentialAction(
-//                    robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-//                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][4].position), switchSides(autonPaths[selectedPath][4].heading.log()))
-//                            .setReversed(true)
-//                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][5].position), STANDARD_HEADING_RAD)
-//                            .strafeToLinearHeading(switchSides(autonPaths[selectedPath][6].position), STANDARD_HEADING_RAD)
-//                            .build()
-//            );
-//        }
-//    }
-
     public static int autonIndex;
     public long autonTimer = futureTime(10);
 
     public boolean execute(FtcDashboard dashboard) {
-            switch (autonIndex) {
-                case 0:
-                    autonState = AutonState.INIT;
-                    robot.positionCache.update(new DTPosition(robot.driveTrain.pose), true);
-                    autonTimer = futureTime(AUTON_START_DELAY);
+        switch (autonIndex) {
+            case 0:
+                autonState = AutonState.INIT;
+                robot.positionCache.update(new DTPosition(robot.driveTrain.pose), true);
+                autonTimer = futureTime(AUTON_START_DELAY);
+                autonIndex++;
+                break;
+            case 1:
+                if (System.nanoTime() > autonTimer) {
+                    autonState = AutonState.DRIVE_TO_BASKET;
+                    numCycles--;
                     autonIndex++;
-                    break;
-                case 1:
-                    if (System.nanoTime() > autonTimer) {
-                        autonState = AutonState.DRIVE_TO_BASKET;
+                }
+                break;
+            case 2:
+                if (robot.driveTrain.strafeToPose(Field.basket.pose)) {
+                    autonState = AutonState.DRIVE_TO_SUB;
+                    autonIndex++;
+                }
+                break;
+            case 3:
+                if (robot.driveTrain.strafeToPose(Field.P2D(-2, -.5, 180))) {
+                    autonState = AutonState.DRIVE_TO_BASKET;
+                    autonIndex++;
+                }
+                break;
+            case 4:
+                if (robot.driveTrain.strafeToPose(Field.subAccess.pose)) {
+                    autonState = AutonState.DRIVE_TO_BASKET;
+                    if(numCycles == 0)
                         autonIndex++;
+                    else {
+                        numCycles --;
+                        autonIndex = 2;
                     }
-                    break;
-                case 2:
-                    if(robot.driveTrain.strafeToPose(Field.basket) {
-                        autonState = AutonState.OUTTAKE_TO_BASKET;
-                        autonIndex++;
-                    }
-                    break;
-                case 3:
-                    break;
-                case 4:
-                    break;
-            }
+                }
+                break;
+            case 5:
+                break;
+            case 6:
+                break;
+        }
         return false;
+    }
 
 
 }

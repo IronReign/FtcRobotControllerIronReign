@@ -213,12 +213,7 @@ public class DriverControls {
                 robot.driveTrain.setPose(startingPosition);
             }
         }
-        if (stickyGamepad1.right_stick_button) {
-            field.finalizeField();
-            robot.driveTrain.pose = new Pose2d(field.SCORE6.pose.position, field.SCORE6.pose.heading.log());
-            robot.driveTrain.buildTestPathToWing();
-            robot.driveTrain.runTestPath = true;
-        }
+
         if (stickyGamepad1.guide) {
             robot.initPositionIndex++;
         }

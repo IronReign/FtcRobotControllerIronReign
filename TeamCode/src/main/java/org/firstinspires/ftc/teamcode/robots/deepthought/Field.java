@@ -21,7 +21,8 @@ public class Field {
     public boolean isRed = true;
 
    public List<POI> scoreLocations = new ArrayList<POI>();
-   POI basket = new POI(0, 0, 0, "BASKET", Zone.AUDIENCE);
+   public static POI basket = new POI(-2, -2, 235, "BASKET");
+   public static POI subAccess = new POI(-1.5, -.5, 180, "SUBACCESS");
 
     //all values are in field grids
     public static final double MAX_Y_VALUE = 3;
@@ -37,7 +38,6 @@ public class Field {
         AUDIENCE(Field.MIN_X_VALUE, -1.5, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "AUDIENCE"),
         BACKSTAGE(.5, Field.MAX_X_VALUE, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "BACKSTAGE"),
         RIGGING(-1.5, .5, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "RIGGING");
-
         public double x1;
         public double x2;
         public double y1;
@@ -138,6 +138,7 @@ public class Field {
     //get SubZones at robotPosition
     public ArrayList<SubZone> getSubZones(Pose2d robotPosition) {
         ArrayList<SubZone> temp = new ArrayList<>();
+        SubZone[] subZones = null;
         for(SubZone k : subZones) {
             if(k.withinSubZone(robotPosition))
                 temp.add(k);

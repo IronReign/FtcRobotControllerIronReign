@@ -260,7 +260,6 @@ public class IntoTheDeep_6832 extends OpMode {
 
         TelemetryPacket packet = new TelemetryPacket();
         robot.update(packet.fieldOverlay());
-
         Map<String, Object> opModeTelemetryMap = new LinkedHashMap<>();
         // handling op mode telemetry
         opModeTelemetryMap.put("Active", active);
