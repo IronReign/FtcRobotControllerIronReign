@@ -8,6 +8,7 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Outtake.craneSpeed;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Outtake.slideSpeed;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot.visionOn;
 
@@ -54,6 +55,21 @@ public class DriverControls {
 
     public void manualDiagnosticMethods() {
         robotOrientedDrive();
+        if(gamepad1.left_trigger > .2) {
+            robot.outtake.setCraneTargetPosition(robot.outtake.getCraneTargetPosition() - 5 * craneSpeed);
+        }
+        if(gamepad1.right_trigger > .2) {
+            robot.outtake.setCraneTargetPosition(robot.outtake.getCraneTargetPosition() + 5 * craneSpeed);
+        }
+        if (stickyGamepad1.a) {
+            robot.outtake.beater.setPower(255);
+        }
+        if (stickyGamepad1.b) {
+            robot.outtake.beater.setPower(-255);
+        }
+        if(stickyGamepad1.x) {
+            robot.outtake.beater.setPower(0);
+        }
     }
 
     public boolean joysticksInactive() {
@@ -75,13 +91,19 @@ public class DriverControls {
         //GAMEPAD 1 CONTROLS
         // ------------------------------------------------------------------
 
-        if (gamepad1.left_trigger > .1) {
-            robot.outtake.adjustWrist(-Outtake.ELEVATOR_ADJUST_ANGLE);
-        }
-        if (gamepad1.right_trigger > .1) {
-            robot.outtake.adjustWrist(Outtake.ELEVATOR_ADJUST_ANGLE);
-        }
+//        if (gamepad1.left_trigger > .1) {
+//            robot.outtake.adjustWrist(-Outtake.ELEVATOR_ADJUST_ANGLE);
+//        }
+//        if (gamepad1.right_trigger > .1) {
+//            robot.outtake.adjustWrist(Outtake.ELEVATOR_ADJUST_ANGLE);
+//        }
 
+        if(gamepad1.left_trigger > .2) {
+            robot.outtake.setCraneTargetPosition(robot.outtake.getCraneTargetPosition() - 5 * craneSpeed);
+        }
+        if(gamepad1.right_trigger > .2) {
+            robot.outtake.setCraneTargetPosition(robot.outtake.getCraneTargetPosition() + 5 * craneSpeed);
+        }
 
         if (shifted(gamepad1) && stickyGamepad1.b) {
             debugTelemetryEnabled = !debugTelemetryEnabled;
@@ -103,7 +125,6 @@ public class DriverControls {
 //        } else {
         robotOrientedDrive();
 //        }
-
         if (gamepad1.left_bumper) {
             robot.outtake.setSlideTargetPosition(robot.outtake.getSlideTargetPosition() - 5 * slideSpeed);
         }

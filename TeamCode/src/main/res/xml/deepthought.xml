@@ -3,33 +3,30 @@
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Control Hub" port="173">
             <Servo name="diverterRight" port="5" />
-            <AdafruitBNO055IMU name="skyhookIMU" port="1" bus="1" />
-            <RevTouchSensor name="leftTouchSensor" port="1" />
-            <RevTouchSensor name="rightTouchSensor" port="3" />
             <RevRobotics20HDHexMotor name="rightFront" port="0" />
             <RevRobotics20HDHexMotor name="rightBack" port="1" />
             <RevRobotics20HDHexMotor name="leftBack" port="2" />
             <RevRobotics20HDHexMotor name="leftFront" port="3" />
-            <Servo name="intakeAngleRight" port="0" />
+            <ContinuousRotationServo name="beater" port="0" />
+            <RevColorSensorV3 name="intakeSensor" port="0" bus="0" />
+            <RevColorSensorV3 name="leftPixelSensor" port="0" bus="2" />
+            <RevColorSensorV3 name="rightPixelSensor" port="0" bus="1" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
         </LynxModule>
     </LynxUsbDevice>
     <LynxUsbDevice name="Expansion Hub Portal 1" serialNumber="DQ2D1L2I" parentModuleAddress="1">
         <LynxModule name="Expansion Hub 1" port="1">
-            <RevColorSensorV3 name="leftPixelSensor" port="0" bus="0" />
-            <RevColorSensorV3 name="rightPixelSensor" port="0" bus="1" />
             <REV_VL53L0X_RANGE_SENSOR name="backDistLeft" port="0" bus="2" />
             <REV_VL53L0X_RANGE_SENSOR name="backDistRight" port="0" bus="3" />
             <Servo name="intakeAngleLeft" port="0" />
+            <Servo name="intakeAngleRight" port="2" />
             <Servo name="diverterLeft" port="1" />
             <Servo name="wrist" port="5" />
             <Servo name="elevator" port="4" />
             <Servo name="elbow" port="3" />
-            <Servo name="droneLauncher" port="2" />
             <RevRobotics40HDHexMotor name="intakeBeater" port="1" />
             <RevRobotics40HDHexMotor name="slide" port="2"/>
-            <RevRoboticsCoreHexMotor name="kareem" port="3"/>
-            <RevRoboticsCoreHexMotor name="jabbar" port="0"/>
+            <RevRoboticsCoreHexMotor name="crane" port="3"/>
             <LynxEmbeddedIMU name="eimu" port="0" bus="0" />
         </LynxModule>
     </LynxUsbDevice>

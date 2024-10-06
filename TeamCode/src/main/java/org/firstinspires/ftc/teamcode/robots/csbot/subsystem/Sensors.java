@@ -72,10 +72,10 @@ public class Sensors implements Subsystem {
             rightTouchSensor = robot.skyhook.rightTouchSensor.isPressed();
         }
 
-        if(pixelSensorEnabled) {
-            rightPixelSensorValue = robot.intake.pixelSensorRight.getDistance(DistanceUnit.INCH);
-            leftPixelSensorValue = robot.intake.pixelSensorLeft.getDistance(DistanceUnit.INCH);
-        }
+//        if(pixelSensorEnabled) {
+//            rightPixelSensorValue = robot.intake.pixelSensorRight.getDistance(DistanceUnit.INCH);
+//            leftPixelSensorValue = robot.intake.pixelSensorLeft.getDistance(DistanceUnit.INCH);
+//        }
         else {
             rightPixelSensorValue = 10;
             leftPixelSensorValue = 10;

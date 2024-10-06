@@ -2,20 +2,19 @@ package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem;
 
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.hardware.CRServoImplEx;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
-import org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+
 
 @Config(value = "AA_ITD_OUTTAKE")
 public class Outtake implements Subsystem {
@@ -23,25 +22,21 @@ public class Outtake implements Subsystem {
     Robot robot;
 
     public DcMotorEx slide = null;
-
+    public DcMotorEx crane = null;
     public Joint elbow;
     public Joint wrist;
+    public CRServoImplEx beater = null;
+    public ColorSensor colorSensor = null;
+    public boolean colorSensorEnabled = false;
+
+    public enum CurrentSample {
+        RED, BLUE, NEUTRAL, NO_SAMPLE
+    }
+    public CurrentSample currentSample = CurrentSample.NO_SAMPLE;
+    List<CurrentSample> targetSamples = new ArrayList<>();
 
     public static double slideTicksPerInch = 130.593132; // determined experimentally using a average distance and ticks
-
-    //Kinematics values in inches
-//    public static double armBase = 15.75;
-//    public static double armHeight = 10.625;
-//    public static double armTheta;
-//    public static double elevatorBottomBone = 4.505;
-//    public static double elevatorTopBone = 4.505;
-//    public static double armLengthToElevator = 13;
-//    public static double elbowLength = 6;
-//    public static double wristLength = 9.5;
-//    public static double armLength = elbowLength+ wristLength;
-
     public static double elbowTargetAngle, wristTargetAngle;
-
     public static int flipperPosition = 1888;
 
     public void setSlideTargetPosition(int slideTargetPosition) {
@@ -51,16 +46,17 @@ public class Outtake implements Subsystem {
     int slideTargetPosition = 0;
     public static int slidePositionMax = 1600;
     public static int slidePositionMin = 0;
-    public static int slidePositionPreDock = 500;
-    public static int slidePositionDocked = 0;
-    public static int slidePositionScore = 400;
 
 
     public static int slideSpeed = 15;
-    public static int UNTUCK_SLIDE_POSITION = 500;
     public static double SLIDE_SPEED = 1500;
-    public static boolean TEMP_FLIPPER_TUNE = false;
-    public static double IK_ADJUST_INCHES = .2;
+
+    int craneTargetPosition = 0;
+    public static int craneSpeed = 30;
+    public void setCraneTargetPosition(int craneTargetPosition) {
+        this.craneTargetPosition = craneTargetPosition;
+    }
+
 
     //ELBOW JOINT VARIABLES
     public static int ELBOW_HOME_POSITION = 2050;
@@ -71,8 +67,6 @@ public class Outtake implements Subsystem {
     public static double ELBOW_JOINT_SPEED = 60;
 
     public static double ELBOW_MIN_ANGLE = -15;
-    public static double ELBOW_SAFE_ANGLE = 15;
-    public static double ELBOW_SCORE_ANGLE = 120;
     public static double ELBOW_MAX_ANGLE = 220;
     public static double ELBOW_PRE_SCORE_ANGLE = 120;
     public static double ELBOW_TRAVEL_ANGLE = 0;
@@ -111,26 +105,64 @@ public class Outtake implements Subsystem {
                 break;
             case TRAVEL:
                 break;
-            default:
+            //SHOULD ONLY BE ACCESSED BY SAMPLE()
+            case SAMPLE:
+                if(intake()) {
+                    articulation = Articulation.MANUAL;
+                }
                 break;
+            default:
+                throw new RuntimeException("how the ^%*( did you get here?");
         }
         prevArticulation = articulation;
         return articulation;
     }
 
-    public void cleanArticulations() {
-//        backdropPrepStage = 0;
-//        travelStage = 0;
-//        travelStageBack = 0;
-//        ingestPositionIndex = 0;
+    public static int intakeIndex;
+    public long intakeTimer;
+    public boolean intake() {
+        switch (intakeIndex) {
+            case 0:
+                //get to position
+                intakeIndex++;
+                break;
+            case 1:
+                beater.setPower(1);
+                colorSensorEnabled = true;
+                //open the "gate"
+                if(targetSamples.contains(currentSample)) {
+                    intakeTimer = futureTime(3);
+                    intakeIndex++;
+                }
+                break;
+            case 2:
+                //close the "gate"
+                beater.setPower(-1);
+                if(isPast(intakeTimer)) {
+                    beater.setPower(0);
+                    intakeIndex++;
+                }
+                break;
+            case 3:
+                return true;
+            case 4:
+                break;
+            case 5:
+                return true;
+        }
+        return false;
+    }
 
+    public void sample(List<CurrentSample> samples) {
+        articulation = Articulation.SAMPLE;
+        this.targetSamples = samples;
     }
 
 
     public enum Articulation {
         MANUAL, //does nothing - used for transition tracking
         TRAVEL, //does nothing - used for transition tracking
-//        START
+        SAMPLE
     }
 
     //LIVE STATES
@@ -147,13 +179,28 @@ public class Outtake implements Subsystem {
         elbow = new Joint(hardwareMap, "elbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         wrist = new Joint(hardwareMap, "wrist", false, WRIST_HOME_POSITION, WRIST_PWM_PER_DEGREE, WRIST_MIN_ANGLE, WRIST_MAX_ANGLE, WRIST_START_ANGLE, WRIST_JOINT_SPEED);
         slide = this.hardwareMap.get(DcMotorEx.class, "slide");
+        crane = this.hardwareMap.get(DcMotorEx.class, "crane");
+        colorSensor = this.hardwareMap.get(ColorSensor.class, "intakeSensor");
+        beater = this.hardwareMap.get(CRServoImplEx.class, "beater");
         wrist.setTargetAngle(WRIST_INIT_ANGLE);
         slide.setMotorEnable();
+        slide.setPower(1);
         slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         slide.setTargetPosition(0);
         slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slide.setVelocity(SLIDE_SPEED);
+
+        crane.setMotorEnable();
+        crane.setPower(1);
+        crane.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        crane.setTargetPosition(0);
+        crane.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        crane.setVelocity(1500);
         articulation = Articulation.MANUAL;
+    }
+
+    public int getCraneTargetPosition() {
+        return craneTargetPosition;
     }
 
     public void moveSlide(int distance) {
@@ -186,10 +233,34 @@ public class Outtake implements Subsystem {
         //allow real-time flipper speed changes
         elbow.setSpeed(ELBOW_JOINT_SPEED);
         wrist.setSpeed(WRIST_JOINT_SPEED);
+
+        if(colorSensorEnabled) {
+            updateColorSensor();
+        }
+
         //actually instruct actuators to go to desired targets
         elbow.update();
         wrist.update();
         slide.setTargetPosition(slideTargetPosition);
+        crane.setTargetPosition(craneTargetPosition);
+    }
+
+    public String updateColorSensor() {
+        if (colorSensor.blue() + colorSensor.red() + colorSensor.green() > 500) {
+            if(colorSensor.red() > colorSensor.blue() && colorSensor.red() > colorSensor.green()) {
+                currentSample = CurrentSample.RED;
+                return "Red";
+            } else if(colorSensor.blue() > colorSensor.red() && colorSensor.blue() > colorSensor.green()) {
+                currentSample = CurrentSample.BLUE;
+                return "Blue";
+            } else {
+                currentSample = CurrentSample.NEUTRAL;
+                return "Neutral";
+            }
+        } else {
+            currentSample = CurrentSample.NO_SAMPLE;
+            return "No Sample";
+        }
     }
 
     @Override
@@ -200,19 +271,20 @@ public class Outtake implements Subsystem {
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
+        telemetryMap.put("crane target position", craneTargetPosition);
+        telemetryMap.put("crane position", crane.getCurrentPosition());
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("slide target position", slideTargetPosition);
+        telemetryMap.put("beater speed", beater.getPower());
         telemetryMap.put("slide actual position", Robot.sensors.outtakeSlideTicks);
-        telemetryMap.put("slide actual position (inches)", Robot.sensors.outtakeSlideTicks/ slideTicksPerInch);
         telemetryMap.put("elbow ticks", flipperPosition);
         telemetryMap.put("elbow angle", elbow.getCurrentAngle());
-        telemetryMap.put("elbow target angle", elbow.getTargetAngle());
         telemetryMap.put("elbow joint speed", ELBOW_JOINT_SPEED);
         telemetryMap.put("wrist angle", wrist.getCurrentAngle());
-        telemetryMap.put("wrist target angle", wrist.getTargetAngle());
         telemetryMap.put("wrist joint speed", WRIST_JOINT_SPEED);
         telemetryMap.put("wrist target angle", wristTargetAngle);
         telemetryMap.put("elbow target angle", elbowTargetAngle);
+        telemetryMap.put("current sample", currentSample.name());
         return telemetryMap;
     }
 
