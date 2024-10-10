@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -18,8 +19,6 @@ import java.util.Map;
 
 @Config(value = "AA_CS_Auton")
 public class Autonomous implements TelemetryProvider {
-
-    public static double SCORE_DRIVE_DISTANCE = 3;
     public static int numCycles = 4;
     private Robot robot;
     private HardwareMap hardwareMap;
@@ -58,7 +57,6 @@ public class Autonomous implements TelemetryProvider {
 
     public static double FIELD_INCHES_PER_GRID = 23.5;
     public static double AUTON_START_DELAY = 0;
-    public StateMachine square, turn;
 
     public Autonomous(Robot robot) {
         this.robot = robot;
@@ -69,7 +67,7 @@ public class Autonomous implements TelemetryProvider {
     public static int autonIndex;
     public long autonTimer = futureTime(10);
 
-    public boolean execute(FtcDashboard dashboard) {
+    public boolean execute(TelemetryPacket packet) {
         switch (autonIndex) {
             case 0:
                 autonState = AutonState.INIT;
@@ -85,19 +83,19 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 2:
-                if (robot.driveTrain.strafeToPose(Field.basket.pose)) {
+                if (robot.driveTrain.strafeToPose(Field.basket.pose, packet)) {
                     autonState = AutonState.DRIVE_TO_SUB;
                     autonIndex++;
                 }
                 break;
             case 3:
-                if (robot.driveTrain.strafeToPose(Field.P2D(-2, -.5, 180))) {
+                if (robot.driveTrain.strafeToPose(Field.P2D(-2, -.5, 180), packet)) {
                     autonState = AutonState.DRIVE_TO_BASKET;
                     autonIndex++;
                 }
                 break;
             case 4:
-                if (robot.driveTrain.strafeToPose(Field.subAccess.pose)) {
+                if (robot.driveTrain.strafeToPose(Field.subAccess.pose, packet)) {
                     autonState = AutonState.DRIVE_TO_BASKET;
                     if(numCycles == 0)
                         autonIndex++;

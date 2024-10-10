@@ -23,7 +23,7 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 
-@Config(value = "AA_CS_SKYHOOK")
+@Config(value = "CS_SKYHOOK")
 public class Skyhook implements Subsystem {
     HardwareMap hardwareMap;
     Robot robot;

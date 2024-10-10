@@ -4,23 +4,19 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.debugTelemetryEnabled;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Outtake.craneSpeed;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Outtake.slideSpeed;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot.visionOn;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.craneSpeed;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.slideSpeed;
 
 import android.annotation.SuppressLint;
 
-import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.DriveTrain;
-import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Outtake;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
-import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Sensors;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 
@@ -56,20 +52,26 @@ public class DriverControls {
     public void manualDiagnosticMethods() {
         robotOrientedDrive();
         if(gamepad1.left_trigger > .2) {
-            robot.outtake.setCraneTargetPosition(robot.outtake.getCraneTargetPosition() - 5 * craneSpeed);
+            robot.trident.setCraneTargetPosition(robot.trident.getCraneTargetPosition() - 5 * craneSpeed);
         }
         if(gamepad1.right_trigger > .2) {
-            robot.outtake.setCraneTargetPosition(robot.outtake.getCraneTargetPosition() + 5 * craneSpeed);
+            robot.trident.setCraneTargetPosition(robot.trident.getCraneTargetPosition() + 5 * craneSpeed);
         }
-        if (stickyGamepad1.a) {
-            robot.outtake.beater.setPower(255);
+
+        if (gamepad1.left_trigger > .1) {
+            robot.trident.adjustWrist(-Trident.ELEVATOR_ADJUST_ANGLE);
         }
-        if (stickyGamepad1.b) {
-            robot.outtake.beater.setPower(-255);
+        if (gamepad1.right_trigger > .1) {
+            robot.trident.adjustWrist(Trident.ELEVATOR_ADJUST_ANGLE);
         }
-        if(stickyGamepad1.x) {
-            robot.outtake.beater.setPower(0);
+
+        if (gamepad1.dpad_down) {
+            robot.trident.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
         }
+        if (gamepad1.dpad_up) {
+            robot.trident.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
+        }
+
     }
 
     public boolean joysticksInactive() {
@@ -91,18 +93,13 @@ public class DriverControls {
         //GAMEPAD 1 CONTROLS
         // ------------------------------------------------------------------
 
-//        if (gamepad1.left_trigger > .1) {
-//            robot.outtake.adjustWrist(-Outtake.ELEVATOR_ADJUST_ANGLE);
-//        }
-//        if (gamepad1.right_trigger > .1) {
-//            robot.outtake.adjustWrist(Outtake.ELEVATOR_ADJUST_ANGLE);
-//        }
+
 
         if(gamepad1.left_trigger > .2) {
-            robot.outtake.setCraneTargetPosition(robot.outtake.getCraneTargetPosition() - 5 * craneSpeed);
+            robot.trident.setCraneTargetPosition(robot.trident.getCraneTargetPosition() - 5 * craneSpeed);
         }
         if(gamepad1.right_trigger > .2) {
-            robot.outtake.setCraneTargetPosition(robot.outtake.getCraneTargetPosition() + 5 * craneSpeed);
+            robot.trident.setCraneTargetPosition(robot.trident.getCraneTargetPosition() + 5 * craneSpeed);
         }
 
         if (shifted(gamepad1) && stickyGamepad1.b) {
@@ -116,48 +113,44 @@ public class DriverControls {
         if (shifted(gamepad1) && stickyGamepad1.a) {
             fieldOrientedDrive = !fieldOrientedDrive;
         }
-        if (shifted(gamepad1) && stickyGamepad1.x) {
-            DriveTrain.roadRunnerDrive = !DriveTrain.roadRunnerDrive;
-        }
 
-//        if (fieldOrientedDrive) {
-//            fieldOrientedDrive();
-//        } else {
+
+        if (fieldOrientedDrive) {
+            fieldOrientedDrive();
+        } else {
         robotOrientedDrive();
-//        }
+        }
         if (gamepad1.left_bumper) {
-            robot.outtake.setSlideTargetPosition(robot.outtake.getSlideTargetPosition() - 5 * slideSpeed);
+            robot.trident.setSlideTargetPosition(robot.trident.getSlideTargetPosition() - 5 * slideSpeed);
         }
         if (gamepad1.right_bumper) {
-            robot.outtake.setSlideTargetPosition(robot.outtake.getSlideTargetPosition() + 5 * slideSpeed);
+            robot.trident.setSlideTargetPosition(robot.trident.getSlideTargetPosition() + 5 * slideSpeed);
         }
 
         if (gamepad1.y) {
-            robot.outtake.adjustElbow(Outtake.ELBOW_ADJUST_ANGLE);
+            robot.trident.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad1.x) {
-            robot.outtake.adjustElbow(-Outtake.ELBOW_ADJUST_ANGLE);
+            robot.trident.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
         }
 
-
         // ------------------------------------------------------------------
-
         //GAMEPAD 2 CONTROLS
         // ------------------------------------------------------------------
         if (stickyGamepad2.b) {
             fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (gamepad2.left_trigger > .1) {
-            robot.outtake.adjustElbow(-robot.outtake.ELBOW_ADJUST_ANGLE);
+            robot.trident.adjustElbow(-robot.trident.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad2.right_trigger > .1) {
-            robot.outtake.adjustElbow(robot.outtake.ELBOW_ADJUST_ANGLE);
+            robot.trident.adjustElbow(robot.trident.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad2.left_bumper) {
-            robot.outtake.adjustWrist(-robot.outtake.WRIST_ADJUST_ANGLE);
+            robot.trident.adjustWrist(-robot.trident.WRIST_ADJUST_ANGLE);
         }
         if (gamepad2.right_bumper) {
-            robot.outtake.adjustWrist(robot.outtake.WRIST_ADJUST_ANGLE);
+            robot.trident.adjustWrist(robot.trident.WRIST_ADJUST_ANGLE);
         }
         // ------------------------------------------------------------------
 

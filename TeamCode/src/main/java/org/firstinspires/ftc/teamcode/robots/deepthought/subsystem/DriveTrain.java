@@ -10,28 +10,26 @@ import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.wrapAngle;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Sensors.distanceSensorsEnabled;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors.distanceSensorsEnabled;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 //todo this should not reference the reign version of MecanumDrive
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
-import org.firstinspires.ftc.teamcode.robots.deepthought.Field;
-import org.firstinspires.ftc.teamcode.robots.deepthought.SubZone;
 import org.firstinspires.ftc.teamcode.robots.deepthought.rr_stuff.MecanumDrive;
 //todo this should not reference reign's Constants
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Config(value = "AA_ITD_Drive_Train")
+@Config(value = "0_ITD_Drive_Train")
 public class DriveTrain extends MecanumDrive implements Subsystem {
     public Robot robot;
     public boolean trajectoryIsActive;
@@ -232,8 +230,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 
     int strafeToPoseIndex = 0;
     SequentialAction strafeToPoseAction;
-    TelemetryPacket packet = new TelemetryPacket();
-    public boolean strafeToPose(Pose2d pose2d) {
+    public boolean strafeToPose(Pose2d pose2d, TelemetryPacket packet) {
         if (roadRunnerDrive) {
             switch (strafeToPoseIndex) {
                 case 0:

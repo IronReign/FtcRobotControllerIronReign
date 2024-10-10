@@ -3,16 +3,13 @@ package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.dc;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.debugTelemetryEnabled;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -21,6 +18,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.Autonomous;
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.deepthought.vision.Target;
@@ -35,17 +33,16 @@ import java.util.List;
 import java.util.Map;
 
 
-@Config(value = "AA_ITDRobot")
+@Config(value = "0_ITD_Robot")
 public class Robot implements Subsystem {
 
     //components and subsystems
     public Subsystem[] subsystems;
     public static Sensors sensors;
     public DriveTrain driveTrain;
-    public Intake intake;
     public VisionProvider visionProviderBack, visionProviderFront;
     public static boolean visionOn = true;
-    public Outtake outtake;
+    public Trident trident;
     public static boolean updatePositionCache = false;
     public static boolean frontVision = false;
 
@@ -64,10 +61,6 @@ public class Robot implements Subsystem {
     //REMOVE
     public Pose2d aprilTagPose = new Pose2d(0, 0, 0);
 
-    public static double DISTANCE_FROM_CAMERA_TO_CENTER_X = 16;// In inches
-    public static double DISTANCE_FROM_CAMERA_TO_CENTER_Y = 5.25;
-    public boolean initing = false;
-
     private long[] subsystemUpdateTimes;
     private List<LynxModule> hubs = null;
     public HardwareMap hardwareMap;
@@ -76,39 +69,6 @@ public class Robot implements Subsystem {
     public List<Target> targets = new ArrayList<Target>();
     public boolean fetched;
 
-    public void backdropRelocalize() {
-        driveTrain.RELOCALIZE_WITH_IMU = false;
-        distanceSensorHeading();
-        frontVision = false;
-        if (backVisionProviderIndex == 0) {
-            //assumes that the backvision is in apriltag
-            enableVision();
-            if (((AprilTagProvider) visionProviderBack).getDetections() != null) {
-                aprilTagRelocalization(Autonomous.targetAprilTagIndex);
-            }
-        } else {
-            visionProviderFinalized = false;
-            backVisionProviderIndex = 0;
-        }
-        //say bye bye to loop times
-    }
-
-    public void distanceSensorX() {
-//        Vector2d newLocation = new Vector2d(field.APRILTAG1.pose.position.x - (driveTrain.leftDistanceSensorValue + 7), driveTrain.pose.position.y);
-//        driveTrain.pose = new Pose2d(newLocation, driveTrain.pose.heading);
-    }
-
-    public void distanceSensorHeading() {
-        Sensors.distanceSensorsEnabled = true;
-        if (sensors.averageDistSensorValue < 30) {
-            double distDiff = Math.abs(sensors.rightDistSensorValue - sensors.leftDistSensorValue);
-            double heading = Math.PI -
-                    Math.asin(distDiff / Math.hypot(driveTrain.DISTANCE_BETWEEN_DISTANCE_SENSORS, distDiff))
-                            * ((sensors.leftDistSensorValue > sensors.rightDistSensorValue) ? 1 : 1);
-            driveTrain.pose = new Pose2d(driveTrain.pose.position, heading);
-            Sensors.distanceSensorsEnabled = false;
-        }
-    }
 
     public enum Articulation {
         //beater bar, drivetrain, drone launcher, outtake
@@ -137,19 +97,17 @@ public class Robot implements Subsystem {
             positionCache = new PositionCache(5);
 
             // initializing subsystems
-            driveTrain = new DriveTrain(hardwareMap, this, simulated);
-            intake = new Intake(hardwareMap, this);
-            outtake = new Outtake(hardwareMap, this);
+            driveTrain = new DriveTrain(hardwareMap, this, false);
+            trident = new Trident(hardwareMap, this);
             sensors = new Sensors(this);
 
 
-            subsystems = new Subsystem[]{driveTrain, intake, outtake, sensors};
+            subsystems = new Subsystem[]{driveTrain, trident, sensors};
             subsystemUpdateTimes = new long[subsystems.length];
 
             batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
             articulation = Articulation.MANUAL;
-            backVisionProviderIndex = 0;
         }
 
     }

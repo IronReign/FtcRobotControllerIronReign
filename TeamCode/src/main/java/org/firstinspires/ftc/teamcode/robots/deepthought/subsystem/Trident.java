@@ -16,8 +16,8 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
 import java.util.*;
 
 
-@Config(value = "AA_ITD_OUTTAKE")
-public class Outtake implements Subsystem {
+@Config(value = "00_ITD_TRIDENT")
+public class Trident implements Subsystem {
     HardwareMap hardwareMap;
     Robot robot;
 
@@ -173,7 +173,7 @@ public class Outtake implements Subsystem {
         wrist.setTargetAngle(wristAngle);
     }
 
-    public Outtake(HardwareMap hardwareMap, Robot robot) {
+    public Trident(HardwareMap hardwareMap, Robot robot) {
         this.hardwareMap = hardwareMap;
         this.robot = robot;
         elbow = new Joint(hardwareMap, "elbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);

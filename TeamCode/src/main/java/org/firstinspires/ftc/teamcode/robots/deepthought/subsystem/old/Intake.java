@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem;
+package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
@@ -14,6 +14,8 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils;
 
 import java.util.LinkedHashMap;

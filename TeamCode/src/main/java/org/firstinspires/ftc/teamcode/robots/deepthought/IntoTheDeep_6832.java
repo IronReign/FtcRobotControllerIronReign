@@ -215,18 +215,17 @@ public class IntoTheDeep_6832 extends OpMode {
 
     @Override
     public void loop() {
+        TelemetryPacket packet = new TelemetryPacket();
         totalRunTime = (System.currentTimeMillis()-startTime)/1000;
         dc.updateStickyGamepads();
         dc.handleStateSwitch();
 
         if (active) {
             long currentTime = System.currentTimeMillis();
-
-            update();
-
+            update(packet);
             switch(gameState) {
                 case AUTONOMOUS:
-                    if(auton.execute(dashboard)) gameState = GameState.TELE_OP;
+                    if(auton.execute(packet)) gameState = GameState.TELE_OP;
                     break;
 
                 case TELE_OP:
@@ -254,12 +253,11 @@ public class IntoTheDeep_6832 extends OpMode {
         robot.stop();
     }
 
-    private void update() {
+    private void update(TelemetryPacket packet) {
         long updateStartTime = System.nanoTime();
         long updateTime = (System.nanoTime() - updateStartTime);
         double averageUpdateTime = averageUpdateTimeSmoother.update(updateTime);
 
-        TelemetryPacket packet = new TelemetryPacket();
         robot.update(packet.fieldOverlay());
         Map<String, Object> opModeTelemetryMap = new LinkedHashMap<>();
         // handling op mode telemetry

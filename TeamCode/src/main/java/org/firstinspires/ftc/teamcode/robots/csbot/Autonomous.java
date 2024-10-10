@@ -39,7 +39,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 
-@Config(value = "AA_CS_Auton")
+@Config(value = "CS_Auton")
 public class Autonomous implements TelemetryProvider {
 
     public static double SCORE_DRIVE_DISTANCE = 3;

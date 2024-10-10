@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem;
+package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
 
@@ -6,9 +6,9 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 
 import java.util.LinkedHashMap;
@@ -63,20 +63,20 @@ public class Sensors implements Subsystem {
         }
 
 
-        if(pixelSensorEnabled) {
-            rightPixelSensorValue = robot.intake.pixelSensorRight.getDistance(DistanceUnit.INCH);
-            leftPixelSensorValue = robot.intake.pixelSensorLeft.getDistance(DistanceUnit.INCH);
-        }
-        else {
-            rightPixelSensorValue = 10;
-            leftPixelSensorValue = 10;
-        }
-
-        //INTAKE
-        beaterBarAmps = robot.intake.beater.getCurrent(CurrentUnit.AMPS);
+//        if(pixelSensorEnabled) {
+//            rightPixelSensorValue = robot.intake.pixelSensorRight.getDistance(DistanceUnit.INCH);
+//            leftPixelSensorValue = robot.intake.pixelSensorLeft.getDistance(DistanceUnit.INCH);
+//        }
+//        else {
+//            rightPixelSensorValue = 10;
+//            leftPixelSensorValue = 10;
+//        }
+//
+//        INTAKE
+//        beaterBarAmps = robot.intake.beater.getCurrent(CurrentUnit.AMPS);
 
         //OUTTAKE
-        outtakeSlideTicks = robot.outtake.slide.getCurrentPosition();
+        outtakeSlideTicks = robot.trident.slide.getCurrentPosition();
 
     }
 
