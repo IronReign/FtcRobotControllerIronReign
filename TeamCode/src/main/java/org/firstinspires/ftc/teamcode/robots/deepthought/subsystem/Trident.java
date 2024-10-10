@@ -271,20 +271,13 @@ public class Trident implements Subsystem {
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
-        telemetryMap.put("crane target position", craneTargetPosition);
-        telemetryMap.put("crane position", crane.getCurrentPosition());
         telemetryMap.put("articulation", articulation.name());
-        telemetryMap.put("slide target position", slideTargetPosition);
-        telemetryMap.put("beater speed", beater.getPower());
-        telemetryMap.put("slide actual position", Robot.sensors.outtakeSlideTicks);
-        telemetryMap.put("elbow ticks", flipperPosition);
-        telemetryMap.put("elbow angle", elbow.getCurrentAngle());
-        telemetryMap.put("elbow joint speed", ELBOW_JOINT_SPEED);
-        telemetryMap.put("wrist angle", wrist.getCurrentAngle());
-        telemetryMap.put("wrist joint speed", WRIST_JOINT_SPEED);
-        telemetryMap.put("wrist target angle", wristTargetAngle);
-        telemetryMap.put("elbow target angle", elbowTargetAngle);
+        telemetryMap.put("crane target : real", "" + craneTargetPosition + " : " + crane.getCurrentPosition());
+        telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
         telemetryMap.put("current sample", currentSample.name());
+        telemetryMap.put("beater speed", beater.getPower());
+        telemetryMap.put("elbow angle target : real", wristTargetAngle + " : " + elbow.getCurrentAngle());
+        telemetryMap.put("wrist angle target : real", elbowTargetAngle + " : " +  wrist.getCurrentAngle());
         return telemetryMap;
     }
 
