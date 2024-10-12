@@ -178,7 +178,7 @@ public class Trident implements Subsystem {
 
     public static int outtakeIndex;
     public long outtakeTimer;
-    public boolean outtake() {
+    public boolean  outtake() {
         switch (outtakeIndex) {
             case 0:
                 craneTargetPosition = 0;

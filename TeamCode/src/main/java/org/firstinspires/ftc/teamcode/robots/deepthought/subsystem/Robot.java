@@ -241,21 +241,21 @@ public class Robot implements Subsystem {
         return false;
     }
 
-    public static int intakeIndex = 0;
-    public boolean intake() {
-        switch (intakeIndex) {
-            case 0:
-                trident.articulate(Trident.Articulation.SAMPLE);
-                intakeIndex ++;
-                break;
-            case 1:
-                if(trident.articulation == Trident.Articulation.MANUAL)
-                    return true;
-                break;
-        }
-
-        return false;
-    }
+//    public static int intakeIndex = 0;
+//    public boolean intake() {
+//        switch (intakeIndex) {
+//            case 0:
+//                trident.articulate(Trident.Articulation.SAMPLE);
+//                intakeIndex ++;
+//                break;
+//            case 1:
+//                if(trident.articulation == Trident.Articulation.MANUAL)
+//                    return true;
+//                break;
+//        }
+//
+//        return false;
+//    }
 
     public Articulation articulate(Articulation target) {
         articulation = target;
@@ -267,8 +267,12 @@ public class Robot implements Subsystem {
                     articulation = Articulation.MANUAL;
                 break;
             case INTAKE:
-                if(intake())
+                trident.articulate(Trident.Articulation.SAMPLE);
+                if(trident.articulation == Trident.Articulation.MANUAL) {
                     articulation = Articulation.MANUAL;
+                }
+//                if(intake())
+//                    articulation = Articulation.MANUAL;
                 break;
             case OUTTAKE:
                 if(outtake())
@@ -283,7 +287,7 @@ public class Robot implements Subsystem {
         switch (outtakeIndex) {
             case 0:
                 trident.articulate(Trident.Articulation.OUTTAKE);
-                intakeIndex ++;
+                outtakeIndex++;
                 break;
             case 1:
                 if(trident.articulation == Trident.Articulation.MANUAL)
