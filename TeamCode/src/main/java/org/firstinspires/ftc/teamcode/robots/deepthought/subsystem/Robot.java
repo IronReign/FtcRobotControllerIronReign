@@ -245,6 +245,12 @@ public class Robot implements Subsystem {
     public boolean intake() {
         switch (intakeIndex) {
             case 0:
+                trident.articulate(Trident.Articulation.SAMPLE);
+                intakeIndex ++;
+                break;
+            case 1:
+                if(trident.articulation == Trident.Articulation.MANUAL)
+                    return true;
                 break;
         }
 
@@ -274,11 +280,20 @@ public class Robot implements Subsystem {
 
     public static int outtakeIndex = 0;
     public boolean outtake() {
-        if(trident.outtake()) {
-            return true;
+        switch (outtakeIndex) {
+            case 0:
+                trident.articulate(Trident.Articulation.OUTTAKE);
+                intakeIndex ++;
+                break;
+            case 1:
+                if(trident.articulation == Trident.Articulation.MANUAL)
+                    return true;
+                break;
         }
+
         return false;
     }
+
 
     @Override
     public void stop() {
