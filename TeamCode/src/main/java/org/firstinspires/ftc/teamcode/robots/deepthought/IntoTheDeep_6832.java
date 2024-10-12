@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.deepthought.field.Field;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.ExponentialSmoother;
@@ -145,12 +146,11 @@ public class IntoTheDeep_6832 extends OpMode {
     //end init()
 
     public void init_loop() {
-
+        TelemetryPacket packet = new TelemetryPacket();
         dc.init_loop();
         dc.robotOrientedDrive();
         initVision();
 
-        robot.driveTrain.updatePoseEstimate();
         telemetry.addData("fetched", robot.fetched);
         telemetry.addData("gameState", gameState);
         telemetry.addData("active", active);
@@ -158,7 +158,10 @@ public class IntoTheDeep_6832 extends OpMode {
         telemetry.addData("startingPosition", startingPosition);
         telemetry.addData("initPositionIndex", Robot.initPositionIndex);
 
-        update();
+        robot.driveTrain.updatePoseEstimate();
+
+        update(packet);
+        dashboard.sendTelemetryPacket(packet);
     }
     //end init_loop()
 
@@ -177,7 +180,7 @@ public class IntoTheDeep_6832 extends OpMode {
         //FETCH CACHE
         robot.fetchCachedDTPosition();
 
-        field.finalizeField();
+        field.finalizeField(alliance);
         resetGame();
 
 
@@ -225,7 +228,7 @@ public class IntoTheDeep_6832 extends OpMode {
             update(packet);
             switch(gameState) {
                 case AUTONOMOUS:
-                    if(auton.execute(packet)) gameState = GameState.TELE_OP;
+                    if(auton.execute(packet, field)) gameState = GameState.TELE_OP;
                     break;
 
                 case TELE_OP:

@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.robots.deepthought;
+package org.firstinspires.ftc.teamcode.robots.deepthought.field;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants.FIELD_INCHES_PER_GRID;
 
@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class SubZone {
+public class SubZone extends Flippable{
     public static SubZone PICKUP = new SubZone(Field.MIN_X_VALUE, -1.5, 1.5, Field.MAX_Y_VALUE, "PICKUP", Field.Zone.AUDIENCE);
     public static SubZone WING = new SubZone(Field.MIN_X_VALUE, -1.5, 1.5, Field.MAX_Y_VALUE, "WING", Field.Zone.AUDIENCE);
     public static SubZone BACKDROP = new SubZone(1, Field.MAX_X_VALUE, Field.MIN_Y_VALUE, 0, "BACKDROP", Field.Zone.BACKSTAGE);

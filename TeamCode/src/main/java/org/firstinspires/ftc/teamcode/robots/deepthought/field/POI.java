@@ -1,13 +1,11 @@
-package org.firstinspires.ftc.teamcode.robots.deepthought;
+package org.firstinspires.ftc.teamcode.robots.deepthought.field;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.P2D;
 
 import com.acmerobotics.roadrunner.Pose2d;
 
-public class POI {
-    //TODO - does this need to be diff for individual pois?
-    //also needs actual testing
+public class POI extends Flippable {
     public static double POI_ERROR_RADIUS = .25;
 
     POI(double x, double y, double heading, String name) {
@@ -30,9 +28,6 @@ public class POI {
         return pose;
     }
 
-    public POI flipOnX() {
-        return new POI(this.x, -this.y, -this.heading, this.name);
-    }
 
     public boolean atPOI(Pose2d pose) {
         return Math.hypot(pose.position.x / FIELD_INCHES_PER_GRID - x, pose.position.y / FIELD_INCHES_PER_GRID - y) < POI_ERROR_RADIUS;

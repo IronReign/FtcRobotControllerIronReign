@@ -12,6 +12,8 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 
+import org.firstinspires.ftc.teamcode.robots.deepthought.field.Field;
+import org.firstinspires.ftc.teamcode.robots.deepthought.field.SubZone;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
 
