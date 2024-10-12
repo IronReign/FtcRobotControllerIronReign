@@ -265,8 +265,19 @@ public class Robot implements Subsystem {
                     articulation = Articulation.MANUAL;
                 break;
             case OUTTAKE:
+                if(outtake())
+                    articulation = Articulation.MANUAL;
+                break;
         }
         return articulation;
+    }
+
+    public static int outtakeIndex = 0;
+    public boolean outtake() {
+        if(trident.outtake()) {
+            return true;
+        }
+        return false;
     }
 
     @Override

@@ -29,6 +29,8 @@ public class Trident implements Subsystem {
     public ColorSensor colorSensor = null;
     public boolean colorSensorEnabled = false;
 
+
+
     public enum CurrentSample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
     }
@@ -149,6 +151,15 @@ public class Trident implements Subsystem {
                 break;
             case 5:
                 return true;
+        }
+        return false;
+    }
+
+    public static int outtakeIndex;
+    public boolean outtake() {
+        switch (outtakeIndex) {
+            case 0:
+                break;
         }
         return false;
     }

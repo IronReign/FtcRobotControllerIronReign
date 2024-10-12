@@ -51,11 +51,26 @@ public class DriverControls {
 
     public void manualDiagnosticMethods() {
         robotOrientedDrive();
-        if(gamepad1.left_trigger > .2) {
+        if(gamepad1.right_bumper) {
             robot.trident.setCraneTargetPosition(robot.trident.getCraneTargetPosition() - 5 * craneSpeed);
         }
-        if(gamepad1.right_trigger > .2) {
+        if(gamepad1.left_bumper) {
             robot.trident.setCraneTargetPosition(robot.trident.getCraneTargetPosition() + 5 * craneSpeed);
+        }
+
+        if(stickyGamepad1.a) {
+            Trident.intakeIndex = 0;
+            robot.articulate(Robot.Articulation.INTAKE);
+        }
+
+        if(stickyGamepad1.b) {
+            Trident.outtakeIndex = 0;
+            robot.articulate(Robot.Articulation.OUTTAKE);
+        }
+
+        if(stickyGamepad1.guide){
+            Trident.intakeIndex++;
+            Trident.outtakeIndex++;
         }
 
         if (gamepad1.left_trigger > .1) {
