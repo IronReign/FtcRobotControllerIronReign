@@ -11,7 +11,9 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -22,12 +24,15 @@ public class Robot implements Subsystem {
     HardwareMap hardwareMap;
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
 
-    //Servo claw;
-    //StickeyGamepad g1;
+
+    Servo claw;
+    StickyGamepad g1=null;
     Gamepad gamepad1;
     double forward = 0;
     double strafe = 0;
     double turn = 0;
+
+    int clawTicks=0;
 
     //public boolean clawOpen = false;
 
@@ -38,15 +43,17 @@ public class Robot implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
-//        if(gamepad1.b) {
-//            clawOpen = !clawOpen;
-//        }
-//
-//        if(clawOpen) {
-//            claw.setPosition(1);
-//        } else {
-//            claw.setPosition(0);
-//        }
+
+        claw.setPosition(servoNormalize(clawTicks));
+
+        if(g1.left_bumper) {
+            clawTicks-=15;
+        }
+        if(g1.right_bumper) {
+            clawTicks+=15;
+        }
+
+
 
         mecanumDrive();
     }
@@ -71,11 +78,12 @@ public class Robot implements Subsystem {
     }
 
     public void init() {
+        g1 = new StickyGamepad(gamepad1);
         leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
         rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-       // claw = hardwareMap.get(Servo.class, "claw");
+        claw = hardwareMap.get(Servo.class, "claw");
         // Set motor runmodes
         leftBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         rightBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -100,8 +108,14 @@ public class Robot implements Subsystem {
         telemetry.put("forward:" , forward);
         telemetry.put("strafe" , strafe);
         telemetry.put("turn" , turn);
+        telemetry.put("servo", clawTicks);
 
         return telemetry;
+    }
+
+    public static double servoNormalize(int pulse){
+        double normalized = (double)pulse;
+        return (normalized - 750.0) / 1500.0; //convert mr servo controller pulse width to double on _0 - 1 scale
     }
 
     @Override
