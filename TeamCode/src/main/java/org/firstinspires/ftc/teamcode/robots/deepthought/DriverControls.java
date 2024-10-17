@@ -20,6 +20,9 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public class DriverControls {
     //CONSTANTS
     public static boolean fieldOrientedDrive = false;
@@ -73,6 +76,13 @@ public class DriverControls {
         if(stickyGamepad1.b) {
             Trident.outtakeIndex = 0;
             robot.articulate(Robot.Articulation.OUTTAKE);
+        }
+
+        if(stickyGamepad1.x) {
+            robot.trident.beater.setPower(0);
+            Trident.runBeaterIndex=0;
+            Trident.colorSensorEnabled = true; 
+            robot.trident.sample(Arrays.asList(Trident.CurrentSample.RED));
         }
 
         if(stickyGamepad1.guide){
