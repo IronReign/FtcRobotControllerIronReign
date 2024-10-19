@@ -19,8 +19,7 @@
             <REV_VL53L0X_RANGE_SENSOR name="backDistLeft" port="0" bus="2" />
             <REV_VL53L0X_RANGE_SENSOR name="backDistRight" port="0" bus="3" />
             <Servo name="intakeAngleLeft" port="0" />
-            <Servo name="intakeAngleRight" port="2" />
-            <Servo name="diverterLeft" port="1" />
+            <Servo name="pincer" port="1" />
             <Servo name="wrist" port="5" />
             <Servo name="elevator" port="4" />
             <Servo name="elbow" port="3" />

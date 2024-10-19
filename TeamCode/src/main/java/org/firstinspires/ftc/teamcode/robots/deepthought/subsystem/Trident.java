@@ -11,14 +11,19 @@ import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
+import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 
 import java.util.*;
 
 
 @Config(value = "00_ITD_TRIDENT")
 public class Trident implements Subsystem {
+    public static double PINCER_CLOSE = 1770;
+    public static double PINCER_OPEN = 2105;
+    public boolean clawEnable;
     HardwareMap hardwareMap;
     Robot robot;
 
@@ -30,6 +35,7 @@ public class Trident implements Subsystem {
     public NormalizedColorSensor colorSensor = null;
     public static boolean colorSensorEnabled = false;
     public static int colorSensorGain = 2;
+    public Servo pincer;
 
     public enum CurrentSample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
@@ -265,6 +271,7 @@ public class Trident implements Subsystem {
         crane = this.hardwareMap.get(DcMotorEx.class, "crane");
         colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
         beater = this.hardwareMap.get(CRServoImplEx.class, "beater");
+        pincer = this.hardwareMap.get(Servo.class, "pincer");
         slide.setMotorEnable();
         slide.setPower(1);
         slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -311,11 +318,17 @@ public class Trident implements Subsystem {
     @Override
     public void update(Canvas fieldOverlay) {
         //compute the current articulation/behavior
-        articulate();
+//        articulate();
         //allow real-time flipper speed changes
         elbow.setSpeed(ELBOW_JOINT_SPEED);
         wrist.setSpeed(WRIST_JOINT_SPEED);
 
+        if(clawEnable) {
+            pincer.setPosition(Utils.servoNormalize(PINCER_OPEN));
+        }
+        else {
+            pincer.setPosition(Utils.servoNormalize(PINCER_CLOSE));
+        }
         if (colorSensorEnabled) {
             updateColorSensor();
             colorSensor.setGain(colorSensorGain);

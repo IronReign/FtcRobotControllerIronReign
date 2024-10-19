@@ -124,23 +124,20 @@ public class DriverControls {
 
         //GAMEPAD 1 CONTROLS
         // ------------------------------------------------------------------
-
-
-
-        if(gamepad1.left_trigger > .2) {
+        if(gamepad1.left_bumper) {
             robot.trident.setCraneTargetPosition(robot.trident.getCraneTargetPosition() - 5 * craneSpeed);
         }
-        if(gamepad1.right_trigger > .2) {
+        if(gamepad1.right_bumper) {
             robot.trident.setCraneTargetPosition(robot.trident.getCraneTargetPosition() + 5 * craneSpeed);
         }
 
         if (shifted(gamepad1) && stickyGamepad1.b) {
             debugTelemetryEnabled = !debugTelemetryEnabled;
         }
-
-        if(gamepad1.a) {
-            robot.articulate(Robot.Articulation.INTAKE);
-        }
+//
+//        if(gamepad1.a) {
+//            robot.articulate(Robot.Articulation.INTAKE);
+//        }
 
         if (shifted(gamepad1) && stickyGamepad1.a) {
             fieldOrientedDrive = !fieldOrientedDrive;
@@ -152,11 +149,22 @@ public class DriverControls {
         } else {
         robotOrientedDrive();
         }
-        if (gamepad1.left_bumper) {
+        if (gamepad1.left_trigger > .2) {
             robot.trident.setSlideTargetPosition(robot.trident.getSlideTargetPosition() - 5 * slideSpeed);
         }
-        if (gamepad1.right_bumper) {
+        if (gamepad1.right_trigger > .2) {
             robot.trident.setSlideTargetPosition(robot.trident.getSlideTargetPosition() + 5 * slideSpeed);
+        }
+
+        if(gamepad1.a){
+            robot.trident.adjustWrist(Trident.WRIST_ADJUST_ANGLE);
+        }
+
+        if(gamepad1.b) {
+            robot.trident.adjustWrist(-Trident.WRIST_ADJUST_ANGLE);
+        }
+        if(stickyGamepad1.dpad_up) {
+            robot.trident.clawEnable = !robot.trident.clawEnable;
         }
 
         if (gamepad1.y) {
