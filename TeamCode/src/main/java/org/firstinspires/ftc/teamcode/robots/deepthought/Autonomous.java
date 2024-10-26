@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.field.Field;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
 
@@ -81,9 +82,10 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 2:
-                if (robot.driveTrain.strafeToPose(field.basket.pose, packet)) {
-                    autonState = AutonState.DRIVE_TO_SUB;
-                    autonIndex++;
+                if (robot.driveTrain.strafeToPose(Field.P2D(-2.5, -2.5, 90), packet)) {
+//                    autonState = AutonState.DRIVE_TO_SUB;
+                    return true;
+//                    autonIndex++;
                 }
                 break;
             case 3:

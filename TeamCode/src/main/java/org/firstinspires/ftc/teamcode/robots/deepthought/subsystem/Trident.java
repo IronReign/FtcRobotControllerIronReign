@@ -21,9 +21,6 @@ import java.util.*;
 
 @Config(value = "00_ITD_TRIDENT")
 public class Trident implements Subsystem {
-    public static double PINCER_CLOSE = 1770;
-    public static double PINCER_OPEN = 2105;
-    public boolean clawEnable;
     HardwareMap hardwareMap;
     Robot robot;
 
@@ -32,77 +29,72 @@ public class Trident implements Subsystem {
     public Joint elbow;
     public Joint wrist;
     public CRServoImplEx beater = null;
+    public Servo pincer;
+
     public NormalizedColorSensor colorSensor = null;
     public static boolean colorSensorEnabled = false;
 
     public static int colorSensorGain = 12;
-    public Servo pincer;
 
 
     public enum CurrentSample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
     }
-
     public CurrentSample currentSample = CurrentSample.NO_SAMPLE;
     public List<CurrentSample> targetSamples = new ArrayList<>();
 
-    public static double slideTicksPerInch = 130.593132; // determined experimentally using a average distance and ticks
-    public static int flipperPosition = 1888;
-
-    public void setSlideTargetPosition(int slideTargetPosition) {
-        this.slideTargetPosition = slideTargetPosition;
-    }
-
-    int slideTargetPosition = 0;
+    //SLIDE
+    public static int slideTargetPosition = 0;
     public static int slidePositionMax = 1600;
     public static int slidePositionMin = 0;
-
-
     public static int slideSpeed = 15;
     public static double SLIDE_SPEED = 1500;
 
-    int craneTargetPosition = 0;
+
+    //CRANE
+    public static int craneTargetPosition = 0;
     public static int craneSpeed = 30;
 
-    public void setCraneTargetPosition(int craneTargetPosition) {
-        this.craneTargetPosition = craneTargetPosition;
-    }
-
-
     //ELBOW JOINT VARIABLES
+    public static double ELBOW_START_ANGLE = 0;
     public static int ELBOW_HOME_POSITION = 2050;
     public static double ELBOW_PWM_PER_DEGREE = -5.672222222222222;
-    //IN DEGREES PER SECOND
-    public static double ELBOW_START_ANGLE = 0;
-
     public static double ELBOW_JOINT_SPEED = 60;
-
     public static double ELBOW_MIN_ANGLE = -15;
     public static double ELBOW_MAX_ANGLE = 220;
-    public static double ELBOW_PRE_SCORE_ANGLE = 120;
-    public static double ELBOW_TRAVEL_ANGLE = 0;
     public static int ELBOW_ADJUST_ANGLE = 5;
-    public static int WRIST_ADJUST_ANGLE = 5;
-    public static int ELEVATOR_ADJUST_ANGLE = 5;
-    public static double ELBOW_DOCK_ANGLE = -15;
+    public static double ELBOW_PREINTAKE_ANGLE = 123;
 
-    //WRIST JOINT VARIABLES TODO tune these value
+
+    //WRIST JOINT VARIABLES
     public static int WRIST_HOME_POSITION = 950;
     public static double WRIST_PWM_PER_DEGREE = 7.22222222222;
-    //IN DEGREES PER SECOND
-    public static double WRIST_START_ANGLE = 0;
-    public static double WRIST_TRAVEL_ANGLE = WRIST_START_ANGLE;
-
-    public static double WRIST_INIT_ANGLE = 5;
-    public static double WRIST_SCORE_ANGLE = 180;
-
+    public static double WRIST_START_ANGLE = 44;
     public static double WRIST_JOINT_SPEED = 50;
-
     public static double WRIST_MIN_ANGLE = 0;
-    public static double WRIST_MAX_ANGLE = 180;
+    public static double WRIST_MAX_ANGLE = 140;
+    public static int WRIST_ADJUST_ANGLE = 5;
+    public static double WRIST_PREINTAKE_ANGLE = 123;
 
-    private boolean flipped = false;
 
+    //BEATER
+    public static double beaterPower;
+
+    //PINCER
+    public static double PINCER_CLOSE = 1750;
+    public static double PINCER_OPEN = 2150;
+    public boolean pincerEnabled = true;
+
+
+    public enum Articulation {
+        MANUAL, //does nothing - used for transition tracking
+        TUCK, //does nothing - used for transition tracking
+        INTAKE,
+        OUTTAKE
+    }
+
+    //LIVE STATES
+    public Articulation articulation;
     private Articulation prevArticulation;
 
     public Articulation articulate(Articulation articulation) {
@@ -114,11 +106,11 @@ public class Trident implements Subsystem {
         switch (articulation) {
             case MANUAL:
                 break;
-            case TRAVEL:
+            case TUCK:
                 break;
             //SHOULD ONLY BE ACCESSED BY SAMPLE()
-            case SAMPLE:
-                if (runBeater()) {
+            case INTAKE:
+                if (intake()) {
                     articulation = Articulation.MANUAL;
                 }
                 break;
@@ -136,14 +128,13 @@ public class Trident implements Subsystem {
 
     public static int intakeIndex;
     public long intakeTimer;
-
     public boolean intake() {
         switch (intakeIndex) {
             case 0:
                 craneTargetPosition = 0;
                 slideTargetPosition = 0;
-                wrist.setTargetAngle(WRIST_START_ANGLE);
-                elbow.setTargetAngle(WRIST_START_ANGLE);
+                wrist.setTargetAngle(WRIST_PREINTAKE_ANGLE);
+                elbow.setTargetAngle(ELBOW_PREINTAKE_ANGLE);
 
                 //get to position
                 if (withinError(crane.getCurrentPosition(), 0, 10)) {
@@ -226,38 +217,9 @@ public class Trident implements Subsystem {
     }
 
     public void sample(List<CurrentSample> samples) {
-        articulation = Articulation.SAMPLE;
+        articulation = Articulation.INTAKE;
         this.targetSamples = samples;
-//        runBeater();
     }
-    public static int runBeaterIndex;
-    public boolean runBeater() {
-        switch (runBeaterIndex) {
-            case 0:
-                beater.setPower(-1);
-                colorSensorEnabled = true;
-                if (targetSamples.contains(currentSample)) {
-                    runBeaterIndex++;
-                }
-                break;
-            case 1:
-                colorSensorEnabled = false;
-                beater.setPower(0);
-                return true;
-        }
-        return false;
-    }
-
-
-    public enum Articulation {
-        MANUAL, //does nothing - used for transition tracking
-        TRAVEL, //does nothing - used for transition tracking
-        SAMPLE,
-        OUTTAKE
-    }
-
-    //LIVE STATES
-    public Articulation articulation;
 
     public void setTargetAngle(double elbowAngle, double wristAngle) {
         elbow.setTargetAngle(elbowAngle);
@@ -290,21 +252,6 @@ public class Trident implements Subsystem {
         articulation = Articulation.MANUAL;
     }
 
-    public int getCraneTargetPosition() {
-        return craneTargetPosition;
-    }
-
-    public void moveSlide(int distance) {
-        slideTargetPosition += distance * slideSpeed;
-        if (slideTargetPosition < slidePositionMin) {
-            slideTargetPosition = slidePositionMin;
-        }
-        if (slideTargetPosition > slidePositionMax) {
-            slideTargetPosition = slidePositionMax;
-        }
-        slide.setTargetPosition(slideTargetPosition);
-    }
-
     public void adjustElbow(double angle) {
         elbow.setTargetAngle(elbow.getCurrentAngle() + angle);
     }
@@ -313,24 +260,14 @@ public class Trident implements Subsystem {
         wrist.setTargetAngle(wrist.getCurrentAngle() + angle);
     }
 
-    public int getSlideTargetPosition() {
-        return slideTargetPosition;
-    }
-
     @Override
     public void update(Canvas fieldOverlay) {
         //compute the current articulation/behavior
-//        articulate();
+        articulate();
         //allow real-time flipper speed changes
         elbow.setSpeed(ELBOW_JOINT_SPEED);
         wrist.setSpeed(WRIST_JOINT_SPEED);
 
-        if(clawEnable) {
-            pincer.setPosition(Utils.servoNormalize(PINCER_OPEN));
-        }
-        else {
-            pincer.setPosition(Utils.servoNormalize(PINCER_CLOSE));
-        }
         if (colorSensorEnabled) {
             updateColorSensor();
             colorSensor.setGain(colorSensorGain);
@@ -342,6 +279,15 @@ public class Trident implements Subsystem {
         wrist.update();
         slide.setTargetPosition(slideTargetPosition);
         crane.setTargetPosition(craneTargetPosition);
+        beater.setPower(beaterPower);
+
+//        if(pincerEnabled) {
+//            pincer.setPosition(Utils.servoNormalize(PINCER_OPEN));
+//        }
+//        else {
+//            pincer.setPosition(Utils.servoNormalize(PINCER_CLOSE));
+//        }
+
     }
 
     public String updateColorSensor() {

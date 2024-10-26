@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.dc;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.debugTelemetryEnabled;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
@@ -16,7 +15,6 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.deepthought.Autonomous;
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
@@ -71,7 +69,6 @@ public class Robot implements Subsystem {
 
 
     public enum Articulation {
-        //beater bar, drivetrain, drone launcher, outtake
         MANUAL,
         CALIBRATE,
         INTAKE,
@@ -149,11 +146,11 @@ public class Robot implements Subsystem {
                 visionProviderBack.initializeVision(hardwareMap, this, false);
                 visionProviderFront.initializeVision(hardwareMap, this, true);
                 visionProviderFinalized = true;
-
+//
             }
-            if (frontVision) {
-                visionProviderFront.update(debugTelemetryEnabled);
-            } else visionProviderBack.update(debugTelemetryEnabled);
+//            if (frontVision) {
+//                visionProviderFront.update(debugTelemetryEnabled);
+//            } else visionProviderBack.update(debugTelemetryEnabled);
         }
     }
 
@@ -267,7 +264,7 @@ public class Robot implements Subsystem {
                     articulation = Articulation.MANUAL;
                 break;
             case INTAKE:
-                trident.articulate(Trident.Articulation.SAMPLE);
+                trident.articulate(Trident.Articulation.INTAKE);
                 if(trident.articulation == Trident.Articulation.MANUAL) {
                     articulation = Articulation.MANUAL;
                 }

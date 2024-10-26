@@ -20,7 +20,6 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class DriverControls {
@@ -34,7 +33,7 @@ public class DriverControls {
     private StickyGamepad stickyGamepad1, stickyGamepad2;
 
     DriverControls(Gamepad pad1, Gamepad pad2) {
-        fieldOrientedDrive = true;
+//        fieldOrientedDrive = true;
         gamepad1 = pad1;
         gamepad2 = pad2;
         stickyGamepad1 = new StickyGamepad(gamepad1);
@@ -55,17 +54,17 @@ public class DriverControls {
     public void manualDiagnosticMethods() {
         robotOrientedDrive();
         if(gamepad1.right_bumper) {
-            robot.trident.setCraneTargetPosition(robot.trident.getCraneTargetPosition() - 1 * craneSpeed);
+            robot.trident.craneTargetPosition -= 1 * craneSpeed;
         }
         if(gamepad1.left_bumper) {
-            robot.trident.setCraneTargetPosition(robot.trident.getCraneTargetPosition() + 1 * craneSpeed);
+            robot.trident.craneTargetPosition += 1 * craneSpeed;
         }
 
         if(gamepad1.dpad_right) {
-            robot.trident.setSlideTargetPosition(robot.trident.getSlideTargetPosition() - 1 * slideSpeed);
+            robot.trident.slideTargetPosition -= 1 * slideSpeed;
         }
         if(gamepad1.dpad_left) {
-            robot.trident.setSlideTargetPosition(robot.trident.getSlideTargetPosition() + 1 * slideSpeed);
+            robot.trident.slideTargetPosition -= 1 * slideSpeed;
         }
 
         if(stickyGamepad1.a) {
@@ -79,8 +78,7 @@ public class DriverControls {
         }
 
         if(stickyGamepad1.x) {
-            robot.trident.beater.setPower(0);
-            Trident.runBeaterIndex=0;
+            robot.trident.beaterPower = 0;
             Trident.colorSensorEnabled = true; 
             robot.trident.sample(Arrays.asList(Trident.CurrentSample.RED));
         }
@@ -91,10 +89,10 @@ public class DriverControls {
         }
 
         if (gamepad1.left_trigger > .1) {
-            robot.trident.adjustWrist(-Trident.ELEVATOR_ADJUST_ANGLE);
+            robot.trident.adjustWrist(-Trident.WRIST_ADJUST_ANGLE);
         }
         if (gamepad1.right_trigger > .1) {
-            robot.trident.adjustWrist(Trident.ELEVATOR_ADJUST_ANGLE);
+            robot.trident.adjustWrist(Trident.WRIST_ADJUST_ANGLE);
         }
 
         if (gamepad1.dpad_down) {
@@ -125,11 +123,12 @@ public class DriverControls {
         //GAMEPAD 1 CONTROLS
         // ------------------------------------------------------------------
         if(gamepad1.left_bumper) {
-            robot.trident.setCraneTargetPosition(robot.trident.getCraneTargetPosition() - 5 * craneSpeed);
+            robot.trident.craneTargetPosition -= 2 * craneSpeed;
         }
         if(gamepad1.right_bumper) {
-            robot.trident.setCraneTargetPosition(robot.trident.getCraneTargetPosition() + 5 * craneSpeed);
+            robot.trident.craneTargetPosition -= 2 * craneSpeed;
         }
+
 
         if (shifted(gamepad1) && stickyGamepad1.b) {
             debugTelemetryEnabled = !debugTelemetryEnabled;
@@ -150,21 +149,21 @@ public class DriverControls {
         robotOrientedDrive();
         }
         if (gamepad1.left_trigger > .2) {
-            robot.trident.setSlideTargetPosition(robot.trident.getSlideTargetPosition() - 5 * slideSpeed);
+            robot.trident.slideTargetPosition -= 3 * slideSpeed;
         }
         if (gamepad1.right_trigger > .2) {
-            robot.trident.setSlideTargetPosition(robot.trident.getSlideTargetPosition() + 5 * slideSpeed);
+            robot.trident.slideTargetPosition -= 3 * slideSpeed;
         }
 
-        if(gamepad1.a){
+        if(gamepad1.dpad_up){
             robot.trident.adjustWrist(Trident.WRIST_ADJUST_ANGLE);
         }
 
-        if(gamepad1.b) {
+        if(gamepad1.dpad_down) {
             robot.trident.adjustWrist(-Trident.WRIST_ADJUST_ANGLE);
         }
-        if(stickyGamepad1.dpad_up) {
-            robot.trident.clawEnable = !robot.trident.clawEnable;
+        if(stickyGamepad1.a) {
+            robot.trident.pincerEnabled = !robot.trident.pincerEnabled;
         }
 
         if (gamepad1.y) {
