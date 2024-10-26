@@ -34,8 +34,10 @@ public class Trident implements Subsystem {
     public CRServoImplEx beater = null;
     public NormalizedColorSensor colorSensor = null;
     public static boolean colorSensorEnabled = false;
-    public static int colorSensorGain = 2;
+
+    public static int colorSensorGain = 12;
     public Servo pincer;
+
 
     public enum CurrentSample {
         RED, BLUE, NEUTRAL, NO_SAMPLE

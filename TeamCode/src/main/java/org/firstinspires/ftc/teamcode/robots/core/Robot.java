@@ -29,7 +29,7 @@ public class Robot implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
-        if(gamepad1.b) {
+        /*if(gamepad1.b) {
             clawOpen = !clawOpen;
         }
 
@@ -37,7 +37,7 @@ public class Robot implements Subsystem {
             claw.setPosition(1);
         } else {
             claw.setPosition(0);
-        }
+        }*/
 
         mecanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
     }
@@ -63,7 +63,7 @@ public class Robot implements Subsystem {
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
         rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-        claw = hardwareMap.get(Servo.class, "claw");
+        //claw = hardwareMap.get(Servo.class, "claw");
         // Set motor runmodes
         leftBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         rightBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);

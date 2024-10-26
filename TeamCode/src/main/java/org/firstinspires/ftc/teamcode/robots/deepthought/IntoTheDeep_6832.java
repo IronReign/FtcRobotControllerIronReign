@@ -32,7 +32,7 @@ public class IntoTheDeep_6832 extends OpMode {
 
     //GLOBAL STATES
     public static boolean active;
-    public static boolean debugTelemetryEnabled;
+    public static boolean debugTelemetryEnabled = true;
     private boolean initializing;
     public static boolean initPosition = false;
     public static boolean ignoreCachePosition = false;
