@@ -1,13 +1,14 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought.vision;
 
-import android.graphics.Bitmap;
+import
+        android.graphics.Bitmap;
 import android.os.Environment;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
 
 import java.io.File;
@@ -18,6 +19,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 
 @Config
 public abstract class VisionProvider implements TelemetryProvider {
@@ -30,7 +32,7 @@ public abstract class VisionProvider implements TelemetryProvider {
     private Bitmap dashboardImage;
     private FtcDashboard dashboard;
     private boolean saveDashboard;
-    public Robot robot;
+    public Subsystem robot;
 
     public VisionProvider() {
         mostFrequentPosition = Position.HOLD;
@@ -58,7 +60,7 @@ public abstract class VisionProvider implements TelemetryProvider {
 
     abstract public void initializeVision(HardwareMap hardwareMap, boolean isFront);
 
-    public void initializeVision(HardwareMap hardwareMap, Robot robot, boolean isFront){
+    public void initializeVision(HardwareMap hardwareMap, Subsystem robot, boolean isFront){
         initializeVision(hardwareMap, isFront);
     }
 

@@ -10,6 +10,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProvider;
+import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProviders;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -21,6 +23,7 @@ public class Robot implements Subsystem {
     Servo claw;
     Gamepad gamepad1;
     DcMotorEx arm;
+    VisionProvider camera;
     public boolean clawOpen = false;
 
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
@@ -64,7 +67,14 @@ public class Robot implements Subsystem {
 
     }
 
-    public void init() {
+    public void init () {
+        try {
+            camera = VisionProviders.VISION_PROVIDERS[0].newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        camera.initializeVision(hardwareMap, this, true);
+
         leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
