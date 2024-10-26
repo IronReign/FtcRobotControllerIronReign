@@ -13,16 +13,21 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProvider;
+import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProviders;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+
 public class Robot implements Subsystem {
     static FtcDashboard dashboard = FtcDashboard.getInstance();
     HardwareMap hardwareMap;
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
+    VisionProvider camera;
+
 
 
     Servo claw;
@@ -79,6 +84,13 @@ public class Robot implements Subsystem {
 
     public void init() {
         g1 = new StickyGamepad(gamepad1);
+        try{
+            camera = VisionProviders.VISION_PROVIDERS[0].newInstance();
+        }catch(Exception e) {
+            throw new RuntimeException(e);
+        }
+        camera
+
         leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
@@ -117,6 +129,7 @@ public class Robot implements Subsystem {
         double normalized = (double)pulse;
         return (normalized - 750.0) / 1500.0; //convert mr servo controller pulse width to double on _0 - 1 scale
     }
+
 
     @Override
     public String getTelemetryName() {

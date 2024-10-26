@@ -12,6 +12,7 @@ import java.util.Map;
 @TeleOp(name="giant mode", group="game")
 public class giantOpMode extends OpMode {
     Robot robot;
+    boolean on=false;
 
     @Override
     public void init() {
@@ -21,8 +22,14 @@ public class giantOpMode extends OpMode {
 
     @Override
     public void loop() {
+        on=true;
         robot.update(new Canvas());
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
+    }
+
+    public boolean opModeIsActive()
+    {
+        return on;
     }
 
     private void handleTelemetry(Map<String, Object> telemetryMap, String telemetryName) {
