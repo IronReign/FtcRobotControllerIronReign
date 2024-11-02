@@ -19,6 +19,10 @@ public class Robot implements Subsystem {
     DcMotorEx shoulder;
     DcMotorEx elbow;
     public boolean clawOpen = false;
+    public double clawOpenPosition = 0;
+    public double clawClosePosition = 1;
+    public int shoulderTargetPosition = 0;
+    public int elbowTargetPosition = 0;
 
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
         this.hardwareMap = hardwareMap;
@@ -28,30 +32,39 @@ public class Robot implements Subsystem {
     @Override
     public void update(Canvas fieldOverlay) {
 
+        if(gamepad1.a) {
+            shoulderTargetPosition = 50;
+            elbowTargetPosition = 75;
+            clawOpen = true;
+        }
+
         if(gamepad1.b) {
             clawOpen = !clawOpen;
         }
-
-//        if(clawOpen) {
-//            claw.setPosition(1);
-//        } else {
-//            claw.setPosition(0);
-//        }
         if(gamepad1.right_trigger >= 0.3){
-            shoulder.setTargetPosition(shoulder.getCurrentPosition() + 10);
+            shoulderTargetPosition += 10;
         }
-
         else if (gamepad1.left_trigger >= 0.3){
-            shoulder.setTargetPosition(shoulder.getCurrentPosition() - 10);
+            shoulderTargetPosition -= 10;
         }
         if(gamepad1.right_bumper) {
-            elbow.setTargetPosition(elbow.getCurrentPosition() + 10);
+            elbowTargetPosition += 10;
         }
-
         if (gamepad1.left_bumper){
-            elbow.setTargetPosition(elbow.getCurrentPosition() - 10);
+            elbowTargetPosition -= 10;
         }
+        updateMotors();
         mecanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+    }
+
+    public void updateMotors() {
+        if(clawOpen) {
+            claw.setPosition(clawOpenPosition);
+        } else {
+            claw.setPosition(clawClosePosition);
+        }
+        shoulder.setTargetPosition(shoulderTargetPosition);
+        elbow.setTargetPosition(elbowTargetPosition);
     }
 
     public void mecanumDrive(double forward, double strafe, double turn) {
@@ -107,6 +120,11 @@ public class Robot implements Subsystem {
         LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
 
         telemetry.put("Claw Open", clawOpen);
+        telemetry.put("Shoulder Position", shoulder.getCurrentPosition());
+        telemetry.put("Shoulder Target Position", shoulderTargetPosition);
+        telemetry.put("Elbow Position", elbow.getCurrentPosition());
+        telemetry.put("Elbow Target Position", elbowTargetPosition);
+
 
         return telemetry;
     }
