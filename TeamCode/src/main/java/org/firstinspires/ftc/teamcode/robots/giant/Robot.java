@@ -89,7 +89,7 @@ public class Robot implements Subsystem {
         }catch(Exception e) {
             throw new RuntimeException(e);
         }
-        camera
+//        camera
 
         leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");

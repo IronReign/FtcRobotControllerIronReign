@@ -3,12 +3,14 @@ package org.firstinspires.ftc.teamcode.robots.core;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@TeleOp(name = "CORE")
 public class CoreOpMode extends OpMode {
     Robot robot;
 

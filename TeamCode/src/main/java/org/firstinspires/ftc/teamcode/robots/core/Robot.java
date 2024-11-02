@@ -14,7 +14,7 @@ import java.util.Map;
 public class Robot implements Subsystem {
     HardwareMap hardwareMap;
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
-    Servo claw;
+//    Servo claw;
     Gamepad gamepad1;
     DcMotorEx shoulder;
     DcMotorEx elbow;
@@ -32,11 +32,11 @@ public class Robot implements Subsystem {
             clawOpen = !clawOpen;
         }
 
-        if(clawOpen) {
-            claw.setPosition(1);
-        } else {
-            claw.setPosition(0);
-        }
+//        if(clawOpen) {
+//            claw.setPosition(1);
+//        } else {
+//            claw.setPosition(0);
+//        }
         if(gamepad1.right_trigger >= 0.3){
             shoulder.setTargetPosition(shoulder.getCurrentPosition() + 10);
         }
@@ -58,10 +58,10 @@ public class Robot implements Subsystem {
         double r = Math.hypot(strafe, forward);
         double robotAngle = Math.atan2(forward, strafe) - Math.PI/4;
         double rightX = -turn;
-        leftFront.setPower((r * Math.cos(robotAngle) - rightX));
+       // leftFront.setPower((r * Math.cos(robotAngle) - rightX));
         rightFront.setPower((r * Math.sin(robotAngle) + rightX));
-        leftBack.setPower((r * Math.sin(robotAngle) - rightX));
-        rightBack.setPower((r * Math.cos(robotAngle) + rightX));
+//        leftBack.setPower((r * Math.sin(robotAngle) - rightX));
+//        rightBack.setPower((r * Math.cos(robotAngle) + rightX));
     }
 
 
@@ -75,8 +75,8 @@ public class Robot implements Subsystem {
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
         rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-        shoulder = hardwareMap.get(DcMotorEx.class, "armBase");
-        elbow = hardwareMap.get(DcMotorEx.class, "armJoint");
+        shoulder = hardwareMap.get(DcMotorEx.class, "shoulder");
+        elbow = hardwareMap.get(DcMotorEx.class, "elbow");
         //claw = hardwareMap.get(Servo.class, "claw");
         // Set motor runmodes
         leftBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -87,12 +87,12 @@ public class Robot implements Subsystem {
         elbow.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
         shoulder.setPower(1);
-        shoulder.setVelocity(300);
+        shoulder.setVelocity(1000);
         shoulder.setTargetPosition(0);
         shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         elbow.setPower(1);
-        elbow.setVelocity(300);
+        elbow.setVelocity(1000);
         elbow.setTargetPosition(0);
         elbow.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
