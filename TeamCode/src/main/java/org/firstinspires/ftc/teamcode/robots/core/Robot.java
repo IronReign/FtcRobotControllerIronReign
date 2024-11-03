@@ -14,7 +14,7 @@ import java.util.Map;
 public class Robot implements Subsystem {
     HardwareMap hardwareMap;
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
-//    Servo claw;
+    Servo claw;
     Gamepad gamepad1;
     DcMotorEx shoulder;
     DcMotorEx elbow;

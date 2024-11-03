@@ -18,7 +18,6 @@
         <LynxModule name="Expansion Hub 1" port="1">
             <REV_VL53L0X_RANGE_SENSOR name="backDistLeft" port="0" bus="2" />
             <REV_VL53L0X_RANGE_SENSOR name="backDistRight" port="0" bus="3" />
-            <Servo name="intakeAngleLeft" prt="0" />
             <Servo name="pincer" port="1" />
             <Servo name="wrist" port="5" />
             <Servo name="elevator" port="4" />
