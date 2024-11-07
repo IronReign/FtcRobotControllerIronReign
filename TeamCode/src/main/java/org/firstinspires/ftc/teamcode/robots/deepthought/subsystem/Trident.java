@@ -56,25 +56,25 @@ public class Trident implements Subsystem {
     public static int craneSpeed = 30;
 
     //ELBOW JOINT VARIABLES
-    public static double ELBOW_START_ANGLE = 0;
+    public static double ELBOW_START_ANGLE = 189;
     public static int ELBOW_HOME_POSITION = 2050;
     public static double ELBOW_PWM_PER_DEGREE = -5.672222222222222;
     public static double ELBOW_JOINT_SPEED = 60;
     public static double ELBOW_MIN_ANGLE = -15;
     public static double ELBOW_MAX_ANGLE = 220;
     public static int ELBOW_ADJUST_ANGLE = 5;
-    public static double ELBOW_PREINTAKE_ANGLE = 123;
+    public static double ELBOW_PREINTAKE_ANGLE = -15;
 
 
     //WRIST JOINT VARIABLES
     public static int WRIST_HOME_POSITION = 950;
     public static double WRIST_PWM_PER_DEGREE = 7.22222222222;
-    public static double WRIST_START_ANGLE = 44;
+    public static double WRIST_START_ANGLE = 40;
     public static double WRIST_JOINT_SPEED = 50;
     public static double WRIST_MIN_ANGLE = 0;
     public static double WRIST_MAX_ANGLE = 140;
     public static int WRIST_ADJUST_ANGLE = 5;
-    public static double WRIST_PREINTAKE_ANGLE = 123;
+    public static double WRIST_PREINTAKE_ANGLE = 110;
 
 
     //BEATER
@@ -143,27 +143,28 @@ public class Trident implements Subsystem {
                 }
                 break;
             case 1:
-                if (isPast(intakeTimer)) {
-                    wrist.setTargetAngle(15);
-                    elbow.setTargetAngle(180);
-                }
+//                if (isPast(intakeTimer)) {
+//                    wrist.setTargetAngle(15);
+//                    elbow.setTargetAngle(180);
+//                }
+                intakeIndex++;
                 break;
             case 2:
-//                beater.setPower(1);
-//                colorSensorEnabled = true;
+                beaterPower = 1;
+                colorSensorEnabled = true;
 //                open the "gate"
 //                if (targetSamples.contains(currentSample)) {
 //                    intakeTimer = futureTime(3);
-                intakeIndex++;
+//                intakeIndex++;
 //                }
                 break;
             case 3:
                 //close the "gate"
-//                beater.setPower(-1);
-//                if (isPast(intakeTimer)) {
-//                    beater.setPower(0);
+                beaterPower = -1;
+                if (isPast(intakeTimer)) {
+                    beaterPower = 0;
                 intakeIndex++;
-//                }
+                }
                 break;
             case 4:
                 return true;
@@ -182,8 +183,8 @@ public class Trident implements Subsystem {
             case 0:
                 craneTargetPosition = 0;
                 slideTargetPosition = 0;
-                wrist.setTargetAngle(WRIST_START_ANGLE);
-                elbow.setTargetAngle(WRIST_START_ANGLE);
+                wrist.setTargetAngle(123);
+                elbow.setTargetAngle(90);
 
                 //get to position
                 if (withinError(crane.getCurrentPosition(), 0, 10)) {
@@ -191,22 +192,20 @@ public class Trident implements Subsystem {
                 }
                 break;
             case 1:
-                craneTargetPosition = 630;
-                if (withinError(crane.getCurrentPosition(), 630, 10)) {
+                craneTargetPosition = 420;
+                if (withinError(crane.getCurrentPosition(), 420, 10)) {
                     outtakeTimer = futureTime(2);
                     outtakeIndex++;
                 }
                 break;
             case 2:
-                wrist.setTargetAngle(10);
-                elbow.setTargetAngle(110);
                 if(isPast(outtakeTimer)){
                     outtakeIndex ++;
                 }
                 break;
             case 3:
-                slide.setTargetPosition(-1230);
-                if(withinError(slide.getCurrentPosition(), -1230, 10))
+//                slide.setTargetPosition(-1230);
+//                if(withinError(slide.getCurrentPosition(), -1230, 10))
                     outtakeIndex++;
                 break;
             case 4:

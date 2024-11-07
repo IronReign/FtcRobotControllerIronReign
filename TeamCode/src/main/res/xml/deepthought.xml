@@ -7,8 +7,7 @@
             <RevRobotics20HDHexMotor name="rightBack" port="1" />
             <RevRobotics20HDHexMotor name="leftBack" port="2" />
             <RevRobotics20HDHexMotor name="leftFront" port="3" />
-            <ContinuousRotationServo name="beater" port="0" />
-            <RevColorSensorV3 name="intakeSensor" port="0" bus="0" />
+            <RevColorSensorV3 name="intakeSensor" port="0" bus="3" />
             <RevColorSensorV3 name="leftPixelSensor" port="0" bus="2" />
             <RevColorSensorV3 name="rightPixelSensor" port="0" bus="1" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
@@ -22,6 +21,7 @@
             <Servo name="wrist" port="5" />
             <Servo name="elevator" port="4" />
             <Servo name="elbow" port="3" />
+            <ContinuousRotationServo name="beater" port="0" />
             <RevRobotics40HDHexMotor name="intakeBeater" port="1" />
             <RevRobotics40HDHexMotor name="slide" port="3"/>
             <RevRoboticsCoreHexMotor name="crane" port="2"/>
