@@ -7,6 +7,7 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.colorSensorEnabled;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.craneSpeed;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.slideSpeed;
 
@@ -82,10 +83,16 @@ public class DriverControls {
             Trident.colorSensorEnabled = true; 
             robot.trident.sample(Arrays.asList(Trident.CurrentSample.RED));
         }
+        if(stickyGamepad1.y) {
+            robot.articulate(Robot.Articulation.TRAVEL);
+        }
 
         if(stickyGamepad1.guide){
             Trident.intakeIndex++;
             Trident.outtakeIndex++;
+        }
+        if(stickyGamepad1.start) {
+            Trident.colorSensorEnabled = !colorSensorEnabled;
         }
 
         if (gamepad1.left_trigger > .1) {

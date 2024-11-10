@@ -332,12 +332,12 @@ public class IntoTheDeep_6832 extends OpMode {
         telemetry.addLine(telemetryName);
         packet.addLine(telemetryName);
 
-        if (averageVoltage <= 12) {
-            telemetryMap = new LinkedHashMap<>();
-            for (int i = 0; i < 5; i++) {
-                telemetryMap.put(i + (System.currentTimeMillis() / 500 % 2 == 0 ? "**BATTERY VOLTAGE LOW**" : "  BATTERY VOLTAGE LOW  "), (System.currentTimeMillis() / 500 % 2 == 0 ? "**CHANGE BATTERY ASAP!!**" : "  CHANGE BATTERY ASAP!!  "));
-            }
-        }
+//        if (averageVoltage <= 12) {
+//            telemetryMap = new LinkedHashMap<>();
+//            for (int i = 0; i < 5; i++) {
+//                telemetryMap.put(i + (System.currentTimeMillis() / 500 % 2 == 0 ? "**BATTERY VOLTAGE LOW**" : "  BATTERY VOLTAGE LOW  "), (System.currentTimeMillis() / 500 % 2 == 0 ? "**CHANGE BATTERY ASAP!!**" : "  CHANGE BATTERY ASAP!!  "));
+//            }
+//        }
 
         for (Map.Entry<String, Object> entry : telemetryMap.entrySet()) {
             String line = Misc.formatInvariant("%s: %s", entry.getKey(), entry.getValue());

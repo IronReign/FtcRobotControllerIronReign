@@ -52,8 +52,9 @@ public class Trident implements Subsystem {
 
 
     //CRANE
-    public static int craneTargetPosition = 0;
+    public int craneTargetPosition = 0;
     public static int craneSpeed = 30;
+    public static int CRANE_LOWOUTTAKE_POSITION = 420;
 
     //ELBOW JOINT VARIABLES
     public static double ELBOW_START_ANGLE = 189;
@@ -63,7 +64,8 @@ public class Trident implements Subsystem {
     public static double ELBOW_MIN_ANGLE = -15;
     public static double ELBOW_MAX_ANGLE = 220;
     public static int ELBOW_ADJUST_ANGLE = 5;
-    public static double ELBOW_PREINTAKE_ANGLE = -15;
+    public static double ELBOW_PREINTAKE_ANGLE = 51.34601680003834 ;
+    public static double ELBOW_LOWOUTTAKE_ANGLE = 102;
 
 
     //WRIST JOINT VARIABLES
@@ -75,10 +77,11 @@ public class Trident implements Subsystem {
     public static double WRIST_MAX_ANGLE = 140;
     public static int WRIST_ADJUST_ANGLE = 5;
     public static double WRIST_PREINTAKE_ANGLE = 110;
+    public static double WRIST_LOWOUTTAKE_ANGLE = 117;
 
 
     //BEATER
-    public static double beaterPower;
+    public double beaterPower;
 
     //PINCER
     public static double PINCER_CLOSE = 1750;
@@ -107,6 +110,11 @@ public class Trident implements Subsystem {
             case MANUAL:
                 break;
             case TUCK:
+                elbow.setTargetAngle(ELBOW_START_ANGLE);
+                wrist.setTargetAngle(WRIST_START_ANGLE);
+                beaterPower = 0;
+                craneTargetPosition = 0;
+                articulation = Articulation.MANUAL;
                 break;
             //SHOULD ONLY BE ACCESSED BY SAMPLE()
             case INTAKE:
@@ -133,34 +141,34 @@ public class Trident implements Subsystem {
             case 0:
                 craneTargetPosition = 0;
                 slideTargetPosition = 0;
-                wrist.setTargetAngle(WRIST_PREINTAKE_ANGLE);
+//                wrist.setTargetAngle(WRIST_PREINTAKE_ANGLE);
                 elbow.setTargetAngle(ELBOW_PREINTAKE_ANGLE);
 
                 //get to position
                 if (withinError(crane.getCurrentPosition(), 0, 10)) {
                     intakeTimer = futureTime(5);
-//                    intakeIndex++;
+                    intakeIndex++;
                 }
                 break;
             case 1:
-//                if (isPast(intakeTimer)) {
-//                    wrist.setTargetAngle(15);
+                if (isPast(intakeTimer)) {
+                    wrist.setTargetAngle(WRIST_PREINTAKE_ANGLE);
 //                    elbow.setTargetAngle(180);
-//                }
+                }
                 intakeIndex++;
                 break;
             case 2:
-                beaterPower = 1;
+                beaterPower = -1;
                 colorSensorEnabled = true;
 //                open the "gate"
 //                if (targetSamples.contains(currentSample)) {
-//                    intakeTimer = futureTime(3);
+//                    intakeTi mer = futureTime(3);
 //                intakeIndex++;
 //                }
                 break;
             case 3:
                 //close the "gate"
-                beaterPower = -1;
+                beaterPower = 1;
                 if (isPast(intakeTimer)) {
                     beaterPower = 0;
                 intakeIndex++;
@@ -181,26 +189,26 @@ public class Trident implements Subsystem {
     public boolean outtake() {
         switch (outtakeIndex) {
             case 0:
-                craneTargetPosition = 0;
-                slideTargetPosition = 0;
-                wrist.setTargetAngle(123);
-                elbow.setTargetAngle(90);
-
-                //get to position
-                if (withinError(crane.getCurrentPosition(), 0, 10)) {
+                craneTargetPosition = CRANE_LOWOUTTAKE_POSITION;
+                elbow.setTargetAngle(ELBOW_LOWOUTTAKE_ANGLE);
+                if (withinError(crane.getCurrentPosition(), CRANE_LOWOUTTAKE_POSITION, 10)) {
                     outtakeIndex++;
+                    outtakeTimer = futureTime(2);
                 }
                 break;
             case 1:
-                craneTargetPosition = 420;
-                if (withinError(crane.getCurrentPosition(), 420, 10)) {
-                    outtakeTimer = futureTime(2);
+                wrist.setTargetAngle(WRIST_LOWOUTTAKE_ANGLE);
+                if(isPast(outtakeTimer)) {
+                    beaterPower = -1;
+                    outtakeTimer = futureTime(3);
                     outtakeIndex++;
                 }
                 break;
             case 2:
+                //this should be a second or so after we don't see a sample anymore
                 if(isPast(outtakeTimer)){
-                    outtakeIndex ++;
+                    beaterPower = 0;
+                    return true;
                 }
                 break;
             case 3:
