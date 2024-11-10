@@ -14,16 +14,20 @@ import java.util.Map;
 public class Robot implements Subsystem {
     HardwareMap hardwareMap;
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
-//    Servo claw;
+    Servo claw;
     Gamepad gamepad1;
     DcMotorEx shoulder;
     DcMotorEx elbow;
+    DcMotorEx slide;
     public boolean clawOpen = false;
     public double clawOpenPosition = 0;
     public double clawClosePosition = 1;
     public int shoulderTargetPosition = 0;
     public int elbowTargetPosition = 0;
-
+    public int slideTargetPosition = 0;
+    public double forward = 0;
+    public double strafe = 0;
+    public double turn = 0;
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
         this.hardwareMap = hardwareMap;
         this.gamepad1 = gamepad;
@@ -35,6 +39,7 @@ public class Robot implements Subsystem {
         if(gamepad1.a) {
             shoulderTargetPosition = 50;
             elbowTargetPosition = 75;
+            slideTargetPosition = 50;
             clawOpen = true;
         }
 
@@ -53,8 +58,16 @@ public class Robot implements Subsystem {
         if (gamepad1.left_bumper){
             elbowTargetPosition -= 10;
         }
+        if (gamepad1.dpad_up){
+            slideTargetPosition += 1;
+        }
+        if (gamepad1.dpad_down){
+            slideTargetPosition -= 1;
+        }
+
         updateMotors();
-        mecanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+        mecanumDrive();
+
     }
 
     public void updateMotors() {
@@ -65,16 +78,20 @@ public class Robot implements Subsystem {
         }
         shoulder.setTargetPosition(shoulderTargetPosition);
         elbow.setTargetPosition(elbowTargetPosition);
+        slide.setTargetPosition(slideTargetPosition);
     }
 
-    public void mecanumDrive(double forward, double strafe, double turn) {
+    public void mecanumDrive() {
+        forward = gamepad1.left_stick_y;
+        strafe =  -gamepad1.right_stick_x;
+        turn = -gamepad1.right_stick_x;
         double r = Math.hypot(strafe, forward);
         double robotAngle = Math.atan2(forward, strafe) - Math.PI/4;
         double rightX = -turn;
-       // leftFront.setPower((r * Math.cos(robotAngle) - rightX));
-        rightFront.setPower((r * Math.sin(robotAngle) + rightX));
-//        leftBack.setPower((r * Math.sin(robotAngle) - rightX));
-//        rightBack.setPower((r * Math.cos(robotAngle) + rightX));
+        leftFront.setPower(((r * Math.cos(robotAngle) - rightX))*0.7);
+        rightFront.setPower((r * Math.sin(robotAngle) + rightX)*0.7);
+        leftBack.setPower((r * Math.sin(robotAngle) - rightX)*0.7);
+        rightBack.setPower((r * Math.cos(robotAngle) + rightX)*0.7);
     }
 
 
@@ -90,7 +107,8 @@ public class Robot implements Subsystem {
         rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
         shoulder = hardwareMap.get(DcMotorEx.class, "shoulder");
         elbow = hardwareMap.get(DcMotorEx.class, "elbow");
-        //claw = hardwareMap.get(Servo.class, "claw");
+        claw = hardwareMap.get(Servo.class, "claw");
+        slide = hardwareMap.get(DcMotorEx.class, "slide");
         // Set motor runmodes
         leftBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         rightBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -98,16 +116,22 @@ public class Robot implements Subsystem {
         rightFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         shoulder.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         elbow.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        slide.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
         shoulder.setPower(1);
-        shoulder.setVelocity(1000);
+        shoulder.setVelocity(800);
         shoulder.setTargetPosition(0);
         shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         elbow.setPower(1);
-        elbow.setVelocity(1000);
+        elbow.setVelocity(800);
         elbow.setTargetPosition(0);
         elbow.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+
+        slide.setPower(1);
+        slide.setVelocity(150);
+        slide.setTargetPosition(0);
+        slide.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         leftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         leftBack.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
@@ -124,6 +148,8 @@ public class Robot implements Subsystem {
         telemetry.put("Shoulder Target Position", shoulderTargetPosition);
         telemetry.put("Elbow Position", elbow.getCurrentPosition());
         telemetry.put("Elbow Target Position", elbowTargetPosition);
+        telemetry.put("Slide Position", slide.getCurrentPosition());
+        telemetry.put("Slide Target Position", slideTargetPosition);
 
 
         return telemetry;
