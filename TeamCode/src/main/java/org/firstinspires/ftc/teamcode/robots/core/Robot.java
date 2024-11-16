@@ -46,18 +46,25 @@ public class Robot implements Subsystem {
         if(gamepad1.b) {
             clawOpen = !clawOpen;
         }
+
+//        if(clawOpen) {
+//            claw.setPosition(1);
+//        } else {
+//            claw.setPosition(0);
+//        }
         if(gamepad1.right_trigger >= 0.3){
-            shoulderTargetPosition += 10;
+            shoulder.setTargetPosition(shoulder.getCurrentPosition() + 10);
         }
         else if (gamepad1.left_trigger >= 0.3){
-            shoulderTargetPosition -= 10;
+            shoulder.setTargetPosition(shoulder.getCurrentPosition() - 10);
         }
         if(gamepad1.right_bumper) {
-            elbowTargetPosition += 10;
+            elbow.setTargetPosition(elbow.getCurrentPosition() + 10);
         }
-        if (gamepad1.left_bumper){
-            elbowTargetPosition -= 10;
+        if (gamepad1.left_bumper) {
+            elbow.setTargetPosition(elbow.getCurrentPosition() - 10);
         }
+
         if (gamepad1.dpad_up){
             slideTargetPosition += 1;
         }
@@ -66,7 +73,7 @@ public class Robot implements Subsystem {
         }
 
         updateMotors();
-        mecanumDrive();
+        mecanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
 
     }
 
@@ -88,11 +95,10 @@ public class Robot implements Subsystem {
         double r = Math.hypot(strafe, forward);
         double robotAngle = Math.atan2(forward, strafe) - Math.PI/4;
         double rightX = -turn;
-        leftFront.setPower(((r * Math.cos(robotAngle) - rightX))*0.7);
-        rightFront.setPower((r * Math.sin(robotAngle) + rightX)*0.7);
-        leftBack.setPower((r * Math.sin(robotAngle) - rightX)*0.7);
-        rightBack.setPower((r * Math.cos(robotAngle) + rightX)*0.7);
-    }
+        leftFront.setPower((r * Math.cos(robotAngle) - rightX));
+        rightFront.setPower((r * Math.sin(robotAngle) + rightX));
+        leftBack.setPower((r * Math.sin(robotAngle) - rightX));
+        rightBack.setPower((r * Math.cos(robotAngle) + rightX));
 
 
     @Override
@@ -100,7 +106,7 @@ public class Robot implements Subsystem {
 
     }
 
-    public void init () {
+    public void init() {
         leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
