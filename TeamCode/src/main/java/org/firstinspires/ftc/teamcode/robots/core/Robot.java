@@ -25,9 +25,7 @@ public class Robot implements Subsystem {
     public int shoulderTargetPosition = 0;
     public int elbowTargetPosition = 0;
     public int slideTargetPosition = 0;
-    public double forward = 0;
-    public double strafe = 0;
-    public double turn = 0;
+
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
         this.hardwareMap = hardwareMap;
         this.gamepad1 = gamepad;
@@ -47,11 +45,11 @@ public class Robot implements Subsystem {
             clawOpen = !clawOpen;
         }
 
-//        if(clawOpen) {
-//            claw.setPosition(1);
-//        } else {
-//            claw.setPosition(0);
-//        }
+        if(clawOpen) {
+            claw.setPosition(1);
+        } else {
+            claw.setPosition(0);
+        }
         if(gamepad1.right_trigger >= 0.3){
             shoulder.setTargetPosition(shoulder.getCurrentPosition() + 10);
         }
@@ -66,10 +64,10 @@ public class Robot implements Subsystem {
         }
 
         if (gamepad1.dpad_up){
-            slideTargetPosition += 1;
+            slide.setTargetPosition(slide.getCurrentPosition() + 10);
         }
         if (gamepad1.dpad_down){
-            slideTargetPosition -= 1;
+            slide.setTargetPosition(slide.getCurrentPosition() - 10);
         }
 
         updateMotors();
@@ -88,18 +86,15 @@ public class Robot implements Subsystem {
         slide.setTargetPosition(slideTargetPosition);
     }
 
-    public void mecanumDrive() {
-        forward = gamepad1.left_stick_y;
-        strafe =  -gamepad1.right_stick_x;
-        turn = -gamepad1.right_stick_x;
+    public void mecanumDrive(double forward, double strafe, double turn) {
         double r = Math.hypot(strafe, forward);
-        double robotAngle = Math.atan2(forward, strafe) - Math.PI/4;
+        double robotAngle = Math.atan2(forward, strafe) - Math.PI / 4;
         double rightX = -turn;
         leftFront.setPower((r * Math.cos(robotAngle) - rightX));
         rightFront.setPower((r * Math.sin(robotAngle) + rightX));
         leftBack.setPower((r * Math.sin(robotAngle) - rightX));
         rightBack.setPower((r * Math.cos(robotAngle) + rightX));
-
+    }
 
     @Override
     public void stop() {
