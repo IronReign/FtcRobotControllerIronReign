@@ -2,6 +2,7 @@
 <Robot type="FirstInspires-FTC">
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Control Hub" port="173">
+            <LynxColorSensor name="intakeSensor" port="1" bus="0" />
             <Servo name="diverterRight" port="5" />
             <RevRobotics20HDHexMotor name="rightFront" port="0" />
             <RevRobotics20HDHexMotor name="rightBack" port="1" />
@@ -14,13 +15,11 @@
         <LynxModule name="Expansion Hub 1" port="1">
             <REV_VL53L0X_RANGE_SENSOR name="backDistLeft" port="0" bus="2" />
             <REV_VL53L0X_RANGE_SENSOR name="backDistRight" port="0" bus="3" />
-            <RevColorSensorV3 name="intakeSensor" port="0" bus="3" />
             <Servo name="pincer" port="1" />
             <Servo name="wrist" port="5" />
             <Servo name="elevator" port="4" />
             <Servo name="elbow" port="3" />
             <ContinuousRotationServo name="beater" port="0" />
-            <RevRobotics40HDHexMotor name="intakeBeater" port="1" />
             <RevRobotics40HDHexMotor name="slide" port="3"/>
             <RevRoboticsCoreHexMotor name="crane" port="2"/>
             <LynxEmbeddedIMU name="eimu" port="0" bus="0" />

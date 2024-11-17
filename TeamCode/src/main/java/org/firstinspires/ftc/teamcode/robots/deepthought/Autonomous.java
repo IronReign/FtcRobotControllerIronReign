@@ -83,15 +83,15 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 2:
                 if (robot.driveTrain.strafeToPose(Field.P2D(-2.5, -2.5, 90), packet)) {
-//                    autonState = AutonState.DRIVE_TO_SUB;
-                    return true;
-//                    autonIndex++;
+                    robot.articulate(Robot.Articulation.OUTTAKE);
+                    autonIndex++;
                 }
                 break;
             case 3:
-                if (robot.driveTrain.strafeToPose(field.subAccess.pose, packet)) {
-                    autonState = AutonState.DRIVE_TO_BASKET;
-                    autonIndex++;
+//                todo - test & tune preload score here
+                if (robot.articulation.equals(Robot.Articulation.MANUAL)) {
+                    robot.trident.beaterPower = 1;
+//                    autonIndex++;
                 }
                 break;
             case 4:

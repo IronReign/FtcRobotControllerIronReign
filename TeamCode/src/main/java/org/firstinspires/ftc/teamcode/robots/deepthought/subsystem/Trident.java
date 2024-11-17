@@ -13,6 +13,8 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.checkerframework.checker.units.qual.Current;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
 import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 
@@ -76,7 +78,7 @@ public class Trident implements Subsystem {
     public static double WRIST_MIN_ANGLE = 0;
     public static double WRIST_MAX_ANGLE = 140;
     public static int WRIST_ADJUST_ANGLE = 5;
-    public static double WRIST_PREINTAKE_ANGLE = 110;
+    public static double WRIST_PREINTAKE_ANGLE = 140;
     public static double WRIST_LOWOUTTAKE_ANGLE = 117;
 
 
@@ -110,11 +112,9 @@ public class Trident implements Subsystem {
             case MANUAL:
                 break;
             case TUCK:
-                elbow.setTargetAngle(ELBOW_START_ANGLE);
-                wrist.setTargetAngle(WRIST_START_ANGLE);
-                beaterPower = 0;
-                craneTargetPosition = 0;
-                articulation = Articulation.MANUAL;
+                if(tuck()) {
+                    articulation = Articulation.MANUAL;
+                }
                 break;
             //SHOULD ONLY BE ACCESSED BY SAMPLE()
             case INTAKE:
@@ -134,6 +134,31 @@ public class Trident implements Subsystem {
         return articulation;
     }
 
+    public static int tuckIndex = 0;
+    public boolean tuck() {
+        switch (tuckIndex) {
+            case 0:
+                craneTargetPosition = 0;
+                slideTargetPosition = 0;
+                if (withinError(crane.getCurrentPosition(), 0, 10)) {
+                    tuckIndex++;
+                    ELBOW_JOINT_SPEED = 35;
+                }
+                break;
+            case 1:
+                elbow.setTargetAngle(ELBOW_START_ANGLE);
+                wrist.setTargetAngle(WRIST_START_ANGLE);
+                if (withinError(elbow.getCurrentAngle(), ELBOW_START_ANGLE, 5) && withinError(wrist.getCurrentAngle(), WRIST_START_ANGLE, 5)) {
+                    tuckIndex++;
+                    ELBOW_JOINT_SPEED = 60;
+                }
+                break;
+            case 2:
+                return true;
+        }
+        return false;
+    }
+
     public static int intakeIndex;
     public long intakeTimer;
     public boolean intake() {
@@ -141,38 +166,35 @@ public class Trident implements Subsystem {
             case 0:
                 craneTargetPosition = 0;
                 slideTargetPosition = 0;
-//                wrist.setTargetAngle(WRIST_PREINTAKE_ANGLE);
-                elbow.setTargetAngle(ELBOW_PREINTAKE_ANGLE);
-
                 //get to position
                 if (withinError(crane.getCurrentPosition(), 0, 10)) {
-                    intakeTimer = futureTime(5);
+                    intakeTimer = futureTime(2);
+                    setTargetAngle(ELBOW_PREINTAKE_ANGLE, WRIST_PREINTAKE_ANGLE);
                     intakeIndex++;
                 }
                 break;
             case 1:
-                if (isPast(intakeTimer)) {
+//                if (isPast(intakeTimer)) {
                     wrist.setTargetAngle(WRIST_PREINTAKE_ANGLE);
-//                    elbow.setTargetAngle(180);
-                }
+//                }
                 intakeIndex++;
                 break;
             case 2:
-                beaterPower = -1;
+                beaterPower = 1;
                 colorSensorEnabled = true;
 //                open the "gate"
-//                if (targetSamples.contains(currentSample)) {
-//                    intakeTi mer = futureTime(3);
-//                intakeIndex++;
-//                }
+                if (sampleDetected()) {
+                    beaterPower = 0;
+                    intakeIndex++;
+                }
                 break;
             case 3:
                 //close the "gate"
-                beaterPower = 1;
-                if (isPast(intakeTimer)) {
-                    beaterPower = 0;
+//                beaterPower = 1;
+//                if (isPast(intakeTimer)) {
+//                    beaterPower = 0;
                 intakeIndex++;
-                }
+//                }
                 break;
             case 4:
                 return true;
@@ -198,24 +220,28 @@ public class Trident implements Subsystem {
                 break;
             case 1:
                 wrist.setTargetAngle(WRIST_LOWOUTTAKE_ANGLE);
-                if(isPast(outtakeTimer)) {
-                    beaterPower = -1;
-                    outtakeTimer = futureTime(3);
-                    outtakeIndex++;
-                }
+//                if(isPast(outtakeTimer)) {
+//                    beaterPower = 1;
+//                    outtakeTimer = futureTime(3);
+//                    outtakeIndex++;
+//                }
                 break;
             case 2:
-                //this should be a second or so after we don't see a sample anymore
-                if(isPast(outtakeTimer)){
-                    beaterPower = 0;
-                    return true;
-                }
-                break;
+
+                beaterPower = 1;
+                //                this should be a second or so after we don't see a sample anymore
+//                if(isPast(outtakeTimer)){
+
+//                    return true;
+//                }
+//                break;
             case 3:
+                beaterPower = 0;
+                return true;
 //                slide.setTargetPosition(-1230);
 //                if(withinError(slide.getCurrentPosition(), -1230, 10))
-                    outtakeIndex++;
-                break;
+//                    outtakeIndex++;
+//                break;
             case 4:
                 return true;
 
@@ -226,6 +252,27 @@ public class Trident implements Subsystem {
     public void sample(List<CurrentSample> samples) {
         articulation = Articulation.INTAKE;
         this.targetSamples = samples;
+    }
+
+    public void sample(Constants.Alliance alliance) {
+        List<CurrentSample> samples = new ArrayList<>();
+        if(alliance.isRed())
+            samples.add(CurrentSample.RED);
+        else
+            samples.add(CurrentSample.BLUE);
+        samples.add(CurrentSample.NEUTRAL);
+        articulation = Articulation.INTAKE;
+        this.targetSamples = samples;
+    }
+    public boolean sampleDetected() {
+        return targetSamples.contains(currentSample);
+    }
+
+    public void stopOnSample() {
+        if(targetSamples.contains(currentSample)) {
+            beaterPower = 0;
+
+        }
     }
 
     public void setTargetAngle(double elbowAngle, double wristAngle) {
@@ -286,7 +333,7 @@ public class Trident implements Subsystem {
         wrist.update();
         slide.setTargetPosition(slideTargetPosition);
         crane.setTargetPosition(craneTargetPosition);
-        beater.setPower(beaterPower);
+        beater.setPower(-beaterPower);
 
 //        if(pincerEnabled) {
 //            pincer.setPosition(Utils.servoNormalize(PINCER_OPEN));
@@ -303,7 +350,7 @@ public class Trident implements Subsystem {
             currentSample = CurrentSample.NEUTRAL;
             return "NEUTRAL";
         }
-        else if (hue < 60 && hue > 20) {
+        else if (hue < 60) {
             currentSample = CurrentSample.RED;
             return "RED";
         }
@@ -322,7 +369,7 @@ public class Trident implements Subsystem {
         slide.setMotorDisable();
     }
 
-    public String HSVasString () {
+    public String HSVasString() {
         float[] hsv = getHSV();
         return hsv[0] + " " + hsv[1] + " " + hsv[2];
     }
@@ -343,7 +390,9 @@ public class Trident implements Subsystem {
         telemetryMap.put("current sample", currentSample.name());
         telemetryMap.put("colorsensor", colorSensorEnabled);
         if(colorSensorEnabled) {
-//            telemetryMap.put("colorsensor values", colorSensor.getNormalizedColors().red + " " + colorSensor.getNormalizedColors().green + " " + colorSensor.getNormalizedColors().blue);
+            telemetryMap.put("jlwkej", colorSensor.getGain());
+            telemetryMap.put("jflwekj", colorSensor.getClass());
+            telemetryMap.put("lkwjfljwe", colorSensor.getNormalizedColors().toString());
             telemetryMap.put("colorsensor hsv", "" + HSVasString());
         }
         telemetryMap.put("beater speed", beater.getPower());

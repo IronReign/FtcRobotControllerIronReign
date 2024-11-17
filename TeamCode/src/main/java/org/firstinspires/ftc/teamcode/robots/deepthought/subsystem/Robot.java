@@ -26,6 +26,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.vision.provider.AprilTa
 import org.openftc.apriltag.AprilTagDetection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -264,12 +265,10 @@ public class Robot implements Subsystem {
                     articulation = Articulation.MANUAL;
                 break;
             case INTAKE:
-                trident.articulate(Trident.Articulation.INTAKE);
+                trident.sample(Arrays.asList(Trident.CurrentSample.RED));
                 if(trident.articulation == Trident.Articulation.MANUAL) {
                     articulation = Articulation.MANUAL;
                 }
-//                if(intake())
-//                    articulation = Articulation.MANUAL;
                 break;
             case TRAVEL:
                 trident.articulate(Trident.Articulation.TUCK);
