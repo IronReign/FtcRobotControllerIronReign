@@ -22,8 +22,8 @@ public class Robot implements Subsystem {
     DcMotorEx elbow;
     DcMotorEx slide;
     public boolean clawOpen = false;
-    public double clawOpenPosition = 0.4;
-    public double clawClosePosition = 0;
+    public double clawOpenPosition = 1;
+    public double clawClosePosition = 0.4;
     public int shoulderTargetPosition = 0;
     public int elbowTargetPosition = 0;
     public int slideTargetPosition = 0;
