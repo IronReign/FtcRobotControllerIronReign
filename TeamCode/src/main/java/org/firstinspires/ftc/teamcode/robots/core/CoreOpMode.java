@@ -10,13 +10,17 @@ import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+
+import com.acmerobotics.dashboard.FtcDashboard;
 @TeleOp(name = "CORE")
 public class CoreOpMode extends OpMode {
     Robot robot;
+    private FtcDashboard dashboard;
 
     @Override
     public void init() {
         robot = new Robot(hardwareMap, gamepad1);
+        dashboard = FtcDashboard.getInstance();
         robot.init();
     }
 
@@ -27,13 +31,15 @@ public class CoreOpMode extends OpMode {
     }
 
     private void handleTelemetry(Map<String, Object> telemetryMap, String telemetryName) {
+        TelemetryPacket p = new TelemetryPacket();
         telemetry.addLine(telemetryName);
 
         for (Map.Entry<String, Object> entry : telemetryMap.entrySet()) {
             String line = Misc.formatInvariant("%s: %s", entry.getKey(), entry.getValue());
             telemetry.addLine(line);
+            p.addLine(line);
         }
-
         telemetry.addLine();
+        dashboard.sendTelemetryPacket(p);
     }
 }
