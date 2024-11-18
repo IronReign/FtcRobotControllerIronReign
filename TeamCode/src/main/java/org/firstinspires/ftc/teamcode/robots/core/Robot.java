@@ -1,11 +1,13 @@
 package org.firstinspires.ftc.teamcode.robots.core;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.robots.deepthought.field.Field;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
 
 import java.util.LinkedHashMap;
@@ -20,8 +22,8 @@ public class Robot implements Subsystem {
     DcMotorEx elbow;
     DcMotorEx slide;
     public boolean clawOpen = false;
-    public double clawOpenPosition = 0;
-    public double clawClosePosition = 1;
+    public double clawOpenPosition = 1;
+    public double clawClosePosition = 0.4;
     public int shoulderTargetPosition = 0;
     public int elbowTargetPosition = 0;
     public int slideTargetPosition = 0;
@@ -44,34 +46,58 @@ public class Robot implements Subsystem {
         if(gamepad1.b) {
             clawOpen = !clawOpen;
         }
-
         if(clawOpen) {
-            claw.setPosition(1);
+            claw.setPosition(clawOpenPosition);
         } else {
-            claw.setPosition(0);
+            claw.setPosition(clawClosePosition);
         }
         if(gamepad1.right_trigger >= 0.3){
-            shoulder.setTargetPosition(shoulder.getCurrentPosition() + 10);
+            if (shoulder.getCurrentPosition() < 1000){
+                shoulder.setTargetPosition(shoulder.getCurrentPosition() + 100);
+            } else {
+                shoulder.setTargetPosition(1010);
+            }
         }
         else if (gamepad1.left_trigger >= 0.3){
-            shoulder.setTargetPosition(shoulder.getCurrentPosition() - 10);
+            if (shoulder.getCurrentPosition() > 0){
+                shoulder.setTargetPosition(shoulder.getCurrentPosition() - 100);
+            } else {
+                shoulder.setTargetPosition(0);
+            }
+
         }
         if(gamepad1.right_bumper) {
-            elbow.setTargetPosition(elbow.getCurrentPosition() + 10);
+            if (elbow.getCurrentPosition() < 1000){
+                elbow.setTargetPosition(elbow.getCurrentPosition() + 100);
+            } else {
+                elbow.setTargetPosition(1010);
+            }
         }
         if (gamepad1.left_bumper) {
-            elbow.setTargetPosition(elbow.getCurrentPosition() - 10);
+            if(elbow.getCurrentPosition() > 0){
+                elbow.setTargetPosition(elbow.getCurrentPosition() - 100);
+            } else {
+                elbow.setTargetPosition(0);
+            }
         }
 
         if (gamepad1.dpad_up){
-            slide.setTargetPosition(slide.getCurrentPosition() + 10);
+            if (slide.getCurrentPosition() < 1000){
+                slide.setTargetPosition(slide.getCurrentPosition() + 100);
+            } else {
+                slide.setTargetPosition(1010);
+            }
         }
         if (gamepad1.dpad_down){
-            slide.setTargetPosition(slide.getCurrentPosition() - 10);
+            if(slide.getCurrentPosition() > 0){
+                slide.setTargetPosition(slide.getCurrentPosition() - 100);
+            } else {
+                slide.setTargetPosition(0);
+            }
         }
 
         updateMotors();
-        mecanumDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+        mecanumDrive(gamepad1.left_stick_x, gamepad1.right_stick_y, gamepad1.left_stick_y);
 
     }
 
@@ -87,13 +113,13 @@ public class Robot implements Subsystem {
     }
 
     public void mecanumDrive(double forward, double strafe, double turn) {
-        double r = Math.hypot(strafe, forward);
-        double robotAngle = Math.atan2(forward, strafe) - Math.PI / 4;
-        double rightX = -turn;
-        leftFront.setPower((r * Math.cos(robotAngle) - rightX));
-        rightFront.setPower((r * Math.sin(robotAngle) + rightX));
-        leftBack.setPower((r * Math.sin(robotAngle) - rightX));
-        rightBack.setPower((r * Math.cos(robotAngle) + rightX));
+        double negS = -strafe;
+        double r = Math.hypot(negS, forward);
+        double robotAngle = Math.atan2(forward, negS) - Math.PI / 4;
+        leftFront.setPower((r * Math.cos(robotAngle) - turn));
+        rightFront.setPower((r * Math.sin(robotAngle) + turn));
+        leftBack.setPower((r * Math.sin(robotAngle) - turn));
+        rightBack.setPower((r * Math.cos(robotAngle) + turn));
     }
 
     @Override
