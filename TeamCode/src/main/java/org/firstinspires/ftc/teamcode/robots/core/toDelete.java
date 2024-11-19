@@ -15,9 +15,7 @@ import org.firstinspires.ftc.robotcore.internal.system.Misc;
 
 import java.util.Map;
 
-@Autonomous(name = "COREAUTON")
-@Config(value = "CoreAuton")
-public class CoreAuton extends OpMode {
+public class toDelete extends OpMode {
     public static double ONE_TILE_TIMER = 1.5;
     public static double TURN_TIMER = 1.5;
     Robot robot;
