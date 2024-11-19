@@ -82,18 +82,18 @@ public class Robot implements Subsystem {
         }
 
         if (gamepad1.dpad_up){
-            if (slide.getCurrentPosition() < 1000){
+            //if (slide.getCurrentPosition() < 1000000000){
                 slide.setTargetPosition(slide.getCurrentPosition() + 100);
-            } else {
-                slide.setTargetPosition(1010);
-            }
+            //} else {
+            //    slide.setTargetPosition(1010);
+            //}
         }
         if (gamepad1.dpad_down){
-            if(slide.getCurrentPosition() > 0){
+            //if(slide.getCurrentPosition() > 0){
                 slide.setTargetPosition(slide.getCurrentPosition() - 100);
-            } else {
-                slide.setTargetPosition(0);
-            }
+            //} else {
+            //    slide.setTargetPosition(0);
+            //}
         }
 
         updateMotors();
