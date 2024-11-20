@@ -70,7 +70,7 @@ public class Autonomous implements TelemetryProvider {
         switch (autonIndex) {
             case 0:
                 autonState = AutonState.INIT;
-                robot.positionCache.update(new DTPosition(robot.driveTrain.pose), true);
+                robot.positionCache.update(new DTPosition(robot.driveTrain.pose, robot.trident.crane.getCurrentPosition()), true);
                 autonTimer = futureTime(AUTON_START_DELAY);
                 autonIndex++;
                 break;
@@ -82,32 +82,37 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 2:
-                if (robot.driveTrain.strafeToPose(Field.P2D(-2.5, -2.5, 90), packet)) {
+                if (robot.driveTrain.strafeToPose(Field.P2D(-2, -2, -135), packet)) {
+                    robot.trident.outtakeIndex = 0;
                     robot.articulate(Robot.Articulation.OUTTAKE);
+                    autonTimer = futureTime(4);
                     autonIndex++;
                 }
                 break;
             case 3:
 //                todo - test & tune preload score here
-                if (robot.articulation.equals(Robot.Articulation.MANUAL)) {
-                    robot.trident.beaterPower = 1;
-//                    autonIndex++;
+                if (robot.articulation.equals(Robot.Articulation.MANUAL) && isPast(autonTimer)) {
+                    autonIndex++;
                 }
                 break;
             case 4:
-                if (robot.driveTrain.strafeToPose(field.subAccess.pose, packet)) {
-                    autonState = AutonState.DRIVE_TO_BASKET;
-                    if(numCycles == 0)
-                        autonIndex++;
-                    else {
-                        numCycles --;
-                        autonIndex = 2;
-                    }
+                if (robot.driveTrain.strafeToPose(Field.P2D(-2.3, -2.3, -135), packet)) {
+                    robot.trident.beaterPower = 1;
+                    autonTimer = futureTime(2);
+                    autonIndex++;
                 }
                 break;
             case 5:
+                if(isPast(autonTimer)){
+                    autonIndex++;
+                    robot.trident.beaterPower = 0;
+                }
                 break;
             case 6:
+                if(robot.driveTrain.strafeToPose(Field.P2D(-2, -2, -135), packet)){
+                    robot.articulate(Robot.Articulation.TRAVEL);
+                    return true;
+                }
                 break;
         }
         return false;

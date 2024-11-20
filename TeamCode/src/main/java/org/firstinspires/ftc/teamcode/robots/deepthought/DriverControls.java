@@ -25,7 +25,7 @@ import java.util.Arrays;
 
 public class DriverControls {
     //CONSTANTS
-    public static boolean fieldOrientedDrive = false;
+    public static boolean fieldOrientedDrive = true;
     public static double DEADZONE = 0.1;
 
     public boolean visionProviderFinalized = robot.visionProviderFinalized;
@@ -166,6 +166,9 @@ public class DriverControls {
         }
         if(gamepad1.right_trigger > .2) {
             robot.trident.adjustWrist(Trident.WRIST_ADJUST_ANGLE);
+        }
+        if(stickyGamepad1.start) {
+            debugTelemetryEnabled = !debugTelemetryEnabled;
         }
         //
 

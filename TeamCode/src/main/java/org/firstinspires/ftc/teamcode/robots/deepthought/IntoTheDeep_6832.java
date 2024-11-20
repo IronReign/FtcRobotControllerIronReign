@@ -177,7 +177,9 @@ public class IntoTheDeep_6832 extends OpMode {
         totalRunTime = 0;
         //FETCH CACHE
         robot.fetchCachedDTPosition();
-
+        if(gameState.equals(GameState.TELE_OP)) {
+            robot.driveTrain.setPose(startingPosition);
+        }
         field.finalizeField(alliance);
         resetGame();
 

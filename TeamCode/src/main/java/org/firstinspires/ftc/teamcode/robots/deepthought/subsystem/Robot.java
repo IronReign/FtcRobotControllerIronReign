@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.dc;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.fieldOrientedDrive;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -121,7 +122,7 @@ public class Robot implements Subsystem {
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         if (updatePositionCache && gameState.isAutonomous()) {
-            currPosition = new DTPosition(driveTrain.pose);
+            currPosition = new DTPosition(driveTrain.pose, trident.crane.getCurrentPosition());
             positionCache.update(currPosition, false);
         }
 
@@ -222,7 +223,8 @@ public class Robot implements Subsystem {
                 int loggerTimeout = (int) (loggerTimeoutMinutes * 60000);
                 if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
                     //apply cached position
-//                    driveTrain.pose = fetchedPosition.getPose();
+                    driveTrain.pose = fetchedPosition.getPose();
+                    trident.crane.setPosition(fetchedPosition.getCranePosition());
                 }
             }
         }
@@ -265,7 +267,7 @@ public class Robot implements Subsystem {
                     articulation = Articulation.MANUAL;
                 break;
             case INTAKE:
-                trident.sample(Arrays.asList(Trident.CurrentSample.RED));
+                trident.sample(alliance);
                 if(trident.articulation == Trident.Articulation.MANUAL) {
                     articulation = Articulation.MANUAL;
                 }
@@ -302,7 +304,7 @@ public class Robot implements Subsystem {
 
     @Override
     public void stop() {
-        currPosition = new DTPosition(driveTrain.pose);
+        currPosition = new DTPosition(driveTrain.pose, trident.crane.getCurrentPosition());
         positionCache.update(currPosition, true);
         for (Subsystem component : subsystems) {
             component.stop();
