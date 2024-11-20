@@ -136,7 +136,7 @@ public class Trident implements Subsystem {
         return articulation;
     }
 
-    public static int tuckIndex = 0;
+    public int tuckIndex = 0;
     public boolean tuck() {
         switch (tuckIndex) {
             case 0:

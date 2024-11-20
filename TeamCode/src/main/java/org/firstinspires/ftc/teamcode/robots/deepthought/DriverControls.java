@@ -139,7 +139,7 @@ public class DriverControls {
             robot.articulate(Robot.Articulation.OUTTAKE);
         }
         if(stickyGamepad1.y) {
-            Trident.tuckIndex = 0;
+            robot.trident.tuckIndex = 0;
             robot.articulate(Robot.Articulation.TRAVEL);
         }
 
