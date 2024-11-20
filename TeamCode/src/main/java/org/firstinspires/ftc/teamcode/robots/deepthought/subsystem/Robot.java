@@ -276,30 +276,28 @@ public class Robot implements Subsystem {
                 trident.articulate(Trident.Articulation.TUCK);
                 break;
             case OUTTAKE:
-                trident.articulate(Trident.Articulation.OUTTAKE);
-                if(trident.articulation == Trident.Articulation.MANUAL) {
+                if(outtake())
                     articulation = Articulation.MANUAL;
-                }
                 break;
         }
         return articulation;
     }
 
-//    public static int outtakeIndex = 0;
-//    public boolean outtake() {
-//        switch (outtakeIndex) {
-//            case 0:
-//                trident.articulate(Trident.Articulation.OUTTAKE);
-//                outtakeIndex++;
-//                break;
-//            case 1:
-//                if(trident.articulation == Trident.Articulation.MANUAL)
-//                    return true;
-//                break;
-//        }
+    public static int outtakeIndex = 0;
+    public boolean outtake() {
+        switch (outtakeIndex) {
+            case 0:
+                trident.articulate(Trident.Articulation.OUTTAKE);
+                outtakeIndex++;
+                break;
+            case 1:
+                if(trident.articulation == Trident.Articulation.MANUAL)
+                    return true;
+                break;
+        }
 
-//        return false;
-//    }
+        return false;
+    }
 
 
     @Override
