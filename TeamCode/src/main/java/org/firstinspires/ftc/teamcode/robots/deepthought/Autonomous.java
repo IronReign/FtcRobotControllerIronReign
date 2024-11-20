@@ -112,7 +112,7 @@ public class Autonomous implements TelemetryProvider {
             case 6:
                 if(robot.driveTrain.strafeToPose(Field.P2D(-2, -2, -135), packet)){
                     autonTimer = futureTime(2);
-                    return true;
+
                 }
                 break;
             case 7:
