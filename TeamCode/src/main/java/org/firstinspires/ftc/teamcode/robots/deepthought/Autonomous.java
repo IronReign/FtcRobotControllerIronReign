@@ -39,6 +39,7 @@ public class Autonomous implements TelemetryProvider {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("autonState\t ", autonState);
         telemetryMap.put("auton index\t", autonIndex);
+        telemetryMap.put("outtake state", robot.trident.outtakeIndex);
         telemetryMap.put("num cycles\t", numCycles);
         telemetryMap.put("selectedPath\t", selectedPath);
         return telemetryMap;
