@@ -283,7 +283,7 @@ public class Robot implements Subsystem {
         return articulation;
     }
 
-    public static int outtakeIndex = 0;
+    public int outtakeIndex = 0;
     public boolean outtake() {
         switch (outtakeIndex) {
             case 0:
