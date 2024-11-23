@@ -83,7 +83,7 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 2:
-                if (robot.driveTrain.strafeToPose(Field.P2D(-2, -2, -135), packet)) {
+                if (robot.driveTrain.strafeToPose(Field.P2D(-2, -2, -140), packet)) {
                     robot.trident.outtakeIndex = 0;
                     robot.articulate(Robot.Articulation.OUTTAKE);
                     autonTimer = futureTime(4);

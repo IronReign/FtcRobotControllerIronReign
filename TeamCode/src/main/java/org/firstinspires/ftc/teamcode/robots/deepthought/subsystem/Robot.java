@@ -5,6 +5,7 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -203,9 +204,17 @@ public class Robot implements Subsystem {
         trident.updateColorSensor();
         if(trident.currentSample == Trident.Sample.RED) {
             alliance = Constants.Alliance.RED;
+            startingPosition = startingPosition.isRed() == true ?
+                    startingPosition :
+                    startingPosition == Constants.Position.START_LEFT_BLUE ?
+                            Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
         }
         else if(trident.currentSample == Trident.Sample.BLUE) {
             alliance = Constants.Alliance.BLUE;
+            startingPosition = startingPosition.isRed() == false ?
+                    startingPosition :
+                    startingPosition == Constants.Position.START_LEFT_RED ?
+                            Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
         }
     }
 

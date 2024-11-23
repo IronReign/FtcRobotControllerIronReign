@@ -7,6 +7,7 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.colorSensorEnabled;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.craneSpeed;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.slideSpeed;
 
 import android.annotation.SuppressLint;
@@ -132,6 +133,7 @@ public class DriverControls {
         }
         if(stickyGamepad1.b) {
             Trident.outtakeIndex = 0;
+            robot.outtakeIndex = 0;
             robot.articulate(Robot.Articulation.OUTTAKE);
         }
         if(stickyGamepad1.y) {
@@ -145,6 +147,12 @@ public class DriverControls {
 
 
         //adjust methods
+        if(gamepad1.dpad_right){
+            robot.trident.craneTargetPosition -= craneSpeed;
+        }
+        if(gamepad1.dpad_left){
+            robot.trident.craneTargetPosition += craneSpeed;
+        }
         if(gamepad1.dpad_up) {
             robot.trident.slideTargetPosition += slideSpeed;
         }

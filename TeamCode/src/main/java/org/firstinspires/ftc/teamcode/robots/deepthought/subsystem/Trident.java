@@ -49,7 +49,7 @@ public class Trident implements Subsystem {
     public static int slideTargetPosition = 0;
     public static int slidePositionMax = 1600;
     public static int slidePositionMin = 0;
-    public static int slideSpeed = 15;
+    public static int slideSpeed = 80;
     public static double SLIDE_SPEED = 1500;
 
 
