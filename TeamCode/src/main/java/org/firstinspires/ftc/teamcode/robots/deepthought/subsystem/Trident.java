@@ -55,8 +55,6 @@ public class Trident implements Subsystem {
 
     //CRANE
     public int craneTargetPosition = 0;
-    public static int cranePositionMin = 1600;
-    public static int cranePositionMax = 0;
     public static int craneSpeed = 30;
     public static int CRANE_LOWOUTTAKE_POSITION = 420;
 
@@ -335,14 +333,6 @@ public class Trident implements Subsystem {
         }
         if(slideTargetPosition < slidePositionMin) {
             slideTargetPosition = slidePositionMin;
-        }
-
-        //TODO - MAKE SURE IT CAN'T DESPOOL
-        if(craneTargetPosition > cranePositionMax) {
-            craneTargetPosition = cranePositionMax;
-        }
-        if(craneTargetPosition < cranePositionMin) {
-            craneTargetPosition = cranePositionMin;
         }
 
         slide.setTargetPosition(slideTargetPosition);
