@@ -326,6 +326,15 @@ public class Trident implements Subsystem {
         //actually instruct actuators to go to desired targets
         elbow.update();
         wrist.update();
+
+        //TODO - limit this based on 36" restriction
+        if(slideTargetPosition > slideTargetPosition) {
+            slideTargetPosition = slidePositionMax;
+        }
+        if(slideTargetPosition < slidePositionMin) {
+            slideTargetPosition = slidePositionMin;
+        }
+
         slide.setTargetPosition(slideTargetPosition);
         crane.setTargetPosition(craneTargetPosition);
         beater.setPower(-beaterPower);
