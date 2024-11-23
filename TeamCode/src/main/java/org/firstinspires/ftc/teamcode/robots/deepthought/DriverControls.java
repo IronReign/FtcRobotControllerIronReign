@@ -4,11 +4,9 @@ package org.firstinspires.ftc.teamcode.robots.deepthought;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.debugTelemetryEnabled;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.colorSensorEnabled;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.craneSpeed;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.slideSpeed;
 
 import android.annotation.SuppressLint;
@@ -20,8 +18,6 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
-
-import java.util.Arrays;
 
 public class DriverControls {
     //CONSTANTS
@@ -78,7 +74,7 @@ public class DriverControls {
 //        }
 
         if(stickyGamepad1.x) {
-            robot.trident.targetSamples.add(Trident.CurrentSample.RED);
+            robot.trident.targetSamples.add(Trident.Sample.RED);
             robot.trident.beaterPower = 1;
             Trident.colorSensorEnabled = true;
         }

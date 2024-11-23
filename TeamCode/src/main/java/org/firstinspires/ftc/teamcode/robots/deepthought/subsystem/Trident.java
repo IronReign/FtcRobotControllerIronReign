@@ -13,12 +13,9 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.checkerframework.checker.units.qual.Current;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DcMotorExResetable;
-import org.firstinspires.ftc.teamcode.robots.deepthought.util.DcMotorExSquared;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
-import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 
 import java.util.*;
 
@@ -41,11 +38,12 @@ public class Trident implements Subsystem {
     public static int colorSensorGain = 12;
 
 
-    public enum CurrentSample {
+    public enum Sample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
+        
     }
-    public CurrentSample currentSample = CurrentSample.NO_SAMPLE;
-    public List<CurrentSample> targetSamples = new ArrayList<>();
+    public Sample currentSample = Sample.NO_SAMPLE;
+    public List<Sample> targetSamples = new ArrayList<>();
 
     //SLIDE
     public static int slideTargetPosition = 0;
@@ -245,18 +243,18 @@ public class Trident implements Subsystem {
         return false;
     }
 
-    public void sample(List<CurrentSample> samples) {
+    public void sample(List<Sample> samples) {
         articulation = Articulation.INTAKE;
         this.targetSamples = samples;
     }
 
     public void sample(Constants.Alliance alliance) {
-        List<CurrentSample> samples = new ArrayList<>();
+        List<Sample> samples = new ArrayList<>();
         if(alliance.isRed())
-            samples.add(CurrentSample.RED);
+            samples.add(Sample.RED);
         else
-            samples.add(CurrentSample.BLUE);
-        samples.add(CurrentSample.NEUTRAL);
+            samples.add(Sample.BLUE);
+        samples.add(Sample.NEUTRAL);
         articulation = Articulation.INTAKE;
         this.targetSamples = samples;
     }
@@ -344,19 +342,19 @@ public class Trident implements Subsystem {
     public String updateColorSensor() {
         double hue = getHSV()[0];
         if(hue < 45 && hue > 35){
-            currentSample = CurrentSample.NEUTRAL;
+            currentSample = Sample.NEUTRAL;
             return "NEUTRAL";
         }
         else if (hue < 10 || hue > 350) {
-            currentSample = CurrentSample.RED;
+            currentSample = Sample.RED;
             return "RED";
         }
         else if(hue < 225  && hue > 200) {
-            currentSample = CurrentSample.BLUE;
+            currentSample = Sample.BLUE;
             return "BLUE";
         }
         else {
-            currentSample = CurrentSample.NO_SAMPLE ;
+            currentSample = Sample.NO_SAMPLE ;
             return "NO SAMPLE";
         }
     }

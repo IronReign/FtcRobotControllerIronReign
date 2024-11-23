@@ -67,7 +67,7 @@ public class Autonomous implements TelemetryProvider {
     public static int autonIndex;
     public long autonTimer = futureTime(10);
 
-    public boolean execute(TelemetryPacket packet, Field field) {
+    public boolean execute(TelemetryPacket packet) {
         switch (autonIndex) {
             case 0:
                 autonState = AutonState.INIT;

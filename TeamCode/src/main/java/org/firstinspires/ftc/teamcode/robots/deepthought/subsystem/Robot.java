@@ -18,6 +18,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.deepthought.vision.Target;
@@ -68,6 +69,7 @@ public class Robot implements Subsystem {
     public Articulation articulation;
     public List<Target> targets = new ArrayList<Target>();
     public boolean fetched;
+
 
 
     public enum Articulation {
@@ -194,6 +196,17 @@ public class Robot implements Subsystem {
         Vector2d p1 = t.position.plus(halfv);
         Vector2d p2 = p1.plus(halfv);
         c.strokeLine(p1.x, p1.y, p2.x, p2.y);
+    }
+
+
+    public void preloadAllianceSelect() {
+        trident.updateColorSensor();
+        if(trident.currentSample == Trident.Sample.RED) {
+            alliance = Constants.Alliance.RED;
+        }
+        else if(trident.currentSample == Trident.Sample.BLUE) {
+            alliance = Constants.Alliance.BLUE;
+        }
     }
 
     public void switchVisionProviders() {

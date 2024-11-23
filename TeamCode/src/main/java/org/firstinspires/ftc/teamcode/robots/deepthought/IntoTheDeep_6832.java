@@ -147,6 +147,7 @@ public class IntoTheDeep_6832 extends OpMode {
         TelemetryPacket packet = new TelemetryPacket();
         dc.init_loop();
         dc.robotOrientedDrive();
+        robot.preloadAllianceSelect();
 //        initVision();
 
         telemetry.addData("fetched", robot.fetched);
@@ -226,7 +227,7 @@ public class IntoTheDeep_6832 extends OpMode {
             update(packet);
             switch(gameState) {
                 case AUTONOMOUS:
-                    if (auton.execute(packet, field)) gameState = GameState.TELE_OP;
+                    if (auton.execute(packet)) gameState = GameState.TELE_OP;
                     break;
 
                 case TELE_OP:
