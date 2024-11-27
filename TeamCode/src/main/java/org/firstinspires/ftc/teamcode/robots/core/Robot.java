@@ -22,16 +22,16 @@ public class Robot implements Subsystem {
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
     Servo claw;
     Gamepad gamepad1;
-    DcMotorEx shoulder;
+    //DcMotorEx shoulder;
     DcMotorEx elbow;
     DcMotorEx slide;
     public boolean clawOpen = false;
     public double clawOpenPosition = 1;
     public double clawClosePosition = 0.7;
-    public int shoulderTargetPosition = 250;
+    //public int shoulderTargetPosition = 250;
     public int elbowTargetPosition = 10;
     public int slideTargetPosition = 0;
-    public int shoulderLimit = 255;
+    //public int shoulderLimit = 255;
     public int elbowLimit = 100;
 
 
@@ -42,10 +42,10 @@ public class Robot implements Subsystem {
     public static int timeOne = 1;
     public static int timeTurn = 1;
     public static int slideUp = 1500;
-    public static int shoulderUp = 250;
+    //public static int shoulderUp = 250;
     public static int elbowUp = 150;
     public static int slideRe = 0;
-    public static int shoulderDown = 75;
+    //public static int shoulderDown = 75;
     public static int elbowDown = 50;
 
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
@@ -65,9 +65,9 @@ public class Robot implements Subsystem {
             case 0:
                 // Move strafe to the left side
                 leftFront.setPower(powerOne); //RIGHTFRONT
-                rightFront.setPower(-powerOne); //LEFT FRONT
+                rightFront.setPower(powerOne); //LEFT FRONT
                 leftBack.setPower(-powerOne); //RIGHTBACK
-                rightBack.setPower(powerOne);
+                rightBack.setPower(-powerOne);
                 if (rightBack.getCurrentPosition() == rightBack.getTargetPosition()){
                     autonIndex ++;
                 }
@@ -93,9 +93,9 @@ public class Robot implements Subsystem {
                 // Extend Linear Slide
                 if (isPast(autonTimer)){
                     slide.setTargetPosition(slideUp);
-                    shoulder.setTargetPosition(shoulderUp);
+                    //shoulder.setTargetPosition(shoulderUp);
                     elbow.setTargetPosition(elbowUp);
-                    if ((slide.getCurrentPosition() == slide.getTargetPosition())&(shoulder.getCurrentPosition()==shoulder.getTargetPosition())&(elbow.getCurrentPosition()==elbow.getTargetPosition())){
+                    if ((slide.getCurrentPosition() == slide.getTargetPosition())&(elbow.getCurrentPosition()==elbow.getTargetPosition())){
                         autonIndex++;
                     }
                 }
@@ -150,7 +150,7 @@ public class Robot implements Subsystem {
             case 7:
                 // Return to normal
                 slide.setTargetPosition(slideTargetPosition);
-                shoulder.setTargetPosition(shoulderTargetPosition);
+                //shoulder.setTargetPosition(shoulderTargetPosition);
                 elbow.setTargetPosition(elbowTargetPosition);
 
                 leftFront.setPower(0); //RIGHTFRONT
@@ -229,7 +229,7 @@ public class Robot implements Subsystem {
     @Override
     public void update(Canvas fieldOverlay) {
         if (gamepad1.a) {
-            shoulderTargetPosition = 50;
+            //shoulderTargetPosition = 50;
             elbowTargetPosition = 75;
             slideTargetPosition = 50;
             clawOpen = true;
@@ -244,20 +244,20 @@ public class Robot implements Subsystem {
         } else {
             claw.setPosition(clawClosePosition);
         }
-        if (gamepad1.right_trigger >= 0.3) {
+        //if (gamepad1.right_trigger >= 0.3) {
             //if (shoulder.getCurrentPosition() < 1000){
-                shoulderTargetPosition = shoulder.getCurrentPosition() + 100;
+                //shoulderTargetPosition = shoulder.getCurrentPosition() + 100;
             //} else {
              //   shoulder.setTargetPosition(1010);
             //}
-        }
-        if (gamepad1.left_trigger >= 0.3) {
+        //}
+        //if (gamepad1.left_trigger >= 0.3) {
             //if (shoulder.getCurrentPosition() > 0){
-                shoulderTargetPosition = shoulder.getCurrentPosition() - 100;
+                //shoulderTargetPosition = shoulder.getCurrentPosition() - 100;
             //} else {
               //  shoulder.setTargetPosition(0);
             //}
-        }
+        //}
 
         if (gamepad1.right_bumper) {
             //if (elbow.getCurrentPosition() < 1000){
@@ -275,7 +275,7 @@ public class Robot implements Subsystem {
         }
 
         if (gamepad1.dpad_up) {
-            if (shoulder.getCurrentPosition() <= shoulderLimit || elbow.getCurrentPosition() <= elbowLimit) {
+            if (elbow.getCurrentPosition() <= elbowLimit) {
                 if (slide.getCurrentPosition() < 1100) {
                     slideTargetPosition = slide.getCurrentPosition() + 100;
                 } else {
@@ -303,7 +303,7 @@ public class Robot implements Subsystem {
         } else {
             claw.setPosition(clawClosePosition);
         }
-        shoulder.setTargetPosition(shoulderTargetPosition);
+        //shoulder.setTargetPosition(shoulderTargetPosition);
         elbow.setTargetPosition(elbowTargetPosition);
         slide.setTargetPosition(slideTargetPosition);
     }
@@ -329,7 +329,7 @@ public class Robot implements Subsystem {
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
         rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-        shoulder = hardwareMap.get(DcMotorEx.class, "shoulder");
+        //shoulder = hardwareMap.get(DcMotorEx.class, "shoulder");
         elbow = hardwareMap.get(DcMotorEx.class, "elbow");
         claw = hardwareMap.get(Servo.class, "claw");
         slide = hardwareMap.get(DcMotorEx.class, "slide");
@@ -340,14 +340,14 @@ public class Robot implements Subsystem {
         leftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        shoulder.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        //shoulder.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         elbow.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         slide.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
-        shoulder.setPower(1);
-        shoulder.setVelocity(50);
-        shoulder.setTargetPosition(shoulderTargetPosition);
-        shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        //shoulder.setPower(1);
+        //shoulder.setVelocity(50);
+        //shoulder.setTargetPosition(shoulderTargetPosition);
+        //shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         elbow.setPower(1);
         elbow.setVelocity(50);
@@ -364,7 +364,7 @@ public class Robot implements Subsystem {
         rightFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         rightBack.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
 
-        claw.setPosition(clawOpenPosition);
+        claw.setPosition(clawClosePosition);
     }
 
     @Override
@@ -372,8 +372,8 @@ public class Robot implements Subsystem {
         LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
 
         telemetry.put("Claw Open", clawOpen);
-        telemetry.put("Shoulder Position", shoulder.getCurrentPosition());
-        telemetry.put("Shoulder Target Position", shoulderTargetPosition);
+        //telemetry.put("Shoulder Position", shoulder.getCurrentPosition());
+        //telemetry.put("Shoulder Target Position", shoulderTargetPosition);
         telemetry.put("Elbow Position", elbow.getCurrentPosition());
         telemetry.put("Elbow Target Position", elbowTargetPosition);
         telemetry.put("Slide Position", slide.getCurrentPosition());
