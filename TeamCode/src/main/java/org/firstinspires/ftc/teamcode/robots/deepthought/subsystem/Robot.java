@@ -299,6 +299,7 @@ public class Robot implements Subsystem {
                 break;
             case OUTTAKE:
                 if(outtake())
+
                     articulation = Articulation.MANUAL;
                 break;
         }

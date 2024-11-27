@@ -1,14 +1,18 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought;
 
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.field.Field;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
@@ -22,7 +26,8 @@ public class Autonomous implements TelemetryProvider {
     public static int numCycles = 4;
     private Robot robot;
     private HardwareMap hardwareMap;
-//
+
+    //
     public enum AutonState {
         INIT,
         DRIVE_TO_BASKET,
@@ -53,6 +58,7 @@ public class Autonomous implements TelemetryProvider {
     // autonomous routines
 
     public static int selectedPath;
+    public int allianceMultiplier = 1;
 
 
     public static double FIELD_INCHES_PER_GRID = 23.5;
@@ -68,6 +74,9 @@ public class Autonomous implements TelemetryProvider {
     public long autonTimer = futureTime(10);
 
     public boolean execute(TelemetryPacket packet) {
+        if(!alliance.isRed()) {
+            allianceMultiplier = -1;
+        }
         switch (autonIndex) {
             case 0:
                 autonState = AutonState.INIT;
@@ -83,8 +92,9 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 2:
-                if (robot.driveTrain.strafeToPose(Field.P2D(-2, -2, -140), packet)) {
+                if (robot.driveTrain.strafeToPose(Field.P2D(-2.35 * allianceMultiplier, -2.35 * allianceMultiplier, alliance.isRed()? -150 : -150 + 180 ), packet)) {
                     robot.trident.outtakeIndex = 0;
+                    Trident.enforceSlideLimits = false;
                     robot.articulate(Robot.Articulation.OUTTAKE);
                     autonTimer = futureTime(4);
                     autonIndex++;
@@ -97,29 +107,54 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 4:
-                if (robot.driveTrain.strafeToPose(Field.P2D(-2.3, -2.3, -135), packet)) {
-                    robot.trident.beaterPower = 1;
-                    autonTimer = futureTime(2);
-                    autonIndex++;
-                }
+                        robot.trident.beaterPower = 1;
+                        autonTimer = futureTime(2);
+                        autonIndex++;
                 break;
             case 5:
-                if(isPast(autonTimer)){
+                if (isPast(autonTimer)) {
                     autonIndex++;
                     robot.trident.beaterPower = 0;
                 }
                 break;
             case 6:
-                if(robot.driveTrain.strafeToPose(Field.P2D(-2, -2, -135), packet)){
-                    autonTimer = futureTime(2);
+                if (robot.driveTrain.strafeToPose(Field.P2D(-1.8 * allianceMultiplier, -2 * allianceMultiplier, -90*allianceMultiplier), packet)) {
+                    autonTimer = futureTime(5);
                     autonIndex++;
+
                 }
                 break;
             case 7:
-                robot.articulate(Robot.Articulation.TRAVEL);
-                if(isPast(autonTimer)) {
+                Trident.intakeIndex = 0;
+                robot.articulate(Robot.Articulation.INTAKE);
+                if (isPast(autonTimer)) {
+
+                    robot.trident.adjustElbow(Trident.ELBOW_ADJUST_ANGLE * 3);
+                    autonTimer = futureTime(1.5);
+                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.2, 0), 0 ));
+                    autonIndex++;
+                }
+            case 8:
+                if (isPast(autonTimer)) {
+                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0 ));
+                    autonIndex++;
+                }
+                break;
+            case 9:
+                if (robot.driveTrain.strafeToPose(Field.P2D(-2.3 * allianceMultiplier, -2.3 * allianceMultiplier, alliance.isRed()? -150 : -150 + 180), packet)) {
+                    robot.trident.outtakeIndex = 0;
+                    Trident.enforceSlideLimits = false;
+                    robot.articulate(Robot.Articulation.OUTTAKE);
+                    autonTimer = futureTime(10);
+                    autonIndex++;
+                }
+                break;
+            case 10:
+                if (robot.articulation.equals(Robot.Articulation.MANUAL) && isPast(autonTimer)) {
+                    robot.articulate(Robot.Articulation.TRAVEL);
                     return true;
                 }
+                break;
         }
         return false;
     }

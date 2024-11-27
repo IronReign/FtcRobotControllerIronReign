@@ -147,6 +147,7 @@ public class IntoTheDeep_6832 extends OpMode {
         TelemetryPacket packet = new TelemetryPacket();
         dc.init_loop();
         dc.robotOrientedDrive();
+    if(gameState.isAutonomous())
         robot.preloadAllianceSelect();
 //        initVision();
 
