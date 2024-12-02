@@ -23,7 +23,7 @@ public class Robot implements Subsystem {
     DcMotorEx slide;
     public boolean clawOpen = false;
     public double clawOpenPosition = 1;
-    public double clawClosePosition = 0.4;
+    public double clawClosePosition = 0.7;
     public int shoulderTargetPosition = 0;
     public int elbowTargetPosition = 0;
     public int slideTargetPosition = 0;
@@ -52,48 +52,48 @@ public class Robot implements Subsystem {
             claw.setPosition(clawClosePosition);
         }
         if(gamepad1.right_trigger >= 0.3){
-            if (shoulder.getCurrentPosition() < 1000){
+            //if (shoulder.getCurrentPosition() < 1000){
                 shoulder.setTargetPosition(shoulder.getCurrentPosition() + 100);
-            } else {
-                shoulder.setTargetPosition(1010);
-            }
+            //} else {
+            //    shoulder.setTargetPosition(1010);
+            //}
         }
         else if (gamepad1.left_trigger >= 0.3){
-            if (shoulder.getCurrentPosition() > 0){
+            //if (shoulder.getCurrentPosition() > 0){
                 shoulder.setTargetPosition(shoulder.getCurrentPosition() - 100);
-            } else {
-                shoulder.setTargetPosition(0);
-            }
+            //} else {
+            //    shoulder.setTargetPosition(0);
+            //}
 
         }
         if(gamepad1.right_bumper) {
-            if (elbow.getCurrentPosition() < 1000){
-                elbow.setTargetPosition(elbow.getCurrentPosition() + 100);
-            } else {
-                elbow.setTargetPosition(1010);
-            }
+            //if (elbow.getCurrentPosition() < 1000){
+                elbow.setTargetPosition(elbow.getCurrentPosition() + 10);
+            //} else {
+                //elbow.setTargetPosition(1010);
+            //}
         }
         if (gamepad1.left_bumper) {
-            if(elbow.getCurrentPosition() > 0){
-                elbow.setTargetPosition(elbow.getCurrentPosition() - 100);
-            } else {
-                elbow.setTargetPosition(0);
-            }
+            //if(elbow.getCurrentPosition() > 0){
+                elbow.setTargetPosition(elbow.getCurrentPosition() - 10);
+            //} else {
+              //  elbow.setTargetPosition(0);
+            //}
         }
 
         if (gamepad1.dpad_up){
-            if (slide.getCurrentPosition() < 1000){
-                slide.setTargetPosition(slide.getCurrentPosition() + 100);
-            } else {
-                slide.setTargetPosition(1010);
-            }
+            //if (slide.getCurrentPosition() < 1000000000){
+                slide.setTargetPosition(slide.getCurrentPosition() + 10);
+            //} else {
+            //    slide.setTargetPosition(1010);
+            //}
         }
         if (gamepad1.dpad_down){
-            if(slide.getCurrentPosition() > 0){
-                slide.setTargetPosition(slide.getCurrentPosition() - 100);
-            } else {
-                slide.setTargetPosition(0);
-            }
+            //if(slide.getCurrentPosition() > 0){
+                slide.setTargetPosition(slide.getCurrentPosition() - 10);
+            //} else {
+            //    slide.setTargetPosition(0);
+            //}
         }
 
         updateMotors();
