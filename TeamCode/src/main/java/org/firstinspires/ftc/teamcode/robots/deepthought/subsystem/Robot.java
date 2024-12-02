@@ -310,6 +310,7 @@ public class Robot implements Subsystem {
     public boolean outtake() {
         switch (outtakeIndex) {
             case 0:
+                Trident.enforceSlideLimits = true;
                 trident.articulate(Trident.Articulation.OUTTAKE);
                 outtakeIndex++;
                 break;

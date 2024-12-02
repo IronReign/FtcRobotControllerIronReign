@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.deepthought.field;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.*;
 
@@ -12,7 +13,7 @@ import org.firstinspires.ftc.teamcode.util.Vector2;
 
 import java.lang.Math;
 import java.util.*;
-
+@Config(value = "ITD_FIELD")
 public class Field {
 
     public static final double FIELD_INCHES_PER_GRID = 23.5;
@@ -22,10 +23,13 @@ public class Field {
 
     public boolean isRed = true;
 
+    public static int allianceMultiplier = 1;
     List<Flippable> elements = new ArrayList<>();
-    public POI basket = new POI(-2, -2, 235, "BASKET");
+    public POI basket = new POI(-2.45, -2.45, 235, "BASKET");
     public POI subAccess = new POI(-1.5, -.5, 180, "SUBACCESS");
-
+    public POI ground1 = new POI(-2.45, -2.45, -90, "GROUND1");
+    public POI ground2 = new POI(-2.45, -2.45, -100, "GROUND2");
+    public POI ground3 = new POI(-2.45, -2.45, -110, "GROUND3");
     //all values are in field grids
     public static final double MAX_Y_VALUE = 3;
     public static final double MAX_X_VALUE = 3;
@@ -33,7 +37,6 @@ public class Field {
     public static final double MIN_Y_VALUE = -3;
 
     public static final int STANDARD_HEADING = 180;
-
 
     public enum Zone {
         AUDIENCE(Field.MIN_X_VALUE, -1.5, Field.MIN_Y_VALUE, Field.MAX_Y_VALUE, "AUDIENCE"),
@@ -107,7 +110,7 @@ public class Field {
         flipField(alliance.isRed());
         finalized = true;
         zones = Zone.getNamedZones();
-        int allianceMultiplier = isRed ? 1 : -1;
+        allianceMultiplier = isRed ? 1 : -1;
     }
 
     public void flipField(boolean alliance){

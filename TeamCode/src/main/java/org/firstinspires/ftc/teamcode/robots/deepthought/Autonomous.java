@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -92,7 +93,7 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 2:
-                if (robot.driveTrain.strafeToPose(Field.P2D(-2.35 * allianceMultiplier, -2.35 * allianceMultiplier, alliance.isRed()? -150 : -150 + 180 ), packet)) {
+                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet)) {
                     robot.trident.outtakeIndex = 0;
                     Trident.enforceSlideLimits = false;
                     robot.articulate(Robot.Articulation.OUTTAKE);
@@ -131,18 +132,17 @@ public class Autonomous implements TelemetryProvider {
 
                     robot.trident.adjustElbow(Trident.ELBOW_ADJUST_ANGLE * 3);
                     autonTimer = futureTime(1.5);
-                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.2, 0), 0 ));
+                    robot.driveTrain.setDrivePowers(.2, 0, 0);
                     autonIndex++;
                 }
             case 8:
                 if (isPast(autonTimer)) {
-                    robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0 ));
+                    robot.driveTrain.setDrivePowers(0, 0, 0);
                     autonIndex++;
                 }
                 break;
             case 9:
-                if (robot.driveTrain.strafeToPose(Field.P2D(-2.3 * allianceMultiplier, -2.3 * allianceMultiplier, alliance.isRed()? -150 : -150 + 180), packet)) {
-                    robot.trident.outtakeIndex = 0;
+                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet)) {
                     Trident.enforceSlideLimits = false;
                     robot.articulate(Robot.Articulation.OUTTAKE);
                     autonTimer = futureTime(10);

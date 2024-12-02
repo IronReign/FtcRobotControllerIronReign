@@ -231,6 +231,9 @@ public class MecanumDrive {
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
     }
+    public void setDrivePowers(double x, double y, double heading) {
+        setDrivePowers(new PoseVelocity2d(new Vector2d(x, y), heading));
+    }
 
     public void setDrivePowers(PoseVelocity2d powers) {
         MecanumKinematics.WheelVelocities<Time> wheelVels = new MecanumKinematics(1).inverse(
