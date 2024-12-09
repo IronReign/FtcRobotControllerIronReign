@@ -19,7 +19,6 @@ public class CoreAuton extends OpMode {
     Robot robot;
     private FtcDashboard dashboard;
 
-
     public static int autonIndex = 0;
     long autonTimer = futureTime(10);
     public static double adjust_time = 1.0;
