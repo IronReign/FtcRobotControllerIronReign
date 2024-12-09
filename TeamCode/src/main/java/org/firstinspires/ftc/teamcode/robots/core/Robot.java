@@ -28,13 +28,7 @@ public class Robot implements Subsystem {
     public double clawClosePosition = 0.7;
     public int gearboxTargetPosition = 10;
     public int slideTargetPosition = 0;
-
-    public static int slideUp = 1500;
-    public static int shoulderUp = 250;
-    public static int elbowUp = 150;
-    public static int slideRe = 0;
-    public static int shoulderDown = 75;
-    public static int elbowDown = 50;
+    public int gearboxpick = 0;
 
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
         this.hardwareMap = hardwareMap;
@@ -51,7 +45,7 @@ public class Robot implements Subsystem {
         }
 
         if(gamepad1.x){
-            // Call pickup func from AutonCode2 - Ask Jai
+            pickup();
         }
 
         // Claw Open
@@ -141,6 +135,19 @@ public class Robot implements Subsystem {
         rightBack.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
 
         claw.setPosition(clawOpenPosition);
+    }
+
+    public void pickup(){
+        // Move back a smidge
+        mecanumDrive(-1, 0, 0);
+
+        if (leftFront.getCurrentPosition() == 75){
+            // Angle gearbox
+            gearbox.setTargetPosition(gearboxpick);
+
+            // Close claw
+            claw.setPosition(clawClosePosition);
+        }
     }
 
     @Override

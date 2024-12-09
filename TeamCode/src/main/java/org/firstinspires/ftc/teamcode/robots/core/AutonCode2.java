@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.robots.core;
 
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -30,7 +33,11 @@ public class AutonCode2 extends OpMode {
     private FtcDashboard dashboard;
     BNO055IMU imu;
     public static int autonIndex = 1;
-    float zOrientation = getZorient();
+    long autonTimer = 0;
+    int gpos = 10;
+    int spos = 1200;
+    float initialzOrientation = 0;
+    float nowOrientation = 0;
 
     @Override
     public void init() {
@@ -62,7 +69,7 @@ public class AutonCode2 extends OpMode {
         robot.gearbox.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         robot.slide.setPower(10);
-        robot.slide.setVelocity(5);
+        robot.slide.setVelocity(50);
         robot.slide.setTargetPosition(robot.slideTargetPosition);
         robot.slide.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
@@ -86,7 +93,7 @@ public class AutonCode2 extends OpMode {
                 robot.mecanumDrive(1,0,0);
 
                 // (5.625/12.566)*1440 (1/4 of a tile)
-                if (robot.leftFront.getCurrentPosition() == 644){
+                if (robot.leftFront.getCurrentPosition() >= 644){
                     autonIndex++;
                 }
                 break;
@@ -94,20 +101,24 @@ public class AutonCode2 extends OpMode {
             case 2:
                 // Gotta Adjust on Wed (repeat in case 8)
                 // Angle gearbox
-                robot.gearbox.setTargetPosition(10);
+                robot.gearbox.setTargetPosition(gpos);
                 // Extend Slide
-                robot.slide.setTargetPosition(1200);
+                robot.slide.setTargetPosition(spos);
                 // Open claw
                 robot.claw.setPosition(robot.clawOpenPosition);
-                autonIndex++;
+
+                if (robot.gearbox.getCurrentPosition()==gpos && robot.slide.getCurrentPosition()==spos && robot.claw.getPosition()==robot.clawOpenPosition) {
+                    autonIndex++;
+                }
+
                 break;
 
             case 3:
                 // Turn 90 degrees
+                initialzOrientation = getZorient();
                 robot.mecanumDrive(0, 0, 1);
-
-                if (zOrientation == (zOrientation+90)){
-                    zOrientation = getZorient();
+                nowOrientation = getZorient();
+                if (Math.abs(initialzOrientation - nowOrientation) >= 90){
                     autonIndex ++;
                 }
                 break;
@@ -117,31 +128,38 @@ public class AutonCode2 extends OpMode {
                 robot.mecanumDrive(1,0,0);
 
                 // (45/12.566)*1440 (2 tiles)
-                if (robot.leftFront.getCurrentPosition() == 5156){
+                if (robot.leftFront.getCurrentPosition() >= 5156){
                     autonIndex++;
                 }
                 break;
 
             case 5:
                 // Picks up block
-                pickup();
+                robot.pickup();
+
+                if (robot.gearbox.getCurrentPosition()==robot.gearboxpick && robot.claw.getPosition()==robot.clawClosePosition) {
+                    autonIndex++;
+                }
+                break;
 
             case 6:
                // Move backwards
                 robot.mecanumDrive(-1,0,0);
 
                 // (45/12.566)*1440 (2 tiles)
-                if (robot.leftFront.getCurrentPosition() == 5156){
+                if (robot.leftFront.getCurrentPosition() >= 5156){
                     autonIndex++;
                 }
                 break;
 
             case 7:
                 // Turn -90 degrees
+                initialzOrientation = getZorient();
                 robot.mecanumDrive(0, 0, -1);
+                nowOrientation = getZorient();
 
-                if (zOrientation == (zOrientation-90)){
-                    zOrientation = getZorient();
+                if (Math.abs(initialzOrientation - nowOrientation) >= 90){
+                    initialzOrientation = nowOrientation;
                     autonIndex ++;
                 }
                 break;
@@ -159,19 +177,6 @@ public class AutonCode2 extends OpMode {
                 break;
         }
 
-    }
-
-    public void pickup(){
-        // Move back a smidge
-        robot.mecanumDrive(-1, 0, 0);
-
-        if (robot.leftFront.getCurrentPosition() == 75){
-            // Angle gearbox
-            robot.gearbox.setTargetPosition(10);
-
-            // Close claw
-            robot.claw.setPosition(robot.clawClosePosition);
-        }
     }
 
     public void initIMU(){
@@ -193,6 +198,7 @@ public class AutonCode2 extends OpMode {
     public Map<String, Object> getTelemetry(boolean debug) {
         LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
 
+        telemetry.put("Orientation Angle", getZorient());
 
         return telemetry;
     }
