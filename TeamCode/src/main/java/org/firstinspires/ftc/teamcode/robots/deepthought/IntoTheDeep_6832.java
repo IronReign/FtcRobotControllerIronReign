@@ -235,6 +235,7 @@ public class IntoTheDeep_6832 extends OpMode {
                     dc.joystickDrive();
                     break;
                 case TEST:
+                    debugTelemetryEnabled = true;
                     dc.manualDiagnosticMethods();
                     break;
                 case MANUAL_DIAGNOSTIC:
