@@ -28,7 +28,7 @@ public class Trident implements Subsystem {
     Robot robot;
 
     public static boolean enforceSlideLimits;
-    public DcMotorEx slide = null;
+    public DcMotorExResetable slide = null;
     public DcMotorExResetable crane = null;
     public Joint elbow;
     public Joint wrist;
@@ -206,10 +206,10 @@ public class Trident implements Subsystem {
     public boolean intake() {
         switch (intakeIndex) {
             case 0:
-                craneTargetPosition = 0;
-                slideTargetPosition = 0;
+                craneTargetPosition = 30;
                 //get to position
                 if (withinError(crane.getCurrentPosition(), 0, 10)) {
+                    slideTargetPosition = 0;
                     intakeTimer = futureTime(2);
                     setTargetAngle(ELBOW_PREINTAKE_ANGLE, WRIST_PREINTAKE_ANGLE);
                     intakeIndex++;
@@ -353,9 +353,10 @@ public class Trident implements Subsystem {
         this.robot = robot;
         elbow = new Joint(hardwareMap, "elbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         wrist = new Joint(hardwareMap, "wrist", false, WRIST_HOME_POSITION, WRIST_PWM_PER_DEGREE, WRIST_MIN_ANGLE, WRIST_MAX_ANGLE, WRIST_START_ANGLE, WRIST_JOINT_SPEED);
-        slide = this.hardwareMap.get(DcMotorEx.class, "slide");
-        DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "crane");
-        crane = new DcMotorExResetable(bruh);
+        DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "slide");
+        DcMotorEx bruhx2 = this.hardwareMap.get(DcMotorEx.class, "crane");
+        slide = new DcMotorExResetable(bruh);
+        crane = new DcMotorExResetable(bruhx2);
         colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
         beater = this.hardwareMap.get(CRServoImplEx.class, "beater");
         pincer = this.hardwareMap.get(Servo.class, "pincer");

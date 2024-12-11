@@ -108,6 +108,7 @@ public class Robot implements Subsystem {
             subsystemUpdateTimes = new long[subsystems.length];
 
             batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
+            trident.slideTargetPosition = 0;
 
             articulation = Articulation.MANUAL;
         }
@@ -125,7 +126,7 @@ public class Robot implements Subsystem {
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         if (updatePositionCache && gameState.isAutonomous()) {
-            currPosition = new DTPosition(driveTrain.pose, trident.crane.getCurrentPosition());
+            currPosition = new DTPosition(driveTrain.pose, trident.crane.getCurrentPosition(), trident.slide.getCurrentPosition());
             positionCache.update(currPosition, false);
         }
 
@@ -247,6 +248,7 @@ public class Robot implements Subsystem {
                     //apply cached position
                     driveTrain.pose = fetchedPosition.getPose();
                     trident.crane.setPosition(fetchedPosition.getCranePosition());
+                    trident.slide.setPosition(fetchedPosition.getSlidePosition());
                 }
             }
         }
@@ -310,13 +312,15 @@ public class Robot implements Subsystem {
     public boolean outtake() {
         switch (outtakeIndex) {
             case 0:
-                Trident.enforceSlideLimits = true;
+                Trident.enforceSlideLimits = false;
                 trident.articulate(Trident.Articulation.OUTTAKE);
                 outtakeIndex++;
                 break;
             case 1:
-                if(trident.articulation == Trident.Articulation.MANUAL)
+                if(trident.articulation == Trident.Articulation.MANUAL) {
+                    Trident.enforceSlideLimits = true;
                     return true;
+                }
                 break;
         }
 
@@ -326,7 +330,7 @@ public class Robot implements Subsystem {
 
     @Override
     public void stop() {
-        currPosition = new DTPosition(driveTrain.pose, trident.crane.getCurrentPosition());
+        currPosition = new DTPosition(driveTrain.pose, trident.crane.getCurrentPosition(), trident.slide.getCurrentPosition());
         positionCache.update(currPosition, true);
         for (Subsystem component : subsystems) {
             component.stop();
