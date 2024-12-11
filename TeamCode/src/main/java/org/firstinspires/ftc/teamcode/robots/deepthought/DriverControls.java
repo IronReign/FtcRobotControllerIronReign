@@ -65,7 +65,7 @@ public class DriverControls {
         }
         if(gamepad1.dpad_left) {
             Trident.enforceSlideLimits = false;
-            robot.trident.slideTargetPosition -= 1 * slideSpeed;
+            robot.trident.slideTargetPosition += 1 * slideSpeed;
         }
 //
 //        if(stickyGamepad1.a) {
