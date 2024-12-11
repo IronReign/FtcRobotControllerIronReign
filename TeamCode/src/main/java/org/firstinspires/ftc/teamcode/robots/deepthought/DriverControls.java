@@ -52,19 +52,21 @@ public class DriverControls {
 
     public void manualDiagnosticMethods() {
         robotOrientedDrive();
-//        if(gamepad1.right_bumper) {
-//            robot.trident.craneTargetPosition -= 1 * craneSpeed;
-//        }
-//        if(gamepad1.left_bumper) {
-//            robot.trident.craneTargetPosition += 1 * craneSpeed;
-//        }
+        if(gamepad1.right_bumper) {
+            robot.trident.craneTargetPosition -= 1 * craneSpeed;
+        }
+        if(gamepad1.left_bumper) {
+            robot.trident.craneTargetPosition += 1 * craneSpeed;
+        }
 //
-//        if(gamepad1.dpad_right) {
-//            robot.trident.slideTargetPosition -= 1 * slideSpeed;
-//        }
-//        if(gamepad1.dpad_left) {
-//            robot.trident.slideTargetPosition -= 1 * slideSpeed;
-//        }
+        if(gamepad1.dpad_right) {
+            Trident.enforceSlideLimits = false;
+            robot.trident.slideTargetPosition -= 1 * slideSpeed;
+        }
+        if(gamepad1.dpad_left) {
+            Trident.enforceSlideLimits = false;
+            robot.trident.slideTargetPosition -= 1 * slideSpeed;
+        }
 //
 //        if(stickyGamepad1.a) {
 //            Trident.intakeIndex = 0;
@@ -76,32 +78,32 @@ public class DriverControls {
 //            robot.articulate(Robot.Articulation.OUTTAKE);
 //        }
 
-        if (stickyGamepad1.x) {
-            robot.trident.targetSamples.add(Trident.Sample.RED);
-            robot.trident.beaterPower = 1;
-            Trident.colorSensorEnabled = true;
-        }
-        robot.trident.stopOnSample();
-
-        if (stickyGamepad1.start) {
-            Trident.colorSensorEnabled = !colorSensorEnabled;
-            debugTelemetryEnabled = true;
-        }
-
-
-//        if (gamepad1.left_trigger > .1) {
-//            robot.trident.adjustWrist(-Trident.WRIST_ADJUST_ANGLE);
+//        if (stickyGamepad1.x) {
+//            robot.trident.targetSamples.add(Trident.Sample.RED);
+//            robot.trident.beaterPower = 1;
+//            Trident.colorSensorEnabled = true;
 //        }
-//        if (gamepad1.right_trigger > .1) {
-//            robot.trident.adjustWrist(Trident.WRIST_ADJUST_ANGLE);
-//        }
+//        robot.trident.stopOnSample();
 //
-//        if (gamepad1.dpad_down) {
-//            robot.trident.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
+//        if (stickyGamepad1.start) {
+//            Trident.colorSensorEnabled = !colorSensorEnabled;
+//            debugTelemetryEnabled = true;
 //        }
-//        if (gamepad1.dpad_up) {
-//            robot.trident.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
-//        }
+
+
+        if (gamepad1.left_trigger > .1) {
+            robot.trident.adjustWrist(-Trident.WRIST_ADJUST_ANGLE);
+        }
+        if (gamepad1.right_trigger > .1) {
+            robot.trident.adjustWrist(Trident.WRIST_ADJUST_ANGLE);
+        }
+
+        if (gamepad1.dpad_down) {
+            robot.trident.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
+        }
+        if (gamepad1.dpad_up) {
+            robot.trident.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
+        }
 
     }
 
