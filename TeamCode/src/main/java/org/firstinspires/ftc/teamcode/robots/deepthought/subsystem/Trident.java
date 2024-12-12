@@ -3,7 +3,9 @@ package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
+
 import android.graphics.Color;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
@@ -13,8 +15,9 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.DcMotorExResetable;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
-import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 
 import java.util.*;
 
@@ -24,61 +27,79 @@ public class Trident implements Subsystem {
     HardwareMap hardwareMap;
     Robot robot;
 
-    public DcMotorEx slide = null;
-    public DcMotorEx crane = null;
+    public static boolean enforceSlideLimits;
+    public DcMotorExResetable slide = null;
+    public DcMotorExResetable crane = null;
     public Joint elbow;
     public Joint wrist;
     public CRServoImplEx beater = null;
     public Servo pincer;
+    public static boolean tuckFromHighOuttake = false;
 
     public NormalizedColorSensor colorSensor = null;
     public static boolean colorSensorEnabled = false;
 
     public static int colorSensorGain = 12;
 
-
-    public enum CurrentSample {
-        RED, BLUE, NEUTRAL, NO_SAMPLE
+    public void intakeSlideLimits() {
+        if (slideTargetPosition > slidePositionMax) slideTargetPosition = slidePositionMax;
+        if (slideTargetPosition < slidePositionMin) slideTargetPosition = slidePositionMin;
     }
-    public CurrentSample currentSample = CurrentSample.NO_SAMPLE;
-    public List<CurrentSample> targetSamples = new ArrayList<>();
 
+
+    public enum Sample {
+        RED, BLUE, NEUTRAL, NO_SAMPLE
+
+    }
+
+    public Sample currentSample = Sample.NO_SAMPLE;
+    public List<Sample> targetSamples = new ArrayList<>();
+
+    public static boolean preferHighOuttake = true;
     //SLIDE
     public static int slideTargetPosition = 0;
-    public static int slidePositionMax = 1600;
+    public static int slidePositionMax = 640;
     public static int slidePositionMin = 0;
-    public static int slideSpeed = 15;
+    public static int SLIDE_HIGHOUTTAKE_POSITION = 1280;
+    public static int slideSpeed = 80;
     public static double SLIDE_SPEED = 1500;
 
 
     //CRANE
-    public static int craneTargetPosition = 0;
-    public static int craneSpeed = 30;
+    public int craneTargetPosition = 0;
+    public static int craneSpeed = 15;
+    public static int CRANE_LOWOUTTAKE_POSITION = 420;
+    public static int CRANE_HIGHOUTTAKE_POSITION = 675;
+    public int cranePositionMax = 700;
 
     //ELBOW JOINT VARIABLES
-    public static double ELBOW_START_ANGLE = 0;
+    public static double ELBOW_START_ANGLE = 189;
     public static int ELBOW_HOME_POSITION = 2050;
     public static double ELBOW_PWM_PER_DEGREE = -5.672222222222222;
-    public static double ELBOW_JOINT_SPEED = 60;
+    public static double ELBOW_JOINT_SPEED = 120;
     public static double ELBOW_MIN_ANGLE = -15;
     public static double ELBOW_MAX_ANGLE = 220;
     public static int ELBOW_ADJUST_ANGLE = 5;
-    public static double ELBOW_PREINTAKE_ANGLE = 123;
+    public static double ELBOW_PREINTAKE_ANGLE = 34;
+    public static double ELBOW_LOWOUTTAKE_ANGLE = 102;
+    public static double ELBOW_HIGHOUTTAKE_ANGLE = 60;
 
 
     //WRIST JOINT VARIABLES
     public static int WRIST_HOME_POSITION = 950;
     public static double WRIST_PWM_PER_DEGREE = 7.22222222222;
-    public static double WRIST_START_ANGLE = 44;
-    public static double WRIST_JOINT_SPEED = 50;
+    public static double WRIST_START_ANGLE = 63;
+    public static double WRIST_JOINT_SPEED = 80;
     public static double WRIST_MIN_ANGLE = 0;
     public static double WRIST_MAX_ANGLE = 140;
     public static int WRIST_ADJUST_ANGLE = 5;
-    public static double WRIST_PREINTAKE_ANGLE = 123;
+    public static double WRIST_PREINTAKE_ANGLE = 140;
+    public static double WRIST_LOWOUTTAKE_ANGLE = 117;
+    public static double WRIST_HIGHOUTTAKE_ANGLE = 125;
 
 
     //BEATER
-    public static double beaterPower;
+    public double beaterPower;
 
     //PINCER
     public static double PINCER_CLOSE = 1750;
@@ -89,8 +110,7 @@ public class Trident implements Subsystem {
     public enum Articulation {
         MANUAL, //does nothing - used for transition tracking
         TUCK, //does nothing - used for transition tracking
-        INTAKE,
-        OUTTAKE
+        INTAKE, OUTTAKE
     }
 
     //LIVE STATES
@@ -107,6 +127,9 @@ public class Trident implements Subsystem {
             case MANUAL:
                 break;
             case TUCK:
+                if (tuck()) {
+                    articulation = Articulation.MANUAL;
+                }
                 break;
             //SHOULD ONLY BE ACCESSED BY SAMPLE()
             case INTAKE:
@@ -116,8 +139,7 @@ public class Trident implements Subsystem {
                 break;
 
             case OUTTAKE:
-                if(outtake())
-                    articulation = Articulation.MANUAL;
+                if (outtake()) articulation = Articulation.MANUAL;
                 break;
             default:
                 throw new RuntimeException("how the ^%*( did you get here?");
@@ -126,42 +148,93 @@ public class Trident implements Subsystem {
         return articulation;
     }
 
+    public long tuckTimer = 0;
+    public int tuckIndex = 0;
+
+    public boolean tuck() {
+        if (!tuckFromHighOuttake) {
+            switch (tuckIndex) {
+                case 0:
+                    craneTargetPosition = 0;
+                    slideTargetPosition = 0;
+                    beaterPower = 0;
+                    if (withinError(crane.getCurrentPosition(), 0, 10)) {
+                        tuckIndex++;
+                        ELBOW_JOINT_SPEED = 40;
+                    }
+                    break;
+                case 1:
+                    elbow.setTargetAngle(ELBOW_START_ANGLE);
+                    wrist.setTargetAngle(WRIST_START_ANGLE);
+                    if (withinError(elbow.getCurrentAngle(), ELBOW_START_ANGLE, 5) && withinError(wrist.getCurrentAngle(), WRIST_START_ANGLE, 5)) {
+                        tuckIndex++;
+                        ELBOW_JOINT_SPEED = 60;
+                    }
+                    break;
+                case 2:
+                    return true;
+            }
+        } else {
+            switch (tuckIndex) {
+                case 0:
+                    tuckTimer = futureTime(1.5);
+                    wrist.setTargetAngle(WRIST_START_ANGLE);
+                    elbow.setTargetAngle(ELBOW_START_ANGLE);
+                    beaterPower = 0;
+                    tuckIndex++;
+                    break;
+                case 1:
+                    if (isPast(tuckTimer)) {
+                        craneTargetPosition = 0;
+                        slideTargetPosition = 0;
+                        tuckIndex++;
+                        tuckFromHighOuttake = false;
+                    }
+                    break;
+                case 2:
+                    if (withinError(crane.getCurrentPosition(), 0, 10)) {
+                        return true;
+                    }
+            }
+        }
+        return false;
+    }
+
     public static int intakeIndex;
     public long intakeTimer;
+
     public boolean intake() {
         switch (intakeIndex) {
             case 0:
-                craneTargetPosition = 0;
-                slideTargetPosition = 0;
-                wrist.setTargetAngle(WRIST_PREINTAKE_ANGLE);
-                elbow.setTargetAngle(ELBOW_PREINTAKE_ANGLE);
-
+                craneTargetPosition = 30;
                 //get to position
                 if (withinError(crane.getCurrentPosition(), 0, 10)) {
-                    intakeTimer = futureTime(5);
-//                    intakeIndex++;
+                    slideTargetPosition = 0;
+                    intakeTimer = futureTime(2);
+                    setTargetAngle(ELBOW_PREINTAKE_ANGLE, WRIST_PREINTAKE_ANGLE);
+                    intakeIndex++;
                 }
                 break;
             case 1:
-                if (isPast(intakeTimer)) {
-                    wrist.setTargetAngle(15);
-                    elbow.setTargetAngle(180);
-                }
+//                if (isPast(intakeTimer)) {
+                wrist.setTargetAngle(WRIST_PREINTAKE_ANGLE);
+//                }
+                intakeIndex++;
                 break;
             case 2:
-//                beater.setPower(1);
-//                colorSensorEnabled = true;
+                beaterPower = 1;
+                colorSensorEnabled = true;
 //                open the "gate"
-//                if (targetSamples.contains(currentSample)) {
-//                    intakeTimer = futureTime(3);
-                intakeIndex++;
-//                }
+                if (sampleDetected()) {
+                    beaterPower = 0;
+                    intakeIndex++;
+                }
                 break;
             case 3:
                 //close the "gate"
-//                beater.setPower(-1);
+//                beaterPower = 1;
 //                if (isPast(intakeTimer)) {
-//                    beater.setPower(0);
+//                    beaterPower = 0;
                 intakeIndex++;
 //                }
                 break;
@@ -177,48 +250,97 @@ public class Trident implements Subsystem {
 
     public static int outtakeIndex;
     public long outtakeTimer;
-    public boolean outtake() {
-        switch (outtakeIndex) {
-            case 0:
-                craneTargetPosition = 0;
-                slideTargetPosition = 0;
-                wrist.setTargetAngle(WRIST_START_ANGLE);
-                elbow.setTargetAngle(WRIST_START_ANGLE);
 
-                //get to position
-                if (withinError(crane.getCurrentPosition(), 0, 10)) {
-                    outtakeIndex++;
-                }
-                break;
-            case 1:
-                craneTargetPosition = 630;
-                if (withinError(crane.getCurrentPosition(), 630, 10)) {
+    public boolean outtake() {
+        if (!preferHighOuttake) {
+            switch (outtakeIndex) {
+                case 0:
                     outtakeTimer = futureTime(2);
                     outtakeIndex++;
-                }
-                break;
-            case 2:
-                wrist.setTargetAngle(10);
-                elbow.setTargetAngle(110);
-                if(isPast(outtakeTimer)){
-                    outtakeIndex ++;
-                }
-                break;
-            case 3:
-                slide.setTargetPosition(-1230);
-                if(withinError(slide.getCurrentPosition(), -1230, 10))
-                    outtakeIndex++;
-                break;
-            case 4:
-                return true;
+                    break;
+                case 1:
+                    elbow.setTargetAngle(ELBOW_LOWOUTTAKE_ANGLE);
+                    if (isPast(outtakeTimer)) {
+                        outtakeIndex++;
+                        outtakeTimer = futureTime(2);
+                    }
+                    break;
+                case 2:
+                    craneTargetPosition = CRANE_LOWOUTTAKE_POSITION;
+                    wrist.setTargetAngle(WRIST_LOWOUTTAKE_ANGLE);
+                    if (withinError(craneTargetPosition, CRANE_LOWOUTTAKE_POSITION, 10)) {
+                        outtakeIndex++;
+                    }
+                    break;
+                case 3:
+//                beaterPower = 0;
+                    return true;
+//                slide.setTargetPosition(-1230);
+//                if(withinError(slide.getCurrentPosition(), -1230, 10))
+//                    outtakeIndex++;
+//                break;
+                case 4:
+                    return true;
 
+            }
+        } else {
+            switch (outtakeIndex) {
+                //intake
+                case 0:
+                    craneTargetPosition = CRANE_HIGHOUTTAKE_POSITION;
+                    slideTargetPosition = SLIDE_HIGHOUTTAKE_POSITION;
+                    elbow.setTargetAngle(ELBOW_HIGHOUTTAKE_ANGLE);
+                    if (withinError(crane.getCurrentPosition(), CRANE_HIGHOUTTAKE_POSITION / 4.0, 10)) {
+                        outtakeIndex++;
+                    }
+                    break;
+                case 1:
+                    if (withinError(crane.getCurrentPosition(), CRANE_HIGHOUTTAKE_POSITION / 2.0, 10)) {
+                        wrist.setTargetAngle(WRIST_HIGHOUTTAKE_ANGLE);
+                        tuckFromHighOuttake = true;
+                        outtakeIndex++;
+                    }
+                    break;
+                case 2:
+                    return true;
+                case 3:
+//                beaterPower = 0;
+                    return true;
+//                slide.setTargetPosition(-1230);
+//                if(withinError(slide.getCurrentPosition(), -1230, 10))
+//                    outtakeIndex++;
+//                break;
+                case 4:
+                    return true;
+
+            }
         }
         return false;
     }
 
-    public void sample(List<CurrentSample> samples) {
+    public void sample(List<Sample> samples) {
         articulation = Articulation.INTAKE;
         this.targetSamples = samples;
+    }
+
+    public void sample(Constants.Alliance alliance) {
+        List<Sample> samples = new ArrayList<>();
+        if (alliance.isRed()) samples.add(Sample.RED);
+        else samples.add(Sample.BLUE);
+        samples.add(Sample.NEUTRAL);
+        articulation = Articulation.INTAKE;
+        this.targetSamples = samples;
+    }
+
+    public boolean sampleDetected() {
+        return targetSamples.contains(currentSample);
+    }
+
+    public void stopOnSample() {
+        if (targetSamples.contains(currentSample)) {
+            beaterPower = 0;
+
+        }
     }
 
     public void setTargetAngle(double elbowAngle, double wristAngle) {
@@ -231,8 +353,10 @@ public class Trident implements Subsystem {
         this.robot = robot;
         elbow = new Joint(hardwareMap, "elbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         wrist = new Joint(hardwareMap, "wrist", false, WRIST_HOME_POSITION, WRIST_PWM_PER_DEGREE, WRIST_MIN_ANGLE, WRIST_MAX_ANGLE, WRIST_START_ANGLE, WRIST_JOINT_SPEED);
-        slide = this.hardwareMap.get(DcMotorEx.class, "slide");
-        crane = this.hardwareMap.get(DcMotorEx.class, "crane");
+        DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "slide");
+        DcMotorEx bruhx2 = this.hardwareMap.get(DcMotorEx.class, "crane");
+        slide = new DcMotorExResetable(bruh);
+        crane = new DcMotorExResetable(bruhx2);
         colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
         beater = this.hardwareMap.get(CRServoImplEx.class, "beater");
         pincer = this.hardwareMap.get(Servo.class, "pincer");
@@ -277,9 +401,10 @@ public class Trident implements Subsystem {
         //actually instruct actuators to go to desired targets
         elbow.update();
         wrist.update();
+        if (enforceSlideLimits) intakeSlideLimits();
         slide.setTargetPosition(slideTargetPosition);
         crane.setTargetPosition(craneTargetPosition);
-        beater.setPower(beaterPower);
+        beater.setPower(-beaterPower);
 
 //        if(pincerEnabled) {
 //            pincer.setPosition(Utils.servoNormalize(PINCER_OPEN));
@@ -292,20 +417,17 @@ public class Trident implements Subsystem {
 
     public String updateColorSensor() {
         double hue = getHSV()[0];
-        if(hue < 90 && hue > 70){
-            currentSample = CurrentSample.NEUTRAL;
+        if (hue < 45 && hue > 35) {
+            currentSample = Sample.NEUTRAL;
             return "NEUTRAL";
-        }
-        else if (hue < 60 && hue > 20) {
-            currentSample = CurrentSample.RED;
+        } else if (hue < 10 || hue > 350) {
+            currentSample = Sample.RED;
             return "RED";
-        }
-        else if(hue < 250  && hue > 200) {
-            currentSample = CurrentSample.BLUE;
+        } else if (hue < 225 && hue > 200) {
+            currentSample = Sample.BLUE;
             return "BLUE";
-        }
-        else {
-            currentSample = CurrentSample.NO_SAMPLE ;
+        } else {
+            currentSample = Sample.NO_SAMPLE;
             return "NO SAMPLE";
         }
     }
@@ -315,10 +437,11 @@ public class Trident implements Subsystem {
         slide.setMotorDisable();
     }
 
-    public String HSVasString () {
+    public String HSVasString() {
         float[] hsv = getHSV();
         return hsv[0] + " " + hsv[1] + " " + hsv[2];
     }
+
     public float[] getHSV() {
         float[] hsv = new float[3];
         Color.colorToHSV(colorSensor.getNormalizedColors().toColor(), hsv);
@@ -329,16 +452,18 @@ public class Trident implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("articulation", articulation.name());
+        telemetryMap.put("preferHighOuttake", preferHighOuttake);
         telemetryMap.put("intake index", intakeIndex);
         telemetryMap.put("outtake index", outtakeIndex);
         telemetryMap.put("crane target : real", "" + craneTargetPosition + " : " + crane.getCurrentPosition());
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
         telemetryMap.put("current sample", currentSample.name());
         telemetryMap.put("colorsensor", colorSensorEnabled);
-        if(colorSensorEnabled) {
-//            telemetryMap.put("colorsensor values", colorSensor.getNormalizedColors().red + " " + colorSensor.getNormalizedColors().green + " " + colorSensor.getNormalizedColors().blue);
+        if (colorSensorEnabled) {
             telemetryMap.put("colorsensor hsv", "" + HSVasString());
+            telemetryMap.put("colorsensor rgb", colorSensor.getNormalizedColors().red + " " + colorSensor.getNormalizedColors().green + " " + colorSensor.getNormalizedColors().blue);
         }
+//        0 40 214
         telemetryMap.put("beater speed", beater.getPower());
         telemetryMap.put("elbow angle target : real", elbow.getTargetAngle() + " : " + elbow.getCurrentAngle());
         telemetryMap.put("wrist angle target : real", wrist.getTargetAngle() + " : " + wrist.getCurrentAngle());

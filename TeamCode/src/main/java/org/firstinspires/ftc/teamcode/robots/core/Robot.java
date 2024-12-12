@@ -21,12 +21,12 @@ public class Robot implements Subsystem {
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
     Servo claw;
     Gamepad gamepad1;
-    DcMotorEx gearbox;
+    DcMotorEx shoulder;
     DcMotorEx slide;
     public boolean clawOpen = false;
     public double clawOpenPosition = 1;
     public double clawClosePosition = 0.7;
-    public int gearboxTargetPosition = 10;
+    public int shoulderTargetPosition = 0;
     public int slideTargetPosition = 0;
     public int gearboxpick = 0;
 
@@ -37,10 +37,9 @@ public class Robot implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
-        // Initialize
-        if (gamepad1.y) {
-            gearbox.setTargetPosition(gearboxTargetPosition);
-            slide.setTargetPosition(slideTargetPosition);
+        if(gamepad1.a) {
+            shoulderTargetPosition = 50;
+            slideTargetPosition = 50;
             clawOpen = true;
         }
 
@@ -57,17 +56,36 @@ public class Robot implements Subsystem {
         // Claw Close
         if (gamepad1.a){
             claw.setPosition(clawClosePosition);
-            clawOpen = false;
+        }
+        if(gamepad1.right_trigger >= 0.3){
+            if (shoulder.getCurrentPosition() < 900){
+                shoulderTargetPosition = shoulder.getCurrentPosition() + 20;
+            } else {
+                shoulderTargetPosition = 900;
+            }
+        }
+        else if (gamepad1.left_trigger >= 0.3){
+            if (shoulder.getCurrentPosition() > 0){
+                shoulderTargetPosition = shoulder.getCurrentPosition() - 20;
+            } else {
+                shoulderTargetPosition = 0;
+            }
+
         }
 
-        // Extend Linear Slide
-        if (gamepad1.dpad_up) {
-            gearboxTargetPosition = gearbox.getCurrentPosition() + 100;
+        if (gamepad1.right_bumper){
+            if (slide.getCurrentPosition() < 1450){
+                slideTargetPosition = slide.getCurrentPosition() + 10;
+            } else {
+                slide.setTargetPosition(1450);
+            }
         }
-
-        // Retract Linear Slide
-        if (gamepad1.dpad_down){
-            gearboxTargetPosition = gearbox.getCurrentPosition() - 100;
+        if (gamepad1.left_bumper){
+            if(slide.getCurrentPosition() > 0){
+                slideTargetPosition = slide.getCurrentPosition() - 10;
+            } else {
+                slide.setTargetPosition(0);
+            }
         }
 
 
@@ -81,7 +99,7 @@ public class Robot implements Subsystem {
         } else {
             claw.setPosition(clawClosePosition);
         }
-        gearbox.setTargetPosition(gearboxTargetPosition);
+        shoulder.setTargetPosition(shoulderTargetPosition);
         slide.setTargetPosition(slideTargetPosition);
     }
 
@@ -106,7 +124,7 @@ public class Robot implements Subsystem {
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
         rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-        gearbox = hardwareMap.get(DcMotorEx.class, "gearbox");
+        shoulder = hardwareMap.get(DcMotorEx.class, "shoulder");
         claw = hardwareMap.get(Servo.class, "claw");
         slide = hardwareMap.get(DcMotorEx.class, "slide");
         // Set motor run modes
@@ -116,17 +134,17 @@ public class Robot implements Subsystem {
         leftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        gearbox.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        shoulder.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         slide.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
-        gearbox.setPower(10);
-        gearbox.setVelocity(50);
-        gearbox.setTargetPosition(gearboxTargetPosition);
-        gearbox.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        shoulder.setPower(10);
+        shoulder.setVelocity(50);
+        shoulder.setTargetPosition(gearboxTargetPosition);
+        shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
-        slide.setPower(10);
-        slide.setVelocity(5);
-        slide.setTargetPosition(slideTargetPosition);
+        slide.setPower(1);
+        slide.setVelocity(150);
+        slide.setTargetPosition(0);
         slide.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         leftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
@@ -155,8 +173,8 @@ public class Robot implements Subsystem {
         LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
 
         telemetry.put("Claw Open", clawOpen);
-        telemetry.put("Gearbox Position", gearbox.getCurrentPosition());
-        telemetry.put("Gearbox Target Position", gearboxTargetPosition);
+        telemetry.put("Shoulder Position", shoulder.getCurrentPosition());
+        telemetry.put("Shoulder Target Position", shoulderTargetPosition);
         telemetry.put("Slide Position", slide.getCurrentPosition());
         telemetry.put("Slide Target Position", slideTargetPosition);
 

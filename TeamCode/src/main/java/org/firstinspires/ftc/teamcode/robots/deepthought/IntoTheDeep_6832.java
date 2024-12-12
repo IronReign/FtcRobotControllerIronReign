@@ -31,7 +31,7 @@ public class IntoTheDeep_6832 extends OpMode {
 
 
     //GLOBAL STATES
-    public static boolean active;
+
     public static boolean debugTelemetryEnabled = true;
     private boolean initializing;
     public static boolean initPosition = false;
@@ -112,7 +112,6 @@ public class IntoTheDeep_6832 extends OpMode {
         telemetry.update();
 
         //SET GLOBAL STATES
-        active = true;
         initializing = true;
         debugTelemetryEnabled = DEFAULT_DEBUG_TELEMETRY_ENABLED;
 
@@ -126,7 +125,6 @@ public class IntoTheDeep_6832 extends OpMode {
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
         field = new Field();
-//        autoNav = new AutoNav(robot, field);
 
         robot.updatePositionCache = false;
         robot.driveTrain.setPose(startingPosition);
@@ -149,11 +147,13 @@ public class IntoTheDeep_6832 extends OpMode {
         TelemetryPacket packet = new TelemetryPacket();
         dc.init_loop();
         dc.robotOrientedDrive();
-        initVision();
+    if(gameState.isAutonomous())
+        robot.preloadAllianceSelect();
+//        initVision();
 
         telemetry.addData("fetched", robot.fetched);
         telemetry.addData("gameState", gameState);
-        telemetry.addData("active", active);
+
         telemetry.addData("Alliance", alliance);
         telemetry.addData("startingPosition", startingPosition);
         telemetry.addData("initPositionIndex", Robot.initPositionIndex);
@@ -179,7 +179,9 @@ public class IntoTheDeep_6832 extends OpMode {
         totalRunTime = 0;
         //FETCH CACHE
         robot.fetchCachedDTPosition();
-
+        if(gameState.equals(GameState.TELE_OP)) {
+            robot.driveTrain.setPose(startingPosition);
+        }
         field.finalizeField(alliance);
         resetGame();
 
@@ -221,20 +223,19 @@ public class IntoTheDeep_6832 extends OpMode {
         TelemetryPacket packet = new TelemetryPacket();
         totalRunTime = (System.currentTimeMillis()-startTime)/1000;
         dc.updateStickyGamepads();
-        dc.handleStateSwitch();
 
-        if (active) {
-            long currentTime = System.currentTimeMillis();
+
             update(packet);
             switch(gameState) {
                 case AUTONOMOUS:
-                    if(auton.execute(packet, field)) gameState = GameState.TELE_OP;
+                    if (auton.execute(packet)) gameState = GameState.TELE_OP;
                     break;
 
                 case TELE_OP:
                     dc.joystickDrive();
                     break;
                 case TEST:
+                    debugTelemetryEnabled = true;
                     dc.manualDiagnosticMethods();
                     break;
                 case MANUAL_DIAGNOSTIC:
@@ -243,10 +244,6 @@ public class IntoTheDeep_6832 extends OpMode {
                     dc.joystickDrive();
                     break;
             }
-        }
-        else {
-            dc.handlePregameControls();
-        }
     }
     //end loop()
 
@@ -264,15 +261,14 @@ public class IntoTheDeep_6832 extends OpMode {
         robot.update(packet.fieldOverlay());
         Map<String, Object> opModeTelemetryMap = new LinkedHashMap<>();
         // handling op mode telemetry
-        opModeTelemetryMap.put("Active", active);
+
         if(initializing) {
             opModeTelemetryMap.put("Starting Position", startingPosition);
         }
         if(debugTelemetryEnabled) {
             opModeTelemetryMap.put("Average Robot Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageUpdateTime * 1e-6), (int) (1 / (averageUpdateTime * 1e-9))));
+            opModeTelemetryMap.put("Battery Voltage", averageVoltage);
         }
-
-        opModeTelemetryMap.put("Battery Voltage", averageVoltage);
         opModeTelemetryMap.put("Average Loop Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageLoopTime * 1e-6), (int) (1 / (averageLoopTime * 1e-9))));
 
 
@@ -294,18 +290,21 @@ public class IntoTheDeep_6832 extends OpMode {
         //handle this class' telemetry
         handleTelemetry(opModeTelemetryMap,  gameState.getName(), packet);
 
-        Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
-        visionTelemetryMap.put("Backend",
-                Misc.formatInvariant("%s (%s)",
-                        VisionProviders.VISION_PROVIDERS[Robot.backVisionProviderIndex].getSimpleName(),
-                        robot.visionProviderFinalized ?
-                                "finalized" :
-                                System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
-                )
-        );
 
-        handleTelemetry(visionTelemetryMap, "BACK VISION - \t" + robot.visionProviderBack.getTelemetryName(), packet);
-        handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
+        if(debugTelemetryEnabled) {
+            Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
+            visionTelemetryMap.put("Backend",
+                    Misc.formatInvariant("%s (%s)",
+                            VisionProviders.VISION_PROVIDERS[Robot.backVisionProviderIndex].getSimpleName(),
+                            robot.visionProviderFinalized ?
+                                    "finalized" :
+                                    System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
+                    )
+            );
+            handleTelemetry(visionTelemetryMap, "BACK VISION - \t" + robot.visionProviderBack.getTelemetryName(), packet);
+            handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
+        }
+
 
         handleTelemetry(robot.getTelemetry(debugTelemetryEnabled), robot.getTelemetryName(), packet);
 
@@ -332,7 +331,7 @@ public class IntoTheDeep_6832 extends OpMode {
         telemetry.addLine(telemetryName);
         packet.addLine(telemetryName);
 
-        if (averageVoltage <= 12) {
+        if (!debugTelemetryEnabled && averageVoltage <= 12) {
             telemetryMap = new LinkedHashMap<>();
             for (int i = 0; i < 5; i++) {
                 telemetryMap.put(i + (System.currentTimeMillis() / 500 % 2 == 0 ? "**BATTERY VOLTAGE LOW**" : "  BATTERY VOLTAGE LOW  "), (System.currentTimeMillis() / 500 % 2 == 0 ? "**CHANGE BATTERY ASAP!!**" : "  CHANGE BATTERY ASAP!!  "));

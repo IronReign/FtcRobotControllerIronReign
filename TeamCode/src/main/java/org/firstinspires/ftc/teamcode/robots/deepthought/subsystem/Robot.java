@@ -4,6 +4,8 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.dc;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.fieldOrientedDrive;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -17,6 +19,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.deepthought.vision.Target;
@@ -26,6 +29,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.vision.provider.AprilTa
 import org.openftc.apriltag.AprilTagDetection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,11 +72,12 @@ public class Robot implements Subsystem {
     public boolean fetched;
 
 
+
     public enum Articulation {
         MANUAL,
         CALIBRATE,
         INTAKE,
-        OUTTAKE
+        TRAVEL, OUTTAKE
     }
 
     public void start() {
@@ -103,6 +108,7 @@ public class Robot implements Subsystem {
             subsystemUpdateTimes = new long[subsystems.length];
 
             batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
+            trident.slideTargetPosition = 0;
 
             articulation = Articulation.MANUAL;
         }
@@ -120,7 +126,7 @@ public class Robot implements Subsystem {
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         if (updatePositionCache && gameState.isAutonomous()) {
-            currPosition = new DTPosition(driveTrain.pose);
+            currPosition = new DTPosition(driveTrain.pose, trident.crane.getCurrentPosition(), trident.slide.getCurrentPosition());
             positionCache.update(currPosition, false);
         }
 
@@ -194,6 +200,25 @@ public class Robot implements Subsystem {
         c.strokeLine(p1.x, p1.y, p2.x, p2.y);
     }
 
+
+    public void preloadAllianceSelect() {
+        trident.updateColorSensor();
+        if(trident.currentSample == Trident.Sample.RED) {
+            alliance = Constants.Alliance.RED;
+            startingPosition = startingPosition.isRed() == true ?
+                    startingPosition :
+                    startingPosition == Constants.Position.START_LEFT_BLUE ?
+                            Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
+        }
+        else if(trident.currentSample == Trident.Sample.BLUE) {
+            alliance = Constants.Alliance.BLUE;
+            startingPosition = startingPosition.isRed() == false ?
+                    startingPosition :
+                    startingPosition == Constants.Position.START_LEFT_RED ?
+                            Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
+        }
+    }
+
     public void switchVisionProviders() {
         visionProviderBack.shutdownVision();
         visionProviderFront.shutdownVision();
@@ -221,7 +246,9 @@ public class Robot implements Subsystem {
                 int loggerTimeout = (int) (loggerTimeoutMinutes * 60000);
                 if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
                     //apply cached position
-//                    driveTrain.pose = fetchedPosition.getPose();
+                    driveTrain.pose = fetchedPosition.getPose();
+                    trident.crane.setPosition(fetchedPosition.getCranePosition());
+                    trident.slide.setPosition(fetchedPosition.getSlidePosition());
                 }
             }
         }
@@ -264,31 +291,36 @@ public class Robot implements Subsystem {
                     articulation = Articulation.MANUAL;
                 break;
             case INTAKE:
-                trident.articulate(Trident.Articulation.INTAKE);
+                trident.sample(alliance);
                 if(trident.articulation == Trident.Articulation.MANUAL) {
                     articulation = Articulation.MANUAL;
                 }
-//                if(intake())
-//                    articulation = Articulation.MANUAL;
+                break;
+            case TRAVEL:
+                trident.articulate(Trident.Articulation.TUCK);
                 break;
             case OUTTAKE:
                 if(outtake())
+
                     articulation = Articulation.MANUAL;
                 break;
         }
         return articulation;
     }
 
-    public static int outtakeIndex = 0;
+    public int outtakeIndex = 0;
     public boolean outtake() {
         switch (outtakeIndex) {
             case 0:
+                Trident.enforceSlideLimits = false;
                 trident.articulate(Trident.Articulation.OUTTAKE);
                 outtakeIndex++;
                 break;
             case 1:
-                if(trident.articulation == Trident.Articulation.MANUAL)
+                if(trident.articulation == Trident.Articulation.MANUAL) {
+                    Trident.enforceSlideLimits = true;
                     return true;
+                }
                 break;
         }
 
@@ -298,7 +330,7 @@ public class Robot implements Subsystem {
 
     @Override
     public void stop() {
-        currPosition = new DTPosition(driveTrain.pose);
+        currPosition = new DTPosition(driveTrain.pose, trident.crane.getCurrentPosition(), trident.slide.getCurrentPosition());
         positionCache.update(currPosition, true);
         for (Subsystem component : subsystems) {
             component.stop();
