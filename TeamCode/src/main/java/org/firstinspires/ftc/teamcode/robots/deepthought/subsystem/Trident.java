@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem;
 
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.calibrated;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
@@ -15,6 +16,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DcMotorExResetable;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
@@ -60,14 +62,18 @@ public class Trident implements Subsystem {
     public static int slideTargetPosition = 0;
     public static int slidePositionMax = 640;
     public static int slidePositionMin = 0;
+    private static final int SLIDE_INTAKE_MIN_POSITION = 200;
+    private static final int SLIDE_PREINTAKE_POSITION = 500;
     public static int SLIDE_HIGHOUTTAKE_POSITION = 1280;
     public static int slideSpeed = 80;
     public static double SLIDE_SPEED = 1500;
 
 
     //CRANE
+    public static double CRANE_STALL_THRESHOLD = 2;
     public int craneTargetPosition = 0;
     public static int craneSpeed = 15;
+    public static int CRANE_INTAKE_POSITION = 30;
     public static int CRANE_LOWOUTTAKE_POSITION = 420;
     public static int CRANE_HIGHOUTTAKE_POSITION = 675;
     public int cranePositionMax = 700;
@@ -206,38 +212,29 @@ public class Trident implements Subsystem {
     public boolean intake() {
         switch (intakeIndex) {
             case 0:
-                craneTargetPosition = 30;
-                //get to position
-                if (withinError(crane.getCurrentPosition(), 0, 10)) {
-                    slideTargetPosition = 0;
-                    intakeTimer = futureTime(2);
-                    setTargetAngle(ELBOW_PREINTAKE_ANGLE, WRIST_PREINTAKE_ANGLE);
+                elbow.setTargetAngle(ELBOW_PREINTAKE_ANGLE);
+                intakeTimer = futureTime(1);
+                intakeIndex++;
+                break;
+            case 1:
+                if (isPast(intakeTimer)) {
+                    craneTargetPosition = CRANE_INTAKE_POSITION;
+                    slideTargetPosition = SLIDE_INTAKE_MIN_POSITION;
                     intakeIndex++;
                 }
                 break;
-            case 1:
-//                if (isPast(intakeTimer)) {
-                wrist.setTargetAngle(WRIST_PREINTAKE_ANGLE);
-//                }
-                intakeIndex++;
-                break;
             case 2:
-                beaterPower = 1;
-                colorSensorEnabled = true;
-//                open the "gate"
-                if (sampleDetected()) {
-                    beaterPower = 0;
+                if (withinError(crane.getCurrentPosition(), CRANE_INTAKE_POSITION, 5) && withinError(slide.getCurrentPosition(), SLIDE_INTAKE_MIN_POSITION, 5)) {
                     intakeIndex++;
                 }
                 break;
             case 3:
-                //close the "gate"
-//                beaterPower = 1;
-//                if (isPast(intakeTimer)) {
-//                    beaterPower = 0;
-                intakeIndex++;
-//                }
-                break;
+                if(slideTargetPosition > SLIDE_INTAKE_MIN_POSITION) {
+                    slideTargetPosition -= 10;
+                }
+                if(stopOnSample()) {
+                    return true;
+                }
             case 4:
                 return true;
             case 5:
@@ -336,11 +333,15 @@ public class Trident implements Subsystem {
         return targetSamples.contains(currentSample);
     }
 
-    public void stopOnSample() {
+    public boolean stopOnSample() {
+        colorSensorEnabled = true;
+        beaterPower = 1;
         if (targetSamples.contains(currentSample)) {
             beaterPower = 0;
-
+            colorSensorEnabled = false;
+            return true;
         }
+        return false;
     }
 
     public void setTargetAngle(double elbowAngle, double wristAngle) {
@@ -403,7 +404,9 @@ public class Trident implements Subsystem {
         wrist.update();
         if (enforceSlideLimits) intakeSlideLimits();
         slide.setTargetPosition(slideTargetPosition);
-        crane.setTargetPosition(craneTargetPosition);
+        if (calibrated) {
+            crane.setTargetPosition(craneTargetPosition);
+        }
         beater.setPower(-beaterPower);
 
 //        if(pincerEnabled) {
@@ -455,6 +458,7 @@ public class Trident implements Subsystem {
         telemetryMap.put("preferHighOuttake", preferHighOuttake);
         telemetryMap.put("intake index", intakeIndex);
         telemetryMap.put("outtake index", outtakeIndex);
+        telemetryMap.put("crane current", crane.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("crane target : real", "" + craneTargetPosition + " : " + crane.getCurrentPosition());
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
         telemetryMap.put("current sample", currentSample.name());

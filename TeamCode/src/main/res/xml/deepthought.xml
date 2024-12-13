@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
-<Robot type="FirstInspires-FTC">
+ <Robot type="FirstInspires-FTC">
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Control Hub" port="173">
             <LynxColorSensor name="intakeSensor" port="1" bus="0" />
@@ -21,7 +21,7 @@
             <Servo name="elbow" port="4" />
             <ContinuousRotationServo name="beater" port="0" />
             <RevRobotics40HDHexMotor name="slide" port="3"/>
-            <RevRoboticsCoreHexMotor name="crane" port="2"/>
+            <RevRobotics40HDHexMotor name="crane" port="2"/>
             <LynxEmbeddedIMU name="eimu" port="0" bus="0" />
         </LynxModule>
     </LynxUsbDevice>

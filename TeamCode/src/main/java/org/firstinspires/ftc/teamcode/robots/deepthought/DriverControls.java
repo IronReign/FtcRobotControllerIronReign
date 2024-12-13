@@ -4,8 +4,10 @@ package org.firstinspires.ftc.teamcode.robots.deepthought;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.debugTelemetryEnabled;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.initPosition;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot.initPositionIndex;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.colorSensorEnabled;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.craneSpeed;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.slideSpeed;
@@ -65,13 +67,12 @@ public class DriverControls {
         }
         if(gamepad1.dpad_left) {
             Trident.enforceSlideLimits = false;
-            robot.trident.slideTargetPosition -= 1 * slideSpeed;
+            robot.trident.slideTargetPosition += 1 * slideSpeed;
         }
 //
-//        if(stickyGamepad1.a) {
-//            Trident.intakeIndex = 0;
-//            robot.articulate(Robot.Articulation.INTAKE);
-//        }
+        if(stickyGamepad1.a) {
+            robot.articulate(Robot.Articulation.INTAKE);
+        }
 //
 //        if(stickyGamepad1.b) {
 //            Trident.outtakeIndex = 0;
@@ -261,7 +262,9 @@ public class DriverControls {
         IntoTheDeep_6832.gameStateIndex %= IntoTheDeep_6832.GameState.getNumGameStates();
         IntoTheDeep_6832.gameState = IntoTheDeep_6832.GameState.getGameState(IntoTheDeep_6832.gameStateIndex);
 
-
+        if(stickyGamepad1.guide) {
+            initPositionIndex++;
+        }
     }
 
     @SuppressLint("SuspiciousIndentation")

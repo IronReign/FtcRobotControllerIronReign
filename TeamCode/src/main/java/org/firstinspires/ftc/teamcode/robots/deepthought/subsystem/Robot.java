@@ -7,15 +7,18 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.f
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
@@ -259,8 +262,36 @@ public class Robot implements Subsystem {
 
     public boolean calibrate() {
         switch (initPositionIndex) {
-            case 0:
-                return true;
+            case 1:
+                trident.crane.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                trident.crane.setPower(-.2);
+                initPositionIndex++;
+
+            case 2:
+                if(trident.crane.getCurrent(CurrentUnit.AMPS) > Trident.CRANE_STALL_THRESHOLD) {
+                    initPositionIndex++;
+                }
+                break;
+            case 3:
+                trident.crane.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                trident.crane.setTargetPosition(841);
+                trident.crane.setPower(1);
+                trident.crane.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                initPositionIndex++;
+
+            case 4:
+                if(withinError(trident.crane.getCurrentPosition(), 841, 3)) {
+                    trident.crane.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    trident.crane.setTargetPosition(400);
+                    trident.crane.setPower(1);
+                    trident.crane.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    initPositionIndex++;
+                    return true;
+                }
+                break;
+            case 5:
+                break;
+
         }
         return false;
     }
