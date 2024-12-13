@@ -4,10 +4,9 @@ package org.firstinspires.ftc.teamcode.robots.deepthought;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.debugTelemetryEnabled;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.initPosition;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot.initPositionIndex;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot.calibrateIndex;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.colorSensorEnabled;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.craneSpeed;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.slideSpeed;
@@ -61,42 +60,29 @@ public class DriverControls {
             robot.trident.craneTargetPosition += 1 * craneSpeed;
         }
 //
-        if(gamepad1.dpad_right) {
+        if(gamepad1.left_trigger > .2) {
             Trident.enforceSlideLimits = false;
             robot.trident.slideTargetPosition -= 1 * slideSpeed;
         }
-        if(gamepad1.dpad_left) {
+        if(gamepad1.right_trigger > .2) {
             Trident.enforceSlideLimits = false;
             robot.trident.slideTargetPosition += 1 * slideSpeed;
         }
 //
         if(stickyGamepad1.a) {
+            Trident.outtakeIndex = 0;
             robot.articulate(Robot.Articulation.INTAKE);
         }
 //
-//        if(stickyGamepad1.b) {
-//            Trident.outtakeIndex = 0;
-//            robot.articulate(Robot.Articulation.OUTTAKE);
-//        }
-
-//        if (stickyGamepad1.x) {
-//            robot.trident.targetSamples.add(Trident.Sample.RED);
-//            robot.trident.beaterPower = 1;
-//            Trident.colorSensorEnabled = true;
-//        }
-//        robot.trident.stopOnSample();
-//
-//        if (stickyGamepad1.start) {
-//            Trident.colorSensorEnabled = !colorSensorEnabled;
-//            debugTelemetryEnabled = true;
-//        }
-
-
-        if (gamepad1.left_trigger > .1) {
-            robot.trident.adjustWrist(-Trident.WRIST_ADJUST_ANGLE);
+        if(stickyGamepad1.b) {
+            Trident.outtakeIndex = 0;
+            robot.articulate(Robot.Articulation.OUTTAKE);
         }
-        if (gamepad1.right_trigger > .1) {
-            robot.trident.adjustWrist(Trident.WRIST_ADJUST_ANGLE);
+
+
+        if (stickyGamepad1.start) {
+            Trident.colorSensorEnabled = !colorSensorEnabled;
+            debugTelemetryEnabled = true;
         }
 
         if (gamepad1.dpad_down) {
@@ -263,7 +249,7 @@ public class DriverControls {
         IntoTheDeep_6832.gameState = IntoTheDeep_6832.GameState.getGameState(IntoTheDeep_6832.gameStateIndex);
 
         if(stickyGamepad1.guide) {
-            initPositionIndex++;
+            calibrateIndex++;
         }
     }
 

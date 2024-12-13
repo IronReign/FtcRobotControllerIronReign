@@ -5,7 +5,6 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.field.Field;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
@@ -116,7 +115,7 @@ public class IntoTheDeep_6832 extends OpMode {
     @Override
     public void init() {
         calibrated = false;
-        Robot.initPositionIndex = 0;
+        Robot.calibrateIndex = 0;
         telemetry.addData("Status", "Hold right_trigger to enable debug mode");
         telemetry.update();
 
@@ -170,7 +169,7 @@ public class IntoTheDeep_6832 extends OpMode {
 
         telemetry.addData("Alliance", alliance);
         telemetry.addData("startingPosition", startingPosition);
-        telemetry.addData("initPositionIndex", Robot.initPositionIndex);
+        telemetry.addData("initPositionIndex", Robot.calibrateIndex);
         telemetry.addData("calibrated", calibrated);
 
         robot.driveTrain.updatePoseEstimate();
@@ -220,7 +219,7 @@ public class IntoTheDeep_6832 extends OpMode {
         }
 
         if (gameState.equals(GameState.TEST) || gameState.equals(GameState.DEMO)) {
-
+            calibrated = true;
         }
 
         robot.start();

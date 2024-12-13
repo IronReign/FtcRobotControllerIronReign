@@ -64,6 +64,7 @@ public class Trident implements Subsystem {
     public static int slidePositionMin = 0;
     private static final int SLIDE_INTAKE_MIN_POSITION = 200;
     private static final int SLIDE_PREINTAKE_POSITION = 500;
+    public static int SLIDE_LOWOUTTAKE_POSITION = 1280;
     public static int SLIDE_HIGHOUTTAKE_POSITION = 1280;
     public static int slideSpeed = 80;
     public static double SLIDE_SPEED = 1500;
@@ -219,28 +220,23 @@ public class Trident implements Subsystem {
             case 1:
                 if (isPast(intakeTimer)) {
                     craneTargetPosition = CRANE_INTAKE_POSITION;
-                    slideTargetPosition = SLIDE_INTAKE_MIN_POSITION;
+                    slideTargetPosition = SLIDE_PREINTAKE_POSITION;
                     intakeIndex++;
                 }
                 break;
             case 2:
-                if (withinError(crane.getCurrentPosition(), CRANE_INTAKE_POSITION, 5) && withinError(slide.getCurrentPosition(), SLIDE_INTAKE_MIN_POSITION, 5)) {
+                if (withinError(crane.getCurrentPosition(), CRANE_INTAKE_POSITION, 5) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 5)) {
                     intakeIndex++;
                 }
                 break;
             case 3:
-                if(slideTargetPosition > SLIDE_INTAKE_MIN_POSITION) {
+                if (slideTargetPosition > SLIDE_INTAKE_MIN_POSITION) {
                     slideTargetPosition -= 10;
                 }
-                if(stopOnSample()) {
+                if (stopOnSample()) {
                     return true;
                 }
-            case 4:
-                return true;
-            case 5:
                 break;
-            case 6:
-                return true;
         }
         return false;
     }
@@ -249,68 +245,29 @@ public class Trident implements Subsystem {
     public long outtakeTimer;
 
     public boolean outtake() {
-        if (!preferHighOuttake) {
-            switch (outtakeIndex) {
-                case 0:
-                    outtakeTimer = futureTime(2);
+        switch (outtakeIndex) {
+            case 0:
+                outtakeTimer = futureTime(2);
+                elbow.setTargetAngle(preferHighOuttake ? ELBOW_HIGHOUTTAKE_ANGLE : ELBOW_LOWOUTTAKE_ANGLE);
+                outtakeIndex++;
+                break;
+            case 1:
+                if (isPast(outtakeTimer)) {
+                    craneTargetPosition = preferHighOuttake ? CRANE_HIGHOUTTAKE_POSITION : CRANE_LOWOUTTAKE_POSITION;
+                    slideTargetPosition = preferHighOuttake ? SLIDE_LOWOUTTAKE_POSITION : SLIDE_HIGHOUTTAKE_POSITION;
                     outtakeIndex++;
-                    break;
-                case 1:
-                    elbow.setTargetAngle(ELBOW_LOWOUTTAKE_ANGLE);
-                    if (isPast(outtakeTimer)) {
-                        outtakeIndex++;
-                        outtakeTimer = futureTime(2);
-                    }
-                    break;
-                case 2:
-                    craneTargetPosition = CRANE_LOWOUTTAKE_POSITION;
-                    wrist.setTargetAngle(WRIST_LOWOUTTAKE_ANGLE);
-                    if (withinError(craneTargetPosition, CRANE_LOWOUTTAKE_POSITION, 10)) {
-                        outtakeIndex++;
-                    }
-                    break;
-                case 3:
-//                beaterPower = 0;
+                }
+                break;
+            case 2:
+                if (withinError(crane.getCurrentPosition(), craneTargetPosition, 5) && withinError(crane.getCurrentPosition(), craneTargetPosition, 5)) {
+                    colorSensorEnabled = true;
+                    outtakeIndex++;
+                }
+                break;
+            case 3:
+                if (!sampleDetected()) {
                     return true;
-//                slide.setTargetPosition(-1230);
-//                if(withinError(slide.getCurrentPosition(), -1230, 10))
-//                    outtakeIndex++;
-//                break;
-                case 4:
-                    return true;
-
-            }
-        } else {
-            switch (outtakeIndex) {
-                //intake
-                case 0:
-                    craneTargetPosition = CRANE_HIGHOUTTAKE_POSITION;
-                    slideTargetPosition = SLIDE_HIGHOUTTAKE_POSITION;
-                    elbow.setTargetAngle(ELBOW_HIGHOUTTAKE_ANGLE);
-                    if (withinError(crane.getCurrentPosition(), CRANE_HIGHOUTTAKE_POSITION / 4.0, 10)) {
-                        outtakeIndex++;
-                    }
-                    break;
-                case 1:
-                    if (withinError(crane.getCurrentPosition(), CRANE_HIGHOUTTAKE_POSITION / 2.0, 10)) {
-                        wrist.setTargetAngle(WRIST_HIGHOUTTAKE_ANGLE);
-                        tuckFromHighOuttake = true;
-                        outtakeIndex++;
-                    }
-                    break;
-                case 2:
-                    return true;
-                case 3:
-//                beaterPower = 0;
-                    return true;
-//                slide.setTargetPosition(-1230);
-//                if(withinError(slide.getCurrentPosition(), -1230, 10))
-//                    outtakeIndex++;
-//                break;
-                case 4:
-                    return true;
-
-            }
+                }
         }
         return false;
     }
