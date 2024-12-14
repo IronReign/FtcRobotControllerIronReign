@@ -31,7 +31,7 @@ public class Robot implements Subsystem {
 
     public boolean clawOpen = false;
     public double clawOpenPosition = 1;
-    public double clawClosePosition = 0.7;
+    public double clawClosePosition = 0.6;
     public int shoulderTargetPosition = 0;
     public int slideTargetPosition = 0;
     public int gearboxpick = 0;
@@ -43,7 +43,7 @@ public class Robot implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
-        if(gamepad1.a) {
+        /*if(gamepad1.a) {
             shoulderTargetPosition = 50;
             slideTargetPosition = 50;
             clawOpen = true;
@@ -51,18 +51,18 @@ public class Robot implements Subsystem {
 
         if(gamepad1.x){
             pickup();
-        }
+        }*/
 
-        // Claw Open
-        if (gamepad1.b) {
+        // Claw Controls
+        if(gamepad1.b) {
+            clawOpen = !clawOpen;
+        }
+        if(clawOpen) {
             claw.setPosition(clawOpenPosition);
-            clawOpen = true;
-        }
-
-        // Claw Close
-        if (gamepad1.a){
+        } else {
             claw.setPosition(clawClosePosition);
         }
+
         if(gamepad1.right_trigger >= 0.3){
             if (shoulder.getCurrentPosition() < 1200){
                 shoulderTargetPosition = shoulder.getCurrentPosition() + 75;
@@ -72,7 +72,7 @@ public class Robot implements Subsystem {
         }
         else if (gamepad1.left_trigger >= 0.3){
             if (shoulder.getCurrentPosition() > 0){
-                shoulderTargetPosition = shoulder.getCurrentPosition() - 50;
+                shoulderTargetPosition = shoulder.getCurrentPosition() - 75;
             } else {
                 shoulderTargetPosition = 0;
             }
@@ -81,14 +81,14 @@ public class Robot implements Subsystem {
 
         if (gamepad1.right_bumper){
             if (slide.getCurrentPosition() < 1450){
-                slideTargetPosition = slide.getCurrentPosition() + 40;
+                slideTargetPosition = slide.getCurrentPosition() + 60;
             } else {
                 slide.setTargetPosition(1450);
             }
         }
         if (gamepad1.left_bumper){
             if(slide.getCurrentPosition() > 0){
-                slideTargetPosition = slide.getCurrentPosition() - 40;
+                slideTargetPosition = slide.getCurrentPosition() - 60;
             } else {
                 slide.setTargetPosition(0);
             }
