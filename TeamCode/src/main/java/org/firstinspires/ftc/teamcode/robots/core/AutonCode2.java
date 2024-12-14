@@ -27,18 +27,19 @@ Diameter of wheel: 4 in
 C = 4pi = 12.566 in
 (Distance to travel / 12.566 in)*1440
  */
-/*
+
 @Autonomous(name = "COREAUTON2")
 public class AutonCode2 extends OpMode {
     Robot robot;
     private FtcDashboard dashboard;
     BNO055IMU imu;
-    public static int autonIndex = 1;
+    public static int autonIndex = 0;
     long autonTimer = 0;
-    int gpos = 10;
-    int spos = 1200;
+    int gpos = 325;
+    int spos = 825;
     float initialzOrientation = 0;
     float nowOrientation = 0;
+    int startpos = 0;
 
     @Override
     public void init() {
@@ -53,6 +54,8 @@ public class AutonCode2 extends OpMode {
         robot.shoulder = hardwareMap.get(DcMotorEx.class, "gearbox");
         robot.claw = hardwareMap.get(Servo.class, "claw");
         robot.slide = hardwareMap.get(DcMotorEx.class, "slide");
+        robot.vertical = hardwareMap.get(DcMotorEx.class, "vertical");
+        robot.horizontal = hardwareMap.get(DcMotorEx.class, "horizontal");
 
         // Restart motors
         robot.leftBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -63,13 +66,15 @@ public class AutonCode2 extends OpMode {
         robot.rightFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         robot.shoulder.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         robot.slide.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        robot.vertical.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        robot.horizontal.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
-        robot.gearbox.setPower(10);
-        robot.gearbox.setVelocity(50);
-        robot.gearbox.setTargetPosition(robot.gearboxTargetPosition);
-        robot.gearbox.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        robot.shoulder.setPower(1);
+        robot.shoulder.setVelocity(50);
+        robot.shoulder.setTargetPosition(robot.shoulderTargetPosition);
+        robot.shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
-        robot.slide.setPower(10);
+        robot.slide.setPower(1);
         robot.slide.setVelocity(50);
         robot.slide.setTargetPosition(robot.slideTargetPosition);
         robot.slide.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
@@ -78,6 +83,8 @@ public class AutonCode2 extends OpMode {
         robot.leftBack.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         robot.rightFront.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         robot.rightBack.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        robot.horizontal.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        robot.vertical.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
         robot.claw.setPosition(robot.clawOpenPosition);
 
@@ -89,26 +96,36 @@ public class AutonCode2 extends OpMode {
     public void loop() {
         switch(autonIndex){
             // Start the robot one tile away facing the bucket with side touching wall
-            case 1:
+            case 0:
                 // Move forward
+                startpos = robot.vertical.getCurrentPosition();
                 robot.mecanumDrive(1,0,0);
 
                 // (5.625/12.566)*1440 (1/4 of a tile)
-                if (robot.leftFront.getCurrentPosition() >= 644){
+                if (robot.vertical.getCurrentPosition() >= (startpos+100)){
+                    autonIndex++;
+                }
+                break;
+/*
+            case 1:
+                startpos = robot.horizontal.getCurrentPosition();
+                robot.mecanumDrive(0, 0, -1);
+
+                if (robot.vertical.getCurrentPosition() >= (startpos+10)){
                     autonIndex++;
                 }
                 break;
 
             case 2:
-                // Gotta Adjust on Wed (repeat in case 8)
+                // Gotta Adjust (repeat in case 8)
                 // Angle gearbox
-                robot.gearbox.setTargetPosition(gpos);
+                robot.shoulder.setTargetPosition(gpos);
                 // Extend Slide
                 robot.slide.setTargetPosition(spos);
                 // Open claw
                 robot.claw.setPosition(robot.clawOpenPosition);
 
-                if (robot.gearbox.getCurrentPosition()==gpos && robot.slide.getCurrentPosition()==spos && robot.claw.getPosition()==robot.clawOpenPosition) {
+                if (robot.shoulder.getCurrentPosition()==gpos && robot.slide.getCurrentPosition()==spos && robot.claw.getPosition()==robot.clawOpenPosition) {
                     autonIndex++;
                 }
 
@@ -138,13 +155,13 @@ public class AutonCode2 extends OpMode {
                 // Picks up block
                 robot.pickup();
 
-                if (robot.gearbox.getCurrentPosition()==robot.gearboxpick && robot.claw.getPosition()==robot.clawClosePosition) {
+                if (robot.shoulder.getCurrentPosition()==robot.gearboxpick && robot.claw.getPosition()==robot.clawClosePosition) {
                     autonIndex++;
                 }
                 break;
 
             case 6:
-               // Move backwards
+                // Move backwards
                 robot.mecanumDrive(-1,0,0);
 
                 // (45/12.566)*1440 (2 tiles)
@@ -167,12 +184,13 @@ public class AutonCode2 extends OpMode {
 
             case 8:
                 // Angle gearbox
-                robot.gearbox.setTargetPosition(10);
+                robot.shoulder.setTargetPosition(10);
                 // Extend Slide
                 robot.slide.setTargetPosition(1200);
                 // Open claw
                 robot.claw.setPosition(robot.clawOpenPosition);
                 break;
+ */
 
             default:
                 break;
@@ -205,4 +223,3 @@ public class AutonCode2 extends OpMode {
     }
 
 }
-*/
