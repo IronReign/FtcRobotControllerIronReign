@@ -6,6 +6,7 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -258,16 +259,18 @@ public class Robot implements Subsystem {
     }
 
     public static int calibrateIndex = 0;
+    public long calibrateTimer = 0;
     public boolean calibrate() {
         calibrating = true;
         switch (calibrateIndex) {
             case 1:
+                calibrateTimer = futureTime(1);
                 trident.crane.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 trident.crane.setPower(-.3);
                 calibrateIndex++;
 
             case 2:
-                if(Trident.CRANE_CALIBRATE_ENCODER == trident.crane.getCurrentPosition()) {
+                if(Trident.CRANE_CALIBRATE_ENCODER == trident.crane.getCurrentPosition() && isPast(calibrateTimer)) {
                     calibrateIndex++;
                 }
                 else {
@@ -285,7 +288,8 @@ public class Robot implements Subsystem {
                 if(withinError(trident.crane.getCurrentPosition(), 835, 3)) {
                     trident.crane.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     trident.crane.setDirection(DcMotorSimple.Direction.REVERSE);
-                    trident.crane.setPower(.5);
+                    trident.crane.setPower(1);
+                    trident.crane.setVelocity(400);
                     trident.crane.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     calibrateIndex++;
                 }
@@ -340,7 +344,6 @@ public class Robot implements Subsystem {
                 break;
             case OUTTAKE:
                 if(outtake())
-
                     articulation = Articulation.MANUAL;
                 break;
         }
@@ -358,6 +361,7 @@ public class Robot implements Subsystem {
             case 1:
                 if(trident.articulation == Trident.Articulation.MANUAL) {
                     Trident.enforceSlideLimits = true;
+                    outtakeIndex = 0;
                     return true;
                 }
                 break;

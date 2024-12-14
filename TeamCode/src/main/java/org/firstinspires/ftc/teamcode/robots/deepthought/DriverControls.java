@@ -75,6 +75,7 @@ public class DriverControls {
         }
 //
         if(stickyGamepad1.b) {
+            robot.outtakeIndex = 0;
             Trident.outtakeIndex = 0;
             robot.articulate(Robot.Articulation.OUTTAKE);
         }

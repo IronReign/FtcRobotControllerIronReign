@@ -67,10 +67,10 @@ public class Trident implements Subsystem {
     public static int slidePositionMax = 3800;
     public static int slidePositionMin = 0;
     private static final int SLIDE_INTAKE_MIN_POSITION = 200;
-    private static final int SLIDE_PREINTAKE_POSITION = 500;
+    private static final int SLIDE_PREINTAKE_POSITION = 900;
     public static int SLIDE_LOWOUTTAKE_POSITION = 320;
-    public static int SLIDE_HIGHOUTTAKE_POSITION = 2480;
-    public static int slideSpeed = 80;
+    public static int SLIDE_HIGHOUTTAKE_POSITION = 2160;
+     public static int slideSpeed = 80;
     public static double SLIDE_SPEED = 1500;
 
 
@@ -81,11 +81,11 @@ public class Trident implements Subsystem {
     public static int craneSpeed = 15;
     public static int CRANE_INTAKE_POSITION = 30;
     public static int CRANE_LOWOUTTAKE_POSITION = 420;
-    public static int CRANE_HIGHOUTTAKE_POSITION = 685;
+    public static int CRANE_HIGHOUTTAKE_POSITION = 740;
     public int cranePositionMax = 850;
 
     //ELBOW JOINT VARIABLES
-    public static double ELBOW_START_ANGLE = 149;
+    public static double ELBOW_START_ANGLE = 145;
     public static int ELBOW_HOME_POSITION = 2050;
     public static double ELBOW_PWM_PER_DEGREE = -5.672222222222222;
     public static double ELBOW_JOINT_SPEED = 120;
@@ -94,7 +94,7 @@ public class Trident implements Subsystem {
     public static int ELBOW_ADJUST_ANGLE = 5;
     public static double ELBOW_PREINTAKE_ANGLE = 34;
     public static double ELBOW_LOWOUTTAKE_ANGLE = 102;
-    public static double ELBOW_HIGHOUTTAKE_ANGLE = 60;
+    public static double ELBOW_HIGHOUTTAKE_ANGLE = 20;
 
 
     //WRIST JOINT VARIABLES
@@ -164,25 +164,25 @@ public class Trident implements Subsystem {
     public static int tuckIndex = 0;
 
     public boolean tuck() {
-            switch (tuckIndex) {
-                case 0:
-                    tuckTimer = futureTime(.7);
-                    elbow.setTargetAngle(ELBOW_START_ANGLE);
-                    beaterPower = 0;
+        switch (tuckIndex) {
+            case 0:
+                tuckTimer = futureTime(.7);
+                elbow.setTargetAngle(ELBOW_START_ANGLE);
+                beaterPower = 0;
+                tuckIndex++;
+                break;
+            case 1:
+                if (isPast(tuckTimer)) {
+                    slideTargetPosition = 0;
                     tuckIndex++;
-                    break;
-                case 1:
-                    if (isPast(tuckTimer)) {
-                        slideTargetPosition = 0;
-                        tuckIndex++;
-                    }
-                    break;
-                case 2:
-                    if(slideTargetPosition < 250) {
-                        craneTargetPosition = 0;
-                        return true;
-                    }
-            }
+                }
+                break;
+            case 2:
+                if (slideTargetPosition < 250) {
+                    craneTargetPosition = 0;
+                    return true;
+                }
+        }
         return false;
     }
 
@@ -209,10 +209,11 @@ public class Trident implements Subsystem {
                 }
                 break;
             case 3:
-                if (slideTargetPosition > SLIDE_INTAKE_MIN_POSITION) {
-                    slideTargetPosition -= 10;
-                }
+//                if (slideTargetPosition > SLIDE_INTAKE_MIN_POSITION) {
+//                    slideTargetPosition -= 10;
+//                }
                 if (stopOnSample()) {
+                    intakeIndex = 0;
                     return true;
                 }
                 break;
@@ -233,12 +234,12 @@ public class Trident implements Subsystem {
             case 1:
                 if (isPast(outtakeTimer)) {
                     craneTargetPosition = preferHighOuttake ? CRANE_HIGHOUTTAKE_POSITION : CRANE_LOWOUTTAKE_POSITION;
-                    slideTargetPosition = preferHighOuttake ? SLIDE_HIGHOUTTAKE_POSITION : SLIDE_LOWOUTTAKE_POSITION;
                     outtakeIndex++;
                 }
                 break;
             case 2:
-                if (withinError(crane.getCurrentPosition(), craneTargetPosition, 5) && withinError(crane.getCurrentPosition(), craneTargetPosition, 5)) {
+                if (withinError(crane.getCurrentPosition(), craneTargetPosition, 5)) {
+                    slideTargetPosition = preferHighOuttake ? SLIDE_HIGHOUTTAKE_POSITION : SLIDE_LOWOUTTAKE_POSITION;
                     colorSensorEnabled = true;
                     outtakeIndex++;
                 }
@@ -269,7 +270,7 @@ public class Trident implements Subsystem {
         return targetSamples.contains(currentSample);
     }
 
-    public boolean stopOnSample() {
+    public boolean  stopOnSample() {
         colorSensorEnabled = true;
         beaterPower = 1;
         if (targetSamples.contains(currentSample)) {
@@ -375,7 +376,8 @@ public class Trident implements Subsystem {
 
     @Override
     public void stop() {
-        slide.setMotorDisable();beater.setPower(Utils.servoNormalize(1500));
+        slide.setMotorDisable();
+        beater.setPower(Utils.servoNormalize(1500));
     }
 
     public String HSVasString() {
