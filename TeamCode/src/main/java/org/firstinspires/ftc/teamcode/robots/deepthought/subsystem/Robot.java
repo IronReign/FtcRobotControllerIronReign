@@ -49,6 +49,8 @@ public class Robot implements Subsystem {
     public static boolean updatePositionCache = false;
     public static boolean frontVision = false;
 
+    public boolean calibrarting = false;
+
     public PositionCache positionCache;
     public DTPosition currPosition;
 
@@ -257,15 +259,19 @@ public class Robot implements Subsystem {
 
     public static int calibrateIndex = 0;
     public boolean calibrate() {
+        calibrarting = true;
         switch (calibrateIndex) {
             case 1:
-                trident.crane.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                trident.crane.setPower(-.2);
+                trident.crane.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                trident.crane.setPower(-.3);
                 calibrateIndex++;
 
             case 2:
-                if(trident.crane.getCurrent(CurrentUnit.AMPS) > Trident.CRANE_STALL_THRESHOLD) {
+                if(Trident.CRANE_CALIBRATE_ENCODER == trident.crane.getCurrentPosition()) {
                     calibrateIndex++;
+                }
+                else {
+                    Trident.CRANE_CALIBRATE_ENCODER = trident.crane.getCurrentPosition();
                 }
                 break;
             case 3:
@@ -282,6 +288,7 @@ public class Robot implements Subsystem {
                     trident.crane.setPower(1);
                     trident.crane.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     calibrateIndex++;
+                    calibrarting = false;
                     return true;
                 }
                 break;
@@ -371,6 +378,7 @@ public class Robot implements Subsystem {
         telemetryMap.put("Articulation", articulation);
         telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
         telemetryMap.put("initPositionIndex", calibrateIndex);
+        telemetryMap.put("calibrating", calibrarting);
         telemetryMap.put("Vision On/Vision Provider Finalized", visionOn + " " + visionProviderFinalized);
         telemetryMap.put("april tag relocalization point", "(" + aprilTagRelocalizationX + ", " + aprilTagRelocalizationY + ")");
         telemetryMap.put("april tag pose", "(" + aprilTagPose.position.x * 39.37 + ", " + aprilTagPose.position.y * 39.37 + ")");

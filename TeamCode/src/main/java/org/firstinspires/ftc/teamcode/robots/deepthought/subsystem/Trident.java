@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem;
 
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.calibrated;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
@@ -10,6 +9,7 @@ import android.graphics.Color;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -17,9 +17,11 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DcMotorExResetable;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils;
 
 import java.util.*;
 
@@ -43,6 +45,8 @@ public class Trident implements Subsystem {
 
     public static int colorSensorGain = 12;
 
+    public boolean calibrated = false;
+
     public void intakeSlideLimits() {
         if (slideTargetPosition > slidePositionMax) slideTargetPosition = slidePositionMax;
         if (slideTargetPosition < slidePositionMin) slideTargetPosition = slidePositionMin;
@@ -60,7 +64,7 @@ public class Trident implements Subsystem {
     public static boolean preferHighOuttake = true;
     //SLIDE
     public static int slideTargetPosition = 0;
-    public static int slidePositionMax = 640;
+    public static int slidePositionMax = 3800;
     public static int slidePositionMin = 0;
     private static final int SLIDE_INTAKE_MIN_POSITION = 200;
     private static final int SLIDE_PREINTAKE_POSITION = 500;
@@ -71,13 +75,14 @@ public class Trident implements Subsystem {
 
 
     //CRANE
-    public static double CRANE_STALL_THRESHOLD = 2;
+    public static double CRANE_STALL_THRESHOLD = 4.5;
+    public static int CRANE_CALIBRATE_ENCODER = Integer.MIN_VALUE;
     public int craneTargetPosition = 0;
     public static int craneSpeed = 15;
     public static int CRANE_INTAKE_POSITION = 30;
     public static int CRANE_LOWOUTTAKE_POSITION = 420;
     public static int CRANE_HIGHOUTTAKE_POSITION = 675;
-    public int cranePositionMax = 700;
+    public int cranePositionMax = 850;
 
     //ELBOW JOINT VARIABLES
     public static double ELBOW_START_ANGLE = 189;
@@ -320,6 +325,7 @@ public class Trident implements Subsystem {
         pincer = this.hardwareMap.get(Servo.class, "pincer");
         slide.setMotorEnable();
         slide.setPower(1);
+        slide.setDirection(DcMotorSimple.Direction.REVERSE);
         slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         slide.setTargetPosition(0);
         slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -332,6 +338,7 @@ public class Trident implements Subsystem {
         crane.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         crane.setVelocity(1500);
         articulation = Articulation.MANUAL;
+        CRANE_CALIBRATE_ENCODER = Integer.MIN_VALUE;
     }
 
     public void adjustElbow(double angle) {
@@ -394,7 +401,7 @@ public class Trident implements Subsystem {
 
     @Override
     public void stop() {
-        slide.setMotorDisable();
+        slide.setMotorDisable();beater.setPower(Utils.servoNormalize(1500));
     }
 
     public String HSVasString() {

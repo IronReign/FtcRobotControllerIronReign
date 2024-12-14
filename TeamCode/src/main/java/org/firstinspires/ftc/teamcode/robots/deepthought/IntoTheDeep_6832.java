@@ -36,7 +36,6 @@ public class IntoTheDeep_6832 extends OpMode {
     private boolean initializing;
     public static boolean initPosition = false;
     public static boolean ignoreCachePosition = false;
-    public static boolean calibrated = false;
 
     //GAMESTATES
     public enum GameState {
@@ -114,7 +113,6 @@ public class IntoTheDeep_6832 extends OpMode {
 
     @Override
     public void init() {
-        calibrated = false;
         Robot.calibrateIndex = 0;
         telemetry.addData("Status", "Hold right_trigger to enable debug mode");
         telemetry.update();
@@ -135,6 +133,7 @@ public class IntoTheDeep_6832 extends OpMode {
         field = new Field();
 
         robot.updatePositionCache = false;
+        robot.trident.calibrated = false;
         robot.driveTrain.setPose(startingPosition);
 
         //TELEMETRY SETUP
@@ -157,9 +156,9 @@ public class IntoTheDeep_6832 extends OpMode {
         dc.robotOrientedDrive();
         if (gameState.isAutonomous()) {
             robot.preloadAllianceSelect();
-            if(!calibrated) {
+            if(!robot.trident.calibrated) {
                 if(robot.calibrate())
-                    calibrated = true;
+                    robot.trident.calibrated = true;
             }
         }
 //        initVision();
@@ -170,7 +169,7 @@ public class IntoTheDeep_6832 extends OpMode {
         telemetry.addData("Alliance", alliance);
         telemetry.addData("startingPosition", startingPosition);
         telemetry.addData("initPositionIndex", Robot.calibrateIndex);
-        telemetry.addData("calibrated", calibrated);
+        telemetry.addData("calibrated", robot.trident.calibrated);
 
         robot.driveTrain.updatePoseEstimate();
 
@@ -194,7 +193,7 @@ public class IntoTheDeep_6832 extends OpMode {
         //FETCH CACHE
         robot.fetchCachedDTPosition();
         if (gameState.equals(GameState.TELE_OP)) {
-            calibrated = true;
+            robot.trident.calibrated = true;
             robot.driveTrain.setPose(startingPosition);
         }
         field.finalizeField(alliance);
@@ -219,7 +218,7 @@ public class IntoTheDeep_6832 extends OpMode {
         }
 
         if (gameState.equals(GameState.TEST) || gameState.equals(GameState.DEMO)) {
-            calibrated = true;
+            robot.trident.calibrated = true;
         }
 
         robot.start();
