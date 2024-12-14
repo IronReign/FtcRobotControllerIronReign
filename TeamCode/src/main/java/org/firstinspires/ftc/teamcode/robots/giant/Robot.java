@@ -150,19 +150,19 @@ public class Robot implements Subsystem {
         extend=7850;
     }
     public void rotateUpBar(){
-        rotate=1420;
+        rotate=1470+80;
     }
     public void aim(){
-        rotate=1265;
+        rotate=1295;
     }
     public void safeRotate() {
         extend=3200;
     }
     public void reach() {
-        extend=5460;
+        extend=7780; //5460
     }
     public void pull() {
-        extend=4750;
+        extend=4450;
     }
     public int getClaw() {
         return clawTicks;
@@ -187,7 +187,7 @@ public class Robot implements Subsystem {
     public void doit() {
 
         extend=2110;
-        rotate=1450;
+        rotate=1550;
     }
     public void attatch(){
         extend=5;

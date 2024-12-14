@@ -21,10 +21,12 @@ import java.util.Map;
 public class GiantAuton extends OpMode {
 
     public static double FORWARD=.69;
-    public static double L=.91;    //.91
-    public static double TURN_FORWARD_1 = .6;
-    public static double BACK=.3;
+    public static double L=.938;    //.91
+    public static double TURN_FORWARD_1 = .8;
+    public static double BACK=.45;   //.3
     public static double TIME=.1;
+    public static double SLAM=2.5;
+    public static double PLEASE=.4;
 
             ; //experiment and fix
     Robot robot;
@@ -64,7 +66,7 @@ public class GiantAuton extends OpMode {
                 }
                 break;
             case 2:
-                if(robot.getRotate()>1390){
+                if(robot.getRotate()>(1390+80)){
                     autonTimer = futureTime(TURN_FORWARD_1);
                     robot.unstickArm();
 
@@ -72,27 +74,30 @@ public class GiantAuton extends OpMode {
                 }
                 break;
             case 3:
-                if(robot.getExtend()>7750){
+                if(robot.getExtend()>7800){
                     robot.reach();
 
                     autonIndex++;
                 }
                 break;
             case 4:
-                if(isPast(autonTimer)) {
+                if(robot.getExtend()<7785) {
+                    autonTimer=futureTime(PLEASE);
+                    robot.setShoulderSpeed(.4);
                     robot.aim();
                     autonIndex++;
                 }
                 break;
             case 5:
-                if(robot.getRotate()<1280) {
+                if(isPast(autonTimer)) {
                     autonTimer=futureTime(TIME);
                     robot.pull();
+                    robot.setShoulderSpeed(1);
                     autonIndex++;
                 }
                 break;
             case 6:
-                if(robot.getExtend()<4760) {
+                if(robot.getExtend()<4500) {
                     autonTimer=futureTime(BACK);
                     robot.dropBlock();
                     robot.setDrive(.6,0,0);
@@ -116,7 +121,10 @@ public class GiantAuton extends OpMode {
                 break;
             case 9:
                 if(robot.getRotate()<10){
+                   // autonTimer=futureTime(SLAM);
                     robot.setShoulderSpeed(1);
+                   // robot.setDrive(0,-.8,0);
+                    //autonIndex++;
                 }
 
                 break;

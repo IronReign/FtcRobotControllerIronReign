@@ -93,7 +93,12 @@ public class giantOpMode extends OpMode {
         {
             robot.setStop(true);
         }
-
+//        if(g1.left_trigger){
+//            robot.setDrive(.5*gamepad1.left_stick_y,.5*-gamepad1.left_stick_x,-gamepad1.right_stick_x);
+//        }
+//        if(g1.right_trigger){
+//            robot.setDrive(gamepad1.left_stick_y,-gamepad1.left_stick_x,-gamepad1.right_stick_x);
+//        }
 
         robot.setDrive(gamepad1.left_stick_y,-gamepad1.left_stick_x,-gamepad1.right_stick_x);
 
