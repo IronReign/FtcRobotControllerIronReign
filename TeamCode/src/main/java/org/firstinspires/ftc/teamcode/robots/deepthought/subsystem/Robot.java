@@ -14,10 +14,10 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
@@ -49,7 +49,7 @@ public class Robot implements Subsystem {
     public static boolean updatePositionCache = false;
     public static boolean frontVision = false;
 
-    public boolean calibrarting = false;
+    public boolean calibrating = false;
 
     public PositionCache positionCache;
     public DTPosition currPosition;
@@ -250,8 +250,8 @@ public class Robot implements Subsystem {
                 if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
                     //apply cached position
                     driveTrain.pose = fetchedPosition.getPose();
-                    trident.crane.setPosition(fetchedPosition.getCranePosition());
-                    trident.slide.setPosition(fetchedPosition.getSlidePosition());
+//                    trident.crane.setPosition(fetchedPosition.getCranePosition());
+//                    trident.slide.setPosition(fetchedPosition.getSlidePosition());
                 }
             }
         }
@@ -259,7 +259,7 @@ public class Robot implements Subsystem {
 
     public static int calibrateIndex = 0;
     public boolean calibrate() {
-        calibrarting = true;
+        calibrating = true;
         switch (calibrateIndex) {
             case 1:
                 trident.crane.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -276,24 +276,26 @@ public class Robot implements Subsystem {
                 break;
             case 3:
                 trident.crane.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                trident.crane.setTargetPosition(841);
+                trident.crane.setTargetPosition(835);
                 trident.crane.setPower(1);
                 trident.crane.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 calibrateIndex++;
 
             case 4:
-                if(withinError(trident.crane.getCurrentPosition(), 841, 3)) {
+                if(withinError(trident.crane.getCurrentPosition(), 835, 3)) {
                     trident.crane.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    trident.crane.setTargetPosition(400);
-                    trident.crane.setPower(1);
+                    trident.crane.setDirection(DcMotorSimple.Direction.REVERSE);
+                    trident.crane.setPower(.5);
                     trident.crane.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     calibrateIndex++;
-                    calibrarting = false;
-                    return true;
                 }
                 break;
             case 5:
-                break;
+                trident.craneTargetPosition = 300;
+                calibrateIndex++;
+                calibrating = false;
+                return true;
+
 
         }
         return false;
@@ -332,6 +334,9 @@ public class Robot implements Subsystem {
                 break;
             case TRAVEL:
                 trident.articulate(Trident.Articulation.TUCK);
+                if(trident.articulation == Trident.Articulation.MANUAL) {
+                    articulation = Articulation.MANUAL;
+                }
                 break;
             case OUTTAKE:
                 if(outtake())
@@ -378,7 +383,7 @@ public class Robot implements Subsystem {
         telemetryMap.put("Articulation", articulation);
         telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
         telemetryMap.put("initPositionIndex", calibrateIndex);
-        telemetryMap.put("calibrating", calibrarting);
+        telemetryMap.put("calibrating", calibrating);
         telemetryMap.put("Vision On/Vision Provider Finalized", visionOn + " " + visionProviderFinalized);
         telemetryMap.put("april tag relocalization point", "(" + aprilTagRelocalizationX + ", " + aprilTagRelocalizationY + ")");
         telemetryMap.put("april tag pose", "(" + aprilTagPose.position.x * 39.37 + ", " + aprilTagPose.position.y * 39.37 + ")");

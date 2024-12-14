@@ -70,7 +70,7 @@ public class DriverControls {
         }
 //
         if(stickyGamepad1.a) {
-            Trident.outtakeIndex = 0;
+            Trident.intakeIndex = 0;
             robot.articulate(Robot.Articulation.INTAKE);
         }
 //
@@ -79,6 +79,14 @@ public class DriverControls {
             robot.articulate(Robot.Articulation.OUTTAKE);
         }
 
+        if(stickyGamepad1.x) {
+            robot.trident.beaterPower = robot.trident.beaterPower == 1 ? 0 : 1;
+        }
+
+        if(stickyGamepad1.y) {
+            Trident.tuckIndex = 0;
+            robot.articulate(Robot.Articulation.TRAVEL);
+        }
 
         if (stickyGamepad1.start) {
             Trident.colorSensorEnabled = !colorSensorEnabled;

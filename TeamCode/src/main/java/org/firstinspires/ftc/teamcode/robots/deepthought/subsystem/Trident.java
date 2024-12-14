@@ -68,8 +68,8 @@ public class Trident implements Subsystem {
     public static int slidePositionMin = 0;
     private static final int SLIDE_INTAKE_MIN_POSITION = 200;
     private static final int SLIDE_PREINTAKE_POSITION = 500;
-    public static int SLIDE_LOWOUTTAKE_POSITION = 1280;
-    public static int SLIDE_HIGHOUTTAKE_POSITION = 1280;
+    public static int SLIDE_LOWOUTTAKE_POSITION = 320;
+    public static int SLIDE_HIGHOUTTAKE_POSITION = 2480;
     public static int slideSpeed = 80;
     public static double SLIDE_SPEED = 1500;
 
@@ -81,11 +81,11 @@ public class Trident implements Subsystem {
     public static int craneSpeed = 15;
     public static int CRANE_INTAKE_POSITION = 30;
     public static int CRANE_LOWOUTTAKE_POSITION = 420;
-    public static int CRANE_HIGHOUTTAKE_POSITION = 675;
+    public static int CRANE_HIGHOUTTAKE_POSITION = 685;
     public int cranePositionMax = 850;
 
     //ELBOW JOINT VARIABLES
-    public static double ELBOW_START_ANGLE = 189;
+    public static double ELBOW_START_ANGLE = 149;
     public static int ELBOW_HOME_POSITION = 2050;
     public static double ELBOW_PWM_PER_DEGREE = -5.672222222222222;
     public static double ELBOW_JOINT_SPEED = 120;
@@ -161,54 +161,28 @@ public class Trident implements Subsystem {
     }
 
     public long tuckTimer = 0;
-    public int tuckIndex = 0;
+    public static int tuckIndex = 0;
 
     public boolean tuck() {
-        if (!tuckFromHighOuttake) {
             switch (tuckIndex) {
                 case 0:
-                    craneTargetPosition = 0;
-                    slideTargetPosition = 0;
-                    beaterPower = 0;
-                    if (withinError(crane.getCurrentPosition(), 0, 10)) {
-                        tuckIndex++;
-                        ELBOW_JOINT_SPEED = 40;
-                    }
-                    break;
-                case 1:
-                    elbow.setTargetAngle(ELBOW_START_ANGLE);
-                    wrist.setTargetAngle(WRIST_START_ANGLE);
-                    if (withinError(elbow.getCurrentAngle(), ELBOW_START_ANGLE, 5) && withinError(wrist.getCurrentAngle(), WRIST_START_ANGLE, 5)) {
-                        tuckIndex++;
-                        ELBOW_JOINT_SPEED = 60;
-                    }
-                    break;
-                case 2:
-                    return true;
-            }
-        } else {
-            switch (tuckIndex) {
-                case 0:
-                    tuckTimer = futureTime(1.5);
-                    wrist.setTargetAngle(WRIST_START_ANGLE);
+                    tuckTimer = futureTime(.7);
                     elbow.setTargetAngle(ELBOW_START_ANGLE);
                     beaterPower = 0;
                     tuckIndex++;
                     break;
                 case 1:
                     if (isPast(tuckTimer)) {
-                        craneTargetPosition = 0;
                         slideTargetPosition = 0;
                         tuckIndex++;
-                        tuckFromHighOuttake = false;
                     }
                     break;
                 case 2:
-                    if (withinError(crane.getCurrentPosition(), 0, 10)) {
+                    if(slideTargetPosition < 250) {
+                        craneTargetPosition = 0;
                         return true;
                     }
             }
-        }
         return false;
     }
 
@@ -252,14 +226,14 @@ public class Trident implements Subsystem {
     public boolean outtake() {
         switch (outtakeIndex) {
             case 0:
-                outtakeTimer = futureTime(2);
+                outtakeTimer = futureTime(.7);
                 elbow.setTargetAngle(preferHighOuttake ? ELBOW_HIGHOUTTAKE_ANGLE : ELBOW_LOWOUTTAKE_ANGLE);
                 outtakeIndex++;
                 break;
             case 1:
                 if (isPast(outtakeTimer)) {
                     craneTargetPosition = preferHighOuttake ? CRANE_HIGHOUTTAKE_POSITION : CRANE_LOWOUTTAKE_POSITION;
-                    slideTargetPosition = preferHighOuttake ? SLIDE_LOWOUTTAKE_POSITION : SLIDE_HIGHOUTTAKE_POSITION;
+                    slideTargetPosition = preferHighOuttake ? SLIDE_HIGHOUTTAKE_POSITION : SLIDE_LOWOUTTAKE_POSITION;
                     outtakeIndex++;
                 }
                 break;
