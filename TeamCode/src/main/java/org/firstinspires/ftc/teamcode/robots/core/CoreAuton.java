@@ -14,7 +14,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.robots.csbot.Field;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 
-
+/*
 @Autonomous
 public class CoreAuton extends OpMode {
     HardwareMap hardwareMap;
@@ -207,7 +207,7 @@ public class CoreAuton extends OpMode {
                     autonIndex++;
                     //autonIndex=autonIndex-13;
                     //adjust_time = 0.75;
-                }*/
+                }
 
             default:
                 break;
@@ -271,7 +271,7 @@ public class CoreAuton extends OpMode {
                 slide.setTargetPosition(slideTargetPosition);
             }
             i++;
-        }*/
+        }
     }
 }
-
+*/

@@ -27,6 +27,7 @@ Diameter of wheel: 4 in
 C = 4pi = 12.566 in
 (Distance to travel / 12.566 in)*1440
  */
+/*
 @Autonomous(name = "COREAUTON2")
 public class AutonCode2 extends OpMode {
     Robot robot;
@@ -49,7 +50,7 @@ public class AutonCode2 extends OpMode {
         robot.leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         robot.rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
         robot.rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-        robot.gearbox = hardwareMap.get(DcMotorEx.class, "gearbox");
+        robot.shoulder = hardwareMap.get(DcMotorEx.class, "gearbox");
         robot.claw = hardwareMap.get(Servo.class, "claw");
         robot.slide = hardwareMap.get(DcMotorEx.class, "slide");
 
@@ -60,7 +61,7 @@ public class AutonCode2 extends OpMode {
         robot.leftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         robot.leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         robot.rightFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        robot.gearbox.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        robot.shoulder.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         robot.slide.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
         robot.gearbox.setPower(10);
@@ -204,3 +205,4 @@ public class AutonCode2 extends OpMode {
     }
 
 }
+*/
