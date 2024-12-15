@@ -73,10 +73,10 @@ public class AutonCode2 extends OpMode {
         robot.slide.setTargetPosition(robot.slideTargetPosition);
         robot.slide.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
-        robot.leftFront.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-        robot.leftBack.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-        robot.rightFront.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-        robot.rightBack.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        robot.leftFront.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        robot.leftBack.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        robot.rightFront.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        robot.rightBack.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         robot.horizontal.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         robot.vertical.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
