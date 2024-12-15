@@ -1,13 +1,11 @@
 package org.firstinspires.ftc.teamcode.robots.core;
 
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -20,26 +18,22 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/*
-Odometry pod has 1440 ticks
-Diameter of wheel: 4 in
-
-C = 4pi = 12.566 in
-(Distance to travel / 12.566 in)*1440
- */
-
 @Autonomous(name = "COREAUTON2")
 public class AutonCode2 extends OpMode {
     Robot robot;
-    private FtcDashboard dashboard;
     BNO055IMU imu;
+    private FtcDashboard dashboard;
     public static int autonIndex = 0;
-    long autonTimer = 0;
-    int gpos = 325;
-    int spos = 825;
+    int startpos = 0;
     float initialzOrientation = 0;
     float nowOrientation = 0;
-    int startpos = 0;
+
+    /*
+    Notes to Self:
+    - IMU is used for rotation
+    - Encoder ticks are used for forward and strafing movements
+     */
+
 
     @Override
     public void init() {
@@ -79,10 +73,10 @@ public class AutonCode2 extends OpMode {
         robot.slide.setTargetPosition(robot.slideTargetPosition);
         robot.slide.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
-        robot.leftFront.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        robot.leftBack.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        robot.rightFront.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        robot.rightBack.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        robot.leftFront.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        robot.leftBack.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        robot.rightFront.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        robot.rightBack.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         robot.horizontal.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         robot.vertical.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
@@ -90,112 +84,6 @@ public class AutonCode2 extends OpMode {
 
         // Init IMU
         initIMU();
-    }
-
-    @Override
-    public void loop() {
-        switch(autonIndex){
-            // Start the robot one tile away facing the bucket with side touching wall
-            case 0:
-                // Move forward
-                startpos = robot.vertical.getCurrentPosition();
-                robot.mecanumDrive(1,0,0);
-
-                // (5.625/12.566)*1440 (1/4 of a tile)
-                if (robot.vertical.getCurrentPosition() >= (startpos+100)){
-                    autonIndex++;
-                }
-                break;
-/*
-            case 1:
-                startpos = robot.horizontal.getCurrentPosition();
-                robot.mecanumDrive(0, 0, -1);
-
-                if (robot.vertical.getCurrentPosition() >= (startpos+10)){
-                    autonIndex++;
-                }
-                break;
-
-            case 2:
-                // Gotta Adjust (repeat in case 8)
-                // Angle gearbox
-                robot.shoulder.setTargetPosition(gpos);
-                // Extend Slide
-                robot.slide.setTargetPosition(spos);
-                // Open claw
-                robot.claw.setPosition(robot.clawOpenPosition);
-
-                if (robot.shoulder.getCurrentPosition()==gpos && robot.slide.getCurrentPosition()==spos && robot.claw.getPosition()==robot.clawOpenPosition) {
-                    autonIndex++;
-                }
-
-                break;
-
-            case 3:
-                // Turn 90 degrees
-                initialzOrientation = getZorient();
-                robot.mecanumDrive(0, 0, 1);
-                nowOrientation = getZorient();
-                if (Math.abs(initialzOrientation - nowOrientation) >= 90){
-                    autonIndex ++;
-                }
-                break;
-
-            case 4:
-                // Move forward
-                robot.mecanumDrive(1,0,0);
-
-                // (45/12.566)*1440 (2 tiles)
-                if (robot.leftFront.getCurrentPosition() >= 5156){
-                    autonIndex++;
-                }
-                break;
-
-            case 5:
-                // Picks up block
-                robot.pickup();
-
-                if (robot.shoulder.getCurrentPosition()==robot.gearboxpick && robot.claw.getPosition()==robot.clawClosePosition) {
-                    autonIndex++;
-                }
-                break;
-
-            case 6:
-                // Move backwards
-                robot.mecanumDrive(-1,0,0);
-
-                // (45/12.566)*1440 (2 tiles)
-                if (robot.leftFront.getCurrentPosition() >= 5156){
-                    autonIndex++;
-                }
-                break;
-
-            case 7:
-                // Turn -90 degrees
-                initialzOrientation = getZorient();
-                robot.mecanumDrive(0, 0, -1);
-                nowOrientation = getZorient();
-
-                if (Math.abs(initialzOrientation - nowOrientation) >= 90){
-                    initialzOrientation = nowOrientation;
-                    autonIndex ++;
-                }
-                break;
-
-            case 8:
-                // Angle gearbox
-                robot.shoulder.setTargetPosition(10);
-                // Extend Slide
-                robot.slide.setTargetPosition(1200);
-                // Open claw
-                robot.claw.setPosition(robot.clawOpenPosition);
-                break;
- */
-
-            default:
-                break;
-        }
-
     }
 
     public void initIMU(){
@@ -222,4 +110,113 @@ public class AutonCode2 extends OpMode {
         return telemetry;
     }
 
+    // Wheels
+    public double wheelCircum = ((4.09449)*Math.PI);
+    public int ticksrev = 1440;
+
+    public void forward(double length, int direction){
+        // Number of encoder ticks per distance
+        int ticks = (int)((length/wheelCircum)*ticksrev);
+
+        // Reset pod encoders
+        robot.vertical.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+
+        // Move chassis motors
+        robot.mecanumDrive(direction,0,0);
+
+        // Stop after Distance is moved
+        if (Math.abs(robot.vertical.getCurrentPosition()) >= Math.abs(ticks)){
+            robot.mecanumDrive(0,0,0);
+        }
+
+    }
+
+    public void strafe(double length, int direction){
+        // Number of encoder ticks per distance
+        int ticks = (int)((length/wheelCircum)*ticksrev);
+
+        // Reset pod encoders
+        robot.horizontal.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+
+        // Move chassis motors
+        robot.mecanumDrive(0, direction,0);
+
+        // Stop after Distance is moved
+        if (Math.abs(robot.horizontal.getCurrentPosition()) >= Math.abs(ticks)){
+            robot.mecanumDrive(0,0,0);
+        }
+    }
+
+
+    @Override
+    public void loop() {
+        switch(autonIndex){
+            // Starting Position: A3 facing opposite from the bucket
+            case 0:
+                // Adjust shoulder, slide, and claw position
+                // TODO: Figure out shoulder position
+                robot.shoulder.setTargetPosition(700);
+                robot.claw.setPosition(robot.clawOpenPosition);
+                // TODO: Figure out slide position
+                robot.slide.setTargetPosition(0);
+
+            case 1:
+                // Move Forward One Tile
+                forward(24, 1);
+                autonIndex++;
+                break;
+
+            case 2:
+                // Close Claw
+                robot.claw.setPosition(robot.clawClosePosition);
+
+            case 3:
+                // Turn 90 Degrees Counter Clockwise
+                // TODO: Define turning function
+                initialzOrientation = getZorient();
+                robot.mecanumDrive(0, 0, -1);
+                nowOrientation = getZorient();
+
+                if (Math.abs(initialzOrientation - nowOrientation) >= 90){
+                    initialzOrientation = nowOrientation;
+                    autonIndex ++;
+                }
+                break;
+
+            case 4:
+                // Strafe Left
+                strafe(24, -1);
+                autonIndex++;
+                break;
+
+            case 5:
+                // Move Forward 0.75 Tile
+                forward((24*0.75), 1);
+                autonIndex++;
+                break;
+
+            case 6:
+                // Push Shoulder Down
+                robot.shoulder.setTargetPosition(robot.shoulder.getCurrentPosition() - 75);
+                autonIndex++;
+                break;
+
+            case 7:
+                // Move Forward 0.25 Tile
+                forward((24*0.25), 1);
+                autonIndex++;
+                break;
+
+            case 8:
+                // Adjust shoulder, slide, and claw position to init position
+                robot.shoulder.setTargetPosition(700);
+                robot.claw.setPosition(robot.clawOpenPosition);
+                // TODO: Figure out slide init position
+                robot.slide.setTargetPosition(0);
+
+            default:
+                break;
+        }
+
+    }
 }

@@ -167,19 +167,6 @@ public class Robot implements Subsystem {
         claw.setPosition(clawOpenPosition);
     }
 
-    public void pickup(){
-        // Move back a smidge
-        mecanumDrive(-1, 0, 0);
-
-        if (leftFront.getCurrentPosition() == 75){
-            // Angle gearbox
-            shoulder.setTargetPosition(gearboxpick);
-
-            // Close claw
-            claw.setPosition(clawClosePosition);
-        }
-    }
-
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
