@@ -25,8 +25,6 @@ public class AutonCode2 extends OpMode {
     private FtcDashboard dashboard;
     public static int autonIndex = 0;
     int startpos = 0;
-    float initialzOrientation = 0;
-    float nowOrientation = 0;
 
     /*
     Notes to Self:
@@ -113,38 +111,56 @@ public class AutonCode2 extends OpMode {
     // Wheels
     public double wheelCircum = ((4.09449)*Math.PI);
     public int ticksrev = 1440;
+    boolean moving = false;
 
     public void forward(double length, int direction){
-        // Number of encoder ticks per distance
-        int ticks = (int)((length/wheelCircum)*ticksrev);
 
-        // Reset pod encoders
-        robot.vertical.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        if (!moving){
+            // Number of encoder ticks per distance
+            int ticks = (int)((length/wheelCircum)*ticksrev);
 
-        // Move chassis motors
-        robot.mecanumDrive(direction,0,0);
+            // Assign initial encoder values
+            startpos = robot.vertical.getCurrentPosition();
 
-        // Stop after Distance is moved
-        if (Math.abs(robot.vertical.getCurrentPosition()) >= Math.abs(ticks)){
-            robot.mecanumDrive(0,0,0);
+            // Travel Distance
+            robot.mecanumDrive(direction,0,0);
+
+            // Update moving
+            moving = true;
         }
 
+        // Stop after done moving
+        robot.mecanumDrive(0,0,0);
     }
 
     public void strafe(double length, int direction){
-        // Number of encoder ticks per distance
-        int ticks = (int)((length/wheelCircum)*ticksrev);
+        if (!moving){
+            // Number of encoder ticks per distance
+            int ticks = (int)((length/wheelCircum)*ticksrev);
 
-        // Reset pod encoders
-        robot.horizontal.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+            // Assign initial encoder values
+            startpos = robot.horizontal.getCurrentPosition();
 
-        // Move chassis motors
-        robot.mecanumDrive(0, direction,0);
+            // Travel Distance
+            robot.mecanumDrive(0, direction,0);
 
-        // Stop after Distance is moved
-        if (Math.abs(robot.horizontal.getCurrentPosition()) >= Math.abs(ticks)){
-            robot.mecanumDrive(0,0,0);
+            // Update moving
+            moving = true;
         }
+
+        // Stop after done moving
+        robot.mecanumDrive(0,0,0);
+    }
+
+    double initialzOrientation = 0;
+    double nowOrientation = 0;
+    public void turn(double degrees) {
+        initialzOrientation = getZorient();
+        double target = initialzOrientation + degrees;
+
+       nowOrientation = getZorient();
+
+
     }
 
 
@@ -162,6 +178,7 @@ public class AutonCode2 extends OpMode {
 
             case 1:
                 // Move Forward One Tile
+                moving = false;
                 forward(24, 1);
                 autonIndex++;
                 break;
@@ -185,12 +202,14 @@ public class AutonCode2 extends OpMode {
 
             case 4:
                 // Strafe Left
+                moving = false;
                 strafe(24, -1);
                 autonIndex++;
                 break;
 
             case 5:
                 // Move Forward 0.75 Tile
+                moving = false;
                 forward((24*0.75), 1);
                 autonIndex++;
                 break;
@@ -203,6 +222,7 @@ public class AutonCode2 extends OpMode {
 
             case 7:
                 // Move Forward 0.25 Tile
+                moving = false;
                 forward((24*0.25), 1);
                 autonIndex++;
                 break;
