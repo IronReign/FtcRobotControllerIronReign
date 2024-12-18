@@ -127,10 +127,10 @@ public class AutonCode2 extends OpMode {
 
             // Update moving
             moving = true;
+        } else {
+            // Stop after done moving
+            robot.mecanumDrive(0,0,0);
         }
-
-        // Stop after done moving
-        robot.mecanumDrive(0,0,0);
     }
 
     public void strafe(double length, int direction){
@@ -146,10 +146,10 @@ public class AutonCode2 extends OpMode {
 
             // Update moving
             moving = true;
+        } else {
+            // Stop after done moving
+            robot.mecanumDrive(0,0,0);
         }
-
-        // Stop after done moving
-        robot.mecanumDrive(0,0,0);
     }
 
     double initialzOrientation = 0;
