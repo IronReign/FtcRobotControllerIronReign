@@ -112,43 +112,65 @@ public class AutonCode2 extends OpMode {
     public double wheelCircum = ((4.09449)*Math.PI);
     public int ticksrev = 1440;
     boolean moving = false;
+    public int ticks = 0;
+    boolean vertical = true;
+    boolean horizontal = false;
+    double distance = 0;
 
     public void forward(double length, int direction){
-
         if (!moving){
             // Number of encoder ticks per distance
-            int ticks = (int)((length/wheelCircum)*ticksrev);
+            ticks = (int)((length/wheelCircum)*ticksrev);
 
             // Assign initial encoder values
             startpos = robot.vertical.getCurrentPosition();
+
+            // Indicate Vertical/Horizontal
+            vertical = true;
+            horizontal = false;
 
             // Travel Distance
             robot.mecanumDrive(direction,0,0);
 
             // Update moving
             moving = true;
-        } else {
-            // Stop after done moving
-            robot.mecanumDrive(0,0,0);
+        }
+    }
+
+    public void check(){
+        if (moving) {
+            if (vertical){
+                distance = robot.vertical.getCurrentPosition()-startpos;
+            }
+
+            else if (horizontal){
+                distance = robot.horizontal.getCurrentPosition()-startpos;
+            }
+
+            if (Math.abs(distance) >= Math.abs(ticks)){
+                robot.mecanumDrive(0,0,0);
+                moving = false;
+            }
         }
     }
 
     public void strafe(double length, int direction){
         if (!moving){
             // Number of encoder ticks per distance
-            int ticks = (int)((length/wheelCircum)*ticksrev);
+            ticks = (int)((length/wheelCircum)*ticksrev);
 
             // Assign initial encoder values
             startpos = robot.horizontal.getCurrentPosition();
+
+            // Indicate Vertical/Horizontal
+            vertical = false;
+            horizontal = true;
 
             // Travel Distance
             robot.mecanumDrive(0, direction,0);
 
             // Update moving
             moving = true;
-        } else {
-            // Stop after done moving
-            robot.mecanumDrive(0,0,0);
         }
     }
 
@@ -158,7 +180,11 @@ public class AutonCode2 extends OpMode {
         initialzOrientation = getZorient();
         double target = initialzOrientation + degrees;
 
-       nowOrientation = getZorient();
+        nowOrientation = getZorient();
+
+        if (!moving){
+
+        }
 
 
     }
@@ -166,6 +192,7 @@ public class AutonCode2 extends OpMode {
 
     @Override
     public void loop() {
+        check();
         switch(autonIndex){
             // Starting Position: A3 facing opposite from the bucket
             case 0:
@@ -175,10 +202,10 @@ public class AutonCode2 extends OpMode {
                 robot.claw.setPosition(robot.clawOpenPosition);
                 // TODO: Figure out slide position
                 robot.slide.setTargetPosition(0);
+                autonIndex++;
 
             case 1:
                 // Move Forward One Tile
-                moving = false;
                 forward(24, 1);
                 autonIndex++;
                 break;
@@ -202,14 +229,12 @@ public class AutonCode2 extends OpMode {
 
             case 4:
                 // Strafe Left
-                moving = false;
                 strafe(24, -1);
                 autonIndex++;
                 break;
 
             case 5:
                 // Move Forward 0.75 Tile
-                moving = false;
                 forward((24*0.75), 1);
                 autonIndex++;
                 break;
@@ -222,7 +247,6 @@ public class AutonCode2 extends OpMode {
 
             case 7:
                 // Move Forward 0.25 Tile
-                moving = false;
                 forward((24*0.25), 1);
                 autonIndex++;
                 break;
