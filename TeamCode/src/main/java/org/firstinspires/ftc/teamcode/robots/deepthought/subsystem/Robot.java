@@ -266,7 +266,7 @@ public class Robot implements Subsystem {
             case 1:
                 calibrateTimer = futureTime(1);
                 trident.crane.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                trident.crane.setPower(-.3);
+                trident.crane.setPower(-.5);
                 calibrateIndex++;
 
             case 2:
@@ -279,13 +279,13 @@ public class Robot implements Subsystem {
                 break;
             case 3:
                 trident.crane.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                trident.crane.setTargetPosition(835);
+                trident.crane.setTargetPosition(2450);
                 trident.crane.setPower(1);
                 trident.crane.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 calibrateIndex++;
 
             case 4:
-                if(withinError(trident.crane.getCurrentPosition(), 835, 3)) {
+                if(withinError(trident.crane.getCurrentPosition(), 2450, 3)) {
                     trident.crane.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     trident.crane.setDirection(DcMotorSimple.Direction.REVERSE);
                     trident.crane.setPower(1);
@@ -295,7 +295,7 @@ public class Robot implements Subsystem {
                 }
                 break;
             case 5:
-                trident.craneTargetPosition = 300;
+                trident.craneTargetPosition = 800;
                 calibrateIndex++;
                 calibrating = false;
                 return true;

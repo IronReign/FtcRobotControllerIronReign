@@ -174,12 +174,6 @@ public class DriverControls {
         if (gamepad1.left_bumper) {
             robot.trident.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
         }
-        if (gamepad1.left_trigger > .2) {
-            robot.trident.adjustWrist(-Trident.WRIST_ADJUST_ANGLE);
-        }
-        if (gamepad1.right_trigger > .2) {
-            robot.trident.adjustWrist(Trident.WRIST_ADJUST_ANGLE);
-        }
         if (stickyGamepad1.start) {
             debugTelemetryEnabled = !debugTelemetryEnabled;
         }
@@ -197,12 +191,6 @@ public class DriverControls {
         }
         if (gamepad2.right_trigger > .1) {
             robot.trident.adjustElbow(robot.trident.ELBOW_ADJUST_ANGLE);
-        }
-        if (gamepad2.left_bumper) {
-            robot.trident.adjustWrist(-robot.trident.WRIST_ADJUST_ANGLE);
-        }
-        if (gamepad2.right_bumper) {
-            robot.trident.adjustWrist(robot.trident.WRIST_ADJUST_ANGLE);
         }
         // ------------------------------------------------------------------
 
