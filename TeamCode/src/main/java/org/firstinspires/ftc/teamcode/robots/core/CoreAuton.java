@@ -14,7 +14,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.robots.csbot.Field;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 
-
+/*
 @Autonomous
 public class CoreAuton extends OpMode {
     HardwareMap hardwareMap;
@@ -70,11 +70,12 @@ public class CoreAuton extends OpMode {
 
             case 1:
                 // Turn -135 degrees
+                leftFront.setPower(powerOne);
+                rightFront.setPower(-powerOne);
+                leftBack.setPower(powerOne);
+                rightBack.setPower(-powerOne);
+
                 if (isPast(autonTimer)) {
-                    leftFront.setPower(powerOne);
-                    rightFront.setPower(-powerOne);
-                    leftBack.setPower(powerOne);
-                    rightBack.setPower(-powerOne);
                     autonTimer = futureTime(timeTurn);
                     autonIndex++;
                 }
@@ -146,12 +147,13 @@ public class CoreAuton extends OpMode {
 
             case 8:
                 // Move a unit
+                 leftFront.setPower(powerOne);
+                 rightFront.setPower(powerOne);
+                 leftBack.setPower(powerOne);
+                 rightBack.setPower(powerOne);
+
                 if (isPast(autonTimer)){
-                    leftFront.setPower(powerOne);
-                    rightFront.setPower(powerOne);
-                    leftBack.setPower(powerOne);
-                    rightBack.setPower(powerOne);
-                    autonTimer = futureTime(timeOne);
+                   autonTimer = futureTime(timeOne);
                     autonIndex++;
                 }
                 break;
@@ -177,9 +179,7 @@ public class CoreAuton extends OpMode {
             case 11:
                 // Retract slide
                 slide.setTargetPosition(slideRe);
-                shoulder.setTargetPosition(shoulderRe);
-                elbow.setTargetPosition(elbowRe);
-                if ((slide.getCurrentPosition() == slide.getTargetPosition()) & (shoulder.getCurrentPosition() == shoulder.getTargetPosition()) & (elbow.getCurrentPosition() == elbow.getTargetPosition())) {
+                if ((slide.getCurrentPosition() == slide.getTargetPosition())){
                     autonIndex++;
                 }
                 break;
@@ -187,9 +187,10 @@ public class CoreAuton extends OpMode {
             case 12:
                 // Move back a unit
                 leftFront.setPower(-powerOne);
-                rightFront.setPower(-powerOne);
+                rightFront.setPower(powerOne);
                 leftBack.setPower(-powerOne);
-                rightBack.setPower(-powerOne);
+                rightBack.setPower(powerOne);
+
                 autonTimer = futureTime(timeOne);
                 autonIndex++;
                 break;
@@ -201,12 +202,18 @@ public class CoreAuton extends OpMode {
                     rightFront.setPower(-powerOne);
                     leftBack.setPower(powerOne);
                     rightBack.setPower(-powerOne);
+
                     autonTimer = futureTime((float) (timeOne * 4) /3);
                     autonIndex++;
                     //autonIndex=autonIndex-13;
                     //adjust_time = 0.75;
                 }
-                return true;
+
+            default:
+                break;
+        }
+    }
+}
         }
         return false;
     }
@@ -264,6 +271,7 @@ public class CoreAuton extends OpMode {
                 slide.setTargetPosition(slideTargetPosition);
             }
             i++;
-        }*/
+        }
     }
 }
+*/

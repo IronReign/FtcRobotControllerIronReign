@@ -12,22 +12,37 @@ import java.util.Map;
 
 
 import com.acmerobotics.dashboard.FtcDashboard;
+
 @TeleOp(name = "CORE")
 public class CoreOpMode extends OpMode {
     Robot robot;
     private FtcDashboard dashboard;
+
+    public boolean calibrated = false;
 
     @Override
     public void init() {
         robot = new Robot(hardwareMap, gamepad1);
         dashboard = FtcDashboard.getInstance();
         robot.init();
+        Robot.calibrateStage = 0;
+    }
+
+    public void init_loop() {
+        if (!calibrated) {
+            if (robot.calibrate()) {
+                calibrated = true;
+            }
+        }
+        handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
     }
 
     @Override
     public void loop() {
         robot.update(new Canvas());
+
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
+
     }
 
     private void handleTelemetry(Map<String, Object> telemetryMap, String telemetryName) {
@@ -43,3 +58,5 @@ public class CoreOpMode extends OpMode {
         dashboard.sendTelemetryPacket(p);
     }
 }
+
+
