@@ -100,6 +100,9 @@ public class DriverControls {
         if (gamepad1.dpad_up) {
             robot.trident.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
         }
+        if(stickyGamepad1.dpad_left) {
+            robot.trident.stopOnSample();
+        }
 
     }
 

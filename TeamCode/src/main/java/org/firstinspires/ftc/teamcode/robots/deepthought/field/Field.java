@@ -25,7 +25,9 @@ public class Field {
 
     public static int allianceMultiplier = 1;
     List<Flippable> elements = new ArrayList<>();
-    public POI basket = new POI(-2.5, -2.5, 230, "BASKET");
+    public POI basket = new POI(-2.375, -2.375, 35, "BASKET");
+    public POI basketPrep = new POI(-2, -2, 35, "BASKET");
+
     public POI subAccess = new POI(-1.5, -.5, 180, "SUBACCESS");
     public POI ground1 = new POI(-2.5, -2.5, -90, "GROUND1");
     public POI ground2 = new POI(-2.5, -2.5, -100, "GROUND2");

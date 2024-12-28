@@ -69,8 +69,8 @@ public class Trident implements Subsystem {
     private static final int SLIDE_INTAKE_MIN_POSITION = 200;
     private static final int SLIDE_PREINTAKE_POSITION = 900;
     public static int SLIDE_LOWOUTTAKE_POSITION = 320;
-    public static int SLIDE_HIGHOUTTAKE_POSITION = 2460;
-     public static int slideSpeed = 80;
+    public static int SLIDE_HIGHOUTTAKE_POSITION = 2880;
+    public static int slideSpeed = 80;
     public static double SLIDE_SPEED = 2000;
 
 
@@ -82,7 +82,7 @@ public class Trident implements Subsystem {
     public static int CRANE_HOME_POSITION = 250;
     public static int CRANE_INTAKE_POSITION = 125;
     public static int CRANE_LOWOUTTAKE_POSITION = 2105;
-    public static int CRANE_HIGHOUTTAKE_POSITION = 2105;
+    public static int CRANE_HIGHOUTTAKE_POSITION = 1925;
     public int cranePositionMax = 850;
 
     //ELBOW JOINT VARIABLES
@@ -95,7 +95,7 @@ public class Trident implements Subsystem {
     public static int ELBOW_ADJUST_ANGLE = 5;
     public static double ELBOW_PREINTAKE_ANGLE = 20;
     public static double ELBOW_LOWOUTTAKE_ANGLE = 102;
-    public static double ELBOW_HIGHOUTTAKE_ANGLE = 50;
+    public static double ELBOW_HIGHOUTTAKE_ANGLE = 70;
 
     //BEATER
     public double beaterPower;
@@ -193,6 +193,7 @@ public class Trident implements Subsystem {
             case 2:
                 if (withinError(crane.getCurrentPosition(), CRANE_INTAKE_POSITION, 5) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 5)) {
                     intakeIndex++;
+                    colorSensorEnabled = true;
                 }
                 break;
             case 3:
@@ -215,27 +216,35 @@ public class Trident implements Subsystem {
     public boolean outtake() {
         switch (outtakeIndex) {
             case 0:
-                outtakeTimer = futureTime(.2);
-                elbow.setTargetAngle(preferHighOuttake ? ELBOW_HIGHOUTTAKE_ANGLE : ELBOW_LOWOUTTAKE_ANGLE);
+                outtakeTimer = futureTime(0);
+//                elbow.setTargetAngle(preferHighOuttake ? ELBOW_HIGHOUTTAKE_ANGLE : ELBOW_LOWOUTTAKE_ANGLE);
                 outtakeIndex++;
                 break;
             case 1:
                 if (isPast(outtakeTimer)) {
-                    craneTargetPosition = preferHighOuttake ? CRANE_HIGHOUTTAKE_POSITION : CRANE_LOWOUTTAKE_POSITION;
+                    slideTargetPosition = preferHighOuttake ? SLIDE_HIGHOUTTAKE_POSITION : SLIDE_LOWOUTTAKE_POSITION;
+                    craneTargetPosition = preferHighOuttake ? (int)(CRANE_HIGHOUTTAKE_POSITION * .75) : CRANE_LOWOUTTAKE_POSITION;
                     outtakeIndex++;
                 }
                 break;
             case 2:
-                if (withinError(crane.getCurrentPosition(), craneTargetPosition*.75, 5)) {
-                    slideTargetPosition = preferHighOuttake ? SLIDE_HIGHOUTTAKE_POSITION : SLIDE_LOWOUTTAKE_POSITION;
-                    colorSensorEnabled = true;
+                if (withinError(slide.getCurrentPosition(), preferHighOuttake ? SLIDE_HIGHOUTTAKE_POSITION : SLIDE_LOWOUTTAKE_POSITION, 5)) {
+                    elbow.setTargetAngle(preferHighOuttake ? ELBOW_HIGHOUTTAKE_ANGLE : ELBOW_LOWOUTTAKE_ANGLE);
+                    outtakeTimer = futureTime(.3);
                     outtakeIndex++;
                 }
                 break;
             case 3:
+                if(isPast(outtakeTimer)) {
+                    craneTargetPosition = preferHighOuttake ? CRANE_HIGHOUTTAKE_POSITION : CRANE_LOWOUTTAKE_POSITION;
+                    outtakeIndex ++;
+                }
+                break;
+            case 4:
                 if (!sampleDetected()) {
                     return true;
                 }
+                break;
         }
         return false;
     }

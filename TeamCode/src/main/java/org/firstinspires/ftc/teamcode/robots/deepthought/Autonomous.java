@@ -114,7 +114,7 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 5:
                 if (isPast(autonTimer)) {
-                    autonIndex++;
+//                    autonIndex++;
                     robot.trident.beaterPower = 0;
                 }
                 break;
