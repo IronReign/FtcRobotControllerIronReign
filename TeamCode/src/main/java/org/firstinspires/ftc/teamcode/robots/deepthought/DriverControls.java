@@ -25,8 +25,8 @@ public class DriverControls {
     //CONSTANTS
     public static boolean fieldOrientedDrive = true;
     public static double DEADZONE = 0.1;
-    public static double rotationDampener = .5;
-    public static boolean dampenRotation = false;
+    public static double driveDampener = .5;
+    public static boolean dampenDrive = false;
 
     public boolean visionProviderFinalized = robot.visionProviderFinalized;
 
@@ -70,11 +70,13 @@ public class DriverControls {
         }
 //
         if(stickyGamepad1.a) {
+            dampenDrive = true;
             Trident.intakeIndex = 0;
             robot.articulate(Robot.Articulation.INTAKE);
         }
 //
         if(stickyGamepad1.b) {
+            dampenDrive = true;
             robot.outtakeIndex = 0;
             Trident.outtakeIndex = 0;
             robot.articulate(Robot.Articulation.OUTTAKE);
@@ -85,6 +87,7 @@ public class DriverControls {
         }
 
         if(stickyGamepad1.y) {
+            dampenDrive = false;
             Trident.tuckIndex = 0;
             robot.articulate(Robot.Articulation.TRAVEL);
         }
@@ -130,13 +133,13 @@ public class DriverControls {
             fieldOrientedDrive();
 
         if (stickyGamepad1.a) {
-            dampenRotation = true;
+            dampenDrive = true;
             robot.trident.enforceSlideLimits = true;
             Trident.intakeIndex = 0;
             robot.articulate(Robot.Articulation.INTAKE);
         }
         if (stickyGamepad1.b) {
-            dampenRotation = true;
+            dampenDrive = true;
             Trident.tuckFromHighOuttake = true;
             robot.trident.enforceSlideLimits = false;
             Trident.outtakeIndex = 0;
@@ -144,7 +147,7 @@ public class DriverControls {
             robot.articulate(Robot.Articulation.OUTTAKE);
         }
         if (stickyGamepad1.y) {
-            dampenRotation = false;
+            dampenDrive = false;
             robot.trident.tuckIndex = 0;
             robot.articulate(Robot.Articulation.TRAVEL);
         }
@@ -207,8 +210,8 @@ public class DriverControls {
         if (Math.abs(gamepad1.left_stick_x) > DEADZONE ||
                 Math.abs(gamepad1.left_stick_y) > DEADZONE ||
                 Math.abs(gamepad1.right_stick_x) > DEADZONE) {
-            if (dampenRotation)
-                robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x * rotationDampener, alliance.isRed());
+            if (dampenDrive)
+                robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x * driveDampener, gamepad1.left_stick_y * driveDampener, gamepad1.right_stick_x * driveDampener, alliance.isRed());
             else
                 robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, alliance.isRed());
         } else robot.driveTrain.drive(0, 0, 0);
@@ -219,8 +222,8 @@ public class DriverControls {
             if (Math.abs(gamepad1.left_stick_x) > DEADZONE ||
                     Math.abs(gamepad1.left_stick_y) > DEADZONE ||
                     Math.abs(gamepad1.right_stick_x) > DEADZONE) {
-                if (dampenRotation)
-                    robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x * rotationDampener);
+                if (dampenDrive)
+                    robot.driveTrain.drive(gamepad1.left_stick_x * driveDampener, gamepad1.left_stick_y * driveDampener, -gamepad1.right_stick_x * driveDampener);
                 else
                     robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
             } else

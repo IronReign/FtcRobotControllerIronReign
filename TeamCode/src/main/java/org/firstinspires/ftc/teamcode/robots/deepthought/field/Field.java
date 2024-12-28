@@ -25,13 +25,13 @@ public class Field {
 
     public static int allianceMultiplier = 1;
     List<Flippable> elements = new ArrayList<>();
-    public POI basket = new POI(-2.375, -2.375, 35, "BASKET");
-    public POI basketPrep = new POI(-2, -2, 35, "BASKET");
+    public POI basket = new POI(-2.3, -2.3, 35, "BASKET");
+    public POI basketPrep = new POI(-2.4, -2, 50, "BASKET");
 
     public POI subAccess = new POI(-1.5, -.5, 180, "SUBACCESS");
-    public POI ground1 = new POI(-2.5, -2.5, -90, "GROUND1");
-    public POI ground2 = new POI(-2.5, -2.5, -100, "GROUND2");
-    public POI ground3 = new POI(-2.5, -2.5, -110, "GROUND3");
+    public POI ground1 = new POI(-2.4, -2, 90, "GROUND1");
+    public POI ground2 = new POI(-2.375, -2.35, 100, "GROUND2");
+    public POI ground3 = new POI(-2.375, -2.35, 110, "GROUND3");
     //all values are in field grids
     public static final double MAX_Y_VALUE = 3;
     public static final double MAX_X_VALUE = 3;
