@@ -1,34 +1,24 @@
 //package org.firstinspires.ftc.teamcode.robots.giant;
+//
 //import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 //import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 //
 //import com.acmerobotics.dashboard.canvas.Canvas;
 //import com.acmerobotics.dashboard.config.Config;
-//import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 //import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-//import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-//import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-//import com.qualcomm.robotcore.hardware.HardwareMap;
 //
-//
-//import org.checkerframework.checker.units.qual.A;
 //import org.firstinspires.ftc.robotcore.internal.system.Misc;
 //
 //import java.util.Map;
 //
 //@Autonomous(name = "GIANTAUTON")
 //@Config(value = "GiantAuton")
-//public class GiantAuton extends OpMode {
+//public class NewGiantAuton extends giantOpMode{
 //
-//    public static double FORWARD=.69;
-//    public static double L=.938;    //.91
-//    public static double TURN_FORWARD_1 = .8;
-//    public static double BACK=.45;   //.3
-//    public static double TIME=.1;
-//    public static double SLAM=2.5;
-//    public static double PLEASE=.4;
+//    public static double FORWARD_SLAM=1.75;
+//    public static double BUFFER=.2;
+//    public static double BACKWARD=1.1;
 //
-//            ; //experiment and fix
 //    Robot robot;
 //    //HardwareMap hardwareMap;
 //
@@ -51,85 +41,81 @@
 //    public void execute() {
 //        switch (autonIndex) {
 //            case 0:
-//                autonTimer = futureTime(L);
+//                autonTimer = futureTime(BUFFER);
 //                robot.grabBlock();
-//                robot.setDrive(-.5, 0, 0);
 //                robot.setShoulderSpeed(1);
 //                autonIndex++;
 //                break;
 //            case 1:
 //                if(isPast(autonTimer)){
-//                   // autonTimer = futureTime(TURN_TIMER);
-//                    robot.setDrive(0, 0, 0);
-//                    robot.rotateUpBar();;
+//                    autonTimer=futureTime(BUFFER);
+//                    robot.setDrive(-.67, 0, 0);
 //                    autonIndex++;
 //                }
 //                break;
-//            case 2:
-//                if(robot.getRotate()>(1390+80)){
-//                    autonTimer = futureTime(TURN_FORWARD_1);
-//                    robot.unstickArm();
 //
+//            case 2:
+//                if(isPast(autonTimer)){
+//                    autonTimer = futureTime(FORWARD_SLAM);
+//                    robot.setDrive(0, 0, 0);
+//                    robot.rotateBar();
 //                    autonIndex++;
 //                }
 //                break;
 //            case 3:
-//                if(robot.getExtend()>7800){
-//                    robot.reach();
-//
+//                if(robot.getRotate()>1545){
+//                    robot.unstickArm();
 //                    autonIndex++;
 //                }
 //                break;
 //            case 4:
-//                if(robot.getExtend()<7785) {
-//                    autonTimer=futureTime(PLEASE);
-//                    robot.setShoulderSpeed(.4);
-//                    robot.aim();
+//                if(robot.getExtend()>7845){
+//                    robot.reachUp();
 //                    autonIndex++;
 //                }
 //                break;
 //            case 5:
-//                if(isPast(autonTimer)) {
-//                    autonTimer=futureTime(TIME);
-//                    robot.pull();
-//                    robot.setShoulderSpeed(1);
+//                if(robot.getExtend()<5145){
+//                    autonTimer=futureTime(FORWARD_SLAM);
+//                    robot.setDrive(-.5,0,0);
 //                    autonIndex++;
 //                }
 //                break;
 //            case 6:
-//                if(robot.getExtend()<4500) {
-//                    autonTimer=futureTime(BACK);
-//                    robot.dropBlock();
-//                    robot.setDrive(.6,0,0);
+//                if(isPast(autonTimer)){
+//                    autonTimer=futureTime(BUFFER);
+//                    robot.setDrive(0,0,0);
 //                    autonIndex++;
 //                }
 //                break;
 //            case 7:
-//                if(isPast(autonTimer)) {
-//                    autonTimer=futureTime(TIME);
-//                    robot.setDrive(0,0,0);
-//                    robot.resetE();
-//                    autonIndex++;
-//                }
-//            case 8:
 //                if(isPast(autonTimer)){
-//                    robot.setShoulderSpeed(.4);
-//                    robot.setRotate(5);
+//                    robot.setArmSpeed(.7);
+//                    robot.pullDown();
 //                    autonIndex++;
 //                }
-//
+//                break;
+//            case 8:
+//                if(robot.getExtend()<1970){
+//                    autonTimer=futureTime(BACKWARD);
+//                    robot.dropBlock();
+//                    robot.setDrive(.4,0,0);
+//                    autonIndex++;
+//                }
 //                break;
 //            case 9:
-//                if(robot.getRotate()<10){
-//                   // autonTimer=futureTime(SLAM);
-//                    robot.setShoulderSpeed(1);
-//                   // robot.setDrive(0,-.8,0);
-//                    //autonIndex++;
+//                if(isPast(autonTimer)){
+//                    robot.setDrive(0,0,0);
+//                    robot.setArmSpeed(1);
+//                    robot.resetE();
+//                }
+//                break;
+//            case 10:
+//                if(robot.getExtend()>2100){
+//                    robot.resetR();
 //                }
 //
-//                break;
-//
-//       }
+//        }
 //    }
 //
 //    private void handleTelemetry(Map<String, Object> telemetryMap, String telemetryName) {
@@ -138,6 +124,7 @@
 //        for (Map.Entry<String, Object> entry : telemetryMap.entrySet()) {
 //            String line = Misc.formatInvariant("%s: %s", entry.getKey(), entry.getValue());
 //            telemetry.addLine(line);
+//            robot.getTelemetry(true);
 //            //telemetry.addLine(""+autonIndex);
 //        }
 //
