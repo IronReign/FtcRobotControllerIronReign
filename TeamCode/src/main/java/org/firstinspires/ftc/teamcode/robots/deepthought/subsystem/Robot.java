@@ -4,15 +4,18 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.dc;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.fieldOrientedDrive;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
@@ -29,7 +32,6 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.vision.provider.AprilTa
 import org.openftc.apriltag.AprilTagDetection;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +49,8 @@ public class Robot implements Subsystem {
     public Trident trident;
     public static boolean updatePositionCache = false;
     public static boolean frontVision = false;
+
+    public boolean calibrating = false;
 
     public PositionCache positionCache;
     public DTPosition currPosition;
@@ -247,20 +251,56 @@ public class Robot implements Subsystem {
                 if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
                     //apply cached position
                     driveTrain.pose = fetchedPosition.getPose();
-                    trident.crane.setPosition(fetchedPosition.getCranePosition());
-                    trident.slide.setPosition(fetchedPosition.getSlidePosition());
+//                    trident.crane.setPosition(fetchedPosition.getCranePosition());
+//                    trident.slide.setPosition(fetchedPosition.getSlidePosition());
                 }
             }
         }
     }
 
-    public static int initPositionIndex = 0;
-    public long initPositionTimer;
-
+    public static int calibrateIndex = 0;
+    public long calibrateTimer = 0;
     public boolean calibrate() {
-        switch (initPositionIndex) {
-            case 0:
+        calibrating = true;
+        switch (calibrateIndex) {
+            case 1:
+                calibrateTimer = futureTime(1);
+                trident.crane.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                trident.crane.setPower(-.5);
+                calibrateIndex++;
+
+            case 2:
+                if(Trident.CRANE_CALIBRATE_ENCODER == trident.crane.getCurrentPosition() && isPast(calibrateTimer)) {
+                    calibrateIndex++;
+                }
+                else {
+                    Trident.CRANE_CALIBRATE_ENCODER = trident.crane.getCurrentPosition();
+                }
+                break;
+            case 3:
+                trident.crane.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                trident.crane.setTargetPosition(2450);
+                trident.crane.setPower(1);
+                trident.crane.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                calibrateIndex++;
+
+            case 4:
+                if(withinError(trident.crane.getCurrentPosition(), 2450, 3)) {
+                    trident.crane.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    trident.crane.setDirection(DcMotorSimple.Direction.REVERSE);
+                    trident.crane.setPower(1);
+                    trident.crane.setVelocity(400);
+                    trident.crane.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    calibrateIndex++;
+                }
+                break;
+            case 5:
+                trident.craneTargetPosition = 800;
+                calibrateIndex++;
+                calibrating = false;
                 return true;
+
+
         }
         return false;
     }
@@ -298,10 +338,12 @@ public class Robot implements Subsystem {
                 break;
             case TRAVEL:
                 trident.articulate(Trident.Articulation.TUCK);
+                if(trident.articulation == Trident.Articulation.MANUAL) {
+                    articulation = Articulation.MANUAL;
+                }
                 break;
             case OUTTAKE:
                 if(outtake())
-
                     articulation = Articulation.MANUAL;
                 break;
         }
@@ -319,6 +361,7 @@ public class Robot implements Subsystem {
             case 1:
                 if(trident.articulation == Trident.Articulation.MANUAL) {
                     Trident.enforceSlideLimits = true;
+                    outtakeIndex = 0;
                     return true;
                 }
                 break;
@@ -343,7 +386,8 @@ public class Robot implements Subsystem {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("Articulation", articulation);
         telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
-        telemetryMap.put("initPositionIndex", initPositionIndex);
+        telemetryMap.put("initPositionIndex", calibrateIndex);
+        telemetryMap.put("calibrating", calibrating);
         telemetryMap.put("Vision On/Vision Provider Finalized", visionOn + " " + visionProviderFinalized);
         telemetryMap.put("april tag relocalization point", "(" + aprilTagRelocalizationX + ", " + aprilTagRelocalizationY + ")");
         telemetryMap.put("april tag pose", "(" + aprilTagPose.position.x * 39.37 + ", " + aprilTagPose.position.y * 39.37 + ")");
