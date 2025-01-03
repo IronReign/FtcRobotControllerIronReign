@@ -108,11 +108,11 @@ public class AutonCode2 extends OpMode {
     }
 
     // Wheels
-    public double wheelCircum = ((4.09449)*Math.PI);
+    public double wheelCircum = ((3.5)*Math.PI);
     public int ticksrev = 1440;
     boolean moving = false;
     boolean turning = false;
-    public int ticks = 0;
+    public int ticks = 10000;
     boolean vertical = true;
     boolean horizontal = false;
     double distance = 0;
