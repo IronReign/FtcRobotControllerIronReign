@@ -33,72 +33,85 @@ public class giantOpMode extends OpMode {
 
     public void handleJoysticks(Gamepad gamepad){
         //rotate entire arm
-        if(gamepad1.dpad_down){
-            robot.tu(-20);
-        }
-        if(gamepad1.dpad_up ){
-            robot.tu(20);
-        }
-
-
-        //open and close claw
-        if(g1.a) {
-            robot.grabBlock();
-        }
-        if(g1.b) {
-            robot.dropBlock();
-        }
-
-        //extend linear slide
-        if(gamepad1.left_bumper &&robot.getExtend()>=10) {
-            robot.extend(-50);
-        }
-
-        if(gamepad1.right_bumper && robot.getExtend()<=(9040-2110)) {//&&robot.getExtend()<7150
-            robot.extend(50);
-        }
-        if(robot.getExtend()<=10)
-        {
-            robot.setExtend(12);
-        }
-        if(robot.getRotate()<40){
-            robot.setRotate(50);
-        }
-        if(robot.getRotate()>2220){
-            robot.setRotate(2150);
-        }
-
-        if(robot.getRotate()<700&&robot.getRotate()>2200) {
-            if(robot.getExtend()>=5520)
-            {
-                robot.setExtend(5500);
-            }
-        }
-        else{
-            if(robot.getExtend()>=(9050-2110)){
-                robot.setExtend(9030-2110);
-            }
-        }
-        if(robot.getExtend()>=(9200-2110))
-        {
-            robot.setExtend(9100-2110);
-        }
-        if(g1.dpad_left) {
-            robot.doit();
-        }
-        if(g1.dpad_right) {
-            robot.attatch();
-        }
-        if(g1.guide)
-        {
-            robot.setStop(true);
-        }
+//        if(gamepad1.dpad_down){
+//            robot.tu(-20);
+//        }
+//        if(gamepad1.dpad_up ){
+//            robot.tu(20);
+//        }
+//
+//
+//        //open and close claw
+//        if(g1.a) {
+//            robot.grabBlock();
+//        }
+//        if(g1.b) {
+//            robot.dropBlock();
+//        }
+//
+//        //extend linear slide
+//        if(gamepad1.left_bumper &&robot.getExtend()>=10) {
+//            robot.extend(-50);
+//        }
+//
+//        if(gamepad1.right_bumper && robot.getExtend()<=(9040-2110)) {//&&robot.getExtend()<7150
+//            robot.extend(50);
+//        }
+//        if(robot.getExtend()<=10)
+//        {
+//            robot.setExtend(12);
+//        }
+//        if(robot.getRotate()<40){
+//            robot.setRotate(50);
+//        }
+//        if(robot.getRotate()>2220){
+//            robot.setRotate(2150);
+//        }
+//
+//        if(robot.getRotate()<700&&robot.getRotate()>2200) {
+//            if(robot.getExtend()>=5520)
+//            {
+//                robot.setExtend(5500);
+//            }
+//        }
+//        else{
+//            if(robot.getExtend()>=(9050-2110)){
+//                robot.setExtend(9030-2110);
+//            }
+//        }
+//        if(robot.getExtend()>=(9200-2110))
+//        {
+//            robot.setExtend(9100-2110);
+//        }
+//        if(g1.dpad_left) {
+//            robot.doit();
+//        }
+//        if(g1.dpad_right) {
+//            robot.attatch();
+//        }
+//        if(g1.guide)
+//        {
+//            robot.setStop(true);
+//        }
 //        if(g1.left_trigger){
 //            robot.setDrive(.5*gamepad1.left_stick_y,.5*-gamepad1.left_stick_x,-gamepad1.right_stick_x);
 //        }
 //        if(g1.right_trigger){
 //            robot.setDrive(gamepad1.left_stick_y,-gamepad1.left_stick_x,-gamepad1.right_stick_x);
 //        }
+        if(g1.a){
+            robot.suck();
+        }
+        if(gamepad1.b){
+            robot.setSlurp(true);
+        }else{
+            robot.setSlurp(false);
+        }
+        if(gamepad1.x){
+            robot.spit(true);
+        }else{
+            robot.spit(false);
+        }
 
         robot.setDrive(gamepad1.left_stick_y,-gamepad1.left_stick_x,-gamepad1.right_stick_x);
 
