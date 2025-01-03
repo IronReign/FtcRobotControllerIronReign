@@ -112,7 +112,7 @@ public class AutonCode2 extends OpMode {
     public int ticksrev = 1440;
     boolean moving = false;
     boolean turning = false;
-    public int ticks = 10000;
+    public int ticks = 0;
     boolean vertical = true;
     boolean horizontal = false;
     double distance = 0;
@@ -182,6 +182,7 @@ public class AutonCode2 extends OpMode {
                 vertical = false;
                 horizontal = false;
                 moving = false;
+                autonIndex++;
             }
         }
 
@@ -191,6 +192,7 @@ public class AutonCode2 extends OpMode {
             if(Math.abs(nowOrientation-initialzOrientation) >= target){
                 robot.mecanumDrive(0,0,0);
                 turning = false;
+                autonIndex++;
             }
 
         }
@@ -213,13 +215,11 @@ public class AutonCode2 extends OpMode {
             case 1:
                 // Move forward 0.8 tile
                 forward((24*0.8), 1);
-                autonIndex++;
                 break;
 
             case 2:
                 // Strafe left half tile
                 strafe(12, -1);
-                autonIndex++;
                 break;
 
             case 3:
@@ -231,17 +231,17 @@ public class AutonCode2 extends OpMode {
             case 4:
                 // Move Forward 0.175 Tile
                 forward((24*0.175), 1);
-                autonIndex++;
                 break;
 
             case 5:
                 // Open claw
                 robot.claw.setPosition(robot.clawOpenPosition);
+                autonIndex++;
+                break;
 
             case 6:
                 // Move backwards one tile
                 forward(24, -1);
-                autonIndex++;
                 break;
 
             case 7:
