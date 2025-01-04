@@ -20,6 +20,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
+
 //hi this is fern
 public class DriverControls {
     //CONSTANTS
@@ -53,40 +54,40 @@ public class DriverControls {
 
     public void manualDiagnosticMethods() {
         robotOrientedDrive();
-        if(gamepad1.right_bumper) {
+        if (gamepad1.right_bumper) {
             robot.trident.craneTargetPosition -= 1 * craneSpeed;
         }
-        if(gamepad1.left_bumper) {
+        if (gamepad1.left_bumper) {
             robot.trident.craneTargetPosition += 1 * craneSpeed;
         }
 //
-        if(gamepad1.left_trigger > .2) {
+        if (gamepad1.left_trigger > .2) {
             Trident.enforceSlideLimits = false;
             robot.trident.slideTargetPosition -= 1 * slideSpeed;
         }
-        if(gamepad1.right_trigger > .2) {
+        if (gamepad1.right_trigger > .2) {
             Trident.enforceSlideLimits = false;
             robot.trident.slideTargetPosition += 1 * slideSpeed;
         }
 //
-        if(stickyGamepad1.a) {
+        if (stickyGamepad1.a) {
             dampenDrive = true;
             Trident.intakeIndex = 0;
             robot.articulate(Robot.Articulation.INTAKE);
         }
 //
-        if(stickyGamepad1.b) {
+        if (stickyGamepad1.b) {
             dampenDrive = true;
             robot.outtakeIndex = 0;
             Trident.outtakeIndex = 0;
             robot.articulate(Robot.Articulation.OUTTAKE);
         }
 
-        if(stickyGamepad1.x) {
-            robot.trident.beaterPower = robot.trident.beaterPower == 1 ? 0 : 1;
+        if (stickyGamepad1.x) {
+            robot.trident.beaterPower = robot.trident.beaterPower == .8 ? 0 : .8;
         }
 
-        if(stickyGamepad1.y) {
+        if (stickyGamepad1.y) {
             dampenDrive = false;
             Trident.tuckIndex = 0;
             robot.articulate(Robot.Articulation.TRAVEL);
@@ -103,7 +104,7 @@ public class DriverControls {
         if (gamepad1.dpad_up) {
             robot.trident.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
         }
-        if(stickyGamepad1.dpad_left) {
+        if (stickyGamepad1.dpad_left) {
             robot.trident.stopOnSample();
         }
 
@@ -132,59 +133,54 @@ public class DriverControls {
         else
             fieldOrientedDrive();
 
+        if (gamepad1.right_bumper) {
+            robot.trident.craneTargetPosition += 1 * craneSpeed;
+        }
+        if (gamepad1.left_bumper) {
+            robot.trident.craneTargetPosition -= 1 * craneSpeed;
+        }
+//
+        if (gamepad1.left_trigger > .2) {
+            Trident.enforceSlideLimits = false;
+            robot.trident.slideTargetPosition -= 1 * slideSpeed;
+        }
+        if (gamepad1.right_trigger > .2) {
+            Trident.enforceSlideLimits = false;
+            robot.trident.slideTargetPosition += 1 * slideSpeed;
+        }
+//
         if (stickyGamepad1.a) {
             dampenDrive = true;
-            robot.trident.enforceSlideLimits = true;
             Trident.intakeIndex = 0;
             robot.articulate(Robot.Articulation.INTAKE);
         }
+//
         if (stickyGamepad1.b) {
             dampenDrive = true;
-            Trident.tuckFromHighOuttake = true;
-            robot.trident.enforceSlideLimits = false;
-            Trident.outtakeIndex = 0;
             robot.outtakeIndex = 0;
+            Trident.outtakeIndex = 0;
             robot.articulate(Robot.Articulation.OUTTAKE);
-        }
-        if (stickyGamepad1.y) {
-            dampenDrive = false;
-            robot.trident.tuckIndex = 0;
-            robot.articulate(Robot.Articulation.TRAVEL);
         }
 
         if (stickyGamepad1.x) {
-            robot.trident.beaterPower = robot.trident.beaterPower == 1 ? 0 : 1;
+            robot.trident.beaterPower = robot.trident.beaterPower == .8 ? 0 : .8;
         }
 
-        if (stickyGamepad1.guide) {
-            Trident.preferHighOuttake = !Trident.preferHighOuttake;
+        if (stickyGamepad1.y) {
+            dampenDrive = false;
+            Trident.tuckIndex = 0;
+            robot.articulate(Robot.Articulation.TRAVEL);
         }
 
-
-        //adjust methods
-        if (gamepad1.dpad_right) {
-            robot.trident.craneTargetPosition -= craneSpeed;
-        }
-        if (gamepad1.dpad_left) {
-            robot.trident.craneTargetPosition += craneSpeed;
-        }
-        if (gamepad1.dpad_up) {
-            robot.trident.slideTargetPosition += slideSpeed;
-        }
         if (gamepad1.dpad_down) {
-            robot.trident.slideTargetPosition -= slideSpeed;
-        }
-        if (gamepad1.right_bumper) {
             robot.trident.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
         }
-        if (gamepad1.left_bumper) {
+        if (gamepad1.dpad_up) {
             robot.trident.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
         }
-        if (stickyGamepad1.start) {
-            debugTelemetryEnabled = !debugTelemetryEnabled;
+        if (stickyGamepad1.dpad_left) {
+            robot.trident.stopOnSample();
         }
-        //
-
 
         // ------------------------------------------------------------------
         //GAMEPAD 2 CONTROLS
@@ -251,7 +247,7 @@ public class DriverControls {
         IntoTheDeep_6832.gameStateIndex %= IntoTheDeep_6832.GameState.getNumGameStates();
         IntoTheDeep_6832.gameState = IntoTheDeep_6832.GameState.getGameState(IntoTheDeep_6832.gameStateIndex);
 
-        if(stickyGamepad1.guide) {
+        if (stickyGamepad1.guide) {
             calibrateIndex++;
         }
     }

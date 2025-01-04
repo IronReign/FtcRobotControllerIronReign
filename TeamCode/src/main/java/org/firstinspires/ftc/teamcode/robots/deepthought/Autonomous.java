@@ -112,14 +112,14 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 4:
-                robot.trident.beaterPower = 1;
+                robot.trident.beaterPower = .8;
                 autonTimer = futureTime(2);
                 autonIndex++;
                 break;
             case 5:
                 Trident.colorSensorEnabled = true;
                 if (isPast(autonTimer)) {
-                    autonIndex = 9;
+                    autonIndex++;
                 }
                 break;
             case 6:
@@ -144,6 +144,7 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 9:
                 robot.articulate(Robot.Articulation.TRAVEL);
+                autonTimer = futureTime(4);
 //                robot.trident.slideTargetPosition -=50;
 //                if(robot.trident.articulation == Trident.Articulation.MANUAL){
 //                    robot.articulate(Robot.Articulation.TRAVEL);
@@ -152,7 +153,8 @@ public class Autonomous implements TelemetryProvider {
 //                }
                 break;
             case 10:
-                if (robot.driveTrain.strafeToPose(field.basketPrep.getPose(), packet) && robot.trident.articulation == Trident.Articulation.MANUAL) {;
+                if ((robot.driveTrain.strafeToPose(field.basketPrep.getPose(), packet) || isPast(autonTimer))) {;
+//                    autonIndex ++;
                     return true;
                 }
                 break;

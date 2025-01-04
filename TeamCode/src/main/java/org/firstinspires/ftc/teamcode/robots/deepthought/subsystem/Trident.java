@@ -8,6 +8,7 @@ import android.graphics.Color;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
@@ -36,7 +37,7 @@ public class Trident implements Subsystem {
     public DcMotorExResetable crane = null;
     public Joint elbow;
 
-    public CRServoImplEx beater = null;
+    public CRServo beater = null;
     public Servo pincer;
     public static boolean tuckFromHighOuttake = false;
 
@@ -98,7 +99,7 @@ public class Trident implements Subsystem {
     public static double ELBOW_HIGHOUTTAKE_ANGLE = 70;
 
     //BEATER
-    public double beaterPower;
+    public static double beaterPower;
 
     //PINCER
     public static double PINCER_CLOSE = 1750;
@@ -192,7 +193,7 @@ public class Trident implements Subsystem {
                 break;
             case 2:
                 if (withinError(crane.getCurrentPosition(), CRANE_INTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
-                    beaterPower = 1;
+                    beaterPower = .8;
                     intakeTimer = futureTime(8);
                     intakeIndex++;
                     colorSensorEnabled = true;
@@ -272,7 +273,7 @@ public class Trident implements Subsystem {
 
     public boolean stopOnSample() {
         colorSensorEnabled = true;
-        beaterPower = 1;
+        beaterPower = .8;
         if (targetSamples.contains(currentSample)) {
             beaterPower = 0;
             colorSensorEnabled = false;
@@ -290,7 +291,7 @@ public class Trident implements Subsystem {
         slide = new DcMotorExResetable(bruh);
         crane = new DcMotorExResetable(bruhx2);
         colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
-        beater = this.hardwareMap.get(CRServoImplEx.class, "beater");
+        beater = this.hardwareMap.get(CRServo.class, "beater");
         pincer = this.hardwareMap.get(Servo.class, "pincer");
         slide.setMotorEnable();
         slide.setPower(1);
@@ -389,6 +390,9 @@ public class Trident implements Subsystem {
         telemetryMap.put("outtake index", outtakeIndex);
         telemetryMap.put("crane current", crane.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("crane target : real", "" + craneTargetPosition + " : " + crane.getCurrentPosition());
+        if(robot.fetchedPosition != null)
+        telemetryMap.put("crane fetched pos", robot.fetchedPosition.getCranePosition());
+        telemetryMap.put("crane offset", crane.offset);
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
         telemetryMap.put("current sample", currentSample.name());
         telemetryMap.put("colorsensor", colorSensorEnabled);

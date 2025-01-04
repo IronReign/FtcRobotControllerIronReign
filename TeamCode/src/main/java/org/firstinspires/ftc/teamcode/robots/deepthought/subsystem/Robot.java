@@ -85,7 +85,9 @@ public class Robot implements Subsystem {
     }
 
     public void start() {
-
+        if(gameState.equals(IntoTheDeep_6832.GameState.TELE_OP)) {
+            trident.crane.setPosition(250);
+        }
     }
     //end start
 
@@ -130,7 +132,7 @@ public class Robot implements Subsystem {
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         if (updatePositionCache && gameState.isAutonomous()) {
-            currPosition = new DTPosition(driveTrain.pose, trident.crane.getCurrentPosition(), trident.slide.getCurrentPosition());
+            currPosition = new DTPosition(driveTrain.pose, -trident.crane.getCurrentPosition(), trident.slide.getCurrentPosition());
             positionCache.update(currPosition, false);
         }
 
@@ -251,8 +253,9 @@ public class Robot implements Subsystem {
                 if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
                     //apply cached position
                     driveTrain.pose = fetchedPosition.getPose();
-//                    trident.crane.setPosition(fetchedPosition.getCranePosition());
-//                    trident.slide.setPosition(fetchedPosition.getSlidePosition());
+                    trident.crane.setPosition(fetchedPosition.getCranePosition());
+                    trident.slide.setPosition(fetchedPosition.getSlidePosition());
+                    trident.crane.setDirection(DcMotor.Direction.REVERSE);
                 }
             }
         }
@@ -304,22 +307,6 @@ public class Robot implements Subsystem {
         }
         return false;
     }
-
-//    public static int intakeIndex = 0;
-//    public boolean intake() {
-//        switch (intakeIndex) {
-//            case 0:
-//                trident.articulate(Trident.Articulation.SAMPLE);
-//                intakeIndex ++;
-//                break;
-//            case 1:
-//                if(trident.articulation == Trident.Articulation.MANUAL)
-//                    return true;
-//                break;
-//        }
-//
-//        return false;
-//    }
 
     public Articulation articulate(Articulation target) {
         articulation = target;
@@ -373,7 +360,7 @@ public class Robot implements Subsystem {
 
     @Override
     public void stop() {
-        currPosition = new DTPosition(driveTrain.pose, trident.crane.getCurrentPosition(), trident.slide.getCurrentPosition());
+        currPosition = new DTPosition(driveTrain.pose, -trident.crane.getCurrentPosition(), trident.slide.getCurrentPosition());
         positionCache.update(currPosition, true);
         for (Subsystem component : subsystems) {
             component.stop();
