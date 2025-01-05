@@ -32,7 +32,6 @@ public class AutonCode2 extends OpMode {
     - Encoder ticks are used for forward and strafing movements
      */
 
-
     @Override
     public void init() {
         dashboard = FtcDashboard.getInstance();
@@ -78,7 +77,7 @@ public class AutonCode2 extends OpMode {
         robot.horizontal.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         robot.vertical.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
-        robot.claw.setPosition(robot.clawOpenPosition);
+        robot.claw.setPosition(robot.clawClosePosition);
 
         // Init IMU
         initIMU();
@@ -109,129 +108,145 @@ public class AutonCode2 extends OpMode {
     }
 
     // Wheels
-    public double wheelCircum = ((4.09449)*Math.PI);
+    public double wheelCircum = ((3.5)*Math.PI);
     public int ticksrev = 1440;
     boolean moving = false;
+    boolean turning = false;
+    public int ticks = 0;
+    boolean vertical = true;
+    boolean horizontal = false;
+    double distance = 0;
+    double target = 0;
 
     public void forward(double length, int direction){
-
         if (!moving){
             // Number of encoder ticks per distance
-            int ticks = (int)((length/wheelCircum)*ticksrev);
+            ticks = (int)((length/wheelCircum)*ticksrev);
 
             // Assign initial encoder values
             startpos = robot.vertical.getCurrentPosition();
+
+            // Indicate Vertical/Horizontal
+            vertical = true;
+            horizontal = false;
 
             // Travel Distance
             robot.mecanumDrive(direction,0,0);
 
             // Update moving
             moving = true;
-        } else {
-            // Stop after done moving
-            robot.mecanumDrive(0,0,0);
         }
     }
 
     public void strafe(double length, int direction){
         if (!moving){
             // Number of encoder ticks per distance
-            int ticks = (int)((length/wheelCircum)*ticksrev);
+            ticks = (int)((length/wheelCircum)*ticksrev);
 
             // Assign initial encoder values
             startpos = robot.horizontal.getCurrentPosition();
+
+            // Indicate Vertical/Horizontal
+            vertical = false;
+            horizontal = true;
 
             // Travel Distance
             robot.mecanumDrive(0, direction,0);
 
             // Update moving
             moving = true;
-        } else {
-            // Stop after done moving
-            robot.mecanumDrive(0,0,0);
         }
     }
 
     double initialzOrientation = 0;
     double nowOrientation = 0;
-    public void turn(double degrees) {
+    public void turn(double degrees, int direction) {
         initialzOrientation = getZorient();
-        double target = initialzOrientation + degrees;
-
-       nowOrientation = getZorient();
-
-
+        target = (initialzOrientation + degrees) % 360;
+        robot.mecanumDrive(0, 0, direction);
+        turning = true;
     }
 
+    public void check(){
+        if (moving) {
+            if (vertical){
+                distance = robot.vertical.getCurrentPosition()-startpos;
+            }
+
+            else if (horizontal){
+                distance = robot.horizontal.getCurrentPosition()-startpos;
+            }
+
+            if (Math.abs(distance) >= Math.abs(ticks)){
+                robot.mecanumDrive(0,0,0);
+                vertical = false;
+                horizontal = false;
+                moving = false;
+                autonIndex++;
+            }
+        }
+
+        if(turning){
+            nowOrientation = (getZorient()) % 360;
+
+            if(Math.abs(nowOrientation-initialzOrientation) >= target){
+                robot.mecanumDrive(0,0,0);
+                turning = false;
+                autonIndex++;
+            }
+
+        }
+    }
 
     @Override
     public void loop() {
+        check();
         switch(autonIndex){
-            // Starting Position: A3 facing opposite from the bucket
+            // Starting Position: A3 facing submersible with specimen in hand
             case 0:
-                // Adjust shoulder, slide, and claw position
+                // Adjust shoulder and slide position
                 // TODO: Figure out shoulder position
                 robot.shoulder.setTargetPosition(700);
-                robot.claw.setPosition(robot.clawOpenPosition);
                 // TODO: Figure out slide position
-                robot.slide.setTargetPosition(0);
+                robot.slide.setTargetPosition(200);
+                autonIndex++;
+                break;
 
             case 1:
-                // Move Forward One Tile
-                moving = false;
-                forward(24, 1);
-                autonIndex++;
+                // Move forward 0.8 tile
+                forward((24*0.8), 1);
                 break;
 
             case 2:
-                // Close Claw
-                robot.claw.setPosition(robot.clawClosePosition);
+                // Strafe left half tile
+                strafe(12, -1);
+                break;
 
             case 3:
-                // Turn 90 Degrees Counter Clockwise
-                // TODO: Define turning function
-                initialzOrientation = getZorient();
-                robot.mecanumDrive(0, 0, -1);
-                nowOrientation = getZorient();
-
-                if (Math.abs(initialzOrientation - nowOrientation) >= 90){
-                    initialzOrientation = nowOrientation;
-                    autonIndex ++;
-                }
-                break;
-
-            case 4:
-                // Strafe Left
-                moving = false;
-                strafe(24, -1);
-                autonIndex++;
-                break;
-
-            case 5:
-                // Move Forward 0.75 Tile
-                moving = false;
-                forward((24*0.75), 1);
-                autonIndex++;
-                break;
-
-            case 6:
                 // Push Shoulder Down
                 robot.shoulder.setTargetPosition(robot.shoulder.getCurrentPosition() - 75);
                 autonIndex++;
                 break;
 
-            case 7:
-                // Move Forward 0.25 Tile
-                moving = false;
-                forward((24*0.25), 1);
+            case 4:
+                // Move Forward 0.175 Tile
+                forward((24*0.175), 1);
+                break;
+
+            case 5:
+                // Open claw
+                robot.claw.setPosition(robot.clawOpenPosition);
                 autonIndex++;
                 break;
 
-            case 8:
-                // Adjust shoulder, slide, and claw position to init position
+            case 6:
+                // Move backwards one tile
+                forward(24, -1);
+                break;
+
+            case 7:
+                // Adjust shoulder and slide to init position
                 robot.shoulder.setTargetPosition(700);
-                robot.claw.setPosition(robot.clawOpenPosition);
-                // TODO: Figure out slide init position
                 robot.slide.setTargetPosition(0);
 
             default:
