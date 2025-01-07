@@ -20,17 +20,18 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 //todo this should not reference the reign version of MecanumDrive
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
-import org.firstinspires.ftc.teamcode.robots.deepthought.rr_stuff.MecanumDrive;
+import org.firstinspires.ftc.teamcode.rrQuickStart.MecanumDrive;
 //todo this should not reference reign's Constants
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
+import org.firstinspires.ftc.teamcode.rrQuickStart.MecanumDriveReign;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Config(value = "0_ITD_Drive_Train")
-public class DriveTrain extends MecanumDrive implements Subsystem {
+public class DriveTrain extends MecanumDriveReign implements Subsystem {
     public Robot robot;
     public boolean trajectoryIsActive;
     public static double GLOBAL_HEADING_DAMPENING = .7;

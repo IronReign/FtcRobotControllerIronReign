@@ -202,7 +202,7 @@ public class IntoTheDeep_6832 extends OpMode {
 
         if (gameState.equals(GameState.AUTONOMOUS)) {
             robot.driveTrain.setPose(startingPosition);
-            robot.driveTrain.imu.resetYaw();
+            //robot.driveTrain.imu.resetYaw(); TODO - how is the imu reset gonna work now?
         }
 
         robot.updatePositionCache = true;
