@@ -25,12 +25,17 @@ public class AutonCode2 extends OpMode {
     private FtcDashboard dashboard;
     public static int autonIndex = 0;
     int startpos = 0;
-
-    /*
-    Notes to Self:
-    - IMU is used for rotation
-    - Encoder ticks are used for forward and strafing movements
-     */
+    public double wheelCircum = ((3.5)*Math.PI);
+    public int ticksrev = 1440;
+    boolean moving = false;
+    boolean turning = false;
+    public int ticks = 0;
+    boolean vertical = true;
+    boolean horizontal = false;
+    double distance = 0;
+    double target = 0;
+    double initialzOrientation = 0;
+    double nowOrientation = 0;
 
     @Override
     public void init() {
@@ -42,7 +47,7 @@ public class AutonCode2 extends OpMode {
         robot.leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         robot.rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
         robot.rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-        robot.shoulder = hardwareMap.get(DcMotorEx.class, "gearbox");
+        robot.shoulder = hardwareMap.get(DcMotorEx.class, "shoulder");
         robot.claw = hardwareMap.get(Servo.class, "claw");
         robot.slide = hardwareMap.get(DcMotorEx.class, "slide");
         robot.vertical = hardwareMap.get(DcMotorEx.class, "vertical");
@@ -79,7 +84,6 @@ public class AutonCode2 extends OpMode {
 
         robot.claw.setPosition(robot.clawClosePosition);
 
-        // Init IMU
         initIMU();
     }
 
@@ -107,18 +111,7 @@ public class AutonCode2 extends OpMode {
         return telemetry;
     }
 
-    // Wheels
-    public double wheelCircum = ((3.5)*Math.PI);
-    public int ticksrev = 1440;
-    boolean moving = false;
-    boolean turning = false;
-    public int ticks = 0;
-    boolean vertical = true;
-    boolean horizontal = false;
-    double distance = 0;
-    double target = 0;
-
-    public void forward(double length, int direction){
+    public void forward(double length, double direction){
         if (!moving){
             // Number of encoder ticks per distance
             ticks = (int)((length/wheelCircum)*ticksrev);
@@ -131,14 +124,14 @@ public class AutonCode2 extends OpMode {
             horizontal = false;
 
             // Travel Distance
-            robot.mecanumDrive(direction,0,0);
+            robot.mecanumDrive(-direction,0,0);
 
             // Update moving
             moving = true;
         }
     }
 
-    public void strafe(double length, int direction){
+    public void strafe(double length, double direction){
         if (!moving){
             // Number of encoder ticks per distance
             ticks = (int)((length/wheelCircum)*ticksrev);
@@ -158,8 +151,6 @@ public class AutonCode2 extends OpMode {
         }
     }
 
-    double initialzOrientation = 0;
-    double nowOrientation = 0;
     public void turn(double degrees, int direction) {
         initialzOrientation = getZorient();
         target = (initialzOrientation + degrees) % 360;
@@ -194,7 +185,6 @@ public class AutonCode2 extends OpMode {
                 turning = false;
                 autonIndex++;
             }
-
         }
     }
 
@@ -214,23 +204,23 @@ public class AutonCode2 extends OpMode {
 
             case 1:
                 // Move forward 0.8 tile
-                forward((24*0.8), 1);
+                forward((24*0.8), 0.1);
                 break;
 
             case 2:
                 // Strafe left half tile
-                strafe(12, -1);
+                strafe(12, -0.1);
                 break;
 
             case 3:
-                // Push Shoulder Down
+                // Push shoulder down
                 robot.shoulder.setTargetPosition(robot.shoulder.getCurrentPosition() - 75);
                 autonIndex++;
                 break;
 
             case 4:
-                // Move Forward 0.175 Tile
-                forward((24*0.175), 1);
+                // Move forward 0.375 Tile
+                forward(9, 0.1);
                 break;
 
             case 5:
@@ -241,7 +231,7 @@ public class AutonCode2 extends OpMode {
 
             case 6:
                 // Move backwards one tile
-                forward(24, -1);
+                forward(24, -0.1);
                 break;
 
             case 7:
@@ -252,6 +242,5 @@ public class AutonCode2 extends OpMode {
             default:
                 break;
         }
-
     }
 }

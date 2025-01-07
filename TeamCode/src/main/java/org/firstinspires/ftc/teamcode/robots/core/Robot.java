@@ -22,7 +22,7 @@ public class Robot implements Subsystem {
     HardwareMap hardwareMap;
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
     DcMotorEx vertical, horizontal;
-    Servo claw;
+    Servo claw, rotater;
     Gamepad gamepad1;
     DcMotorEx shoulder;
     DcMotorEx slide;
@@ -34,7 +34,7 @@ public class Robot implements Subsystem {
     public double clawClosePosition = 0.6;
     public int shoulderTargetPosition = 0;
     public int slideTargetPosition = 0;
-    public int gearboxpick = 0;
+    public int rotaterPosition = 0;
 
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
         this.hardwareMap = hardwareMap;
@@ -43,15 +43,21 @@ public class Robot implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
-        /*if(gamepad1.a) {
-            shoulderTargetPosition = 50;
-            slideTargetPosition = 50;
-            clawOpen = true;
+        if(gamepad1.dpad_up) {
+            if (rotaterPosition < 90){
+                rotater.setPosition(rotaterPosition + 10);
+            } else {
+                shoulderTargetPosition = 90;
+            }
         }
 
-        if(gamepad1.x){
-            pickup();
-        }*/
+        if(gamepad1.dpad_down) {
+            if (rotaterPosition > 0){
+                rotater.setPosition(rotaterPosition - 10);
+            } else {
+                shoulderTargetPosition = 0;
+            }
+        }
 
         // Claw Controls
         if(gamepad1.b) {
@@ -135,6 +141,7 @@ public class Robot implements Subsystem {
         slide = hardwareMap.get(DcMotorEx.class, "slide");
         horizontal = hardwareMap.get(DcMotorEx.class, "horizontal");
         vertical = hardwareMap.get(DcMotorEx.class, "vertical");
+        rotater = hardwareMap.get(Servo.class, "rotater");
         // Set motor run modes
         leftBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -165,6 +172,7 @@ public class Robot implements Subsystem {
         vertical.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
 
         claw.setPosition(clawOpenPosition);
+        rotater.setPosition(90);
     }
 
     @Override
@@ -172,6 +180,7 @@ public class Robot implements Subsystem {
         LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
 
         telemetry.put("Claw Open", clawOpen);
+        telemetry.put("Rotater", rotaterPosition);
         telemetry.put("Shoulder Power", shoulder.getCurrent(CurrentUnit.AMPS));
         telemetry.put("Shoulder Position", shoulder.getCurrentPosition());
         telemetry.put("Shoulder Target Position", shoulderTargetPosition);
