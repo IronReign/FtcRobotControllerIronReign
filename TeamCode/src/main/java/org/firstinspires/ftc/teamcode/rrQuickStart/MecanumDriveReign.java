@@ -138,6 +138,7 @@ public class MecanumDriveReign {
             private boolean initialized;
             private Pose2d pose;
         public DriveLocalizer(Pose2d pose) {
+            this.pose=pose;
             leftFront = new OverflowEncoder(new RawEncoder(MecanumDriveReign.this.leftFront));
             leftBack = new OverflowEncoder(new RawEncoder(MecanumDriveReign.this.leftBack));
             rightBack = new OverflowEncoder(new RawEncoder(MecanumDriveReign.this.rightBack));
