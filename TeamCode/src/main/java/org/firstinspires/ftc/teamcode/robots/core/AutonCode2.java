@@ -195,33 +195,32 @@ public class AutonCode2 extends OpMode {
             // Starting Position: A3 facing submersible with specimen in hand
             case 0:
                 // Adjust shoulder and slide position
-                // TODO: Figure out shoulder position
-                robot.shoulder.setTargetPosition(700);
                 // TODO: Figure out slide position
-                robot.slide.setTargetPosition(200);
+
+                robot.slide.setTargetPosition(500);
+                robot.shoulder.setTargetPosition(robot.shoulder.getCurrentPosition() + 275);
                 autonIndex++;
                 break;
 
             case 1:
                 // Move forward 0.8 tile
-                forward((24*0.8), 0.1);
+                forward((65), 0.04);
                 break;
 
             case 2:
-                // Strafe left half tile
-                strafe(12, -0.1);
-                break;
-
-            case 3:
                 // Push shoulder down
-                robot.shoulder.setTargetPosition(robot.shoulder.getCurrentPosition() - 75);
-                autonIndex++;
+                robot.shoulder.setPower(70);
+                robot.shoulder.setTargetPosition(robot.shoulder.getCurrentPosition() - 300);
+                robot.slide.setTargetPosition(robot.slide.getCurrentPosition()+40);
+
+                autonIndex+=2;
                 break;
 
-            case 4:
-                // Move forward 0.375 Tile
-                forward(9, 0.1);
-                break;
+
+
+           case 4:
+                //Move backwards
+                forward(20, -1);
 
             case 5:
                 // Open claw
@@ -231,13 +230,10 @@ public class AutonCode2 extends OpMode {
 
             case 6:
                 // Move backwards one tile
-                forward(24, -0.1);
+                forward(4, -0.1);
                 break;
 
-            case 7:
-                // Adjust shoulder and slide to init position
-                robot.shoulder.setTargetPosition(700);
-                robot.slide.setTargetPosition(0);
+
 
             default:
                 break;
