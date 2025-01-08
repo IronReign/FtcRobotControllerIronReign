@@ -391,7 +391,7 @@ public class Trident implements Subsystem {
         telemetryMap.put("crane current", crane.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("crane target : real", "" + craneTargetPosition + " : " + crane.getCurrentPosition());
         if(robot.fetchedPosition != null)
-        telemetryMap.put("crane fetched pos", robot.fetchedPosition.getCranePosition());
+            telemetryMap.put("crane fetched pos", robot.fetchedPosition.getCranePosition());
         telemetryMap.put("crane offset", crane.offset);
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
         telemetryMap.put("current sample", currentSample.name());
