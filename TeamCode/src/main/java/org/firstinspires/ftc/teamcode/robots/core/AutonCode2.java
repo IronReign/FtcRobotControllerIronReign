@@ -204,7 +204,7 @@ public class AutonCode2 extends OpMode {
 
             case 1:
                 // Move forward 0.8 tile
-                forward((24*0.8), 0.1);
+                forward((19), 0.1);
                 break;
 
             case 2:
@@ -226,7 +226,7 @@ public class AutonCode2 extends OpMode {
             case 5:
                 // Open claw
                 robot.claw.setPosition(robot.clawOpenPosition);
-                autonIndex++;
+              //  autonIndex++;
                 break;
 
             case 6:
