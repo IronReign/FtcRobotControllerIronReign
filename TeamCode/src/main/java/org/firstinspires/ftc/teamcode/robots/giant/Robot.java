@@ -15,6 +15,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
@@ -194,13 +195,6 @@ import java.util.Map;
 //    public void attatch(){
 //        extend=5;
 //    }
-//
-//
-//
-//
-//
-//
-//
 //    @Override
 //    public void stop() {
 //
@@ -345,7 +339,7 @@ public class Robot implements Subsystem {
     //2:rightfront
 
 
-    public NormalizedColorSensor colorSensor = null;
+    //public NormalizedColorSensor colorSensor = null;
     public static int colorSensorGain = 12;
     public enum CurrentSample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
@@ -359,23 +353,26 @@ public class Robot implements Subsystem {
 
 
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
+    DcMotorEx shoulder,arm;
     DcMotorEx suck;
 
+    Servo claw;
 
     boolean sucking=false;
     boolean eject=false;
     boolean slurp=false;
 
-
     StickyGamepad g1=null;
     Gamepad gamepad1;
+
     double forward = 0;
     double strafe = 0;
     double turn = 0;
     double targetF, targetS, targetT;
-
-
-
+    int rotate=0;
+    int extend=0;
+    int clawTicks=1000;
+    boolean clawOpen=false;
 
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
         this.hardwareMap = hardwareMap;
@@ -397,20 +394,28 @@ public class Robot implements Subsystem {
     public void update(Canvas fieldOverlay) {
         g1.update();
         mecanumDrive(targetF,targetS,targetT);
-        updateColorSensor();
-        colorSensor.setGain(colorSensorGain);
-        if(!eject&&!slurp) {
-            if (sucking) {
-                grab();
-            }
-            else{
-                suck.setPower(0);
-            }
-        }else if(eject&&!slurp){
-            suck.setPower(-1);
-        } else{
-            suck.setPower(.8);
+        shoulder.setTargetPosition(rotate);
+        claw.setPosition(servoNormalize(clawTicks));
+        arm.setTargetPosition(extend);
+        if(clawOpen){
+            dropBlock();
+        }else{
+            grabBlock();
         }
+        //updateColorSensor();
+        //colorSensor.setGain(colorSensorGain);
+//        if(!eject&&!slurp) {
+//            if (sucking) {
+//                grab();
+//            }
+//            else{
+//                suck.setPower(0);
+//            }
+//        }else if(eject&&!slurp){
+//            suck.setPower(-1);
+//        } else{
+//            suck.setPower(.8);
+//        }
 
     }
 
@@ -442,8 +447,10 @@ public class Robot implements Subsystem {
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
         rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-        suck = hardwareMap.get(DcMotorEx.class, "suck");
-
+        //suck = hardwareMap.get(DcMotorEx.class, "suck");
+        arm = hardwareMap.get(DcMotorEx.class, "arm");
+        shoulder = hardwareMap.get(DcMotorEx.class, "shoulder");
+        claw = hardwareMap.get(Servo.class, "claw");
 
 
 
@@ -452,7 +459,8 @@ public class Robot implements Subsystem {
         rightBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         leftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         rightFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-
+        shoulder.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        arm.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
         leftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         leftBack.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
@@ -462,101 +470,159 @@ public class Robot implements Subsystem {
         rightFront.setDirection(DcMotor.Direction.REVERSE);
 
 
-        suck.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        suck.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+
+        arm.setDirection(DcMotor.Direction.REVERSE);
+        shoulder.setDirection(DcMotor.Direction.REVERSE);
+
+        shoulder.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        arm.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+
+        shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        shoulder.setTargetPosition(0);
+        shoulder.setPower(1);
+
+        arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        arm.setTargetPosition(0);
+        arm.setPower(1);
+
+
+
+        //suck.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+       // suck.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         // suck.setDirection(DcMotor.Direction.REVERSE);
 
 
-        colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
+       // colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
+    }
+
+    //rotate entire arm
+    public void tu(int x){
+        rotate+=x;
+    }
+    public void setRotate(int x) {
+        rotate=x;
+    }
+    //extend linear slide
+    public void extend(int x) {
+        extend+=x;
+    }
+    public void setExtend(int x) {
+        extend=x;
+    }
+
+    public void setClaw(int x){
+        clawTicks+=x;
+    }
+
+    public void setShoulderSpeed(double x){
+        shoulder.setPower(x);
+    }
+
+    public void setClawP(){
+        clawOpen=!clawOpen;
+    }
+
+    public int getClaw(){
+        return clawTicks;
     }
 
 
-    public void grab(){
-        //if find opponent block reverse motor to spit back out in same direction picked up
-        if(!eject&&!slurp) {
-            if (keepBlock()) {
-                long autonTimer = 0;
-                autonTimer = futureTime(.4);
-                if(isPast(autonTimer)){
-                    suck.setPower(0);
-                    // autonTimer = futureTime(.05);
-                }
-//                if (isPast(autonTimer)) {
-//                    suck.setPower(0);
-//                }
-            }
-//            else if (updateColorSensor().equals(op)) {
+
+    public void grabBlock(){clawTicks=1000;}
+
+    public void dropBlock(){clawTicks=1350;}
+
+    public int getExtend() {return arm.getCurrentPosition();}
+
+    public int getRotate() {return shoulder.getCurrentPosition();}
+
+
+//    public void grab(){
+//        //if find opponent block reverse motor to spit back out in same direction picked up
+//        if(!eject&&!slurp) {
+//            if (keepBlock()) {
 //                long autonTimer = 0;
-//                autonTimer = futureTime(.2);
-//                suck.setPower(-1);
-//                if (isPast(autonTimer)) {
-//                    suck.setPower(1);
+//                autonTimer = futureTime(.4);
+//                if(isPast(autonTimer)){
+//                    suck.setPower(0);
+//                    // autonTimer = futureTime(.05);
 //                }
+////                if (isPast(autonTimer)) {
+////                    suck.setPower(0);
+////                }
 //            }
-            else {
-                suck.setPower(1);
-            }
-        }else if(eject&&!slurp){
-            suck.setPower(-1);
-        }
-        else{
-            suck.setPower(.8);
-        }
-    }
-
-
-    public void eject(double x){
-        suck.setPower(x);
-    }
-    public void spit(boolean x){eject=x;}
-    public void setSlurp(boolean x){slurp=x;}
-
-
-    public void suck(){
-        sucking=!sucking;
-    }
-
-
-
-
-    public boolean keepBlock() {
-        if(targetSamples.contains(currentSample)){
-            sucking=false;
-            return true;
-        }
-        return false;
-    }
-
-
-    //110-140
-    public String updateColorSensor() {
-        double hue = getHSV()[0];
-        if (hue < 40 && hue > 15) {         //90    70
-            currentSample = Robot.CurrentSample.NEUTRAL;
-            return "NEUTRAL";
-        } else if (hue < 360 && hue > 350) {      //60    20
-            currentSample = Robot.CurrentSample.RED;
-            return "RED";
-        } else if (hue < 250 && hue > 200) {
-            currentSample = Robot.CurrentSample.BLUE;
-            return "BLUE";
-        } else {
-            currentSample = Robot.CurrentSample.NO_SAMPLE;
-            return "NO SAMPLE";
-        }
-    }
-
-
-    public String HSVasString () {
-        float[] hsv = getHSV();
-        return hsv[0] + " " + hsv[1] + " " + hsv[2];
-    }
-    public float[] getHSV() {
-        float[] hsv = new float[3];
-        Color.colorToHSV(colorSensor.getNormalizedColors().toColor(), hsv);
-        return hsv;
-    }
-
+////            else if (updateColorSensor().equals(op)) {
+////                long autonTimer = 0;
+////                autonTimer = futureTime(.2);
+////                suck.setPower(-1);
+////                if (isPast(autonTimer)) {
+////                    suck.setPower(1);
+////                }
+////            }
+//            else {
+//                suck.setPower(1);
+//            }
+//        }else if(eject&&!slurp){
+//            suck.setPower(-1);
+//        }
+//        else{
+//            suck.setPower(.8);
+//        }
+//    }
+//
+//
+//    public void eject(double x){
+//        suck.setPower(x);
+//    }
+//    public void spit(boolean x){eject=x;}
+//    public void setSlurp(boolean x){slurp=x;}
+//
+//
+//    public void suck(){
+//        sucking=!sucking;
+//    }
+//
+//
+//
+//
+//    public boolean keepBlock() {
+//        if(targetSamples.contains(currentSample)){
+//            sucking=false;
+//            return true;
+//        }
+//        return false;
+//    }
+//
+//
+//    //110-140
+//    public String updateColorSensor() {
+//        double hue = getHSV()[0];
+//        if (hue < 40 && hue > 15) {         //90    70
+//            currentSample = Robot.CurrentSample.NEUTRAL;
+//            return "NEUTRAL";
+//        } else if (hue < 360 && hue > 350) {      //60    20
+//            currentSample = Robot.CurrentSample.RED;
+//            return "RED";
+//        } else if (hue < 250 && hue > 200) {
+//            currentSample = Robot.CurrentSample.BLUE;
+//            return "BLUE";
+//        } else {
+//            currentSample = Robot.CurrentSample.NO_SAMPLE;
+//            return "NO SAMPLE";
+//        }
+//    }
+//
+//
+//    public String HSVasString () {
+//        float[] hsv = getHSV();
+//        return hsv[0] + " " + hsv[1] + " " + hsv[2];
+//    }
+//    public float[] getHSV() {
+//        float[] hsv = new float[3];
+//        Color.colorToHSV(colorSensor.getNormalizedColors().toColor(), hsv);
+//        return hsv;
+//    }
+//
 
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
@@ -565,10 +631,21 @@ public class Robot implements Subsystem {
         telemetry.put("FORWARD: ", targetF);
         telemetry.put("TURN: ", targetT);
         telemetry.put("STRAFE: ", targetS);
-        telemetry.put("colorsensor hsv ",  HSVasString());
-        telemetry.put("what color we got? ", updateColorSensor());
-        telemetry.put("keep the block: ", keepBlock());
-        telemetry.put("ejecting???", eject);
+        telemetry.put("shoudler guess: " , rotate);
+        telemetry.put("shoulder actual: " , shoulder.getCurrentPosition());
+
+        telemetry.put("claw guess: ", clawTicks);
+        telemetry.put("claw actual:", claw.getPosition());
+
+        telemetry.put("arm guess: ", extend);
+        telemetry.put("actual extend: ", arm.getCurrentPosition());
+
+        telemetry.put("CLAW: ", clawTicks);
+
+//        telemetry.put("colorsensor hsv ",  HSVasString());
+//        telemetry.put("what color we got? ", updateColorSensor());
+////        telemetry.put("keep the block: ", keepBlock());
+//        telemetry.put("ejecting???", eject);
         dashboard.sendTelemetryPacket(p);
         return telemetry;
     }
@@ -584,6 +661,10 @@ public class Robot implements Subsystem {
     public void stop() {
 
 
+    }
+    public static double servoNormalize(int pulse) {
+        double normalized = (double) pulse;
+        return (normalized - 750.0) / 1500.0; //convert mr servo controller pulse width to double on _0 - 1 scale
     }
 
 
