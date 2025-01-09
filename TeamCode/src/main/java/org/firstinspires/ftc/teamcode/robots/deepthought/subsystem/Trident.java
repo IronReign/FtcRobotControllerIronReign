@@ -69,12 +69,11 @@ public class Trident implements Subsystem {
     public static int SLIDE_PREINTAKE_POSITION = 2200;
     public static int SLIDE_LOWOUTTAKE_POSITION = 320;
     public static int SLIDE_HIGHOUTTAKE_POSITION = 2880;
-    public static int slideSpeed = 80;
+    public static int SLIDE_ADJUST_SPEED = 80;
     public static double SLIDE_SPEED = 2000;
 
 
     //shoulder
-    public static double shoulder_STALL_THRESHOLD = 4.5;
     public static int SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
     public int shoulderTargetPosition = 0;
     public static int shoulderSpeed = 45;
