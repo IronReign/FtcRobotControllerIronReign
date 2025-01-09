@@ -86,7 +86,7 @@ public class Robot implements Subsystem {
 
     public void start() {
         if(gameState.equals(IntoTheDeep_6832.GameState.TELE_OP)) {
-            trident.crane.setPosition(250);
+            trident.shoulder.setPosition(250);
         }
     }
     //end start
@@ -132,7 +132,7 @@ public class Robot implements Subsystem {
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         if (updatePositionCache && gameState.isAutonomous()) {
-            currPosition = new DTPosition(driveTrain.pose, -trident.crane.getCurrentPosition(), trident.slide.getCurrentPosition());
+            currPosition = new DTPosition(driveTrain.pose, -trident.shoulder.getCurrentPosition(), trident.slide.getCurrentPosition());
             positionCache.update(currPosition, false);
         }
 
@@ -253,9 +253,9 @@ public class Robot implements Subsystem {
                 if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
                     //apply cached position
                     driveTrain.pose = fetchedPosition.getPose();
-                    trident.crane.setPosition(fetchedPosition.getCranePosition());
+                    trident.shoulder.setPosition(fetchedPosition.getShoulderPosition());
                     trident.slide.setPosition(fetchedPosition.getSlidePosition());
-                    trident.crane.setDirection(DcMotor.Direction.REVERSE);
+                    trident.shoulder.setDirection(DcMotor.Direction.REVERSE);
                 }
             }
         }
@@ -268,37 +268,37 @@ public class Robot implements Subsystem {
         switch (calibrateIndex) {
             case 1:
                 calibrateTimer = futureTime(1);
-                trident.crane.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                trident.crane.setPower(-.5);
+                trident.shoulder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                trident.shoulder.setPower(-.5);
                 calibrateIndex++;
 
             case 2:
-                if(Trident.CRANE_CALIBRATE_ENCODER == trident.crane.getCurrentPosition() && isPast(calibrateTimer)) {
+                if(Trident.SHOULDER_CALIBRATE_ENCODER == trident.shoulder.getCurrentPosition() && isPast(calibrateTimer)) {
                     calibrateIndex++;
                 }
                 else {
-                    Trident.CRANE_CALIBRATE_ENCODER = trident.crane.getCurrentPosition();
+                    Trident.SHOULDER_CALIBRATE_ENCODER = trident.shoulder.getCurrentPosition();
                 }
                 break;
             case 3:
-                trident.crane.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                trident.crane.setTargetPosition(2450);
-                trident.crane.setPower(1);
-                trident.crane.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                trident.shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                trident.shoulder.setTargetPosition(2450);
+                trident.shoulder.setPower(1);
+                trident.shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 calibrateIndex++;
 
             case 4:
-                if(withinError(trident.crane.getCurrentPosition(), 2450, 3)) {
-                    trident.crane.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    trident.crane.setDirection(DcMotorSimple.Direction.REVERSE);
-                    trident.crane.setPower(1);
-                    trident.crane.setVelocity(400);
-                    trident.crane.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                if(withinError(trident.shoulder.getCurrentPosition(), 2450, 3)) {
+                    trident.shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    trident.shoulder.setDirection(DcMotorSimple.Direction.REVERSE);
+                    trident.shoulder.setPower(1);
+                    trident.shoulder.setVelocity(400);
+                    trident.shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     calibrateIndex++;
                 }
                 break;
             case 5:
-                trident.craneTargetPosition = 800;
+                trident.shoulderTargetPosition = 800;
                 calibrateIndex++;
                 calibrating = false;
                 return true;
@@ -360,7 +360,7 @@ public class Robot implements Subsystem {
 
     @Override
     public void stop() {
-        currPosition = new DTPosition(driveTrain.pose, -trident.crane.getCurrentPosition(), trident.slide.getCurrentPosition());
+        currPosition = new DTPosition(driveTrain.pose, -trident.shoulder.getCurrentPosition(), trident.slide.getCurrentPosition());
         positionCache.update(currPosition, true);
         for (Subsystem component : subsystems) {
             component.stop();
