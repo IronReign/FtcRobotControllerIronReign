@@ -18,13 +18,11 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.wrapA
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors.distanceSensorsEnabled;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
-//todo this should not reference the reign version of MecanumDrive
+
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
-import org.firstinspires.ftc.teamcode.rrQuickStart.MecanumDrive;
-//todo this should not reference reign's Constants
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
-import org.firstinspires.ftc.teamcode.rrQuickStart.MecanumDriveReign;
+import org.firstinspires.ftc.teamcode.robots.deepthought.rr_localize.MecanumDriveReign;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.HashMap;
@@ -97,7 +95,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
         }
     }
 
-    public void mecanumDrive(double x, double y, double theta) {
+    public void DirectDriveMecanums(double x, double y, double theta) {
         double forward = x;
         double strafe = y;
         double turn = theta;

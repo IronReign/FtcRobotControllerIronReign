@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.rrQuickStart;
+package org.firstinspires.ftc.teamcode.robots.deepthought.rr_localize;
 
 import androidx.annotation.NonNull;
 
@@ -43,7 +43,6 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.rrQuickStart.Localizer;
-import org.firstinspires.ftc.teamcode.rrQuickStart.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.MecanumLocalizerInputsMessage;
@@ -130,6 +129,8 @@ public class MecanumDriveReign {
     private final DownsampledWriter driveCommandWriter = new DownsampledWriter("DRIVE_COMMAND", 50_000_000);
     private final DownsampledWriter mecanumCommandWriter = new DownsampledWriter("MECANUM_COMMAND", 50_000_000);
 
+    //todo this localizer implementation should really be in its own file to help reinforce the idea that motion outputs and localization
+    // are really different things. only use this if using the encoders on the wheel motors.
     public class DriveLocalizer implements Localizer {
             public final Encoder leftFront, leftBack, rightBack, rightFront;
             public final IMU imu;
@@ -267,7 +268,8 @@ public class MecanumDriveReign {
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        localizer = new DriveLocalizer(pose);
+        //localizer = new DriveLocalizer(pose); //mecanum localizer
+        localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick, pose);
         //this.pose = pose;
         this.pose = localizer.getPose(); //TODO validate - this.pose is no longer the pose moved to the DriveLocalizer class
 

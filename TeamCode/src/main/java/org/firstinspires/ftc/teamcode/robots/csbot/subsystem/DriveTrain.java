@@ -21,10 +21,9 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.Field;
 import org.firstinspires.ftc.teamcode.robots.csbot.SubZone;
-import org.firstinspires.ftc.teamcode.rrQuickStart.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 //todo this should not reference reign's Constants
-import org.firstinspires.ftc.teamcode.rrQuickStart.MecanumDriveReign;
+import org.firstinspires.ftc.teamcode.robots.deepthought.rr_localize.MecanumDriveReign;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.HashMap;
