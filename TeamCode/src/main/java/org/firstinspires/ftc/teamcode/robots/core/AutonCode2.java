@@ -195,8 +195,6 @@ public class AutonCode2 extends OpMode {
             // Starting Position: A3 facing submersible with specimen in hand
             case 0:
                 // Adjust shoulder and slide position
-                // TODO: Figure out slide position
-
                 robot.slide.setTargetPosition(500);
                 robot.shoulder.setTargetPosition(robot.shoulder.getCurrentPosition() + 275);
                 autonIndex++;
@@ -204,7 +202,7 @@ public class AutonCode2 extends OpMode {
 
             case 1:
                 // Move forward 0.8 tile
-                forward((19), 0.1);
+                forward((65), 0.04);
 
                 break;
 
@@ -214,27 +212,24 @@ public class AutonCode2 extends OpMode {
                 robot.shoulder.setTargetPosition(robot.shoulder.getCurrentPosition() - 300);
                 robot.slide.setTargetPosition(robot.slide.getCurrentPosition()+40);
 
-                autonIndex+=2;
+                autonIndex++;
                 break;
 
-
+           case 3:
+                //Move forward
+                forward(12, 1);
+                robot.slide.setTargetPosition(robot.slide.getCurrentPosition()+100);
 
            case 4:
-                //Move backwards
-                forward(20, -1);
-
-            case 5:
                 // Open claw
                 robot.claw.setPosition(robot.clawOpenPosition);
-              //  autonIndex++;
+                autonIndex++;
                 break;
 
-            case 6:
+           case 5:
                 // Move backwards one tile
-                forward(4, -0.1);
+                forward(10, -0.1);
                 break;
-
-
 
             default:
                 break;
