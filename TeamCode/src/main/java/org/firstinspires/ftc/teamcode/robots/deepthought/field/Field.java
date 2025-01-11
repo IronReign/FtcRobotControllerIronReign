@@ -30,7 +30,7 @@ public class Field {
 
     public POI subAccess = new POI(-1.5, -.5, 180, "SUBACCESS");
     public POI ground1 = new POI(-2.4, -2, 90, "GROUND1");
-    public POI ground2 = new POI(-2.375, -2.35, 100, "GROUND2");
+    public POI ground2 = new POI(-2.4, -2, 70, "GROUND2");
     public POI ground3 = new POI(-2.375, -2.35, 110, "GROUND3");
     //all values are in field grids
     public static final double MAX_Y_VALUE = 3;
