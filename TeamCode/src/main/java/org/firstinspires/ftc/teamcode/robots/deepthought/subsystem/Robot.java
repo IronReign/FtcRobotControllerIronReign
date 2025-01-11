@@ -179,7 +179,7 @@ public class Robot implements Subsystem {
 //            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
 //            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
             aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
-            driveTrain.pose = new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading);
+            driveTrain.setPose(new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading));
             dc.rumble(1, 3000);
             dc.rumble(2, 3000);
         }
@@ -252,7 +252,7 @@ public class Robot implements Subsystem {
                 int loggerTimeout = (int) (loggerTimeoutMinutes * 60000);
                 if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
                     //apply cached position
-                    driveTrain.pose = fetchedPosition.getPose();
+                    driveTrain.setPose(fetchedPosition.getPose());
                     trident.crane.setPosition(fetchedPosition.getCranePosition());
                     trident.slide.setPosition(fetchedPosition.getSlidePosition());
                     trident.crane.setDirection(DcMotor.Direction.REVERSE);

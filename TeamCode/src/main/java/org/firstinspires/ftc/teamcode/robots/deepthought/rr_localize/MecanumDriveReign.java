@@ -55,6 +55,7 @@ import java.util.List;
 
 @Config
 public class MecanumDriveReign {
+
     public static class Params {
         // IMU orientation
         // TODO: fill in these values based on
@@ -117,10 +118,23 @@ public class MecanumDriveReign {
 
     public final LazyImu lazyImu; //this replaces the previous imu object
 
-    public final Localizer localizer;
+    public final Localizer localizer; //this is the active localizer once initialized
 
-    //GOD POSE
-    public Pose2d pose;
+    //Frickin GOD POSE should never have existed  - the data belongs in the localizer - now acts as a cache
+    //in that setting  it directly does nothing useful since it should get updated on every cycle by the active localizer
+    public Pose2d pose; //have to leave public  until all external references are refactored out
+
+    public Pose2d getPose() {
+        pose = localizer.getPose(); //every opportunity to update the cached pose
+        return pose;
+    }
+
+    public void setPose(Pose2d pose) {
+
+        localizer.setPose(pose);
+    }
+
+
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -270,8 +284,9 @@ public class MecanumDriveReign {
 
         //localizer = new DriveLocalizer(pose); //mecanum localizer
         localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick, pose);
+        localizer.setPose(pose);
         //this.pose = pose;
-        this.pose = localizer.getPose(); //TODO validate - this.pose is no longer the pose moved to the DriveLocalizer class
+        this.pose = localizer.getPose(); //TODO validate
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
     }
@@ -479,14 +494,15 @@ public class MecanumDriveReign {
 
     public PoseVelocity2d updatePoseEstimate() {
         PoseVelocity2d vel = localizer.update();
-        poseHistory.add(localizer.getPose());
+        pose = localizer.getPose();
+
+        poseHistory.add(pose);
 
         while (poseHistory.size() > 100) {
             poseHistory.removeFirst();
         }
 
-        estimatedPoseWriter.write(new PoseMessage(localizer.getPose()));
-
+        estimatedPoseWriter.write(new PoseMessage(pose));
 
         return vel;
     }

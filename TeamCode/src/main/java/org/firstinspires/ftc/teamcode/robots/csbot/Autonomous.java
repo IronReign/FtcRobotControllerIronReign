@@ -583,7 +583,7 @@ public class Autonomous implements TelemetryProvider {
                     autonState = AutonState.IMU_TURN;
                     if (robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING, turnToSpeed) || isPast(futureTimer)) {
                         robot.enableVision();
-                        robot.driveTrain.pose = new Pose2d(new Vector2d(robot.driveTrain.pose.position.x, robot.driveTrain.pose.position.y), Math.toRadians(robot.sensors.driveIMUYaw));
+                        robot.driveTrain.setPose(new Pose2d(new Vector2d(robot.driveTrain.pose.position.x, robot.driveTrain.pose.position.y), Math.toRadians(robot.sensors.driveIMUYaw)));
                         autonIndex++;
                     }
                     break;
@@ -654,7 +654,7 @@ public class Autonomous implements TelemetryProvider {
                 case 14:
                     autonState = AutonState.IMU_TURN;
                     if (robot.driveTrain.turnUntilDegreesIMU(STANDARD_HEADING, turnToSpeed) || isPast(futureTimer)) {
-                        robot.driveTrain.pose = new Pose2d(new Vector2d(robot.driveTrain.pose.position.x, robot.driveTrain.pose.position.y), Math.toRadians(robot.sensors.driveIMUYaw));
+                        robot.driveTrain.setPose(new Pose2d(new Vector2d(robot.driveTrain.pose.position.x, robot.driveTrain.pose.position.y), Math.toRadians(robot.sensors.driveIMUYaw)));
                         MecanumDrive.PARAMS.maxWheelVel = 50;
                         autonIndex++;
                     }
