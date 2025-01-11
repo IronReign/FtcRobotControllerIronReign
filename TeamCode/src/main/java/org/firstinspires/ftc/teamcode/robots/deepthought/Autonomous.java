@@ -1,21 +1,16 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.auton;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.PoseVelocity2d;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.robots.deepthought.field.Field;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
-import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
 
@@ -82,7 +77,7 @@ public class Autonomous implements TelemetryProvider {
         switch (autonIndex) {
             case 0:
                 autonState = AutonState.INIT;
-                robot.positionCache.update(new DTPosition(robot.driveTrain.pose, robot.trident.crane.getCurrentPosition(), robot.trident.slide.getCurrentPosition()), true);
+                robot.positionCache.update(new DTPosition(robot.driveTrain.pose, robot.trident.shoulder.getCurrentPosition(), robot.trident.slide.getCurrentPosition()), true);
                 autonTimer = futureTime(AUTON_START_DELAY);
                 autonIndex++;
                 break;
