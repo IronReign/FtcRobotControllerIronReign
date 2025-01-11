@@ -163,13 +163,13 @@ public class Autonomous implements TelemetryProvider {
 
             case 11:
                 if (robot.articulation.equals(Robot.Articulation.MANUAL) && isPast(autonTimer)) {
+                    Trident.beaterPower = .8;
+                    autonTimer = futureTime(3);
                     autonIndex++;
                 }
                 break;
 
             case 12:
-                Trident.beaterPower = .8;
-                autonTimer = futureTime(3);
                 autonIndex++;
                 break;
 

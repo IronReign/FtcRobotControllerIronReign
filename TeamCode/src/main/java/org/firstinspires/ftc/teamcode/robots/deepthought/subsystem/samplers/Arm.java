@@ -17,6 +17,8 @@ public abstract class Arm implements Subsystem {
     HardwareMap hardwareMap;
     Robot robot;
 
+    DcMotorEx shoulder;
+
     DcMotorEx slide = null;
     NormalizedColorSensor colorSensor = null;
     Joint elbow;
