@@ -360,7 +360,7 @@ public class DriverControls {
         }
         if(stickyGamepad1.right_stick_button) {
             field.finalizeField();
-            robot.driveTrain.pose = new Pose2d(field.SCORE6.pose.position, field.SCORE6.pose.heading.log());
+            robot.driveTrain.setPose(new Pose2d(field.SCORE6.pose.position, field.SCORE6.pose.heading.log()));
             robot.driveTrain.buildTestPathToWing();
             robot.driveTrain.runTestPath = true;
         }

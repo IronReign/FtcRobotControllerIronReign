@@ -63,8 +63,9 @@ public class Sensors implements Subsystem {
             leftDistSensorValue = 500;
             averageDistSensorValue = (leftDistSensorValue + rightDistSensorValue)/2;
         }
-        if(driveIMUEnabled){
-            driveIMUYaw = Utils.wrapAngle(robot.driveTrain.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.isRed()? -90 : 90) + (CenterStage_6832.frontAuton? 180: 0));
+        if(driveIMUEnabled){ //todo - is this test valid? don't we always want a heading? also, need to validate if this is a legit way to get heading once we start swapping out pinpoint, sparkfun optical, etc.
+            //driveIMUYaw = Utils.wrapAngle(robot.driveTrain.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + (alliance.isRed()? -90 : 90) + (CenterStage_6832.frontAuton? 180: 0));
+            driveIMUYaw = Utils.wrapAngle(Math.toDegrees(robot.driveTrain.pose.heading.log()) + (alliance.isRed()? -90 : 90));
         }
 
         if(touchSensorsEnabled){
