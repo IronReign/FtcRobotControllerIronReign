@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.dc;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
@@ -88,6 +89,7 @@ public class Robot implements Subsystem {
         if(gameState.equals(IntoTheDeep_6832.GameState.TELE_OP)) {
             trident.shoulder.setPosition(250);
         }
+        field.finalizeField(alliance);
     }
     //end start
 
@@ -252,7 +254,7 @@ public class Robot implements Subsystem {
                 if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
                     //apply cached position
                     driveTrain.setPose(fetchedPosition.getPose());
-                    trident.shoulder.setPosition(fetchedPosition.getCranePosition());
+                    trident.shoulder.setPosition(fetchedPosition.getShoulderPosition());
                     trident.slide.setPosition(fetchedPosition.getSlidePosition());
                     trident.shoulder.setDirection(DcMotor.Direction.REVERSE);
                 }

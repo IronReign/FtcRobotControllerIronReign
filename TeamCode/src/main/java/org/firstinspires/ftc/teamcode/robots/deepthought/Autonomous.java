@@ -94,7 +94,7 @@ public class Autonomous implements TelemetryProvider {
                     autonTimer = futureTime(.5);
                     autonIndex++;
                 }
-                if(isPast(autonTimer)) {
+                if (isPast(autonTimer)) {
                     robot.trident.outtakeIndex = 0;
                     Trident.enforceSlideLimits = false;
                     robot.articulate(Robot.Articulation.OUTTAKE);
@@ -127,9 +127,9 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 7:
-//                if (isPast(autonTimer)) {
+                if (isPast(autonTimer)) {
                     autonIndex++;
-//                }
+                }
                 break;
             case 8:
                 if (robot.articulation == Robot.Articulation.MANUAL && robot.trident.articulation == Trident.Articulation.MANUAL) {
@@ -144,12 +144,38 @@ public class Autonomous implements TelemetryProvider {
 //                if(robot.trident.articulation == Trident.Articulation.MANUAL){
 //                    robot.articulate(Robot.Articulation.TRAVEL);
 //                    autonTimer = futureTime(3);
-                    autonIndex++;
+                autonTimer = futureTime(2);
+
+                autonIndex++;
 //                }
                 break;
             case 10:
-                if ((robot.driveTrain.strafeToPose(field.basketPrep.getPose(), packet) || isPast(autonTimer))) {;
-//                    autonIndex ++;
+                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet)) {
+                    autonTimer = futureTime(.5);
+                    autonIndex++;
+                }
+                if (isPast(autonTimer)) {
+                    robot.trident.outtakeIndex = 0;
+                    Trident.enforceSlideLimits = false;
+                    robot.articulate(Robot.Articulation.OUTTAKE);
+                }
+                break;
+
+            case 11:
+                if (robot.articulation.equals(Robot.Articulation.MANUAL) && isPast(autonTimer)) {
+                    autonIndex++;
+                }
+                break;
+
+            case 12:
+                Trident.beaterPower = .8;
+                autonTimer = futureTime(3);
+                autonIndex++;
+                break;
+
+            case 13:
+                if (isPast(autonTimer)) {
+                    Trident.beaterPower = 0;
                     return true;
                 }
                 break;

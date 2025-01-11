@@ -113,6 +113,8 @@ public class Field {
         finalized = true;
         zones = Zone.getNamedZones();
         allianceMultiplier = isRed ? 1 : -1;
+        basket = new POI(-2.3 * allianceMultiplier, -2.3 * allianceMultiplier, 35, "BASKET");
+        basketPrep = new POI(isRed? -2.4 : 2, isRed? -2 : 2.4, 50, "BASKET");
     }
 
     public void flipField(boolean alliance){
