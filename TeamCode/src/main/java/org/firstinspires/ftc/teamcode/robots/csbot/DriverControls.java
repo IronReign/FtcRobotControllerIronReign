@@ -9,7 +9,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.slideSpeed;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.SLIDE_ADJUST_SPEED;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot.visionOn;
 
 import android.annotation.SuppressLint;
@@ -160,13 +160,13 @@ public class DriverControls {
             if (robot.intake.isEating())
                 robot.intake.pixelSensorLeft();
             else
-                robot.outtake.slide.setTargetPosition(robot.outtake.getSlideTargetPosition() -5 * slideSpeed);
+                robot.outtake.slide.setTargetPosition(robot.outtake.getSlideTargetPosition() -5 * SLIDE_ADJUST_SPEED);
         }
         if (gamepad1.right_bumper) {
             if (robot.intake.isEating())
                 robot.intake.pixelSensorRight();
             else
-                robot.outtake.slide.setTargetPosition(robot.outtake.getSlideTargetPosition() +5 * slideSpeed);
+                robot.outtake.slide.setTargetPosition(robot.outtake.getSlideTargetPosition() +5 * SLIDE_ADJUST_SPEED);
         }
         
         if(stickyGamepad1.y) {

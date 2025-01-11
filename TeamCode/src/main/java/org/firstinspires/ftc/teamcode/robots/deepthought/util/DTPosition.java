@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 public class DTPosition implements Serializable {
     private static final long serialVersionUID = 12345L;
-    private int cranePosition;
+    private int shoulderPosition;
     private long timestamp;
     private double chassisX;
     private double chassisY;
@@ -20,11 +20,11 @@ public class DTPosition implements Serializable {
         chassisHeading = 0;
     }
 
-    public DTPosition(Pose2d driveTrainPose, int cranePosition, int slidePosition) {
+    public DTPosition(Pose2d driveTrainPose, int shoulderPosition, int slidePosition) {
         chassisX = driveTrainPose.position.x;
         chassisY = driveTrainPose.position.y;
         chassisHeading = driveTrainPose.heading.log();
-        this.cranePosition = cranePosition;
+        this.shoulderPosition = shoulderPosition;
         timestamp = System.currentTimeMillis();
         this.slidePosition = slidePosition;
     }
@@ -37,7 +37,7 @@ public class DTPosition implements Serializable {
         this.chassisY = pose.position.y;
         this.chassisHeading = pose.heading.log();
     }
-    public int getCranePosition() { return cranePosition; }
+    public int getShoulderPosition() { return shoulderPosition; }
     public int getSlidePosition() { return slidePosition; }
     public long getTimestamp() { return timestamp; }
 
