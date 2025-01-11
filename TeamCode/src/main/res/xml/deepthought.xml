@@ -42,7 +42,7 @@
                 name="slide"
                 port="3" />
             <RevRobotics40HDHexMotor
-                name="crane"
+                name="shoulder"
                 port="2" />
             <LynxEmbeddedIMU
                 name="eimu"

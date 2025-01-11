@@ -8,7 +8,7 @@ import android.graphics.Color;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.robotcore.hardware.CRServoImplEx;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -17,7 +17,6 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DcMotorExResetable;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
@@ -33,10 +32,10 @@ public class Trident implements Subsystem {
 
     public static boolean enforceSlideLimits;
     public DcMotorExResetable slide = null;
-    public DcMotorExResetable crane = null;
+    public DcMotorExResetable shoulder = null;
     public Joint elbow;
 
-    public CRServoImplEx beater = null;
+    public CRServo beater = null;
     public Servo pincer;
     public static boolean tuckFromHighOuttake = false;
 
@@ -70,20 +69,19 @@ public class Trident implements Subsystem {
     public static int SLIDE_PREINTAKE_POSITION = 2200;
     public static int SLIDE_LOWOUTTAKE_POSITION = 320;
     public static int SLIDE_HIGHOUTTAKE_POSITION = 2880;
-    public static int slideSpeed = 80;
+    public static int SLIDE_ADJUST_SPEED = 80;
     public static double SLIDE_SPEED = 2000;
 
 
-    //CRANE
-    public static double CRANE_STALL_THRESHOLD = 4.5;
-    public static int CRANE_CALIBRATE_ENCODER = Integer.MIN_VALUE;
-    public int craneTargetPosition = 0;
-    public static int craneSpeed = 45;
-    public static int CRANE_HOME_POSITION = 250;
-    public static int CRANE_INTAKE_POSITION = 180;
-    public static int CRANE_LOWOUTTAKE_POSITION = 2105;
-    public static int CRANE_HIGHOUTTAKE_POSITION = 1925;
-    public int cranePositionMax = 850;
+    //shoulder
+    public static int SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
+    public int shoulderTargetPosition = 0;
+    public static int shoulderSpeed = 45;
+    public static int SHOULDER_HOME_POSITION = 250;
+    public static int SHOULDER_INTAKE_POSITION = 250;
+    public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
+    public static int SHOULDER_HIGHOUTTAKE_POSITION = 1925;
+    public int shoulderPositionMax = 850;
 
     //ELBOW JOINT VARIABLES
     public static double ELBOW_START_ANGLE = 145;
@@ -98,7 +96,7 @@ public class Trident implements Subsystem {
     public static double ELBOW_HIGHOUTTAKE_ANGLE = 70;
 
     //BEATER
-    public double beaterPower;
+    public static double beaterPower;
 
     //PINCER
     public static double PINCER_CLOSE = 1750;
@@ -166,7 +164,7 @@ public class Trident implements Subsystem {
                 break;
             case 2:
                 if (slide.getCurrentPosition() < 150) {
-                    craneTargetPosition = CRANE_HOME_POSITION;
+                    shoulderTargetPosition = SHOULDER_HOME_POSITION;
                     return true;
                 }
         }
@@ -185,14 +183,14 @@ public class Trident implements Subsystem {
                 break;
             case 1:
                 if (isPast(intakeTimer)) {
-                    craneTargetPosition = CRANE_INTAKE_POSITION;
+                    shoulderTargetPosition = SHOULDER_INTAKE_POSITION;
                     slideTargetPosition = SLIDE_PREINTAKE_POSITION;
                     intakeIndex++;
                 }
                 break;
             case 2:
-                if (withinError(crane.getCurrentPosition(), CRANE_INTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
-                    beaterPower = 1;
+                if (withinError(shoulder.getCurrentPosition(), SHOULDER_INTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
+                    beaterPower = .8;
                     intakeTimer = futureTime(8);
                     intakeIndex++;
                     colorSensorEnabled = true;
@@ -201,7 +199,7 @@ public class Trident implements Subsystem {
             case 3:
                 if (slideTargetPosition > SLIDE_INTAKE_MIN_POSITION) {
                     slideTargetPosition -= 120;
-                    craneTargetPosition -= 5;
+                    shoulderTargetPosition -= 5;
                 }
                 if (stopOnSample() || isPast(intakeTimer)) {
                     intakeIndex = 0;
@@ -226,7 +224,7 @@ public class Trident implements Subsystem {
             case 1:
                 if (isPast(outtakeTimer)) {
                     slideTargetPosition = preferHighOuttake ? SLIDE_HIGHOUTTAKE_POSITION : SLIDE_LOWOUTTAKE_POSITION;
-                    craneTargetPosition = preferHighOuttake ? (int)(CRANE_HIGHOUTTAKE_POSITION * .75) : CRANE_LOWOUTTAKE_POSITION;
+                    shoulderTargetPosition = preferHighOuttake ? (int)(SHOULDER_HIGHOUTTAKE_POSITION * .75) : SHOULDER_LOWOUTTAKE_POSITION;
                     outtakeIndex++;
                 }
                 break;
@@ -239,7 +237,7 @@ public class Trident implements Subsystem {
                 break;
             case 3:
                 if(isPast(outtakeTimer)) {
-                    craneTargetPosition = preferHighOuttake ? CRANE_HIGHOUTTAKE_POSITION : CRANE_LOWOUTTAKE_POSITION;
+                    shoulderTargetPosition = preferHighOuttake ? SHOULDER_HIGHOUTTAKE_POSITION : SHOULDER_LOWOUTTAKE_POSITION;
                     outtakeIndex ++;
                 }
                 break;
@@ -272,7 +270,7 @@ public class Trident implements Subsystem {
 
     public boolean stopOnSample() {
         colorSensorEnabled = true;
-        beaterPower = 1;
+        beaterPower = .8;
         if (targetSamples.contains(currentSample)) {
             beaterPower = 0;
             colorSensorEnabled = false;
@@ -286,11 +284,11 @@ public class Trident implements Subsystem {
         this.robot = robot;
         elbow = new Joint(hardwareMap, "elbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "slide");
-        DcMotorEx bruhx2 = this.hardwareMap.get(DcMotorEx.class, "crane");
+        DcMotorEx bruhx2 = this.hardwareMap.get(DcMotorEx.class, "shoulder");
         slide = new DcMotorExResetable(bruh);
-        crane = new DcMotorExResetable(bruhx2);
+        shoulder = new DcMotorExResetable(bruhx2);
         colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
-        beater = this.hardwareMap.get(CRServoImplEx.class, "beater");
+        beater = this.hardwareMap.get(CRServo.class, "beater");
         pincer = this.hardwareMap.get(Servo.class, "pincer");
         slide.setMotorEnable();
         slide.setPower(1);
@@ -300,14 +298,14 @@ public class Trident implements Subsystem {
         slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slide.setVelocity(SLIDE_SPEED);
 
-        crane.setMotorEnable();
-        crane.setPower(1);
-        crane.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        crane.setTargetPosition(0);
-        crane.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        crane.setVelocity(1500);
+        shoulder.setMotorEnable();
+        shoulder.setPower(1);
+        shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shoulder.setTargetPosition(0);
+        shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        shoulder.setVelocity(1500);
         articulation = Articulation.MANUAL;
-        CRANE_CALIBRATE_ENCODER = Integer.MIN_VALUE;
+        SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
     }
 
     public void adjustElbow(double angle) {
@@ -333,7 +331,7 @@ public class Trident implements Subsystem {
         if (enforceSlideLimits) intakeSlideLimits();
         slide.setTargetPosition(slideTargetPosition);
         if (calibrated) {
-            crane.setTargetPosition(craneTargetPosition);
+            shoulder.setTargetPosition(shoulderTargetPosition);
         }
         beater.setPower(-beaterPower);
 
@@ -348,13 +346,13 @@ public class Trident implements Subsystem {
 
     public String updateColorSensor() {
         double hue = getHSV()[0];
-        if (hue < 45 && hue > 35) {
+        if (hue < 35 && hue > 30) {
             currentSample = Sample.NEUTRAL;
             return "NEUTRAL";
-        } else if (hue < 15 || hue > 350) {
+        } else if (hue < 5 || hue > 350) {
             currentSample = Sample.RED;
             return "RED";
-        } else if (hue < 225 && hue > 200) {
+        } else if (hue < 220 && hue > 210) {
             currentSample = Sample.BLUE;
             return "BLUE";
         } else {
@@ -387,8 +385,11 @@ public class Trident implements Subsystem {
         telemetryMap.put("preferHighOuttake", preferHighOuttake);
         telemetryMap.put("intake index", intakeIndex);
         telemetryMap.put("outtake index", outtakeIndex);
-        telemetryMap.put("crane current", crane.getCurrent(CurrentUnit.AMPS));
-        telemetryMap.put("crane target : real", "" + craneTargetPosition + " : " + crane.getCurrentPosition());
+        telemetryMap.put("shoulder current", shoulder.getCurrent(CurrentUnit.AMPS));
+        telemetryMap.put("shoulder target : real", "" + shoulderTargetPosition + " : " + shoulder.getCurrentPosition());
+        if(robot.fetchedPosition != null)
+            telemetryMap.put("shoulder fetched pos", robot.fetchedPosition.getShoulderPosition());
+        telemetryMap.put("shoulder offset", shoulder.offset);
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
         telemetryMap.put("current sample", currentSample.name());
         telemetryMap.put("colorsensor", colorSensorEnabled);

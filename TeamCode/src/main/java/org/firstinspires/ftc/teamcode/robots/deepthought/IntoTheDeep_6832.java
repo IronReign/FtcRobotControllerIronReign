@@ -8,7 +8,9 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.field.Field;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.ExponentialSmoother;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
 import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProviders;
@@ -156,8 +158,8 @@ public class IntoTheDeep_6832 extends OpMode {
         dc.robotOrientedDrive();
         if (gameState.isAutonomous()) {
             robot.preloadAllianceSelect();
-            if(!robot.trident.calibrated) {
-                if(robot.calibrate())
+            if (!robot.trident.calibrated) {
+                if (robot.calibrate())
                     robot.trident.calibrated = true;
             }
         }
@@ -194,28 +196,16 @@ public class IntoTheDeep_6832 extends OpMode {
         robot.fetchCachedDTPosition();
         if (gameState.equals(GameState.TELE_OP)) {
             robot.trident.calibrated = true;
-            robot.driveTrain.setPose(startingPosition);
+            restoreRobotPositionFromCache();
         }
         field.finalizeField(alliance);
-        resetGame();
 
-
-        if (robot.fetched && !gameState.isAutonomous()) {
-            robot.driveTrain.setPose(robot.fetchedPosition.getPose());
-
-        } else {
+        if (gameState.equals(GameState.AUTONOMOUS)) {
             robot.driveTrain.setPose(startingPosition);
+            //robot.driveTrain.imu.resetYaw(); TODO - how is the imu reset gonna work now?
         }
 
         robot.updatePositionCache = true;
-
-        if (gameState.equals(GameState.AUTONOMOUS)) {
-            robot.driveTrain.imu.resetYaw();
-        }
-
-        if (gameState.equals(GameState.TELE_OP)) {
-
-        }
 
         if (gameState.equals(GameState.TEST) || gameState.equals(GameState.DEMO)) {
             robot.trident.calibrated = true;
@@ -225,8 +215,8 @@ public class IntoTheDeep_6832 extends OpMode {
     }
 
     //end start()
-    public void resetGame() {
-        robot.resetRobotPosFromCache(5, ignoreCachePosition);
+    public void restoreRobotPositionFromCache() {
+        robot.resetRobotPosFromCache(5, false);
     }
 
 
@@ -240,7 +230,11 @@ public class IntoTheDeep_6832 extends OpMode {
         update(packet);
         switch (gameState) {
             case AUTONOMOUS:
-                if (auton.execute(packet)) gameState = GameState.TELE_OP;
+                if (auton.execute(packet)) {
+                    robot.articulate(Robot.Articulation.TRAVEL);
+                    robot.trident.articulate(Trident.Articulation.TUCK);
+                    gameState = GameState.TELE_OP;
+                }
                 break;
 
             case TELE_OP:

@@ -1,21 +1,16 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.auton;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.PoseVelocity2d;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.robots.deepthought.field.Field;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
-import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
 
@@ -82,7 +77,7 @@ public class Autonomous implements TelemetryProvider {
         switch (autonIndex) {
             case 0:
                 autonState = AutonState.INIT;
-                robot.positionCache.update(new DTPosition(robot.driveTrain.pose, robot.trident.crane.getCurrentPosition(), robot.trident.slide.getCurrentPosition()), true);
+                robot.positionCache.update(new DTPosition(robot.driveTrain.pose, robot.trident.shoulder.getCurrentPosition(), robot.trident.slide.getCurrentPosition()), true);
                 autonTimer = futureTime(AUTON_START_DELAY);
                 autonIndex++;
                 break;
@@ -99,7 +94,7 @@ public class Autonomous implements TelemetryProvider {
                     autonTimer = futureTime(.5);
                     autonIndex++;
                 }
-                if(isPast(autonTimer)) {
+                if (isPast(autonTimer)) {
                     robot.trident.outtakeIndex = 0;
                     Trident.enforceSlideLimits = false;
                     robot.articulate(Robot.Articulation.OUTTAKE);
@@ -112,14 +107,14 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 4:
-                robot.trident.beaterPower = 1;
+                robot.trident.beaterPower = .5;
                 autonTimer = futureTime(2);
                 autonIndex++;
                 break;
             case 5:
                 Trident.colorSensorEnabled = true;
                 if (isPast(autonTimer)) {
-                    autonIndex = 9;
+                    autonIndex++;
                 }
                 break;
             case 6:
@@ -132,9 +127,9 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 7:
-//                if (isPast(autonTimer)) {
+                if (isPast(autonTimer)) {
                     autonIndex++;
-//                }
+                }
                 break;
             case 8:
                 if (robot.articulation == Robot.Articulation.MANUAL && robot.trident.articulation == Trident.Articulation.MANUAL) {
@@ -144,15 +139,94 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 9:
                 robot.articulate(Robot.Articulation.TRAVEL);
-//                robot.trident.slideTargetPosition -=50;
-//                if(robot.trident.articulation == Trident.Articulation.MANUAL){
-//                    robot.articulate(Robot.Articulation.TRAVEL);
-//                    autonTimer = futureTime(3);
-                    autonIndex++;
-//                }
+                autonTimer = futureTime(2);
+                autonIndex++;
+
                 break;
             case 10:
-                if (robot.driveTrain.strafeToPose(field.basketPrep.getPose(), packet) && robot.trident.articulation == Trident.Articulation.MANUAL) {;
+                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet)) {
+                    autonTimer = futureTime(.5);
+                    autonIndex++;
+                }
+                if (isPast(autonTimer)) {
+                    robot.trident.outtakeIndex = 0;
+                    Trident.enforceSlideLimits = false;
+                    robot.articulate(Robot.Articulation.OUTTAKE);
+                }
+                break;
+
+            case 11:
+                if (robot.articulation.equals(Robot.Articulation.MANUAL) && isPast(autonTimer)) {
+                    Trident.beaterPower = .5;
+                    autonTimer = futureTime(3);
+                    autonIndex++;
+                }
+                break;
+
+            case 12:
+                autonIndex++;
+                break;
+
+            case 13:
+                if (isPast(autonTimer)) {
+                    Trident.beaterPower = 0;
+                    autonIndex ++;
+                }
+                break;
+
+            case 14:
+                if (robot.driveTrain.strafeToPose(field.ground2.getPose(), packet)) {
+                    robot.trident.beaterPower = 0;
+                    Trident.intakeIndex = 0;
+                    robot.articulate(Robot.Articulation.INTAKE);
+//                    autonTimer = futureTime(0);
+                    autonIndex++;
+                }
+                break;
+            case 15:
+                if (isPast(autonTimer)) {
+                    autonIndex++;
+                }
+                break;
+            case 16:
+                if (robot.articulation == Robot.Articulation.MANUAL && robot.trident.articulation == Trident.Articulation.MANUAL) {
+                    robot.articulate(Robot.Articulation.TRAVEL);
+                    autonIndex++;
+                }
+                break;
+            case 17:
+                robot.articulate(Robot.Articulation.TRAVEL);
+                autonTimer = futureTime(2);
+                autonIndex++;
+
+                break;
+            case 18:
+                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet)) {
+                    autonTimer = futureTime(.5);
+                    autonIndex++;
+                }
+                if (isPast(autonTimer)) {
+                    robot.trident.outtakeIndex = 0;
+                    Trident.enforceSlideLimits = false;
+                    robot.articulate(Robot.Articulation.OUTTAKE);
+                }
+                break;
+
+            case 19:
+                if (robot.articulation.equals(Robot.Articulation.MANUAL) && isPast(autonTimer)) {
+                    Trident.beaterPower = .5;
+                    autonTimer = futureTime(3);
+                    autonIndex++;
+                }
+                break;
+
+            case 20:
+                autonIndex++;
+                break;
+
+            case 21:
+                if (isPast(autonTimer)) {
+                    Trident.beaterPower = 0;
                     return true;
                 }
                 break;

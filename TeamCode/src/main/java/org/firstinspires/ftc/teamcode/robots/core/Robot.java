@@ -31,7 +31,7 @@ public class Robot implements Subsystem {
 
     public boolean clawOpen = false;
     public double clawOpenPosition = 1;
-    public double clawClosePosition = 0.6;
+    public double clawClosePosition = 0.3;
     public int shoulderTargetPosition = 0;
     public int slideTargetPosition = 0;
     public int rotaterPosition = 0;
@@ -70,10 +70,10 @@ public class Robot implements Subsystem {
         }
 
         if(gamepad1.right_trigger >= 0.3){
-            if (shoulder.getCurrentPosition() < 1200){
+            if (shoulder.getCurrentPosition() < 1800){
                 shoulderTargetPosition = shoulder.getCurrentPosition() + 75;
             } else {
-                shoulderTargetPosition = 1200;
+                shoulderTargetPosition = 1800;
             }
         }
         else if (gamepad1.left_trigger >= 0.3){
@@ -93,7 +93,7 @@ public class Robot implements Subsystem {
             }
         }
         if (gamepad1.left_bumper){
-            if(slide.getCurrentPosition() > 0){
+            if(slide.getCurrentPosition() > 60){
                 slideTargetPosition = slide.getCurrentPosition() - 60;
             } else {
                 slide.setTargetPosition(0);
@@ -111,8 +111,8 @@ public class Robot implements Subsystem {
         } else {
             claw.setPosition(clawClosePosition);
         }
-        shoulder.setTargetPosition(shoulderTargetPosition);
-        slide.setTargetPosition(slideTargetPosition);
+        shoulder.setTargetPosition(1647);
+        slide.setTargetPosition(44);
     }
 
     public void mecanumDrive(double forward, double strafe, double turn) {
@@ -156,12 +156,12 @@ public class Robot implements Subsystem {
 
         shoulder.setPower(1);
         shoulder.setVelocity(300);
-        shoulder.setTargetPosition(700);
+        shoulder.setTargetPosition(1467);
         shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         slide.setPower(1);
         slide.setVelocity(300);
-        slide.setTargetPosition(slideTargetPosition);
+        slide.setTargetPosition(44);
         slide.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         leftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
@@ -203,7 +203,7 @@ public class Robot implements Subsystem {
         switch (calibrateStage) {
             case 0:
                 shoulder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                shoulder.setPower(-.2);
+                shoulder.setPower(-.4);
                 calibrateStage++;
                 break;
             case 1:
@@ -215,13 +215,14 @@ public class Robot implements Subsystem {
                 CALIBRATE_POSITION = shoulder.getCurrentPosition();
                 break;
             case 2:
-                shoulder.setPower(1);
+                shoulder.setPower(10);
                 shoulder.setTargetPosition(0);
                 shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 calibrateStage++;
                 break;
             case 3:
-                shoulder.setTargetPosition(1000);
+                shoulder.setTargetPosition(1647);
+                slide.setTargetPosition(44);
                 return true;
         }
         return false;

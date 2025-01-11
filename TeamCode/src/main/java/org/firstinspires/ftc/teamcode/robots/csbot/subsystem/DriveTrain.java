@@ -21,16 +21,16 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.Field;
 import org.firstinspires.ftc.teamcode.robots.csbot.SubZone;
-import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 //todo this should not reference reign's Constants
+import org.firstinspires.ftc.teamcode.robots.deepthought.rr_localize.MecanumDriveReign;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Config(value = "CS_Drive_Train")
-public class DriveTrain extends MecanumDrive implements Subsystem {
+public class DriveTrain extends MecanumDriveReign implements Subsystem {
     public Robot robot;
     public boolean trajectoryIsActive;
     public static double GLOBAL_HEADING_DAMPENING = .7;
@@ -106,7 +106,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
 //        update pose heading from imu regularly
         if(RELOCALIZE_WITH_IMU) {
             if ((int) (System.nanoTime() / 1e9) % 2 == 0) {
-                pose = new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw));
+                setPose(new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw)));
             }
         }
 
@@ -189,7 +189,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         if (headingPID.onTarget()) {
             //turn meets accuracy target
             //todo is this a good time to update pose heading from imu?
-            pose = new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw));
+            setPose(new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw)));
             //stop
             Sensors.driveIMUEnabled = false;
             setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
@@ -202,11 +202,15 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     }
 
     public void setPose(Constants.Position start) {
-        pose = start.getPose();
+        setPose(start.getPose());
     }
 
     public void setPose(Pose2d pose) {
-        this.pose = pose;
+        super.setPose(pose);
+    }
+
+    public Pose2d getPose(){
+        return  super.getPose();
     }
 
     @Override

@@ -10,14 +10,14 @@ package org.firstinspires.ftc.teamcode.robots.deepthought.util;
 
 public class DcMotorExResetable implements DcMotorEx {
     private DcMotorEx realMotor;
-    private int offset = 0;
+    public int offset = 0;
 
     public DcMotorExResetable(DcMotorEx realMotor) {
         this.realMotor = realMotor;
     }
 
     public void setPosition(int position){
-        offset = -position;
+        offset = position;
     }
 
     @Override
