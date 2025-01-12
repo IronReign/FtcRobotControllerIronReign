@@ -232,7 +232,7 @@ public class CenterStage_6832 extends OpMode {
         robot.updatePositionCache = true;
 
         if(gameState.equals(GameState.AUTONOMOUS)){
-            robot.driveTrain.imu.resetYaw();
+            //robot.driveTrain.localizer.resetYaw(); //todo - imu didn't want to play nice
             robot.skyhook.skyhookLeft.setPosition(0);
             robot.skyhook.skyhookRight.setPosition(0);
             //calc auton based on alliance, starting position and team prop position

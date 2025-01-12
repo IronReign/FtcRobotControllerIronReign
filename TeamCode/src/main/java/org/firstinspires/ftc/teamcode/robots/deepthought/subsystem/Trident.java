@@ -78,7 +78,7 @@ public class Trident implements Subsystem {
     public int shoulderTargetPosition = 0;
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
-    public static int SHOULDER_INTAKE_POSITION = 180;
+    public static int SHOULDER_INTAKE_POSITION = 250;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
     public static int SHOULDER_HIGHOUTTAKE_POSITION = 1925;
     public int shoulderPositionMax = 850;
@@ -346,13 +346,13 @@ public class Trident implements Subsystem {
 
     public String updateColorSensor() {
         double hue = getHSV()[0];
-        if (hue < 45 && hue > 35) {
+        if (hue < 35 && hue > 30) {
             currentSample = Sample.NEUTRAL;
             return "NEUTRAL";
-        } else if (hue < 15 || hue > 350) {
+        } else if (hue < 5 || hue > 350) {
             currentSample = Sample.RED;
             return "RED";
-        } else if (hue < 225 && hue > 200) {
+        } else if (hue < 220 && hue > 210) {
             currentSample = Sample.BLUE;
             return "BLUE";
         } else {

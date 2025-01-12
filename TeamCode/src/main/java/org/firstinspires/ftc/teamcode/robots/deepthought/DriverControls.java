@@ -225,7 +225,7 @@ public class DriverControls {
             } else
                 robot.driveTrain.drive(0, 0, 0);
         } else
-            robot.driveTrain.mecanumDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x);
+            robot.driveTrain.DirectDriveMecanums(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x);
     }
 
 
