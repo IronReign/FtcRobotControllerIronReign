@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.core;
 
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -39,6 +40,7 @@ public class AutonCode2 extends OpMode {
     double initialzOrientation = 0;
     double nowOrientation = 0;
     public boolean calibrated = false;
+    public long autonTimer = 0;
 
     @Override
     public void init() {
@@ -206,6 +208,8 @@ public class AutonCode2 extends OpMode {
         check();
         switch(autonIndex){
             // Starting Position: A3 facing submersible with specimen in hand
+            // Specimen one
+            // TODO: pull correct values from alyssa once committed
             case 0:
                 // Adjust shoulder and slide position
                 robot.slide.setTargetPosition(500);
@@ -228,23 +232,110 @@ public class AutonCode2 extends OpMode {
                 autonIndex++;
                 break;
 
-           case 3:
+            case 3:
                 //Move forward
                 forward(12, 1);
                 robot.slide.setTargetPosition(robot.slide.getCurrentPosition()+100);
 
-           case 4:
+            case 4:
                 // Open claw
                 robot.claw.setPosition(robot.clawOpenPosition);
                 autonIndex++;
                 break;
 
-           case 5:
+            case 5:
                 // Move backwards one tile
                 forward(10, -0.1);
                 break;
 
-            default:
+           // Specimen two
+
+            case 6:
+                // Strafe sideways one tile
+                strafe(65, 0.04);
+                break;
+
+            case 7:
+                // Forward one tile
+                forward(65, 0.04);
+                break;
+
+            case 8:
+                // Strafe sideways one tile
+                strafe(65, 0.04);
+                break;
+
+            case 9:
+                // Turn 180
+                turn(180, 1);
+                break;
+
+            case 10:
+                // Move forward 3 tiles - push sample into conservation zone and go back out
+                // Adjust shoulder and slide position ideal for picking up specimen
+                robot.shoulder.setTargetPosition(robot.shoulder.getCurrentPosition()-500);
+                robot.slide.setTargetPosition(robot.slide.getCurrentPosition()+50);
+                forward(195, 0.04);
+                forward(20, -0.04);
+                autonTimer = futureTime(7);
+
+            case 11:
+                // Collect specimen
+                if(isPast(autonTimer)){
+                    forward(20, 0.04);
+                }
+                break;
+
+            case 12:
+                // Close claw
+                robot.claw.setPosition(robot.clawClosePosition);
+                robot.shoulder.setTargetPosition(1647+275);
+                autonIndex++;
+                break;
+
+            case 13:
+                // Strafe right one tile
+                strafe(65, -0.04);
+                break;
+
+            case 14:
+                // Turn 180
+                turn(180, -1);
+                robot.slide.setTargetPosition(500);
+                break;
+
+            // TODO: update
+            case 15:
+                // Move forward 0.8 tile
+                forward((65), 0.04);
+                break;
+
+            case 16:
+                // Push shoulder down
+                robot.shoulder.setPower(70);
+                robot.shoulder.setTargetPosition(robot.shoulder.getCurrentPosition() - 300);
+                robot.slide.setTargetPosition(robot.slide.getCurrentPosition()+40);
+
+                autonIndex++;
+                break;
+
+            case 17:
+                //Move forward
+                forward(12, 1);
+                robot.slide.setTargetPosition(robot.slide.getCurrentPosition()+100);
+
+            case 18:
+                // Open claw
+                robot.claw.setPosition(robot.clawOpenPosition);
+                autonIndex++;
+                break;
+
+            case 19:
+                // Move backwards one tile
+                forward(10, -0.1);
+                break;
+
+           default:
                 break;
         }
     }
