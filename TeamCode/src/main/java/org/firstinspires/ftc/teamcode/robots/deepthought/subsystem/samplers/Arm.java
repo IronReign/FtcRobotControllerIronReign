@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
 
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import java.util.List;
 public abstract class Arm implements Subsystem {
     HardwareMap hardwareMap;
     Robot robot;
+    Trident trident;
 
     DcMotorEx shoulder;
 
@@ -55,6 +57,7 @@ public abstract class Arm implements Subsystem {
     double servoPower = 0;
 
     boolean colorSensorEnabled = false;
+
     boolean inControl = false;
 
     enum Sample {

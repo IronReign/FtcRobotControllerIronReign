@@ -23,6 +23,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.PositionCache;
@@ -81,8 +82,9 @@ public class Robot implements Subsystem {
     public enum Articulation {
         MANUAL,
         CALIBRATE,
-        INTAKE,
-        TRAVEL, OUTTAKE
+        SAMPLER_INTAKE,
+        TRAVEL, SAMPLER_OUTTAKE,
+        SPECIMINER_INTAKE, SPECIMINER_WALLTAKE, SPECIMINER_OUTTAKE
     }
 
     public void start() {
@@ -318,9 +320,9 @@ public class Robot implements Subsystem {
                 if (calibrate())
                     articulation = Articulation.MANUAL;
                 break;
-            case INTAKE:
-                trident.sample(alliance);
-                if(trident.articulation == Trident.Articulation.MANUAL) {
+            case SAMPLER_INTAKE:
+                trident.sampler.sample(alliance);
+                if(trident.sampler.articulation == Sampler.Articulation.MANUAL) {
                     articulation = Articulation.MANUAL;
                 }
                 break;
@@ -330,8 +332,8 @@ public class Robot implements Subsystem {
                     articulation = Articulation.MANUAL;
                 }
                 break;
-            case OUTTAKE:
-                if(outtake())
+            case SAMPLER_OUTTAKE:
+                if(samplerOuttake())
                     articulation = Articulation.MANUAL;
                 break;
         }
@@ -339,15 +341,15 @@ public class Robot implements Subsystem {
     }
 
     public int outtakeIndex = 0;
-    public boolean outtake() {
+    public boolean samplerOuttake() {
         switch (outtakeIndex) {
             case 0:
-                Trident.enforceSlideLimits = false;
-                trident.articulate(Trident.Articulation.OUTTAKE);
+                Trident.enforceSlideLimits = false; // todo this might be at wrong level or ignored
+                trident.sampler.articulate(Sampler.Articulation.OUTTAKE);
                 outtakeIndex++;
                 break;
             case 1:
-                if(trident.articulation == Trident.Articulation.MANUAL) {
+                if(trident.sampler.articulation == Sampler.Articulation.MANUAL) {
                     Trident.enforceSlideLimits = true;
                     outtakeIndex = 0;
                     return true;

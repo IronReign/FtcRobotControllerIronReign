@@ -72,15 +72,15 @@ public class DriverControls {
 //
         if (stickyGamepad1.a) {
             dampenDrive = true;
-            Trident.intakeIndex = 0;
-            robot.articulate(Robot.Articulation.INTAKE);
+            robot.trident.sampler.intakeIndex = 0;
+            robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
         }
 //
         if (stickyGamepad1.b) {
             dampenDrive = true;
             robot.outtakeIndex = 0;
-            Trident.outtakeIndex = 0;
-            robot.articulate(Robot.Articulation.OUTTAKE);
+            robot.trident.sampler.outtakeIndex = 0;
+            robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
         }
 
         if (stickyGamepad1.x) {
@@ -89,7 +89,7 @@ public class DriverControls {
 
         if (stickyGamepad1.y) {
             dampenDrive = false;
-            Trident.tuckIndex = 0;
+            robot.trident.sampler.tuckIndex = 0;
             robot.articulate(Robot.Articulation.TRAVEL);
         }
 
@@ -151,15 +151,15 @@ public class DriverControls {
 //
         if (stickyGamepad1.a) {
             dampenDrive = true;
-            Trident.intakeIndex = 0;
-            robot.articulate(Robot.Articulation.INTAKE);
+            robot.trident.sampler.intakeIndex = 0;
+            robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
         }
 //
         if (stickyGamepad1.b) {
             dampenDrive = true;
             robot.outtakeIndex = 0;
-            Trident.outtakeIndex = 0;
-            robot.articulate(Robot.Articulation.OUTTAKE);
+            robot.trident.sampler.outtakeIndex = 0;
+            robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
         }
 
         if (stickyGamepad1.x) {
@@ -168,7 +168,7 @@ public class DriverControls {
 
         if (stickyGamepad1.y) {
             dampenDrive = false;
-            Trident.tuckIndex = 0;
+            robot.trident.sampler.tuckIndex = 0;
             robot.articulate(Robot.Articulation.TRAVEL);
         }
 

@@ -19,7 +19,7 @@
                 bus="0"
                 port="0" />
             <LynxColorSensor
-                name="intakeSensor"
+                name="samplerSensor"
                 bus="3"
                 port="1" />
 
@@ -36,10 +36,10 @@
                 name="elbow"
                 port="1" />
             <ContinuousRotationServo
-                name="beater"
+                name="samplerBeater"
                 port="4" />
             <RevRobotics40HDHexMotor
-                name="slide"
+                name="samplerSlide"
                 port="3" />
             <RevRobotics40HDHexMotor
                 name="shoulder"
