@@ -34,6 +34,7 @@ public class Sampler extends Arm {
     public static int SHOULDER_INTAKE_POSITION = 250;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
     public static int SHOULDER_HIGHOUTTAKE_POSITION = 1925;
+    public static int SLIDE_ADJUST_SPEED = 80;
     public int shoulderPositionMax = 850;
 
     public static int colorSensorGain = 12;

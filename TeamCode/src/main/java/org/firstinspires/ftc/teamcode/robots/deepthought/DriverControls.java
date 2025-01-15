@@ -9,7 +9,7 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot.calibrateIndex;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.colorSensorEnabled;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.shoulderSpeed;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.SLIDE_ADJUST_SPEED;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler.SLIDE_ADJUST_SPEED;
 
 import android.annotation.SuppressLint;
 
@@ -63,11 +63,11 @@ public class DriverControls {
 //
         if (gamepad1.left_trigger > .2) {
             Trident.enforceSlideLimits = false;
-            robot.trident.sampler.slideTargetPosition -= 1 * robot.trident.sampler.SLIDE_ADJUST_SPEED;
+            robot.trident.sampler.slideTargetPosition -= 1 * SLIDE_ADJUST_SPEED;
         }
         if (gamepad1.right_trigger > .2) {
             Trident.enforceSlideLimits = false;
-            robot.trident.sampler.slideTargetPosition += 1 * robot.trident.sampler.SLIDE_ADJUST_SPEED;
+            robot.trident.sampler.slideTargetPosition += 1 * SLIDE_ADJUST_SPEED;
         }
 //
         if (stickyGamepad1.a) {
@@ -142,11 +142,11 @@ public class DriverControls {
 //
         if (gamepad1.left_trigger > .2) {
             Trident.enforceSlideLimits = false;
-            robot.trident.slideTargetPosition -= 1 * SLIDE_ADJUST_SPEED;
+            robot.trident.sampler.slideTargetPosition -= 1 * SLIDE_ADJUST_SPEED;
         }
         if (gamepad1.right_trigger > .2) {
             Trident.enforceSlideLimits = false;
-            robot.trident.slideTargetPosition += 1 * SLIDE_ADJUST_SPEED;
+            robot.trident.sampler. slideTargetPosition += 1 * SLIDE_ADJUST_SPEED;
         }
 //
         if (stickyGamepad1.a) {

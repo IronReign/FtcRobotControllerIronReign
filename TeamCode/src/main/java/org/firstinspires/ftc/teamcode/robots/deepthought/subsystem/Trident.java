@@ -45,10 +45,6 @@ public class Trident implements Subsystem {
 
     public boolean calibrated = false;
 
-    public void intakeSlideLimits() {
-        if (slideTargetPosition > slidePositionMax) slideTargetPosition = slidePositionMax;
-        if (slideTargetPosition < slidePositionMin) slideTargetPosition = slidePositionMin;
-    }
     public final boolean useSampler = true;
     public final boolean useSpeciminer = false;
 
