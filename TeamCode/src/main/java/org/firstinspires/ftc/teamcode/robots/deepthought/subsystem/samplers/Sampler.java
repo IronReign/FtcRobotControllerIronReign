@@ -55,7 +55,7 @@ public class Sampler extends Arm {
         ELBOW_LOWOUTTAKE_ANGLE = 102;
         ELBOW_HIGHOUTTAKE_ANGLE = 70;
 
-        elbow = new Joint(hardwareMap, "beaterElbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
+        elbow = new Joint(hardwareMap, "samplerElbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "samplerSlide");
         slide = new DcMotorExResetable(bruh);
         colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "samplerSensor");

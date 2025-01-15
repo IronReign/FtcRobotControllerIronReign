@@ -76,7 +76,7 @@ public class Sensors implements Subsystem {
 //        beaterBarAmps = robot.intake.beater.getCurrent(CurrentUnit.AMPS);
 
         //OUTTAKE
-        outtakeSlideTicks = robot.trident.slide.getCurrentPosition();
+        outtakeSlideTicks = robot.trident.sampler.slide.getCurrentPosition();
 
     }
 

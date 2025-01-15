@@ -38,10 +38,6 @@ public class Trident implements Subsystem {
     public DcMotorExResetable shoulder = null;
     public Joint elbow;
 
-    public CRServo beater = null;
-    public Servo pincer;
-    public static boolean tuckFromHighOuttake = false;
-
     public NormalizedColorSensor colorSensor = null;
     public static boolean colorSensorEnabled = false;
 
@@ -66,17 +62,6 @@ public class Trident implements Subsystem {
     public List<Sample> targetSamples = new ArrayList<>();
 
     public static boolean preferHighOuttake = true;
-
-    //SLIDE - todo remove - this are handled locally in Sampler and Speciminer
-    public static int slideTargetPosition = 0;
-    public static int slidePositionMax = 3800;
-    public static int slidePositionMin = 0;
-    public static int SLIDE_INTAKE_MIN_POSITION = 200;
-    public static int SLIDE_PREINTAKE_POSITION = 2200;
-    public static int SLIDE_LOWOUTTAKE_POSITION = 320;
-    public static int SLIDE_HIGHOUTTAKE_POSITION = 2880;
-    public static int SLIDE_ADJUST_SPEED = 80;
-    public static double SLIDE_SPEED = 2000;
 
 
     //shoulder - these are defaults - but the Sampler and Speciminer classes define their own local versions
@@ -194,23 +179,23 @@ public class Trident implements Subsystem {
         this.robot = robot;
         //moar subsystems
         sampler = new Sampler(hardwareMap, robot, this);
-        speciMiner = new SpeciMiner(hardwareMap, robot, this);
+        //speciMiner = new SpeciMiner(hardwareMap, robot, this);
 
-        elbow = new Joint(hardwareMap, "elbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
-        DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "slide");
+        //elbow = new Joint(hardwareMap, "elbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
+        //DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "slide");
         DcMotorEx bruhx2 = this.hardwareMap.get(DcMotorEx.class, "shoulder");
-        slide = new DcMotorExResetable(bruh);
+        //slide = new DcMotorExResetable(bruh);
         shoulder = new DcMotorExResetable(bruhx2);
-        colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
-        beater = this.hardwareMap.get(CRServo.class, "beater");
-        pincer = this.hardwareMap.get(Servo.class, "pincer");
-        slide.setMotorEnable();
-        slide.setPower(1);
-        slide.setDirection(DcMotorSimple.Direction.REVERSE);
-        slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        slide.setTargetPosition(0);
-        slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        slide.setVelocity(SLIDE_SPEED);
+        //colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
+        //beater = this.hardwareMap.get(CRServo.class, "beater");
+//        pincer = this.hardwareMap.get(Servo.class, "pincer");
+//        slide.setMotorEnable();
+//        slide.setPower(1);
+//        slide.setDirection(DcMotorSimple.Direction.REVERSE);
+//        slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        slide.setTargetPosition(0);
+//        slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        slide.setVelocity(SLIDE_SPEED);
 
         shoulder.setMotorEnable();
         shoulder.setPower(1);
@@ -232,22 +217,22 @@ public class Trident implements Subsystem {
         //compute the current articulation/behavior
         articulate();
         //allow real-time flipper speed changes
-        elbow.setSpeed(ELBOW_JOINT_SPEED);
-
-        if (colorSensorEnabled) {
-            updateColorSensor();
-            colorSensor.setGain(colorSensorGain);
-        }
+////        elbow.setSpeed(ELBOW_JOINT_SPEED);
+//
+//        if (colorSensorEnabled) {
+//            updateColorSensor();
+//            colorSensor.setGain(colorSensorGain);
+//        }
 
 
         //actually instruct actuators to go to desired targets
-        elbow.update();
-        if (enforceSlideLimits) intakeSlideLimits();
-        slide.setTargetPosition(slideTargetPosition);
+//        elbow.update();
+//        if (enforceSlideLimits) intakeSlideLimits();
+//        slide.setTargetPosition(slideTargetPosition);
         if (calibrated) {
             shoulder.setTargetPosition(shoulderTargetPosition);
         }
-        beater.setPower(-beaterPower);
+//        beater.setPower(-beaterPower);
 
 //        if(pincerEnabled) {
 //            pincer.setPosition(Utils.servoNormalize(PINCER_OPEN));
@@ -258,39 +243,11 @@ public class Trident implements Subsystem {
 
     }
 
-    public String updateColorSensor() {
-        double hue = getHSV()[0];
-        if (hue < 35 && hue > 30) {
-            currentSample = Sample.NEUTRAL;
-            return "NEUTRAL";
-        } else if (hue < 5 || hue > 350) {
-            currentSample = Sample.RED;
-            return "RED";
-        } else if (hue < 220 && hue > 210) {
-            currentSample = Sample.BLUE;
-            return "BLUE";
-        } else {
-            currentSample = Sample.NO_SAMPLE;
-            return "NO SAMPLE";
-        }
-    }
-
     @Override
     public void stop() {
-        slide.setMotorDisable();
-        beater.setPower(Utils.servoNormalize(1500));
+    shoulderTargetPosition=shoulder.getCurrentPosition();
     }
 
-    public String HSVasString() {
-        float[] hsv = getHSV();
-        return hsv[0] + " " + hsv[1] + " " + hsv[2];
-    }
-
-    public float[] getHSV() {
-        float[] hsv = new float[3];
-        Color.colorToHSV(colorSensor.getNormalizedColors().toColor(), hsv);
-        return hsv;
-    }
 
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {

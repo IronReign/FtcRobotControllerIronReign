@@ -33,7 +33,7 @@
                 name="elevator"
                 port="3" />
             <Servo
-                name="elbow"
+                name="samplerElbow"
                 port="1" />
             <ContinuousRotationServo
                 name="samplerBeater"

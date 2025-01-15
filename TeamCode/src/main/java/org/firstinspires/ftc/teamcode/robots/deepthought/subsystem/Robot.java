@@ -111,7 +111,7 @@ public class Robot implements Subsystem {
             // initializing subsystems
             driveTrain = new DriveTrain(hardwareMap, this, false);
             trident = new Trident(hardwareMap, this);
-            sensors = new Sensors(this);
+            //sensors = new Sensors(this);
 
 
             subsystems = new Subsystem[]{driveTrain, trident, sensors};
@@ -211,7 +211,7 @@ public class Robot implements Subsystem {
 
 
     public void preloadAllianceSelect() {
-        trident.updateColorSensor();
+        trident.sampler.updateColorSensor();
         if(trident.currentSample == Trident.Sample.RED) {
             alliance = Constants.Alliance.RED;
             startingPosition = startingPosition.isRed() == true ?

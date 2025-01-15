@@ -21,12 +21,12 @@ public abstract class Arm implements Subsystem {
 
     DcMotorEx shoulder;
 
-    DcMotorEx slide = null;
+    public DcMotorEx slide = null;
     NormalizedColorSensor colorSensor = null;
     Joint elbow;
     static boolean specimenTargeted = false;
 
-    int slideTargetPosition = 0;
+    public int slideTargetPosition = 0;
     int slideMinPosition = 0;
     //todo - determine this
     int slideMaxPosition = 2450;
