@@ -34,9 +34,7 @@ public class Trident implements Subsystem {
     public Sampler sampler;
     public SpeciMiner speciMiner;
     public static boolean enforceSlideLimits;
-    public DcMotorExResetable slide = null;
     public DcMotorExResetable shoulder = null;
-    public Joint elbow;
 
     public NormalizedColorSensor colorSensor = null;
     public static boolean colorSensorEnabled = false;
@@ -177,21 +175,9 @@ public class Trident implements Subsystem {
         sampler = new Sampler(hardwareMap, robot, this);
         //speciMiner = new SpeciMiner(hardwareMap, robot, this);
 
-        //elbow = new Joint(hardwareMap, "elbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
-        //DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "slide");
         DcMotorEx bruhx2 = this.hardwareMap.get(DcMotorEx.class, "shoulder");
-        //slide = new DcMotorExResetable(bruh);
         shoulder = new DcMotorExResetable(bruhx2);
-        //colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
-        //beater = this.hardwareMap.get(CRServo.class, "beater");
-//        pincer = this.hardwareMap.get(Servo.class, "pincer");
-//        slide.setMotorEnable();
-//        slide.setPower(1);
-//        slide.setDirection(DcMotorSimple.Direction.REVERSE);
-//        slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        slide.setTargetPosition(0);
-//        slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        slide.setVelocity(SLIDE_SPEED);
+
 
         shoulder.setMotorEnable();
         shoulder.setPower(1);
@@ -219,7 +205,6 @@ public class Trident implements Subsystem {
 
     @Override
     public void stop() {
-//    shoulderTargetPosition=shoulder.getCurrentPosition();
     }
 
 
