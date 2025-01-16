@@ -318,6 +318,8 @@ public class IntoTheDeep_6832 extends OpMode {
             for (TelemetryProvider telemetryProvider : robot.subsystems)
                 handleTelemetry(telemetryProvider.getTelemetry(debugTelemetryEnabled), telemetryProvider.getTelemetryName(), packet);
         }
+        handleTelemetry(robot.trident.sampler.getTelemetry(true), "SAMPLER", packet);
+//        handleTelemetry(robot.trident.speciMiner.getTelemetry(true), "SPECIMINER", packet);
         telemetry.update();
         dashboard.sendTelemetryPacket(packet);
         updateLiveStates();

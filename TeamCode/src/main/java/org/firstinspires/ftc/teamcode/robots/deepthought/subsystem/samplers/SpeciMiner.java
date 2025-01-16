@@ -21,6 +21,8 @@ public class SpeciMiner extends Arm{
     public CRServo CRSOne;
     public CRServo CRSTwo;
     public static boolean preferHighOuttake = true;
+    public DcMotorEx slide = null;
+
 
     // Shoulder values to request from Trident
     public int shoulderTargetPosition = 0;
@@ -34,6 +36,7 @@ public class SpeciMiner extends Arm{
     public int shoulderPositionMax = 850;
 
     public static int colorSensorGain = 12;
+    public int slideTargetPosition = 0;
 
     public SpeciMiner(HardwareMap hardwareMap, Robot robot, Trident trident) {
         this.hardwareMap = hardwareMap;

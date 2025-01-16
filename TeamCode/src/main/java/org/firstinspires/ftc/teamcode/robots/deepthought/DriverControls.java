@@ -18,6 +18,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.DriveTrain;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 
@@ -55,19 +56,19 @@ public class DriverControls {
     public void manualDiagnosticMethods() {
         robotOrientedDrive();
         if (gamepad1.right_bumper) {
-            robot.trident.shoulderTargetPosition -= 1 * shoulderSpeed;
+            robot.trident.sampler.shoulderTargetPosition -= shoulderSpeed;
         }
         if (gamepad1.left_bumper) {
-            robot.trident.shoulderTargetPosition += 1 * shoulderSpeed;
+            robot.trident.sampler.shoulderTargetPosition += shoulderSpeed;
         }
 //
         if (gamepad1.left_trigger > .2) {
             Trident.enforceSlideLimits = false;
-            robot.trident.sampler.slideTargetPosition -= 1 * SLIDE_ADJUST_SPEED;
+            robot.trident.sampler.slideTargetPosition -= SLIDE_ADJUST_SPEED;
         }
         if (gamepad1.right_trigger > .2) {
             Trident.enforceSlideLimits = false;
-            robot.trident.sampler.slideTargetPosition += 1 * SLIDE_ADJUST_SPEED;
+            robot.trident.sampler.slideTargetPosition += SLIDE_ADJUST_SPEED;
         }
 //
         if (stickyGamepad1.a) {
@@ -84,7 +85,7 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.x) {
-            robot.trident.beaterPower = robot.trident.beaterPower == .8 ? 0 : .8;
+            robot.trident.sampler.servoPower = robot.trident.sampler.servoPower == .8 ? 0 : .8;
         }
 
         if (stickyGamepad1.y) {
@@ -94,15 +95,15 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.start) {
-            colorSensorEnabled = !colorSensorEnabled;
+            Sampler.colorSensorEnabled = !Sampler.colorSensorEnabled;
             debugTelemetryEnabled = true;
         }
 
         if (gamepad1.dpad_down) {
-            robot.trident.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad1.dpad_up) {
-            robot.trident.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
         }
         if (stickyGamepad1.dpad_left) {
             robot.trident.stopOnSample();
@@ -146,7 +147,7 @@ public class DriverControls {
         }
         if (gamepad1.right_trigger > .2) {
             Trident.enforceSlideLimits = false;
-            robot.trident.sampler. slideTargetPosition += 1 * SLIDE_ADJUST_SPEED;
+            robot.trident.sampler.slideTargetPosition += 1 * SLIDE_ADJUST_SPEED;
         }
 //
         if (stickyGamepad1.a) {
@@ -173,10 +174,10 @@ public class DriverControls {
         }
 
         if (gamepad1.dpad_down) {
-            robot.trident.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad1.dpad_up) {
-            robot.trident.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
         }
         if (stickyGamepad1.dpad_left) {
             robot.trident.stopOnSample();
@@ -189,10 +190,10 @@ public class DriverControls {
             fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (gamepad2.left_trigger > .1) {
-            robot.trident.adjustElbow(-robot.trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(-robot.trident.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad2.right_trigger > .1) {
-            robot.trident.adjustElbow(robot.trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(robot.trident.ELBOW_ADJUST_ANGLE);
         }
         // ------------------------------------------------------------------
 

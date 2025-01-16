@@ -6,7 +6,9 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 
@@ -24,8 +26,12 @@ import java.util.Map;
 
 public class Sampler extends Arm {
     CRServo beater = null;
+    public DcMotorEx slide = null;
+
     //ELBOW JOINT VARIABLES
     public static boolean preferHighOuttake = true;
+
+    public int slideTargetPosition = 0;
 
     // Shoulder values to request from Trident
     public int shoulderTargetPosition = 0;
@@ -44,6 +50,8 @@ public class Sampler extends Arm {
         this.robot = robot;
         this.trident = trident; // to request services from Trident - mainly setting the shoulder angle
 
+        articulation = Articulation.MANUAL;
+
         //defaults specific to sampler
         ELBOW_START_ANGLE = 145;
         ELBOW_HOME_POSITION = 2050;
@@ -59,6 +67,13 @@ public class Sampler extends Arm {
         elbow = new Joint(hardwareMap, "samplerElbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "samplerSlide");
         slide = new DcMotorExResetable(bruh);
+        slide.setMotorEnable();
+        slide.setPower(1);
+        slide.setDirection(DcMotorSimple.Direction.REVERSE);
+        slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        slide.setTargetPosition(0);
+        slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        slide.setVelocity(SLIDE_SPEED);
         colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "samplerSensor");
         beater = this.hardwareMap.get(CRServo.class, "samplerBeater");
     }
@@ -79,9 +94,16 @@ public class Sampler extends Arm {
         return false;
     }
 
+    public void adjustElbow(double angle) {
+        elbow.setTargetAngle(elbow.getCurrentAngle() + angle);
+    }
+
+
+
     @Override
     public void update(Canvas fieldOverlay) {
         beater.setPower(-servoPower);
+        elbow.update();
         slide.setTargetPosition(slideTargetPosition);
         if (colorSensorEnabled) {
             updateColorSensor();
@@ -328,14 +350,14 @@ public class Sampler extends Arm {
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
-        telemetryMap.put("articulation", articulation.name());
+//        telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("preferHighOuttake", preferHighOuttake);
         telemetryMap.put("intake index", intakeIndex);
         telemetryMap.put("outtake index", outtakeIndex);
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
-        telemetryMap.put("current sample", currentSample.name());
         telemetryMap.put("colorsensor", colorSensorEnabled);
         if (colorSensorEnabled) {
+            telemetryMap.put("current sample", currentSample.name());
             telemetryMap.put("colorsensor hsv", "" + HSVasString());
             telemetryMap.put("colorsensor rgb", colorSensor.getNormalizedColors().red + " " + colorSensor.getNormalizedColors().green + " " + colorSensor.getNormalizedColors().blue);
         }

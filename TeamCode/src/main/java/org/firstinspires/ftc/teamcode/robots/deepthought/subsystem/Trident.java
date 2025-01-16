@@ -62,7 +62,7 @@ public class Trident implements Subsystem {
 
     //shoulder - these are defaults - but the Sampler and Speciminer classes define their own local versions
     public static int SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
-    public int shoulderTargetPosition = 0;
+    public static int shoulderTargetPosition = 0;
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
     public static int SHOULDER_INTAKE_POSITION = 250;
@@ -203,45 +203,23 @@ public class Trident implements Subsystem {
         SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
     }
 
-    public void adjustElbow(double angle) {
-        elbow.setTargetAngle(elbow.getCurrentAngle() + angle);
-    }
-
 
     @Override
     public void update(Canvas fieldOverlay) {
         //compute the current articulation/behavior
         articulate();
-        //allow real-time flipper speed changes
-////        elbow.setSpeed(ELBOW_JOINT_SPEED);
-//
-//        if (colorSensorEnabled) {
-//            updateColorSensor();
-//            colorSensor.setGain(colorSensorGain);
-//        }
-
-
-        //actually instruct actuators to go to desired targets
-//        elbow.update();
-//        if (enforceSlideLimits) intakeSlideLimits();
-//        slide.setTargetPosition(slideTargetPosition);
         if (calibrated) {
             shoulder.setTargetPosition(shoulderTargetPosition);
         }
-//        beater.setPower(-beaterPower);
 
-//        if(pincerEnabled) {
-//            pincer.setPosition(Utils.servoNormalize(PINCER_OPEN));
-//        }
-//        else {
-//            pincer.setPosition(Utils.servoNormalize(PINCER_CLOSE));
-//        }
+        sampler.update(fieldOverlay);
+//        speciMiner.update(fieldOverlay);
 
     }
 
     @Override
     public void stop() {
-    shoulderTargetPosition=shoulder.getCurrentPosition();
+//    shoulderTargetPosition=shoulder.getCurrentPosition();
     }
 
 

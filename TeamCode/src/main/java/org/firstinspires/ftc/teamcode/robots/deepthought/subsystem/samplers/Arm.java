@@ -21,12 +21,10 @@ public abstract class Arm implements Subsystem {
 
     DcMotorEx shoulder;
 
-    public DcMotorEx slide = null;
     NormalizedColorSensor colorSensor = null;
     Joint elbow;
     static boolean specimenTargeted = false;
 
-    public int slideTargetPosition = 0;
     int slideMinPosition = 0;
     //todo - determine this
     int slideMaxPosition = 2450;
@@ -54,9 +52,9 @@ public abstract class Arm implements Subsystem {
     public static double ELBOW_LOWOUTTAKE_ANGLE = 102;
     public static double ELBOW_HIGHOUTTAKE_ANGLE = 70;
 
-    double servoPower = 0;
+    public double servoPower = 0;
 
-    boolean colorSensorEnabled = false;
+    public static boolean colorSensorEnabled = false;
 
     boolean inControl = false;
 

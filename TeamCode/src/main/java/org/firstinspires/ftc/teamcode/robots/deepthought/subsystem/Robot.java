@@ -114,7 +114,7 @@ public class Robot implements Subsystem {
             //sensors = new Sensors(this);
 
 
-            subsystems = new Subsystem[]{driveTrain, trident, sensors};
+            subsystems = new Subsystem[]{driveTrain, trident};
             subsystemUpdateTimes = new long[subsystems.length];
 
             batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
@@ -301,7 +301,7 @@ public class Robot implements Subsystem {
                 }
                 break;
             case 5:
-                trident.shoulderTargetPosition = 800;
+                trident.sampler.shoulderTargetPosition = 800;
                 calibrateIndex++;
                 calibrating = false;
                 return true;
@@ -363,7 +363,7 @@ public class Robot implements Subsystem {
 
     @Override
     public void stop() {
-        currPosition = new DTPosition(driveTrain.pose, -trident.shoulder.getCurrentPosition(), trident.slide.getCurrentPosition());
+        currPosition = new DTPosition(driveTrain.pose, -trident.shoulder.getCurrentPosition(), trident.sampler.slide.getCurrentPosition());
         positionCache.update(currPosition, true);
         for (Subsystem component : subsystems) {
             component.stop();
@@ -386,6 +386,7 @@ public class Robot implements Subsystem {
             String name = subsystems[i].getClass().getSimpleName();
             telemetryMap.put(name + " Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (subsystemUpdateTimes[i] * 1e-6), (int) (1 / (subsystemUpdateTimes[i] * 1e-9))));
         }
+
 
 
         telemetryMap.put("Delta Time", deltaTime);
