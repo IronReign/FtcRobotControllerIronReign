@@ -109,7 +109,7 @@ public class Robot implements Subsystem {
             double heading = Math.PI -
                     Math.asin(distDiff / Math.hypot(driveTrain.DISTANCE_BETWEEN_DISTANCE_SENSORS, distDiff))
                             * ((sensors.leftDistSensorValue > sensors.rightDistSensorValue) ? 1 : 1);
-            driveTrain.pose = new Pose2d(driveTrain.pose.position, heading);
+            driveTrain.setPose(new Pose2d(driveTrain.pose.position, heading));
             Sensors.distanceSensorsEnabled = false;
         }
     }

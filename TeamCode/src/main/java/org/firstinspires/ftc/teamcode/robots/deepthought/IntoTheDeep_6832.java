@@ -8,7 +8,9 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.field.Field;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.ExponentialSmoother;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
 import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProviders;
@@ -31,7 +33,7 @@ public class IntoTheDeep_6832 extends OpMode {
 
 
     //GLOBAL STATES
-    public static boolean active;
+
     public static boolean debugTelemetryEnabled = true;
     private boolean initializing;
     public static boolean initPosition = false;
@@ -60,14 +62,19 @@ public class IntoTheDeep_6832 extends OpMode {
         }
 
         public static GameState getGameState(int gameStateIndex) {
-            switch(gameStateIndex) {
-                case 0: return GameState.AUTONOMOUS;
-                case 1: return GameState.TELE_OP;
-                case 2: return GameState.TEST;
+            switch (gameStateIndex) {
+                case 0:
+                    return GameState.AUTONOMOUS;
+                case 1:
+                    return GameState.TELE_OP;
+                case 2:
+                    return GameState.TEST;
 //                case 3: return GameState.DEMO;
 //                case 4: return GameState.MANUAL_DIAGNOSTIC;
-                case 3: return GameState.RELOCALIZATION_TEST;
-                default: return GameState.TEST;
+                case 3:
+                    return GameState.RELOCALIZATION_TEST;
+                default:
+                    return GameState.TEST;
             }
         }
 
@@ -75,7 +82,9 @@ public class IntoTheDeep_6832 extends OpMode {
             return name;
         }
 
-        public static int getNumGameStates() {return 4;}
+        public static int getNumGameStates() {
+            return 4;
+        }
 
         public boolean isAutonomous() {
             return autonomous;
@@ -87,7 +96,7 @@ public class IntoTheDeep_6832 extends OpMode {
     static public int gameStateIndex;
 
     //CONSTANTS FOR GAME
-    public static boolean DEFAULT_DEBUG_TELEMETRY_ENABLED = false;
+    public static boolean DEFAULT_DEBUG_TELEMETRY_ENABLED = true;
     public static Constants.Alliance alliance = Constants.Alliance.RED;
     public static Constants.Position startingPosition = Constants.Position.START_LEFT_RED;
     long startTime;
@@ -98,7 +107,6 @@ public class IntoTheDeep_6832 extends OpMode {
     public static double AVERAGE_LOOP_TIME_SMOOTHING_FACTOR = 0.1;
 
 
-
     //LIVE DATA
     private double averageLoopTime;
     long loopClockTime = System.nanoTime();
@@ -107,12 +115,11 @@ public class IntoTheDeep_6832 extends OpMode {
 
     @Override
     public void init() {
-        Robot.initPositionIndex = 0;
+        Robot.calibrateIndex = 0;
         telemetry.addData("Status", "Hold right_trigger to enable debug mode");
         telemetry.update();
 
         //SET GLOBAL STATES
-        active = true;
         initializing = true;
         debugTelemetryEnabled = DEFAULT_DEBUG_TELEMETRY_ENABLED;
 
@@ -126,9 +133,9 @@ public class IntoTheDeep_6832 extends OpMode {
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
         field = new Field();
-//        autoNav = new AutoNav(robot, field);
 
         robot.updatePositionCache = false;
+        robot.trident.calibrated = false;
         robot.driveTrain.setPose(startingPosition);
 
         //TELEMETRY SETUP
@@ -149,14 +156,22 @@ public class IntoTheDeep_6832 extends OpMode {
         TelemetryPacket packet = new TelemetryPacket();
         dc.init_loop();
         dc.robotOrientedDrive();
-        initVision();
+        if (gameState.isAutonomous()) {
+            robot.preloadAllianceSelect();
+            if (!robot.trident.calibrated) {
+                if (robot.calibrate())
+                    robot.trident.calibrated = true;
+            }
+        }
+//        initVision();
 
         telemetry.addData("fetched", robot.fetched);
         telemetry.addData("gameState", gameState);
-        telemetry.addData("active", active);
+
         telemetry.addData("Alliance", alliance);
         telemetry.addData("startingPosition", startingPosition);
-        telemetry.addData("initPositionIndex", Robot.initPositionIndex);
+        telemetry.addData("initPositionIndex", Robot.calibrateIndex);
+        telemetry.addData("calibrated", robot.trident.calibrated);
 
         robot.driveTrain.updatePoseEstimate();
 
@@ -179,79 +194,67 @@ public class IntoTheDeep_6832 extends OpMode {
         totalRunTime = 0;
         //FETCH CACHE
         robot.fetchCachedDTPosition();
-
-        field.finalizeField(alliance);
-        resetGame();
-
-
-
-        if(robot.fetched && !gameState.isAutonomous()) {
-            robot.driveTrain.setPose(robot.fetchedPosition.getPose());
-
+        if (gameState.equals(GameState.TELE_OP)) {
+            robot.trident.calibrated = true;
+            restoreRobotPositionFromCache();
         }
-        else {
+        field.finalizeField(alliance);
+
+        if (gameState.equals(GameState.AUTONOMOUS)) {
             robot.driveTrain.setPose(startingPosition);
+            //robot.driveTrain.imu.resetYaw(); TODO - how is the imu reset gonna work now?
         }
 
         robot.updatePositionCache = true;
 
-        if(gameState.equals(GameState.AUTONOMOUS)){
-            robot.driveTrain.imu.resetYaw();
-        }
-
-        if(gameState.equals(GameState.TELE_OP)){
-
-        }
-
-        if(gameState.equals(GameState.TEST) ||  gameState.equals(GameState.DEMO)){
-
+        if (gameState.equals(GameState.TEST) || gameState.equals(GameState.DEMO)) {
+            robot.trident.calibrated = true;
         }
 
         robot.start();
     }
+
     //end start()
-    public void resetGame()
-    {
-        robot.resetRobotPosFromCache(5, ignoreCachePosition);
+    public void restoreRobotPositionFromCache() {
+        robot.resetRobotPosFromCache(5, false);
     }
 
 
     @Override
     public void loop() {
         TelemetryPacket packet = new TelemetryPacket();
-        totalRunTime = (System.currentTimeMillis()-startTime)/1000;
+        totalRunTime = (System.currentTimeMillis() - startTime) / 1000;
         dc.updateStickyGamepads();
-        dc.handleStateSwitch();
 
-        if (active) {
-            long currentTime = System.currentTimeMillis();
-            update(packet);
-            switch(gameState) {
-                case AUTONOMOUS:
-                    if(auton.execute(packet, field)) gameState = GameState.TELE_OP;
-                    break;
 
-                case TELE_OP:
-                    dc.joystickDrive();
-                    break;
-                case TEST:
-                    dc.manualDiagnosticMethods();
-                    break;
-                case MANUAL_DIAGNOSTIC:
-                    break;
-                case RELOCALIZATION_TEST:
-                    dc.joystickDrive();
-                    break;
-            }
-        }
-        else {
-            dc.handlePregameControls();
+        update(packet);
+        switch (gameState) {
+            case AUTONOMOUS:
+                if (auton.execute(packet)) {
+                    robot.articulate(Robot.Articulation.TRAVEL);
+                    robot.trident.articulate(Trident.Articulation.TUCK);
+                    gameState = GameState.TELE_OP;
+                }
+                break;
+
+            case TELE_OP:
+                dc.joystickDrive();
+                break;
+            case TEST:
+                debugTelemetryEnabled = true;
+                dc.manualDiagnosticMethods();
+                break;
+            case MANUAL_DIAGNOSTIC:
+                break;
+            case RELOCALIZATION_TEST:
+                dc.joystickDrive();
+                break;
         }
     }
     //end loop()
 
     @Override
-    public void stop(){
+    public void stop() {
         gameState = GameState.TELE_OP;
         robot.stop();
     }
@@ -264,20 +267,19 @@ public class IntoTheDeep_6832 extends OpMode {
         robot.update(packet.fieldOverlay());
         Map<String, Object> opModeTelemetryMap = new LinkedHashMap<>();
         // handling op mode telemetry
-        opModeTelemetryMap.put("Active", active);
-        if(initializing) {
+
+        if (initializing) {
             opModeTelemetryMap.put("Starting Position", startingPosition);
         }
-        if(debugTelemetryEnabled) {
+        if (debugTelemetryEnabled) {
             opModeTelemetryMap.put("Average Robot Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageUpdateTime * 1e-6), (int) (1 / (averageUpdateTime * 1e-9))));
+            opModeTelemetryMap.put("Battery Voltage", averageVoltage);
         }
-
-        opModeTelemetryMap.put("Battery Voltage", averageVoltage);
         opModeTelemetryMap.put("Average Loop Time", Misc.formatInvariant("%d ms (%d hz)", (int) (averageLoopTime * 1e-6), (int) (1 / (averageLoopTime * 1e-9))));
 
 
         //IF NECESSARY, ADD TELEMETRY FOR EACH GAME STATE
-        switch(gameState) {
+        switch (gameState) {
             case RELOCALIZATION_TEST:
 
                 break;
@@ -285,34 +287,39 @@ public class IntoTheDeep_6832 extends OpMode {
 
                 break;
             case AUTONOMOUS:
-                handleTelemetry(auton.getTelemetry(debugTelemetryEnabled),  auton.getTelemetryName(), packet);
+                handleTelemetry(auton.getTelemetry(debugTelemetryEnabled), auton.getTelemetryName(), packet);
                 break;
             case TEST:
 
                 break;
         }
         //handle this class' telemetry
-        handleTelemetry(opModeTelemetryMap,  gameState.getName(), packet);
+        handleTelemetry(opModeTelemetryMap, gameState.getName(), packet);
 
-        Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
-        visionTelemetryMap.put("Backend",
-                Misc.formatInvariant("%s (%s)",
-                        VisionProviders.VISION_PROVIDERS[Robot.backVisionProviderIndex].getSimpleName(),
-                        robot.visionProviderFinalized ?
-                                "finalized" :
-                                System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
-                )
-        );
 
-        handleTelemetry(visionTelemetryMap, "BACK VISION - \t" + robot.visionProviderBack.getTelemetryName(), packet);
-        handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
+        if (debugTelemetryEnabled) {
+            Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
+            visionTelemetryMap.put("Backend",
+                    Misc.formatInvariant("%s (%s)",
+                            VisionProviders.VISION_PROVIDERS[Robot.backVisionProviderIndex].getSimpleName(),
+                            robot.visionProviderFinalized ?
+                                    "finalized" :
+                                    System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
+                    )
+            );
+            handleTelemetry(visionTelemetryMap, "BACK VISION - \t" + robot.visionProviderBack.getTelemetryName(), packet);
+            handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
+        }
+
 
         handleTelemetry(robot.getTelemetry(debugTelemetryEnabled), robot.getTelemetryName(), packet);
 
-        if(debugTelemetryEnabled) {
+        if (debugTelemetryEnabled) {
             for (TelemetryProvider telemetryProvider : robot.subsystems)
                 handleTelemetry(telemetryProvider.getTelemetry(debugTelemetryEnabled), telemetryProvider.getTelemetryName(), packet);
         }
+        handleTelemetry(robot.trident.sampler.getTelemetry(true), "SAMPLER", packet);
+//        handleTelemetry(robot.trident.speciMiner.getTelemetry(true), "SPECIMINER", packet);
         telemetry.update();
         dashboard.sendTelemetryPacket(packet);
         updateLiveStates();
@@ -332,7 +339,7 @@ public class IntoTheDeep_6832 extends OpMode {
         telemetry.addLine(telemetryName);
         packet.addLine(telemetryName);
 
-        if (averageVoltage <= 12) {
+        if (!debugTelemetryEnabled && averageVoltage <= 12) {
             telemetryMap = new LinkedHashMap<>();
             for (int i = 0; i < 5; i++) {
                 telemetryMap.put(i + (System.currentTimeMillis() / 500 % 2 == 0 ? "**BATTERY VOLTAGE LOW**" : "  BATTERY VOLTAGE LOW  "), (System.currentTimeMillis() / 500 % 2 == 0 ? "**CHANGE BATTERY ASAP!!**" : "  CHANGE BATTERY ASAP!!  "));

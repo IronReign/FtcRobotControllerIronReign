@@ -18,19 +18,18 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.wrapA
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors.distanceSensorsEnabled;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
-//todo this should not reference the reign version of MecanumDrive
+
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
-import org.firstinspires.ftc.teamcode.robots.deepthought.rr_stuff.MecanumDrive;
-//todo this should not reference reign's Constants
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
+import org.firstinspires.ftc.teamcode.robots.deepthought.rr_localize.MecanumDriveReign;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Config(value = "0_ITD_Drive_Train")
-public class DriveTrain extends MecanumDrive implements Subsystem {
+public class DriveTrain extends MecanumDriveReign implements Subsystem {
     public Robot robot;
     public boolean trajectoryIsActive;
     public static double GLOBAL_HEADING_DAMPENING = .7;
@@ -77,26 +76,26 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     @Override
     public void update(Canvas c) {
         if (roadRunnerDrive) {
-            imuRoadrunnerError = Robot.sensors.driveIMUYaw - Math.toDegrees(pose.heading.log());
-            if (distanceSensorsEnabled) {
-                rightDistanceSensorValue = Robot.sensors.rightDistSensorValue;
-                leftDistanceSensorValue = Robot.sensors.leftDistSensorValue;
-            }
+//            imuRoadrunnerError = Robot.sensors.driveIMUYaw - Math.toDegrees(pose.heading.log());
+//            if (distanceSensorsEnabled) {
+//                rightDistanceSensorValue = Robot.sensors.rightDistSensorValue;
+//                leftDistanceSensorValue = Robot.sensors.leftDistSensorValue;
+//            }
             updatePoseEstimate();
 
 //        update pose heading from imu regularly
-            if (RELOCALIZE_WITH_IMU) {
-                if ((int) (System.nanoTime() / 1e9) % 2 == 0) {
-                    pose = new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw));
-                }
-            }
+//            if (RELOCALIZE_WITH_IMU) {
+//                if ((int) (System.nanoTime() / 1e9) % 2 == 0) {
+//                    setPose(new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw)));
+//                }
+//            }
 
             //test imu based turning from dashboard - todo comment out when not needed
-            if (turnToTest != 0) turnUntilDegreesIMU(turnToTest, turnToSpeed); //can target any angle but zero
+//            if (turnToTest != 0) turnUntilDegreesIMU(turnToTest, turnToSpeed); //can target any angle but zero
         }
     }
 
-    public void mecanumDrive(double x, double y, double theta) {
+    public void DirectDriveMecanums(double x, double y, double theta) {
         double forward = x;
         double strafe = y;
         double turn = theta;
@@ -154,7 +153,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     //this is an absolute (non-relative) implementation.
     //the direction of the turn will favor the shortest approach
     public boolean turnUntilDegreesIMU(double turnAngle, double maxSpeed) {
-        Sensors.driveIMUEnabled = true;
+//        Sensors.driveIMUEnabled = true;
         targetHeading = wrapAngle(turnAngle);
         headingPID.setPID(HEADING_PID_PWR);
         headingPID.setInput(wrapAngle(Robot.sensors.driveIMUYaw));
@@ -167,7 +166,7 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         if (headingPID.onTarget()) {
             //turn meets accuracy target
             //todo is this a good time to update pose heading from imu?
-            pose = new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw));
+            setPose(new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw)));
             //stop
             Sensors.driveIMUEnabled = false;
             setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
@@ -180,10 +179,11 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     }
 
     public void setPose(Constants.Position start) {
-        pose = start.getPose();
+        setPose(start.getPose());
     }
 
     public void setPose(Pose2d pose) {
+        super.setPose(pose);
         this.pose = pose;
     }
 
@@ -201,15 +201,15 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("x in inches", pose.position.x);
         telemetryMap.put("y in inches", pose.position.y);
 
-        telemetryMap.put("Right Distance Sensor Value", robot.sensors.rightDistSensorValue);
-        telemetryMap.put("Left Distance Sensor Value", robot.sensors.leftDistSensorValue);
+//        telemetryMap.put("Right Distance Sensor Value", robot.sensors.rightDistSensorValue);
+//        telemetryMap.put("Left Distance Sensor Value", robot.sensors.leftDistSensorValue);
 
         telemetryMap.put("heading", Math.toDegrees(pose.heading.log()));
         telemetryMap.put("Left Odometry Pod:\t", leftFront.getCurrentPosition());
         telemetryMap.put("Right Odometry Pod:\t", rightFront.getCurrentPosition());
         telemetryMap.put("Cross Odometry Pod:\t", rightBack.getCurrentPosition());
         telemetryMap.put("imu vs roadrunner:\t", imuRoadrunnerError);
-        telemetryMap.put("imu:\t", Robot.sensors.driveIMUYaw);
+//        telemetryMap.put("imu:\t", Robot.sensors.driveIMUYaw);
         telemetryMap.put("PID Error:\t", PIDError);
         telemetryMap.put("PID Correction:\t", PIDCorrection);
         telemetryMap.put("imuTurnDone?", imuTurnDone);

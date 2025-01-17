@@ -443,6 +443,13 @@ public class Robot implements Subsystem {
 
     public void init() {
         g1 = new StickyGamepad(gamepad1);
+//        try{
+//            camera = VisionProviders.VISION_PROVIDERS[0].newInstance();
+//        }catch(Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//        camera
+
         leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");

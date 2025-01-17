@@ -96,18 +96,18 @@ public class RobotTeleopTank_Iterative extends OpMode{
         // Define and initialize ALL installed servos.
 
         // Send telemetry message to signify robot waiting;
-        telemetry.addData(">", "Robot Ready.  Press Play.");    //
+        telemetry.addData(">", "Robot Ready.  Press START.");    //
     }
 
     /*
-     * Code to run REPEATEDLY after the driver hits INIT, but before they hit PLAY
+     * Code to run REPEATEDLY after the driver hits INIT, but before they hit START
      */
     @Override
     public void init_loop() {
     }
 
     /*
-     * Code to run ONCE when the driver hits PLAY
+     * Code to run ONCE when the driver hits START
      */
     @Override
     public void start() {
@@ -115,7 +115,7 @@ public class RobotTeleopTank_Iterative extends OpMode{
     }
 
     /*
-     * Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
+     * Code to run REPEATEDLY after the driver hits START but before they hit STOP
      */
 
     private ElapsedTime runtime = new ElapsedTime();
