@@ -1,12 +1,18 @@
 package org.firstinspires.ftc.teamcode.robots.giant;
 
 
+
+
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 
+
+
 import android.content.pm.LabeledIntent;
 import android.graphics.Color;
+
+
 
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -22,6 +28,8 @@ import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 
 
+
+
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
@@ -33,11 +41,17 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProviders;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 
+
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+
+
+
 
 
 
@@ -326,17 +340,31 @@ import java.util.Map;
 
 
 
+
+
+
+
+
+
+
+
 /////NEW STUFF
 public class Robot implements Subsystem {
     static FtcDashboard dashboard = FtcDashboard.getInstance();
 
 
+
+
     HardwareMap hardwareMap;
+
+
 
 
     //0:leftback
     //1:leftfront
     //2:rightfront
+
+
 
 
     //public NormalizedColorSensor colorSensor = null;
@@ -352,18 +380,26 @@ public class Robot implements Subsystem {
 
 
 
+
+
+
+
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
     DcMotorEx shoulder,arm;
     DcMotorEx suck;
 
+
     Servo claw;
+
 
     boolean sucking=false;
     boolean eject=false;
     boolean slurp=false;
 
+
     StickyGamepad g1=null;
     Gamepad gamepad1;
+
 
     double forward = 0;
     double strafe = 0;
@@ -373,6 +409,7 @@ public class Robot implements Subsystem {
     int extend=0;
     int clawTicks=1100;
     boolean clawOpen=false;
+
 
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
         this.hardwareMap = hardwareMap;
@@ -388,6 +425,8 @@ public class Robot implements Subsystem {
             op="RED";
         }
     }
+
+
 
 
     @Override
@@ -417,7 +456,10 @@ public class Robot implements Subsystem {
 //            suck.setPower(.8);
 //        }
 
+
     }
+
+
 
 
     public void mecanumDrive(double forwardX, double strafeX, double turnX) {
@@ -434,6 +476,8 @@ public class Robot implements Subsystem {
     }
 
 
+
+
     public void setDrive(double forwardX, double strafeX, double turnX) {
         targetF=forwardX;
         targetT=turnX;
@@ -441,15 +485,10 @@ public class Robot implements Subsystem {
     }
 
 
+
+
     public void init() {
         g1 = new StickyGamepad(gamepad1);
-//        try{
-//            camera = VisionProviders.VISION_PROVIDERS[0].newInstance();
-//        }catch(Exception e) {
-//            throw new RuntimeException(e);
-//        }
-//        camera
-
         leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
@@ -461,6 +500,9 @@ public class Robot implements Subsystem {
 
 
 
+
+
+
         // Set motor runmodes
         leftBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         rightBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -468,6 +510,7 @@ public class Robot implements Subsystem {
         rightFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         shoulder.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         arm.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+
 
         leftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         leftBack.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
@@ -478,15 +521,21 @@ public class Robot implements Subsystem {
 
 
 
+
+
+
         arm.setDirection(DcMotor.Direction.REVERSE);
         shoulder.setDirection(DcMotor.Direction.REVERSE);
+
 
         shoulder.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         arm.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
 
+
         shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         shoulder.setTargetPosition(0);
         shoulder.setPower(1);
+
 
         arm.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         arm.setTargetPosition(0);
@@ -494,13 +543,19 @@ public class Robot implements Subsystem {
 
 
 
+
+
+
         //suck.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-       // suck.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        // suck.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         // suck.setDirection(DcMotor.Direction.REVERSE);
 
 
-       // colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
+
+
+        // colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
     }
+
 
     //rotate entire arm
     public void tu(int x){
@@ -517,17 +572,21 @@ public class Robot implements Subsystem {
         extend=x;
     }
 
+
     public void setClaw(int x){
         clawTicks+=x;
     }
+
 
     public void setShoulderSpeed(double x){
         shoulder.setPower(x);
     }
 
+
     public void setClawP(){
         clawOpen=!clawOpen;
     }
+
 
     public int getClaw(){
         return clawTicks;
@@ -535,13 +594,21 @@ public class Robot implements Subsystem {
 
 
 
+
+
+
     public void grabBlock(){clawTicks=1100;}
+
 
     public void dropBlock(){clawTicks=1700;}
 
+
     public int getExtend() {return arm.getCurrentPosition();}
 
+
     public int getRotate() {return shoulder.getCurrentPosition();}
+
+
 
 
 //    public void grab(){
@@ -631,6 +698,7 @@ public class Robot implements Subsystem {
 //    }
 //
 
+
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
@@ -641,13 +709,17 @@ public class Robot implements Subsystem {
         telemetry.put("shoudler guess: " , rotate);
         telemetry.put("shoulder actual: " , shoulder.getCurrentPosition());
 
+
         telemetry.put("claw guess: ", clawTicks);
         telemetry.put("claw actual:", claw.getPosition());
+
 
         telemetry.put("arm guess: ", extend);
         telemetry.put("actual extend: ", arm.getCurrentPosition());
 
+
         telemetry.put("CLAW: ", clawTicks);
+
 
 //        telemetry.put("colorsensor hsv ",  HSVasString());
 //        telemetry.put("what color we got? ", updateColorSensor());
@@ -658,14 +730,20 @@ public class Robot implements Subsystem {
     }
 
 
+
+
     @Override
     public String getTelemetryName() {
         return "Giant Robot";
     }
 
 
+
+
     @Override
     public void stop() {
+
+
 
 
     }
@@ -675,5 +753,10 @@ public class Robot implements Subsystem {
     }
 
 
+
+
 }
+
+
+
 
