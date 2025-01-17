@@ -2,7 +2,9 @@ package org.firstinspires.ftc.teamcode.robots.deepthought.vision.pipeline;
 
 import android.graphics.Bitmap;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.vision.Position;
 import org.opencv.android.Utils;
@@ -24,8 +26,21 @@ import java.util.List;
  * @author Mahesh Natamai
  */
 
-@Config
+@Config(value = "NEW OPENCV")
 public class OpenCVPipeline extends OpenCvPipeline {
+    static FtcDashboard dashboard = FtcDashboard.getInstance();
+
+    double cX = 0;
+    double cY = 0;
+    double width = 0;
+
+    private static final int CAMERA_WIDTH = 640;
+    private static final int CAMERA_HEIGHT = 360;
+    private static final double FOV = 6; //CHANGE??
+
+    public static final double objectWidthirl = 3.5;
+    public static final double focalLength = 362.0*8.02/objectWidthirl;
+
     private Mat cropOutput = new Mat();
     private Mat normalizeInput = new Mat();
     private Mat normalizeOutput = new Mat();
@@ -48,7 +63,7 @@ public class OpenCVPipeline extends OpenCvPipeline {
     // Constants
     public static int VIEW_OPEN_CV_PIPELINE_STAGE = 6;
     public static int TOP_LEFT_X = 0, TOP_LEFT_Y = 80;
-    public static int BOTTOM_RIGHT_X = 320, BOTTOM_RIGHT_Y = 180;
+    public static int BOTTOM_RIGHT_X = 640, BOTTOM_RIGHT_Y = 480;
     public static double NORMALIZE_ALPHA = 51.0, NORMALIZE_BETA = 261.0;
     public static double BLUR_RADIUS = 7;
     public static double HUE_MIN = 30, HUE_MAX = 90;
@@ -120,10 +135,29 @@ public class OpenCVPipeline extends OpenCvPipeline {
                     largestArea = contourArea;
                 }
             }
+            //LOOK HERE
             if (largestContourIndex != -1) {
                 Imgproc.drawContours(finalContourOutputMat, findContoursOutput, largestContourIndex, new Scalar(255, 255, 255), 2);
                 Imgproc.drawMarker(finalContourOutputMat, new Point(largestX, largestY), new Scalar(0, 255, 0));
+                width = calculateWidth(findContoursOutput.get(largestContourIndex));
+                String widthLable = "Width: " + (int)width + " pixles";
+                Imgproc.putText(input, widthLable, new Point(cX + 10, cY + 20), Imgproc.FONT_HERSHEY_SIMPLEX, .5, new Scalar(0, 255, 0), 2);
+                String distanceLable = "Distance: " + String.format("%.2f",getDistance(width)) + " inches";
+                Imgproc.putText(input, distanceLable, new Point(cX + 10, cY + 60), Imgproc.FONT_HERSHEY_SIMPLEX, .5, new Scalar(0, 255, 0), 2);
+                Moments moments = Imgproc.moments(findContoursOutput.get(largestContourIndex));
+                cX = moments.get_m10() / moments.get_m00();
+                cY = moments.get_m01() / moments.get_m00();
+
+                String lable = "(" + (int)cX + ", "+ (int)cY + ")";
+                Imgproc.putText(input, lable, new Point(cX + 10, cY), Imgproc.FONT_HERSHEY_SIMPLEX, .5, new Scalar(0, 255, 0), 2);
+                Imgproc.circle(input, new Point(cX, cY), 5,  new Scalar(0, 255, 0), -1);
+                TelemetryPacket p=new TelemetryPacket();
+                p.addLine("FOC??? "+(int)cX+" "+(int)cY);
+                dashboard.sendTelemetryPacket(p);
+
             }
+
+
             Imgproc.line(finalContourOutputMat, new Point(RIGHT_THRESHOLD, 0), new Point(RIGHT_THRESHOLD, finalContourOutputMat.height()), new Scalar(255, 255, 255), 2);
             Imgproc.line(finalContourOutputMat, new Point(LEFT_THRESHOLD, 0), new Point(LEFT_THRESHOLD, finalContourOutputMat.height()), new Scalar(255, 255, 255), 2);
 
@@ -167,8 +201,16 @@ public class OpenCVPipeline extends OpenCvPipeline {
                 Utils.matToBitmap(dashboardMat, dashboardBitmap);
             }
 
+
             return input;
     }
+
+    private double calculateWidth(MatOfPoint contour){
+        Rect boundingRect = Imgproc.boundingRect(contour);
+        return boundingRect.width;
+    }
+
+
 
     public int[] getPosition() {
         return new int[] {largestX, largestY};
@@ -242,6 +284,17 @@ public class OpenCVPipeline extends OpenCvPipeline {
                 Imgproc.bilateralFilter(input, output, -1, radius, radius);
                 break;
         }
+    }
+
+    //GO TO 7:13 ON YOUTUBE VIDEO IDK WHAT TO DO NEXT
+    public static double getDistance(double width){
+        double distance = (objectWidthirl * focalLength) / width;
+        return distance;
+    }
+
+    private static double getAngleTarget(double objMidpoint){
+        double midpoint = -((objMidpoint - (CAMERA_WIDTH/2))*FOV)/CAMERA_WIDTH;
+        return midpoint;
     }
 
     private void hsvThreshold(Mat input, double[] hue, double[] sat, double[] val,

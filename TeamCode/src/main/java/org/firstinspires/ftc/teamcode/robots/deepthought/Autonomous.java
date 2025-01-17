@@ -61,8 +61,8 @@ public class Autonomous implements TelemetryProvider {
     public static double FIELD_INCHES_PER_GRID = 23.5;
     public static double AUTON_START_DELAY = 0;
 
-    public Autonomous(Robot robot) {
-        this.robot = robot;
+    public Autonomous(Robot r) {
+        robot = r;
         this.hardwareMap = robot.hardwareMap;
         autonIndex = 0;
     }
