@@ -206,7 +206,7 @@ public class Sampler extends Arm {
                 }
                 break;
             case 2:
-                if (withinError(shoulder.getCurrentPosition(), SHOULDER_INTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
+                if (withinError(trident.getShoulderCurrentPosition(), SHOULDER_INTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
                     servoPower = .8;
                     intakeTimer = futureTime(8);
                     intakeIndex++;
@@ -244,7 +244,7 @@ public class Sampler extends Arm {
                 }
                 break;
             case 2:
-                if (withinError(shoulder.getCurrentPosition(), SHOULDER_INTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
+                if (withinError(trident.getShoulderCurrentPosition(), SHOULDER_INTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
                     servoPower = .8;
                     intakeTimer = futureTime(8);
                     intakeIndex++;

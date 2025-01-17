@@ -17,6 +17,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Arm;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.SpeciMiner;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DcMotorExResetable;
@@ -33,13 +34,14 @@ public class Trident implements Subsystem {
 
     public Sampler sampler;
     public SpeciMiner speciMiner;
+
+    Arm activeArm; //just to keep track of which arm is actively requesting shoulder services
     public static boolean enforceSlideLimits;
-    public DcMotorExResetable slide = null;
-    public DcMotorExResetable shoulder = null;
+    DcMotorExResetable shoulder = null;
     public Joint elbow;
 
     public NormalizedColorSensor colorSensor = null;
-    public static boolean colorSensorEnabled = false;
+    //public static boolean colorSensorEnabled = false;
 
     public static int colorSensorGain = 12;
 
@@ -51,7 +53,6 @@ public class Trident implements Subsystem {
 
     public enum Sample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
-
     }
 
     public Sample currentSample = Sample.NO_SAMPLE;
@@ -160,14 +161,8 @@ public class Trident implements Subsystem {
     }
 
     public boolean stopOnSample() {
-        colorSensorEnabled = true;
-        beaterPower = .8;
-        if (targetSamples.contains(currentSample)) {
-            beaterPower = 0;
-            colorSensorEnabled = false;
-            return true;
-        }
-        return false;
+        if (isSamplerActive()) return sampler.stopOnSample();
+        else return speciMiner.stopOnSample();
     }
 
     public Trident(HardwareMap hardwareMap, Robot robot) {
@@ -175,23 +170,11 @@ public class Trident implements Subsystem {
         this.robot = robot;
         //moar subsystems
         sampler = new Sampler(hardwareMap, robot, this);
-        //speciMiner = new SpeciMiner(hardwareMap, robot, this);
+        speciMiner = new SpeciMiner(hardwareMap, robot, this);
+        activeArm=sampler; //just a default - can change any time
 
-        //elbow = new Joint(hardwareMap, "elbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
-        //DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "slide");
         DcMotorEx bruhx2 = this.hardwareMap.get(DcMotorEx.class, "shoulder");
-        //slide = new DcMotorExResetable(bruh);
         shoulder = new DcMotorExResetable(bruhx2);
-        //colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
-        //beater = this.hardwareMap.get(CRServo.class, "beater");
-//        pincer = this.hardwareMap.get(Servo.class, "pincer");
-//        slide.setMotorEnable();
-//        slide.setPower(1);
-//        slide.setDirection(DcMotorSimple.Direction.REVERSE);
-//        slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        slide.setTargetPosition(0);
-//        slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        slide.setVelocity(SLIDE_SPEED);
 
         shoulder.setMotorEnable();
         shoulder.setPower(1);
@@ -203,6 +186,28 @@ public class Trident implements Subsystem {
         SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
     }
 
+    // shoulder services
+    public int getShoulderTarget(){
+        return shoulderTargetPosition;
+    }
+
+    public int getShoulderCurrentPosition(){return shoulder.getCurrentPosition();}
+    public void setShoulderTarget( Arm subsystem, int targetTics){
+        if (subsystem instanceof SpeciMiner)
+            activeArm = speciMiner;
+        else
+            activeArm = sampler;
+
+        setShoulderTarget(targetTics);
+    }
+    public void setShoulderTarget(int targetTics){
+        shoulderTargetPosition = targetTics;
+    }
+
+    public Arm getActiveArm(){ return activeArm;}
+
+    public boolean isSamplerActive(){return activeArm instanceof Sampler;}
+    public DcMotorExResetable getShoulder(){return shoulder;}
 
     @Override
     public void update(Canvas fieldOverlay) {

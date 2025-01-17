@@ -136,7 +136,7 @@ public class Robot implements Subsystem {
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         if (updatePositionCache && gameState.isAutonomous()) {
-            currPosition = new DTPosition(driveTrain.pose, -trident.shoulder.getCurrentPosition(), trident.slide.getCurrentPosition());
+            currPosition = new DTPosition(driveTrain.pose, -trident.shoulder.getCurrentPosition(), trident.sampler.slide.getCurrentPosition(), trident.speciMiner.slide.getCurrentPosition());
             positionCache.update(currPosition, false);
         }
 
@@ -257,7 +257,8 @@ public class Robot implements Subsystem {
                     //apply cached position
                     driveTrain.setPose(fetchedPosition.getPose());
                     trident.shoulder.setPosition(fetchedPosition.getShoulderPosition());
-                    trident.slide.setPosition(fetchedPosition.getSlidePosition());
+                    trident.sampler.slide.setTargetPosition(fetchedPosition.getSlidePosition());
+                    trident.speciMiner.slide.setTargetPosition(fetchedPosition.getSlide2Position());
                     trident.shoulder.setDirection(DcMotor.Direction.REVERSE);
                 }
             }
@@ -363,7 +364,7 @@ public class Robot implements Subsystem {
 
     @Override
     public void stop() {
-        currPosition = new DTPosition(driveTrain.pose, -trident.shoulder.getCurrentPosition(), trident.sampler.slide.getCurrentPosition());
+        currPosition = new DTPosition(driveTrain.pose, -trident.shoulder.getCurrentPosition(), trident.sampler.slide.getCurrentPosition(), trident.speciMiner.slide.getCurrentPosition());
         positionCache.update(currPosition, true);
         for (Subsystem component : subsystems) {
             component.stop();

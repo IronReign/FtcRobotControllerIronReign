@@ -19,8 +19,6 @@ public abstract class Arm implements Subsystem {
     Robot robot;
     Trident trident;
 
-    DcMotorEx shoulder;
-
     NormalizedColorSensor colorSensor = null;
     Joint elbow;
     static boolean specimenTargeted = false;

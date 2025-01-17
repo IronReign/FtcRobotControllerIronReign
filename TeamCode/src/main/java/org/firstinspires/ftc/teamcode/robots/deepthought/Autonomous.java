@@ -77,7 +77,7 @@ public class Autonomous implements TelemetryProvider {
         switch (autonIndex) {
             case 0:
                 autonState = AutonState.INIT;
-                robot.positionCache.update(new DTPosition(robot.driveTrain.pose, robot.trident.shoulder.getCurrentPosition(), robot.trident.slide.getCurrentPosition()), true);
+                robot.positionCache.update(new DTPosition(robot.driveTrain.pose, robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
                 autonTimer = futureTime(AUTON_START_DELAY);
                 autonIndex++;
                 break;
@@ -112,7 +112,7 @@ public class Autonomous implements TelemetryProvider {
                 autonIndex++;
                 break;
             case 5:
-                Trident.colorSensorEnabled = true;
+                robot.trident.sampler.colorSensorEnabled = true;
                 if (isPast(autonTimer)) {
                     autonIndex++;
                 }

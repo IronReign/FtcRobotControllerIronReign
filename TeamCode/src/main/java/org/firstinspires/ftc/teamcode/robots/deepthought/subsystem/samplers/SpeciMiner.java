@@ -2,7 +2,9 @@ package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 
@@ -58,6 +60,13 @@ public class SpeciMiner extends Arm{
         elbow = new Joint(hardwareMap, "specElbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "specSlide");
         slide = new DcMotorExResetable(bruh);
+        slide.setMotorEnable();
+        slide.setPower(1);
+        slide.setDirection(DcMotorSimple.Direction.REVERSE);
+        slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        slide.setTargetPosition(0);
+        slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        slide.setVelocity(SLIDE_SPEED);
         colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "specSensor");
         CRSOne = this.hardwareMap.get(CRServo.class, "specBeater1");
         CRSTwo = this.hardwareMap.get(CRServo.class, "specBeater2");
