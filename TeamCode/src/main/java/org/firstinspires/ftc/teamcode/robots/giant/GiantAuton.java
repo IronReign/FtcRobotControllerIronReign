@@ -22,16 +22,9 @@ public class GiantAuton extends OpMode {
 
     public static double FORWARD=1.21;
     public static double BUFFER=.23;
-    public static double LONGBUFFER=2.2;
-    public static double BACKWARD=.255;
-//    public static double L=.938;    //.91
-//    public static double TURN_FORWARD_1 = .8;
-//    public static double BACK=.45;   //.3
-//    public static double TIME=.1;
-//    public static double SLAM=2.5;
-//    public static double PLEASE=.4;
+    public static double LONGBUFFER= 1.9;        //2.2
+    public static double BACKWARD=.255;     //.255
 
-            ; //experiment and fix
     Robot robot;
     //HardwareMap hardwareMap;
 
@@ -39,6 +32,7 @@ public class GiantAuton extends OpMode {
     public void init() {
         robot = new Robot(hardwareMap, gamepad1);
         robot.init();
+      //  robot.setRotate(950);
     }
 
     @Override
@@ -59,7 +53,7 @@ public class GiantAuton extends OpMode {
                 autonIndex++;
                 break;
             case 1:
-                if(robot.getClaw()<1005){
+                if(robot.getClaw()>1095){
                     robot.setRotate(1270);
                     autonIndex++;
                 }
@@ -86,12 +80,12 @@ public class GiantAuton extends OpMode {
                 break;
             case 5:
                 if(isPast(autonTimer)){
-                    robot.setExtend(1130);
+                    robot.setExtend(1160);      //working 1130
                     autonIndex++;
                 }
                 break;
             case 6:
-                if(robot.getExtend()<1135){
+                if(robot.getExtend()<1165){     //working 1135
                     autonTimer=futureTime(BACKWARD);
                     robot.setDrive(.8,0,0);
                     autonIndex++;
@@ -112,12 +106,18 @@ public class GiantAuton extends OpMode {
                 }
                 break;
             case 9:
-                if(robot.getClaw()>1340){
-                    robot.setExtend(5);
+                if(robot.getClaw()>1600){
+                    robot.setExtend(2);
                     autonIndex++;
                 }
                 break;
             case 10:
+                if(robot.getExtend()<5){
+                    robot.setRotate(5);
+                    autonIndex++;
+                }
+                break;
+            case 11:
                 break;
 
 

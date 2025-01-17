@@ -58,7 +58,7 @@ public class giantOpMode extends OpMode {
 
         //extend linear slide
         if(gamepad1.left_bumper&&robot.getExtend()>=10) { //&&robot.getExtend()>=10
-            robot.extend(-50);
+            robot.extend(-100);
         }
 
 
@@ -75,7 +75,7 @@ public class giantOpMode extends OpMode {
         }
 
         if(gamepad1.right_bumper && robot.getExtend()<8840) {//&& robot.getExtend()<7370+200
-            robot.extend(50);
+            robot.extend(100);
         }
 
         //EXTEND LIMITS

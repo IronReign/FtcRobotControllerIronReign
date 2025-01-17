@@ -371,7 +371,7 @@ public class Robot implements Subsystem {
     double targetF, targetS, targetT;
     int rotate=0;
     int extend=0;
-    int clawTicks=1000;
+    int clawTicks=1100;
     boolean clawOpen=false;
 
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
@@ -528,9 +528,9 @@ public class Robot implements Subsystem {
 
 
 
-    public void grabBlock(){clawTicks=1000;}
+    public void grabBlock(){clawTicks=1100;}
 
-    public void dropBlock(){clawTicks=1350;}
+    public void dropBlock(){clawTicks=1700;}
 
     public int getExtend() {return arm.getCurrentPosition();}
 
