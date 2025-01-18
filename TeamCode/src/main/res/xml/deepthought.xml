@@ -19,27 +19,20 @@
                 bus="0"
                 port="0" />
             <LynxColorSensor
-                name="intakeSensor"
+                name="samplerSensor"
                 bus="3"
                 port="1" />
-
             <Servo
-                name="pincer"
-                port="5" />
-            <Servo
-                name="wrist"
-                port="2" />
-            <Servo
-                name="elevator"
-                port="3" />
-            <Servo
-                name="elbow"
+                name="samplerElbow"
                 port="1" />
             <ContinuousRotationServo
-                name="beater"
+                name="samplerBeater"
                 port="4" />
             <RevRobotics40HDHexMotor
-                name="slide"
+                name="specSlide"
+                port="0" />
+            <RevRobotics40HDHexMotor
+                name="samplerSlide"
                 port="3" />
             <RevRobotics40HDHexMotor
                 name="shoulder"
@@ -71,6 +64,19 @@
                 name="imu"
                 bus="0"
                 port="0" />
+            <LynxColorSensor
+                name="specSensor"
+                bus="3"
+                port="1" />
+            <ContinuousRotationServo
+                name="specBeater1"
+                port="0" />
+            <ContinuousRotationServo
+                name="specBeater2"
+                port="2" />
+            <Servo
+                name="specElbow"
+                port="4" />
         </LynxModule>
     </LynxUsbDevice>
 </Robot>

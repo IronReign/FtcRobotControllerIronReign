@@ -23,6 +23,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.PositionCache;
@@ -80,9 +81,9 @@ public class Robot implements Subsystem {
 
     public enum Articulation {
         MANUAL,
-        CALIBRATE,
-        INTAKE,
-        TRAVEL, OUTTAKE
+        SAMPLER_INTAKE,
+        TRAVEL, SAMPLER_OUTTAKE,
+        SPECIMINER_INTAKE, SPECIMINER_WALLTAKE, SPECIMINER_OUTTAKE
     }
 
     public void start() {
@@ -109,14 +110,14 @@ public class Robot implements Subsystem {
             // initializing subsystems
             driveTrain = new DriveTrain(hardwareMap, this, false);
             trident = new Trident(hardwareMap, this);
-            sensors = new Sensors(this);
+            //sensors = new Sensors(this);
 
 
-            subsystems = new Subsystem[]{driveTrain, trident, sensors};
+            subsystems = new Subsystem[]{driveTrain, trident};
             subsystemUpdateTimes = new long[subsystems.length];
 
             batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
-            trident.slideTargetPosition = 0;
+            trident.sampler.slideTargetPosition = 0;
 
             articulation = Articulation.MANUAL;
         }
@@ -134,7 +135,7 @@ public class Robot implements Subsystem {
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         if (updatePositionCache && gameState.isAutonomous()) {
-            currPosition = new DTPosition(driveTrain.pose, -trident.shoulder.getCurrentPosition(), trident.slide.getCurrentPosition());
+            currPosition = new DTPosition(driveTrain.pose, -trident.shoulder.getCurrentPosition(), trident.sampler.slide.getCurrentPosition(), trident.speciMiner.slide.getCurrentPosition());
             positionCache.update(currPosition, false);
         }
 
@@ -209,7 +210,7 @@ public class Robot implements Subsystem {
 
 
     public void preloadAllianceSelect() {
-        trident.updateColorSensor();
+        trident.sampler.updateColorSensor();
         if(trident.currentSample == Trident.Sample.RED) {
             alliance = Constants.Alliance.RED;
             startingPosition = startingPosition.isRed() == true ?
@@ -255,72 +256,73 @@ public class Robot implements Subsystem {
                     //apply cached position
                     driveTrain.setPose(fetchedPosition.getPose());
                     trident.shoulder.setPosition(fetchedPosition.getShoulderPosition());
-                    trident.slide.setPosition(fetchedPosition.getSlidePosition());
+                    trident.sampler.slide.setTargetPosition(fetchedPosition.getSlidePosition());
+                    trident.speciMiner.slide.setTargetPosition(fetchedPosition.getSlide2Position());
                     trident.shoulder.setDirection(DcMotor.Direction.REVERSE);
                 }
             }
         }
     }
 
-    public static int calibrateIndex = 0;
-    public long calibrateTimer = 0;
-    public boolean calibrate() {
-        calibrating = true;
-        switch (calibrateIndex) {
-            case 1:
-                calibrateTimer = futureTime(1);
-                trident.shoulder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                trident.shoulder.setPower(-.5);
-                calibrateIndex++;
-
-            case 2:
-                if(Trident.SHOULDER_CALIBRATE_ENCODER == trident.shoulder.getCurrentPosition() && isPast(calibrateTimer)) {
-                    calibrateIndex++;
-                }
-                else {
-                    Trident.SHOULDER_CALIBRATE_ENCODER = trident.shoulder.getCurrentPosition();
-                }
-                break;
-            case 3:
-                trident.shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                trident.shoulder.setTargetPosition(2450);
-                trident.shoulder.setPower(1);
-                trident.shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                calibrateIndex++;
-
-            case 4:
-                if(withinError(trident.shoulder.getCurrentPosition(), 2450, 3)) {
-                    trident.shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    trident.shoulder.setDirection(DcMotorSimple.Direction.REVERSE);
-                    trident.shoulder.setPower(1);
-                    trident.shoulder.setVelocity(400);
-                    trident.shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    calibrateIndex++;
-                }
-                break;
-            case 5:
-                trident.shoulderTargetPosition = 800;
-                calibrateIndex++;
-                calibrating = false;
-                return true;
-
-
-        }
-        return false;
-    }
+//    public static int calibrateIndex = 0;
+//    public long calibrateTimer = 0;
+//    public boolean calibrate() {
+//        calibrating = true;
+//        switch (calibrateIndex) {
+//            case 1:
+//                calibrateTimer = futureTime(1);
+//                trident.shoulder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//                trident.shoulder.setPower(-.5);
+//                calibrateIndex++;
+//
+//            case 2:
+//                if(Trident.SHOULDER_CALIBRATE_ENCODER == trident.shoulder.getCurrentPosition() && isPast(calibrateTimer)) {
+//                    calibrateIndex++;
+//                }
+//                else {
+//                    Trident.SHOULDER_CALIBRATE_ENCODER = trident.shoulder.getCurrentPosition();
+//                }
+//                break;
+//            case 3:
+//                trident.shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//                trident.shoulder.setTargetPosition(2450);
+//                trident.shoulder.setPower(1);
+//                trident.shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//                calibrateIndex++;
+//
+//            case 4:
+//                if(withinError(trident.shoulder.getCurrentPosition(), 2450, 3)) {
+//                    trident.shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//                    trident.shoulder.setDirection(DcMotorSimple.Direction.REVERSE);
+//                    trident.shoulder.setPower(1);
+//                    trident.shoulder.setVelocity(400);
+//                    trident.shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//                    calibrateIndex++;
+//                }
+//                break;
+//            case 5:
+//                trident.sampler.shoulderTargetPosition = 800;
+//                calibrateIndex++;
+//                calibrating = false;
+//                return true;
+//
+//
+//        }
+//        return false;
+//    }
 
     public Articulation articulate(Articulation target) {
         articulation = target;
         switch (this.articulation) {
             case MANUAL:
                 break;
-            case CALIBRATE:
-                if (calibrate())
-                    articulation = Articulation.MANUAL;
-                break;
-            case INTAKE:
-                trident.sample(alliance);
-                if(trident.articulation == Trident.Articulation.MANUAL) {
+//            case CALIBRATE:
+//                if (calibrate())
+//                    articulation = Articulation.MANUAL;
+//                break;
+            case SAMPLER_INTAKE:
+                trident.sampler.sample(alliance);
+                if(trident.sampler.articulation == Sampler.Articulation.MANUAL) {
                     articulation = Articulation.MANUAL;
                 }
                 break;
@@ -330,8 +332,8 @@ public class Robot implements Subsystem {
                     articulation = Articulation.MANUAL;
                 }
                 break;
-            case OUTTAKE:
-                if(outtake())
+            case SAMPLER_OUTTAKE:
+                if(samplerOuttake())
                     articulation = Articulation.MANUAL;
                 break;
         }
@@ -339,15 +341,15 @@ public class Robot implements Subsystem {
     }
 
     public int outtakeIndex = 0;
-    public boolean outtake() {
+    public boolean samplerOuttake() {
         switch (outtakeIndex) {
             case 0:
-                Trident.enforceSlideLimits = false;
-                trident.articulate(Trident.Articulation.OUTTAKE);
+                Trident.enforceSlideLimits = false; // todo this might be at wrong level or ignored
+                trident.sampler.articulate(Sampler.Articulation.OUTTAKE);
                 outtakeIndex++;
                 break;
             case 1:
-                if(trident.articulation == Trident.Articulation.MANUAL) {
+                if(trident.sampler.articulation == Sampler.Articulation.MANUAL) {
                     Trident.enforceSlideLimits = true;
                     outtakeIndex = 0;
                     return true;
@@ -361,7 +363,7 @@ public class Robot implements Subsystem {
 
     @Override
     public void stop() {
-        currPosition = new DTPosition(driveTrain.pose, -trident.shoulder.getCurrentPosition(), trident.slide.getCurrentPosition());
+        currPosition = new DTPosition(driveTrain.pose, -trident.shoulder.getCurrentPosition(), trident.sampler.slide.getCurrentPosition(), trident.speciMiner.slide.getCurrentPosition());
         positionCache.update(currPosition, true);
         for (Subsystem component : subsystems) {
             component.stop();
@@ -374,7 +376,6 @@ public class Robot implements Subsystem {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("Articulation", articulation);
         telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
-        telemetryMap.put("initPositionIndex", calibrateIndex);
         telemetryMap.put("calibrating", calibrating);
         telemetryMap.put("Vision On/Vision Provider Finalized", visionOn + " " + visionProviderFinalized);
         telemetryMap.put("april tag relocalization point", "(" + aprilTagRelocalizationX + ", " + aprilTagRelocalizationY + ")");
@@ -384,6 +385,7 @@ public class Robot implements Subsystem {
             String name = subsystems[i].getClass().getSimpleName();
             telemetryMap.put(name + " Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (subsystemUpdateTimes[i] * 1e-6), (int) (1 / (subsystemUpdateTimes[i] * 1e-9))));
         }
+
 
 
         telemetryMap.put("Delta Time", deltaTime);

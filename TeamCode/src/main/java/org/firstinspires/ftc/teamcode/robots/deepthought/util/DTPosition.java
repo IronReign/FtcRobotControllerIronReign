@@ -12,6 +12,7 @@ public class DTPosition implements Serializable {
     private double chassisY;
     private double chassisHeading;
     private int slidePosition;
+    private int slide2Position;
 
     public DTPosition() {
         timestamp = System.currentTimeMillis();
@@ -20,13 +21,14 @@ public class DTPosition implements Serializable {
         chassisHeading = 0;
     }
 
-    public DTPosition(Pose2d driveTrainPose, int shoulderPosition, int slidePosition) {
+    public DTPosition(Pose2d driveTrainPose, int shoulderPosition, int slidePosition, int slide2Position) {
         chassisX = driveTrainPose.position.x;
         chassisY = driveTrainPose.position.y;
         chassisHeading = driveTrainPose.heading.log();
         this.shoulderPosition = shoulderPosition;
         timestamp = System.currentTimeMillis();
         this.slidePosition = slidePosition;
+        this.slide2Position = slide2Position;
     }
     public void updateTime() { timestamp = System.currentTimeMillis(); }
     public Pose2d getPose(){
@@ -39,6 +41,7 @@ public class DTPosition implements Serializable {
     }
     public int getShoulderPosition() { return shoulderPosition; }
     public int getSlidePosition() { return slidePosition; }
+    public int getSlide2Position() { return slide2Position; }
     public long getTimestamp() { return timestamp; }
 
     public String toString() {

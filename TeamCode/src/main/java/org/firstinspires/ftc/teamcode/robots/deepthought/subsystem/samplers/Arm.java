@@ -1,13 +1,21 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers;
 
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
+
 import android.graphics.Color;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
 
 import java.util.ArrayList;
@@ -16,20 +24,25 @@ import java.util.List;
 public abstract class Arm implements Subsystem {
     HardwareMap hardwareMap;
     Robot robot;
+    Trident trident;
 
-    DcMotorEx shoulder;
-
-    DcMotorEx slide = null;
-    NormalizedColorSensor colorSensor = null;
+    public DcMotorEx slide;
     Joint elbow;
+
+    NormalizedColorSensor colorSensor = null;
+    float[] colorLastHSV = {0.0f, 0.0f, 0.0f};
+    NormalizedRGBA colorLastRGBA = new NormalizedRGBA();
+
+    int slidePos = 0;
+    int slidePosPrev = 10;
+
     static boolean specimenTargeted = false;
 
-    int slideTargetPosition = 0;
     int slideMinPosition = 0;
     //todo - determine this
     int slideMaxPosition = 2450;
 
-    //SLIDE VARIABLES
+    //SLIDE VARIABLES - todo, values should be moved into implementations
     public static int slidePositionMax = 3800;
     public static int slidePositionMin = 0;
     public int SLIDE_INTAKE_MIN_POSITION = 200;
@@ -40,28 +53,29 @@ public abstract class Arm implements Subsystem {
     public static double SLIDE_SPEED = 2000;
 
 
-    //ELBOW JOINT VARIABLES
-    public static double ELBOW_START_ANGLE = 145;
-    public static int ELBOW_HOME_POSITION = 2050;
-    public static double ELBOW_PWM_PER_DEGREE = -5.672222222222222;
-    public static double ELBOW_JOINT_SPEED = 120;
-    public static double ELBOW_MIN_ANGLE = -15;
-    public static double ELBOW_MAX_ANGLE = 220;
-    public static int ELBOW_ADJUST_ANGLE = 5;
-    public static double ELBOW_PREINTAKE_ANGLE = 20;
-    public static double ELBOW_LOWOUTTAKE_ANGLE = 102;
-    public static double ELBOW_HIGHOUTTAKE_ANGLE = 70;
+    //ELBOW JOINT VARIABLES - expect these to be set in implementation
+    public static double ELBOW_START_ANGLE;
+    public static int ELBOW_HOME_POSITION;
+    public static double ELBOW_PWM_PER_DEGREE;
+    public static double ELBOW_JOINT_SPEED;
+    public static double ELBOW_MIN_ANGLE;
+    public static double ELBOW_MAX_ANGLE;
+    public static int ELBOW_ADJUST_ANGLE;
+    public static double ELBOW_PREINTAKE_ANGLE;
+    public static double ELBOW_LOWOUTTAKE_ANGLE;
+    public static double ELBOW_HIGHOUTTAKE_ANGLE;
 
-    double servoPower = 0;
+    public double servoPower = 0;
 
-    boolean colorSensorEnabled = false;
+    public static boolean colorSensorEnabled = false;
+
     boolean inControl = false;
 
     enum Sample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
     }
     Sample currentSample = null;
-    List<Sample> targetSamples = new ArrayList<>();
+    List<Sample> targetSamples;
 
     abstract boolean intake();
     abstract boolean outtake();
@@ -70,14 +84,59 @@ public abstract class Arm implements Subsystem {
     abstract String updateColorSensor();
 
     public String HSVasString() {
-        float[] hsv = getHSV();
+        float[] hsv = colorLastHSV;
         return hsv[0] + " " + hsv[1] + " " + hsv[2];
     }
     public float[] getHSV() {
         float[] hsv = new float[3];
-        Color.colorToHSV(colorSensor.getNormalizedColors().toColor(), hsv);
+        colorLastRGBA = colorSensor.getNormalizedColors();
+        Color.colorToHSV(colorLastRGBA.toColor(), hsv);
+        colorLastHSV = hsv;
         return hsv;
     }
 
     abstract boolean stopOnSample();
+
+    boolean calibrated = false;
+    public static int calibrateIndex = 0;
+    public long calibrateTimer = 0;
+    public boolean calibrate(Arm subs, double elbowStartAngle) {
+        switch (calibrateIndex) {
+            case 0: //set elbow position and retract slide until it stalls
+                calibrated=false;
+                elbow = subs.elbow;
+                slide = subs.slide;
+                subs.servoPower=0; //stop the beater(s)
+
+                elbow.setTargetAngle(elbowStartAngle);
+
+                slidePos = subs.slide.getCurrentPosition();
+                slidePosPrev = slidePos + 10;
+                calibrateTimer = futureTime(1); //enough time to assure it has begun moving
+                slide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                slide.setPower(-.3);
+                calibrateIndex++;
+                break;
+            case 1: // has the slide stopped moving?
+                slidePos = slide.getCurrentPosition();
+                //withinError to allow stall detection even if vibrating slightly
+                if(withinError(slidePos, slidePosPrev, 2) && isPast(calibrateTimer)) {
+                    calibrateIndex++;
+                }
+
+                slidePosPrev = slidePos;
+
+                break;
+            case 2: // reset the encoders to zero
+
+                slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                slide.setPower(1);
+                slide.setTargetPosition(0);
+                slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                calibrateIndex=0;
+                calibrated=true;
+                return true;
+        }
+        return false;
+    }
 }

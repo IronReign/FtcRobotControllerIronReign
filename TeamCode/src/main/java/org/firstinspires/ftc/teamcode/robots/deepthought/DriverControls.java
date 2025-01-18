@@ -6,10 +6,10 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.debugTelemetryEnabled;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot.calibrateIndex;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.colorSensorEnabled;
+
+
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.shoulderSpeed;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.SLIDE_ADJUST_SPEED;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler.SLIDE_ADJUST_SPEED;
 
 import android.annotation.SuppressLint;
 
@@ -18,6 +18,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.DriveTrain;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 
@@ -55,54 +56,54 @@ public class DriverControls {
     public void manualDiagnosticMethods() {
         robotOrientedDrive();
         if (gamepad1.right_bumper) {
-            robot.trident.shoulderTargetPosition -= 1 * shoulderSpeed;
+            robot.trident.sampler.shoulderTargetPosition -= shoulderSpeed;
         }
         if (gamepad1.left_bumper) {
-            robot.trident.shoulderTargetPosition += 1 * shoulderSpeed;
+            robot.trident.sampler.shoulderTargetPosition += shoulderSpeed;
         }
 //
         if (gamepad1.left_trigger > .2) {
             Trident.enforceSlideLimits = false;
-            robot.trident.slideTargetPosition -= 1 * SLIDE_ADJUST_SPEED;
+            robot.trident.sampler.slideTargetPosition -= SLIDE_ADJUST_SPEED;
         }
         if (gamepad1.right_trigger > .2) {
             Trident.enforceSlideLimits = false;
-            robot.trident.slideTargetPosition += 1 * SLIDE_ADJUST_SPEED;
+            robot.trident.sampler.slideTargetPosition += SLIDE_ADJUST_SPEED;
         }
 //
         if (stickyGamepad1.a) {
             dampenDrive = true;
-            Trident.intakeIndex = 0;
-            robot.articulate(Robot.Articulation.INTAKE);
+            robot.trident.sampler.intakeIndex = 0;
+            robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
         }
 //
         if (stickyGamepad1.b) {
             dampenDrive = true;
             robot.outtakeIndex = 0;
-            Trident.outtakeIndex = 0;
-            robot.articulate(Robot.Articulation.OUTTAKE);
+            robot.trident.sampler.outtakeIndex = 0;
+            robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
         }
 
         if (stickyGamepad1.x) {
-            robot.trident.beaterPower = robot.trident.beaterPower == .8 ? 0 : .8;
+            robot.trident.sampler.servoPower = robot.trident.sampler.servoPower == .8 ? 0 : .8;
         }
 
         if (stickyGamepad1.y) {
             dampenDrive = false;
-            Trident.tuckIndex = 0;
+            robot.trident.sampler.tuckIndex = 0;
             robot.articulate(Robot.Articulation.TRAVEL);
         }
 
         if (stickyGamepad1.start) {
-            colorSensorEnabled = !colorSensorEnabled;
+            Sampler.colorSensorEnabled = !Sampler.colorSensorEnabled;
             debugTelemetryEnabled = true;
         }
 
         if (gamepad1.dpad_down) {
-            robot.trident.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad1.dpad_up) {
-            robot.trident.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
         }
         if (stickyGamepad1.dpad_left) {
             robot.trident.stopOnSample();
@@ -134,32 +135,32 @@ public class DriverControls {
             fieldOrientedDrive();
 
         if (gamepad1.right_bumper) {
-            robot.trident.shoulderTargetPosition += 1 * shoulderSpeed;
+            robot.trident.setShoulderTarget( robot.trident.getShoulderTarget() + shoulderSpeed);
         }
         if (gamepad1.left_bumper) {
-            robot.trident.shoulderTargetPosition -= 1 * shoulderSpeed;
+            robot.trident.setShoulderTarget( robot.trident.getShoulderTarget() - shoulderSpeed);
         }
 //
         if (gamepad1.left_trigger > .2) {
             Trident.enforceSlideLimits = false;
-            robot.trident.slideTargetPosition -= 1 * SLIDE_ADJUST_SPEED;
+            robot.trident.sampler.slideTargetPosition -= 1 * SLIDE_ADJUST_SPEED;
         }
         if (gamepad1.right_trigger > .2) {
             Trident.enforceSlideLimits = false;
-            robot.trident.slideTargetPosition += 1 * SLIDE_ADJUST_SPEED;
+            robot.trident.sampler.slideTargetPosition += 1 * SLIDE_ADJUST_SPEED;
         }
 //
         if (stickyGamepad1.a) {
             dampenDrive = true;
-            Trident.intakeIndex = 0;
-            robot.articulate(Robot.Articulation.INTAKE);
+            robot.trident.sampler.intakeIndex = 0;
+            robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
         }
 //
         if (stickyGamepad1.b) {
             dampenDrive = true;
             robot.outtakeIndex = 0;
-            Trident.outtakeIndex = 0;
-            robot.articulate(Robot.Articulation.OUTTAKE);
+            robot.trident.sampler.outtakeIndex = 0;
+            robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
         }
 
         if (stickyGamepad1.x) {
@@ -168,15 +169,15 @@ public class DriverControls {
 
         if (stickyGamepad1.y) {
             dampenDrive = false;
-            Trident.tuckIndex = 0;
+            robot.trident.sampler.tuckIndex = 0;
             robot.articulate(Robot.Articulation.TRAVEL);
         }
 
         if (gamepad1.dpad_down) {
-            robot.trident.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad1.dpad_up) {
-            robot.trident.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
         }
         if (stickyGamepad1.dpad_left) {
             robot.trident.stopOnSample();
@@ -189,10 +190,10 @@ public class DriverControls {
             fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (gamepad2.left_trigger > .1) {
-            robot.trident.adjustElbow(-robot.trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(-robot.trident.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad2.right_trigger > .1) {
-            robot.trident.adjustElbow(robot.trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(robot.trident.ELBOW_ADJUST_ANGLE);
         }
         // ------------------------------------------------------------------
 
@@ -248,7 +249,7 @@ public class DriverControls {
         IntoTheDeep_6832.gameState = IntoTheDeep_6832.GameState.getGameState(IntoTheDeep_6832.gameStateIndex);
 
         if (stickyGamepad1.guide) {
-            calibrateIndex++;
+            robot.trident.articulate(Trident.Articulation.CALIBRATE);
         }
     }
 

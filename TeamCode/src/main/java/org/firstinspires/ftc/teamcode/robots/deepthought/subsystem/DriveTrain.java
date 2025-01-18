@@ -76,22 +76,22 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     @Override
     public void update(Canvas c) {
         if (roadRunnerDrive) {
-            imuRoadrunnerError = Robot.sensors.driveIMUYaw - Math.toDegrees(pose.heading.log());
-            if (distanceSensorsEnabled) {
-                rightDistanceSensorValue = Robot.sensors.rightDistSensorValue;
-                leftDistanceSensorValue = Robot.sensors.leftDistSensorValue;
-            }
+//            imuRoadrunnerError = Robot.sensors.driveIMUYaw - Math.toDegrees(pose.heading.log());
+//            if (distanceSensorsEnabled) {
+//                rightDistanceSensorValue = Robot.sensors.rightDistSensorValue;
+//                leftDistanceSensorValue = Robot.sensors.leftDistSensorValue;
+//            }
             updatePoseEstimate();
 
 //        update pose heading from imu regularly
-            if (RELOCALIZE_WITH_IMU) {
-                if ((int) (System.nanoTime() / 1e9) % 2 == 0) {
-                    setPose(new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw)));
-                }
-            }
+//            if (RELOCALIZE_WITH_IMU) {
+//                if ((int) (System.nanoTime() / 1e9) % 2 == 0) {
+//                    setPose(new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw)));
+//                }
+//            }
 
             //test imu based turning from dashboard - todo comment out when not needed
-            if (turnToTest != 0) turnUntilDegreesIMU(turnToTest, turnToSpeed); //can target any angle but zero
+//            if (turnToTest != 0) turnUntilDegreesIMU(turnToTest, turnToSpeed); //can target any angle but zero
         }
     }
 
@@ -153,7 +153,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     //this is an absolute (non-relative) implementation.
     //the direction of the turn will favor the shortest approach
     public boolean turnUntilDegreesIMU(double turnAngle, double maxSpeed) {
-        Sensors.driveIMUEnabled = true;
+//        Sensors.driveIMUEnabled = true;
         targetHeading = wrapAngle(turnAngle);
         headingPID.setPID(HEADING_PID_PWR);
         headingPID.setInput(wrapAngle(Robot.sensors.driveIMUYaw));
@@ -201,15 +201,15 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
         telemetryMap.put("x in inches", pose.position.x);
         telemetryMap.put("y in inches", pose.position.y);
 
-        telemetryMap.put("Right Distance Sensor Value", robot.sensors.rightDistSensorValue);
-        telemetryMap.put("Left Distance Sensor Value", robot.sensors.leftDistSensorValue);
+//        telemetryMap.put("Right Distance Sensor Value", robot.sensors.rightDistSensorValue);
+//        telemetryMap.put("Left Distance Sensor Value", robot.sensors.leftDistSensorValue);
 
         telemetryMap.put("heading", Math.toDegrees(pose.heading.log()));
         telemetryMap.put("Left Odometry Pod:\t", leftFront.getCurrentPosition());
         telemetryMap.put("Right Odometry Pod:\t", rightFront.getCurrentPosition());
         telemetryMap.put("Cross Odometry Pod:\t", rightBack.getCurrentPosition());
         telemetryMap.put("imu vs roadrunner:\t", imuRoadrunnerError);
-        telemetryMap.put("imu:\t", Robot.sensors.driveIMUYaw);
+//        telemetryMap.put("imu:\t", Robot.sensors.driveIMUYaw);
         telemetryMap.put("PID Error:\t", PIDError);
         telemetryMap.put("PID Correction:\t", PIDCorrection);
         telemetryMap.put("imuTurnDone?", imuTurnDone);
