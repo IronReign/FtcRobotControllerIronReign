@@ -101,16 +101,17 @@ public class Sampler extends Arm {
     public void update(Canvas fieldOverlay) {
         beater.setPower(-servoPower);
         elbow.update();
-        slide.setTargetPosition(slideTargetPosition);
+        if (trident.calibrated){
+            slide.setTargetPosition(slideTargetPosition);
+            //allow real-time elbow speed changes
+            elbow.setSpeed(ELBOW_JOINT_SPEED);
+            trident.setShoulderTarget(this, shoulderTargetPosition);
+        }
         if (colorSensorEnabled) {
             updateColorSensor();
         }
         //compute the current articulation/behavior
         articulate();
-        //allow real-time flipper speed changes
-        elbow.setSpeed(ELBOW_JOINT_SPEED);
-
-        trident.setShoulderTarget(this, shoulderTargetPosition);
     }
 
     @Override

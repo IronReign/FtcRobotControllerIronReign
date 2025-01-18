@@ -74,7 +74,7 @@ public abstract class Arm implements Subsystem {
     enum Sample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
     }
-    Sample currentSample = null;
+    Sample currentSample = Sample.NO_SAMPLE;
     List<Sample> targetSamples;
 
     abstract boolean intake();
@@ -97,8 +97,8 @@ public abstract class Arm implements Subsystem {
 
     abstract boolean stopOnSample();
 
-    boolean calibrated = false;
-    public static int calibrateIndex = 0;
+    boolean calibrated = true;
+    int calibrateIndex = 0;
     public long calibrateTimer = 0;
     public boolean calibrate(Arm subs, double elbowStartAngle) {
         switch (calibrateIndex) {
@@ -123,9 +123,7 @@ public abstract class Arm implements Subsystem {
                 if(withinError(slidePos, slidePosPrev, 2) && isPast(calibrateTimer)) {
                     calibrateIndex++;
                 }
-
                 slidePosPrev = slidePos;
-
                 break;
             case 2: // reset the encoders to zero
 

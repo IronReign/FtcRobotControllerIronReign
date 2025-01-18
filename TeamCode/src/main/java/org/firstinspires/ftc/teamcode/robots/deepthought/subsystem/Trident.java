@@ -38,7 +38,7 @@ public class Trident implements Subsystem {
     public NormalizedColorSensor colorSensor = null;
     //public static boolean colorSensorEnabled = false;
 
-    public boolean calibrated = false;
+    public boolean calibrated = true;
 
     public enum Sample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
@@ -54,8 +54,8 @@ public class Trident implements Subsystem {
     public static int SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
     static int shoulderTargetPosition = 0;
     public static int shoulderSpeed = 45;
-    public static int SHOULDER_CALIBRATE_HORIZONTAL = 2450; // offset to get to horizontal when shoulder at max
-    public static int SHOULDER_SIZING = 800;
+    public static int SHOULDER_CALIBRATE_HORIZONTAL = -2000; // offset to get to horizontal when shoulder at max
+    public static int SHOULDER_SIZING = 800;  //todo re-tune after horizontal tuning
     int SHOULDER_HORIZONTAL = 0;
     public static int SHOULDER_INTAKE_POSITION = 250;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
@@ -132,7 +132,7 @@ public class Trident implements Subsystem {
         return articulation;
     }
 
-    public static int calibrateIndex = 0;
+    int calibrateIndex = 0;
     public long calibrateTimer = 0;
     public boolean calibrate() {
         switch (calibrateIndex) {
@@ -142,7 +142,7 @@ public class Trident implements Subsystem {
                 //speciMiner.articulate(SpeciMiner.Articulation.CALIBRATE);
                 calibrateTimer = futureTime(1); //enough time to assure it has begun moving
                 shoulder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                shoulder.setPower(-.3);
+                shoulder.setPower(.3);
                 calibrateIndex++;
                 break;
             case 1: // has the arm stopped moving?
@@ -164,7 +164,7 @@ public class Trident implements Subsystem {
             case 3: // reset the encoders to make horizontal zero
                 if(withinError(shoulder.getCurrentPosition(), SHOULDER_CALIBRATE_HORIZONTAL, 3)) {
                     shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    shoulder.setDirection(DcMotorSimple.Direction.REVERSE);
+                    //shoulder.setDirection(DcMotorSimple.Direction.REVERSE);
                     shoulder.setPower(1);
                     shoulder.setVelocity(400);
                     shoulder.setTargetPosition(0);
@@ -222,7 +222,7 @@ public class Trident implements Subsystem {
 
         DcMotorEx bruhx2 = this.hardwareMap.get(DcMotorEx.class, "shoulder");
         shoulder = new DcMotorExResetable(bruhx2);
-
+        shoulder.setDirection(DcMotorSimple.Direction.REVERSE);
         shoulder.setMotorEnable();
         shoulder.setPower(1);
         shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
