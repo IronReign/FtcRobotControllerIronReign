@@ -26,7 +26,7 @@ import java.util.Map;
 
 public class Sampler extends Arm {
     CRServo beater = null;
-    public DcMotorEx slide = null;
+    //public DcMotorEx slide = null;
 
     //ELBOW JOINT VARIABLES
     public static boolean preferHighOuttake = true;
@@ -79,16 +79,15 @@ public class Sampler extends Arm {
     }
 
     public boolean sampleDetected() {
+        updateColorSensor();
         return targetSamples.contains(currentSample);
     }
 
     @Override
     public boolean stopOnSample() {
-        colorSensorEnabled = true;
-        servoPower = .8;
-        if (targetSamples.contains(currentSample)) {
+        servoPower = 1.0;
+        if (sampleDetected()) {
             servoPower = 0;
-            colorSensorEnabled = false;
             return true;
         }
         return false;
@@ -98,8 +97,6 @@ public class Sampler extends Arm {
         elbow.setTargetAngle(elbow.getCurrentAngle() + angle);
     }
 
-
-
     @Override
     public void update(Canvas fieldOverlay) {
         beater.setPower(-servoPower);
@@ -107,14 +104,13 @@ public class Sampler extends Arm {
         slide.setTargetPosition(slideTargetPosition);
         if (colorSensorEnabled) {
             updateColorSensor();
-            colorSensor.setGain(colorSensorGain);
         }
         //compute the current articulation/behavior
         articulate();
         //allow real-time flipper speed changes
         elbow.setSpeed(ELBOW_JOINT_SPEED);
-        // TODO FIX - this will fail as soon as we start to use SpeciMiner
-        trident.shoulderTargetPosition = shoulderTargetPosition; //todo CRAZY BAD - need to control which subsystem gets to set shoulder targets
+
+        trident.setShoulderTarget(this, shoulderTargetPosition);
     }
 
     @Override
@@ -126,6 +122,7 @@ public class Sampler extends Arm {
 
     public enum Articulation {
         MANUAL, //does nothing - used for transition tracking
+        CALIBRATE,
         TUCK, // safely tuck the arm out of the way
         FLOOR_PREP, INTAKE, OUTTAKE
     }
@@ -141,6 +138,11 @@ public class Sampler extends Arm {
     public Articulation articulate() {
         switch (articulation) {
             case MANUAL:
+                break;
+            case CALIBRATE:
+                if (calibrate(this, ELBOW_START_ANGLE)) {
+                    articulation = Articulation.MANUAL;
+                }
                 break;
             case TUCK:
                 if (tuck()) {
@@ -170,8 +172,9 @@ public class Sampler extends Arm {
     }
 
     public void sample(List<Sample> samples) {
-        articulation = Articulation.INTAKE;
         targetSamples = samples;
+        articulation = Articulation.INTAKE;
+
     }
 
     public void sample(Constants.Alliance alliance) {
@@ -179,8 +182,7 @@ public class Sampler extends Arm {
         if (alliance.isRed()) samples.add(Arm.Sample.RED);
         else samples.add(Arm.Sample.BLUE);
         samples.add(Arm.Sample.NEUTRAL);
-        articulation = Articulation.INTAKE;
-        targetSamples = samples;
+        sample(samples);
     }
 
     public static int intakeIndex;
@@ -331,6 +333,7 @@ public class Sampler extends Arm {
 
     @Override
     public String updateColorSensor() {
+        colorSensor.setGain(colorSensorGain);
         double hue = getHSV()[0];
         if (hue < 45 && hue > 35) {
             currentSample = Sample.NEUTRAL;
@@ -350,20 +353,21 @@ public class Sampler extends Arm {
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
-//        telemetryMap.put("articulation", articulation.name());
+        telemetryMap.put("Articulation", articulation);
         telemetryMap.put("preferHighOuttake", preferHighOuttake);
         telemetryMap.put("intake index", intakeIndex);
         telemetryMap.put("outtake index", outtakeIndex);
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
-        telemetryMap.put("colorsensor", colorSensorEnabled);
-        if (colorSensorEnabled) {
-            telemetryMap.put("current sample", currentSample.name());
-            telemetryMap.put("colorsensor hsv", "" + HSVasString());
-            telemetryMap.put("colorsensor rgb", colorSensor.getNormalizedColors().red + " " + colorSensor.getNormalizedColors().green + " " + colorSensor.getNormalizedColors().blue);
-        }
+
+        telemetryMap.put("current sample", currentSample.name());
+        telemetryMap.put("colorsensor hsv", "" + HSVasString()); // cached - changes when HSV is read
+        telemetryMap.put("colorsensor rgb", colorLastRGBA.red + " " + colorLastRGBA.green + " " + colorLastRGBA.blue);
 //        0 40 214
         telemetryMap.put("beater speed", beater.getPower());
         telemetryMap.put("elbow angle target : real", elbow.getTargetAngle() + " : " + elbow.getCurrentAngle());
+
+        telemetryMap.put("calibrate stage", calibrateIndex);
+
         return telemetryMap;
     }
 

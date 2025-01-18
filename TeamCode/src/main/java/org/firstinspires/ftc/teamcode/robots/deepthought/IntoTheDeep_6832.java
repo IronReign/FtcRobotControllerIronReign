@@ -115,7 +115,7 @@ public class IntoTheDeep_6832 extends OpMode {
 
     @Override
     public void init() {
-        Robot.calibrateIndex = 0;
+
         telemetry.addData("Status", "Hold right_trigger to enable debug mode");
         telemetry.update();
 
@@ -158,10 +158,9 @@ public class IntoTheDeep_6832 extends OpMode {
         dc.robotOrientedDrive();
         if (gameState.isAutonomous()) {
             robot.preloadAllianceSelect();
-            if (!robot.trident.calibrated) {
-                if (robot.calibrate())
-                    robot.trident.calibrated = true;
-            }
+            //if (!robot.trident.calibrated) {
+                //robot.trident.articulate(Trident.Articulation.CALIBRATE);
+            //}
         }
 //        initVision();
 
@@ -170,7 +169,7 @@ public class IntoTheDeep_6832 extends OpMode {
 
         telemetry.addData("Alliance", alliance);
         telemetry.addData("startingPosition", startingPosition);
-        telemetry.addData("initPositionIndex", Robot.calibrateIndex);
+
         telemetry.addData("calibrated", robot.trident.calibrated);
 
         robot.driveTrain.updatePoseEstimate();

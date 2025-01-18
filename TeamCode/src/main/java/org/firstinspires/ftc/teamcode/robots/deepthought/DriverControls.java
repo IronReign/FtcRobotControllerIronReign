@@ -6,7 +6,7 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.debugTelemetryEnabled;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot.calibrateIndex;
+
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident.shoulderSpeed;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler.SLIDE_ADJUST_SPEED;
@@ -135,10 +135,10 @@ public class DriverControls {
             fieldOrientedDrive();
 
         if (gamepad1.right_bumper) {
-            robot.trident.shoulderTargetPosition += 1 * shoulderSpeed;
+            robot.trident.setShoulderTarget( robot.trident.getShoulderTarget() + shoulderSpeed);
         }
         if (gamepad1.left_bumper) {
-            robot.trident.shoulderTargetPosition -= 1 * shoulderSpeed;
+            robot.trident.setShoulderTarget( robot.trident.getShoulderTarget() - shoulderSpeed);
         }
 //
         if (gamepad1.left_trigger > .2) {
@@ -249,7 +249,7 @@ public class DriverControls {
         IntoTheDeep_6832.gameState = IntoTheDeep_6832.GameState.getGameState(IntoTheDeep_6832.gameStateIndex);
 
         if (stickyGamepad1.guide) {
-            calibrateIndex++;
+            robot.trident.articulate(Trident.Articulation.CALIBRATE);
         }
     }
 

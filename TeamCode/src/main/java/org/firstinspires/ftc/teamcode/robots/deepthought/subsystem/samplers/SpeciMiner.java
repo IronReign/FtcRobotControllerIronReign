@@ -96,6 +96,7 @@ public class SpeciMiner extends Arm{
 
     @Override
     public String updateColorSensor() {
+        colorSensor.setGain(colorSensorGain);
         double hue = getHSV()[0];
         if (hue < 45 && hue > 35) {
             currentSample = Sample.NEUTRAL;
@@ -112,13 +113,16 @@ public class SpeciMiner extends Arm{
         }
     }
 
+    public boolean sampleDetected() {
+        updateColorSensor();
+        return targetSamples.contains(currentSample);
+    }
+
     @Override
     public boolean stopOnSample() {
-        colorSensorEnabled = true;
-        servoPower = .8;
-        if (targetSamples.contains(currentSample)) {
+        servoPower = 1.0;
+        if (sampleDetected()) {
             servoPower = 0;
-            colorSensorEnabled = false;
             return true;
         }
         return false;
@@ -129,14 +133,13 @@ public class SpeciMiner extends Arm{
         CRSOne.setPower(-servoPower);
         CRSTwo.setPower(servoPower);
         slide.setTargetPosition(slideTargetPosition);
-        if (colorSensorEnabled) {
-            updateColorSensor();
-            colorSensor.setGain(colorSensorGain);
-        }
+
         //compute the current articulation/behavior
         articulate();
         //allow real-time flipper speed changes
         elbow.setSpeed(ELBOW_JOINT_SPEED);
+
+        trident.setShoulderTarget(this, shoulderTargetPosition);
     }
 
     @Override
@@ -149,6 +152,7 @@ public class SpeciMiner extends Arm{
 
     public enum Articulation {
         MANUAL, //does nothing - used for transition tracking
+        CALIBRATE,
         TUCK, // safely tuck the arm out of the way
         FLOOR_PREP, INTAKE, WALLTAKE, OUTTAKE
 
@@ -165,6 +169,11 @@ public class SpeciMiner extends Arm{
     public Articulation articulate() {
         switch (articulation) {
             case MANUAL:
+                break;
+            case CALIBRATE:
+                if (calibrate(this, ELBOW_START_ANGLE)) {
+                    articulation = Articulation.MANUAL;
+                }
                 break;
             case TUCK:
                 if (tuck()) {
@@ -215,14 +224,15 @@ public class SpeciMiner extends Arm{
         telemetryMap.put("intake index", intakeIndex);
         telemetryMap.put("outtake index", outtakeIndex);
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
+
         telemetryMap.put("current sample", currentSample.name());
-        telemetryMap.put("colorsensor", colorSensorEnabled);
-        if (colorSensorEnabled) {
-            telemetryMap.put("colorsensor hsv", "" + HSVasString());
-            telemetryMap.put("colorsensor rgb", colorSensor.getNormalizedColors().red + " " + colorSensor.getNormalizedColors().green + " " + colorSensor.getNormalizedColors().blue);
-        }
+        telemetryMap.put("colorsensor hsv", "" + HSVasString()); // cached - changes when HSV is read
+        telemetryMap.put("colorsensor rgb", colorLastRGBA.red + " " + colorLastRGBA.green + " " + colorLastRGBA.blue);
+
         telemetryMap.put("beater speed", servoPower);
         telemetryMap.put("elbow angle target : real", elbow.getTargetAngle() + " : " + elbow.getCurrentAngle());
+
+        telemetryMap.put("calibrate stage", calibrateIndex);
 
         return telemetryMap;
     }
