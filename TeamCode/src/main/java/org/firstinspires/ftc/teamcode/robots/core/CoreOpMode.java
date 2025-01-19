@@ -36,7 +36,6 @@ public class CoreOpMode extends OpMode {
         }
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
     }
-
     @Override
     public void loop() {
         robot.update(new Canvas());
