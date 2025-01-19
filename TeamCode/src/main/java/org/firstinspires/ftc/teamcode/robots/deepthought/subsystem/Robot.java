@@ -5,10 +5,9 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.fieldOrientedDrive;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
@@ -16,7 +15,6 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
@@ -78,18 +76,15 @@ public class Robot implements Subsystem {
     public boolean fetched;
 
 
-
     public enum Articulation {
-        MANUAL,
-        SAMPLER_INTAKE,
-        TRAVEL, SAMPLER_OUTTAKE,
-        SPECIMINER_INTAKE, SPECIMINER_WALLTAKE, SPECIMINER_OUTTAKE
+        MANUAL, SAMPLER_INTAKE, TRAVEL, SAMPLER_OUTTAKE, SPECIMINER_INTAKE, SPECIMINER_WALLTAKE, SAMPLER_PREP, SPECIMINER_OUTTAKE
     }
 
     public void start() {
-        if(gameState.equals(IntoTheDeep_6832.GameState.TELE_OP)) {
+        if (gameState.equals(IntoTheDeep_6832.GameState.TELE_OP)) {
             trident.shoulder.setPosition(250);
         }
+        trident.finalizeTargets();
         field.finalizeField(alliance);
     }
     //end start
@@ -174,8 +169,7 @@ public class Robot implements Subsystem {
         if (detections != null && detections.size() > 0) {
             AprilTagDetection targetTag = detections.get(0);
             for (AprilTagDetection detection : detections) {
-                if (Math.abs(detection.id - target) < Math.abs(targetTag.id - target))
-                    targetTag = detection;
+                if (Math.abs(detection.id - target) < Math.abs(targetTag.id - target)) targetTag = detection;
             }
 
 //            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
@@ -211,19 +205,12 @@ public class Robot implements Subsystem {
 
     public void preloadAllianceSelect() {
         trident.sampler.updateColorSensor();
-        if(trident.currentSample == Trident.Sample.RED) {
+        if (trident.currentSample == Trident.Sample.RED) {
             alliance = Constants.Alliance.RED;
-            startingPosition = startingPosition.isRed() == true ?
-                    startingPosition :
-                    startingPosition == Constants.Position.START_LEFT_BLUE ?
-                            Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
-        }
-        else if(trident.currentSample == Trident.Sample.BLUE) {
+            startingPosition = startingPosition.isRed() == true ? startingPosition : startingPosition == Constants.Position.START_LEFT_BLUE ? Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
+        } else if (trident.currentSample == Trident.Sample.BLUE) {
             alliance = Constants.Alliance.BLUE;
-            startingPosition = startingPosition.isRed() == false ?
-                    startingPosition :
-                    startingPosition == Constants.Position.START_LEFT_RED ?
-                            Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
+            startingPosition = startingPosition.isRed() == false ? startingPosition : startingPosition == Constants.Position.START_LEFT_RED ? Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
         }
     }
 
@@ -321,26 +308,53 @@ public class Robot implements Subsystem {
 //                    articulation = Articulation.MANUAL;
 //                break;
             case SAMPLER_INTAKE:
-                trident.sampler.sample(alliance);
-                if(trident.sampler.articulation == Sampler.Articulation.MANUAL) {
-                    articulation = Articulation.MANUAL;
-                }
+                if (samplerIntake()) articulation = Articulation.MANUAL;
+
                 break;
+
+            case SAMPLER_PREP:
+                if (samplerPrep()) articulation = Articulation.MANUAL;
             case TRAVEL:
                 trident.articulate(Trident.Articulation.TUCK);
-                if(trident.articulation == Trident.Articulation.MANUAL) {
+                if (trident.articulation == Trident.Articulation.MANUAL) {
                     articulation = Articulation.MANUAL;
                 }
                 break;
             case SAMPLER_OUTTAKE:
-                if(samplerOuttake())
-                    articulation = Articulation.MANUAL;
+                if (samplerOuttake()) articulation = Articulation.MANUAL;
                 break;
         }
         return articulation;
     }
 
+
+    public int intakeIndex = 0;
+
+    public boolean samplerIntake() {
+        switch (intakeIndex) {
+            case 0:
+                // todo this might be at wrong level or ignored
+                trident.sampler.articulate(Sampler.Articulation.INTAKE);
+                intakeIndex++;
+                break;
+            case 1:
+                if (trident.sampler.articulation == Sampler.Articulation.MANUAL) {
+                    intakeIndex = 0;
+                    return true;
+                }
+                break;
+        }
+        return false;
+    }
+
+
+    public boolean samplerPrep() {
+        trident.sampler.articulate(Sampler.Articulation.INTAKE_PREP);
+        return true;
+    }
+
     public int outtakeIndex = 0;
+
     public boolean samplerOuttake() {
         switch (outtakeIndex) {
             case 0:
@@ -349,7 +363,7 @@ public class Robot implements Subsystem {
                 outtakeIndex++;
                 break;
             case 1:
-                if(trident.sampler.articulation == Sampler.Articulation.MANUAL) {
+                if (trident.sampler.articulation == Sampler.Articulation.MANUAL) {
                     Trident.enforceSlideLimits = true;
                     outtakeIndex = 0;
                     return true;
@@ -385,7 +399,6 @@ public class Robot implements Subsystem {
             String name = subsystems[i].getClass().getSimpleName();
             telemetryMap.put(name + " Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (subsystemUpdateTimes[i] * 1e-6), (int) (1 / (subsystemUpdateTimes[i] * 1e-9))));
         }
-
 
 
         telemetryMap.put("Delta Time", deltaTime);

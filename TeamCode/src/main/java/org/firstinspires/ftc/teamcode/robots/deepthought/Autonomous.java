@@ -107,19 +107,18 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 4:
-                robot.trident.beaterPower = .5;
+                robot.trident.sampler.servoPower = .5;
                 autonTimer = futureTime(2);
                 autonIndex++;
                 break;
             case 5:
-                robot.trident.sampler.colorSensorEnabled = true;
                 if (isPast(autonTimer)) {
                     autonIndex++;
                 }
                 break;
             case 6:
                 if (robot.driveTrain.strafeToPose(field.ground1.getPose(), packet)) {
-                    robot.trident.beaterPower = 0;
+                    robot.trident.sampler.servoPower = 0;
                     robot.trident.sampler.intakeIndex = 0;
                     robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
 //                    autonTimer = futureTime(0);
