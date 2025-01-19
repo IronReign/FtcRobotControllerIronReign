@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.robots.core;
 
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+
+import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -39,7 +41,6 @@ public class AutonCode2 extends OpMode {
     double target = 0;
     double initialzOrientation = 0;
     double nowOrientation = 0;
-    public boolean calibrated = false;
     public long autonTimer = 0;
     public int cPosition;
 
@@ -91,7 +92,6 @@ public class AutonCode2 extends OpMode {
         robot.claw.setPosition(robot.clawClosePosition);
 
         initIMU();
-        Robot.calibrateStage = 0;
     }
 
     public void initIMU(){
@@ -165,6 +165,12 @@ public class AutonCode2 extends OpMode {
         turning = true;
     }
 
+    public void debug(Canvas fieldOverlay){
+        if(gamepad1.a){
+            autonIndex++;
+        }
+    }
+
     public void check(){
         if (moving) {
             if (vertical){
@@ -180,7 +186,7 @@ public class AutonCode2 extends OpMode {
                 vertical = false;
                 horizontal = false;
                 moving = false;
-                autonIndex++;
+                //autonIndex++;
             }
         }
 
@@ -190,44 +196,35 @@ public class AutonCode2 extends OpMode {
             if(Math.abs(nowOrientation-initialzOrientation) >= target){
                 robot.mecanumDrive(0,0,0);
                 turning = false;
-                autonIndex++;
+                //autonIndex++;
             }
         }
     }
-
-    public void init_loop() {
-        if (!calibrated) {
-            if (robot.calibrate()) {
-                calibrated = true;
-            }
-        }
-        handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
-    }
-
     @Override
     public void loop() {
         check();
+        debug(new Canvas());
         switch(autonIndex){
             // Starting Position: A3 facing submersible with specimen in hand
             // Specimen one
             case 0:
                 // Adjust shoulder and slide position
                 robot.slide.setTargetPosition(400);
-                robot.shoulder.setTargetPosition(robot.shoulder.getCurrentPosition() + 275);
-                autonIndex++;
+                robot.shoulder.setTargetPosition(robot.shoulder.getCurrentPosition() + 220); //OG: 275
+                //autonIndex++;
                 break;
 
             case 1:
                 // Move forward 0.8 tile
-                forward((60), 0.04);
+                forward((72), 0.04); //OG: 60
                 break;
 
             case 2:
                 // Push shoulder down
-                robot.shoulder.setPower(70);
+                robot.shoulder.setPower(85);
                 cPosition = robot.shoulder.getCurrentPosition();
-                robot.shoulder.setTargetPosition(cPosition - 400);
-                autonIndex+=2;
+                robot.shoulder.setTargetPosition(cPosition - 500);
+                //autonIndex++;
                 break;
 
             /*case 3:
@@ -241,12 +238,12 @@ public class AutonCode2 extends OpMode {
             case 4:
                 // Move backwards
                 forward(5, -1);
-                autonIndex++;
+                //autonIndex++;
 
             case 5:
                 // Open claw
                 robot.claw.setPosition(robot.clawOpenPosition);
-                autonIndex++;
+                //autonIndex++;
                 break;
 
             case 6:
@@ -347,8 +344,11 @@ public class AutonCode2 extends OpMode {
             case 22:
                 //Strafe left 2 tiles
                 strafe(130, -0.04);
-                break;
-             */
+                robot.slide.setTargetPosition(24);
+                break;*/
+
+
+
 
            default:
                 break;

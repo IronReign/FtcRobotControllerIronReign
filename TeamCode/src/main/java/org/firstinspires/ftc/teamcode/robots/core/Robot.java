@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -17,7 +18,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-
+@Config(value = "CORE")
 public class Robot implements Subsystem {
     HardwareMap hardwareMap;
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
@@ -31,10 +32,11 @@ public class Robot implements Subsystem {
 
     public boolean clawOpen = false;
     public double clawOpenPosition = 1;
-    public double clawClosePosition = 0.3;
-    public int shoulderTargetPosition = 0;
-    public int slideTargetPosition = 0;
+    public double clawClosePosition = 0;
+    public static int shoulderTargetPosition = 0;
+    public static int slideTargetPosition = 0;
     public int rotaterPosition = 0;
+    private boolean motorUpdated;
 
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
         this.hardwareMap = hardwareMap;
@@ -43,7 +45,7 @@ public class Robot implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
-
+        motorUpdated = false;
         // Claw Controls
         if(gamepad1.b) {
             clawOpen = !clawOpen;
@@ -54,14 +56,14 @@ public class Robot implements Subsystem {
             claw.setPosition(clawClosePosition);
         }
 
-        if(gamepad1.right_trigger >= 0.3){
+        if(gamepad1.left_trigger >= 0.3){
             if (shoulder.getCurrentPosition() < 1800){
                 shoulderTargetPosition = shoulder.getCurrentPosition() + 75;
             } else {
                 shoulderTargetPosition = 1800;
             }
         }
-        else if (gamepad1.left_trigger >= 0.3){
+        else if (gamepad1.right_trigger >= 0.3){
             if (shoulder.getCurrentPosition() > 0){
                 shoulderTargetPosition = shoulder.getCurrentPosition() - 75;
             } else {
@@ -70,14 +72,14 @@ public class Robot implements Subsystem {
 
         }
 
-        if (gamepad1.right_bumper){
-            if (slide.getCurrentPosition() < 1450){
+        if (gamepad1.dpad_up){
+            if (slide.getCurrentPosition() < 1200){
                 slideTargetPosition = slide.getCurrentPosition() + 60;
             } else {
-                slide.setTargetPosition(1450);
+                slide.setTargetPosition(1200);
             }
         }
-        if (gamepad1.left_bumper){
+        if (gamepad1.dpad_down){
             if(slide.getCurrentPosition() > 60){
                 slideTargetPosition = slide.getCurrentPosition() - 60;
             } else {
@@ -85,19 +87,20 @@ public class Robot implements Subsystem {
             }
         }
 
-
         updateMotors();
         mecanumDrive(gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.left_stick_x);
     }
 
     public void updateMotors() {
+
         if (clawOpen) {
             claw.setPosition(clawOpenPosition);
         } else {
             claw.setPosition(clawClosePosition);
         }
-        shoulder.setTargetPosition(1647);
-        slide.setTargetPosition(44);
+        shoulder.setTargetPosition(shoulderTargetPosition);
+        motorUpdated = true;
+        slide.setTargetPosition(slideTargetPosition);
     }
 
     public void mecanumDrive(double forward, double strafe, double turn) {
@@ -167,6 +170,9 @@ public class Robot implements Subsystem {
         telemetry.put("Shoulder Power", shoulder.getCurrent(CurrentUnit.AMPS));
         telemetry.put("Shoulder Position", shoulder.getCurrentPosition());
         telemetry.put("Shoulder Target Position", shoulderTargetPosition);
+        telemetry.put("Shoulder runMode", shoulder.getMode());
+        telemetry.put("motor updated", motorUpdated);
+
         telemetry.put("Slide Position", slide.getCurrentPosition());
         telemetry.put("Slide Target Position", slideTargetPosition);
         telemetry.put("Horizontal", horizontal.getCurrentPosition());
