@@ -80,12 +80,12 @@ public class AutonCode2 extends OpMode {
 
         robot.shoulder.setPower(1);
         robot.shoulder.setVelocity(50);
-        robot.shoulder.setTargetPosition(robot.shoulderTargetPosition);
+        robot.shoulder.setTargetPosition(1500);
         robot.shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         robot.slide.setPower(1);
         robot.slide.setVelocity(50);
-        robot.slide.setTargetPosition(robot.slideTargetPosition);
+        robot.slide.setTargetPosition(0);
         robot.slide.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         robot.leftFront.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
@@ -98,6 +98,11 @@ public class AutonCode2 extends OpMode {
         robot.claw.setPosition(robot.clawClosePosition);
 
         initIMU();
+    }
+
+    public void init_loop(){
+        debug(new Canvas());
+
     }
 
     public void initIMU(){
@@ -169,6 +174,9 @@ public class AutonCode2 extends OpMode {
         if(spad1.a){
             autonIndex++;
         }
+        if(spad1.x){
+            autonIndex--;
+        }
         handleTelemetry(getTelemetry(true), robot.getTelemetryName());
     }
 
@@ -223,19 +231,19 @@ public class AutonCode2 extends OpMode {
             case 1:
                 // Adjust shoulder and slide position
                 robot.claw.setPosition(robot.clawClosePosition);
-                robot.shoulder.setTargetPosition(1620);//OG: 275, 220+1647=1867
-                robot.slide.setTargetPosition(400); //444
+                robot.shoulder.setTargetPosition(1775);//OG: 275, 220+1647=1867
+                robot.slide.setTargetPosition(350); //444
 
-               /* if (robot.slide.getCurrentPosition()>=robot.slide.getTargetPosition() && robot.shoulder.getCurrentPosition()>=robot.shoulder.getTargetPosition()){
+               if (robot.slide.getCurrentPosition()>=robot.slide.getTargetPosition() && robot.shoulder.getCurrentPosition()>=robot.shoulder.getTargetPosition()){
                     autonIndex++;
-                }*/
+                }
                 break;
 
             case 2:
                 robot.shoulder.setTargetPosition(1360);
-                /*if (robot.shoulder.getCurrentPosition()>=robot.shoulder.getTargetPosition()){
+                if (robot.shoulder.getCurrentPosition()>=robot.shoulder.getTargetPosition()){
                     autonIndex++;
-                }*/
+                }
                 break;
 
             case 3:
@@ -243,6 +251,17 @@ public class AutonCode2 extends OpMode {
                 robot.claw.setPosition(robot.clawOpenPosition);
                 //autonIndex++;
                 break;
+
+            case 4:
+                //Back up
+                forward(65, -0.04); //OG: 60
+                if (reached){
+                    autonIndex++;
+                    reached = false;
+                    robot.mecanumDrive(0, 0, 0);
+                }
+                break;
+
 
             /*case 0:
                 // Adjust shoulder and slide position
