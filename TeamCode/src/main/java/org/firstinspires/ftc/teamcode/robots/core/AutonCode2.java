@@ -17,8 +17,10 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -28,7 +30,8 @@ public class AutonCode2 extends OpMode {
     Robot robot;
     BNO055IMU imu;
     private FtcDashboard dashboard;
-    public static int autonIndex = 0;
+    boolean runAuton = true;
+    int autonIndex = 0;
     int startpos = 0;
     public double wheelCircum = ((3.5)*Math.PI);
     public int ticksrev = 1440;
@@ -43,9 +46,12 @@ public class AutonCode2 extends OpMode {
     double nowOrientation = 0;
     public long autonTimer = 0;
     public int cPosition;
+    public StickyGamepad spad1;
+    boolean reached = false;
 
     @Override
     public void init() {
+        spad1 = new StickyGamepad(gamepad1);
         dashboard = FtcDashboard.getInstance();
         robot = new Robot(hardwareMap, null);
 
@@ -74,12 +80,12 @@ public class AutonCode2 extends OpMode {
 
         robot.shoulder.setPower(1);
         robot.shoulder.setVelocity(50);
-        robot.shoulder.setTargetPosition(robot.shoulderTargetPosition);
+        robot.shoulder.setTargetPosition(1500);
         robot.shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         robot.slide.setPower(1);
         robot.slide.setVelocity(50);
-        robot.slide.setTargetPosition(robot.slideTargetPosition);
+        robot.slide.setTargetPosition(0);
         robot.slide.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         robot.leftFront.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
@@ -92,6 +98,11 @@ public class AutonCode2 extends OpMode {
         robot.claw.setPosition(robot.clawClosePosition);
 
         initIMU();
+    }
+
+    public void init_loop(){
+        debug(new Canvas());
+
     }
 
     public void initIMU(){
@@ -110,13 +121,6 @@ public class AutonCode2 extends OpMode {
         return angles.firstAngle;
     }
 
-    public Map<String, Object> getTelemetry(boolean debug) {
-        LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
-
-        telemetry.put("Orientation Angle", getZorient());
-
-        return telemetry;
-    }
 
     public void forward(double length, double direction){
         if (!moving){
@@ -166,9 +170,14 @@ public class AutonCode2 extends OpMode {
     }
 
     public void debug(Canvas fieldOverlay){
-        if(gamepad1.a){
+        spad1.update();
+        if(spad1.a){
             autonIndex++;
         }
+        if(spad1.x){
+            autonIndex--;
+        }
+        handleTelemetry(getTelemetry(true), robot.getTelemetryName());
     }
 
     public void check(){
@@ -186,7 +195,8 @@ public class AutonCode2 extends OpMode {
                 vertical = false;
                 horizontal = false;
                 moving = false;
-                //autonIndex++;
+                reached = true;
+
             }
         }
 
@@ -196,61 +206,73 @@ public class AutonCode2 extends OpMode {
             if(Math.abs(nowOrientation-initialzOrientation) >= target){
                 robot.mecanumDrive(0,0,0);
                 turning = false;
-                //autonIndex++;
+                reached = true;
+
             }
         }
     }
-    @Override
-    public void loop() {
-        check();
-        debug(new Canvas());
-        switch(autonIndex){
+
+    public boolean execute(){
+        switch(autonIndex) {
             // Starting Position: A3 facing submersible with specimen in hand
             // Specimen one
             case 0:
-                // Adjust shoulder and slide position
-                robot.slide.setTargetPosition(400);
-                robot.shoulder.setTargetPosition(robot.shoulder.getCurrentPosition() + 220); //OG: 275
-                //autonIndex++;
+                robot.claw.setPosition(robot.clawClosePosition);
+                forward(69, 0.04); //OG: 60
+                robot.shoulder.setTargetPosition(1785);//OG: 275, 220+1647=1867
+                robot.slide.setTargetPosition(350); //444
+                if (reached) {
+                    autonIndex++;
+                    reached = false;
+                    robot.mecanumDrive(0, 0, 0);
+                    autonTimer = futureTime(1);
+                }
                 break;
 
+            /*case 1:
+                // Adjust shoulder and slide position
+                robot.claw.setPosition(robot.clawClosePosition);
+                robot.shoulder.setTargetPosition(1785);//OG: 275, 220+1647=1867
+                robot.slide.setTargetPosition(350); //444
+
+                if (robot.slide.getCurrentPosition() >= robot.slide.getTargetPosition() && robot.shoulder.getCurrentPosition() >= robot.shoulder.getTargetPosition()) {
+                    autonIndex++;
+                    autonTimer = futureTime(1);
+                }
+                break;*/
+
             case 1:
-                // Move forward 0.8 tile
-                forward((72), 0.04); //OG: 60
+                if (isPast(autonTimer)) {
+                    robot.shoulder.setTargetPosition(1360);
+                    if (robot.shoulder.getCurrentPosition() <= robot.shoulder.getTargetPosition()) {
+                        autonIndex++;
+                        autonTimer = futureTime(1);
+                    }
+                }
                 break;
 
             case 2:
-                // Push shoulder down
-                robot.shoulder.setPower(85);
-                cPosition = robot.shoulder.getCurrentPosition();
-                robot.shoulder.setTargetPosition(cPosition - 500);
-                //autonIndex++;
-                break;
-
-            /*case 3:
-                if(robot.shoulder.getCurrentPosition() < cPosition - 200) {
-                    forward(5, 1);
-                    autonIndex++;
-                } else {
-                    autonIndex=3;
-                }*/
-
-            case 4:
-                // Move backwards
-                forward(5, -1);
-                //autonIndex++;
-
-            case 5:
                 // Open claw
-                robot.claw.setPosition(robot.clawOpenPosition);
-                //autonIndex++;
+                if (isPast(autonTimer)) {
+                    robot.claw.setPosition(robot.clawOpenPosition);
+                    autonIndex++;
+                }
                 break;
 
-            case 6:
-                // Move backwards one tile
-                forward(4, -0.1);
+            case 3:
+                //Back up
+                forward(65, -0.04); //OG: 60
+                if (reached) {
+                    autonIndex++;
+                    reached = false;
+                    robot.mecanumDrive(0, 0, 0);
+                    autonIndex = 0;
+                    return true;
+                }
+
                 break;
 
+            /*
            // Specimen two
 
             /*case 7:
@@ -347,11 +369,18 @@ public class AutonCode2 extends OpMode {
                 robot.slide.setTargetPosition(24);
                 break;*/
 
-
-
-
-           default:
+            default:
                 break;
+        }
+        return false;
+    }
+
+    @Override
+    public void loop() {
+        check();
+        debug(new Canvas());
+        if (runAuton) {
+            runAuton = !execute();
         }
     }
 
@@ -366,5 +395,23 @@ public class AutonCode2 extends OpMode {
         }
         telemetry.addLine();
         dashboard.sendTelemetryPacket(p);
+    }
+
+    public Map<String, Object> getTelemetry(boolean debug) {
+        LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
+
+        telemetry.put("Claw Open", robot.clawOpen);
+        telemetry.put("Shoulder Power", robot.shoulder.getCurrent(CurrentUnit.AMPS));
+        telemetry.put("Shoulder Position", robot.shoulder.getCurrentPosition());
+        telemetry.put("Shoulder Target Position", robot.shoulder.getTargetPosition());
+        telemetry.put("Shoulder runMode", robot.shoulder.getMode());
+
+        telemetry.put("Slide Position", robot.slide.getCurrentPosition());
+        telemetry.put("Slide Target Position", robot.slideTargetPosition);
+        telemetry.put("Horizontal", robot.horizontal.getCurrentPosition());
+        telemetry.put("Vertical", robot.vertical.getCurrentPosition());
+        telemetry.put("auton Index", autonIndex);
+
+        return telemetry;
     }
 }
