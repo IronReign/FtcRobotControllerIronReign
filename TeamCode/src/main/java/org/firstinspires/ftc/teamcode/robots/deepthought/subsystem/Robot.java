@@ -13,9 +13,11 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
@@ -24,6 +26,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.deepthought.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProvider;
@@ -45,9 +48,12 @@ public class Robot implements Subsystem {
     public static Sensors sensors;
     public DriveTrain driveTrain;
     public VisionProvider visionProviderBack, visionProviderFront;
-    public static boolean visionOn = true;
+    
     public Trident trident;
+    public Joint pan; // pan servo for the Limelight
+    private Limelight3A limelight; // smart camera
     public static boolean updatePositionCache = false;
+    public static boolean visionOn = true;
     public static boolean frontVision = false;
 
     public boolean calibrating = false;
@@ -74,7 +80,20 @@ public class Robot implements Subsystem {
     public Articulation articulation;
     public List<Target> targets = new ArrayList<Target>();
     public boolean fetched;
+    
+    //pan servo
+    public static double PAN_START_ANGLE = 145;
+    public static int PAN_HOME_POSITION = 2050;
+    public static double PAN_PWM_PER_DEGREE = -5.672222222222222;
+    public static double PAN_JOINT_SPEED = 120;
+    public static double PAN_MIN_ANGLE = -15;
+    public static double PAN_MAX_ANGLE = 220;
+    public static double PAN_ADJUST_ANGLE = 5;
 
+    public static  double PAN_FORWARD = 82;
+    public static double PAN_APRILTAG_BASKET = 200;
+
+    public static double panTargetAngle = PAN_FORWARD;
 
     public enum Articulation {
         MANUAL, SAMPLER_INTAKE, TRAVEL, SAMPLER_OUTTAKE, SPECIMINER_INTAKE, SPECIMINER_WALLTAKE, SAMPLER_PREP, SPECIMINER_OUTTAKE
@@ -107,6 +126,10 @@ public class Robot implements Subsystem {
             trident = new Trident(hardwareMap, this);
             //sensors = new Sensors(this);
 
+            limelight = hardwareMap.get(Limelight3A.class, "limelight");
+            pan = new Joint(hardwareMap, "pan", false, PAN_HOME_POSITION, PAN_PWM_PER_DEGREE, PAN_MIN_ANGLE, PAN_MAX_ANGLE, PAN_START_ANGLE, PAN_JOINT_SPEED);
+            
+
 
             subsystems = new Subsystem[]{driveTrain, trident};
             subsystemUpdateTimes = new long[subsystems.length];
@@ -133,6 +156,9 @@ public class Robot implements Subsystem {
             currPosition = new DTPosition(driveTrain.pose, -trident.shoulder.getCurrentPosition(), trident.sampler.slide.getCurrentPosition(), trident.speciMiner.slide.getCurrentPosition());
             positionCache.update(currPosition, false);
         }
+
+        pan.setTargetAngle(panTargetAngle);
+        pan.update();
 
         articulate(articulation);
         driveTrain.updatePoseEstimate();
