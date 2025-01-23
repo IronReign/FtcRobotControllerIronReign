@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
 
 import java.util.LinkedHashMap;
@@ -37,18 +38,38 @@ public class Robot implements Subsystem {
     public static int slideTargetPosition = 0;
     public int rotaterPosition = 0;
     private boolean motorUpdated;
+    public StickyGamepad spad1;
 
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
         this.hardwareMap = hardwareMap;
         this.gamepad1 = gamepad;
+        spad1 = new StickyGamepad(gamepad1);
     }
 
     @Override
     public void update(Canvas fieldOverlay) {
+        spad1.update();
         motorUpdated = false;
         // Claw Controls
-        if(gamepad1.b) {
+        if(spad1.b) {
             clawOpen = !clawOpen;
+        }
+
+        if(spad1.a) { //preset for ground
+            if (shoulderTargetPosition < 400) // over sub barrier
+                shoulderTargetPosition = 560;
+            else
+                shoulderTargetPosition = 330; //ground
+            slideTargetPosition = 440;
+        }
+
+        if(spad1.x) { //preset for wall
+            shoulderTargetPosition= 824;
+            slideTargetPosition = 0;
+        }
+        if(spad1.y) { //preset for specimen score
+            shoulderTargetPosition = 1900;
+            slideTargetPosition = 280;
         }
         if(clawOpen) {
             claw.setPosition(clawOpenPosition);
@@ -57,10 +78,10 @@ public class Robot implements Subsystem {
         }
 
         if(gamepad1.left_trigger >= 0.3){
-            if (shoulder.getCurrentPosition() < 1800){
+            if (shoulder.getCurrentPosition() < 2000){
                 shoulderTargetPosition = shoulder.getCurrentPosition() + 75;
             } else {
-                shoulderTargetPosition = 1800;
+                shoulderTargetPosition = 2000;
             }
         }
         else if (gamepad1.right_trigger >= 0.3){
@@ -72,14 +93,14 @@ public class Robot implements Subsystem {
 
         }
 
-        if (gamepad1.dpad_up){
+        if (spad1.dpad_up){
             if (slide.getCurrentPosition() < 1200){
                 slideTargetPosition = slide.getCurrentPosition() + 60;
             } else {
                 slide.setTargetPosition(1200);
             }
         }
-        if (gamepad1.dpad_down){
+        if (spad1.dpad_down){
             if(slide.getCurrentPosition() > 60){
                 slideTargetPosition = slide.getCurrentPosition() - 60;
             } else {
