@@ -98,7 +98,7 @@ public class CrapSwerve implements Subsystem {
 
     @Override
     public void resetStates() {
-         
+
     }
 
     public void drawRobot(Canvas c) {
