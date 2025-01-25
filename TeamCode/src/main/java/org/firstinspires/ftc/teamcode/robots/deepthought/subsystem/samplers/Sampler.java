@@ -122,6 +122,14 @@ public class Sampler extends Arm {
         slide.setTargetPosition(slide.getCurrentPosition());
     }
 
+    @Override
+    public void resetStates() {
+        intakeIndex = 0;
+        outtakeIndex = 0;
+        tuckIndex = 0;
+        calibrateIndex = 0;
+    }
+
     public enum Articulation {
         MANUAL, //does nothing - used for transition tracking
         CALIBRATE,
@@ -218,7 +226,7 @@ public class Sampler extends Arm {
             case 2:
                 if (withinError(trident.getShoulderCurrentPosition(), SHOULDER_INTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
                     servoPower = .8;
-                    intakeTimer = futureTime(8);
+                    intakeTimer = futureTime(10);
                     intakeIndex++;
                     colorSensorEnabled = true;
                 }

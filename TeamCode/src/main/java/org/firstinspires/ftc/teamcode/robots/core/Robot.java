@@ -139,6 +139,11 @@ public class Robot implements Subsystem {
 
     }
 
+    @Override
+    public void resetStates() {
+
+    }
+
     public void init() {
 
         leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");

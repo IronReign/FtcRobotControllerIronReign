@@ -76,8 +76,7 @@ public class DriverControls {
             dampenDrive = true;
 
             if (robot.trident.sampler.articulation == Sampler.Articulation.INTAKE_PREP) {
-                robot.trident.sampler.intakeIndex = 0;
-                robot.intakeIndex = 0;
+                robot.resetStates();
                 robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
             } else {
                 robot.articulate(Robot.Articulation.SAMPLER_PREP);
@@ -86,8 +85,7 @@ public class DriverControls {
 //
         if (stickyGamepad1.b) {
             dampenDrive = true;
-            robot.outtakeIndex = 0;
-            robot.trident.sampler.outtakeIndex = 0;
+            robot.resetStates();
             robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
         }
 
@@ -97,7 +95,7 @@ public class DriverControls {
 
         if (stickyGamepad1.y) {
             dampenDrive = false;
-            Trident.tuckIndex = 0;
+            robot.resetStates();
             robot.articulate(Robot.Articulation.TRAVEL);
         }
 
@@ -142,26 +140,26 @@ public class DriverControls {
             fieldOrientedDrive();
 
         if (gamepad1.right_bumper) {
-            robot.trident.setShoulderTarget(robot.trident.getShoulderTarget() + shoulderSpeed);
+            robot.trident.sampler.shoulderTargetPosition -= shoulderSpeed;
         }
         if (gamepad1.left_bumper) {
-            robot.trident.setShoulderTarget(robot.trident.getShoulderTarget() - shoulderSpeed);
+            robot.trident.sampler.shoulderTargetPosition += shoulderSpeed;
         }
 //
         if (gamepad1.left_trigger > .2) {
             Trident.enforceSlideLimits = false;
-            robot.trident.sampler.slideTargetPosition -= 1 * SLIDE_ADJUST_SPEED;
+            robot.trident.sampler.slideTargetPosition -= SLIDE_ADJUST_SPEED;
         }
         if (gamepad1.right_trigger > .2) {
             Trident.enforceSlideLimits = false;
-            robot.trident.sampler.slideTargetPosition += 1 * SLIDE_ADJUST_SPEED;
+            robot.trident.sampler.slideTargetPosition += SLIDE_ADJUST_SPEED;
         }
 //
         if (stickyGamepad1.a) {
             dampenDrive = true;
 
             if (robot.trident.sampler.articulation == Sampler.Articulation.INTAKE_PREP) {
-                robot.trident.sampler.intakeIndex = 0;
+                robot.resetStates();
                 robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
             } else {
                 robot.articulate(Robot.Articulation.SAMPLER_PREP);
@@ -170,19 +168,23 @@ public class DriverControls {
 //
         if (stickyGamepad1.b) {
             dampenDrive = true;
-            robot.outtakeIndex = 0;
-            robot.trident.sampler.outtakeIndex = 0;
+            robot.resetStates();
             robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
         }
 
         if (stickyGamepad1.x) {
-            robot.trident.beaterPower = robot.trident.beaterPower == .8 ? 0 : .8;
+            robot.trident.sampler.servoPower = robot.trident.sampler.servoPower == .8 ? 0 : .8;
         }
 
         if (stickyGamepad1.y) {
             dampenDrive = false;
-            robot.trident.sampler.tuckIndex = 0;
+            robot.resetStates();
             robot.articulate(Robot.Articulation.TRAVEL);
+        }
+
+        if (stickyGamepad1.start) {
+            Sampler.colorSensorEnabled = !Sampler.colorSensorEnabled;
+            debugTelemetryEnabled = true;
         }
 
         if (gamepad1.dpad_down) {
@@ -274,7 +276,7 @@ public class DriverControls {
                     startingPosition :
                     startingPosition == Constants.Position.START_LEFT_RED ?
                             Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
-            robot.visionProviderBack.setRedAlliance(false);
+//            robot.visionProviderBack.setRedAlliance(false);
         }
         if (stickyGamepad1.b || stickyGamepad2.b) {
             alliance = Constants.Alliance.RED;
@@ -283,7 +285,7 @@ public class DriverControls {
                     startingPosition :
                     startingPosition == Constants.Position.START_LEFT_BLUE ?
                             Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
-            robot.visionProviderBack.setRedAlliance(true);
+//            robot.visionProviderBack.setRedAlliance(true);
         }
 
         if (stickyGamepad1.dpad_up) {

@@ -164,6 +164,13 @@ public class SpeciMiner extends Arm{
         slide.setTargetPosition(slide.getCurrentPosition());
     }
 
+    @Override
+    public void resetStates() {
+        intakeIndex = 0;
+        outtakeIndex = 0;
+        calibrateIndex = 0;
+    }
+
     public enum Articulation {
         MANUAL, //does nothing - used for transition tracking
         CALIBRATE,

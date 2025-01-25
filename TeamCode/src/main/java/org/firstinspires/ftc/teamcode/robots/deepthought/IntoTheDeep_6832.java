@@ -230,8 +230,8 @@ public class IntoTheDeep_6832 extends OpMode {
         switch (gameState) {
             case AUTONOMOUS:
                 if (auton.execute(packet)) {
+                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
                     robot.articulate(Robot.Articulation.TRAVEL);
-                    robot.trident.articulate(Trident.Articulation.TUCK);
                     gameState = GameState.TELE_OP;
                 }
                 break;
@@ -297,17 +297,19 @@ public class IntoTheDeep_6832 extends OpMode {
 
 
         if (debugTelemetryEnabled) {
-            Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
-            visionTelemetryMap.put("Backend",
-                    Misc.formatInvariant("%s (%s)",
-                            VisionProviders.VISION_PROVIDERS[Robot.backVisionProviderIndex].getSimpleName(),
-                            robot.visionProviderFinalized ?
-                                    "finalized" :
-                                    System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
-                    )
-            );
-            handleTelemetry(visionTelemetryMap, "BACK VISION - \t" + robot.visionProviderBack.getTelemetryName(), packet);
-            handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
+            //NOW HANDLING VISION TELEMETRY WITHIN ROBOT BC IT MAKES MORE SENSE TO JAI
+//            Map<String, Object> visionTelemetryMap = robot.visionProviderBack.getTelemetry(debugTelemetryEnabled);
+//            visionTelemetryMap.put("Backend",
+//                    Misc.formatInvariant("%s (%s)",
+//                            VisionProviders.VISION_PROVIDERS[Robot.backVisionProviderIndex].getSimpleName(),
+//                            robot.visionProviderFinalized ?
+//                                    "finalized" :
+//                                    System.currentTimeMillis() / 500 % 2 == 0 ? "**NOT FINALIZED**" : "  NOT FINALIZED  "
+//                    )
+//            );
+//            handleTelemetry(visionTelemetryMap, "BACK VISION - \t" + robot.visionProviderBack.getTelemetryName(), packet);
+//            handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
+//            Map<String, Object> limelightTelemetryMap = new LinkedHashMap<>();
         }
 
 
