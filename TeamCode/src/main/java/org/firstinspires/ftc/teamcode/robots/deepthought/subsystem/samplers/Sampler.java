@@ -226,7 +226,7 @@ public class Sampler extends Arm {
             case 2:
                 if (withinError(trident.getShoulderCurrentPosition(), SHOULDER_INTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
                     servoPower = .8;
-                    intakeTimer = futureTime(8);
+                    intakeTimer = futureTime(10);
                     intakeIndex++;
                     colorSensorEnabled = true;
                 }
