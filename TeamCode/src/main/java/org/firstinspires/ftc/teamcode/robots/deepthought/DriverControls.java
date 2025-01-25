@@ -76,8 +76,7 @@ public class DriverControls {
             dampenDrive = true;
 
             if (robot.trident.sampler.articulation == Sampler.Articulation.INTAKE_PREP) {
-                robot.trident.sampler.intakeIndex = 0;
-                robot.intakeIndex = 0;
+                robot.resetStates();
                 robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
             } else {
                 robot.articulate(Robot.Articulation.SAMPLER_PREP);

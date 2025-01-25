@@ -141,6 +141,14 @@ public class Robot implements Subsystem {
     }
     //end constructor
 
+    public void resetStates() {
+        intakeIndex = 0;
+        outtakeIndex = 0;
+        for(Subsystem k : subsystems) {
+            k.resetStates();
+        }
+    }
+
     public double deltaTime = 0;
     long lastTime = 0;
 
@@ -208,11 +216,10 @@ public class Robot implements Subsystem {
 //                break;
             case SAMPLER_INTAKE:
                 if (samplerIntake()) articulation = Articulation.MANUAL;
-
                 break;
-
             case SAMPLER_PREP:
                 if (samplerPrep()) articulation = Articulation.MANUAL;
+                break;
             case TRAVEL:
                 trident.articulate(Trident.Articulation.TUCK);
                 if (trident.articulation == Trident.Articulation.MANUAL) {

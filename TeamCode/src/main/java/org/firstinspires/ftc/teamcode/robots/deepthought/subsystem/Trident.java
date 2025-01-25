@@ -56,7 +56,7 @@ public class Trident implements Subsystem {
 
 
     //shoulder - these are defaults - but the Sampler and Speciminer classes define their own local versions
-    public final int SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
+    public int SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
     static int shoulderTargetPosition = 0;
     public static int shoulderSpeed = 45;
     public static int SHOULDER_CALIBRATE_HORIZONTAL = -2020; // offset to get to horizontal when shoulder is at max
@@ -141,10 +141,10 @@ public class Trident implements Subsystem {
                 calibrateIndex++;
                 break;
             case 1: // has the arm stopped moving?
-                if (Trident.SHOULDER_CALIBRATE_ENCODER == shoulder.getCurrentPosition() && isPast(calibrateTimer)) {
+                if (SHOULDER_CALIBRATE_ENCODER == shoulder.getCurrentPosition() && isPast(calibrateTimer)) {
                     calibrateIndex++;
                 } else {
-                    Trident.SHOULDER_CALIBRATE_ENCODER = shoulder.getCurrentPosition();
+                    SHOULDER_CALIBRATE_ENCODER = shoulder.getCurrentPosition();
                 }
                 break;
             case 2: // lower to horizontal - experimentally determined offset
@@ -241,8 +241,8 @@ public class Trident implements Subsystem {
         shoulder.setTargetPosition(0);
         shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         shoulder.setVelocity(1500);
-        articulation = Articulation.MANUAL;
         SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
+        articulation = Articulation.MANUAL;
     }
 
     // shoulder services
@@ -301,6 +301,12 @@ public class Trident implements Subsystem {
     @Override
     public void stop() {
 //    shoulderTargetPosition=shoulder.getCurrentPosition();
+    }
+
+    @Override
+    public void resetStates() {
+        tuckIndex = 0;
+        calibrateIndex = 0;
     }
 
 

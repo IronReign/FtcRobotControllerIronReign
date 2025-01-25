@@ -11,4 +11,5 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
 public interface Subsystem extends TelemetryProvider {
     void update(Canvas fieldOverlay);
     void stop();
+    void resetStates();
 }

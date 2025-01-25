@@ -193,6 +193,11 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     }
 
     @Override
+    public void resetStates() {
+
+    }
+
+    @Override
     public Map<String, Object> getTelemetry(boolean debug) {
 
         Map<String, Object> telemetryMap = new HashMap<>();

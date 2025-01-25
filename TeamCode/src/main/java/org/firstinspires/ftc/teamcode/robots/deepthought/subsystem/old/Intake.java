@@ -534,6 +534,11 @@ public class Intake implements Subsystem {
     }
 
     @Override
+    public void resetStates() {
+
+    }
+
+    @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("pixelsensor state", pixelSensor.name());

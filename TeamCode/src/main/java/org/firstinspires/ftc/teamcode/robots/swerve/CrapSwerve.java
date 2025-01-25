@@ -96,6 +96,11 @@ public class CrapSwerve implements Subsystem {
         yaw.setPower(0);
     }
 
+    @Override
+    public void resetStates() {
+         
+    }
+
     public void drawRobot(Canvas c) {
         final double ROBOT_RADIUS = 5;
 
