@@ -13,6 +13,8 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLStatus;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -20,6 +22,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import org.firstinspires.ftc.robotcontroller.external.samples.UtilityOctoQuadConfigMenu;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
@@ -47,7 +50,7 @@ public class Robot implements Subsystem {
     public Subsystem[] subsystems;
     public static Sensors sensors;
     public DriveTrain driveTrain;
-    public VisionProvider visionProviderBack, visionProviderFront;
+//    public VisionProvider visionProviderBack, visionProviderFront;
 
     public Trident trident;
     public Joint pan; // pan servo for the Limelight
@@ -65,8 +68,8 @@ public class Robot implements Subsystem {
 
     //vision variables
     public static boolean visionProviderFinalized = false;
-    public static int backVisionProviderIndex = 0;
-    public static int frontVisionProviderIndex = 0;
+    //    public static int backVisionProviderIndex = 0;
+//    public static int frontVisionProviderIndex = 0;
     public double aprilTagRelocalizationX = 0;
     public double aprilTagRelocalizationY = 0;
     //REMOVE
@@ -116,7 +119,7 @@ public class Robot implements Subsystem {
                 module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
             }
             //initialize vision
-            createVisionProviders();
+//            createVisionProviders();
 
             positionCache = new PositionCache(5);
 
@@ -144,7 +147,7 @@ public class Robot implements Subsystem {
     public void resetStates() {
         intakeIndex = 0;
         outtakeIndex = 0;
-        for(Subsystem k : subsystems) {
+        for (Subsystem k : subsystems) {
             k.resetStates();
         }
     }
@@ -297,10 +300,19 @@ public class Robot implements Subsystem {
         telemetryMap.put("Articulation", articulation);
         telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
         telemetryMap.put("calibrating", calibrating);
-        telemetryMap.put("Vision On/Vision Provider Finalized", visionOn + " " + visionProviderFinalized);
         telemetryMap.put("april tag relocalization point", "(" + aprilTagRelocalizationX + ", " + aprilTagRelocalizationY + ")");
         telemetryMap.put("april tag pose", "(" + aprilTagPose.position.x * 39.37 + ", " + aprilTagPose.position.y * 39.37 + ")");
-//        telemetryMap.put("MemoryPose", positionCache.readPose());
+        telemetryMap.put("MemoryPose", positionCache.readPose());
+
+        telemetryMap.put("limelight running?", limelight.isRunning());
+     LLStatus status = limelight.getStatus();
+        telemetryMap.put("limelight fps, ", status.getFps());
+        telemetryMap.put("limelight pipeline", "index: " + status.getPipelineIndex() + " type: " + status.getPipelineType());
+        //todo - remove unnecessary telemetry here
+        LLResult result = limelight.getLatestResult();
+        telemetryMap.put("limelight botpose", result.getBotpose());
+        telemetryMap.put("# of limelight detections", result.getDetectorResults().size());
+
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();
             telemetryMap.put(name + " Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (subsystemUpdateTimes[i] * 1e-6), (int) (1 / (subsystemUpdateTimes[i] * 1e-9))));
@@ -314,14 +326,14 @@ public class Robot implements Subsystem {
     }
     //end getTelemetry
 
-    public void createVisionProviders() {
-        try {
-            visionProviderBack = VisionProviders.VISION_PROVIDERS[backVisionProviderIndex].newInstance().setRedAlliance(alliance.isRed());
-            visionProviderFront = VisionProviders.VISION_PROVIDERS[frontVisionProviderIndex].newInstance().setRedAlliance(alliance.isRed());
-        } catch (IllegalAccessException | InstantiationException e) {
-            throw new RuntimeException("Error while instantiating vision provider");
-        }
-    }
+//    public void createVisionProviders() {
+//        try {
+//            visionProviderBack = VisionProviders.VISION_PROVIDERS[backVisionProviderIndex].newInstance().setRedAlliance(alliance.isRed());
+//            visionProviderFront = VisionProviders.VISION_PROVIDERS[frontVisionProviderIndex].newInstance().setRedAlliance(alliance.isRed());
+//        } catch (IllegalAccessException | InstantiationException e) {
+//            throw new RuntimeException("Error while instantiating vision provider");
+//        }
+//    }
 
     public void clearBulkCaches() {
         for (LynxModule module : hubs)
@@ -359,6 +371,15 @@ public class Robot implements Subsystem {
         }
     }
 
+    //to be called repeatedly until success
+    public void aprilTagRelocalization() {
+//       limelight.
+//            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
+//            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
+//            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
+        driveTrain.setPose(new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading));
+    }
+
 
 //    public void enableVision() {
 //        if (visionOn) {
@@ -375,23 +396,6 @@ public class Robot implements Subsystem {
 //        }
 //    }
 
-
-//    public void aprilTagRelocalization(int target) {
-//        ArrayList<AprilTagDetection> detections = getAprilTagDetections();
-//        if (detections != null && detections.size() > 0) {
-//            AprilTagDetection targetTag = detections.get(0);
-//            for (AprilTagDetection detection : detections) {
-//                if (Math.abs(detection.id - target) < Math.abs(targetTag.id - target)) targetTag = detection;
-//            }
-//
-////            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
-////            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
-//            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
-//            driveTrain.setPose(new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading));
-//            dc.rumble(1, 3000);
-//            dc.rumble(2, 3000);
-//        }
-//    }
 
 //    public ArrayList<AprilTagDetection> getAprilTagDetections() {
 //        if (visionOn) {

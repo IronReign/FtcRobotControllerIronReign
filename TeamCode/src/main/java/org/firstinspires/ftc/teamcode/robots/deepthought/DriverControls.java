@@ -276,7 +276,7 @@ public class DriverControls {
                     startingPosition :
                     startingPosition == Constants.Position.START_LEFT_RED ?
                             Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
-            robot.visionProviderBack.setRedAlliance(false);
+//            robot.visionProviderBack.setRedAlliance(false);
         }
         if (stickyGamepad1.b || stickyGamepad2.b) {
             alliance = Constants.Alliance.RED;
@@ -285,7 +285,7 @@ public class DriverControls {
                     startingPosition :
                     startingPosition == Constants.Position.START_LEFT_BLUE ?
                             Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
-            robot.visionProviderBack.setRedAlliance(true);
+//            robot.visionProviderBack.setRedAlliance(true);
         }
 
         if (stickyGamepad1.dpad_up) {
