@@ -48,13 +48,12 @@ public class Robot implements Subsystem {
     public static Sensors sensors;
     public DriveTrain driveTrain;
     public VisionProvider visionProviderBack, visionProviderFront;
-    
+
     public Trident trident;
     public Joint pan; // pan servo for the Limelight
     private Limelight3A limelight; // smart camera
     public static boolean updatePositionCache = false;
     public static boolean visionOn = true;
-    public static boolean frontVision = false;
 
     public boolean calibrating = false;
 
@@ -80,7 +79,7 @@ public class Robot implements Subsystem {
     public Articulation articulation;
     public List<Target> targets = new ArrayList<Target>();
     public boolean fetched;
-    
+
     //pan servo
     public static double PAN_START_ANGLE = 145;
     public static int PAN_HOME_POSITION = 2050;
@@ -90,7 +89,7 @@ public class Robot implements Subsystem {
     public static double PAN_MAX_ANGLE = 220;
     public static double PAN_ADJUST_ANGLE = 5;
 
-    public static  double PAN_FORWARD = 82;
+    public static double PAN_FORWARD = 82;
     public static double PAN_APRILTAG_BASKET = 200;
 
     public static double panTargetAngle = PAN_FORWARD;
@@ -128,7 +127,6 @@ public class Robot implements Subsystem {
 
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
             pan = new Joint(hardwareMap, "pan", false, PAN_HOME_POSITION, PAN_PWM_PER_DEGREE, PAN_MIN_ANGLE, PAN_MAX_ANGLE, PAN_START_ANGLE, PAN_JOINT_SPEED);
-            
 
 
             subsystems = new Subsystem[]{driveTrain, trident};
@@ -174,48 +172,6 @@ public class Robot implements Subsystem {
     }
     //end update
 
-    public void enableVision() {
-        if (visionOn) {
-            if (!visionProviderFinalized) {
-                createVisionProviders();
-                visionProviderBack.initializeVision(hardwareMap, this, false);
-                visionProviderFront.initializeVision(hardwareMap, this, true);
-                visionProviderFinalized = true;
-//
-            }
-//            if (frontVision) {
-//                visionProviderFront.update(debugTelemetryEnabled);
-//            } else visionProviderBack.update(debugTelemetryEnabled);
-        }
-    }
-
-
-    public void aprilTagRelocalization(int target) {
-        ArrayList<AprilTagDetection> detections = getAprilTagDetections();
-        if (detections != null && detections.size() > 0) {
-            AprilTagDetection targetTag = detections.get(0);
-            for (AprilTagDetection detection : detections) {
-                if (Math.abs(detection.id - target) < Math.abs(targetTag.id - target)) targetTag = detection;
-            }
-
-//            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
-//            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
-            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
-            driveTrain.setPose(new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading));
-            dc.rumble(1, 3000);
-            dc.rumble(2, 3000);
-        }
-    }
-
-    public ArrayList<AprilTagDetection> getAprilTagDetections() {
-        if (visionOn) {
-            if (visionProviderFinalized) {
-                return ((AprilTagProvider) visionProviderBack).getDetections();
-            }
-        }
-        return null;
-    }
-
     private static void drawRobot(Canvas c, Pose2d t) {
         final double ROBOT_RADIUS = 8;
 
@@ -240,89 +196,6 @@ public class Robot implements Subsystem {
         }
     }
 
-    public void switchVisionProviders() {
-        visionProviderBack.shutdownVision();
-        visionProviderFront.shutdownVision();
-        if (backVisionProviderIndex == 2) {
-            //switch to AprilTags
-            backVisionProviderIndex = 0;
-            visionProviderFinalized = false;
-
-        } else if (backVisionProviderIndex == 0) {
-            //switch back to ColorBlob
-            backVisionProviderIndex = 2;
-            visionProviderFinalized = false;
-        }
-    }
-
-    public void fetchCachedDTPosition() {
-        fetchedPosition = positionCache.readPose();
-        fetched = fetchedPosition != null;
-    }
-
-    public void resetRobotPosFromCache(double loggerTimeoutMinutes, boolean ignoreCache) {
-        if (!ignoreCache) {
-            fetchCachedDTPosition();
-            if (gameState.equals(IntoTheDeep_6832.GameState.TELE_OP) || gameState.equals((IntoTheDeep_6832.GameState.TEST))) {
-                int loggerTimeout = (int) (loggerTimeoutMinutes * 60000);
-                if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
-                    //apply cached position
-                    driveTrain.setPose(fetchedPosition.getPose());
-                    trident.shoulder.setPosition(fetchedPosition.getShoulderPosition());
-                    trident.sampler.slide.setTargetPosition(fetchedPosition.getSlidePosition());
-                    trident.speciMiner.slide.setTargetPosition(fetchedPosition.getSlide2Position());
-                    trident.shoulder.setDirection(DcMotor.Direction.REVERSE);
-                }
-            }
-        }
-    }
-
-//    public static int calibrateIndex = 0;
-//    public long calibrateTimer = 0;
-//    public boolean calibrate() {
-//        calibrating = true;
-//        switch (calibrateIndex) {
-//            case 1:
-//                calibrateTimer = futureTime(1);
-//                trident.shoulder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//                trident.shoulder.setPower(-.5);
-//                calibrateIndex++;
-//
-//            case 2:
-//                if(Trident.SHOULDER_CALIBRATE_ENCODER == trident.shoulder.getCurrentPosition() && isPast(calibrateTimer)) {
-//                    calibrateIndex++;
-//                }
-//                else {
-//                    Trident.SHOULDER_CALIBRATE_ENCODER = trident.shoulder.getCurrentPosition();
-//                }
-//                break;
-//            case 3:
-//                trident.shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//                trident.shoulder.setTargetPosition(2450);
-//                trident.shoulder.setPower(1);
-//                trident.shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//                calibrateIndex++;
-//
-//            case 4:
-//                if(withinError(trident.shoulder.getCurrentPosition(), 2450, 3)) {
-//                    trident.shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//                    trident.shoulder.setDirection(DcMotorSimple.Direction.REVERSE);
-//                    trident.shoulder.setPower(1);
-//                    trident.shoulder.setVelocity(400);
-//                    trident.shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//                    calibrateIndex++;
-//                }
-//                break;
-//            case 5:
-//                trident.sampler.shoulderTargetPosition = 800;
-//                calibrateIndex++;
-//                calibrating = false;
-//                return true;
-//
-//
-//        }
-//        return false;
-//    }
 
     public Articulation articulate(Articulation target) {
         articulation = target;
@@ -456,4 +329,132 @@ public class Robot implements Subsystem {
     public String getTelemetryName() {
         return "ROBOT";
     }
+
+    public void fetchCachedDTPosition() {
+        fetchedPosition = positionCache.readPose();
+        fetched = fetchedPosition != null;
+    }
+
+    public void resetRobotPosFromCache(double loggerTimeoutMinutes, boolean ignoreCache) {
+        if (!ignoreCache) {
+            fetchCachedDTPosition();
+            if (gameState.equals(IntoTheDeep_6832.GameState.TELE_OP) || gameState.equals((IntoTheDeep_6832.GameState.TEST))) {
+                int loggerTimeout = (int) (loggerTimeoutMinutes * 60000);
+                if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
+                    //apply cached position
+                    driveTrain.setPose(fetchedPosition.getPose());
+                    trident.shoulder.setPosition(fetchedPosition.getShoulderPosition());
+                    trident.sampler.slide.setTargetPosition(fetchedPosition.getSlidePosition());
+                    trident.speciMiner.slide.setTargetPosition(fetchedPosition.getSlide2Position());
+                    trident.shoulder.setDirection(DcMotor.Direction.REVERSE);
+                }
+            }
+        }
+    }
+
+
+//    public void enableVision() {
+//        if (visionOn) {
+//            if (!visionProviderFinalized) {
+//                createVisionProviders();
+//                visionProviderBack.initializeVision(hardwareMap, this, false);
+//                visionProviderFront.initializeVision(hardwareMap, this, true);
+//                visionProviderFinalized = true;
+////
+//            }
+////            if (frontVision) {
+////                visionProviderFront.update(debugTelemetryEnabled);
+////            } else visionProviderBack.update(debugTelemetryEnabled);
+//        }
+//    }
+
+
+//    public void aprilTagRelocalization(int target) {
+//        ArrayList<AprilTagDetection> detections = getAprilTagDetections();
+//        if (detections != null && detections.size() > 0) {
+//            AprilTagDetection targetTag = detections.get(0);
+//            for (AprilTagDetection detection : detections) {
+//                if (Math.abs(detection.id - target) < Math.abs(targetTag.id - target)) targetTag = detection;
+//            }
+//
+////            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
+////            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
+//            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
+//            driveTrain.setPose(new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading));
+//            dc.rumble(1, 3000);
+//            dc.rumble(2, 3000);
+//        }
+//    }
+
+//    public ArrayList<AprilTagDetection> getAprilTagDetections() {
+//        if (visionOn) {
+//            if (visionProviderFinalized) {
+//                return ((AprilTagProvider) visionProviderBack).getDetections();
+//            }
+//        }
+//        return null;
+//    }
+
+//    public void switchVisionProviders() {
+//        visionProviderBack.shutdownVision();
+//        visionProviderFront.shutdownVision();
+//        if (backVisionProviderIndex == 2) {
+//            //switch to AprilTags
+//            backVisionProviderIndex = 0;
+//            visionProviderFinalized = false;
+//
+//        } else if (backVisionProviderIndex == 0) {
+//            //switch back to ColorBlob
+//            backVisionProviderIndex = 2;
+//            visionProviderFinalized = false;
+//        }
+//    }
+
+//    public static int calibrateIndex = 0;
+//    public long calibrateTimer = 0;
+//    public boolean calibrate() {
+//        calibrating = true;
+//        switch (calibrateIndex) {
+//            case 1:
+//                calibrateTimer = futureTime(1);
+//                trident.shoulder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//                trident.shoulder.setPower(-.5);
+//                calibrateIndex++;
+//
+//            case 2:
+//                if(Trident.SHOULDER_CALIBRATE_ENCODER == trident.shoulder.getCurrentPosition() && isPast(calibrateTimer)) {
+//                    calibrateIndex++;
+//                }
+//                else {
+//                    Trident.SHOULDER_CALIBRATE_ENCODER = trident.shoulder.getCurrentPosition();
+//                }
+//                break;
+//            case 3:
+//                trident.shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//                trident.shoulder.setTargetPosition(2450);
+//                trident.shoulder.setPower(1);
+//                trident.shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//                calibrateIndex++;
+//
+//            case 4:
+//                if(withinError(trident.shoulder.getCurrentPosition(), 2450, 3)) {
+//                    trident.shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//                    trident.shoulder.setDirection(DcMotorSimple.Direction.REVERSE);
+//                    trident.shoulder.setPower(1);
+//                    trident.shoulder.setVelocity(400);
+//                    trident.shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//                    calibrateIndex++;
+//                }
+//                break;
+//            case 5:
+//                trident.sampler.shoulderTargetPosition = 800;
+//                calibrateIndex++;
+//                calibrating = false;
+//                return true;
+//
+//
+//        }
+//        return false;
+//    }
+
 }

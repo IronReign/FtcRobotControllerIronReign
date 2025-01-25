@@ -179,12 +179,12 @@ public class IntoTheDeep_6832 extends OpMode {
     }
     //end init_loop()
 
-    private void initVision() {
-        //TODO - HANDLE INIT VISION
-        robot.enableVision();
-        robot.visionProviderBack.setRedAlliance(startingPosition.isRed());
-        robot.visionProviderFront.setRedAlliance(startingPosition.isRed());
-    }
+//    private void initVision() {
+//        TODO - HANDLE INIT VISION
+//        robot.enableVision();
+//        robot.visionProviderBack.setRedAlliance(startingPosition.isRed());
+//        robot.visionProviderFront.setRedAlliance(startingPosition.isRed());
+//    }
 
     @Override
     public void start() {
