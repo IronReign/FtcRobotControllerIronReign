@@ -9,6 +9,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.teamcode.robots.deepthought.field.POI;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
@@ -26,10 +27,7 @@ public class Autonomous implements TelemetryProvider {
 
     //
     public enum AutonState {
-        INIT,
-        DRIVE_TO_BASKET,
-        OUTTAKE_TO_BASKET,
-        DRIVE_TO_SUB,
+        INIT, DRIVE_TO_BASKET, OUTTAKE_TO_BASKET, DRIVE_TO_SUB,
 
     }
 
@@ -40,10 +38,9 @@ public class Autonomous implements TelemetryProvider {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("autonState\t ", autonState);
-        telemetryMap.put("auton index\t", autonIndex);
-        telemetryMap.put("outtake state", robot.trident.sampler.outtakeIndex);
-        telemetryMap.put("num cycles\t", numCycles);
-        telemetryMap.put("selectedPath\t", selectedPath);
+        telemetryMap.put("autonIndex\t", autonIndex);
+        telemetryMap.put("outtakeIndex\t", autonOuttakeIndex);
+        telemetryMap.put("intakeIndex\t", autonIntakeIndex);
         return telemetryMap;
     }
 
@@ -74,61 +71,31 @@ public class Autonomous implements TelemetryProvider {
         if (!alliance.isRed()) {
             allianceMultiplier = -1;
         }
+        robot.positionCache.update(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
         switch (autonIndex) {
             case 0:
                 autonState = AutonState.INIT;
-                robot.positionCache.update(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
                 autonTimer = futureTime(AUTON_START_DELAY);
                 autonIndex++;
                 break;
             case 1:
                 if (isPast(autonTimer)) {
                     autonState = AutonState.DRIVE_TO_BASKET;
-                    numCycles--;
-                    autonTimer = futureTime(2);
                     autonIndex++;
                 }
                 break;
             case 2:
-                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet)) {
-                    autonTimer = futureTime(.5);
+                if(autonSamplerOuttake(packet)) {
+                    robot.articulate(Robot.Articulation.TRAVEL);
                     autonIndex++;
                 }
-                if (isPast(autonTimer)) {
-                    robot.trident.sampler.outtakeIndex = 0;
-                    Trident.enforceSlideLimits = false;
-                    robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
-                }
-                break;
             case 3:
-//                todo - test & tune preload score here
-                if (robot.articulation.equals(Robot.Articulation.MANUAL) && isPast(autonTimer)) {
-                    autonIndex++;
+                if (robot.articulation == Robot.Articulation.MANUAL) {
+                    autonIndex ++;
                 }
                 break;
             case 4:
-                robot.trident.sampler.servoPower = .5;
-                autonTimer = futureTime(2);
-                autonIndex++;
-                break;
-            case 5:
-                if (isPast(autonTimer)) {
-                    autonIndex++;
-                }
-                break;
-            case 6:
-                if (robot.driveTrain.strafeToPose(field.ground1.getPose(), packet)) {
-                    robot.trident.sampler.servoPower = 0;
-                    robot.trident.sampler.intakeIndex = 0;
-                    robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
-//                    autonTimer = futureTime(0);
-                    autonIndex++;
-                }
-                break;
-            case 7:
-                if (isPast(autonTimer)) {
-                    autonIndex++;
-                }
+
                 break;
             case 8:
                 if (robot.articulation == Robot.Articulation.MANUAL && robot.trident.articulation == Trident.Articulation.MANUAL) {
@@ -169,7 +136,7 @@ public class Autonomous implements TelemetryProvider {
             case 13:
                 if (isPast(autonTimer)) {
                     Trident.beaterPower = 0;
-                    autonIndex ++;
+                    autonIndex++;
                 }
                 break;
 
@@ -234,5 +201,72 @@ public class Autonomous implements TelemetryProvider {
         return false;
     }
 
+    //includes driving to outtake, actual dropoff, and leaves the robot in outtake position
+    public int autonOuttakeIndex = 0;
+    public int autonOuttakeTimer = 0;
+    public boolean autonSamplerOuttake(TelemetryPacket packet) {
+        switch (autonOuttakeIndex) {
+            case 0:
+                robot.resetStates();
+                autonTimer = futureTime(2);
+                autonOuttakeIndex ++;
+                break;
+            case 1:
+                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet)) {
+                    autonTimer = futureTime(.5);
+                    autonIndex++;
+                }
+                if (isPast(autonTimer)) {
+                    Trident.enforceSlideLimits = false;
+                    robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
+                }
+                break;
+            case 2:
+                if (robot.articulation.equals(Robot.Articulation.MANUAL) && isPast(autonTimer)) {
+                   //TODO - START LIMELIGHT RELOCALIZATION HERE
+                    robot.trident.sampler.servoPower = .5;
+                    autonTimer = futureTime(2);
+                    autonIndex++;
+                }
+                break;
 
+            case 3:
+                if(isPast(autonTimer)) {
+                    robot.trident.sampler.servoPower = 0;
+                    return true;
+                }
+                break;
+        }
+        return false;
+    }
+
+    //includes driving to intake, 
+    public int autonIntakeIndex = 0;
+    public int autonIntakeTimer = 0;
+    int numAttempts = 2;
+    public boolean autonSamplerIntake(POI ground, TelemetryPacket packet) {
+        switch (autonIntakeIndex){
+            case 0:
+                if(robot.driveTrain.strafeToPose(ground.getPose(), packet)) {
+                    autonIntakeIndex++;
+                    //ADD LIMELIGHT ALIGNMENT HERE
+                }
+                break;
+            case 1:
+                robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
+                if(robot.trident.sampler.sampleDetected()) {
+                   autonIntakeIndex++;
+                }
+                break;
+            case 2:
+
+                break;
+            case 3:
+                break;
+            case 4:
+                break;
+        }
+
+        return false;
+    }
 }
