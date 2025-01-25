@@ -45,10 +45,10 @@ public abstract class Arm implements Subsystem {
     //SLIDE VARIABLES - todo, values should be moved into implementations
     public static int slidePositionMax = 3800;
     public static int slidePositionMin = 0;
-    public int SLIDE_INTAKE_MIN_POSITION = 200;
-    public int SLIDE_PREINTAKE_POSITION = 2200;
+    public int SLIDE_INTAKE_MIN_POSITION = 0;
+    public int SLIDE_PREINTAKE_POSITION = 880;
     public int SLIDE_LOWOUTTAKE_POSITION = 320;
-    public int SLIDE_HIGHOUTTAKE_POSITION = 2880;
+    public int SLIDE_HIGHOUTTAKE_POSITION = 1760;
     public static int slideSpeed = 80;
     public static double SLIDE_SPEED = 2000;
 
@@ -63,7 +63,7 @@ public abstract class Arm implements Subsystem {
     public static int ELBOW_ADJUST_ANGLE;
     public static double ELBOW_PREINTAKE_ANGLE;
     public static double ELBOW_LOWOUTTAKE_ANGLE;
-    public static double ELBOW_HIGHOUTTAKE_ANGLE;
+    public double ELBOW_HIGHOUTTAKE_ANGLE;
 
     public double servoPower = 0;
 
@@ -74,11 +74,16 @@ public abstract class Arm implements Subsystem {
     enum Sample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
     }
-    Sample currentSample = null;
+
+    Sample currentSample = Sample.NO_SAMPLE;
     List<Sample> targetSamples;
 
+    abstract boolean finalizeTargets();
+
     abstract boolean intake();
+
     abstract boolean outtake();
+
     abstract boolean tuck();
 
     abstract String updateColorSensor();
@@ -87,6 +92,7 @@ public abstract class Arm implements Subsystem {
         float[] hsv = colorLastHSV;
         return hsv[0] + " " + hsv[1] + " " + hsv[2];
     }
+
     public float[] getHSV() {
         float[] hsv = new float[3];
         colorLastRGBA = colorSensor.getNormalizedColors();
@@ -97,16 +103,17 @@ public abstract class Arm implements Subsystem {
 
     abstract boolean stopOnSample();
 
-    boolean calibrated = false;
-    public static int calibrateIndex = 0;
+    boolean calibrated = true;
+    int calibrateIndex = 0;
     public long calibrateTimer = 0;
+
     public boolean calibrate(Arm subs, double elbowStartAngle) {
         switch (calibrateIndex) {
             case 0: //set elbow position and retract slide until it stalls
-                calibrated=false;
+                calibrated = false;
                 elbow = subs.elbow;
                 slide = subs.slide;
-                subs.servoPower=0; //stop the beater(s)
+                subs.servoPower = 0; //stop the beater(s)
 
                 elbow.setTargetAngle(elbowStartAngle);
 
@@ -120,12 +127,10 @@ public abstract class Arm implements Subsystem {
             case 1: // has the slide stopped moving?
                 slidePos = slide.getCurrentPosition();
                 //withinError to allow stall detection even if vibrating slightly
-                if(withinError(slidePos, slidePosPrev, 2) && isPast(calibrateTimer)) {
+                if (withinError(slidePos, slidePosPrev, 2) && isPast(calibrateTimer)) {
                     calibrateIndex++;
                 }
-
                 slidePosPrev = slidePos;
-
                 break;
             case 2: // reset the encoders to zero
 
@@ -133,8 +138,8 @@ public abstract class Arm implements Subsystem {
                 slide.setPower(1);
                 slide.setTargetPosition(0);
                 slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                calibrateIndex=0;
-                calibrated=true;
+                calibrateIndex = 0;
+                calibrated = true;
                 return true;
         }
         return false;

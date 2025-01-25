@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers;
 
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -93,6 +95,18 @@ public class SpeciMiner extends Arm{
     boolean wallTake() {
         return false;
     }
+
+    public boolean finalizeTargets() {
+        targetSamples = new ArrayList<Sample>();
+        if(alliance.isRed()) {
+            targetSamples.add(Sample.RED);
+        }
+        else  {
+            targetSamples.add(Sample.BLUE);
+        }
+        return true;
+    }
+
 
     @Override
     public String updateColorSensor() {

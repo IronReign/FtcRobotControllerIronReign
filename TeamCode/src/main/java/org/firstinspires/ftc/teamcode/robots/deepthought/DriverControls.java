@@ -18,6 +18,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.DriveTrain;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Arm;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
@@ -73,8 +74,14 @@ public class DriverControls {
 //
         if (stickyGamepad1.a) {
             dampenDrive = true;
-            robot.trident.sampler.intakeIndex = 0;
-            robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
+
+            if (robot.trident.sampler.articulation == Sampler.Articulation.INTAKE_PREP) {
+                robot.trident.sampler.intakeIndex = 0;
+                robot.intakeIndex = 0;
+                robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
+            } else {
+                robot.articulate(Robot.Articulation.SAMPLER_PREP);
+            }
         }
 //
         if (stickyGamepad1.b) {
@@ -90,7 +97,7 @@ public class DriverControls {
 
         if (stickyGamepad1.y) {
             dampenDrive = false;
-            robot.trident.sampler.tuckIndex = 0;
+            Trident.tuckIndex = 0;
             robot.articulate(Robot.Articulation.TRAVEL);
         }
 
@@ -100,10 +107,10 @@ public class DriverControls {
         }
 
         if (gamepad1.dpad_down) {
-            robot.trident.sampler.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(Arm.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad1.dpad_up) {
-            robot.trident.sampler.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(-Arm.ELBOW_ADJUST_ANGLE);
         }
         if (stickyGamepad1.dpad_left) {
             robot.trident.stopOnSample();
@@ -135,10 +142,10 @@ public class DriverControls {
             fieldOrientedDrive();
 
         if (gamepad1.right_bumper) {
-            robot.trident.setShoulderTarget( robot.trident.getShoulderTarget() + shoulderSpeed);
+            robot.trident.setShoulderTarget(robot.trident.getShoulderTarget() + shoulderSpeed);
         }
         if (gamepad1.left_bumper) {
-            robot.trident.setShoulderTarget( robot.trident.getShoulderTarget() - shoulderSpeed);
+            robot.trident.setShoulderTarget(robot.trident.getShoulderTarget() - shoulderSpeed);
         }
 //
         if (gamepad1.left_trigger > .2) {
@@ -152,8 +159,13 @@ public class DriverControls {
 //
         if (stickyGamepad1.a) {
             dampenDrive = true;
-            robot.trident.sampler.intakeIndex = 0;
-            robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
+
+            if (robot.trident.sampler.articulation == Sampler.Articulation.INTAKE_PREP) {
+                robot.trident.sampler.intakeIndex = 0;
+                robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
+            } else {
+                robot.articulate(Robot.Articulation.SAMPLER_PREP);
+            }
         }
 //
         if (stickyGamepad1.b) {
@@ -174,10 +186,10 @@ public class DriverControls {
         }
 
         if (gamepad1.dpad_down) {
-            robot.trident.sampler.adjustElbow(Trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(Arm.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad1.dpad_up) {
-            robot.trident.sampler.adjustElbow(-Trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(-Arm.ELBOW_ADJUST_ANGLE);
         }
         if (stickyGamepad1.dpad_left) {
             robot.trident.stopOnSample();
@@ -190,10 +202,10 @@ public class DriverControls {
             fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (gamepad2.left_trigger > .1) {
-            robot.trident.sampler.adjustElbow(-robot.trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(-Arm.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad2.right_trigger > .1) {
-            robot.trident.sampler.adjustElbow(robot.trident.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(Arm.ELBOW_ADJUST_ANGLE);
         }
         // ------------------------------------------------------------------
 
