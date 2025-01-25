@@ -230,8 +230,8 @@ public class IntoTheDeep_6832 extends OpMode {
         switch (gameState) {
             case AUTONOMOUS:
                 if (auton.execute(packet)) {
+                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
                     robot.articulate(Robot.Articulation.TRAVEL);
-                    robot.trident.articulate(Trident.Articulation.TUCK);
                     gameState = GameState.TELE_OP;
                 }
                 break;

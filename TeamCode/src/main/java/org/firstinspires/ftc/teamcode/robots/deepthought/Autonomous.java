@@ -226,6 +226,7 @@ public class Autonomous implements TelemetryProvider {
             case 21:
                 if (isPast(autonTimer)) {
                     Trident.beaterPower = 0;
+
                     return true;
                 }
                 break;
