@@ -37,7 +37,7 @@ public class AutonCode2 extends OpMode {
     public int ticksrev = 1440;
     boolean moving = false;
     boolean turning = false;
-    public int ticks = 0;
+    public int targetTicks = 0;
     boolean vertical = true;
     boolean horizontal = false;
     double distance = 0;
@@ -125,7 +125,7 @@ public class AutonCode2 extends OpMode {
     public void forward(double length, double direction){
         if (!moving){
             // Number of encoder ticks per distance
-            ticks = (int)((length/wheelCircum)*ticksrev);
+            targetTicks = (int)((length/wheelCircum)*ticksrev);
 
             // Assign initial encoder values
             startpos = robot.vertical.getCurrentPosition();
@@ -145,7 +145,7 @@ public class AutonCode2 extends OpMode {
     public void strafe(double length, double direction){
         if (!moving){
             // Number of encoder ticks per distance
-            ticks = (int)((length/wheelCircum)*ticksrev);
+            targetTicks = (int)((length/wheelCircum)*ticksrev);
 
             // Assign initial encoder values
             startpos = robot.horizontal.getCurrentPosition();
@@ -190,7 +190,7 @@ public class AutonCode2 extends OpMode {
                 distance = robot.horizontal.getCurrentPosition()-startpos;
             }
 
-            if (Math.abs(distance) >= Math.abs(ticks)){
+            if (Math.abs(distance) >= Math.abs(targetTicks)){
                 robot.mecanumDrive(0,0,0);
                 vertical = false;
                 horizontal = false;
@@ -261,26 +261,30 @@ public class AutonCode2 extends OpMode {
 
             case 3:
                 //Back up
-                forward(65, -0.04); //OG: 60
+                forward(65, -0.25); //OG: 60
                 if (reached) {
                     autonIndex++;
                     reached = false;
                     robot.mecanumDrive(0, 0, 0);
-                    autonIndex = 0;
-                    return true;
                 }
 
                 break;
 
-            /*
            // Specimen two
 
-            /*case 7:
+            case 4:
                 // Strafe sideways one tile
                 strafe(65, 0.04);
+                if(reached){
+                    autonIndex++;
+                    autonIndex = 0;
+                    reached = false;
+                    robot.mecanumDrive(0, 0, 0);
+                    return true;
+                }
                 break;
 
-            case 8:
+            /*case 8:
                 // Forward one tile
                 forward(65, 0.04);
                 break;
@@ -297,7 +301,7 @@ public class AutonCode2 extends OpMode {
 
             case 11:
                 // Move forward 3 tiles - push sample into conservation zone and go back out
-                // Adjust shoulder and slide position ideal for picking up specimen
+                // Adjust shoulder and slide position ideal for picking up specimen (a)
                 robot.shoulder.setTargetPosition(robot.shoulder.getCurrentPosition()-500);
                 robot.slide.setTargetPosition(robot.slide.getCurrentPosition()+50);
                 forward(195, 0.04);
@@ -305,7 +309,7 @@ public class AutonCode2 extends OpMode {
                 autonTimer = futureTime(7);
 
             case 12:
-                // Collect specimen
+                // Collect specimen (x)
                 if(isPast(autonTimer)){
                     forward(20, 0.04);
                 }
@@ -405,6 +409,9 @@ public class AutonCode2 extends OpMode {
         telemetry.put("Shoulder Position", robot.shoulder.getCurrentPosition());
         telemetry.put("Shoulder Target Position", robot.shoulder.getTargetPosition());
         telemetry.put("Shoulder runMode", robot.shoulder.getMode());
+        telemetry.put("Power", robot.leftFront.getPower());
+        telemetry.put("Target Ticks", targetTicks);
+        telemetry.put("Moving", moving);
 
         telemetry.put("Slide Position", robot.slide.getCurrentPosition());
         telemetry.put("Slide Target Position", robot.slideTargetPosition);

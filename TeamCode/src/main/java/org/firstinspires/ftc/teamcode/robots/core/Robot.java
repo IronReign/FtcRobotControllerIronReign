@@ -169,12 +169,12 @@ public class Robot implements Subsystem {
 
         shoulder.setPower(1);
         shoulder.setVelocity(300);
-        shoulder.setTargetPosition(shoulderTargetPosition);
+        shoulder.setTargetPosition(1467);
         shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         slide.setPower(1);
         slide.setVelocity(300);
-        slide.setTargetPosition(slideTargetPosition);
+        slide.setTargetPosition(44);
         slide.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         leftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
