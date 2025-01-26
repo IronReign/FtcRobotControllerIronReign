@@ -7,11 +7,13 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.field.Field.P2D;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLStatus;
@@ -305,14 +307,15 @@ public class Robot implements Subsystem {
         telemetryMap.put("MemoryPose", positionCache.readPose());
 
         telemetryMap.put("limelight running?", limelight.isRunning());
-     LLStatus status = limelight.getStatus();
+        LLStatus status = limelight.getStatus();
         telemetryMap.put("limelight fps, ", status.getFps());
         telemetryMap.put("limelight pipeline", "index: " + status.getPipelineIndex() + " type: " + status.getPipelineType());
         //todo - remove unnecessary telemetry here
         LLResult result = limelight.getLatestResult();
-        telemetryMap.put("limelight botpose", result.getBotpose());
-        telemetryMap.put("# of limelight detections", result.getDetectorResults().size());
-
+        if (result != null) {
+            telemetryMap.put("limelight botpose", result.getBotpose());
+            telemetryMap.put("# of limelight detections", result.getDetectorResults().size());
+        }
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();
             telemetryMap.put(name + " Update Time", Misc.formatInvariant("%d ms (%d hz)", (int) (subsystemUpdateTimes[i] * 1e-6), (int) (1 / (subsystemUpdateTimes[i] * 1e-9))));
@@ -373,11 +376,15 @@ public class Robot implements Subsystem {
 
     //to be called repeatedly until success
     public void aprilTagRelocalization() {
-//       limelight.
+        LLResult llResult;
+        if ((llResult = limelight.getLatestResult()) != null) {
+            //limelight returns everything in meters
+            aprilTagPose = new Pose2d(new Vector2d(llResult.getBotpose().getPosition().x * 39.37, llResult.getBotpose().getPosition().y * 39.37), driveTrain.getPose().heading);
+        }
 //            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
 //            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
 //            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
-        driveTrain.setPose(new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading));
+        driveTrain.setPose(aprilTagPose);
     }
 
 

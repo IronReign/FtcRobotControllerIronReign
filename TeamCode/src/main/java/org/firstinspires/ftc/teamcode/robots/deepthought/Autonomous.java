@@ -143,7 +143,7 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 2:
                 if (robot.articulation.equals(Robot.Articulation.MANUAL) && isPast(autonTimer)) {
-                   //TODO - START LIMELIGHT RELOCALIZATION HERE
+                    robot.aprilTagRelocalization();
                     robot.trident.sampler.servoPower = .5;
                     autonTimer = futureTime(2);
                     autonIndex++;
