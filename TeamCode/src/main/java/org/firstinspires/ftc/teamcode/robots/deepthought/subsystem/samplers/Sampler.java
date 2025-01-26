@@ -54,14 +54,14 @@ public class Sampler extends Arm {
         articulation = Articulation.MANUAL;
 
         //defaults specific to sampler
-        ELBOW_START_ANGLE = 145;
+        ELBOW_START_ANGLE = 140;
         ELBOW_HOME_POSITION = 2050;
         ELBOW_PWM_PER_DEGREE = -5.672222222222222;
         ELBOW_JOINT_SPEED = 120;
         ELBOW_MIN_ANGLE = -15;
         ELBOW_MAX_ANGLE = 220;
         ELBOW_ADJUST_ANGLE = 5;
-        ELBOW_PREINTAKE_ANGLE = 20;
+        ELBOW_PREINTAKE_ANGLE = 5;
         ELBOW_LOWOUTTAKE_ANGLE = 102;
         ELBOW_HIGHOUTTAKE_ANGLE = 30;
 

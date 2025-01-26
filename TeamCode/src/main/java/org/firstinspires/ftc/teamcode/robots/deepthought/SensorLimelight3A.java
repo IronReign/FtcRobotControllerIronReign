@@ -79,7 +79,7 @@ public class SensorLimelight3A extends LinearOpMode {
 
         telemetry.setMsTransmissionInterval(11);
 
-        limelight.pipelineSwitch(0);
+        limelight.pipelineSwitch(2);
 
         /*
          * Starts polling for data.  If you neglect to call start(), getLatestResult() will return null.
@@ -108,7 +108,7 @@ public class SensorLimelight3A extends LinearOpMode {
                 double parseLatency = result.getParseLatency();
                 telemetry.addData("LL Latency", captureLatency + targetingLatency);
                 telemetry.addData("Parse Latency", parseLatency);
-                telemetry.addData("PythonOutput", java.util.Arrays.toString(result.getPythonOutput()));
+//                telemetry.addData("PythonOutput", java.util.Arrays.toString(result.getPythonOutput()));
                 
                 if (result.isValid()) {
                     telemetry.addData("tx", result.getTx());
@@ -116,7 +116,7 @@ public class SensorLimelight3A extends LinearOpMode {
                     telemetry.addData("ty", result.getTy());
                     telemetry.addData("tync", result.getTyNC());
 
-                    telemetry.addData("Botpose", botpose.toString());
+                    telemetry.addData("Botpose", botpose.getPosition().x * 39.37 / 24 + " " + botpose.getPosition().y * 39.37 / 24);
 
                     // Access barcode results
                     List<LLResultTypes.BarcodeResult> barcodeResults = result.getBarcodeResults();

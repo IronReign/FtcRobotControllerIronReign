@@ -18,10 +18,6 @@
                 name="backDistRight"
                 bus="0"
                 port="0" />
-            <LynxColorSensor
-                name="samplerSensor"
-                bus="3"
-                port="1" />
             <Servo
                 name="pan"
                 port="0" />
@@ -68,8 +64,12 @@
                 bus="0"
                 port="0" />
             <LynxColorSensor
+                name="samplerSensor"
+                bus="1"
+                port="1" />
+            <LynxColorSensor
                 name="specSensor"
-                bus="3"
+                bus="0"
                 port="1" />
             <ContinuousRotationServo
                 name="specBeater1"
