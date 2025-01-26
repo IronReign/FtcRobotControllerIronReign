@@ -180,7 +180,7 @@ public class AutonCode2 extends OpMode {
         handleTelemetry(getTelemetry(true), robot.getTelemetryName());
     }
 
-    public void check(){
+    public boolean completed(){
         if (moving) {
             if (vertical){
                 distance = robot.vertical.getCurrentPosition()-startpos;
@@ -190,12 +190,12 @@ public class AutonCode2 extends OpMode {
                 distance = robot.horizontal.getCurrentPosition()-startpos;
             }
 
-            if (Math.abs(distance) >= Math.abs(targetTicks)){
-                robot.mecanumDrive(0,0,0);
+            if (Math.abs(distance) >= Math.abs(targetTicks)) {
+                robot.mecanumDrive(0, 0, 0);
                 vertical = false;
                 horizontal = false;
                 moving = false;
-                reached = true;
+                return true;
 
             }
         }
@@ -206,10 +206,11 @@ public class AutonCode2 extends OpMode {
             if(Math.abs(nowOrientation-initialzOrientation) >= target){
                 robot.mecanumDrive(0,0,0);
                 turning = false;
-                reached = true;
+                return true;
 
             }
         }
+        return false;
     }
 
     public boolean execute(){
@@ -221,9 +222,8 @@ public class AutonCode2 extends OpMode {
                 forward(69, 0.04); //OG: 60
                 robot.shoulder.setTargetPosition(1785);//OG: 275, 220+1647=1867
                 robot.slide.setTargetPosition(350); //444
-                if (reached) {
+                if (completed()) {
                     autonIndex++;
-                    reached = false;
                     robot.mecanumDrive(0, 0, 0);
                     autonTimer = futureTime(1);
                 }
@@ -262,9 +262,8 @@ public class AutonCode2 extends OpMode {
             case 3:
                 //Back up
                 forward(65, -0.25); //OG: 60
-                if (reached) {
+                if (completed()) {
                     autonIndex++;
-                    reached = false;
                     robot.mecanumDrive(0, 0, 0);
                 }
 
@@ -275,11 +274,10 @@ public class AutonCode2 extends OpMode {
             case 4:
                 // Strafe sideways one tile
                 strafe(65, 0.04);
-                if(reached){
+                if(completed()){
                     autonIndex++;
-                    autonIndex = 0;
-                    reached = false;
                     robot.mecanumDrive(0, 0, 0);
+                    autonIndex = 0;
                     return true;
                 }
                 break;
@@ -381,7 +379,6 @@ public class AutonCode2 extends OpMode {
 
     @Override
     public void loop() {
-        check();
         debug(new Canvas());
         if (runAuton) {
             runAuton = !execute();
@@ -412,6 +409,7 @@ public class AutonCode2 extends OpMode {
         telemetry.put("Power", robot.leftFront.getPower());
         telemetry.put("Target Ticks", targetTicks);
         telemetry.put("Moving", moving);
+        telemetry.put("Reached", reached);
 
         telemetry.put("Slide Position", robot.slide.getCurrentPosition());
         telemetry.put("Slide Target Position", robot.slideTargetPosition);
