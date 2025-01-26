@@ -29,6 +29,7 @@ android {
     }
 }
 
+
 // vvvvvvv added this section to copy config files from assets/configs to sdcard/FIRST since Limelight breaks the build with malformed xml if in /res/xml
 // 1) Copy all *.xml files from assets to build/stagedXml, flattening structure
 task stageXmlAssets(type: Copy) {
@@ -58,10 +59,10 @@ task deployXmlAssets(type: Exec) {
 
 // 3) (Optional) Hook into installDebug so it happens automatically
 afterEvaluate {
-    tasks.getByPath(":TeamCode:assembleDebug").dependsOn(deployXmlAssets)
+    tasks.getByPath(":TeamCode:installDebug").dependsOn(deployXmlAssets)
 
 //     If you also have installRelease, uncomment below:
-    tasks.getByPath(":TeamCode:assembleDebug").dependsOn(deployXmlAssets)
+    tasks.getByPath(":TeamCode:installDebug").dependsOn(deployXmlAssets)
 }
 // ^^^^^^^ added this section to copy config files from assets/configs to sdcard/FIRST since Limelight breaks the build with malformed xml if in /res/xml
 
