@@ -120,10 +120,7 @@ public class MecanumDriveReign {
 
     public final Localizer localizer; //this is the active localizer once initialized
 
-    //Frickin GOD POSE should never have existed  - the data belongs in the localizer - now acts as a cache
-    //in that setting  it directly does nothing useful since it should get updated on every cycle by the active localizer
-    public Pose2d pose; //have to leave public  until all external references are refactored out
-
+    private Pose2d pose; // internally cached pose
     public Pose2d getPose() {
         pose = localizer.getPose(); //every opportunity to update the cached pose
         return pose;

@@ -36,7 +36,7 @@ public class IntoTheDeep_6832 extends OpMode {
 
     public static boolean debugTelemetryEnabled = true;
     private boolean initializing;
-    public static boolean initPosition = false;
+    public static boolean setStartPose = false; // use to set the pose from the current starting position via dashboard - but only in init_loop
     public static boolean ignoreCachePosition = false;
 
     //GAMESTATES

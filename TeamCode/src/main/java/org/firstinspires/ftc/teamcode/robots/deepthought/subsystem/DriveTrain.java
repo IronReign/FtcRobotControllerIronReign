@@ -142,7 +142,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
                 x,
                 y);
         //additional rotation needed if blue alliance perspective
-        Rotation2d heading = (!isRed) ? pose.heading : pose.heading.plus(Math.PI);
+        Rotation2d heading = (!isRed) ? getPose().heading : getPose().heading.plus(Math.PI);
         input = heading.inverse().times(
                 new Vector2d(-input.x, input.y));
         setDrivePowers(new PoseVelocity2d(input, -theta));
@@ -184,7 +184,6 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
 
     public void setPose(Pose2d pose) {
         super.setPose(getPose());
-        this.pose = pose;
     }
 
     @Override

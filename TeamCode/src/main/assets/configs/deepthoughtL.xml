@@ -63,14 +63,8 @@
                 name="imu"
                 bus="0"
                 port="0" />
-            <LynxColorSensor
-                name="samplerSensor"
-                bus="1"
-                port="1" />
-            <LynxColorSensor
-                name="specSensor"
-                bus="0"
-                port="1" />
+            <LynxColorSensor name="specSensor" port="1" bus="0" />
+            <RevColorSensorV3 name="samplerSensor" port="1" bus="1" />
             <ContinuousRotationServo
                 name="specBeater1"
                 port="0" />

@@ -59,10 +59,10 @@ task deployXmlAssets(type: Exec) {
 
 // 3) (Optional) Hook into installDebug so it happens automatically
 afterEvaluate {
-    tasks.getByPath(":TeamCode:installDebug").dependsOn(deployXmlAssets)
+    tasks.getByPath(":TeamCode:assembleDebug").dependsOn(deployXmlAssets)
 
 //     If you also have installRelease, uncomment below:
-    tasks.getByPath(":TeamCode:installDebug").dependsOn(deployXmlAssets)
+    tasks.getByPath(":TeamCode:installRelease").dependsOn(deployXmlAssets)
 }
 // ^^^^^^^ added this section to copy config files from assets/configs to sdcard/FIRST since Limelight breaks the build with malformed xml if in /res/xml
 

@@ -95,10 +95,10 @@ public abstract class Arm implements Subsystem {
 
     public float[] getHSV() {
         float[] hsv = new float[3];
-//        colorLastRGBA = colorSensor.getNormalizedColors();
-//        Color.colorToHSV(colorLastRGBA.toColor(), hsv);
+        colorLastRGBA = colorSensor.getNormalizedColors();
+        Color.colorToHSV(colorLastRGBA.toColor(), hsv);
         colorLastHSV = hsv;
-        return new float[]{6, 9, 4, 2, 0};
+        return hsv;
     }
 
     abstract boolean stopOnSample();
