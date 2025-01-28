@@ -103,6 +103,8 @@ public class Sampler extends Arm {
         beater.setPower(-servoPower);
         elbow.update();
         if (trident.calibrated) {
+            if(slideTargetPosition < 0)
+                slideTargetPosition = 0;
             slide.setTargetPosition(slideTargetPosition);
             //allow real-time elbow speed changes
             elbow.setSpeed(ELBOW_JOINT_SPEED);

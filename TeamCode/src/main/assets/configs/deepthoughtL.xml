@@ -26,7 +26,7 @@
                 port="1" />
             <ContinuousRotationServo
                 name="samplerBeater"
-                port="4" />
+                port="2" />
             <RevRobotics40HDHexMotor
                 name="specSlide"
                 port="0" />

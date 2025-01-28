@@ -8,12 +8,10 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.field.Field;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
-import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.ExponentialSmoother;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
-import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProviders;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -158,6 +156,7 @@ public class IntoTheDeep_6832 extends OpMode {
         dc.robotOrientedDrive();
         if (gameState.isAutonomous()) {
             robot.preloadAllianceSelect();
+            robot.driveTrain.setPose(startingPosition);
             //if (!robot.trident.calibrated) {
                 //robot.trident.articulate(Trident.Articulation.CALIBRATE);
             //}
@@ -192,6 +191,7 @@ public class IntoTheDeep_6832 extends OpMode {
         lastLoopClockTime = System.nanoTime();
         totalRunTime = 0;
         //FETCH CACHE
+        robot.start();
         robot.fetchCachedDTPosition();
         if (gameState.equals(GameState.TELE_OP)) {
             robot.trident.calibrated = true;
@@ -206,11 +206,18 @@ public class IntoTheDeep_6832 extends OpMode {
 
         robot.updatePositionCache = true;
 
+
         if (gameState.equals(GameState.TEST) || gameState.equals(GameState.DEMO)) {
             robot.trident.calibrated = true;
+            robot.driveTrain.setPose(startingPosition);
         }
 
-        robot.start();
+        if (gameState.equals(GameState.RELOCALIZATION_TEST)) {
+            robot.driveTrain.setPose(startingPosition);
+            dc.manualDiagnosticMethods();
+            //robot.driveTrain.imu.resetYaw(); TODO - how is the imu reset gonna work now?
+        }
+
     }
 
     //end start()
@@ -246,7 +253,7 @@ public class IntoTheDeep_6832 extends OpMode {
             case MANUAL_DIAGNOSTIC:
                 break;
             case RELOCALIZATION_TEST:
-                dc.joystickDrive();
+                auton.pingPong(packet);
                 break;
         }
     }

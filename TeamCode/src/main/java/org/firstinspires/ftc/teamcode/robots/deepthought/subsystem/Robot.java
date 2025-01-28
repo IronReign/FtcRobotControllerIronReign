@@ -48,6 +48,8 @@ import java.util.Map;
 @Config(value = "0_ITD_Robot")
 public class Robot implements Subsystem {
 
+    public static double APRILTAG_Y_OFFSET = 0;
+    public static double APRILTAG_X_OFFSET = -25;
     //components and subsystems
     public Subsystem[] subsystems;
     public static Sensors sensors;
@@ -107,6 +109,7 @@ public class Robot implements Subsystem {
         if (gameState.equals(IntoTheDeep_6832.GameState.TELE_OP)) {
             trident.shoulder.setPosition(250);
         }
+        limelight.start();
         trident.finalizeTargets();
         field.finalizeField(alliance);
     }
@@ -302,8 +305,7 @@ public class Robot implements Subsystem {
         telemetryMap.put("Articulation", articulation);
         telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
         telemetryMap.put("calibrating", calibrating);
-        telemetryMap.put("april tag relocalization point", "(" + aprilTagRelocalizationX + ", " + aprilTagRelocalizationY + ")");
-        telemetryMap.put("april tag pose", "(" + aprilTagPose.position.x * 39.37 + ", " + aprilTagPose.position.y * 39.37 + ")");
+        telemetryMap.put("april tag pose", "(" + aprilTagPose.position.x / 23.5 + ", " + aprilTagPose.position.y / 23.5 + ")");
         telemetryMap.put("MemoryPose", positionCache.readPose());
 
         telemetryMap.put("limelight running?", limelight.isRunning());
@@ -376,15 +378,18 @@ public class Robot implements Subsystem {
 
     //to be called repeatedly until success
     public void aprilTagRelocalization() {
+        limelight.pipelineSwitch(2);
+
         LLResult llResult;
         if ((llResult = limelight.getLatestResult()) != null) {
             //limelight returns everything in meters
-            aprilTagPose = new Pose2d(new Vector2d(llResult.getBotpose().getPosition().x * 39.37, llResult.getBotpose().getPosition().y * 39.37), driveTrain.getPose().heading);
+            aprilTagPose = new Pose2d(new Vector2d(llResult.getBotpose().getPosition().x * 39.37 + APRILTAG_X_OFFSET, llResult.getBotpose().getPosition().y * 39.37 + APRILTAG_Y_OFFSET), driveTrain.getPose().heading);
+            if (llResult.getBotpose().getPosition().x != 0)
+                driveTrain.setPose(aprilTagPose);
         }
 //            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
 //            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
 //            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
-        driveTrain.setPose(aprilTagPose);
     }
 
 

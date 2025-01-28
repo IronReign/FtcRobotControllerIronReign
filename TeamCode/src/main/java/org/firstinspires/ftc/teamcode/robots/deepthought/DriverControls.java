@@ -73,6 +73,8 @@ public class DriverControls {
         }
 //
         if (stickyGamepad1.a) {
+            robot.trident.sampler.currentSample = Arm.Sample.NO_SAMPLE;
+
             dampenDrive = true;
 
             if (robot.trident.sampler.articulation == Sampler.Articulation.INTAKE_PREP) {
@@ -90,7 +92,11 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.x) {
-            robot.trident.sampler.servoPower = robot.trident.sampler.servoPower == .8 ? 0 : .8;
+            if(robot.trident.sampler.articulation == Sampler.Articulation.INTAKE) {
+                robot.trident.sampler.currentSample = Arm.Sample.NEUTRAL;
+            }
+            else
+                robot.trident.sampler.servoPower = robot.trident.sampler.servoPower == .8 ? 0 : .8;
         }
 
         if (stickyGamepad1.y) {
@@ -156,6 +162,8 @@ public class DriverControls {
         }
 //
         if (stickyGamepad1.a) {
+            robot.trident.sampler.currentSample = Arm.Sample.NO_SAMPLE;
+
             dampenDrive = true;
 
             if (robot.trident.sampler.articulation == Sampler.Articulation.INTAKE_PREP) {
@@ -173,7 +181,11 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.x) {
-            robot.trident.sampler.servoPower = robot.trident.sampler.servoPower == .8 ? 0 : .8;
+            if(robot.trident.sampler.articulation == Sampler.Articulation.INTAKE) {
+                robot.trident.sampler.currentSample = Arm.Sample.NEUTRAL;
+            }
+            else
+                robot.trident.sampler.servoPower = robot.trident.sampler.servoPower == .8 ? 0 : .8;
         }
 
         if (stickyGamepad1.y) {

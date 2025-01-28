@@ -183,7 +183,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     }
 
     public void setPose(Pose2d pose) {
-        super.setPose(getPose());
+        super.setPose(pose);
     }
 
     @Override

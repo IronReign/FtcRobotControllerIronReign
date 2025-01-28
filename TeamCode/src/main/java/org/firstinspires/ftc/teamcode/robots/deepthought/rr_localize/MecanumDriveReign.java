@@ -67,13 +67,13 @@ public class MecanumDriveReign {
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
         // drive model parameters
-        public double inPerTick = 0.00294334069;
-        public double lateralInPerTick = 0.0019116818460189232;
-        public double trackWidthTicks = 4310.402687429322;
+        public double inPerTick = 0.0029188203101247;
+        public double lateralInPerTick = 0.00174599325430274;
+        public double trackWidthTicks = 4074.3803229786836;
 
         // feedforward parameters (in tick units)
-        public double kS = 1.6856031564941047;
-        public double kV = 0.00039112260997735794;
+        public double kS = 1.4156739764545572;
+        public double kV = 0.00041430507779831023;
         public double kA = 0.00006;
 
         // path profile parameters (in inches)
@@ -121,16 +121,16 @@ public class MecanumDriveReign {
     public final Localizer localizer; //this is the active localizer once initialized
 
     private Pose2d pose; // internally cached pose
+
     public Pose2d getPose() {
         pose = localizer.getPose(); //every opportunity to update the cached pose
         return pose;
     }
 
     public void setPose(Pose2d pose) {
-
+        this.pose = pose;
         localizer.setPose(pose);
     }
-
 
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
@@ -143,14 +143,15 @@ public class MecanumDriveReign {
     //todo this localizer implementation should really be in its own file to help reinforce the idea that motion outputs and localization
     // are really different things. only use this if using the encoders on the wheel motors.
     public class DriveLocalizer implements Localizer {
-            public final Encoder leftFront, leftBack, rightBack, rightFront;
-            public final IMU imu;
-            private int lastLeftFrontPos, lastLeftBackPos, lastRightBackPos, lastRightFrontPos;
-            private Rotation2d lastHeading;
-            private boolean initialized;
-            private Pose2d pose;
+        public final Encoder leftFront, leftBack, rightBack, rightFront;
+        public final IMU imu;
+        private int lastLeftFrontPos, lastLeftBackPos, lastRightBackPos, lastRightFrontPos;
+        private Rotation2d lastHeading;
+        private boolean initialized;
+        private Pose2d pose;
+
         public DriveLocalizer(Pose2d pose) {
-            this.pose=pose;
+            this.pose = pose;
             leftFront = new OverflowEncoder(new RawEncoder(MecanumDriveReign.this.leftFront));
             leftBack = new OverflowEncoder(new RawEncoder(MecanumDriveReign.this.leftBack));
             rightBack = new OverflowEncoder(new RawEncoder(MecanumDriveReign.this.rightBack));
@@ -180,7 +181,7 @@ public class MecanumDriveReign {
         }
 
 
-        public void resetYaw(){
+        public void resetYaw() {
             imu.resetYaw();
         }
 
@@ -287,6 +288,7 @@ public class MecanumDriveReign {
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
     }
+
     public void setDrivePowers(double x, double y, double heading) {
         setDrivePowers(new PoseVelocity2d(new Vector2d(x, y), heading));
     }

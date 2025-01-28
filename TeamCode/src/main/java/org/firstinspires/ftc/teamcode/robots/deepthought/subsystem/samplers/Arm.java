@@ -71,11 +71,11 @@ public abstract class Arm implements Subsystem {
 
     boolean inControl = false;
 
-    enum Sample {
+    public enum Sample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
     }
 
-    Sample currentSample = Sample.NO_SAMPLE;
+    public Sample currentSample = Sample.NO_SAMPLE;
     List<Sample> targetSamples;
 
     abstract boolean finalizeTargets();
