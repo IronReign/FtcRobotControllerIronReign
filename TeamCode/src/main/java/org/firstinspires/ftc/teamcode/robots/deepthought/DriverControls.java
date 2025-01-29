@@ -73,6 +73,7 @@ public class DriverControls {
         }
 //
         if (stickyGamepad1.a) {
+            robot.resetStates();
             robot.trident.sampler.currentSample = Arm.Sample.NO_SAMPLE;
 
             dampenDrive = true;

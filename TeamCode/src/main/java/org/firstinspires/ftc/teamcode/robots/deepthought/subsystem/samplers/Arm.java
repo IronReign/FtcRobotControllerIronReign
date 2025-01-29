@@ -121,7 +121,7 @@ public abstract class Arm implements Subsystem {
                 slidePosPrev = slidePos + 10;
                 calibrateTimer = futureTime(1); //enough time to assure it has begun moving
                 slide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                slide.setPower(-.3);
+                slide.setPower(-.5);
                 calibrateIndex++;
                 break;
             case 1: // has the slide stopped moving?

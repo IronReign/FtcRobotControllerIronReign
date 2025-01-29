@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.teamcode.robots.deepthought.field.POI;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
 
@@ -41,6 +42,7 @@ public class Autonomous implements TelemetryProvider {
         telemetryMap.put("autonState\t ", autonState);
         telemetryMap.put("autonIndex\t", autonIndex);
         telemetryMap.put("outtakeIndex\t", autonOuttakeIndex);
+        telemetryMap.put("outtake timer\t", isPast(autonOuttakeTimer));
         telemetryMap.put("intakeIndex\t", autonIntakeIndex);
         return telemetryMap;
     }
@@ -87,9 +89,11 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 2:
                 if (autonSamplerOuttake(packet)) {
-                    robot.articulate(Robot.Articulation.TRAVEL);
+                    robot.resetStates();
+                    robot.articulate(Robot.Articulation.MANUAL);
                     autonIndex++;
                 }
+                break;
             case 3:
                 if (robot.articulation == Robot.Articulation.MANUAL) {
                     autonIndex++;
@@ -123,36 +127,36 @@ public class Autonomous implements TelemetryProvider {
 
     //includes driving to outtake, actual dropoff, and leaves the robot in outtake position
     public int autonOuttakeIndex = 0;
-    public int autonOuttakeTimer = 0;
+    public long autonOuttakeTimer = 0;
 
     public boolean autonSamplerOuttake(TelemetryPacket packet) {
         switch (autonOuttakeIndex) {
             case 0:
                 robot.resetStates();
-                autonTimer = futureTime(2);
+                autonOuttakeTimer = futureTime(2);
                 autonOuttakeIndex++;
                 break;
             case 1:
-                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet)) {
-                    autonTimer = futureTime(.5);
-                    autonIndex++;
+                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet) && robot.trident.sampler.slide.getCurrentPosition() > Sampler.SHOULDER_HIGHOUTTAKE_POSITION - 20) {
+                    autonOuttakeIndex++;
                 }
-                if (isPast(autonTimer)) {
+                if (isPast(autonOuttakeTimer)) {
                     Trident.enforceSlideLimits = false;
                     robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
                 }
                 break;
             case 2:
-                if (robot.articulation.equals(Robot.Articulation.MANUAL) && isPast(autonTimer)) {
+                if (isPast(autonOuttakeTimer)) {
                     robot.aprilTagRelocalization();
                     robot.trident.sampler.servoPower = .5;
-                    autonTimer = futureTime(2);
-                    autonIndex++;
+                    autonOuttakeTimer = futureTime(2);
+                    autonOuttakeIndex++;
                 }
                 break;
 
             case 3:
-                if (isPast(autonTimer)) {
+                robot.aprilTagRelocalization();
+                if (isPast(autonOuttakeTimer)) {
                     robot.trident.sampler.servoPower = 0;
                     autonOuttakeIndex = 0;
                     return true;
@@ -170,24 +174,28 @@ public class Autonomous implements TelemetryProvider {
     public boolean autonSamplerIntake(POI ground, TelemetryPacket packet) {
         switch (autonIntakeIndex) {
             case 0:
+                if (robot.driveTrain.strafeToPose(field.basketPrep.getPose(), packet)) {
+                    autonIntakeIndex++;
+                    robot.resetStates();
+                    //ADD LIMELIGHT ALIGNMENT HERE
+                }
+            case 1:
                 if (robot.driveTrain.strafeToPose(ground.getPose(), packet)) {
                     autonIntakeIndex++;
                     robot.resetStates();
                     //ADD LIMELIGHT ALIGNMENT HERE
                 }
                 break;
-            case 1:
+            case 2:
                 robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
                 if (robot.articulation == Robot.Articulation.MANUAL) {
                     autonIntakeIndex++;
                 }
                 break;
-            case 2:
+            case 3:
                 robot.articulate(Robot.Articulation.TRAVEL);
                 autonIntakeIndex = 0;
                 return true;
-            case 3:
-                break;
             case 4:
                 break;
         }

@@ -183,18 +183,20 @@ public class Trident implements Subsystem {
     public boolean tuck() { //todo tuck needs to be tested after refactoring - this only does sampler.tuck()
         switch (tuckIndex) {
             case 0:
-                Sampler.tuckIndex = 0;
-                sampler.articulate(Sampler.Articulation.TUCK);
-//                SpeciMiner.tuckIndex = 0;
-                speciMiner.articulate(SpeciMiner.Articulation.TUCK);
+                shoulderTargetPosition = SHOULDER_HORIZONTAL;
+                sampler.shoulderTargetPosition = SHOULDER_HORIZONTAL;
+                speciMiner.shoulderTargetPosition = SHOULDER_HORIZONTAL;
                 tuckIndex++;
                 break;
             case 1:
-                if (sampler.slide.getCurrentPosition() < 150 && speciMiner.slide.getCurrentPosition() < 150) {
-                    shoulderTargetPosition = SHOULDER_HORIZONTAL;
+                if (withinError(shoulder.getCurrentPosition(), SHOULDER_HORIZONTAL, 500)) {
+                    Sampler.tuckIndex = 0;
+                    sampler.articulate(Sampler.Articulation.TUCK);
+//                SpeciMiner.tuckIndex = 0;
+                    speciMiner.articulate(SpeciMiner.Articulation.TUCK);
                 }
             case 2:
-                if (withinError(shoulder.getCurrentPosition(), SHOULDER_HORIZONTAL, 10)) {
+                if (sampler.slide.getCurrentPosition() < 150 && speciMiner.slide.getCurrentPosition() < 150) {
                     return true;
                 }
                 break;
@@ -264,10 +266,9 @@ public class Trident implements Subsystem {
     }
 
     public void setShoulderTarget(int targetTics) {
-        if(targetTics > SHOULDER_MIN_POSITION) {
+        if (targetTics > SHOULDER_MIN_POSITION) {
             shoulderTargetPosition = targetTics;
-        }
-        else {
+        } else {
             shoulderTargetPosition = SHOULDER_MIN_POSITION;
         }
     }
@@ -307,6 +308,8 @@ public class Trident implements Subsystem {
     public void resetStates() {
         tuckIndex = 0;
         calibrateIndex = 0;
+        sampler.resetStates();
+        speciMiner.resetStates();
     }
 
 

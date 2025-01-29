@@ -48,8 +48,8 @@ import java.util.Map;
 @Config(value = "0_ITD_Robot")
 public class Robot implements Subsystem {
 
-    public static double APRILTAG_Y_OFFSET = 0;
-    public static double APRILTAG_X_OFFSET = -25;
+    public static double APRILTAG_Y_OFFSET = 2;
+    public static double APRILTAG_X_OFFSET = -26;
     //components and subsystems
     public Subsystem[] subsystems;
     public static Sensors sensors;
@@ -367,7 +367,7 @@ public class Robot implements Subsystem {
                 if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
                     //apply cached position
                     driveTrain.setPose(fetchedPosition.getPose());
-                    trident.shoulder.setPosition(fetchedPosition.getShoulderPosition());
+                    trident.shoulder.setPosition(-fetchedPosition.getShoulderPosition());
                     trident.sampler.slide.setTargetPosition(fetchedPosition.getSlidePosition());
                     trident.speciMiner.slide.setTargetPosition(fetchedPosition.getSlide2Position());
                     trident.shoulder.setDirection(DcMotor.Direction.REVERSE);

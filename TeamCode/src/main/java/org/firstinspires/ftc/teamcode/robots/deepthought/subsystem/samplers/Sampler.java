@@ -228,7 +228,7 @@ public class Sampler extends Arm {
             case 2:
                 if (withinError(trident.getShoulderCurrentPosition(), SHOULDER_INTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
                     servoPower = .8;
-                    intakeTimer = futureTime(10);
+                    intakeTimer = futureTime(5);
                     intakeIndex++;
                     colorSensorEnabled = true;
                 }
@@ -344,6 +344,7 @@ public class Sampler extends Arm {
         telemetryMap.put("preferHighOuttake", preferHighOuttake);
         telemetryMap.put("intake index", intakeIndex);
         telemetryMap.put("outtake index", outtakeIndex);
+        telemetryMap.put("tuck index", tuckIndex);
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
 
         telemetryMap.put("current sample", currentSample.name());
