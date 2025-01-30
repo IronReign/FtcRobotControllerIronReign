@@ -1,19 +1,17 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem;
 
+import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.wrapAngle;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.dc;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.fieldOrientedDrive;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.field.Field.P2D;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.Rotation2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLStatus;
@@ -21,10 +19,10 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
-import org.firstinspires.ftc.robotcontroller.external.samples.UtilityOctoQuadConfigMenu;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
@@ -34,10 +32,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.deepthought.vision.Target;
-import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProvider;
-import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProviders;
-import org.firstinspires.ftc.teamcode.robots.deepthought.vision.provider.AprilTagProvider;
-import org.openftc.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -69,6 +64,12 @@ public class Robot implements Subsystem {
 
     public DTPosition fetchedPosition;
 
+    PIDController sampleAlignmentPID;
+    PIDCoefficients sampleAlignmentCoefficients = new PIDCoefficients(0.03, 0.04, 0);
+
+    public static double SAMPLE_ALIGN_TARGET_TX = 2.5;
+    public static double SAMPLE_ALIGN_TOLERANCE = .5;
+    public double PIDError, PIDCorrection;
 
     //vision variables
     public static boolean visionProviderFinalized = false;
@@ -100,6 +101,7 @@ public class Robot implements Subsystem {
     public static double PAN_APRILTAG_BASKET = 200;
 
     public static double panTargetAngle = PAN_FORWARD;
+
 
     public enum Articulation {
         MANUAL, SAMPLER_INTAKE, TRAVEL, SAMPLER_OUTTAKE, SPECIMINER_INTAKE, SPECIMINER_WALLTAKE, SAMPLER_PREP, SPECIMINER_OUTTAKE
@@ -308,6 +310,8 @@ public class Robot implements Subsystem {
         telemetryMap.put("april tag pose", "(" + aprilTagPose.position.x / 23.5 + ", " + aprilTagPose.position.y / 23.5 + ")");
         telemetryMap.put("MemoryPose", positionCache.readPose());
 
+        telemetryMap.put("pid error", PIDError);
+        telemetryMap.put("pid correction", PIDCorrection);
         telemetryMap.put("limelight running?", limelight.isRunning());
         LLStatus status = limelight.getStatus();
         telemetryMap.put("limelight fps, ", status.getFps());
@@ -317,6 +321,7 @@ public class Robot implements Subsystem {
         if (result != null) {
             telemetryMap.put("limelight botpose", result.getBotpose());
             telemetryMap.put("# of limelight detections", result.getDetectorResults().size());
+            telemetryMap.put("limelight tx", result.getTx());
         }
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();
@@ -374,6 +379,35 @@ public class Robot implements Subsystem {
                 }
             }
         }
+    }
+
+
+    public boolean alignOnSample() {
+        limelight.pipelineSwitch(3);
+        LLResult llResult;
+        if ((llResult = limelight.getLatestResult()) != null) {
+            if (llResult.getTx() != 0.0) {
+                double targetTx = SAMPLE_ALIGN_TARGET_TX;
+                sampleAlignmentPID.setPID(sampleAlignmentCoefficients);
+                sampleAlignmentPID.setInput(llResult.getTx());
+                sampleAlignmentPID.setSetpoint(targetTx);
+                sampleAlignmentPID.setOutputRange(-.8, .8);
+                sampleAlignmentPID.setTolerance(SAMPLE_ALIGN_TOLERANCE);
+                double correction = sampleAlignmentPID.performPID();
+                PIDCorrection = correction;
+                PIDError = sampleAlignmentPID.getError();
+                if (sampleAlignmentPID.onTarget()) {
+                    driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                    return true;
+                } else {
+                    sampleAlignmentPID.enable();
+                    driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
+                    return false;
+                }
+            }
+        }
+
+        return false;
     }
 
     //to be called repeatedly until success

@@ -187,17 +187,21 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 2:
+                if(robot.alignOnSample()) {
+                    autonIntakeIndex++;
+                }
+                break;
+            case 3:
                 robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
                 if (robot.articulation == Robot.Articulation.MANUAL) {
                     autonIntakeIndex++;
                 }
                 break;
-            case 3:
+            case 4:
                 robot.articulate(Robot.Articulation.TRAVEL);
                 autonIntakeIndex = 0;
                 return true;
-            case 4:
-                break;
+
         }
 
         return false;
