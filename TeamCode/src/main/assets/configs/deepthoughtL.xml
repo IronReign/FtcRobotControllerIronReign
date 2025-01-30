@@ -21,12 +21,21 @@
             <Servo
                 name="pan"
                 port="0" />
-            <Servo
-                name="samplerElbow"
-                port="1" />
             <ContinuousRotationServo
                 name="samplerBeater"
+                port="1" />
+            <Servo
+                name="samplerElbow"
                 port="2" />
+            <ContinuousRotationServo
+                name="specBeater1"
+                port="3" />
+            <ContinuousRotationServo
+                name="specBeater2"
+                port="4" />
+            <Servo
+                name="specElbow"
+                port="5" />
             <RevRobotics40HDHexMotor
                 name="specSlide"
                 port="0" />
@@ -44,9 +53,6 @@
         <LynxModule
             name="Control Hub"
             port="173">
-            <Servo
-                name="diverterRight"
-                port="5" />
             <RevRobotics20HDHexMotor
                 name="rightFront"
                 port="0" />
@@ -65,15 +71,6 @@
                 port="0" />
             <LynxColorSensor name="specSensor" port="1" bus="0" />
             <RevColorSensorV3 name="samplerSensor" port="1" bus="1" />
-            <ContinuousRotationServo
-                name="specBeater1"
-                port="0" />
-            <ContinuousRotationServo
-                name="specBeater2"
-                port="2" />
-            <Servo
-                name="specElbow"
-                port="4" />
         </LynxModule>
     </LynxUsbDevice>
     <EthernetDevice name="limelight" serialNumber="EthernetOverUsb:eth0:172.29.0.31" name="limelight" port="-1" ipAddress="172.29.0.1" />
