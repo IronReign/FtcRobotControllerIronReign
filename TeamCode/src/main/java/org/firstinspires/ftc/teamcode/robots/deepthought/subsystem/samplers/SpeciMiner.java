@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -21,18 +24,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SpeciMiner extends Arm{
+public class SpeciMiner extends Arm {
     public CRServo CRSOne;
     public CRServo CRSTwo;
     public static boolean preferHighOuttake = true;
-    public DcMotorEx slide = null;
 
 
     // Shoulder values to request from Trident
     public int shoulderTargetPosition = 0;
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
-    public static int SHOULDER_INTAKE_POSITION = 250;
+    public static int SHOULDER_PREINTAKE_POSITION = 250;
 
     public static int SHOULDER_WALLTAKE_POSITION = 250;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
@@ -48,23 +50,23 @@ public class SpeciMiner extends Arm{
         this.trident = trident; // to request services from Trident - mainly setting the shoulder angle
 
         //defaults specific to sampler
-        ELBOW_START_ANGLE = 145;
+        ELBOW_START_ANGLE = 20;
         ELBOW_HOME_POSITION = 2050;
         ELBOW_PWM_PER_DEGREE = -5.672222222222222;
         ELBOW_JOINT_SPEED = 120;
         ELBOW_MIN_ANGLE = -15;
         ELBOW_MAX_ANGLE = 220;
         ELBOW_ADJUST_ANGLE = 5;
-        ELBOW_PREINTAKE_ANGLE = 20;
+        ELBOW_PREINTAKE_ANGLE = 5;
         ELBOW_LOWOUTTAKE_ANGLE = 102;
-        ELBOW_HIGHOUTTAKE_ANGLE = 70;
+        ELBOW_HIGHOUTTAKE_ANGLE = 30;
 
         elbow = new Joint(hardwareMap, "specElbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "specSlide");
         slide = new DcMotorExResetable(bruh);
         slide.setMotorEnable();
         slide.setPower(1);
-        slide.setDirection(DcMotorSimple.Direction.REVERSE);
+        slide.setDirection(DcMotorSimple.Direction.FORWARD);
         slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         slide.setTargetPosition(0);
         slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -72,36 +74,121 @@ public class SpeciMiner extends Arm{
         colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "specSensor");
         CRSOne = this.hardwareMap.get(CRServo.class, "specBeater1");
         CRSTwo = this.hardwareMap.get(CRServo.class, "specBeater2");
+
+        articulation = Articulation.MANUAL;
     }
-    public static int intakeIndex;
-    public long intakeTimer;
+
+    public static int groundIntakeIndex;
+    public long groundIntakeTimer;
+
     @Override
-    boolean intake() {
+    public boolean intake() {
+        switch (groundIntakeIndex) {
+            case 0:
+                elbow.setTargetAngle(ELBOW_PREINTAKE_ANGLE);
+                trident.setShoulderTarget(this, SHOULDER_PREINTAKE_POSITION);
+                slideTargetPosition = SLIDE_PREINTAKE_POSITION;
+                groundIntakeIndex++;
+                break;
+            case 1:
+                if (withinError(trident.getShoulderCurrentPosition(), SHOULDER_PREINTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
+                    colorSensorEnabled = true;
+                    groundIntakeIndex++;
+                }
+                break;
+            case 2:
+                if(stopOnSample()) {
+                    trident.setShoulderTarget(this, SHOULDER_PREINTAKE_POSITION);
+                    groundIntakeIndex = 0;
+                    return true;
+                }
+                break;
+        }
         return false;
     }
 
     public static int outtakeIndex;
     public long outtakeTimer;
+
     @Override
     boolean outtake() {
+        switch (outtakeIndex) {
+            case 0:
+                elbow.setTargetAngle(ELBOW_HIGHOUTTAKE_ANGLE);
+                trident.setShoulderTarget(this, SHOULDER_HIGHOUTTAKE_POSITION);
+                slideTargetPosition = SLIDE_HIGHOUTTAKE_POSITION;
+                outtakeIndex++;
+                break;
+            case 1:
+                if (withinError(trident.getShoulderCurrentPosition(), SHOULDER_HIGHOUTTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_HIGHOUTTAKE_POSITION, 10)) {
+                    colorSensorEnabled = true;
+                    outtakeIndex++;
+                }
+                break;
+            case 2:
+                if(stopOnSample()) {
+                    trident.setShoulderTarget(this, SHOULDER_PREINTAKE_POSITION);
+                        outtakeIndex = 0;
+                    return true;
+                }
+                break;
+        }
         return false;
     }
+
+
+    long tuckTimer = 0;
+    int tuckIndex = 0;
 
     @Override
     boolean tuck() {
+        switch (tuckIndex) {
+            case 0:
+                tuckTimer = futureTime(.7);
+                elbow.setTargetAngle(ELBOW_START_ANGLE);
+                servoPower = 0;
+                tuckIndex++;
+                break;
+            case 1:
+                if (isPast(tuckTimer)) {
+                    slideTargetPosition = 0;
+                    tuckIndex++;
+                }
+                break;
+            case 2:
+                if (slide.getCurrentPosition() < 150) {
+                    return true;
+                }
+        }
+        return false;
+
+    }
+
+    int wallTakeIndex = 0;
+    long wallTakeTimer = 0;
+
+    boolean wallTake() {
+        switch (wallTakeIndex) {
+            case 0:
+                break;
+            case 1:
+                break;
+            case 2:
+                break;
+        }
         return false;
     }
 
-    boolean wallTake() {
-        return false;
+    @Override
+    public void adjustSlide(int adjustTicks) {
+        slideTargetPosition += adjustTicks;
     }
 
     public boolean finalizeTargets() {
         targetSamples = new ArrayList<Sample>();
-        if(alliance.isRed()) {
+        if (alliance.isRed()) {
             targetSamples.add(Sample.RED);
-        }
-        else  {
+        } else {
             targetSamples.add(Sample.BLUE);
         }
         return true;
@@ -132,6 +219,8 @@ public class SpeciMiner extends Arm{
         return targetSamples.contains(currentSample);
     }
 
+
+
     @Override
     public boolean stopOnSample() {
         servoPower = 1.0;
@@ -143,17 +232,24 @@ public class SpeciMiner extends Arm{
     }
 
     @Override
+    public void adjustElbow(double adjustAngle) {
+        elbow.setTargetAngle(elbow.getCurrentAngle() - adjustAngle);
+    }
+
+    @Override
     public void update(Canvas fieldOverlay) {
         CRSOne.setPower(-servoPower);
         CRSTwo.setPower(servoPower);
+        if(slideTargetPosition > slideMaxPosition)
+            slideTargetPosition = slideMaxPosition;
         slide.setTargetPosition(slideTargetPosition);
 
         //compute the current articulation/behavior
         articulate();
         //allow real-time flipper speed changes
         elbow.setSpeed(ELBOW_JOINT_SPEED);
-
-        trident.setShoulderTarget(this, shoulderTargetPosition);
+        elbow.update();
+//        trident.setShoulderTarget(this, shoulderTargetPosition);
     }
 
     @Override
@@ -166,7 +262,8 @@ public class SpeciMiner extends Arm{
 
     @Override
     public void resetStates() {
-        intakeIndex = 0;
+        tuckIndex = 0;
+        groundIntakeIndex = 0;
         outtakeIndex = 0;
         calibrateIndex = 0;
     }
@@ -175,7 +272,7 @@ public class SpeciMiner extends Arm{
         MANUAL, //does nothing - used for transition tracking
         CALIBRATE,
         TUCK, // safely tuck the arm out of the way
-        FLOOR_PREP, INTAKE, WALLTAKE, OUTTAKE
+        FLOOR_PREP, GROUNDTAKE, WALLTAKE, OUTTAKE
 
     }
 
@@ -202,7 +299,7 @@ public class SpeciMiner extends Arm{
                 }
                 break;
             //SHOULD ONLY BE ACCESSED BY SAMPLE()
-            case INTAKE: //get samples from the floor
+            case GROUNDTAKE: //get samples from the floor
                 if (intake()) {
                     articulation = Articulation.MANUAL;
                 }
@@ -224,7 +321,7 @@ public class SpeciMiner extends Arm{
     }
 
     public void sample(List<Sample> samples) {
-        articulation = Articulation.INTAKE;
+        articulation = Articulation.GROUNDTAKE;
         targetSamples = samples;
     }
 
@@ -233,7 +330,7 @@ public class SpeciMiner extends Arm{
         if (alliance.isRed()) samples.add(Arm.Sample.RED);
         else samples.add(Arm.Sample.BLUE);
         samples.add(Arm.Sample.NEUTRAL);
-        articulation = Articulation.INTAKE;
+        articulation = Articulation.GROUNDTAKE;
         targetSamples = samples;
     }
 
@@ -242,7 +339,7 @@ public class SpeciMiner extends Arm{
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("preferHighOuttake", preferHighOuttake);
-        telemetryMap.put("intake index", intakeIndex);
+        telemetryMap.put("intake index", groundIntakeIndex);
         telemetryMap.put("outtake index", outtakeIndex);
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
 
@@ -251,7 +348,7 @@ public class SpeciMiner extends Arm{
         telemetryMap.put("colorsensor rgb", colorLastRGBA.red + " " + colorLastRGBA.green + " " + colorLastRGBA.blue);
 
         telemetryMap.put("beater speed", servoPower);
-        telemetryMap.put("elbow angle target : real", elbow.getTargetAngle() + " : " + elbow.getCurrentAngle());
+        telemetryMap.put("elbow angle target : real", elbow.getTargetAngle() + " : " + elbow.getCurrentAngle() + " " + elbow.getPosition());
 
         telemetryMap.put("calibrate stage", calibrateIndex);
 

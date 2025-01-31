@@ -86,7 +86,7 @@ public class Sampler extends Arm {
 
     @Override
     public boolean stopOnSample() {
-        servoPower = 1.0;
+        servoPower = 0.8;
         if (sampleDetected()) {
             servoPower = 0;
             return true;
@@ -108,10 +108,10 @@ public class Sampler extends Arm {
             slide.setTargetPosition(slideTargetPosition);
             //allow real-time elbow speed changes
             elbow.setSpeed(ELBOW_JOINT_SPEED);
-            trident.setShoulderTarget(this, shoulderTargetPosition);
+//            trident.setShoulderTarget(this, shoulderTargetPosition);
         }
         if (colorSensorEnabled) {
-            updateColorSensor();
+             updateColorSensor();
         }
         //compute the current articulation/behavior
         articulate();
@@ -183,6 +183,11 @@ public class Sampler extends Arm {
         return articulation;
     }
 
+    @Override
+    public void adjustSlide(int adjustTicks) {
+        slideTargetPosition += adjustTicks;
+    }
+
     public boolean finalizeTargets() {
         targetSamples = new ArrayList<Sample>();
         if (alliance.isRed()) {
@@ -198,19 +203,6 @@ public class Sampler extends Arm {
     public static int intakeIndex;
     public long intakeTimer;
 
-    public boolean samplerPrep() {
-        // all we want to do here is set the sampler out horizontal to maximum horizontal extension
-        // and just above sample or wall height
-        // this should happen while the driver is approaching the target, usually in the sub
-        // if there is a danger of contact with another robot, driver should trigger tuck
-
-        elbow.setTargetAngle(ELBOW_PREINTAKE_ANGLE);
-        shoulderTargetPosition = SHOULDER_PREINTAKE_POSITION;
-        slideTargetPosition = SLIDE_PREINTAKE_POSITION;
-        return true;
-    }
-
-    @Override
     public boolean intake() {
         switch (intakeIndex) {
             case 0:
@@ -247,6 +239,19 @@ public class Sampler extends Arm {
         }
         return false;
     }
+
+    public boolean samplerPrep() {
+        // all we want to do here is set the sampler out horizontal to maximum horizontal extension
+        // and just above sample or wall height
+        // this should happen while the driver is approaching the target, usually in the sub
+        // if there is a danger of contact with another robot, driver should trigger tuck
+
+        elbow.setTargetAngle(ELBOW_PREINTAKE_ANGLE);
+        shoulderTargetPosition = SHOULDER_PREINTAKE_POSITION;
+        slideTargetPosition = SLIDE_PREINTAKE_POSITION;
+        return true;
+    }
+
 
     public static int outtakeIndex;
     public long outtakeTimer;

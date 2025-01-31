@@ -43,7 +43,7 @@ public abstract class Arm implements Subsystem {
     int slideMaxPosition = 2450;
 
     //SLIDE VARIABLES - todo, values should be moved into implementations
-    public static int slidePositionMax = 3800;
+    public static int slidePositionMax = 3300;
     public static int slidePositionMin = 0;
     public int SLIDE_INTAKE_MIN_POSITION = 0;
     public int SLIDE_PREINTAKE_POSITION = 880;
@@ -54,15 +54,15 @@ public abstract class Arm implements Subsystem {
 
 
     //ELBOW JOINT VARIABLES - expect these to be set in implementation
-    public static double ELBOW_START_ANGLE;
+    public double ELBOW_START_ANGLE;
     public static int ELBOW_HOME_POSITION;
     public static double ELBOW_PWM_PER_DEGREE;
     public static double ELBOW_JOINT_SPEED;
-    public static double ELBOW_MIN_ANGLE;
-    public static double ELBOW_MAX_ANGLE;
+    public double ELBOW_MIN_ANGLE;
+    public double ELBOW_MAX_ANGLE;
     public static int ELBOW_ADJUST_ANGLE;
-    public static double ELBOW_PREINTAKE_ANGLE;
-    public static double ELBOW_LOWOUTTAKE_ANGLE;
+    public double ELBOW_PREINTAKE_ANGLE;
+    public double ELBOW_LOWOUTTAKE_ANGLE;
     public double ELBOW_HIGHOUTTAKE_ANGLE;
 
     public double servoPower = 0;
@@ -70,6 +70,9 @@ public abstract class Arm implements Subsystem {
     public static boolean colorSensorEnabled = false;
 
     boolean inControl = false;
+
+    abstract public void adjustSlide(int adjustTicks);
+
 
     public enum Sample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
@@ -101,7 +104,9 @@ public abstract class Arm implements Subsystem {
         return hsv;
     }
 
-    abstract boolean stopOnSample();
+    public abstract boolean stopOnSample();
+
+    public abstract void adjustElbow(double adjustAngle);
 
     boolean calibrated = true;
     int calibrateIndex = 0;

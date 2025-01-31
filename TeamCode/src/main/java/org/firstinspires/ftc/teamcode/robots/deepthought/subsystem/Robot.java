@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem;
 
-import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.wrapAngle;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
@@ -20,7 +19,6 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
@@ -100,11 +98,11 @@ public class Robot implements Subsystem {
     public static double PAN_FORWARD = 82;
     public static double PAN_APRILTAG_BASKET = 200;
 
-    public static double panTargetAngle = PAN_FORWARD;
+    public static double panTargetAngle = PAN_APRILTAG_BASKET;
 
 
     public enum Articulation {
-        MANUAL, SAMPLER_INTAKE, TRAVEL, SAMPLER_OUTTAKE, SPECIMINER_INTAKE, SPECIMINER_WALLTAKE, SAMPLER_PREP, SPECIMINER_OUTTAKE
+        MANUAL, SAMPLER_INTAKE, TRAVEL, SAMPLER_OUTTAKE, SPECIMINER_GROUNDTAKE, SPECIMINER_WALLTAKE, SAMPLER_PREP, SPECIMINER_OUTTAKE
     }
 
     public void start() {
@@ -249,7 +247,6 @@ public class Robot implements Subsystem {
     public boolean samplerIntake() {
         switch (intakeIndex) {
             case 0:
-                // todo this might be at wrong level or ignored
                 trident.sampler.articulate(Sampler.Articulation.INTAKE);
                 intakeIndex++;
                 break;

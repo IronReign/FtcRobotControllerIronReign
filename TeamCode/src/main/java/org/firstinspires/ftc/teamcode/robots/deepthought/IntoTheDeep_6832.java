@@ -296,7 +296,6 @@ public class IntoTheDeep_6832 extends OpMode {
                 handleTelemetry(auton.getTelemetry(debugTelemetryEnabled), auton.getTelemetryName(), packet);
                 break;
             case TEST:
-
                 break;
         }
         //handle this class' telemetry
@@ -327,6 +326,7 @@ public class IntoTheDeep_6832 extends OpMode {
                 handleTelemetry(telemetryProvider.getTelemetry(debugTelemetryEnabled), telemetryProvider.getTelemetryName(), packet);
         }
         handleTelemetry(robot.trident.sampler.getTelemetry(true), "SAMPLER", packet);
+        handleTelemetry(robot.trident.speciMiner.getTelemetry(true), "SPECIMINER", packet);
 //        handleTelemetry(robot.trident.speciMiner.getTelemetry(true), "SPECIMINER", packet);
         telemetry.update();
         dashboard.sendTelemetryPacket(packet);

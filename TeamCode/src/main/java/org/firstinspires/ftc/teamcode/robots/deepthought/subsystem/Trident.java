@@ -45,6 +45,15 @@ public class Trident implements Subsystem {
         speciMiner.finalizeTargets();
     }
 
+    public void setActiveArm(Arm arm) {
+        this.activeArm = arm;
+        if (arm instanceof Sampler) {
+            speciMiner.articulate(SpeciMiner.Articulation.TUCK);
+        } else {
+            sampler.articulate(Sampler.Articulation.TUCK);
+        }
+    }
+
     public enum Sample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
     }
@@ -57,7 +66,7 @@ public class Trident implements Subsystem {
 
     //shoulder - these are defaults - but the Sampler and Speciminer classes define their own local versions
     public int SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
-    static int shoulderTargetPosition = 0;
+    public static int shoulderTargetPosition = 0;
     public static int shoulderSpeed = 45;
     public static int SHOULDER_CALIBRATE_HORIZONTAL = -2020; // offset to get to horizontal when shoulder is at max
     public static int SHOULDER_SIZING = 500;  //todo re-tune after horizontal tuning
@@ -81,7 +90,6 @@ public class Trident implements Subsystem {
         MANUAL, //does nothing - used for transition tracking
         CALIBRATE,
         TUCK, //does nothing - used for transition tracking
-        INTAKE_SAMPLER, OUTTAKE_SAMPLER,
         SAMPLER_TUCK, FLOOR_PREP, SAMPLER_FLOOR, SAMPLER_BASKET, SPECIMINER_TUCK, SPECIMINER_FLOOR, SPECIMINER_WALL, SPECIMINER_BAR
     }
 
@@ -103,22 +111,12 @@ public class Trident implements Subsystem {
                     articulation = Articulation.MANUAL;
                 }
                 break;
-            case TUCK: // todo purge - tuck should be called directly on the Sampler and/or Speciminer - with variations that don't affect the shoulder
+            //this is master tuck, calls both tucks + shoulder and should only rarely be used
+            case TUCK:
                 if (tuck()) {
                     articulation = Articulation.MANUAL;
                 }
                 break;
-            //SHOULD ONLY BE ACCESSED BY SAMPLE()
-            case INTAKE_SAMPLER:
-                if (intakeSampler()) {
-                    articulation = Articulation.MANUAL;
-                }
-                break;
-
-            case OUTTAKE_SAMPLER:
-                if (outtakeSampler()) articulation = Articulation.MANUAL;
-                break;
-
             default:
                 throw new RuntimeException("how the ^%*( did you get here?");
         }
@@ -134,7 +132,7 @@ public class Trident implements Subsystem {
             case 0: //tuck the arms and start moving the shoulder up until it stalls
                 calibrated = false;
                 sampler.articulate(Sampler.Articulation.CALIBRATE);
-                //speciMiner.articulate(SpeciMiner.Articulation.CALIBRATE);
+                speciMiner.articulate(SpeciMiner.Articulation.CALIBRATE);
                 calibrateTimer = futureTime(1); //enough time to assure it has begun moving
                 shoulder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 shoulder.setPower(.3);
@@ -209,21 +207,12 @@ public class Trident implements Subsystem {
         // this is a relic of short term migration needs
     }
 
-    public boolean intakeSampler() {
-        return sampler.intake(); // todo cheapo delegation - fixup later
-    }
-
-    public boolean outtakeSampler() { //todo - trident shouldn't be in the business of passing sampler and speciminer articulations through
-        return sampler.outtake();
-    }
-
     public boolean sampleDetected() {
         return targetSamples.contains(currentSample);
     }
 
     public boolean stopOnSample() {
-        if (isSamplerActive()) return sampler.stopOnSample();
-        else return speciMiner.stopOnSample();
+        return activeArm.stopOnSample();
     }
 
     public Trident(HardwareMap hardwareMap, Robot robot) {
@@ -257,15 +246,11 @@ public class Trident implements Subsystem {
     }
 
     public void setShoulderTarget(Arm subsystem, int targetTics) {
-        if (subsystem instanceof SpeciMiner)
-            activeArm = speciMiner;
-        else
-            activeArm = sampler;
-
+        setActiveArm(subsystem);
         setShoulderTarget(targetTics);
     }
 
-    public void setShoulderTarget(int targetTics) {
+    private void setShoulderTarget(int targetTics) {
         if (targetTics > SHOULDER_MIN_POSITION) {
             shoulderTargetPosition = targetTics;
         } else {
@@ -295,7 +280,7 @@ public class Trident implements Subsystem {
         }
 
         sampler.update(fieldOverlay);
-//        speciMiner.update(fieldOverlay);
+        speciMiner.update(fieldOverlay);
 
     }
 
@@ -318,6 +303,7 @@ public class Trident implements Subsystem {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("preferHighOuttake", preferHighOuttake);
+        telemetryMap.put("activeArm", activeArm.getTelemetryName());
         telemetryMap.put("shoulder current", shoulder.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("shoulder target : real", "" + shoulderTargetPosition + " : " + shoulder.getCurrentPosition());
         if (robot.fetchedPosition != null)

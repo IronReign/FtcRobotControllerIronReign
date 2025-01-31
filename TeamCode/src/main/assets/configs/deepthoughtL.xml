@@ -16,7 +16,7 @@
                 port="0" />
             <REV_VL53L0X_RANGE_SENSOR
                 name="backDistRight"
-                bus="0"
+                bus="1"
                 port="0" />
             <Servo
                 name="pan"
@@ -69,8 +69,8 @@
                 name="imu"
                 bus="0"
                 port="0" />
-            <LynxColorSensor name="specSensor" port="1" bus="0" />
-            <RevColorSensorV3 name="samplerSensor" port="1" bus="1" />
+            <RevColorSensorV3 name="samplerSensor" port="1" bus="0" />
+            <LynxColorSensor name="specSensor" port="0" bus="1" />
         </LynxModule>
     </LynxUsbDevice>
     <EthernetDevice name="limelight" serialNumber="EthernetOverUsb:eth0:172.29.0.31" name="limelight" port="-1" ipAddress="172.29.0.1" />
