@@ -327,7 +327,7 @@ public class Sampler extends Arm {
         } else if (hue < 20) {
             currentSample = Sample.RED;
             return "RED";
-        } else if (hue < 23 5 && hue > 200) {
+        } else if (hue < 235 && hue > 200) {
             currentSample = Sample.BLUE;
             return "BLUE";
         } else {

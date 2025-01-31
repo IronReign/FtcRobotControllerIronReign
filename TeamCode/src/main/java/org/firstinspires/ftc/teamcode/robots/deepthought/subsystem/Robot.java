@@ -25,6 +25,7 @@ import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.SpeciMiner;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
@@ -237,8 +238,68 @@ public class Robot implements Subsystem {
             case SAMPLER_OUTTAKE:
                 if (samplerOuttake()) articulation = Articulation.MANUAL;
                 break;
+            case SPECIMINER_GROUNDTAKE:
+                if (speciMinerGroundtake()) articulation = Articulation.MANUAL;
+                break;
+            case SPECIMINER_WALLTAKE:
+                if (speciMinerWalltake()) articulation = Articulation.MANUAL;
+                break;
+            case SPECIMINER_OUTTAKE:
+                if (speciMinerOuttake()) articulation = Articulation.MANUAL;
+                break;
         }
         return articulation;
+    }
+
+
+    public int speciMinerOuttakeIndex = 0;
+    public boolean speciMinerOuttake() {
+        switch (speciMinerOuttakeIndex) {
+            case 0:
+                trident.speciMiner.articulate(SpeciMiner.Articulation.OUTTAKE);
+                speciMinerOuttakeIndex++;
+                break;
+            case 1:
+                if (trident.speciMiner.articulation == SpeciMiner.Articulation.MANUAL) {
+                    return true;
+                }
+                break;
+        }
+        return false;
+    }
+
+
+    public int walltakeIndex = 0;
+    public boolean speciMinerWalltake() {
+        switch (walltakeIndex) {
+            case 0:
+                trident.speciMiner.articulate(SpeciMiner.Articulation.WALLTAKE);
+                walltakeIndex++;
+                break;
+            case 1:
+                if (trident.speciMiner.articulation == SpeciMiner.Articulation.MANUAL) {
+                    return true;
+                }
+                break;
+        }
+        return false;
+    }
+
+    public int groundtakeIndex = 0;
+
+    public boolean speciMinerGroundtake() {
+        switch (groundtakeIndex) {
+            case 0:
+                trident.speciMiner.articulate(SpeciMiner.Articulation.GROUNDTAKE);
+                groundtakeIndex++;
+                break;
+            case 1:
+                if (trident.speciMiner.articulation == SpeciMiner.Articulation.MANUAL) {
+                    return true;
+                }
+                break;
+        }
+        return false;
     }
 
 

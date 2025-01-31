@@ -54,13 +54,6 @@ public class DriverControls {
     }
 
     public void manualDiagnosticMethods() {
-        if (stickyGamepad1.guide) {
-            if (robot.trident.getActiveArm() instanceof Sampler) {
-                robot.trident.setActiveArm(robot.trident.speciMiner);
-            } else {
-                robot.trident.setActiveArm(robot.trident.sampler);
-            }
-        }
         robotOrientedDrive();
         //this is a quick fix for now, shouldertargetpos should not be public
         if (gamepad1.right_bumper) {
@@ -93,16 +86,26 @@ public class DriverControls {
                 } else {
                     robot.articulate(Robot.Articulation.SAMPLER_PREP);
                 }
-            }
-            else {
+            } else {
                 robot.articulate(Robot.Articulation.SPECIMINER_GROUNDTAKE);
             }
         }
 //
         if (stickyGamepad1.b) {
-            dampenDrive = true;
             robot.resetStates();
-            robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
+            robot.trident.getActiveArm().currentSample = Arm.Sample.NO_SAMPLE;
+
+            dampenDrive = true;
+
+            if (robot.trident.getActiveArm() instanceof Sampler) {
+                robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
+            } else {
+                robot.articulate(Robot.Articulation.SPECIMINER_OUTTAKE);
+            }
+        }
+
+        if(stickyGamepad1.guide) {
+            robot.articulate(Robot.Articulation.SPECIMINER_WALLTAKE);
         }
 
         double power;
@@ -146,7 +149,11 @@ public class DriverControls {
             robot.trident.getActiveArm().adjustElbow(-Arm.ELBOW_ADJUST_ANGLE);
         }
         if (stickyGamepad1.dpad_left) {
-            robot.trident.stopOnSample();
+            robot.trident.setActiveArm(robot.trident.sampler);
+        }
+        if (stickyGamepad1.dpad_right) {
+            robot.trident.setActiveArm(robot.trident.speciMiner);
+
         }
 
     }

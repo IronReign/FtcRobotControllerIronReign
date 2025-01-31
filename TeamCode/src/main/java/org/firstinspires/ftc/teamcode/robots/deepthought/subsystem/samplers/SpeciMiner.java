@@ -42,6 +42,7 @@ public class SpeciMiner extends Arm {
 
     public static int colorSensorGain = 12;
     public int slideTargetPosition = 0;
+    public static int SLIDE_WALLTAKE_POSITION = 500;
 
     public double ELBOW_WALLTAKE_ANGLE = 140;
 
@@ -51,7 +52,7 @@ public class SpeciMiner extends Arm {
         this.trident = trident; // to request services from Trident - mainly setting the shoulder angle
 
         //defaults specific to sampler
-        ELBOW_START_ANGLE = 20;
+        ELBOW_START_ANGLE = 25;
         ELBOW_HOME_POSITION = 2050;
         ELBOW_PWM_PER_DEGREE = -5.672222222222222;
         ELBOW_JOINT_SPEED = 120;
@@ -170,7 +171,11 @@ public class SpeciMiner extends Arm {
     boolean wallTake() {
         switch (wallTakeIndex) {
             case 0:
-                break;
+                trident.setShoulderTarget(this, SHOULDER_WALLTAKE_POSITION);
+                slideTargetPosition = SLIDE_WALLTAKE_POSITION;
+                elbow.setTargetAngle(ELBOW_WALLTAKE_ANGLE);
+                return true;
+
             case 1:
                 break;
             case 2:
