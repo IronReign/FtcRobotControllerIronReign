@@ -153,6 +153,9 @@ public class Robot implements Subsystem {
     public void resetStates() {
         intakeIndex = 0;
         outtakeIndex = 0;
+        speciMinerOuttakeIndex = 0;
+        walltakeIndex = 0;
+        groundtakeIndex = 0;
         for (Subsystem k : subsystems) {
             k.resetStates();
         }

@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DcMotorExResetable;
@@ -308,7 +309,7 @@ public class Sampler extends Arm {
         switch (tuckIndex) {
             case 0:
                 elbow.setTargetAngle(ELBOW_START_ANGLE);
-                slideTargetPosition = 0;
+                slideTargetPosition = 20;
                 servoPower = 0;
                 tuckIndex++;
                return true;
@@ -346,7 +347,7 @@ public class Sampler extends Arm {
         telemetryMap.put("tuck index", tuckIndex);
         telemetryMap.put("tuck timer", isPast(tuckTimer));
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
-
+        telemetryMap.put("slide amps", slide.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("current sample", currentSample.name());
         telemetryMap.put("colorsensor hsv", "" + HSVasString()); // cached - changes when HSV is read
         telemetryMap.put("colorsensor rgb", colorLastRGBA.red + " " + colorLastRGBA.green + " " + colorLastRGBA.blue);

@@ -20,6 +20,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Arm;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.SpeciMiner;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 
@@ -100,7 +101,13 @@ public class DriverControls {
             if (robot.trident.getActiveArm() instanceof Sampler) {
                 robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
             } else {
-                robot.articulate(Robot.Articulation.SPECIMINER_OUTTAKE);
+                if(robot.trident.speciMiner.articulation == SpeciMiner.Articulation.OUTTAKE || robot.articulation == Robot.Articulation.SPECIMINER_OUTTAKE )
+                {
+                    SpeciMiner.outtakeIndex++;
+                }
+                else {
+                    robot.articulate(Robot.Articulation.SPECIMINER_OUTTAKE);
+                }
             }
         }
 
