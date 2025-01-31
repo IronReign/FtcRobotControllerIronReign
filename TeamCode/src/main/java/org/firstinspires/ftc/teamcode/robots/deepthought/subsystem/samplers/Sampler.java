@@ -36,8 +36,8 @@ public class Sampler extends Arm {
     // Shoulder values to request from Trident
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
-    public static int SHOULDER_PREINTAKE_POSITION = -205;
-    public static int SHOULDER_INTAKE_POSITION = -505;
+    public static int SHOULDER_PREINTAKE_POSITION = -100;
+    public static int SHOULDER_INTAKE_POSITION = -375;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
     public static int SHOULDER_HIGHOUTTAKE_POSITION = 1385;
     public static int SLIDE_ADJUST_SPEED = 80;
@@ -321,13 +321,13 @@ public class Sampler extends Arm {
     public String updateColorSensor() {
         colorSensor.setGain(colorSensorGain);
         double hue = getHSV()[0];
-        if (hue < 60 && hue > 20) {
+        if (hue > 60 && hue < 80) {
             currentSample = Sample.NEUTRAL;
             return "NEUTRAL";
-        } else if (hue > 350) {
+        } else if (hue < 20) {
             currentSample = Sample.RED;
             return "RED";
-        } else if (hue < 235 && hue > 200) {
+        } else if (hue < 23 5 && hue > 200) {
             currentSample = Sample.BLUE;
             return "BLUE";
         } else {
