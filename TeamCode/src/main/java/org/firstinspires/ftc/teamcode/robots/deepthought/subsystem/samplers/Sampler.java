@@ -34,13 +34,12 @@ public class Sampler extends Arm {
     public int slideTargetPosition = 0;
 
     // Shoulder values to request from Trident
-    public int shoulderTargetPosition = 0;
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
     public static int SHOULDER_PREINTAKE_POSITION = -205;
     public static int SHOULDER_INTAKE_POSITION = -505;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
-    public static int SHOULDER_HIGHOUTTAKE_POSITION = 1745;
+    public static int SHOULDER_HIGHOUTTAKE_POSITION = 1385;
     public static int SLIDE_ADJUST_SPEED = 80;
     public int shoulderPositionMax = 850;
 
@@ -53,6 +52,9 @@ public class Sampler extends Arm {
 
         articulation = Articulation.MANUAL;
 
+        SLIDE_HIGHOUTTAKE_POSITION = 2320;
+
+
         //defaults specific to sampler
         ELBOW_START_ANGLE = 140;
         ELBOW_HOME_POSITION = 2050;
@@ -63,7 +65,7 @@ public class Sampler extends Arm {
         ELBOW_ADJUST_ANGLE = 5;
         ELBOW_PREINTAKE_ANGLE = 5;
         ELBOW_LOWOUTTAKE_ANGLE = 102;
-        ELBOW_HIGHOUTTAKE_ANGLE = 30;
+        ELBOW_HIGHOUTTAKE_ANGLE = 60;
 
         elbow = new Joint(hardwareMap, "samplerElbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "samplerSlide");
@@ -212,7 +214,7 @@ public class Sampler extends Arm {
                 break;
             case 1:
                 if (isPast(intakeTimer)) {
-                    shoulderTargetPosition = SHOULDER_INTAKE_POSITION;
+                    trident.setShoulderTarget(this, SHOULDER_INTAKE_POSITION);
                     slideTargetPosition = SLIDE_PREINTAKE_POSITION;
                     intakeIndex++;
                 }
@@ -228,11 +230,11 @@ public class Sampler extends Arm {
             case 3:
                 if (slideTargetPosition > SLIDE_INTAKE_MIN_POSITION) {
                     slideTargetPosition -= 20;
-                    shoulderTargetPosition -= 20 * 0.1534090909090909;
+                    trident.setShoulderTarget(this, (int)(trident.getShoulderTarget()- 20 * 0.1534090909090909));
                 }
                 if (stopOnSample() || isPast(intakeTimer)) {
                     intakeIndex = 0;
-                    shoulderTargetPosition = SHOULDER_PREINTAKE_POSITION;
+                    trident.setShoulderTarget(this, SHOULDER_PREINTAKE_POSITION);
                     return true;
                 }
                 break;
@@ -247,7 +249,7 @@ public class Sampler extends Arm {
         // if there is a danger of contact with another robot, driver should trigger tuck
 
         elbow.setTargetAngle(ELBOW_PREINTAKE_ANGLE);
-        shoulderTargetPosition = SHOULDER_PREINTAKE_POSITION;
+        trident.setShoulderTarget(this, SHOULDER_PREINTAKE_POSITION);
         slideTargetPosition = SLIDE_PREINTAKE_POSITION;
         return true;
     }
@@ -268,24 +270,25 @@ public class Sampler extends Arm {
             case 1:
 //                if (isPast(outtakeTimer)) {
                 slideTargetPosition = preferHighOuttake ? SLIDE_HIGHOUTTAKE_POSITION : SLIDE_LOWOUTTAKE_POSITION;
-                shoulderTargetPosition = preferHighOuttake ? (int) (SHOULDER_HIGHOUTTAKE_POSITION * .75) : SHOULDER_LOWOUTTAKE_POSITION;
+                trident.setShoulderTarget(this, preferHighOuttake ? (int) (SHOULDER_HIGHOUTTAKE_POSITION * .75) : SHOULDER_LOWOUTTAKE_POSITION);
                 outtakeIndex++;
 //                }
                 break;
             case 2:
-                shoulderTargetPosition = preferHighOuttake ? (SHOULDER_HIGHOUTTAKE_POSITION) : SHOULDER_LOWOUTTAKE_POSITION;
+                trident.setShoulderTarget(this, preferHighOuttake ? (int) (SHOULDER_HIGHOUTTAKE_POSITION) : SHOULDER_LOWOUTTAKE_POSITION);
 //                if (withinError(slide.getCurrentPosition(), preferHighOuttake ? SLIDE_HIGHOUTTAKE_POSITION : SLIDE_LOWOUTTAKE_POSITION, 10)) {
 //                    elbow.setTargetAngle(preferHighOuttake ? ELBOW_HIGHOUTTAKE_ANGLE : ELBOW_LOWOUTTAKE_ANGLE);
 //                    outtakeTimer = futureTime(.3);
 //                    outtakeIndex++;
 //                }
-                outtakeIndex += 4;
+                outtakeIndex ++;
                 break;
             case 3:
 //                if(isPast(outtakeTimer)) {
 //                    shoulderTargetPosition = preferHighOuttake ? SHOULDER_HIGHOUTTAKE_POSITION : SHOULDER_LOWOUTTAKE_POSITION;
 //                    outtakeIndex ++;
 //                }
+                outtakeIndex++;
                 break;
             case 4:
                 if (!sampleDetected()) {
@@ -304,21 +307,12 @@ public class Sampler extends Arm {
     public boolean tuck() {
         switch (tuckIndex) {
             case 0:
-                tuckTimer = futureTime(.7);
                 elbow.setTargetAngle(ELBOW_START_ANGLE);
+                slideTargetPosition = 0;
                 servoPower = 0;
                 tuckIndex++;
-                break;
-            case 1:
-                if (isPast(tuckTimer)) {
-                    slideTargetPosition = 0;
-                    tuckIndex++;
-                }
-                break;
-            case 2:
-                if (slide.getCurrentPosition() < 150) {
-                    return true;
-                }
+               return true;
+
         }
         return false;
     }
@@ -350,6 +344,7 @@ public class Sampler extends Arm {
         telemetryMap.put("intake index", intakeIndex);
         telemetryMap.put("outtake index", outtakeIndex);
         telemetryMap.put("tuck index", tuckIndex);
+        telemetryMap.put("tuck timer", isPast(tuckTimer));
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
 
         telemetryMap.put("current sample", currentSample.name());

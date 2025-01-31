@@ -35,14 +35,15 @@ public class SpeciMiner extends Arm {
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
     public static int SHOULDER_PREINTAKE_POSITION = 250;
-
-    public static int SHOULDER_WALLTAKE_POSITION = 250;
-    public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
+    public static int SHOULDER_WALLTAKE_POSITION = -130;
+    public static int  SHOULDER_LOWOUTTAKE_POSITION = 2105;
     public static int SHOULDER_HIGHOUTTAKE_POSITION = 1925;
     public int shoulderPositionMax = 850;
 
     public static int colorSensorGain = 12;
     public int slideTargetPosition = 0;
+
+    public double ELBOW_WALLTAKE_ANGLE = 140;
 
     public SpeciMiner(HardwareMap hardwareMap, Robot robot, Trident trident) {
         this.hardwareMap = hardwareMap;
@@ -60,7 +61,6 @@ public class SpeciMiner extends Arm {
         ELBOW_PREINTAKE_ANGLE = 5;
         ELBOW_LOWOUTTAKE_ANGLE = 102;
         ELBOW_HIGHOUTTAKE_ANGLE = 30;
-
         elbow = new Joint(hardwareMap, "specElbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "specSlide");
         slide = new DcMotorExResetable(bruh);

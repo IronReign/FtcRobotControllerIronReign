@@ -175,10 +175,10 @@ public class DriverControls {
             fieldOrientedDrive();
 
         if (gamepad1.right_bumper) {
-            robot.trident.sampler.shoulderTargetPosition -= shoulderSpeed;
+            robot.trident.shoulderTargetPosition -= shoulderSpeed;
         }
         if (gamepad1.left_bumper) {
-            robot.trident.sampler.shoulderTargetPosition += shoulderSpeed;
+            robot.trident.shoulderTargetPosition += shoulderSpeed;
         }
 //
         if (gamepad1.left_trigger > .2) {

@@ -69,7 +69,7 @@ public class Trident implements Subsystem {
     public static int shoulderTargetPosition = 0;
     public static int shoulderSpeed = 45;
     public static int SHOULDER_CALIBRATE_HORIZONTAL = -2020; // offset to get to horizontal when shoulder is at max
-    public static int SHOULDER_SIZING = 500;  //todo re-tune after horizontal tuning
+    public static int SHOULDER_SIZING = 590;  //todo re-tune after horizontal tuning
     public int SHOULDER_HORIZONTAL = 0;
     public static int SHOULDER_INTAKE_POSITION = 250;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
@@ -166,7 +166,7 @@ public class Trident implements Subsystem {
                 break;
             case 4:
                 shoulderTargetPosition = SHOULDER_SIZING;
-                sampler.shoulderTargetPosition = shoulderTargetPosition;
+
                 speciMiner.shoulderTargetPosition = shoulderTargetPosition;
                 calibrateIndex = 0;
                 calibrated = true;
@@ -182,7 +182,7 @@ public class Trident implements Subsystem {
         switch (tuckIndex) {
             case 0:
                 shoulderTargetPosition = SHOULDER_HORIZONTAL;
-                sampler.shoulderTargetPosition = SHOULDER_HORIZONTAL;
+
                 speciMiner.shoulderTargetPosition = SHOULDER_HORIZONTAL;
                 tuckIndex++;
                 break;
