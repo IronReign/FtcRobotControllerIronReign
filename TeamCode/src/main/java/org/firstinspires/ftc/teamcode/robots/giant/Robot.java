@@ -328,6 +328,8 @@ public class Robot implements Subsystem {
     //1:leftfront
     //2:rightfront
 
+    //2250-750 for shoulder servo
+
 
     public NormalizedColorSensor colorSensor = null;
     public static int colorSensorGain = 12;
@@ -339,14 +341,13 @@ public class Robot implements Subsystem {
     public Robot.CurrentSample opp;
     public String op;
 
-   // DcMotorEx vertical, horizontal;
-
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
-    DcMotorEx outExtend1, outExtend2;
+    DcMotorEx outExtend, upExtend2, upExtend1;
     DcMotorEx suck;
 
     Servo tilt;
     Servo claw;
+    Servo shoulder;
 
     boolean sucking=false;
     boolean eject=false;
@@ -355,16 +356,30 @@ public class Robot implements Subsystem {
     StickyGamepad g1=null;
     Gamepad gamepad1;
 
-
-
+    double vertical=0;
+    double horizontal=0;
 
     double forward = 0;
     double strafe = 0;
     double turn = 0;
     double targetF, targetS, targetT;
-    int tiltTicks=860;
+
+    int tiltTicks=800;      //780
+    int shoulderTicks=750;
+
+    int outExtendTicks=0;
+    int upExtendTicks=0;
+
     int clawTicks=1100;
     boolean clawOpen=false;
+
+    boolean hook=true;
+    String mode="";
+
+    int transferUpTicks=0;
+    int transferShoulderTicks=0;
+
+
 
 
 
@@ -382,6 +397,7 @@ public class Robot implements Subsystem {
             opp=Robot.CurrentSample.RED;
             op="RED";
         }
+
     }
 
     @Override
@@ -390,17 +406,43 @@ public class Robot implements Subsystem {
         updateColorSensor();
         colorSensor.setGain(colorSensorGain);
         mecanumDrive(targetF,targetS,targetT);
+        moving();
+        if(hook){
+            mode="hook";
+        }else{
+            mode="basket";
+        }
+
         claw.setPosition(servoNormalize(clawTicks));
         tilt.setPosition(servoNormalize(tiltTicks));
+        shoulder.setPosition(servoNormalize(shoulderTicks));
+        upExtend1.setTargetPosition(upExtendTicks);
+        outExtend.setTargetPosition(outExtendTicks);
+
+        horizontal = leftBack.getCurrentPosition();
+        vertical = leftFront.getCurrentPosition();
+
+        if(hook){
+            transferShoulderTicks=1610;
+           // transferUpTicks= ???         figure out value
+        }else{
+            // transferShoulderTicks= ???         figure out value
+            // transferUpTicks= ???         figure out value
+        }
+
+
         if(clawOpen){
             dropBlock();
         }else{
             grabBlock();
         }
 
+
         if(!eject&&!slurp) {
             if (sucking) {
+                tiltTicks=800;
                 grab();
+               // pullBack();
             }
             else{
                 suck.setPower(0);
@@ -408,82 +450,113 @@ public class Robot implements Subsystem {
         }else if(eject&&!slurp){
             suck.setPower(-1);
         } else{
-            suck.setPower(.8);
+            suck.setPower(1);
         }
-
-
     }
 
-
-    public void suck(){
-        sucking=true;
+    public double getVert(){
+        return leftFront.getCurrentPosition();
+    }
+    public double getHor(){
+        return leftBack.getCurrentPosition();
     }
 
-
-
-
-    public void mecanumDrive(double forwardX, double strafeX, double turnX) {
-        forward = forwardX;
-        strafe =  strafeX;
-        turn = turnX*.65;
-        double r = Math.hypot(strafe, forward);
-        double robotAngle = Math.atan2(forward, strafe) - Math.PI/4;
-        double rightX = -turn;
-        leftFront.setPower((r * Math.cos(robotAngle) - rightX));
-        rightFront.setPower((r * Math.sin(robotAngle) + rightX));
-        leftBack.setPower((r * Math.sin(robotAngle) - rightX));
-        rightBack.setPower((r * Math.cos(robotAngle) + rightX));
-    }
-
-
-    public void setDrive(double forwardX, double strafeX, double turnX) {
-        targetF=forwardX;
-        targetT=turnX;
-        targetS=strafeX;
-    }
-
-
-    public void init() {
-        g1 = new StickyGamepad(gamepad1);
-
-        leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
-        leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
-        rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
-        rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-
-        outExtend1 = hardwareMap.get(DcMotorEx.class, "outExtend1");
-        outExtend2 = hardwareMap.get(DcMotorEx.class, "outExtend2");
-
-        suck = hardwareMap.get(DcMotorEx.class, "suck");
-
-        claw = hardwareMap.get(Servo.class, "claw");
-        tilt = hardwareMap.get(Servo.class, "tilt");
-
-        // Set motor runmodes
-        leftBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        rightBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        leftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        rightFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-
+    public void resetDrive(){
+        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         leftBack.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        rightFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        rightBack.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-
-        outExtend1.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        outExtend2.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        outExtend1.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        outExtend2.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        outExtend2.setDirection(DcMotor.Direction.REVERSE);
-
-        rightBack.setDirection(DcMotor.Direction.REVERSE);
-        rightFront.setDirection(DcMotor.Direction.REVERSE);
-
-        suck.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        suck.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        //suck.setDirection(DcMotor.Direction.REVERSE);
-        colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
     }
+
+    public void goTo(int verticalT, int horizontalT){
+        resetDrive();
+
+        //negative forward==increase vertical
+        if(verticalT>vertical){
+            forward=-.5;
+        } else if (verticalT<vertical) {
+            forward=.5;
+        }else {forward=0;}
+
+        //positive strafe== decrease horizontal
+        if(horizontalT>horizontal){
+            strafe=-.5;
+        } else if (horizontalT<horizontal) {
+            strafe=.5;
+        }else {strafe=0;}
+
+    }
+    public boolean thereYetH(int horizontalT){
+        if(horizontalT==horizontal){
+            return true;
+        }
+        return false;
+    }
+    public boolean thereYetV(int verticalT){
+        if(verticalT==vertical){
+            return true;
+        }
+        return false;
+    }
+
+    public void mode(){
+        hook=!hook;
+    }
+    public boolean isHook(){return hook;}
+
+    public void transfer(){
+        int i=0;
+        long autonTimer = 0;
+        switch(i) {
+            case 0:
+                open();
+                if (getOutExtend() < 440) {
+                    setOutExtend(450);
+                }
+                i++;
+                break;
+            case 1:
+                if (isClawOpen() && getOutExtend() > 440) {
+                    autonTimer = futureTime(.02);
+                    setShoulder(970);
+                    setUpExtend(0);
+                    i++;
+                }
+                break;
+            case 2:
+                if (isPast(autonTimer)) {
+                    autonTimer = futureTime(.02);
+                    close();
+                    i++;
+                }
+                break;
+            case 3:
+                if (isPast(autonTimer)) {
+                    setUpExtend(transferUpTicks);    //change based off mode in
+                    i++;
+                }
+                break;
+            case 4:
+                if (getUpExtend() > 580) {
+                    setShoulder(transferShoulderTicks);    //change based off mode in      hook/grab off wall: 1610       basket: ???
+                    i++;
+                }
+                break;
+            case 5:
+                break;
+
+        }
+    }
+
+
+
+
+
+
+
+    public void grabBlock(){clawTicks=1100;}
+
+    public void dropBlock(){clawTicks=1500;}
 
     public void setClaw(int x){
         clawTicks+=x;
@@ -491,40 +564,79 @@ public class Robot implements Subsystem {
     public void setClawP(){
         clawOpen=!clawOpen;
     }
-
+    public void open(){
+        clawOpen=true;
+    }
+    public void close(){
+        clawOpen=false;
+    }
+    public boolean isClawOpen(){
+        return clawOpen;
+    }
     public int getClaw(){
         return clawTicks;
     }
 
+
+
     public int getTilt(){
         return tiltTicks;
     }
-
     public void addTilt(int x){
         tiltTicks+=x;
     }
-
-    public void setSuck(boolean x){
-        sucking=x;
-    }
-
     public void setTilt(int x){
         tiltTicks=x;
     }
 
-    public void grabBlock(){clawTicks=1100;}
 
-    public void dropBlock(){clawTicks=1500;}
+
+    public int getShoulder(){
+        return shoulderTicks;
+    }
+    public void addShoulder(int x){
+        shoulderTicks+=x;
+    }
+    public void setShoulder(int x){
+        shoulderTicks=x;
+    }
+
+
+    public void addOutExtend(int x){
+        outExtendTicks+=x;
+    }
+    public void setOutExtend(int x){
+        outExtendTicks=x;
+    }
+    public int getOutExtend(){return outExtendTicks;}
+
+    public void addUpExtend(int x){
+        upExtendTicks+=x;
+    }
+    public void setUpExtend(int x){
+        upExtendTicks=x;
+    }
+    public int getUpExtend(){return upExtendTicks;}
 
     public void grab(){
         //if find opponent block reverse motor to spit back out in same direction picked up
         if(!eject&&!slurp) {
             if (keepBlock()) {
-//                long autonTimer = 0;
-//                autonTimer = futureTime(.4);
-//                if(isPast(autonTimer)){
-                    // autonTimer=futureTime(TIME);
+
+
+                long autonTimer = 0;
+                autonTimer = futureTime(.02);
+                suck.setPower(-1);
+                if(isPast(autonTimer)) {
                     suck.setPower(0);
+                }
+
+                    if(currentSample.equals(Robot.CurrentSample.NEUTRAL)){
+                        yellow();
+
+                    }else{
+                        yellow();       //place holder till figure out the fuck we doing
+                    }
                     // autonTimer = futureTime(.05);
                // }
 //                if (isPast(autonTimer)) {
@@ -532,22 +644,70 @@ public class Robot implements Subsystem {
 //                }
             }
 //            else if (updateColorSensor().equals(op)) {
-//                long autonTimer = 0;
-//                autonTimer = futureTime(.2);
+////                long autonTimer = 0;
+////
+////                autonTimer = futureTime(.2);
 //                suck.setPower(-1);
-//                if (isPast(autonTimer)) {
-//                    suck.setPower(1);
-//                }
+////                if (isPast(autonTimer)) {
+////                    suck.setPower(1);
+////                }
 //            }
             else {
-                suck.setPower(.85);       //1
+                suck.setPower(1);       //1
             }
         }else if(eject&&!slurp){
-            suck.setPower(.85);      //-1
+            suck.setPower(-1);      //-1
         }
-        else{
-            suck.setPower(.8);
+        else {
+            suck.setPower(1);
         }
+    }
+    public void suck(){
+//        outExtendTicks=3300;
+      //  tiltTicks=1100;
+        sucking=true;
+
+
+    }
+
+    public void dunk(){
+        upExtendTicks=3450;
+        long autonTimer=0;
+        autonTimer = futureTime(5);
+        if(isPast(autonTimer)){
+            upExtendTicks=-10;
+        }
+
+    }
+
+    public void pullBack(){
+        outExtendTicks-=25;
+    }
+
+    public void yellow(){
+       // long autonTimer=0;
+        tiltTicks=1300;//1440
+        outExtendTicks=-25;
+//        autonTimer = futureTime(.3);
+//        if(isPast(autonTimer)){
+//            autonTimer=futureTime(3);
+//            setSlurp(true);
+//           // spit(true);
+//            if(isPast(autonTimer)){
+//                setSlurp(false);
+//              //  spit(false);
+//                PAUSE=false;
+//            }
+//        }
+
+    }
+
+    public void suckPower(double x){
+        suck.setPower(x);
+    }
+
+    public void setSuck(boolean x){
+        sucking=x;
     }
 
     public void eject(double x){
@@ -565,28 +725,117 @@ public class Robot implements Subsystem {
         return false;
     }
 
+    public boolean up(){
+        int old=upExtend1.getCurrentPosition()-upExtend1.getTargetPosition();
+        if(old<0){
+            return true;
+        }
+        return false;
+    }
+
+    public void moving(){
+        if(upExtend1.isBusy()){
+            int old=upExtend1.getCurrentPosition()-upExtend1.getTargetPosition();
+            if(Math.abs(old)>30){
+                if(up()){
+                    upExtend2.setPower(1);
+                }else{
+                    upExtend2.setPower(-1);
+                }
+            }else{
+                upExtend2.setPower(0);
+            }
+        }
+        else{
+            upExtend2.setPower(0);
+        }
+    }
+
+    public void init() {
+        g1 = new StickyGamepad(gamepad1);
+
+        leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
+        leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
+        rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+        rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
+
+        upExtend1 = hardwareMap.get(DcMotorEx.class, "upExtend1");
+        upExtend2 = hardwareMap.get(DcMotorEx.class, "upExtend2");
+        outExtend = hardwareMap.get(DcMotorEx.class, "outExtend");
+
+        suck = hardwareMap.get(DcMotorEx.class, "suck");
+
+        claw = hardwareMap.get(Servo.class, "claw");
+        tilt = hardwareMap.get(Servo.class, "tilt");
+        shoulder = hardwareMap.get(Servo.class, "shoulder");
+
+        // Set motor runmodes
+        leftBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        rightBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        leftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        rightFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        leftBack.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        rightFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        rightBack.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+
+        upExtend1.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        upExtend2.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        upExtend1.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        upExtend2.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        upExtend2.setDirection(DcMotor.Direction.REVERSE);
+        outExtend.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        outExtend.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        outExtend.setDirection(DcMotor.Direction.REVERSE);
+
+        upExtend1.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        upExtend1.setTargetPosition(0);
+        upExtend1.setPower(1);
+//        upExtend2.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+//        upExtend2.setTargetPosition(0);
+        upExtend2.setPower(0);
+        outExtend.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        outExtend.setTargetPosition(0);
+        outExtend.setPower(1);
+
+        rightBack.setDirection(DcMotor.Direction.REVERSE);
+        rightFront.setDirection(DcMotor.Direction.REVERSE);
+        suck.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        suck.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        //suck.setDirection(DcMotor.Direction.REVERSE);
+        colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
+    }
+
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
         TelemetryPacket p = new TelemetryPacket();
 
-        telemetry.put("Horizontal", rightBack.getCurrentPosition());
-        telemetry.put("Vertical", leftBack.getCurrentPosition());
+        telemetry.put("GAMEMODE: ", mode);
+
+        telemetry.put("Horizontal", leftBack.getCurrentPosition());
+        telemetry.put("Vertical", leftFront.getCurrentPosition());
+
+//        telemetry.put("real out extend: ", outExtend.getCurrentPosition());
+//        telemetry.put("real up extend 2: ", suck.getCurrentPosition());
+//        telemetry.put("real up extend: ", upExtend.getCurrentPosition());
+
+        telemetry.put("out extend", outExtendTicks);
+        telemetry.put("up extend", upExtendTicks);
 
         telemetry.put("FORWARD: ", targetF);
         telemetry.put("TURN: ", targetT);
         telemetry.put("STRAFE: ", targetS);
 
         telemetry.put("claw guess: ", clawTicks);
-        telemetry.put("claw actual:", claw.getPosition());
-
         telemetry.put("tilt guess: ", tiltTicks);
-        telemetry.put("tilt actual:", tilt.getPosition());
+        telemetry.put("shoulder guess: ", shoulderTicks);
 
         telemetry.put("colorsensor hsv ",  HSVasString());
         telemetry.put("what color we got? ", updateColorSensor());
 //        telemetry.put("keep the block: ", keepBlock());
-        telemetry.put("ejecting???", eject);
+      //  telemetry.put("ejecting???", eject);
         dashboard.sendTelemetryPacket(p);
         return telemetry;
     }
@@ -632,5 +881,25 @@ public class Robot implements Subsystem {
     public static double servoNormalize(int pulse) {
         double normalized = (double) pulse;
         return (normalized - 750.0) / 1500.0; //convert mr servo controller pulse width to double on _0 - 1 scale
+    }
+
+    public void mecanumDrive(double forwardX, double strafeX, double turnX) {
+        forward = forwardX;
+        strafe =  strafeX;
+        turn = turnX*.65;
+        double r = Math.hypot(strafe, forward);
+        double robotAngle = Math.atan2(forward, strafe) - Math.PI/4;
+        double rightX = -turn;
+        leftFront.setPower((r * Math.cos(robotAngle) - rightX));
+        rightFront.setPower((r * Math.sin(robotAngle) + rightX));
+        leftBack.setPower((r * Math.sin(robotAngle) - rightX));
+        rightBack.setPower((r * Math.cos(robotAngle) + rightX));
+    }
+
+
+    public void setDrive(double forwardX, double strafeX, double turnX) {
+        targetF=forwardX;
+        targetT=turnX;
+        targetS=strafeX;
     }
 }

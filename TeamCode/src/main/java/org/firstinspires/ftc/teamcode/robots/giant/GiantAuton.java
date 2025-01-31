@@ -1,62 +1,97 @@
-//package org.firstinspires.ftc.teamcode.robots.giant;
-//import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
-//import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+package org.firstinspires.ftc.teamcode.robots.giant;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+
+
+import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+
+
+
+
+import org.firstinspires.ftc.robotcore.internal.system.Misc;
+
+
+import java.util.Map;
+
+
+@Autonomous(name = "auton")
+@Config(value = "auton")
+public class GiantAuton extends OpMode {
+
+
+    public static double FORWARD=1.21;
+    public static double BUFFER=.23;
+    public static double LONGBUFFER= 1.9;        //2.2
+    public static double BACKWARD=.255;     //.255
+
+
+    Robot robot;
+    //HardwareMap hardwareMap;
+
+
+    @Override
+    public void init() {
+        robot = new Robot(hardwareMap, gamepad1);
+        robot.init();
+        //  robot.setRotate(950);
+    }
+
+//    public void forward(double length, double direction){
+//        if (!moving){
+//            // Number of encoder ticks per distance
+//            ticks = (int)((length/wheelCircum)*ticksrev);
 //
+//            // Assign initial encoder values
+//            startpos = robot.vertical.getCurrentPosition();
 //
-//import com.acmerobotics.dashboard.canvas.Canvas;
-//import com.acmerobotics.dashboard.config.Config;
-//import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-//import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-//import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-//import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-//import com.qualcomm.robotcore.hardware.HardwareMap;
+//            // Indicate Vertical/Horizontal
+//            vertical = true;
+//            horizontal = false;
 //
+//            // Travel Distance
+//            robot.mecanumDrive(-direction,0,0);
 //
-//
-//
-//import org.checkerframework.checker.units.qual.A;
-//import org.firstinspires.ftc.robotcore.internal.system.Misc;
-//
-//
-//import java.util.Map;
-//
-//
-//@Autonomous(name = "auton")
-//@Config(value = "auton")
-//public class GiantAuton extends OpMode {
-//
-//
-//    public static double FORWARD=1.21;
-//    public static double BUFFER=.23;
-//    public static double LONGBUFFER= 1.9;        //2.2
-//    public static double BACKWARD=.255;     //.255
-//
-//
-//    Robot robot;
-//    //HardwareMap hardwareMap;
-//
-//
-//    @Override
-//    public void init() {
-//        robot = new Robot(hardwareMap, gamepad1);
-//        robot.init();
-//        //  robot.setRotate(950);
+//            // Update moving
+//            moving = true;
+//        }
 //    }
-//
-//
-//    @Override
-//    public void loop() {
-//        robot.update(new Canvas());
-//        execute();
-//        handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
-//    }
-//
-//
-//    //forward one tile, turn 135, forward 1.25, extend arm, drop
-//    int autonIndex = 0;
-//    long autonTimer = 0;
-//    public void execute() {
-//        switch (autonIndex) {
+
+
+    @Override
+    public void loop() {
+        robot.update(new Canvas());
+        execute();
+        handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
+    }
+
+
+    //forward vertical for one tile practice    vertical=4000;
+
+    //forward one tile, turn 135, forward 1.25, extend arm, drop
+    int autonIndex = 0;
+    long autonTimer = 0;
+    public void execute() {
+        switch (autonIndex) {
+            case 0:
+                robot.setDrive(-.5,0,0);
+                autonIndex++;
+                break;
+            case 1:
+                if(robot.getVert()>=3900){
+              //  if(robot.thereYetH(0) && robot.thereYetV(4000)){
+                    robot.setDrive(0,0,0);
+                   // robot.resetDrive();
+                    autonIndex++;
+                }
+                break;
+
 //            case 0:
 //                //autonTimer=futureTime(BUFFER);
 //                robot.grabBlock();
@@ -130,25 +165,25 @@
 //                break;
 //            case 11:
 //                break;
-//
-//
-//
-//
-//        }
-//    }
-//
-//
-//    private void handleTelemetry(Map<String, Object> telemetryMap, String telemetryName) {
-//        telemetry.addLine(telemetryName);
-//
-//
-//        for (Map.Entry<String, Object> entry : telemetryMap.entrySet()) {
-//            String line = Misc.formatInvariant("%s: %s", entry.getKey(), entry.getValue());
-//            telemetry.addLine(line);
-//            //telemetry.addLine(""+autonIndex);
-//        }
-//
-//
-//        telemetry.addLine();
-//    }
-//}
+
+
+
+
+        }
+    }
+
+
+    private void handleTelemetry(Map<String, Object> telemetryMap, String telemetryName) {
+        telemetry.addLine(telemetryName);
+
+
+        for (Map.Entry<String, Object> entry : telemetryMap.entrySet()) {
+            String line = Misc.formatInvariant("%s: %s", entry.getKey(), entry.getValue());
+            telemetry.addLine(line);
+            //telemetry.addLine(""+autonIndex);
+        }
+
+
+        telemetry.addLine();
+    }
+}
