@@ -16,6 +16,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 
 
 import java.util.Map;
@@ -33,14 +34,28 @@ public class GiantAuton extends OpMode {
 
 
     Robot robot;
+    StickyGamepad g1=null;
+    StickyGamepad g2=null;
     //HardwareMap hardwareMap;
 
 
     @Override
     public void init() {
-        robot = new Robot(hardwareMap, gamepad1);
+        robot = new Robot(hardwareMap, gamepad1,gamepad2);
         robot.init();
         //  robot.setRotate(950);
+    }
+    @Override
+    public void init_loop(){
+        g1=new StickyGamepad(gamepad1);
+        g2=new StickyGamepad(gamepad2);
+        g1.update();
+        g2.update();
+        if(g1.guide){
+            robot.changeAlly();
+        }
+        robot.update(new Canvas());
+        handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
     }
 
 //    public void forward(double length, double direction){
@@ -80,17 +95,75 @@ public class GiantAuton extends OpMode {
     public void execute() {
         switch (autonIndex) {
             case 0:
-                robot.setDrive(-.5,0,0);
+                robot.close();
+                robot.setUpExtend(2250);
+                robot.resetDrive();
                 autonIndex++;
                 break;
             case 1:
-                if(robot.getVert()>=3900){
+                if(robot.getUpExtend()>2000){
+                    robot.setDrive(.8,0,0);
+                    autonIndex++;
+                }
+
+                break;
+            case 2:
+                if(robot.getVert()<=-650){
               //  if(robot.thereYetH(0) && robot.thereYetV(4000)){
+                    autonTimer=futureTime(BUFFER);
                     robot.setDrive(0,0,0);
-                   // robot.resetDrive();
+                    robot.resetDrive();
                     autonIndex++;
                 }
                 break;
+            case 3:
+                if(isPast(autonTimer)){
+                    robot.setUpExtend(1950);        //2250
+                    autonTimer=futureTime(BUFFER);
+                    autonIndex++;
+                }
+                break;
+            case 4:
+                if(robot.getUpExtend()<1955){
+                    robot.setDrive(-.3,0,0);
+                    autonIndex++;
+
+                }
+                break;
+            case 5:
+                if(robot.getVert()>1800){
+                    robot.setDrive(0,0,0);
+                    autonTimer=futureTime(BUFFER);
+                    autonIndex++;
+                }
+                break;
+            case 6:
+                if(isPast(autonTimer)){
+                    robot.open();
+
+                    autonIndex++;
+
+                }
+                break;
+            case 7:
+                robot.setDrive(0,.8,0);
+                autonTimer=futureTime(3);
+                autonIndex++;
+                break;
+            case 8:
+                if(isPast(autonTimer)){
+                    robot.setDrive(-.5,0,0);
+                    autonTimer=futureTime(1);
+                    autonIndex++;
+                }
+                break;
+            case 9:
+                if(isPast(autonTimer)){
+                    robot.setDrive(0,0,0);
+                }
+
+
+
 
 //            case 0:
 //                //autonTimer=futureTime(BUFFER);

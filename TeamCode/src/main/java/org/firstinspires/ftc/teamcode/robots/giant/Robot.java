@@ -329,7 +329,7 @@ public class Robot implements Subsystem {
     //2:rightfront
 
     //2250-750 for shoulder servo
-
+    int i=0;
 
     public NormalizedColorSensor colorSensor = null;
     public static int colorSensorGain = 12;
@@ -354,7 +354,9 @@ public class Robot implements Subsystem {
     boolean slurp=false;
 
     StickyGamepad g1=null;
+    StickyGamepad g2=null;
     Gamepad gamepad1;
+    Gamepad gamepad2;
 
     double vertical=0;
     double horizontal=0;
@@ -364,7 +366,7 @@ public class Robot implements Subsystem {
     double turn = 0;
     double targetF, targetS, targetT;
 
-    int tiltTicks=800;      //780
+    int tiltTicks=950; //800     //780
     int shoulderTicks=750;
 
     int outExtendTicks=0;
@@ -379,16 +381,20 @@ public class Robot implements Subsystem {
     int transferUpTicks=0;
     int transferShoulderTicks=0;
 
+    static boolean allianceRed=true;
+    long timer = 0;
+
+//shoulder grab intake ticks 870
 
 
 
 
-
-    public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
+    public Robot(HardwareMap hardwareMap, Gamepad gamepad, Gamepad gamepad2two) {
         this.hardwareMap = hardwareMap;
         this.gamepad1 = gamepad;
+        this.gamepad2 = gamepad2two;
         targetSamples.add(Robot.CurrentSample.NEUTRAL);
-        targetSamples.add(Robot.CurrentSample.RED);     //CHANGE
+       //      //CHANGE
         if(targetSamples.contains(Robot.CurrentSample.RED)){
             opp=Robot.CurrentSample.BLUE;
             op="BLUE";
@@ -402,7 +408,15 @@ public class Robot implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
+        if(allianceRed){
+            targetSamples.add(Robot.CurrentSample.RED);
+            targetSamples.remove(Robot.CurrentSample.BLUE);
+        }else{
+            targetSamples.add(Robot.CurrentSample.BLUE);
+            targetSamples.remove(Robot.CurrentSample.RED);
+        }
         g1.update();
+        g2.update();
         updateColorSensor();
         colorSensor.setGain(colorSensorGain);
         mecanumDrive(targetF,targetS,targetT);
@@ -426,13 +440,14 @@ public class Robot implements Subsystem {
             transferShoulderTicks=1610;
            // transferUpTicks= ???         figure out value
         }else{
-            // transferShoulderTicks= ???         figure out value
-            // transferUpTicks= ???         figure out value
+             transferShoulderTicks= 1850;
+             transferUpTicks= 3150;
         }
 
 
         if(clawOpen){
             dropBlock();
+
         }else{
             grabBlock();
         }
@@ -440,7 +455,6 @@ public class Robot implements Subsystem {
 
         if(!eject&&!slurp) {
             if (sucking) {
-                tiltTicks=800;
                 grab();
                // pullBack();
             }
@@ -503,43 +517,46 @@ public class Robot implements Subsystem {
         hook=!hook;
     }
     public boolean isHook(){return hook;}
-
+    int autonIndex=0;
+    long autonTimer = 0;
     public void transfer(){
-        int i=0;
-        long autonTimer = 0;
-        switch(i) {
+        autonIndex=0;
+
+        switch(autonIndex) {
             case 0:
                 open();
                 if (getOutExtend() < 440) {
                     setOutExtend(450);
+
                 }
-                i++;
+                autonIndex++;
+
                 break;
             case 1:
                 if (isClawOpen() && getOutExtend() > 440) {
                     autonTimer = futureTime(.02);
-                    setShoulder(970);
+                    setShoulder(870);
                     setUpExtend(0);
-                    i++;
+                    autonIndex++;
                 }
                 break;
             case 2:
                 if (isPast(autonTimer)) {
                     autonTimer = futureTime(.02);
                     close();
-                    i++;
+                    autonIndex++;
                 }
                 break;
             case 3:
                 if (isPast(autonTimer)) {
                     setUpExtend(transferUpTicks);    //change based off mode in
-                    i++;
+                    autonIndex++;
                 }
                 break;
             case 4:
                 if (getUpExtend() > 580) {
                     setShoulder(transferShoulderTicks);    //change based off mode in      hook/grab off wall: 1610       basket: ???
-                    i++;
+                    autonIndex++;
                 }
                 break;
             case 5:
@@ -622,7 +639,7 @@ public class Robot implements Subsystem {
         //if find opponent block reverse motor to spit back out in same direction picked up
         if(!eject&&!slurp) {
             if (keepBlock()) {
-
+                upExtendTicks=0;
 
                 long autonTimer = 0;
                 autonTimer = futureTime(.02);
@@ -664,19 +681,14 @@ public class Robot implements Subsystem {
     }
     public void suck(){
 //        outExtendTicks=3300;
-      //  tiltTicks=1100;
-        sucking=true;
-
+        tiltTicks=800;
+        sucking = true;
 
     }
 
     public void dunk(){
-        upExtendTicks=3450;
-        long autonTimer=0;
-        autonTimer = futureTime(5);
-        if(isPast(autonTimer)){
-            upExtendTicks=-10;
-        }
+        upExtendTicks=3150;
+        shoulderTicks=1850;
 
     }
 
@@ -684,10 +696,21 @@ public class Robot implements Subsystem {
         outExtendTicks-=25;
     }
 
+    public void hookit(){
+        upExtendTicks=1950;
+        shoulderTicks=1510;
+    }
+    public void wallGrab(){
+        open();
+
+        shoulderTicks=1510;
+        upExtendTicks=0;
+    }
+
     public void yellow(){
        // long autonTimer=0;
-        tiltTicks=1300;//1440
-        outExtendTicks=-25;
+        tiltTicks=1210;//1440
+        outExtendTicks=120;     //-25
 //        autonTimer = futureTime(.3);
 //        if(isPast(autonTimer)){
 //            autonTimer=futureTime(3);
@@ -753,6 +776,7 @@ public class Robot implements Subsystem {
 
     public void init() {
         g1 = new StickyGamepad(gamepad1);
+        g2 = new StickyGamepad(gamepad2);
 
         leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
@@ -813,6 +837,7 @@ public class Robot implements Subsystem {
         TelemetryPacket p = new TelemetryPacket();
 
         telemetry.put("GAMEMODE: ", mode);
+        telemetry.put("RED ALLIANCE", allianceRed);
 
         telemetry.put("Horizontal", leftBack.getCurrentPosition());
         telemetry.put("Vertical", leftFront.getCurrentPosition());
@@ -835,7 +860,7 @@ public class Robot implements Subsystem {
         telemetry.put("colorsensor hsv ",  HSVasString());
         telemetry.put("what color we got? ", updateColorSensor());
 //        telemetry.put("keep the block: ", keepBlock());
-      //  telemetry.put("ejecting???", eject);
+        telemetry.put("ejecting???", eject);
         dashboard.sendTelemetryPacket(p);
         return telemetry;
     }
@@ -885,7 +910,7 @@ public class Robot implements Subsystem {
 
     public void mecanumDrive(double forwardX, double strafeX, double turnX) {
         forward = forwardX;
-        strafe =  strafeX;
+        strafe =  .6*strafeX;
         turn = turnX*.65;
         double r = Math.hypot(strafe, forward);
         double robotAngle = Math.atan2(forward, strafe) - Math.PI/4;
@@ -902,4 +927,9 @@ public class Robot implements Subsystem {
         targetT=turnX;
         targetS=strafeX;
     }
+
+    public static void changeAlly(){
+        allianceRed=!allianceRed;
+    }
+
 }
