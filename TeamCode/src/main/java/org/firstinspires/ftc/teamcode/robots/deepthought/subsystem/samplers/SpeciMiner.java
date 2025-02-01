@@ -129,7 +129,7 @@ public class SpeciMiner extends Arm {
                 slideTargetPosition = SLIDE_HIGHOUTTAKE_POSITION;
                 outtakeIndex++;
                 break;
-            case 1:
+            case 1: //needs a manual advance
 
                 break;
             case 2:
@@ -138,6 +138,18 @@ public class SpeciMiner extends Arm {
                 return true;
         }
         return false;
+    }
+
+    boolean outtake_prep() { // this version waits for a field position to trigger hook
+        elbow.setTargetAngle(ELBOW_HIGHOUTTAKE_PREP_ANGLE);
+        trident.setShoulderTarget(this, SHOULDER_PREOUTTAKE_POSITION);
+        slideTargetPosition = SLIDE_HIGHOUTTAKE_POSITION;
+        return true;
+    }
+
+    boolean outtake_hook(){
+                trident.setShoulderTarget(this, SHOULDER_HIGHOUTTAKE_POSITION);
+                return true;
     }
 
 

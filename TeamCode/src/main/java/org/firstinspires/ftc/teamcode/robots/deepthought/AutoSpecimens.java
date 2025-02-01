@@ -22,7 +22,7 @@ import java.util.Map;
 
 @Config(value = "AA_ITD_Auto_Spec")
 public class AutoSpecimens implements TelemetryProvider {
-    public static double AUTON_WAIT_TIMER = 2;
+    public static double AUTON_WAIT_TIMER = 1;
     public static int numCycles = 4;
     private Robot robot;
     private HardwareMap hardwareMap;
@@ -74,14 +74,14 @@ public class AutoSpecimens implements TelemetryProvider {
             allianceMultiplier = -1;
         }
         robot.positionCache.update(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), false);
-        switch (autonIndex) {
+        switch (autonIndex) { //auton delay
             case 0:
                 gameTimer = futureTime(27);
                 autonState = AutonState.INIT;
                 autonTimer = futureTime(AUTON_START_DELAY);
                 autonIndex++;
                 break;
-            case 1:
+            case 1: // go to hibar
                 if (isPast(autonTimer)) {
                     autonState = AutonState.DRIVE_TO_HIGHBAR;
                     autonIndex++;
@@ -135,12 +135,12 @@ public class AutoSpecimens implements TelemetryProvider {
 
     public boolean autonSpecimenOuttake(TelemetryPacket packet) {
         switch (autonOuttakeIndex) {
-            case 0:
+            case 0: // not sure we need another wait here if there is one in execute()
                 robot.resetStates();
                 autonOuttakeTimer = futureTime(AUTON_WAIT_TIMER);
                 autonOuttakeIndex++;
                 break;
-            case 1:
+            case 1: // score the preload alliance sample
                 if (isPast(autonOuttakeTimer)) {
                     Trident.enforceSlideLimits = true;
                     robot.articulate(Robot.Articulation.SPECIMINER_OUTTAKE);

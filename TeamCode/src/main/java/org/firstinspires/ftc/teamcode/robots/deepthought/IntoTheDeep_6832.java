@@ -24,6 +24,7 @@ public class IntoTheDeep_6832 extends OpMode {
     //COMPONENTS
     public static Robot robot;
     static Autonomous auton;
+    static AutoSpecimens autoSpecimens;
     private FtcDashboard dashboard;
     public static Field field;
     public static DriverControls dc;
@@ -44,6 +45,7 @@ public class IntoTheDeep_6832 extends OpMode {
 
         //TEST & TEMP MODES
         TEST("Test"),
+        AUTO_SPECIMEN("Auto-Specimens", true),
         DEMO("Demo"),
         MANUAL_DIAGNOSTIC("Manual Diagnostic"), SQUARE("Square"), TURN("Turn"),
         RELOCALIZATION_TEST("Relocalize");
@@ -130,6 +132,7 @@ public class IntoTheDeep_6832 extends OpMode {
         robot = new Robot(hardwareMap, false);
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
+        autoSpecimens = new AutoSpecimens(robot);
         field = new Field();
 
         robot.updatePositionCache = false;
@@ -246,6 +249,13 @@ public class IntoTheDeep_6832 extends OpMode {
             case TELE_OP:
                 dc.joystickDrive();
                 break;
+            case AUTO_SPECIMEN:
+                if (autoSpecimens.execute(packet)) {
+                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
+                    robot.articulate(Robot.Articulation.TRAVEL);
+                    gameState = GameState.TELE_OP;
+                }
+                break;
             case TEST:
                 debugTelemetryEnabled = true;
                 dc.manualDiagnosticMethods();
@@ -294,6 +304,9 @@ public class IntoTheDeep_6832 extends OpMode {
                 break;
             case AUTONOMOUS:
                 handleTelemetry(auton.getTelemetry(debugTelemetryEnabled), auton.getTelemetryName(), packet);
+                break;
+            case AUTO_SPECIMEN:
+                handleTelemetry(autoSpecimens.getTelemetry(debugTelemetryEnabled), auton.getTelemetryName(), packet);
                 break;
             case TEST:
                 break;
