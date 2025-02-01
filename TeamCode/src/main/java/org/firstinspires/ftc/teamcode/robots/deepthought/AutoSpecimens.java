@@ -2,38 +2,35 @@ package org.firstinspires.ftc.teamcode.robots.deepthought;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.field.Field.P2D;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.field.POI;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
-import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.SpeciMiner;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-
-@Config(value = "AA_ITD_Auto_Basket")
-public class Autonomous implements TelemetryProvider {
-    public static double AUTON_OUTTAKE_WAIT_TIMER = 2;
+@Config(value = "AA_ITD_Auto_Spec")
+public class AutoSpecimens implements TelemetryProvider {
+    public static double AUTON_WAIT_TIMER = 2;
     public static int numCycles = 4;
     private Robot robot;
     private HardwareMap hardwareMap;
 
     //
     public enum AutonState {
-        INIT, DRIVE_TO_BASKET, OUTTAKE_TO_BASKET, DRIVE_TO_SUB,
-
+        INIT, DRIVE_TO_HIGHBAR, DRIVE_TO_OZONE, OUTTAKE_TO_HIGHBAR, DRIVE_TO_SUB,
     }
-
 
     public AutonState autonState = AutonState.INIT;
 
@@ -50,7 +47,7 @@ public class Autonomous implements TelemetryProvider {
 
     @Override
     public String getTelemetryName() {
-        return "AUTONOMOUS";
+        return "AUTOSPEC";
     }
 
     // autonomous routines
@@ -62,7 +59,7 @@ public class Autonomous implements TelemetryProvider {
     public static double FIELD_INCHES_PER_GRID = 23.5;
     public static double AUTON_START_DELAY = 0;
 
-    public Autonomous(Robot robot) {
+    public AutoSpecimens(Robot robot) {
         this.robot = robot;
         this.hardwareMap = this.robot.hardwareMap;
         autonIndex = 0;
@@ -86,12 +83,12 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 1:
                 if (isPast(autonTimer)) {
-                    autonState = AutonState.DRIVE_TO_BASKET;
+                    autonState = AutonState.DRIVE_TO_HIGHBAR;
                     autonIndex++;
                 }
                 break;
             case 2:
-                if (autonSamplerOuttake(packet)) {
+                if (autonSpecimenOuttake(packet)) {
                     robot.resetStates();
                     robot.articulate(Robot.Articulation.MANUAL);
                     autonIndex++;
@@ -104,22 +101,22 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 4:
                 //todo - need to find a way to manage failed intakes
-                if (autonSamplerIntake(field.ground2, packet)) {
+                if (autonSweepSample(field.ground2, packet)) {
                     autonIndex++;
                 }
                 break;
 
             case 5:
-                if (autonSamplerOuttake(packet)) {
+                if (autonSpecimenOuttake(packet)) {
                     robot.resetStates();
-                    robot.trident.sampler.articulate(Sampler.Articulation.MANUAL);
+                    robot.trident.speciMiner.articulate(SpeciMiner.Articulation.MANUAL);
 
                     autonIndex = 7;
                 }
                 break;
             case 6:
 
-                if (autonSamplerIntake(field.ground1, packet)) {
+                if (autonSweepSample(field.ground1, packet)) {
                     autonIndex++;
                 }
                 break;
@@ -136,27 +133,29 @@ public class Autonomous implements TelemetryProvider {
     public int autonOuttakeIndex = 0;
     public long autonOuttakeTimer = 0;
 
-    public boolean autonSamplerOuttake(TelemetryPacket packet) {
+    public boolean autonSpecimenOuttake(TelemetryPacket packet) {
         switch (autonOuttakeIndex) {
             case 0:
                 robot.resetStates();
-                autonOuttakeTimer = futureTime(AUTON_OUTTAKE_WAIT_TIMER);
+                autonOuttakeTimer = futureTime(AUTON_WAIT_TIMER);
                 autonOuttakeIndex++;
                 break;
             case 1:
                 if (isPast(autonOuttakeTimer)) {
-                    Trident.enforceSlideLimits = false;
-                    robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
+                    Trident.enforceSlideLimits = true;
+                    robot.articulate(Robot.Articulation.SPECIMINER_OUTTAKE);
                     autonOuttakeTimer = futureTime(1.75);
+                    //todo - set Speciminer and Shoulder for hibar prep while driving
+
                 }
-                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet) && robot.trident.sampler.slide.getCurrentPosition() > 400) {
+                // drive to hibar prep location
+                if (robot.driveTrain.strafeToPose(field.hibarPrep.getPose(), packet)) {
                     autonOuttakeIndex++;
                 }
                 break;
-            case 2:
+            case 2: //todo keep modifying for specimens
                 if (isPast(autonOuttakeTimer)) {
 //                    robot.aprilTagRelocalization();
-                    robot.trident.sampler.servoPower = .5;
                     autonOuttakeTimer = futureTime(2);
                     autonOuttakeIndex++;
                 }
@@ -179,62 +178,39 @@ public class Autonomous implements TelemetryProvider {
     public int autonIntakeTimer = 0;
     int numAttempts = 2;
 
-    public boolean autonSamplerIntake(POI ground, TelemetryPacket packet) {
+    public boolean autonSweepSample(POI ground, TelemetryPacket packet) {
         switch (autonIntakeIndex) {
-            case 0:
-                if (robot.driveTrain.strafeToPose(field.basketPrep.getPose(), packet)) {
+            case 0: // drive from hibar or from starting position to safe intermediate
+                if (robot.driveTrain.strafeToPose(field.zig.getPose(), packet)) {
                     autonIntakeIndex++;
-                    robot.resetStates();
-                    //ADD LIMELIGHT ALIGNMENT HERE
+                    //robot.resetStates();
                 }
-            case 1:
+            case 1: // get beyond alliance samples
+                if (robot.driveTrain.strafeToPose(field.zag.getPose(), packet)) {
+                    autonIntakeIndex++;
+                    //robot.resetStates();
+                }
+                break;
+            case 2: //drive to coral target sample
                 if (robot.driveTrain.strafeToPose(ground.getPose(), packet)) {
                     autonIntakeIndex++;
-                    robot.resetStates();
-                    //ADD LIMELIGHT ALIGNMENT HERE
+                    //robot.resetStates();
                 }
                 break;
-            case 2:
-//                if (robot.alignOnSample()) {
-                autonIntakeIndex++;
-//                }
-                break;
-            case 3:
-                robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
-                if (robot.articulation == Robot.Articulation.MANUAL) {
+            case 3: // push to ozone
+                if (robot.driveTrain.strafeToPose(new Pose2d(ground.getPose().position.x, -2.3, 90), packet)) {
                     autonIntakeIndex++;
+                    //robot.resetStates();
+                    robot.articulate(Robot.Articulation.TRAVEL);
+                    autonIntakeIndex = 0;
+                    return true;
                 }
                 break;
-            case 4:
-                robot.articulate(Robot.Articulation.TRAVEL);
-                autonIntakeIndex = 0;
-                return true;
 
         }
 
         return false;
     }
 
-    int pingPongIndex = 0;
 
-    public void pingPong(TelemetryPacket packet) {
-        switch (pingPongIndex) {
-            case 0:
-                robot.aprilTagRelocalization();
-
-                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet)) {
-
-                    pingPongIndex++;
-                }
-                break;
-            case 1:
-                robot.aprilTagRelocalization();
-
-
-//                if (robot.driveTrain.strafeToPose(P2D(-1.5, -.5, 0), packet)) {
-//                    pingPongIndex--;
-//                }
-        }
-
-    }
 }
