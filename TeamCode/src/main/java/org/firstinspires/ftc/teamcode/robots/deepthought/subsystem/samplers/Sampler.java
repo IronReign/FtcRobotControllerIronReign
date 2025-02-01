@@ -26,6 +26,7 @@ import java.util.Map;
 
 @Config(value = "00_ITD_SAMPLER")
 public class Sampler extends Arm {
+    public static double TUNABLE_COEFFICIENT = .1;
     CRServo beater = null;
     //public DcMotorEx slide = null;
 
@@ -106,15 +107,14 @@ public class Sampler extends Arm {
         beater.setPower(-servoPower);
         elbow.update();
         if (trident.calibrated) {
-            if(slideTargetPosition < 0)
-                slideTargetPosition = 0;
+            if (slideTargetPosition < 0) slideTargetPosition = 0;
             slide.setTargetPosition(slideTargetPosition);
             //allow real-time elbow speed changes
             elbow.setSpeed(ELBOW_JOINT_SPEED);
 //            trident.setShoulderTarget(this, shoulderTargetPosition);
         }
         if (colorSensorEnabled) {
-             updateColorSensor();
+            updateColorSensor();
         }
         //compute the current articulation/behavior
         articulate();
@@ -141,8 +141,7 @@ public class Sampler extends Arm {
 
     public enum Articulation {
         MANUAL, //does nothing - used for transition tracking
-        CALIBRATE,
-        TUCK, // safely tuck the arm out of the way
+        CALIBRATE, TUCK, // safely tuck the arm out of the way
         INTAKE_PREP, INTAKE, OUTTAKE
     }
 
@@ -227,15 +226,15 @@ public class Sampler extends Arm {
             case 2:
                 if (withinError(trident.getShoulderCurrentPosition(), SHOULDER_INTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
                     servoPower = .8;
-                    intakeTimer = futureTime(5);
+                    intakeTimer = futureTime(4);
                     intakeIndex++;
                     colorSensorEnabled = true;
                 }
                 break;
             case 3:
                 if (slideTargetPosition > SLIDE_INTAKE_MIN_POSITION) {
-                    slideTargetPosition -= 20;
-                    trident.setShoulderTarget(this, (int)(trident.getShoulderTarget()- 20 * 0.1534090909090909));
+                    slideTargetPosition -= 60;
+                    trident.setShoulderTarget(this, (int) (trident.getShoulderTarget() - 60 * 0.1534090909090909));
                 }
                 if (stopOnSample() || isPast(intakeTimer)) {
                     intakeIndex = 0;
@@ -270,30 +269,27 @@ public class Sampler extends Arm {
 //                elbow.setTargetAngle();
 //                outtakeTimer = futureTime(0);
                 elbow.setTargetAngle(preferHighOuttake ? ELBOW_HIGHOUTTAKE_ANGLE : ELBOW_LOWOUTTAKE_ANGLE);
+                slideTargetPosition = SLIDE_HIGHOUTTAKE_POSITION;
                 outtakeIndex++;
                 break;
             case 1:
-//                if (isPast(outtakeTimer)) {
-                slideTargetPosition = preferHighOuttake ? SLIDE_HIGHOUTTAKE_POSITION : SLIDE_LOWOUTTAKE_POSITION;
-                trident.setShoulderTarget(this, preferHighOuttake ? (int) (SHOULDER_HIGHOUTTAKE_POSITION * .75) : SHOULDER_LOWOUTTAKE_POSITION);
-                outtakeIndex++;
-//                }
+                if (slide.getCurrentPosition() > slideTargetPosition * .2) {
+                    trident.setShoulderTarget(this, preferHighOuttake ? (int) (SHOULDER_HIGHOUTTAKE_POSITION) : SHOULDER_LOWOUTTAKE_POSITION);
+                    outtakeIndex++;
+                }
                 break;
             case 2:
-                trident.setShoulderTarget(this, preferHighOuttake ? (int) (SHOULDER_HIGHOUTTAKE_POSITION) : SHOULDER_LOWOUTTAKE_POSITION);
-//                if (withinError(slide.getCurrentPosition(), preferHighOuttake ? SLIDE_HIGHOUTTAKE_POSITION : SLIDE_LOWOUTTAKE_POSITION, 10)) {
-//                    elbow.setTargetAngle(preferHighOuttake ? ELBOW_HIGHOUTTAKE_ANGLE : ELBOW_LOWOUTTAKE_ANGLE);
+
+                if (withinError(slide.getCurrentPosition(), preferHighOuttake ? SLIDE_HIGHOUTTAKE_POSITION : SLIDE_LOWOUTTAKE_POSITION, 10)) {
 //                    outtakeTimer = futureTime(.3);
-//                    outtakeIndex++;
-//                }
-                outtakeIndex ++;
+                    outtakeIndex++;
+                }
+
                 break;
             case 3:
-//                if(isPast(outtakeTimer)) {
-//                    shoulderTargetPosition = preferHighOuttake ? SHOULDER_HIGHOUTTAKE_POSITION : SHOULDER_LOWOUTTAKE_POSITION;
-//                    outtakeIndex ++;
-//                }
-                outtakeIndex++;
+                if (withinError(trident.getShoulderCurrentPosition(), preferHighOuttake ? SHOULDER_HIGHOUTTAKE_POSITION : SHOULDER_LOWOUTTAKE_POSITION, 10)) {
+                    outtakeIndex++;
+                }
                 break;
             case 4:
                 if (!sampleDetected()) {
@@ -316,7 +312,7 @@ public class Sampler extends Arm {
                 slideTargetPosition = 20;
                 servoPower = 0;
                 tuckIndex++;
-               return true;
+                return true;
 
         }
         return false;

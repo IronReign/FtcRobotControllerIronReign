@@ -23,6 +23,7 @@ import java.util.Map;
 
 @Config(value = "AA_CS_Auton")
 public class Autonomous implements TelemetryProvider {
+    public static double AUTON_OUTTAKE_WAIT_TIMER = 2;
     public static int numCycles = 4;
     private Robot robot;
     private HardwareMap hardwareMap;
@@ -69,6 +70,7 @@ public class Autonomous implements TelemetryProvider {
 
     public static int autonIndex;
     public long autonTimer = futureTime(10);
+    public long gameTimer;
 
     public boolean execute(TelemetryPacket packet) {
         if (!alliance.isRed()) {
@@ -77,6 +79,7 @@ public class Autonomous implements TelemetryProvider {
         robot.positionCache.update(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), false);
         switch (autonIndex) {
             case 0:
+                gameTimer = futureTime(27);
                 autonState = AutonState.INIT;
                 autonTimer = futureTime(AUTON_START_DELAY);
                 autonIndex++;
@@ -101,18 +104,22 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 4:
                 //todo - need to find a way to manage failed intakes
-                if (autonSamplerIntake(field.ground1, packet)) {
+                if (autonSamplerIntake(field.ground2, packet)) {
                     autonIndex++;
                 }
                 break;
 
             case 5:
                 if (autonSamplerOuttake(packet)) {
-                    autonIndex++;
+                    robot.resetStates();
+                    robot.trident.sampler.articulate(Sampler.Articulation.MANUAL);
+
+                    autonIndex = 7;
                 }
                 break;
             case 6:
-                if (autonSamplerIntake(field.ground2, packet)) {
+
+                if (autonSamplerIntake(field.ground1, packet)) {
                     autonIndex++;
                 }
                 break;
@@ -133,33 +140,29 @@ public class Autonomous implements TelemetryProvider {
         switch (autonOuttakeIndex) {
             case 0:
                 robot.resetStates();
-                autonOuttakeTimer = futureTime(4);
+                autonOuttakeTimer = futureTime(AUTON_OUTTAKE_WAIT_TIMER);
                 autonOuttakeIndex++;
                 break;
             case 1:
-                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet)) {
-                    autonOuttakeIndex++;
-                }
-
-                break;
-
-            case 2:
                 if (isPast(autonOuttakeTimer)) {
                     Trident.enforceSlideLimits = false;
                     robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
-                    autonOuttakeTimer = futureTime(3);
+                    autonOuttakeTimer = futureTime(1.75);
+                }
+                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet) && robot.trident.sampler.slide.getCurrentPosition() > 400) {
+                    autonOuttakeIndex++;
                 }
                 break;
-            case 3:
+            case 2:
                 if (isPast(autonOuttakeTimer)) {
-                    robot.aprilTagRelocalization();
+//                    robot.aprilTagRelocalization();
                     robot.trident.sampler.servoPower = .5;
                     autonOuttakeTimer = futureTime(2);
                     autonOuttakeIndex++;
                 }
                 break;
 
-            case 4:
+            case 3:
                 robot.aprilTagRelocalization();
                 if (isPast(autonOuttakeTimer)) {
                     robot.trident.sampler.servoPower = 0;
@@ -192,9 +195,9 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 2:
-                if(robot.alignOnSample()) {
-                    autonIntakeIndex++;
-                }
+//                if (robot.alignOnSample()) {
+                autonIntakeIndex++;
+//                }
                 break;
             case 3:
                 robot.articulate(Robot.Articulation.SAMPLER_INTAKE);

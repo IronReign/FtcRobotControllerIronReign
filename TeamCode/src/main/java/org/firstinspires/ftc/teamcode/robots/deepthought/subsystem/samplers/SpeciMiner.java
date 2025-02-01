@@ -39,7 +39,7 @@ public class SpeciMiner extends Arm {
     public static int SHOULDER_HOME_POSITION = 250;
     public static int SHOULDER_PREINTAKE_POSITION = 250;
     public static int SHOULDER_PREOUTTAKE_POSITION = 810;
-    public static int SHOULDER_WALLTAKE_POSITION = -130;
+    public static int SHOULDER_WALLTAKE_POSITION = -150;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
     public static int SHOULDER_HIGHOUTTAKE_POSITION = 270;
     public int shoulderPositionMax = 850;
@@ -177,6 +177,7 @@ public class SpeciMiner extends Arm {
                 trident.setShoulderTarget(this, SHOULDER_WALLTAKE_POSITION);
                 slideTargetPosition = SLIDE_WALLTAKE_POSITION;
                 elbow.setTargetAngle(ELBOW_WALLTAKE_ANGLE);
+                servoPower = 1;
                 return true;
 
             case 1:
@@ -240,7 +241,7 @@ public class SpeciMiner extends Arm {
 
     @Override
     public void adjustElbow(double adjustAngle) {
-        elbow.setTargetAngle(elbow.getCurrentAngle() - adjustAngle);
+        elbow.setTargetAngle(elbow.getCurrentAngle() + adjustAngle);
     }
 
     @Override

@@ -69,7 +69,7 @@ public class Trident implements Subsystem {
     public static int shoulderTargetPosition = 0;
     public static int shoulderSpeed = 45;
     public static int SHOULDER_CALIBRATE_HORIZONTAL = -2020; // offset to get to horizontal when shoulder is at max
-    public static int SHOULDER_SIZING = 560;  //todo re-tune after horizontal tuning
+    public static int SHOULDER_SIZING = 540;  //todo re-tune after horizontal tuning
     public int SHOULDER_HORIZONTAL = 0;
     public static int SHOULDER_INTAKE_POSITION = 250;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
