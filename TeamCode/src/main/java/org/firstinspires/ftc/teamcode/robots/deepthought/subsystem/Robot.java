@@ -373,6 +373,7 @@ public class Robot implements Subsystem {
 
         telemetryMap.put("pid error", PIDError);
         telemetryMap.put("pid correction", PIDCorrection);
+        telemetryMap.put("pan target", panTargetAngle);
         telemetryMap.put("limelight running?", limelight.isRunning());
         LLStatus status = limelight.getStatus();
         telemetryMap.put("limelight fps, ", status.getFps());
@@ -446,6 +447,7 @@ public class Robot implements Subsystem {
     public boolean alignOnSample() {
         limelight.pipelineSwitch(3);
         LLResult llResult;
+        panTargetAngle = PAN_FORWARD;
         if ((llResult = limelight.getLatestResult()) != null) {
             if (llResult.getTx() != 0.0) {
                 double targetTx = SAMPLE_ALIGN_TARGET_TX;
@@ -474,7 +476,7 @@ public class Robot implements Subsystem {
     //to be called repeatedly until success
     public void aprilTagRelocalization() {
         limelight.pipelineSwitch(2);
-
+        panTargetAngle = PAN_APRILTAG_BASKET;
         LLResult llResult;
         if ((llResult = limelight.getLatestResult()) != null) {
             //limelight returns everything in meters

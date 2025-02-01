@@ -53,7 +53,7 @@ public class Sampler extends Arm {
 
         articulation = Articulation.MANUAL;
 
-        SLIDE_HIGHOUTTAKE_POSITION = 2320;
+        SLIDE_HIGHOUTTAKE_POSITION = 2400;
 
 
         //defaults specific to sampler
@@ -133,6 +133,10 @@ public class Sampler extends Arm {
         outtakeIndex = 0;
         tuckIndex = 0;
         calibrateIndex = 0;
+    }
+
+    public void setElbowAngle(double elbowAngle) {
+        elbow.setTargetAngle(elbowAngle);
     }
 
     public enum Articulation {
@@ -325,7 +329,7 @@ public class Sampler extends Arm {
         if (hue > 60 && hue < 80) {
             currentSample = Sample.NEUTRAL;
             return "NEUTRAL";
-        } else if (hue < 20) {
+        } else if (hue < 26) {
             currentSample = Sample.RED;
             return "RED";
         } else if (hue < 235 && hue > 200) {

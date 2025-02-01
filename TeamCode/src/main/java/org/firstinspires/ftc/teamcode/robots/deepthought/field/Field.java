@@ -25,7 +25,7 @@ public class Field {
 
     public static int allianceMultiplier = 1;
     List<Flippable> elements = new ArrayList<>();
-    public POI basket = new POI(-2.3, -2.3, 35, "BASKET");
+    public POI basket = new POI(-2.0, -2.0, 35, "BASKET");
     public POI basketPrep = new POI(-2, -2, 50, "BASKET");
 
     public POI subAccess = new POI(-1.5, -.5, 180, "SUBACCESS");
@@ -99,7 +99,7 @@ public class Field {
         return Math.toDegrees(bearingToPoseRad(robotPose, endPose));
     }
 
-    public void Field() {
+    public Field() {
         elements.add(basket);
         elements.add(subAccess);
     }
@@ -113,7 +113,7 @@ public class Field {
         finalized = true;
         zones = Zone.getNamedZones();
         allianceMultiplier = isRed ? 1 : -1;
-        basket = new POI(-2.3 * allianceMultiplier, -2.3 * allianceMultiplier, 35, "BASKET");
+        basket = new POI(-2.2 * allianceMultiplier, -2.2 * allianceMultiplier, 35, "BASKET");
         basketPrep = new POI(isRed? -2.4 : 2, isRed? -2 : 2.4, 50, "BASKET");
     }
 

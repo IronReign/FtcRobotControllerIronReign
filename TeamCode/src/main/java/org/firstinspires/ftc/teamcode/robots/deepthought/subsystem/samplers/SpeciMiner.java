@@ -26,7 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@Config (value = "00_ITD_SPECIMINER")
+@Config(value = "00_ITD_SPECIMINER")
 public class SpeciMiner extends Arm {
     public CRServo CRSOne;
     public CRServo CRSTwo;
@@ -38,9 +38,10 @@ public class SpeciMiner extends Arm {
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
     public static int SHOULDER_PREINTAKE_POSITION = 250;
+    public static int SHOULDER_PREOUTTAKE_POSITION = 810;
     public static int SHOULDER_WALLTAKE_POSITION = -130;
-    public static int  SHOULDER_LOWOUTTAKE_POSITION = 2105;
-    public static int SHOULDER_HIGHOUTTAKE_POSITION = 1125;
+    public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
+    public static int SHOULDER_HIGHOUTTAKE_POSITION = 270;
     public int shoulderPositionMax = 850;
 
 
@@ -56,7 +57,7 @@ public class SpeciMiner extends Arm {
         this.robot = robot;
         this.trident = trident; // to request services from Trident - mainly setting the shoulder angle
 
-        SLIDE_HIGHOUTTAKE_POSITION = 420;
+        SLIDE_HIGHOUTTAKE_POSITION = 500;
 
         //defaults specific to sampler
         ELBOW_START_ANGLE = 25;
@@ -68,8 +69,8 @@ public class SpeciMiner extends Arm {
         ELBOW_ADJUST_ANGLE = 5;
         ELBOW_PREINTAKE_ANGLE = 5;
         ELBOW_LOWOUTTAKE_ANGLE = 102;
-        ELBOW_HIGHOUTTAKE_PREP_ANGLE = 80;
-        ELBOW_HIGHOUTTAKE_ANGLE = 25;
+        ELBOW_HIGHOUTTAKE_PREP_ANGLE = 155;
+        ELBOW_HIGHOUTTAKE_ANGLE = ELBOW_WALLTAKE_ANGLE;
         elbow = new Joint(hardwareMap, "specElbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "specSlide");
         slide = new DcMotorExResetable(bruh);
@@ -106,7 +107,7 @@ public class SpeciMiner extends Arm {
                 }
                 break;
             case 2:
-                if(stopOnSample()) {
+                if (stopOnSample()) {
                     trident.setShoulderTarget(this, SHOULDER_PREINTAKE_POSITION);
                     groundIntakeIndex = 0;
                     return true;
@@ -124,18 +125,16 @@ public class SpeciMiner extends Arm {
         switch (outtakeIndex) {
             case 0:
                 elbow.setTargetAngle(ELBOW_HIGHOUTTAKE_PREP_ANGLE);
-                trident.setShoulderTarget(this, SHOULDER_HIGHOUTTAKE_POSITION);
+                trident.setShoulderTarget(this, SHOULDER_PREOUTTAKE_POSITION);
                 slideTargetPosition = SLIDE_HIGHOUTTAKE_POSITION;
                 outtakeIndex++;
                 break;
             case 1:
 
-
                 break;
             case 2:
+                trident.setShoulderTarget(this, SHOULDER_HIGHOUTTAKE_POSITION);
                 outtakeIndex = 0;
-                elbow.setTargetAngle(ELBOW_HIGHOUTTAKE_ANGLE);
-                slideTargetPosition = 10;
                 return true;
         }
         return false;
@@ -229,7 +228,6 @@ public class SpeciMiner extends Arm {
     }
 
 
-
     @Override
     public boolean stopOnSample() {
         servoPower = 1.0;
@@ -249,7 +247,7 @@ public class SpeciMiner extends Arm {
     public void update(Canvas fieldOverlay) {
         CRSOne.setPower(-servoPower);
         CRSTwo.setPower(servoPower);
-        if(slideTargetPosition > slideMaxPosition)
+        if (slideTargetPosition > slideMaxPosition)
             slideTargetPosition = slideMaxPosition;
         slide.setTargetPosition(slideTargetPosition);
 
@@ -276,6 +274,10 @@ public class SpeciMiner extends Arm {
         wallTakeIndex = 0;
         outtakeIndex = 0;
         calibrateIndex = 0;
+    }
+
+    public void incrementOuttake() {
+        outtakeIndex++;
     }
 
     public enum Articulation {

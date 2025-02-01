@@ -46,7 +46,7 @@ public abstract class Arm implements Subsystem {
     public static int slidePositionMax = 3300;
     public static int slidePositionMin = 0;
     public int SLIDE_INTAKE_MIN_POSITION = 0;
-    public int SLIDE_PREINTAKE_POSITION = 880;
+    public int SLIDE_PREINTAKE_POSITION = 1000;
     public int SLIDE_LOWOUTTAKE_POSITION = 320;
     public int SLIDE_HIGHOUTTAKE_POSITION = 1920;
     public static int slideSpeed = 80;
