@@ -177,141 +177,141 @@ public class AutoNav implements TelemetryProvider {
     private Action driveToHang;
     private Action driveToDrone;
     public void autoEndgameBuild() {
-        ArrayList<SubZone> arr = field.getSubZones(robot.driveTrain.pose);
+        ArrayList<SubZone> arr = field.getSubZones(robot.driveTrain.getPose());
         if(arr.contains(SubZone.BACKDROP)) {
             if(backdropSide) {
-                driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                         .strafeToLinearHeading(new Vector2d(12, alliance.isRed() ? -35 : 35), Math.toRadians(180))
                         .build();
-                adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                         .build();
-                driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                         .strafeToLinearHeading(new Vector2d(-16, alliance.isRed() ? -35 : 35), Math.toRadians(180))
                         .build();
             }
             else {
-                driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                         .strafeToLinearHeading(new Vector2d(12, alliance.isRed() ? -58.5 : 58.5), Math.toRadians(180))
                         .build();
-                adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                         .strafeToLinearHeading(new Vector2d(-10, alliance.isRed() ? -58.5 : 58.5), Math.toRadians(180))
                         .build();
-                driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                         .strafeToLinearHeading(new Vector2d(-16, alliance.isRed() ? -58.5 : 58.5), Math.toRadians(180))
                         .build();
             }
         }
         else if(arr.contains(SubZone.WING)) {
             if(backdropSide) {
-                driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                         .setReversed(true)
                         .strafeToLinearHeading(new Vector2d(-2 * FIELD_INCHES_PER_GRID, alliance.isRed() ? -.5 * FIELD_INCHES_PER_GRID : .5 * FIELD_INCHES_PER_GRID), Math.toRadians(180))
                         .strafeTo(new Vector2d(1 * FIELD_INCHES_PER_GRID, alliance.isRed() ? -.5 * FIELD_INCHES_PER_GRID : .5 * FIELD_INCHES_PER_GRID))
                         .setReversed(false)
                         .strafeTo(new Vector2d(12, alliance.isRed() ? -35 : 35))
                         .build();
-                adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                         .build();
-                driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                         .strafeToLinearHeading(new Vector2d(-16, alliance.isRed() ? -35 : 35), Math.toRadians(180))
                         .build();
             }
             else {
-                driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                         .setReversed(true)
                         .strafeToLinearHeading(new Vector2d(-2 * FIELD_INCHES_PER_GRID, alliance.isRed() ? -.5 * FIELD_INCHES_PER_GRID : .5 * FIELD_INCHES_PER_GRID), Math.toRadians(180))
                         .strafeTo(new Vector2d(1 * FIELD_INCHES_PER_GRID, alliance.isRed() ? -.5 * FIELD_INCHES_PER_GRID : .5 * FIELD_INCHES_PER_GRID))
                         .setReversed(false)
                         .strafeTo(new Vector2d(12, alliance.isRed() ? -58.5 : 58.5))
                         .build();
-                adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                         .strafeToLinearHeading(new Vector2d(-10, alliance.isRed() ? -58.5 : 58.5), Math.toRadians(180))
                         .build();
-                driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                         .strafeToLinearHeading(new Vector2d(-16, alliance.isRed() ? -58.5 : 58.5), Math.toRadians(180))
                         .build();
             }
         }
         else {
-            if(field.getZone(robot.driveTrain.pose) == Field.Zone.AUDIENCE) {
+            if(field.getZone(robot.driveTrain.getPose()) == Field.Zone.AUDIENCE) {
                 if(backdropSide) {
-                    driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .setReversed(true)
                             .strafeTo(new Vector2d(-1.5 * FIELD_INCHES_PER_GRID, alliance.isRed() ? -2.5 * FIELD_INCHES_PER_GRID : 2.5 * FIELD_INCHES_PER_GRID))
                             .strafeTo(new Vector2d(1 * FIELD_INCHES_PER_GRID, alliance.isRed() ? -2.5 * FIELD_INCHES_PER_GRID : 2.5 * FIELD_INCHES_PER_GRID))
                             .setReversed(false)
                             .strafeToLinearHeading(new Vector2d(12, alliance.isRed() ? -35 : 35), Math.toRadians(180))
                             .build();
-                    adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .build();
-                    driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .strafeToLinearHeading(new Vector2d(-16, alliance.isRed() ? -35 : 35), Math.toRadians(180))
                             .build();
                 }
                 else {
-                    driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .setReversed(true)
                             .strafeTo(new Vector2d(-1.5 * FIELD_INCHES_PER_GRID, alliance.isRed() ? -2.5 * FIELD_INCHES_PER_GRID : 2.5 * FIELD_INCHES_PER_GRID))
                             .strafeTo(new Vector2d(1 * FIELD_INCHES_PER_GRID, alliance.isRed() ? -2.5 * FIELD_INCHES_PER_GRID : 2.5 * FIELD_INCHES_PER_GRID))
                             .setReversed(false)
                             .strafeToLinearHeading(new Vector2d(12, alliance.isRed() ? -58.5 : 58.5), Math.toRadians(180))
                             .build();
-                    adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .strafeToLinearHeading(new Vector2d(-10, alliance.isRed() ? -58.5 : 58.5), Math.toRadians(180))
                             .build();
-                    driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .strafeToLinearHeading(new Vector2d(-16, alliance.isRed() ? -58.5 : 58.5), Math.toRadians(180))
                             .build();
                 }
             }
-            else if(field.getZone(robot.driveTrain.pose) == Field.Zone.RIGGING){
+            else if(field.getZone(robot.driveTrain.getPose()) == Field.Zone.RIGGING){
                 if(backdropSide) {
-                    driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .setReversed(true)
                             .strafeTo(new Vector2d(1 * FIELD_INCHES_PER_GRID, -.5 * FIELD_INCHES_PER_GRID))
                             .setReversed(false)
                             .strafeToLinearHeading(new Vector2d(12, alliance.isRed() ? -35 : 35), Math.toRadians(180))
                             .build();
-                    adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .build();
-                    driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .strafeToLinearHeading(new Vector2d(-16, alliance.isRed() ? -35 : 35), Math.toRadians(180))
                             .build();
                 }
                 else {
-                    driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .setReversed(true)
                             .strafeTo(new Vector2d(1 * FIELD_INCHES_PER_GRID, -.5 * FIELD_INCHES_PER_GRID))
                             .setReversed(false)
                             .strafeToLinearHeading(new Vector2d(12, alliance.isRed() ? -58.5 : 58.5), Math.toRadians(180))
                             .build();
-                    adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .strafeToLinearHeading(new Vector2d(-10, alliance.isRed() ? -58.5 : 58.5), Math.toRadians(180))
                             .build();
-                    driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .strafeToLinearHeading(new Vector2d(-16, alliance.isRed() ? -58.5 : 58.5), Math.toRadians(180))
                             .build();
                 }
             }
             else {
                 if(backdropSide) {
-                    driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .strafeToLinearHeading(new Vector2d(12, alliance.isRed() ? -35 : 35), Math.toRadians(180))
                             .build();
-                    adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .build();
-                    driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .strafeToLinearHeading(new Vector2d(-16, alliance.isRed() ? -35 : 35), Math.toRadians(180))
                             .build();
                 }
                 else {
-                    driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    driveToDrone = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .strafeToLinearHeading(new Vector2d(12, alliance.isRed() ? -58.5 : 58.5), Math.toRadians(180))
                             .build();
-                    adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    adjustForPrepHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .strafeToLinearHeading(new Vector2d(-10, alliance.isRed() ? -58.5 : 58.5), Math.toRadians(180))
                             .build();
-                    driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.pose)
+                    driveToHang = robot.driveTrain.actionBuilder(robot.driveTrain.getPose())
                             .strafeToLinearHeading(new Vector2d(-16, alliance.isRed() ? -58.5 : 58.5), Math.toRadians(180))
                             .build();
                 }

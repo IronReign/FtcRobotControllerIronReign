@@ -157,7 +157,7 @@ public class Field {
 
     public void update(TelemetryPacket packet, Robot robot) {
         //handling dashboard fieldOverlay
-        Zone zone = getZone(robot.driveTrain.pose);
+        Zone zone = getZone(robot.driveTrain.getPose());
         Canvas c = packet.fieldOverlay();
         if (zone != null) {
             double zoneX = Math.min(zone.x1, zone.x2) * FIELD_INCHES_PER_GRID;
@@ -227,7 +227,7 @@ public class Field {
     }
 
     public SequentialAction pathToPOI(Robot robot, POI poi, int preferredRouteIndex){
-        return pathToPose(robot.driveTrain.pose, poi.getPose(), preferredRouteIndex, robot);
+        return pathToPose(robot.driveTrain.getPose(), poi.getPose(), preferredRouteIndex, robot);
     }
 
     public Pose2d getAprilTagPose(int id) {

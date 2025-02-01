@@ -380,9 +380,9 @@ public class CenterStage_6832 extends OpMode {
         if(debugTelemetryEnabled) {
             if (field.finalized) {
                 field.update(packet, robot);
-                opModeTelemetryMap.put("Current Robot Zone", field.getZone(robot.driveTrain.pose));
-                opModeTelemetryMap.put("Current Robot SubZones", field.getSubZones(robot.driveTrain.pose));
-                opModeTelemetryMap.put("Current Robot POI", field.getPOI(robot.driveTrain.pose));
+                opModeTelemetryMap.put("Current Robot Zone", field.getZone(robot.driveTrain.getPose()));
+                opModeTelemetryMap.put("Current Robot SubZones", field.getSubZones(robot.driveTrain.getPose()));
+                opModeTelemetryMap.put("Current Robot POI", field.getPOI(robot.driveTrain.getPose()));
             }
         }
 
@@ -426,8 +426,8 @@ public class CenterStage_6832 extends OpMode {
         handleTelemetry(visionTelemetryMap, "FRONT VISION - \t" + robot.visionProviderFront.getTelemetryName(), packet);
         telemetry.addData("apriltag pose x", robot.aprilTagPose.position.x);
         telemetry.addData("apriltag pose y", robot.aprilTagPose.position.y);
-        telemetry.addData("robot x", robot.driveTrain.pose.position.x);
-        telemetry.addData("robot y", robot.driveTrain.pose.position.y);
+        telemetry.addData("robot x", robot.driveTrain.getPose().position.x);
+        telemetry.addData("robot y", robot.driveTrain.getPose().position.y);
         if(debugTelemetryEnabled) {
             //handle robot telemetry
             handleTelemetry(robot.getTelemetry(debugTelemetryEnabled), robot.getTelemetryName(), packet);
@@ -438,7 +438,7 @@ public class CenterStage_6832 extends OpMode {
 
             packet.put("imu/roadrunner error", robot.driveTrain.imuRoadrunnerError);
             packet.put("imu angle", robot.sensors.driveIMUYaw);
-            packet.put("roadrunner angle", Math.toDegrees(robot.driveTrain.pose.heading.toDouble()));
+            packet.put("roadrunner angle", Math.toDegrees(robot.driveTrain.getPose().heading.toDouble()));
             packet.put("left", robot.sensors.leftDistSensorValue);
             packet.put("right", robot.sensors.rightDistSensorValue);
 

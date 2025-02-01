@@ -109,7 +109,7 @@ public class Robot implements Subsystem {
             double heading = Math.PI -
                     Math.asin(distDiff / Math.hypot(driveTrain.DISTANCE_BETWEEN_DISTANCE_SENSORS, distDiff))
                             * ((sensors.leftDistSensorValue > sensors.rightDistSensorValue) ? 1 : 1);
-            driveTrain.setPose(new Pose2d(driveTrain.pose.position, heading));
+            driveTrain.setPose(new Pose2d(driveTrain.getPose().position, heading));
             Sensors.distanceSensorsEnabled = false;
         }
     }
@@ -180,7 +180,7 @@ public class Robot implements Subsystem {
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         if (updatePositionCache && gameState.isAutonomous()) {
-            currPosition = new CSPosition(driveTrain.pose, skyhook.getSkyhookLeftTicksCurrent(), skyhook.getSkyhookRightTicksCurrent());
+            currPosition = new CSPosition(driveTrain.getPose(), skyhook.getSkyhookLeftTicksCurrent(), skyhook.getSkyhookRightTicksCurrent());
             positionCache.update(currPosition, false);
         }
 
@@ -188,7 +188,7 @@ public class Robot implements Subsystem {
         driveTrain.updatePoseEstimate();
 
         if (drawFieldEnabled)
-            drawRobot(fieldOverlay, driveTrain.pose);
+            drawRobot(fieldOverlay, driveTrain.getPose());
 
         //update subsystems
         for (int i = 0; i < subsystems.length; i++) {
@@ -225,7 +225,7 @@ public class Robot implements Subsystem {
 //                    targetTag = detection;
 //            }
 
-//            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
+//            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.getPose().z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
 //            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
 //            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
 //            driveTrain.pose = new Pose2d(new Vector2d(aprilTagRelocalizationX, aprilTagRelocalizationY), driveTrain.pose.heading);
@@ -494,7 +494,7 @@ public class Robot implements Subsystem {
 
     @Override
     public void stop() {
-        currPosition = new CSPosition(driveTrain.pose, skyhook.getSkyhookLeftTicksCurrent(), skyhook.getSkyhookRightTicksCurrent());
+        currPosition = new CSPosition(driveTrain.getPose(), skyhook.getSkyhookLeftTicksCurrent(), skyhook.getSkyhookRightTicksCurrent());
         positionCache.update(currPosition, true);
         for (Subsystem component : subsystems) {
             component.stop();

@@ -113,6 +113,11 @@ public class Swerve implements Subsystem {
     }
 
     @Override
+    public void resetStates() {
+
+    }
+
+    @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new HashMap<>();
         telemetryMap.put("raw encoder position\n", yawEncoder.getCurrentPosition());
