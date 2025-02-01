@@ -41,6 +41,8 @@ public class Autonomous implements TelemetryProvider {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("autonState\t ", autonState);
+        telemetryMap.put("field finalized?\t", field.finalized);
+        telemetryMap.put("target basket\t", ""+ field.basket.x + field.basket.y);
         telemetryMap.put("autonIndex\t", autonIndex);
         telemetryMap.put("outtakeIndex\t", autonOuttakeIndex);
         telemetryMap.put("outtake timer\t", isPast(autonOuttakeTimer));
@@ -91,7 +93,7 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 2:
-                if (autonSamplerOuttake(packet)) {
+                if (autonSamplerOuttake(field.basket, packet)) {
                     robot.resetStates();
                     robot.articulate(Robot.Articulation.MANUAL);
                     autonIndex++;
@@ -110,7 +112,7 @@ public class Autonomous implements TelemetryProvider {
                 break;
 
             case 5:
-                if (autonSamplerOuttake(packet)) {
+                if (autonSamplerOuttake(field.basket, packet)) {
                     robot.resetStates();
                     robot.trident.sampler.articulate(Sampler.Articulation.MANUAL);
 
@@ -136,7 +138,7 @@ public class Autonomous implements TelemetryProvider {
     public int autonOuttakeIndex = 0;
     public long autonOuttakeTimer = 0;
 
-    public boolean autonSamplerOuttake(TelemetryPacket packet) {
+    public boolean autonSamplerOuttake(POI basket, TelemetryPacket packet) {
         switch (autonOuttakeIndex) {
             case 0:
                 robot.resetStates();
@@ -149,7 +151,7 @@ public class Autonomous implements TelemetryProvider {
                     robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
                     autonOuttakeTimer = futureTime(1.75);
                 }
-                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet) && robot.trident.sampler.slide.getCurrentPosition() > 400) {
+                if (robot.driveTrain.strafeToPose(basket.getPose(), packet) && robot.trident.sampler.slide.getCurrentPosition() > 400) {
                     autonOuttakeIndex++;
                 }
                 break;
@@ -157,14 +159,16 @@ public class Autonomous implements TelemetryProvider {
                 if (isPast(autonOuttakeTimer)) {
 //                    robot.aprilTagRelocalization();
                     robot.trident.sampler.servoPower = .5;
-                    autonOuttakeTimer = futureTime(2);
+                    autonOuttakeTimer = futureTime(1);
                     autonOuttakeIndex++;
                 }
                 break;
 
             case 3:
-                robot.aprilTagRelocalization();
+//                robot.aprilTagRelocalization();
                 if (isPast(autonOuttakeTimer)) {
+                    robot.resetStates();
+                    robot.articulate(Robot.Articulation.MANUAL);
                     robot.trident.sampler.servoPower = 0;
                     autonOuttakeIndex = 0;
                     return true;

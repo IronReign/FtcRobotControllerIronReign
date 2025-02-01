@@ -209,10 +209,10 @@ public class Robot implements Subsystem {
         trident.sampler.updateColorSensor();
         if (trident.currentSample == Trident.Sample.RED) {
             alliance = Constants.Alliance.RED;
-            startingPosition = startingPosition.isRed() == true ? startingPosition : startingPosition == Constants.Position.START_LEFT_BLUE ? Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
+            startingPosition = startingPosition.isRed() ? startingPosition : startingPosition == Constants.Position.START_LEFT_BLUE ? Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
         } else if (trident.currentSample == Trident.Sample.BLUE) {
             alliance = Constants.Alliance.BLUE;
-            startingPosition = startingPosition.isRed() == false ? startingPosition : startingPosition == Constants.Position.START_LEFT_RED ? Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
+            startingPosition = !startingPosition.isRed() ? startingPosition : startingPosition == Constants.Position.START_LEFT_RED ? Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
         }
     }
 

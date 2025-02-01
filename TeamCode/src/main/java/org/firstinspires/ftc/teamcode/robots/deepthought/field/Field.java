@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.util.Vector2;
 
 import java.lang.Math;
 import java.util.*;
+
 @Config(value = "ITD_FIELD")
 public class Field {
 
@@ -27,13 +28,14 @@ public class Field {
     List<Flippable> elements = new ArrayList<>();
     //all values are in field grids
     public POI basket = new POI(-2.0, -2.0, 35, "BASKET");
+    public POI basket2 = new POI(-2.0, -2.0, 35, "BASKET");
     public POI basketPrep = new POI(-2, -2, 50, "BASKET");
 
     public POI subAccess = new POI(-1.5, -.5, 180, "SUBACCESS");
 
     //neutral samples
     public POI ground1 = new POI(-2.4, -2, 93, "GROUND1");
-    public POI ground2 = new POI(-2.4, -2, 52.5, "GROUND2");
+    public POI ground2 = new POI(-2.2, -1.60, 45, "GROUND2");
     public POI ground3 = new POI(-2.375, -2.35, 110, "GROUND3");
 
     // alliance samples - appox settings for using back plate to push samples to ozone
@@ -44,7 +46,7 @@ public class Field {
     public POI ozone = new POI(2.4, -1.75, -90, "OZone");
     public POI hibarPrep = new POI(0, -1.5, 90, "HiBarPrep");
     public POI zig = new POI(1.5, -1.5, 90, "Zig"); // zig from speciminer scoring
-    public POI zag = new POI(1.5, -.5, 90, "Zag"); // zag from zig to safely get back of robot on far side of alliance samples
+    public POI zag = new POI(1.5, -.5, 90, "Zag"); // zag from zig to safely get back of robot on  far side of alliance samples
 
     public POI hibar = new POI(0, -2, 90, "HiBar");
     public static final double MAX_Y_VALUE = 3;
@@ -126,15 +128,17 @@ public class Field {
         flipField(alliance.isRed());
         finalized = true;
         zones = Zone.getNamedZones();
+        isRed = alliance.isRed();
         allianceMultiplier = isRed ? 1 : -1;
-        basket = new POI(-2.3 * allianceMultiplier, -2.3  * allianceMultiplier, 55, "BASKET");
-        basketPrep = new POI(isRed? -2.4 : 2, isRed? -2 : 2.4, 50, "BASKET");
+        basket = new POI(-2.3 * allianceMultiplier, -2.3 * allianceMultiplier, isRed ? 55 : 55 + 180, "BASKET");
+        basket2 = new POI(-2.375 * allianceMultiplier, -2.375 * allianceMultiplier, 55, "BASKET");
+        basketPrep = new POI(-2.4*allianceMultiplier, -2*allianceMultiplier, isRed ? 50 : 50 + 180, "BASKET");
+        ground1 = new POI(-2.4*allianceMultiplier, -2*allianceMultiplier, isRed ? 93 : 93 + 180, "GROUND1");
+        ground2 = new POI(-2.2*allianceMultiplier,-1.60 *allianceMultiplier, isRed ? 45 : 45 + 180, "GROUND2");
     }
 
-    public void flipField(boolean alliance){
-        for(Flippable k : elements){
-           k.flip(alliance);
-        }
+    public void flipField(boolean alliance) {
+
     }
 
     public void update(TelemetryPacket packet, Robot robot) {
