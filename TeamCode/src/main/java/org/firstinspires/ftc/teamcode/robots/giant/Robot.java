@@ -333,6 +333,9 @@ public class Robot implements Subsystem {
 
     public NormalizedColorSensor colorSensor = null;
     public static int colorSensorGain = 12;
+    VisionProvider camera;
+
+
     public enum CurrentSample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
     }
@@ -344,6 +347,9 @@ public class Robot implements Subsystem {
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
     DcMotorEx outExtend, upExtend2, upExtend1;
     DcMotorEx suck;
+
+    public static final double objectWidthInRealWorldUnits= 3.4;
+    public static final double focalLength=1430;
 
     Servo tilt;
     Servo claw;
@@ -415,6 +421,10 @@ public class Robot implements Subsystem {
             targetSamples.add(Robot.CurrentSample.BLUE);
             targetSamples.remove(Robot.CurrentSample.RED);
         }
+
+        camera.update(true);
+        updateColorSensor();
+        colorSensor.setGain(colorSensorGain);
         g1.update();
         g2.update();
         updateColorSensor();
@@ -697,7 +707,7 @@ public class Robot implements Subsystem {
     }
 
     public void hookit(){
-        upExtendTicks=1950;
+        upExtendTicks=1800; //1950
         shoulderTicks=1510;
     }
     public void wallGrab(){
@@ -777,6 +787,13 @@ public class Robot implements Subsystem {
     public void init() {
         g1 = new StickyGamepad(gamepad1);
         g2 = new StickyGamepad(gamepad2);
+
+        try{
+            camera = VisionProviders.VISION_PROVIDERS[6].newInstance();
+        }catch(Exception e) {
+            throw new RuntimeException(e);
+        }
+        camera.initializeVision(hardwareMap,this,false);
 
         leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
@@ -910,7 +927,7 @@ public class Robot implements Subsystem {
 
     public void mecanumDrive(double forwardX, double strafeX, double turnX) {
         forward = forwardX;
-        strafe =  .6*strafeX;
+        strafe =  strafeX;
         turn = turnX*.65;
         double r = Math.hypot(strafe, forward);
         double robotAngle = Math.atan2(forward, strafe) - Math.PI/4;
