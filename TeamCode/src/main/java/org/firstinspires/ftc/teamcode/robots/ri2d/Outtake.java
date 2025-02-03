@@ -32,6 +32,11 @@ public class Outtake implements Subsystem {
     }
 
     @Override
+    public void resetStates() {
+
+    }
+
+    @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         return null;
     }

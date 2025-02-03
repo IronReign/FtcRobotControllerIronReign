@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -13,16 +14,17 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-
+@Config(value = "CORE")
 public class Robot implements Subsystem {
     HardwareMap hardwareMap;
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
     DcMotorEx vertical, horizontal;
-    Servo claw, rotater;
+    Servo claw;
     Gamepad gamepad1;
     DcMotorEx shoulder;
     DcMotorEx slide;
@@ -31,37 +33,43 @@ public class Robot implements Subsystem {
 
     public boolean clawOpen = false;
     public double clawOpenPosition = 1;
-    public double clawClosePosition = 0.3;
-    public int shoulderTargetPosition = 0;
-    public int slideTargetPosition = 0;
+    public double clawClosePosition = 0;
+    public static int shoulderTargetPosition = 0;
+    public static int slideTargetPosition = 0;
     public int rotaterPosition = 0;
+    private boolean motorUpdated;
+    public StickyGamepad spad1;
 
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
         this.hardwareMap = hardwareMap;
         this.gamepad1 = gamepad;
+        spad1 = new StickyGamepad(gamepad1);
     }
 
     @Override
     public void update(Canvas fieldOverlay) {
-        if(gamepad1.dpad_up) {
-            if (rotaterPosition < 90){
-                rotater.setPosition(rotaterPosition + 10);
-            } else {
-                shoulderTargetPosition = 90;
-            }
-        }
-
-        if(gamepad1.dpad_down) {
-            if (rotaterPosition > 0){
-                rotater.setPosition(rotaterPosition - 10);
-            } else {
-                shoulderTargetPosition = 0;
-            }
-        }
-
+        spad1.update();
+        motorUpdated = false;
         // Claw Controls
-        if(gamepad1.b) {
+        if(spad1.b) {
             clawOpen = !clawOpen;
+        }
+
+        if(spad1.a) { //preset for ground
+            if (shoulderTargetPosition < 400) // over sub barrier
+                shoulderTargetPosition = 560;
+            else
+                shoulderTargetPosition = 330; //ground
+            slideTargetPosition = 440;
+        }
+
+        if(spad1.x) { //preset for wall
+            shoulderTargetPosition= 824;
+            slideTargetPosition = 0;
+        }
+        if(spad1.y) { //preset for specimen score
+            shoulderTargetPosition = 1900;
+            slideTargetPosition = 280;
         }
         if(clawOpen) {
             claw.setPosition(clawOpenPosition);
@@ -69,14 +77,14 @@ public class Robot implements Subsystem {
             claw.setPosition(clawClosePosition);
         }
 
-        if(gamepad1.right_trigger >= 0.3){
-            if (shoulder.getCurrentPosition() < 1800){
+        if(gamepad1.left_trigger >= 0.3){
+            if (shoulder.getCurrentPosition() < 2000){
                 shoulderTargetPosition = shoulder.getCurrentPosition() + 75;
             } else {
-                shoulderTargetPosition = 1800;
+                shoulderTargetPosition = 2000;
             }
         }
-        else if (gamepad1.left_trigger >= 0.3){
+        else if (gamepad1.right_trigger >= 0.3){
             if (shoulder.getCurrentPosition() > 0){
                 shoulderTargetPosition = shoulder.getCurrentPosition() - 75;
             } else {
@@ -85,14 +93,14 @@ public class Robot implements Subsystem {
 
         }
 
-        if (gamepad1.right_bumper){
-            if (slide.getCurrentPosition() < 1450){
+        if (spad1.dpad_up){
+            if (slide.getCurrentPosition() < 1200){
                 slideTargetPosition = slide.getCurrentPosition() + 60;
             } else {
-                slide.setTargetPosition(1450);
+                slide.setTargetPosition(1200);
             }
         }
-        if (gamepad1.left_bumper){
+        if (spad1.dpad_down){
             if(slide.getCurrentPosition() > 60){
                 slideTargetPosition = slide.getCurrentPosition() - 60;
             } else {
@@ -100,19 +108,20 @@ public class Robot implements Subsystem {
             }
         }
 
-
         updateMotors();
         mecanumDrive(gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.left_stick_x);
     }
 
     public void updateMotors() {
+
         if (clawOpen) {
             claw.setPosition(clawOpenPosition);
         } else {
             claw.setPosition(clawClosePosition);
         }
-        shoulder.setTargetPosition(1647);
-        slide.setTargetPosition(44);
+        shoulder.setTargetPosition(shoulderTargetPosition);
+        motorUpdated = true;
+        slide.setTargetPosition(slideTargetPosition);
     }
 
     public void mecanumDrive(double forward, double strafe, double turn) {
@@ -130,6 +139,11 @@ public class Robot implements Subsystem {
 
     }
 
+    @Override
+    public void resetStates() {
+
+    }
+
     public void init() {
 
         leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
@@ -141,7 +155,6 @@ public class Robot implements Subsystem {
         slide = hardwareMap.get(DcMotorEx.class, "slide");
         horizontal = hardwareMap.get(DcMotorEx.class, "horizontal");
         vertical = hardwareMap.get(DcMotorEx.class, "vertical");
-        rotater = hardwareMap.get(Servo.class, "rotater");
         // Set motor run modes
         leftBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -172,7 +185,6 @@ public class Robot implements Subsystem {
         vertical.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
 
         claw.setPosition(clawOpenPosition);
-        rotater.setPosition(90);
     }
 
     @Override
@@ -184,6 +196,9 @@ public class Robot implements Subsystem {
         telemetry.put("Shoulder Power", shoulder.getCurrent(CurrentUnit.AMPS));
         telemetry.put("Shoulder Position", shoulder.getCurrentPosition());
         telemetry.put("Shoulder Target Position", shoulderTargetPosition);
+        telemetry.put("Shoulder runMode", shoulder.getMode());
+        telemetry.put("motor updated", motorUpdated);
+
         telemetry.put("Slide Position", slide.getCurrentPosition());
         telemetry.put("Slide Target Position", slideTargetPosition);
         telemetry.put("Horizontal", horizontal.getCurrentPosition());
@@ -221,8 +236,8 @@ public class Robot implements Subsystem {
                 calibrateStage++;
                 break;
             case 3:
-                shoulder.setTargetPosition(1647);
-                slide.setTargetPosition(44);
+                shoulder.setTargetPosition(1500); //1647
+                slide.setTargetPosition(0); //44
                 return true;
         }
         return false;

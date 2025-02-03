@@ -20,6 +20,11 @@ public class Pincer implements Subsystem {
     }
 
     @Override
+    public void resetStates() {
+
+    }
+
+    @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         return Collections.emptyMap();
     }

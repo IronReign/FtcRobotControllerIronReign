@@ -4,24 +4,20 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
-import android.graphics.Color;
-
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Arm;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.SpeciMiner;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DcMotorExResetable;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
-import org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils;
 
 import java.util.*;
 
@@ -33,25 +29,33 @@ public class Trident implements Subsystem {
 
     public Sampler sampler;
     public SpeciMiner speciMiner;
+
+    Arm activeArm; //just to keep track of which arm is actively requesting shoulder services
     public static boolean enforceSlideLimits;
-    public DcMotorExResetable slide = null;
-    public DcMotorExResetable shoulder = null;
+    DcMotorExResetable shoulder = null;
     public Joint elbow;
 
     public NormalizedColorSensor colorSensor = null;
-    public static boolean colorSensorEnabled = false;
+    //public static boolean colorSensorEnabled = false;
 
-    public static int colorSensorGain = 12;
+    public boolean calibrated = true;
 
-    public boolean calibrated = false;
+    public void finalizeTargets() {
+        sampler.finalizeTargets();
+        speciMiner.finalizeTargets();
+    }
 
-    public final boolean useSampler = true;
-    public final boolean useSpeciminer = false;
-
+    public void setActiveArm(Arm arm) {
+        this.activeArm = arm;
+        if (arm instanceof Sampler) {
+            speciMiner.articulate(SpeciMiner.Articulation.TUCK);
+        } else {
+            sampler.articulate(Sampler.Articulation.TUCK);
+        }
+    }
 
     public enum Sample {
         RED, BLUE, NEUTRAL, NO_SAMPLE
-
     }
 
     public Sample currentSample = Sample.NO_SAMPLE;
@@ -61,26 +65,17 @@ public class Trident implements Subsystem {
 
 
     //shoulder - these are defaults - but the Sampler and Speciminer classes define their own local versions
-    public static int SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
+    public int SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
     public static int shoulderTargetPosition = 0;
     public static int shoulderSpeed = 45;
-    public static int SHOULDER_HOME_POSITION = 250;
+    public static int SHOULDER_CALIBRATE_HORIZONTAL = -2020; // offset to get to horizontal when shoulder is at max
+    public static int SHOULDER_SIZING = 540;  //todo re-tune after horizontal tuning
+    public int SHOULDER_HORIZONTAL = 0;
     public static int SHOULDER_INTAKE_POSITION = 250;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
     public static int SHOULDER_HIGHOUTTAKE_POSITION = 1925;
-    public int shoulderPositionMax = 850;
+    public static int SHOULDER_MIN_POSITION = -625;
 
-    //ELBOW JOINT VARIABLES - todo these are unused and need to be removed - they now exist locally in Sampler and Specimer
-    public static double ELBOW_START_ANGLE = 145;
-    public static int ELBOW_HOME_POSITION = 2050;
-    public static double ELBOW_PWM_PER_DEGREE = -5.672222222222222;
-    public static double ELBOW_JOINT_SPEED = 120;
-    public static double ELBOW_MIN_ANGLE = -15;
-    public static double ELBOW_MAX_ANGLE = 220;
-    public static int ELBOW_ADJUST_ANGLE = 5;
-    public static double ELBOW_PREINTAKE_ANGLE = 20;
-    public static double ELBOW_LOWOUTTAKE_ANGLE = 102;
-    public static double ELBOW_HIGHOUTTAKE_ANGLE = 70;
 
     //BEATER
     public static double beaterPower;
@@ -93,8 +88,8 @@ public class Trident implements Subsystem {
 
     public enum Articulation {
         MANUAL, //does nothing - used for transition tracking
+        CALIBRATE,
         TUCK, //does nothing - used for transition tracking
-        INTAKE_SAMPLER, OUTTAKE_SAMPLER,
         SAMPLER_TUCK, FLOOR_PREP, SAMPLER_FLOOR, SAMPLER_BASKET, SPECIMINER_TUCK, SPECIMINER_FLOOR, SPECIMINER_WALL, SPECIMINER_BAR
     }
 
@@ -111,22 +106,17 @@ public class Trident implements Subsystem {
         switch (articulation) {
             case MANUAL:
                 break;
-            case TUCK: // todo purge - tuck should be called directly on the Sampler and/or Speciminer - with variations that don't affect the shoulder
+            case CALIBRATE:
+                if (calibrate()) {
+                    articulation = Articulation.MANUAL;
+                }
+                break;
+            //this is master tuck, calls both tucks + shoulder and should only rarely be used
+            case TUCK:
                 if (tuck()) {
                     articulation = Articulation.MANUAL;
                 }
                 break;
-            //SHOULD ONLY BE ACCESSED BY SAMPLE()
-            case INTAKE_SAMPLER:
-                if (intakeSampler()) {
-                    articulation = Articulation.MANUAL;
-                }
-                break;
-
-            case OUTTAKE_SAMPLER:
-                if (outtakeSampler()) articulation = Articulation.MANUAL;
-                break;
-
             default:
                 throw new RuntimeException("how the ^%*( did you get here?");
         }
@@ -134,12 +124,82 @@ public class Trident implements Subsystem {
         return articulation;
     }
 
+    int calibrateIndex = 0;
+    public long calibrateTimer = 0;
+
+    public boolean calibrate() {
+        switch (calibrateIndex) {
+            case 0: //tuck the arms and start moving the shoulder up until it stalls
+                calibrated = false;
+                sampler.articulate(Sampler.Articulation.CALIBRATE);
+                speciMiner.articulate(SpeciMiner.Articulation.CALIBRATE);
+                calibrateTimer = futureTime(1); //enough time to assure it has begun moving
+                shoulder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                shoulder.setPower(.3);
+                calibrateIndex++;
+                break;
+            case 1: // has the arm stopped moving?
+                if (SHOULDER_CALIBRATE_ENCODER == shoulder.getCurrentPosition() && isPast(calibrateTimer)) {
+                    calibrateIndex++;
+                } else {
+                    SHOULDER_CALIBRATE_ENCODER = shoulder.getCurrentPosition();
+                }
+                break;
+            case 2: // lower to horizontal - experimentally determined offset
+                shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                shoulder.setTargetPosition(SHOULDER_CALIBRATE_HORIZONTAL);
+                shoulder.setPower(1);
+                shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                calibrateIndex++;
+                break;
+
+            case 3: // reset the encoders to make horizontal zero
+                if (withinError(shoulder.getCurrentPosition(), SHOULDER_CALIBRATE_HORIZONTAL, 3)) {
+                    shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    //shoulder.setDirection(DcMotorSimple.Direction.REVERSE);
+                    shoulder.setPower(1);
+                    shoulder.setVelocity(400);
+                    shoulder.setTargetPosition(0);
+                    shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    calibrateIndex++;
+                }
+                break;
+            case 4:
+                shoulderTargetPosition = SHOULDER_SIZING;
+
+                speciMiner.shoulderTargetPosition = shoulderTargetPosition;
+                calibrateIndex = 0;
+                calibrated = true;
+                return true;
+        }
+        return false;
+    }
+
     public long tuckTimer = 0;
     public static int tuckIndex = 0;
 
     public boolean tuck() { //todo tuck needs to be tested after refactoring - this only does sampler.tuck()
-        //todo dangerous way of calling tuck in sampler - sampler articulations don't know it's happening
-        return sampler.tuck();
+        switch (tuckIndex) {
+            case 0:
+                shoulderTargetPosition = SHOULDER_HORIZONTAL;
+
+                speciMiner.shoulderTargetPosition = SHOULDER_HORIZONTAL;
+                tuckIndex++;
+                break;
+            case 1:
+                if (withinError(shoulder.getCurrentPosition(), SHOULDER_HORIZONTAL, 500)) {
+                    Sampler.tuckIndex = 0;
+                    sampler.articulate(Sampler.Articulation.TUCK);
+//                SpeciMiner.tuckIndex = 0;
+                    speciMiner.articulate(SpeciMiner.Articulation.TUCK);
+                }
+            case 2:
+                if (sampler.slide.getCurrentPosition() < 150 && speciMiner.slide.getCurrentPosition() < 150) {
+                    return true;
+                }
+                break;
+        }
+        return false;
         // this won't work either as first line must only be called once
         // sampler.articulate(Sampler.Articulation.TUCK);
         //return (sampler.articulation==Sampler.Articulation.MANUAL)? true : false;
@@ -147,27 +207,12 @@ public class Trident implements Subsystem {
         // this is a relic of short term migration needs
     }
 
-    public boolean intakeSampler() {
-        return sampler.intake(); // todo cheapo delegation - fixup later
-    }
-
-    public boolean outtakeSampler() { //todo - trident shouldn't be in the business of passing sampler and speciminer articulations through
-        return sampler.outtake();
-    }
-
     public boolean sampleDetected() {
         return targetSamples.contains(currentSample);
     }
 
     public boolean stopOnSample() {
-        colorSensorEnabled = true;
-        beaterPower = .8;
-        if (targetSamples.contains(currentSample)) {
-            beaterPower = 0;
-            colorSensorEnabled = false;
-            return true;
-        }
-        return false;
+        return activeArm.stopOnSample();
     }
 
     public Trident(HardwareMap hardwareMap, Robot robot) {
@@ -175,45 +220,67 @@ public class Trident implements Subsystem {
         this.robot = robot;
         //moar subsystems
         sampler = new Sampler(hardwareMap, robot, this);
-        //speciMiner = new SpeciMiner(hardwareMap, robot, this);
+        speciMiner = new SpeciMiner(hardwareMap, robot, this);
+        activeArm = sampler; //just a default - can change any time
 
-        //elbow = new Joint(hardwareMap, "elbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
-        //DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "slide");
         DcMotorEx bruhx2 = this.hardwareMap.get(DcMotorEx.class, "shoulder");
-        //slide = new DcMotorExResetable(bruh);
         shoulder = new DcMotorExResetable(bruhx2);
-        //colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
-        //beater = this.hardwareMap.get(CRServo.class, "beater");
-//        pincer = this.hardwareMap.get(Servo.class, "pincer");
-//        slide.setMotorEnable();
-//        slide.setPower(1);
-//        slide.setDirection(DcMotorSimple.Direction.REVERSE);
-//        slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        slide.setTargetPosition(0);
-//        slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        slide.setVelocity(SLIDE_SPEED);
-
+        shoulder.setDirection(DcMotorSimple.Direction.REVERSE);
         shoulder.setMotorEnable();
         shoulder.setPower(1);
         shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shoulder.setTargetPosition(0);
         shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         shoulder.setVelocity(1500);
-        articulation = Articulation.MANUAL;
         SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
+        articulation = Articulation.MANUAL;
     }
 
+    // shoulder services
+    public int getShoulderTarget() {
+        return shoulderTargetPosition;
+    }
+
+    public int getShoulderCurrentPosition() {
+        return shoulder.getCurrentPosition();
+    }
+
+    public void setShoulderTarget(Arm subsystem, int targetTics) {
+        setActiveArm(subsystem);
+        setShoulderTarget(targetTics);
+    }
+
+    private void setShoulderTarget(int targetTics) {
+        if (targetTics > SHOULDER_MIN_POSITION) {
+            shoulderTargetPosition = targetTics;
+        } else {
+            shoulderTargetPosition = SHOULDER_MIN_POSITION;
+        }
+    }
+
+    public Arm getActiveArm() {
+        return activeArm;
+    }
+
+    public boolean isSamplerActive() {
+        return activeArm instanceof Sampler;
+    }
+
+    public DcMotorExResetable getShoulder() {
+        return shoulder;
+    }
 
     @Override
     public void update(Canvas fieldOverlay) {
         //compute the current articulation/behavior
         articulate();
         if (calibrated) {
+
             shoulder.setTargetPosition(shoulderTargetPosition);
         }
 
         sampler.update(fieldOverlay);
-//        speciMiner.update(fieldOverlay);
+        speciMiner.update(fieldOverlay);
 
     }
 
@@ -222,17 +289,29 @@ public class Trident implements Subsystem {
 //    shoulderTargetPosition=shoulder.getCurrentPosition();
     }
 
+    @Override
+    public void resetStates() {
+        tuckIndex = 0;
+        calibrateIndex = 0;
+        sampler.resetStates();
+        speciMiner.resetStates();
+    }
+
 
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("preferHighOuttake", preferHighOuttake);
+        telemetryMap.put("activeArm", activeArm.getTelemetryName());
         telemetryMap.put("shoulder current", shoulder.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("shoulder target : real", "" + shoulderTargetPosition + " : " + shoulder.getCurrentPosition());
-        if(robot.fetchedPosition != null)
+        if (robot.fetchedPosition != null)
             telemetryMap.put("shoulder fetched pos", robot.fetchedPosition.getShoulderPosition());
         telemetryMap.put("shoulder offset", shoulder.offset);
+
+        telemetryMap.put("calibrate stage", calibrateIndex);
+
         return telemetryMap;
     }
 

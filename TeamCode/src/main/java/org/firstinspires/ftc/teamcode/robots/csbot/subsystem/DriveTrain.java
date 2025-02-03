@@ -96,7 +96,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
 
     @Override
     public void update(Canvas c) {
-        imuRoadrunnerError = Robot.sensors.driveIMUYaw - Math.toDegrees(pose.heading.log());
+        imuRoadrunnerError = Robot.sensors.driveIMUYaw - Math.toDegrees(getPose().heading.log());
         if (distanceSensorsEnabled) {
             rightDistanceSensorValue = Robot.sensors.rightDistSensorValue;
             leftDistanceSensorValue = Robot.sensors.leftDistSensorValue;
@@ -106,7 +106,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
 //        update pose heading from imu regularly
         if(RELOCALIZE_WITH_IMU) {
             if ((int) (System.nanoTime() / 1e9) % 2 == 0) {
-                setPose(new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw)));
+                setPose(new Pose2d(getPose().position, Math.toRadians(Robot.sensors.driveIMUYaw)));
             }
         }
 
@@ -119,10 +119,10 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
 
     public void drive(double x, double y, double theta) {
         if (CenterStage_6832.field.finalized) {
-            theta = CenterStage_6832.field.getZone(pose) == Field.Zone.BACKSTAGE ? theta * HEADING_DAMPENING : theta;
-            x = CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX()) ?
+            theta = CenterStage_6832.field.getZone(getPose()) == Field.Zone.BACKSTAGE ? theta * HEADING_DAMPENING : theta;
+            x = CenterStage_6832.field.getSubZones(getPose()).contains(SubZone.BACKDROP) || CenterStage_6832.field.getSubZones(getPose()).contains(SubZone.BACKDROP.flipOnX()) ?
                     x * DRIVE_DAMPENING : x;
-            y = CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP) || CenterStage_6832.field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX()) ?
+            y = CenterStage_6832.field.getSubZones(getPose()).contains(SubZone.BACKDROP) || CenterStage_6832.field.getSubZones(getPose()).contains(SubZone.BACKDROP.flipOnX()) ?
                     y * DRIVE_DAMPENING : y;
         }
 
@@ -140,21 +140,21 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     public void fieldOrientedDrive(double x, double y, double theta, boolean isRed) {
         theta = theta * GLOBAL_HEADING_DAMPENING;
         if (CenterStage_6832.field.finalized) {
-            theta = (CenterStage_6832.field.getZone(pose) == Field.Zone.BACKSTAGE ||
-                    field.getSubZones(pose).contains(SubZone.PICKUP) ||
-                    field.getSubZones(pose).contains(SubZone.PICKUP.flipOnX()) ||
-                    field.getSubZones(pose).contains(SubZone.WING)) ||
-                    field.getSubZones(pose).contains(SubZone.WING.flipOnX()) ?
+            theta = (CenterStage_6832.field.getZone(getPose()) == Field.Zone.BACKSTAGE ||
+                    field.getSubZones(getPose()).contains(SubZone.PICKUP) ||
+                    field.getSubZones(getPose()).contains(SubZone.PICKUP.flipOnX()) ||
+                    field.getSubZones(getPose()).contains(SubZone.WING)) ||
+                    field.getSubZones(getPose()).contains(SubZone.WING.flipOnX()) ?
                     theta * HEADING_DAMPENING : theta;
-            x = ((field.getSubZones(pose).contains(SubZone.BACKDROP) || field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX())
+            x = ((field.getSubZones(getPose()).contains(SubZone.BACKDROP) || field.getSubZones(getPose()).contains(SubZone.BACKDROP.flipOnX())
                     ||
-                    field.getSubZones(pose).contains(SubZone.WING)) ||
-                    field.getSubZones(pose).contains(SubZone.WING.flipOnX())) ?
+                    field.getSubZones(getPose()).contains(SubZone.WING)) ||
+                    field.getSubZones(getPose()).contains(SubZone.WING.flipOnX())) ?
                     x * DRIVE_DAMPENING : x;
-            y = ((field.getSubZones(pose).contains(SubZone.BACKDROP) || field.getSubZones(pose).contains(SubZone.BACKDROP.flipOnX())
+            y = ((field.getSubZones(getPose()).contains(SubZone.BACKDROP) || field.getSubZones(getPose()).contains(SubZone.BACKDROP.flipOnX())
                     ||
-                    field.getSubZones(pose).contains(SubZone.WING)) ||
-                    field.getSubZones(pose).contains(SubZone.WING.flipOnX())) ?
+                    field.getSubZones(getPose()).contains(SubZone.WING)) ||
+                    field.getSubZones(getPose()).contains(SubZone.WING.flipOnX())) ?
                     y * DRIVE_DAMPENING : y;
         }
         // Create a vector from the gamepad x/y inputs
@@ -163,7 +163,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
                 x,
                 y);
         //additional rotation needed if blue alliance perspective
-        Rotation2d heading = (!isRed) ? pose.heading : pose.heading.plus(Math.PI);
+        Rotation2d heading = (!isRed) ? getPose().heading : getPose().heading.plus(Math.PI);
         input = heading.inverse().times(
                 new Vector2d(-input.x, input.y));
         setDrivePowers(new PoseVelocity2d(input, -theta));
@@ -189,7 +189,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
         if (headingPID.onTarget()) {
             //turn meets accuracy target
             //todo is this a good time to update pose heading from imu?
-            setPose(new Pose2d(pose.position, Math.toRadians(Robot.sensors.driveIMUYaw)));
+            setPose(new Pose2d(getPose().position, Math.toRadians(Robot.sensors.driveIMUYaw)));
             //stop
             Sensors.driveIMUEnabled = false;
             setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
@@ -222,15 +222,15 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
 
         Map<String, Object> telemetryMap = new HashMap<>();
-        telemetryMap.put("x in fieldCoords", pose.position.x / Constants.FIELD_INCHES_PER_GRID);
-        telemetryMap.put("y in fieldCoords", pose.position.y / Constants.FIELD_INCHES_PER_GRID);
-        telemetryMap.put("x in inches", pose.position.x);
-        telemetryMap.put("y in inches", pose.position.y);
+        telemetryMap.put("x in fieldCoords", getPose().position.x / Constants.FIELD_INCHES_PER_GRID);
+        telemetryMap.put("y in fieldCoords", getPose().position.y / Constants.FIELD_INCHES_PER_GRID);
+        telemetryMap.put("x in inches", getPose().position.x);
+        telemetryMap.put("y in inches", getPose().position.y);
 
         telemetryMap.put("Right Distance Sensor Value", robot.sensors.rightDistSensorValue);
         telemetryMap.put("Left Distance Sensor Value", robot.sensors.leftDistSensorValue);
 
-        telemetryMap.put("heading", Math.toDegrees(pose.heading.log()));
+        telemetryMap.put("heading", Math.toDegrees(getPose().heading.log()));
         telemetryMap.put("Left Odometry Pod:\t", leftFront.getCurrentPosition());
         telemetryMap.put("Right Odometry Pod:\t", rightFront.getCurrentPosition());
         telemetryMap.put("Cross Odometry Pod:\t", rightBack.getCurrentPosition());
