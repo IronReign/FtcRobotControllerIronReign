@@ -39,7 +39,7 @@ public class SpeciMiner extends Arm {
     public static int SHOULDER_HOME_POSITION = 250;
     public static int SHOULDER_PREINTAKE_POSITION = 250;
     public static int SHOULDER_PREOUTTAKE_POSITION = 810;
-    public static int SHOULDER_WALLTAKE_POSITION = -150;
+    public static int SHOULDER_WALLTAKE_POSITION = -240;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
     public static int SHOULDER_HIGHOUTTAKE_POSITION = 270;
     public int shoulderPositionMax = 850;

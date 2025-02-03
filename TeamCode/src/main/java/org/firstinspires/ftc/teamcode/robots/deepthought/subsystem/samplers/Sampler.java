@@ -54,7 +54,7 @@ public class Sampler extends Arm {
 
         articulation = Articulation.MANUAL;
 
-        SLIDE_HIGHOUTTAKE_POSITION = 2400;
+        SLIDE_HIGHOUTTAKE_POSITION = 2800;
 
 
         //defaults specific to sampler
@@ -154,6 +154,7 @@ public class Sampler extends Arm {
     }
 
     public Articulation articulate() {
+
         switch (articulation) {
             case MANUAL:
                 break;
