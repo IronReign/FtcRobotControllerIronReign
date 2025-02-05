@@ -42,6 +42,18 @@ public class giantOpMode extends OpMode {
 
     public void handleJoysticks(Gamepad gamepad, Gamepad gamepadtwo){
         //change gamemode transfer,
+
+        if(g1.dpad_down){
+            prep();
+            if(robot.getOutExtend()>2600){
+                robot.suck();
+            }
+        }
+        if(g1.a){
+            robot.setClawP();
+        }
+
+
         if(g2.guide){
             robot.resetDrive();
         }
@@ -49,35 +61,55 @@ public class giantOpMode extends OpMode {
         if(g1.back){
             robot.mode();
         }
-        if(g2.y) {          //g2.a)
-            robot.setClawP();
-           // robot.transfer();     <-- test this
+        if(g1.x){
+            robot.hookit();
+           // robot.setUpExtend(2250);
+            if(robot.getUpExtend()>2150){
+                robot.setShoulder(1270);        //1270
+            }
+            //robot.hookit();
         }
+        if(g1.y){
+            robot.downHook();
+        }
+
 //        if(gamepad2.x){
 //            robot.
 //            robot.setSlurp(false);
 //        }else{
 //
 //        }
-        if(g1.y){
-            if(!robot.isHook()){
-                robot.dunk();
-            }else {
-                if(robot.getUpExtend()<450){
-                    robot.setUpExtend(550);
-                }
-                robot.wallGrab();
-            }
-            //robot.transfer();
-        }
-        if(g2.b){
-            robot.hookit();
-        }
 
-        if(gamepad1.dpad_up && robot.getUpExtend()<3155){
+        if(g1.dpad_up){
+            if(robot.getUpExtend()<650){
+                robot.setUpExtend(700);
+            }
+            robot.wallGrab();
+
+        }
+//        if(g1.y){
+//            if(!robot.isHook()){
+//                robot.dunk();
+//            }else {
+//                if(robot.getUpExtend()<450){
+//                    robot.setUpExtend(550);
+//                }
+//                robot.wallGrab();
+//            }
+//            //robot.transfer();
+//
+//        }
+//        if(g2.b){
+//            robot.hookit();
+//        }
+//        if(g2.a){
+//            robot.downHook();
+//        }
+
+        if(gamepad2.dpad_down && robot.getUpExtend()<3155){
             robot.addUpExtend(150);
         }
-        if(gamepad1.dpad_down && robot.getUpExtend()>10){
+        if(gamepad2.dpad_up && robot.getUpExtend()>10){
             robot.addUpExtend(-150);
         }
         if(robot.getUpExtend()<0){
@@ -93,10 +125,10 @@ public class giantOpMode extends OpMode {
 //            robot.setOutExtend(3350);
 //        }
 
-        if(gamepad1.dpad_left && robot.getOutExtend()>-20){
+        if(gamepad2.dpad_left && robot.getOutExtend()>-20){
             robot.addOutExtend(-150);
         }
-        if(gamepad1.dpad_right && robot.getOutExtend()<2000){
+        if(gamepad2.dpad_right && robot.getOutExtend()<2000){
             robot.addOutExtend(150);
         }
         if(robot.getOutExtend()>2000){
@@ -109,7 +141,7 @@ public class giantOpMode extends OpMode {
         if(gamepad1.left_bumper && robot.getShoulder()<1860){      //lim 1750
             robot.addShoulder(20);
         }
-        if(gamepad1.right_bumper &&  robot.getShoulder()>790){
+        if(gamepad1.right_bumper ){ //&&  robot.getShoulder()>790
             robot.addShoulder(-20);
         }
         if(gamepad1.left_trigger>.3 &&robot.getTilt()<1280){
@@ -117,6 +149,10 @@ public class giantOpMode extends OpMode {
         }
         if(gamepad1.right_trigger>.3 && robot.getTilt()>740){
             robot.addTilt(-20);
+        }
+
+        if(g1.b){
+            robot.setSuck(false);
         }
 
 
@@ -135,23 +171,22 @@ public class giantOpMode extends OpMode {
 
 
         robot.setDrive(gamepad1.left_stick_y,-gamepad1.left_stick_x,gamepad1.right_stick_x);
-        if(g1.a) {
-            prep();
-            if(robot.getOutExtend()>2600){
-                robot.suck();
-            }
+//        if(g1.a) {
+//            prep();
+//            if(robot.getOutExtend()>2600){
+//                robot.suck();
+//            }
+//
+//        }
 
-        }
 
-        if(g1.x){
-            robot.setSuck(false);
-        }
-        if(gamepad1.b){
+        if(gamepad1.dpad_left){
             robot.setSlurp(true);
         }else{
             robot.setSlurp(false);
         }
-        if(gamepad2.x){
+        if(gamepad1.dpad_right){
+            robot.setTilt(970);
             robot.spit(true);
         }else{
             robot.spit(false);
@@ -162,7 +197,6 @@ public class giantOpMode extends OpMode {
 //            robot.resetDrive();
 //        }
 
-        robot.setDrive(gamepad1.left_stick_y,-gamepad1.left_stick_x,gamepad1.right_stick_x);
     }
 
     private void handleTelemetry(Map<String, Object> telemetryMap, String telemetryName) {
