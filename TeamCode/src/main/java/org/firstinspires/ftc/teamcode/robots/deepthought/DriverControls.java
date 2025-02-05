@@ -13,6 +13,7 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.sample
 
 import android.annotation.SuppressLint;
 
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.DriveTrain;
@@ -94,7 +95,7 @@ public class DriverControls {
                     robot.articulate(Robot.Articulation.SAMPLER_PREP);
                 }
             } else {
-                robot.articulate(Robot.Articulation.SPECIMINER_GROUNDTAKE);
+                robot.articulate(Robot.Articulation.SPECIMINER_WALLTAKE);
             }
         }
 //
@@ -117,7 +118,7 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.guide) {
-            robot.articulate(Robot.Articulation.SPECIMINER_WALLTAKE);
+            robot.driveTrain.setPose(new Pose2d(robot.driveTrain.getPose().position, alliance.isRed()? 90: -90));
         }
 
         double power;
@@ -186,6 +187,7 @@ public class DriverControls {
 
     public void joystickDrive() {
 
+
         //GAMEPAD 1 CONTROLS
         // ------------------------------------------------------------------
         if (fieldOrientedDrive)
@@ -247,7 +249,7 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.guide) {
-            robot.articulate(Robot.Articulation.SPECIMINER_GROUNDTAKE);
+            robot.driveTrain.setPose(new Pose2d(robot.driveTrain.getPose().position, alliance.isRed()? 90: -90));
         }
 
         double power;

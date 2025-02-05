@@ -137,11 +137,11 @@ public class Field {
         zones = Zone.getNamedZones();
         isRed = alliance.isRed();
         allianceMultiplier = isRed ? 1 : -1;
-        basket = new POI(-2.3 * allianceMultiplier, -2.3 * allianceMultiplier, isRed ? 55 : 55 + 180, "BASKET");
+        basket = new POI(-2.3 * allianceMultiplier, -2.3 * allianceMultiplier, isRed ? 55  : 55 + 180, "BASKET");
         basket2 = new POI(-2.375 * allianceMultiplier, -2.375 * allianceMultiplier, 55, "BASKET");
         basketPrep = new POI(-2.4*allianceMultiplier, -2*allianceMultiplier, isRed ? 50 : 50 + 180, "BASKET");
         ground1 = new POI(-2.4*allianceMultiplier, -2*allianceMultiplier, isRed ? 93 : 93 + 180, "GROUND1");
-        ground2 = new POI(-2.2*allianceMultiplier,-1.60 *allianceMultiplier, isRed ? 45 : 45 + 180, "GROUND2");
+        ground2 = new POI(-2.2*allianceMultiplier,-1.60 *allianceMultiplier, isRed ? 50 : 50 + 180, "GROUND2");
     }
 
     public void flipField(boolean alliance) {
