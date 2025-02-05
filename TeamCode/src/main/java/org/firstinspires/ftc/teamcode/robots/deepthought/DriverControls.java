@@ -30,6 +30,11 @@ public class DriverControls {
     public static boolean fieldOrientedDrive = true;
     public static double DEADZONE = 0.1;
     public static double driveDampener = .5;
+
+    public static void setDampenDrive(boolean dampenDrive) {
+        DriverControls.dampenDrive = dampenDrive;
+    }
+
     public static boolean dampenDrive = false;
     public boolean visionProviderFinalized = robot.visionProviderFinalized;
 
@@ -44,6 +49,7 @@ public class DriverControls {
     }
 
     public void init_loop() {
+        dampenDrive = true;
         updateStickyGamepads();
         handleStateSwitch();
         handlePregameControls();

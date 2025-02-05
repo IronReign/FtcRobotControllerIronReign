@@ -39,18 +39,23 @@ public class SpeciMiner extends Arm {
     public static int SHOULDER_HOME_POSITION = 250;
     public static int SHOULDER_PREINTAKE_POSITION = 250;
     public static int SHOULDER_PREOUTTAKE_POSITION = 810;
-    public static int SHOULDER_WALLTAKE_POSITION = -150;
-    public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
-    public static int SHOULDER_HIGHOUTTAKE_POSITION = 270;
+    public static int SHOULDER_WALLTAKE_POSITION = -330;
+    public static int SHOULDER_LOWOUTTAKE_POSITION = 0;
+    public static int SHOULDER_HIGHBAR_POSITION = 1710;
     public int shoulderPositionMax = 850;
 
 
     public static int ELBOW_HIGHOUTTAKE_PREP_ANGLE = 0;
     public static int colorSensorGain = 12;
     public int slideTargetPosition = 0;
-    public static int SLIDE_WALLTAKE_POSITION = 500;
+    public static int SLIDE_WALLTAKE_POSITION = 1300;
+    public int SLIDE_HIGHBAR_POSITION = 1220;
+    int SAMPLER_SLIDE_HIBAR_POSITION = 720;
 
-    public double ELBOW_WALLTAKE_ANGLE = 140;
+    public int SLIDE_LATCH_OFFSET = 200; //not tuned - how much further to extend slide to latch
+
+    public double ELBOW_WALLTAKE_ANGLE = 65;
+    public double ELBOW_HIGHBAR_ANGLE = 15;
 
     public SpeciMiner(HardwareMap hardwareMap, Robot robot, Trident trident) {
         this.hardwareMap = hardwareMap;
@@ -124,34 +129,30 @@ public class SpeciMiner extends Arm {
     boolean outtake() {
         switch (outtakeIndex) {
             case 0:
-                elbow.setTargetAngle(ELBOW_HIGHOUTTAKE_PREP_ANGLE);
-                trident.setShoulderTarget(this, SHOULDER_PREOUTTAKE_POSITION);
-                slideTargetPosition = SLIDE_HIGHOUTTAKE_POSITION;
+                prelatchHigh();
                 outtakeIndex++;
                 break;
             case 1: //needs a manual advance
 
                 break;
             case 2:
-                trident.setShoulderTarget(this, SHOULDER_HIGHOUTTAKE_POSITION);
-                outtakeIndex = 0;
-                return true;
+                return latch();
         }
         return false;
     }
 
-    boolean outtake_prep() { // this version waits for a field position to trigger hook
-        elbow.setTargetAngle(ELBOW_HIGHOUTTAKE_PREP_ANGLE);
-        trident.setShoulderTarget(this, SHOULDER_PREOUTTAKE_POSITION);
-        slideTargetPosition = SLIDE_HIGHOUTTAKE_POSITION;
+    public boolean prelatchHigh() { // set angle and extension for high bar, exits immediately
+        elbow.setTargetAngle(ELBOW_HIGHBAR_ANGLE);
+        trident.setShoulderTarget(this, SHOULDER_HIGHBAR_POSITION);
+        slideTargetPosition = SLIDE_HIGHBAR_POSITION;
+        trident.sampler.slideTargetPosition = SAMPLER_SLIDE_HIBAR_POSITION; // move sample out of the way todo - doesn't work
         return true;
     }
 
-    boolean outtake_hook(){
-                trident.setShoulderTarget(this, SHOULDER_HIGHOUTTAKE_POSITION);
-                return true;
+    public boolean latch(){ // set speciminer to latching extent - assumes should already achieved
+        slideTargetPosition = SLIDE_HIGHBAR_POSITION + SLIDE_LATCH_OFFSET;
+        return withinError(slide.getCurrentPosition(), SLIDE_HIGHBAR_POSITION + SLIDE_LATCH_OFFSET, 10);
     }
-
 
     long tuckTimer = 0;
     int tuckIndex = 0;
@@ -238,6 +239,35 @@ public class SpeciMiner extends Arm {
     public boolean sampleDetected() {
         updateColorSensor();
         return targetSamples.contains(currentSample);
+    }
+
+    public void setIntaking(){servoPower = 1; }
+    public void setEjecting(){servoPower = -1; }
+    public void setResting(){servoPower = 0; }
+
+    public boolean grab() {  //grab target samples, reject opposing alliance samples
+        setIntaking();
+        updateColorSensor();
+        if (currentSample == Sample.NO_SAMPLE) return false;
+        else if (targetSamples.contains(currentSample))
+        {
+            setResting();
+            return true;
+        }
+        else eject();
+        return false; //todo this really needs to return an enum, because false just means
+        // we don't have the sample we want, but we could have just ejected an opposing sample
+        // which means we are likely to pick it up again - probably need to signal the elbow
+        // to raise or slide to adjust temporarily to a different position
+    }
+    public boolean eject(){
+        setEjecting();
+        updateColorSensor();
+        if (currentSample == Sample.NO_SAMPLE){
+            setResting();
+            return true;
+        }
+        return false;
     }
 
 

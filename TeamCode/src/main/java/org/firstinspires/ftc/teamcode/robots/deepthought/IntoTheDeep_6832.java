@@ -46,6 +46,7 @@ public class IntoTheDeep_6832 extends OpMode {
         //TEST & TEMP MODES
         TEST("Test"),
         AUTO_SPECIMEN("Auto-Specimens", true),
+        AUTO_SPECIMEN_SWEEP("Auto-Spec-Sweep", true),
         DEMO("Demo"),
         MANUAL_DIAGNOSTIC("Manual Diagnostic"), SQUARE("Square"), TURN("Turn"),
         RELOCALIZATION_TEST("Relocalize");
@@ -69,9 +70,11 @@ public class IntoTheDeep_6832 extends OpMode {
                     return GameState.TELE_OP;
                 case 2:
                     return GameState.TEST;
-//                case 3: return GameState.DEMO;
-//                case 4: return GameState.MANUAL_DIAGNOSTIC;
                 case 3:
+                    return GameState.AUTO_SPECIMEN;
+                case 4: return GameState.AUTO_SPECIMEN_SWEEP;
+
+                case 5:
                     return GameState.RELOCALIZATION_TEST;
                 default:
                     return GameState.TEST;
@@ -83,7 +86,7 @@ public class IntoTheDeep_6832 extends OpMode {
         }
 
         public static int getNumGameStates() {
-            return 4;
+            return 6;
         }
 
         public boolean isAutonomous() {
@@ -155,6 +158,7 @@ public class IntoTheDeep_6832 extends OpMode {
 
     public void init_loop() {
         TelemetryPacket packet = new TelemetryPacket();
+
         dc.init_loop();
         dc.robotOrientedDrive();
         if (gameState.isAutonomous()) {
@@ -251,6 +255,13 @@ public class IntoTheDeep_6832 extends OpMode {
                 break;
             case AUTO_SPECIMEN:
                 if (autoSpecimens.execute(packet)) {
+                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
+                    robot.articulate(Robot.Articulation.TRAVEL);
+                    gameState = GameState.TELE_OP;
+                }
+                break;
+            case AUTO_SPECIMEN_SWEEP:
+                if (autoSpecimens.execSweeping(packet)) {
                     robot.positionCache.writePose(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
                     robot.articulate(Robot.Articulation.TRAVEL);
                     gameState = GameState.TELE_OP;
