@@ -110,11 +110,13 @@ public class giantOpMode extends OpMode {
         if(gamepad2.dpad_left && robot.getOutExtend()>-20){
             robot.addOutExtend(-150);
         }
+
         if(gamepad2.dpad_right && robot.getOutExtend()<2000){
             robot.addOutExtend(150);
         }
         if(robot.getOutExtend()>2000){
             robot.setOutExtend(1990);
+
         }
         if(robot.getOutExtend()<-20){
             robot.setOutExtend(-5);

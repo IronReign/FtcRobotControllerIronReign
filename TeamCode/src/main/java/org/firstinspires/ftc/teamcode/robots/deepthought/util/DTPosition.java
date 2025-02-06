@@ -30,22 +30,39 @@ public class DTPosition implements Serializable {
         this.slidePosition = slidePosition;
         this.slide2Position = slide2Position;
     }
-    public void updateTime() { timestamp = System.currentTimeMillis(); }
-    public Pose2d getPose(){
+
+    public void updateTime() {
+        timestamp = System.currentTimeMillis();
+    }
+
+    public Pose2d getPose() {
         return new Pose2d(chassisX, chassisY, chassisHeading);
     }
-    public void setPose(Pose2d pose){
+
+    public void setPose(Pose2d pose) {
         this.chassisX = pose.position.x;
         this.chassisY = pose.position.y;
         this.chassisHeading = pose.heading.log();
     }
-    public int getShoulderPosition() { return shoulderPosition; }
-    public int getSlidePosition() { return slidePosition; }
-    public int getSlide2Position() { return slide2Position; }
-    public long getTimestamp() { return timestamp; }
+
+    public int getShoulderPosition() {
+        return shoulderPosition;
+    }
+
+    public int getSlidePosition() {
+        return slidePosition;
+    }
+
+    public int getSlide2Position() {
+        return slide2Position;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
 
     public String toString() {
-        return "X: " + chassisX / Constants.FIELD_INCHES_PER_GRID + " Y: " + chassisY / Constants.FIELD_INCHES_PER_GRID + " Heading: " + Math.toDegrees(chassisHeading);
+        return "X: " + chassisX / Constants.FIELD_INCHES_PER_GRID + " Y: " + chassisY / Constants.FIELD_INCHES_PER_GRID + " Heading: " + Math.toDegrees(chassisHeading) + " Shoulder: " + shoulderPosition + " Sampler Slide: " + slidePosition + " SpeciMiner Slide: " + slide2Position;
     }
 
 }

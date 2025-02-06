@@ -149,7 +149,7 @@ public class Autonomous implements TelemetryProvider {
                 if (isPast(autonOuttakeTimer)) {
                     Trident.enforceSlideLimits = false;
                     robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
-                    autonOuttakeTimer = futureTime(1.75);
+                    autonOuttakeTimer = futureTime(2);
                 }
                 if (robot.driveTrain.strafeToPose(basket.getPose(), packet) && robot.trident.sampler.slide.getCurrentPosition() > 400) {
                     autonOuttakeIndex++;
@@ -158,7 +158,7 @@ public class Autonomous implements TelemetryProvider {
             case 2:
                 if (isPast(autonOuttakeTimer)) {
 //                    robot.aprilTagRelocalization();
-                    robot.trident.sampler.servoPower = .5;
+                    robot.trident.sampler.servoPower = .3;
                     autonOuttakeTimer = futureTime(1);
                     autonOuttakeIndex++;
                 }

@@ -431,7 +431,7 @@ public class Robot implements Subsystem {
             fetchCachedDTPosition();
             if (gameState.equals(IntoTheDeep_6832.GameState.TELE_OP) || gameState.equals((IntoTheDeep_6832.GameState.TEST))) {
                 int loggerTimeout = (int) (loggerTimeoutMinutes * 60000);
-                if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
+                if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout)) {
                     //apply cached position
                     driveTrain.setPose(fetchedPosition.getPose());
                     trident.shoulder.setPosition(-fetchedPosition.getShoulderPosition());
