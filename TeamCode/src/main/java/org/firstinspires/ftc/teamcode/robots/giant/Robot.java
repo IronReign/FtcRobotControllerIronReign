@@ -392,7 +392,7 @@ public class Robot implements Subsystem {
     int outExtendTicks=0;
     int upExtendTicks=0;
 
-    int clawTicks=1100;
+    int clawTicks=1000;
     boolean clawOpen=false;
 
     boolean hook=true;
@@ -403,6 +403,10 @@ public class Robot implements Subsystem {
 
     static boolean allianceRed=true;
     long timer = 0;
+
+    boolean blockSucked=false;
+    String block="";
+    String ally="";
 
 //shoulder grab intake ticks 870
     public static PIDController headingPID;
@@ -428,11 +432,20 @@ public class Robot implements Subsystem {
         if(targetSamples.contains(Robot.CurrentSample.RED)){
             opp=Robot.CurrentSample.BLUE;
             op="BLUE";
+            ally="RED";
         }
         else{
             opp=Robot.CurrentSample.RED;
             op="RED";
+            ally="BLUE";
         }
+
+        if(block.equals(ally)) {
+            blockSucked = true;
+        }else{
+            blockSucked=false;
+        }
+
         // init PID
         headingPID = new PIDController(HEADING_PID_PWR);
         headingPID.setInputRange(0, 360);
@@ -470,12 +483,13 @@ public class Robot implements Subsystem {
         distSide=sensorDistSide.getDistance(DistanceUnit.CM);
 
 //        camera.update(true);
-        updateColorSensor();
+        String block=updateColorSensor();
         colorSensor.setGain(colorSensorGain);
         g1.update();
         g2.update();
-        updateColorSensor();
-        colorSensor.setGain(colorSensorGain);
+
+//        updateColorSensor();
+//        colorSensor.setGain(colorSensorGain);
         mecanumDrive(targetF,targetS,targetT);
         moving();
         if(hook){
@@ -502,12 +516,8 @@ public class Robot implements Subsystem {
         }
 
 
-        if(clawOpen){
-            dropBlock();
-
-        }else{
-            grabBlock();
-        }
+        if(clawOpen){dropBlock();
+        }else{grabBlock();}
 
 
         if(!eject&&!slurp) {
@@ -607,158 +617,8 @@ public class Robot implements Subsystem {
     }
 
 
-    public void goTo(int verticalT, int horizontalT){
-        resetDrive();
+    public void mode(){hook=!hook;}
 
-        //negative forward==increase vertical
-        if(verticalT>vertical){
-            forward=-.5;
-        } else if (verticalT<vertical) {
-            forward=.5;
-        }else {forward=0;}
-
-        //positive strafe== decrease horizontal
-        if(horizontalT>horizontal){
-            strafe=-.5;
-        } else if (horizontalT<horizontal) {
-            strafe=.5;
-        }else {strafe=0;}
-
-    }
-    public boolean thereYetH(int horizontalT){
-        if(horizontalT==horizontal){
-            return true;
-        }
-        return false;
-    }
-    public boolean thereYetV(int verticalT){
-        if(verticalT==vertical){
-            return true;
-        }
-        return false;
-    }
-
-    public void mode(){
-        hook=!hook;
-    }
-    public boolean isHook(){return hook;}
-    int autonIndex=0;
-    long autonTimer = 0;
-    public void transfer(){
-        autonIndex=0;
-
-        switch(autonIndex) {
-            case 0:
-                open();
-                if (getOutExtend() < 440) {
-                    setOutExtend(450);
-
-                }
-                autonIndex++;
-
-                break;
-            case 1:
-                if (isClawOpen() && getOutExtend() > 440) {
-                    autonTimer = futureTime(.02);
-                    setShoulder(870);
-                    setUpExtend(0);
-                    autonIndex++;
-                }
-                break;
-            case 2:
-                if (isPast(autonTimer)) {
-                    autonTimer = futureTime(.02);
-                    close();
-                    autonIndex++;
-                }
-                break;
-            case 3:
-                if (isPast(autonTimer)) {
-                    setUpExtend(transferUpTicks);    //change based off mode in
-                    autonIndex++;
-                }
-                break;
-            case 4:
-                if (getUpExtend() > 580) {
-                    setShoulder(transferShoulderTicks);    //change based off mode in      hook/grab off wall: 1610       basket: ???
-                    autonIndex++;
-                }
-                break;
-            case 5:
-                break;
-
-        }
-    }
-
-
-
-
-
-
-
-    public void grabBlock(){clawTicks=1100;}
-
-    public void dropBlock(){clawTicks=1500;}
-
-    public void setClaw(int x){
-        clawTicks+=x;
-    }
-    public void setClawP(){
-        clawOpen=!clawOpen;
-    }
-    public void open(){
-        clawOpen=true;
-    }
-    public void close(){
-        clawOpen=false;
-    }
-    public boolean isClawOpen(){
-        return clawOpen;
-    }
-    public int getClaw(){
-        return clawTicks;
-    }
-
-
-
-    public int getTilt(){
-        return tiltTicks;
-    }
-    public void addTilt(int x){
-        tiltTicks+=x;
-    }
-    public void setTilt(int x){
-        tiltTicks=x;
-    }
-
-
-
-    public int getShoulder(){
-        return shoulderTicks;
-    }
-    public void addShoulder(int x){
-        shoulderTicks+=x;
-    }
-    public void setShoulder(int x){
-        shoulderTicks=x;
-    }
-
-
-    public void addOutExtend(int x){
-        outExtendTicks+=x;
-    }
-    public void setOutExtend(int x){
-        outExtendTicks=x;
-    }
-    public int getOutExtend(){return outExtendTicks;}
-
-    public void addUpExtend(int x){
-        upExtendTicks+=x;
-    }
-    public void setUpExtend(int x){
-        upExtendTicks=x;
-    }
-    public int getUpExtend(){return upExtendTicks;}
 
     public void grab(){
         //if find opponent block reverse motor to spit back out in same direction picked up
@@ -779,21 +639,7 @@ public class Robot implements Subsystem {
                     }else{
                         yellow();       //place holder till figure out the fuck we doing
                     }
-                    // autonTimer = futureTime(.05);
-               // }
-//                if (isPast(autonTimer)) {
-//                    suck.setPower(0);
-//                }
             }
-//            else if (updateColorSensor().equals(op)) {
-////                long autonTimer = 0;
-////
-////                autonTimer = futureTime(.2);
-//                suck.setPower(-1);
-////                if (isPast(autonTimer)) {
-////                    suck.setPower(1);
-////                }
-//            }
             else {
                 suck.setPower(1);       //1
             }
@@ -804,6 +650,12 @@ public class Robot implements Subsystem {
             suck.setPower(1);
         }
     }
+
+    public void yellow(){
+        tiltTicks=970;//1440
+        outExtendTicks=120;     //-25
+    }
+
     public void suck(){
 //        outExtendTicks=3300;
         tiltTicks=800;
@@ -816,7 +668,7 @@ public class Robot implements Subsystem {
         setUpExtend(350);
         setShoulder(950);     //930
         setTilt(970);
-        setOutExtend(2750);
+        outExtendTicks=2750;
     }
 
     public void dunk(){
@@ -842,47 +694,32 @@ public class Robot implements Subsystem {
 
     public void wallGrab(){
         open();
-
         shoulderTicks=1450; //1510  1450
         upExtendTicks=150;    //0
     }
 
-    public void yellow(){
-       // long autonTimer=0;
-        tiltTicks=970;//1440
-        outExtendTicks=120;     //-25
-//        autonTimer = futureTime(.3);
-//        if(isPast(autonTimer)){
-//            autonTimer=futureTime(3);
-//            setSlurp(true);
-//           // spit(true);
-//            if(isPast(autonTimer)){
-//                setSlurp(false);
-//              //  spit(false);
-//                PAUSE=false;
-//            }
-//        }
-
+    public void setOutPower(double x){
+        outExtend.setPower(x);
     }
 
-    public void suckPower(double x){
-        suck.setPower(x);
-    }
 
-    public void setSuck(boolean x){
-        sucking=x;
+
+    public void suckPower(double x){suck.setPower(x);}
+    public void setSuck(boolean x){sucking=x;}
+    public void spit(boolean x){eject=x;}
+    public void setSlurp(boolean x){slurp=x;}
+    public boolean getSuck(){
+        return sucking;
     }
 
     public void eject(double x){
         suck.setPower(x);
     }
-    public void spit(boolean x){eject=x;}
-    public void setSlurp(boolean x){slurp=x;}
 
-    public boolean getSuck(){
-        return sucking;
+
+    public boolean haveBlock(){
+        return blockSucked;
     }
-
 
     public boolean keepBlock() {
         if(targetSamples.contains(currentSample)){
@@ -977,8 +814,6 @@ public class Robot implements Subsystem {
         upExtend1.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         upExtend1.setTargetPosition(0);
         upExtend1.setPower(1);
-//        upExtend2.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-//        upExtend2.setTargetPosition(0);
         upExtend2.setPower(0);
         outExtend.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         outExtend.setTargetPosition(0);
@@ -988,7 +823,6 @@ public class Robot implements Subsystem {
         rightFront.setDirection(DcMotor.Direction.REVERSE);
         suck.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         suck.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        //suck.setDirection(DcMotor.Direction.REVERSE);
          colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
     }
 
@@ -1004,11 +838,6 @@ public class Robot implements Subsystem {
 
         telemetry.put("Horizontal", leftBack.getCurrentPosition());
         telemetry.put("Vertical", leftFront.getCurrentPosition());
-
-
-//        telemetry.put("real out extend: ", outExtend.getCurrentPosition());
-//        telemetry.put("real up extend 2: ", suck.getCurrentPosition());
-//        telemetry.put("real up extend: ", upExtend.getCurrentPosition());
 
         telemetry.put("out extend", outExtendTicks);
         telemetry.put("up extend", upExtendTicks);
@@ -1091,12 +920,41 @@ public class Robot implements Subsystem {
         rightBack.setPower((r * Math.cos(robotAngle) + rightX));
     }
 
-
     public void setDrive(double forwardX, double strafeX, double turnX) {
         targetF=forwardX;
         targetT=turnX;
         targetS=strafeX;
     }
+
+    //TILT THINGS
+    public int getTilt(){return tiltTicks;}
+    public void addTilt(int x){tiltTicks+=x;}
+    public void setTilt(int x){tiltTicks=x;}
+
+    //SHOULDER THINGS
+    public int getShoulder(){return shoulderTicks;}
+    public void addShoulder(int x){shoulderTicks+=x;}
+    public void setShoulder(int x){shoulderTicks=x;}
+
+    //OUT SLIDES THINGS
+    public void addOutExtend(int x){outExtendTicks+=x;}
+    public void setOutExtend(int x){outExtendTicks=x;}
+    public int getOutExtend(){return outExtendTicks;}
+
+    //UP SLIDES THINGS
+    public void addUpExtend(int x){upExtendTicks+=x;}
+    public void setUpExtend(int x){upExtendTicks=x;}
+    public int getUpExtend(){return upExtendTicks;}
+
+//CLAW THINGS
+    public void grabBlock(){clawTicks=1000;}
+    public void dropBlock(){clawTicks=1500;}
+    public void setClaw(int x){clawTicks+=x;}
+    public void setClawP(){clawOpen=!clawOpen;}
+    public void open(){clawOpen=true;}
+    public void close(){clawOpen=false;}
+    public boolean isClawOpen(){return clawOpen;}
+    public int getClaw(){return clawTicks;}
 
     public static void changeAlly(){
         allianceRed=!allianceRed;
