@@ -38,7 +38,7 @@ public class Sampler extends Arm {
     // Shoulder values to request from Trident
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
-    public static int SHOULDER_PREINTAKE_POSITION = -100;
+    public static int SHOULDER_PREINTAKE_POSITION = 0;
     public static int SHOULDER_INTAKE_POSITION = -375;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
     public static int SHOULDER_HIGHOUTTAKE_POSITION = 1385;
