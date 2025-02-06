@@ -365,6 +365,7 @@ public class DriverControls {
         IntoTheDeep_6832.gameState = IntoTheDeep_6832.GameState.getGameState(IntoTheDeep_6832.gameStateIndex);
 
         if (stickyGamepad1.guide) {
+            robot.trident.calibrateIndex = 0;
             robot.trident.articulate(Trident.Articulation.CALIBRATE);
         }
     }

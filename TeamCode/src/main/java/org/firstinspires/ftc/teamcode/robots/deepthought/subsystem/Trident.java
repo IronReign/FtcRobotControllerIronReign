@@ -121,7 +121,7 @@ public class Trident implements Subsystem {
         return articulation;
     }
 
-    int calibrateIndex = 0;
+    public int calibrateIndex = 0;
     public long calibrateTimer = 0;
 
     public boolean calibrate() {
