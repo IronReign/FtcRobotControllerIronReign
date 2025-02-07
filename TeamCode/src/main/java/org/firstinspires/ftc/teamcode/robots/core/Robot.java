@@ -30,6 +30,7 @@ public class Robot implements Subsystem {
     DcMotorEx slide;
     public static final double CURRENT_THRESHOLD = 2.2;
     public static int CALIBRATE_POSITION = Integer.MAX_VALUE;
+    long autonTimer = 0;
 
     public boolean clawOpen = false;
     public double clawOpenPosition = 1;
@@ -65,7 +66,7 @@ public class Robot implements Subsystem {
 
         if(spad1.x) { //preset for wall
             shoulderTargetPosition= 824;
-            slideTargetPosition = 0;
+            slideTargetPosition = 30;
         }
         if(spad1.y) { //preset for specimen score
             shoulderTargetPosition = 1900;
@@ -75,6 +76,29 @@ public class Robot implements Subsystem {
             claw.setPosition(clawOpenPosition);
         } else {
             claw.setPosition(clawClosePosition);
+        }
+
+        //TODO: driver testing (8:00-9:30)
+
+        // Attaching the specimen on the high bar preset (test)
+        if(spad1.left_bumper){
+            shoulderTargetPosition=1800;
+            slideTargetPosition=350;
+            autonTimer = futureTime(1);
+            if(isPast(autonTimer)) {
+                shoulderTargetPosition=1360;
+            }
+        }
+
+        // Attaching picking up the specimen from the wall (test)
+        if(spad1.right_bumper){
+            shoulderTargetPosition=824;
+            slideTargetPosition=30;
+            autonTimer=futureTime(1);
+            if(isPast(autonTimer)){
+                claw.setPosition(clawClosePosition);
+                shoulderTargetPosition=1800;
+            }
         }
 
         if(gamepad1.left_trigger >= 0.3){
