@@ -18,8 +18,6 @@ public class CoreOpMode extends OpMode {
     Robot robot;
     private FtcDashboard dashboard;
 
-    public boolean calibrated = false;
-
     @Override
     public void init() {
         robot = new Robot(hardwareMap, gamepad1);
@@ -29,11 +27,8 @@ public class CoreOpMode extends OpMode {
     }
 
     public void init_loop() {
-        if (!calibrated) {
-            if (robot.calibrate()) {
-                calibrated = true;
-            }
-        }
+        // calibrate by pressing gamepad1 guide (Logitech) button
+        robot.initloopDrive();
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
     }
     @Override

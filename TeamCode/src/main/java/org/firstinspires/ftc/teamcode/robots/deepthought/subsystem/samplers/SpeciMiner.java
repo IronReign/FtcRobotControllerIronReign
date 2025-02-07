@@ -40,6 +40,8 @@ public class SpeciMiner extends Arm {
     public static int SHOULDER_PREINTAKE_POSITION = 250;
     public static int SHOULDER_PREOUTTAKE_POSITION = 810;
     public static int SHOULDER_WALLTAKE_POSITION = -330;
+
+    public static int SHOULDER_WALLTAKE_OFFSET = 100; // how much to raise the shoulder to lift off the wall
     public static int SHOULDER_LOWOUTTAKE_POSITION = 0;
     public static int SHOULDER_HIGHBAR_POSITION = 1710;
     public int shoulderPositionMax = 850;
@@ -65,7 +67,7 @@ public class SpeciMiner extends Arm {
         SLIDE_HIGHOUTTAKE_POSITION = 500;
 
         //defaults specific to sampler
-        ELBOW_START_ANGLE = 25;
+        ELBOW_START_ANGLE = 0;
         ELBOW_HOME_POSITION = 2050;
         ELBOW_PWM_PER_DEGREE = -5.672222222222222;
         ELBOW_JOINT_SPEED = 120;
@@ -180,22 +182,36 @@ public class SpeciMiner extends Arm {
         return false;
 
     }
+    public void wallTakePresets(){
+        trident.sampler.tuck();
+        trident.setShoulderTarget(this, SHOULDER_WALLTAKE_POSITION);
+        slideTargetPosition = SLIDE_WALLTAKE_POSITION;
+        elbow.setTargetAngle(ELBOW_WALLTAKE_ANGLE);
+        servoPower = 1;
+    }
 
     int wallTakeIndex = 0;
     long wallTakeTimer = 0;
 
-    boolean wallTake() {
+    // prepare the arm and speciminer for grabbing from wall
+    // no driving
+    // returns true if it grabs an alliance specimen and lifts it off the wall
+    public boolean wallTake() {
         switch (wallTakeIndex) {
             case 0:
-                trident.setShoulderTarget(this, SHOULDER_WALLTAKE_POSITION);
-                slideTargetPosition = SLIDE_WALLTAKE_POSITION;
-                elbow.setTargetAngle(ELBOW_WALLTAKE_ANGLE);
-                servoPower = 1;
-                return true;
+                wallTakePresets();
+                wallTakeIndex++;
 
-            case 1:
+            case 1: // assume chassis is driving forward under driver or auton control
+                if (grab())
+                    wallTakeIndex++;
                 break;
-            case 2:
+            case 2: //raise the captured specimen off the wall
+                trident.setShoulderTarget(this, SHOULDER_WALLTAKE_POSITION + SHOULDER_WALLTAKE_OFFSET);
+                if (withinError(trident.getShoulderCurrentPosition(), SHOULDER_WALLTAKE_POSITION + SHOULDER_WALLTAKE_OFFSET, 10)) {
+                    wallTakeIndex = 0;
+                    return true;
+                }
                 break;
         }
         return false;
