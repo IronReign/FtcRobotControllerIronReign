@@ -50,6 +50,7 @@ public class Field {
     public POI sweep3 = new POI(1.7, -1.5, 40, "SWEEP3"); // grazing back wall
     public POI sweep3Oz = new POI(1.7, -1.5, -40, "SWEEP3Ozone");
     public POI ozone = new POI(2.4, -1.75, -90, "OZone");
+    public POI oZoneWalltake = new POI(2.0, -1.5, -90, "OZoneWalltake");
     public POI hibarPrep = new POI(0, -1.5, -90, "HiBarPrep");
     public POI hibar = new POI(0, -1.45, -90, "HiBar");
     public POI zig = new POI(1.5, -1.5, 90, "Zig"); // zig from speciminer scoring

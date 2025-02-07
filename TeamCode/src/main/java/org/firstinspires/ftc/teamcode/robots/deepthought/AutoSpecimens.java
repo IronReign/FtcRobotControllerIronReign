@@ -264,7 +264,48 @@ public class AutoSpecimens implements TelemetryProvider {
         }
         return false;
     }
-        public int autonShiftIndex = 0;
+
+    // drive to wall and retrieve specimen
+    // only safe to start from a field position that can direct travel to wall pickup
+    int driveAndWalltakeIndex = 0;
+    double driveAndWalltakeTimer = 0;
+    boolean driveAndWalltake(TelemetryPacket packet) {
+        switch (driveAndWalltakeIndex) { //auton delay
+            case 0:
+                resetStates(); // resets all state variables
+                driveAndWalltakeIndex++;
+                break;
+            case 1: // travel to walltake field position
+                autonState = AutonState.DRIVE_TO_OZONE; // drive to ozone pickup location
+                if (isPast(driveAndWalltakeTimer)) {
+                    robot.trident.speciMiner.wallTakePresets(); //configure Speciminer to intake from wall
+                    if (robot.driveTrain.strafeToPose(field.oZoneWalltake.getPose(), packet)) {
+                        robot.trident.speciMiner.resetStates();
+                        driveAndWalltakeIndex++;
+                        driveAndWalltakeTimer = futureTime(2);
+                    }
+                }
+                break;
+            case 2: // start testing intake - stops on color sensor detection - todo start near very end of drive
+                if (robot.trident.speciMiner.wallTake())
+                {
+                    robot.driveTrain.drive(0,0,0); // stop chassis driving
+                    driveAndWalltakeIndex = 0;
+                    return true;
+                }
+                robot.driveTrain.drive(.2,0,0); // drive forward on low power
+                if (isPast(driveAndWalltakeTimer))
+                {
+                    robot.driveTrain.drive(0,0,0); // stop chassis driving
+                    driveAndWalltakeIndex = 0;
+                    return true;
+                }
+                break;
+
+        }
+        return false;
+    }
+    public int autonShiftIndex = 0;
     public int autonShiftTimer = 0;
     int numAttempts = 2;
 
@@ -303,7 +344,7 @@ public class AutoSpecimens implements TelemetryProvider {
     public int autonSweepIndex = 0;
     public int autonSweepTimer = 0;
 
-    //Sweep a given sample to ozone using the chassis backplate
+    //Sweep a given sample to ozone using the Sampler
     public boolean autonSweepSample(POI sweepFrom, POI ozone, TelemetryPacket packet) {
         switch (autonSweepIndex) {
             case 0: // set sampler for sweeping over
