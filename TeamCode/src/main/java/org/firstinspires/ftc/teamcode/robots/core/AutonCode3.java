@@ -22,7 +22,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -30,10 +29,9 @@ import java.util.Map;
 @Autonomous(name = "COREAUTON3")
 public class AutonCode3 extends OpMode {
     Robot robot;
-    BNO055IMU imu;
     private FtcDashboard dashboard;
     boolean runAuton = true;
-    int autonIndex = 0;
+    public int autonIndex = 0;
     int startpos = 0;
     public double wheelCircum = ((3.5)*Math.PI);
     public int ticksrev = 1440;
@@ -47,22 +45,20 @@ public class AutonCode3 extends OpMode {
     double initialzOrientation = 0;
     double nowOrientation = 0;
     public long autonTimer = 0;
-    public StickyGamepad spad1;
     boolean reached = false;
 
     @Override
     public void init() {
-        spad1 = new StickyGamepad(gamepad1);
+        robot = new Robot(hardwareMap, gamepad1);
+        robot.init();
         dashboard = FtcDashboard.getInstance();
-        robot = new Robot(hardwareMap, null);
-
     }
 
     public void init_loop(){
-        debug(new Canvas());
+       debug(new Canvas());
+        robot.initloopDrive();
 
     }
-
 
     public void forward(double length, double direction){
         if (!moving){
@@ -105,13 +101,7 @@ public class AutonCode3 extends OpMode {
     }
 
     public void debug(Canvas fieldOverlay){
-        spad1.update();
-        if(spad1.a){
-            autonIndex++;
-        }
-        if(spad1.x){
-            autonIndex--;
-        }
+        autonIndex = robot.debugAuton(autonIndex);
         handleTelemetry(getTelemetry(true), robot.getTelemetryName());
     }
 

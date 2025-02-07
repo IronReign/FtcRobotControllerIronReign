@@ -247,12 +247,37 @@ public class Robot implements Subsystem {
         mecanumDrive(gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.left_stick_x);
     }
 
+    static boolean calibrated = true;
+    public void initloopDrive(){
+        spad1.update();
+        if (spad1.guide) {
+            calibrateStage = 0;
+            calibrated = false;
+        }
+        if (! calibrated){
+            if (calibrate()){calibrated = true;};
+        }
+
+        updateMotors();
+        mecanumDrive(gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.left_stick_x);
+    }
+
+    public int debugAuton(int autonIndex){
+        spad1.update();
+        if(spad1.a){
+            autonIndex++;
+        }
+        if(spad1.x){
+            autonIndex--;
+        }
+        return autonIndex;
+    }
     public float getZorient(){
         Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZXY, AngleUnit.DEGREES);
         return angles.firstAngle;
     }
     public void initIMU(){
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu = hardwareMap.get(BNO055IMU.class, "eimu");
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.mode = BNO055IMU.SensorMode.IMU;
@@ -415,7 +440,7 @@ public class Robot implements Subsystem {
         switch (calibrateStage) {
             case 0:
                 shoulder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                shoulder.setPower(-.4);
+                shoulder.setPower(.4);
                 calibrateStage++;
                 break;
             case 1:
