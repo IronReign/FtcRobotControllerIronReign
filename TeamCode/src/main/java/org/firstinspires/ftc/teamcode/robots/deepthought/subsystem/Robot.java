@@ -1,19 +1,16 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.dc;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.fieldOrientedDrive;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
-import static org.firstinspires.ftc.teamcode.robots.deepthought.field.Field.P2D;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.Rotation2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLStatus;
@@ -21,23 +18,20 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
-import org.firstinspires.ftc.robotcontroller.external.samples.UtilityOctoQuadConfigMenu;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.old.Sensors;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.SpeciMiner;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.deepthought.vision.Target;
-import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProvider;
-import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProviders;
-import org.firstinspires.ftc.teamcode.robots.deepthought.vision.provider.AprilTagProvider;
-import org.openftc.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -48,6 +42,8 @@ import java.util.Map;
 @Config(value = "0_ITD_Robot")
 public class Robot implements Subsystem {
 
+    public static double APRILTAG_Y_OFFSET = 2;
+    public static double APRILTAG_X_OFFSET = -26;
     //components and subsystems
     public Subsystem[] subsystems;
     public static Sensors sensors;
@@ -67,6 +63,12 @@ public class Robot implements Subsystem {
 
     public DTPosition fetchedPosition;
 
+    PIDController sampleAlignmentPID;
+    PIDCoefficients sampleAlignmentCoefficients = new PIDCoefficients(0.03, 0.04, 0);
+
+    public static double SAMPLE_ALIGN_TARGET_TX = 2.5;
+    public static double SAMPLE_ALIGN_TOLERANCE = .5;
+    public double PIDError, PIDCorrection;
 
     //vision variables
     public static boolean visionProviderFinalized = false;
@@ -97,16 +99,18 @@ public class Robot implements Subsystem {
     public static double PAN_FORWARD = 82;
     public static double PAN_APRILTAG_BASKET = 200;
 
-    public static double panTargetAngle = PAN_FORWARD;
+    public static double panTargetAngle = PAN_APRILTAG_BASKET;
+
 
     public enum Articulation {
-        MANUAL, SAMPLER_INTAKE, TRAVEL, SAMPLER_OUTTAKE, SPECIMINER_INTAKE, SPECIMINER_WALLTAKE, SAMPLER_PREP, SPECIMINER_OUTTAKE
+        MANUAL, SAMPLER_INTAKE, TRAVEL, SAMPLER_OUTTAKE, SPECIMINER_GROUNDTAKE, SPECIMINER_WALLTAKE, SAMPLER_PREP, SPECIMINER_OUTTAKE
     }
 
     public void start() {
         if (gameState.equals(IntoTheDeep_6832.GameState.TELE_OP)) {
             trident.shoulder.setPosition(250);
         }
+        limelight.start();
         trident.finalizeTargets();
         field.finalizeField(alliance);
     }
@@ -149,6 +153,9 @@ public class Robot implements Subsystem {
     public void resetStates() {
         intakeIndex = 0;
         outtakeIndex = 0;
+        speciMinerOuttakeIndex = 0;
+        walltakeIndex = 0;
+        groundtakeIndex = 0;
         for (Subsystem k : subsystems) {
             k.resetStates();
         }
@@ -202,10 +209,10 @@ public class Robot implements Subsystem {
         trident.sampler.updateColorSensor();
         if (trident.currentSample == Trident.Sample.RED) {
             alliance = Constants.Alliance.RED;
-            startingPosition = startingPosition.isRed() == true ? startingPosition : startingPosition == Constants.Position.START_LEFT_BLUE ? Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
+            startingPosition = startingPosition.isRed() ? startingPosition : startingPosition == Constants.Position.START_LEFT_BLUE ? Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
         } else if (trident.currentSample == Trident.Sample.BLUE) {
             alliance = Constants.Alliance.BLUE;
-            startingPosition = startingPosition.isRed() == false ? startingPosition : startingPosition == Constants.Position.START_LEFT_RED ? Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
+            startingPosition = !startingPosition.isRed() ? startingPosition : startingPosition == Constants.Position.START_LEFT_RED ? Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
         }
     }
 
@@ -234,8 +241,68 @@ public class Robot implements Subsystem {
             case SAMPLER_OUTTAKE:
                 if (samplerOuttake()) articulation = Articulation.MANUAL;
                 break;
+            case SPECIMINER_GROUNDTAKE:
+                if (speciMinerGroundtake()) articulation = Articulation.MANUAL;
+                break;
+            case SPECIMINER_WALLTAKE:
+                if (speciMinerWalltake()) articulation = Articulation.MANUAL;
+                break;
+            case SPECIMINER_OUTTAKE:
+                if (speciMinerOuttake()) articulation = Articulation.MANUAL;
+                break;
         }
         return articulation;
+    }
+
+
+    public int speciMinerOuttakeIndex = 0;
+    public boolean speciMinerOuttake() {
+        switch (speciMinerOuttakeIndex) {
+            case 0:
+                trident.speciMiner.articulate(SpeciMiner.Articulation.OUTTAKE);
+                speciMinerOuttakeIndex++;
+                break;
+            case 1:
+                if (trident.speciMiner.articulation == SpeciMiner.Articulation.MANUAL) {
+                    return true;
+                }
+                break;
+        }
+        return false;
+    }
+
+
+    public int walltakeIndex = 0;
+    public boolean speciMinerWalltake() {
+        switch (walltakeIndex) {
+            case 0:
+                trident.speciMiner.articulate(SpeciMiner.Articulation.WALLTAKE);
+                walltakeIndex++;
+                break;
+            case 1:
+                if (trident.speciMiner.articulation == SpeciMiner.Articulation.MANUAL) {
+                    return true;
+                }
+                break;
+        }
+        return false;
+    }
+
+    public int groundtakeIndex = 0;
+
+    public boolean speciMinerGroundtake() {
+        switch (groundtakeIndex) {
+            case 0:
+                trident.speciMiner.articulate(SpeciMiner.Articulation.GROUNDTAKE);
+                groundtakeIndex++;
+                break;
+            case 1:
+                if (trident.speciMiner.articulation == SpeciMiner.Articulation.MANUAL) {
+                    return true;
+                }
+                break;
+        }
+        return false;
     }
 
 
@@ -244,7 +311,6 @@ public class Robot implements Subsystem {
     public boolean samplerIntake() {
         switch (intakeIndex) {
             case 0:
-                // todo this might be at wrong level or ignored
                 trident.sampler.articulate(Sampler.Articulation.INTAKE);
                 intakeIndex++;
                 break;
@@ -302,10 +368,12 @@ public class Robot implements Subsystem {
         telemetryMap.put("Articulation", articulation);
         telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
         telemetryMap.put("calibrating", calibrating);
-        telemetryMap.put("april tag relocalization point", "(" + aprilTagRelocalizationX + ", " + aprilTagRelocalizationY + ")");
-        telemetryMap.put("april tag pose", "(" + aprilTagPose.position.x * 39.37 + ", " + aprilTagPose.position.y * 39.37 + ")");
+        telemetryMap.put("april tag pose", "(" + aprilTagPose.position.x / 23.5 + ", " + aprilTagPose.position.y / 23.5 + ")");
         telemetryMap.put("MemoryPose", positionCache.readPose());
 
+        telemetryMap.put("pid error", PIDError);
+        telemetryMap.put("pid correction", PIDCorrection);
+        telemetryMap.put("pan target", panTargetAngle);
         telemetryMap.put("limelight running?", limelight.isRunning());
         LLStatus status = limelight.getStatus();
         telemetryMap.put("limelight fps, ", status.getFps());
@@ -315,6 +383,7 @@ public class Robot implements Subsystem {
         if (result != null) {
             telemetryMap.put("limelight botpose", result.getBotpose());
             telemetryMap.put("# of limelight detections", result.getDetectorResults().size());
+            telemetryMap.put("limelight tx", result.getTx());
         }
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();
@@ -362,10 +431,10 @@ public class Robot implements Subsystem {
             fetchCachedDTPosition();
             if (gameState.equals(IntoTheDeep_6832.GameState.TELE_OP) || gameState.equals((IntoTheDeep_6832.GameState.TEST))) {
                 int loggerTimeout = (int) (loggerTimeoutMinutes * 60000);
-                if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout || ignoreCache)) {
+                if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout)) {
                     //apply cached position
                     driveTrain.setPose(fetchedPosition.getPose());
-                    trident.shoulder.setPosition(fetchedPosition.getShoulderPosition());
+                    trident.shoulder.setPosition(-fetchedPosition.getShoulderPosition());
                     trident.sampler.slide.setTargetPosition(fetchedPosition.getSlidePosition());
                     trident.speciMiner.slide.setTargetPosition(fetchedPosition.getSlide2Position());
                     trident.shoulder.setDirection(DcMotor.Direction.REVERSE);
@@ -374,17 +443,50 @@ public class Robot implements Subsystem {
         }
     }
 
+
+    public boolean alignOnSample() {
+        limelight.pipelineSwitch(3);
+        LLResult llResult;
+        panTargetAngle = PAN_FORWARD;
+        if ((llResult = limelight.getLatestResult()) != null) {
+            if (llResult.getTx() != 0.0) {
+                double targetTx = SAMPLE_ALIGN_TARGET_TX;
+                sampleAlignmentPID.setPID(sampleAlignmentCoefficients);
+                sampleAlignmentPID.setInput(llResult.getTx());
+                sampleAlignmentPID.setSetpoint(targetTx);
+                sampleAlignmentPID.setOutputRange(-.8, .8);
+                sampleAlignmentPID.setTolerance(SAMPLE_ALIGN_TOLERANCE);
+                double correction = sampleAlignmentPID.performPID();
+                PIDCorrection = correction;
+                PIDError = sampleAlignmentPID.getError();
+                if (sampleAlignmentPID.onTarget()) {
+                    driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                    return true;
+                } else {
+                    sampleAlignmentPID.enable();
+                    driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
+                    return false;
+                }
+            }
+        }
+
+        return false;
+    }
+
     //to be called repeatedly until success
     public void aprilTagRelocalization() {
+        limelight.pipelineSwitch(2);
+        panTargetAngle = PAN_APRILTAG_BASKET;
         LLResult llResult;
         if ((llResult = limelight.getLatestResult()) != null) {
             //limelight returns everything in meters
-            aprilTagPose = new Pose2d(new Vector2d(llResult.getBotpose().getPosition().x * 39.37, llResult.getBotpose().getPosition().y * 39.37), driveTrain.getPose().heading);
+            aprilTagPose = new Pose2d(new Vector2d(llResult.getBotpose().getPosition().x * 39.37 + APRILTAG_X_OFFSET, llResult.getBotpose().getPosition().y * 39.37 + APRILTAG_Y_OFFSET), driveTrain.getPose().heading);
+            if (llResult.getBotpose().getPosition().x != 0)
+                driveTrain.setPose(aprilTagPose);
         }
 //            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
 //            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
 //            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
-        driveTrain.setPose(aprilTagPose);
     }
 
 

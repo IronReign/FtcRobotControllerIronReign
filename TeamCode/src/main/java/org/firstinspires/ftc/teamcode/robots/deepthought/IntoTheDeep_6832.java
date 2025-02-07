@@ -8,12 +8,10 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.field.Field;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
-import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.ExponentialSmoother;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
-import org.firstinspires.ftc.teamcode.robots.deepthought.vision.VisionProviders;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -26,6 +24,7 @@ public class IntoTheDeep_6832 extends OpMode {
     //COMPONENTS
     public static Robot robot;
     static Autonomous auton;
+    static AutoSpecimens autoSpecimens;
     private FtcDashboard dashboard;
     public static Field field;
     public static DriverControls dc;
@@ -36,7 +35,7 @@ public class IntoTheDeep_6832 extends OpMode {
 
     public static boolean debugTelemetryEnabled = true;
     private boolean initializing;
-    public static boolean initPosition = false;
+    public static boolean setStartPose = false; // use to set the pose from the current starting position via dashboard - but only in init_loop
     public static boolean ignoreCachePosition = false;
 
     //GAMESTATES
@@ -46,6 +45,8 @@ public class IntoTheDeep_6832 extends OpMode {
 
         //TEST & TEMP MODES
         TEST("Test"),
+        AUTO_SPECIMEN("Auto-Specimens", true),
+        AUTO_SPECIMEN_SWEEP("Auto-Spec-Sweep", true),
         DEMO("Demo"),
         MANUAL_DIAGNOSTIC("Manual Diagnostic"), SQUARE("Square"), TURN("Turn"),
         RELOCALIZATION_TEST("Relocalize");
@@ -69,9 +70,11 @@ public class IntoTheDeep_6832 extends OpMode {
                     return GameState.TELE_OP;
                 case 2:
                     return GameState.TEST;
-//                case 3: return GameState.DEMO;
-//                case 4: return GameState.MANUAL_DIAGNOSTIC;
                 case 3:
+                    return GameState.AUTO_SPECIMEN;
+                case 4: return GameState.AUTO_SPECIMEN_SWEEP;
+
+                case 5:
                     return GameState.RELOCALIZATION_TEST;
                 default:
                     return GameState.TEST;
@@ -83,7 +86,7 @@ public class IntoTheDeep_6832 extends OpMode {
         }
 
         public static int getNumGameStates() {
-            return 4;
+            return 6;
         }
 
         public boolean isAutonomous() {
@@ -132,6 +135,7 @@ public class IntoTheDeep_6832 extends OpMode {
         robot = new Robot(hardwareMap, false);
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
+        autoSpecimens = new AutoSpecimens(robot);
         field = new Field();
 
         robot.updatePositionCache = false;
@@ -154,10 +158,12 @@ public class IntoTheDeep_6832 extends OpMode {
 
     public void init_loop() {
         TelemetryPacket packet = new TelemetryPacket();
+
         dc.init_loop();
         dc.robotOrientedDrive();
         if (gameState.isAutonomous()) {
             robot.preloadAllianceSelect();
+            robot.driveTrain.setPose(startingPosition);
             //if (!robot.trident.calibrated) {
                 //robot.trident.articulate(Trident.Articulation.CALIBRATE);
             //}
@@ -192,6 +198,7 @@ public class IntoTheDeep_6832 extends OpMode {
         lastLoopClockTime = System.nanoTime();
         totalRunTime = 0;
         //FETCH CACHE
+        robot.start();
         robot.fetchCachedDTPosition();
         if (gameState.equals(GameState.TELE_OP)) {
             robot.trident.calibrated = true;
@@ -206,11 +213,18 @@ public class IntoTheDeep_6832 extends OpMode {
 
         robot.updatePositionCache = true;
 
+
         if (gameState.equals(GameState.TEST) || gameState.equals(GameState.DEMO)) {
             robot.trident.calibrated = true;
+            robot.driveTrain.setPose(startingPosition);
         }
 
-        robot.start();
+        if (gameState.equals(GameState.RELOCALIZATION_TEST)) {
+            robot.driveTrain.setPose(startingPosition);
+            dc.manualDiagnosticMethods();
+            //robot.driveTrain.imu.resetYaw(); TODO - how is the imu reset gonna work now?
+        }
+
     }
 
     //end start()
@@ -239,6 +253,20 @@ public class IntoTheDeep_6832 extends OpMode {
             case TELE_OP:
                 dc.joystickDrive();
                 break;
+            case AUTO_SPECIMEN:
+                if (autoSpecimens.execute(packet)) {
+                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
+                    robot.articulate(Robot.Articulation.TRAVEL);
+                    gameState = GameState.TELE_OP;
+                }
+                break;
+            case AUTO_SPECIMEN_SWEEP:
+                if (autoSpecimens.execSweeping(packet)) {
+                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
+                    robot.articulate(Robot.Articulation.TRAVEL);
+                    gameState = GameState.TELE_OP;
+                }
+                break;
             case TEST:
                 debugTelemetryEnabled = true;
                 dc.manualDiagnosticMethods();
@@ -246,7 +274,7 @@ public class IntoTheDeep_6832 extends OpMode {
             case MANUAL_DIAGNOSTIC:
                 break;
             case RELOCALIZATION_TEST:
-                dc.joystickDrive();
+                auton.pingPong(packet);
                 break;
         }
     }
@@ -288,8 +316,10 @@ public class IntoTheDeep_6832 extends OpMode {
             case AUTONOMOUS:
                 handleTelemetry(auton.getTelemetry(debugTelemetryEnabled), auton.getTelemetryName(), packet);
                 break;
+            case AUTO_SPECIMEN:
+                handleTelemetry(autoSpecimens.getTelemetry(debugTelemetryEnabled), auton.getTelemetryName(), packet);
+                break;
             case TEST:
-
                 break;
         }
         //handle this class' telemetry
@@ -320,6 +350,7 @@ public class IntoTheDeep_6832 extends OpMode {
                 handleTelemetry(telemetryProvider.getTelemetry(debugTelemetryEnabled), telemetryProvider.getTelemetryName(), packet);
         }
         handleTelemetry(robot.trident.sampler.getTelemetry(true), "SAMPLER", packet);
+        handleTelemetry(robot.trident.speciMiner.getTelemetry(true), "SPECIMINER", packet);
 //        handleTelemetry(robot.trident.speciMiner.getTelemetry(true), "SPECIMINER", packet);
         telemetry.update();
         dashboard.sendTelemetryPacket(packet);
