@@ -294,6 +294,11 @@ public class AutonCode3 extends OpMode {
         }
         return false;
     }
+    @Override
+    public void start()
+    {
+        robot.setShoulderTargetPosition(robot.shoulder.getTargetPosition());
+    }
 
     @Override
     public void loop() {

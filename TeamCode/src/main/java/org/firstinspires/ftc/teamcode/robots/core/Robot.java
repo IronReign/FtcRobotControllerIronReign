@@ -50,13 +50,15 @@ public class Robot implements Subsystem {
     public boolean clawOpen = false;
     public double clawOpenPosition = 1;
     public double clawClosePosition = .6;
+    public double clawSoftClosePosition = .7;
+
 
     public int getShoulderTargetPosition() {
         return shoulderTargetPosition;
     }
 
     public void setShoulderTargetPosition(int shoulderTargetPosition) {
-        shoulderTargetPosition = shoulderTargetPosition;
+        this.shoulderTargetPosition = shoulderTargetPosition;
     }
 
     public int shoulderTargetPosition = 0;
@@ -531,16 +533,17 @@ public class Robot implements Subsystem {
                 break;
             case 2:
                 shoulder.setPower(1);
-                shoulder.setTargetPosition(1500);
+                shoulder.setTargetPosition(1420);
                 shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 calibrateStage++;
                 break;
             case 3:
-                shoulder.setTargetPosition(1500); //1647
+                shoulder.setTargetPosition(1420); //1647
                 slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 // slide should have relaxed
                 slide.setTargetPosition(0); //44
                 slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                claw.setPosition(clawSoftClosePosition);
                 calibrateStage=0;
                 return true;
         }
