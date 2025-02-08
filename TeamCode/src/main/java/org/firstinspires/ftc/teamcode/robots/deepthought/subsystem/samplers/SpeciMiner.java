@@ -39,7 +39,7 @@ public class SpeciMiner extends Arm {
     public static int SHOULDER_HOME_POSITION = 250;
     public static int SHOULDER_PREINTAKE_POSITION = 250;
     public static int SHOULDER_PREOUTTAKE_POSITION = 810;
-    public static int SHOULDER_WALLTAKE_POSITION = -330;
+    public static int SHOULDER_WALLTAKE_POSITION = -465;
 
     public static int SHOULDER_WALLTAKE_OFFSET = 100; // how much to raise the shoulder to lift off the wall
     public static int SHOULDER_LOWOUTTAKE_POSITION = 0;
@@ -51,10 +51,10 @@ public class SpeciMiner extends Arm {
     public static int colorSensorGain = 12;
     public int slideTargetPosition = 0;
     public static int SLIDE_WALLTAKE_POSITION = 1300;
-    public int SLIDE_HIGHBAR_POSITION = 1220;
+    public int SLIDE_HIGHBAR_POSITION = 1540; //1220
     int SAMPLER_SLIDE_HIBAR_POSITION = 720;
 
-    public int SLIDE_LATCH_OFFSET = 200; //not tuned - how much further to extend slide to latch
+    public int SLIDE_LATCH_OFFSET = 500; //not tuned - how much further to extend slide to latch
 
     public double ELBOW_WALLTAKE_ANGLE = 65;
     public double ELBOW_HIGHBAR_ANGLE = 15;

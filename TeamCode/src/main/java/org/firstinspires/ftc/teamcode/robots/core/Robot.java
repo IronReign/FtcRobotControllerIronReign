@@ -257,8 +257,8 @@ public class Robot implements Subsystem {
         }
 
         updateMotors();
-        if (joysticksActive(gamepad1))
-            mecanumDrive(gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.left_stick_x);
+        //if (joysticksActive(gamepad1))
+        mecanumDrive(gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.left_stick_x);
     }
 
     static boolean calibrated = true;
