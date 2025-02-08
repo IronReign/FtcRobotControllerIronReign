@@ -331,7 +331,9 @@ public class AutonCode3 extends OpMode {
         telemetry.put("Horizontal", robot.horizontal.getCurrentPosition());
         telemetry.put("Vertical", robot.vertical.getCurrentPosition());
         telemetry.put("auton Index", autonIndex);
+        telemetry.put("calibrateStage", robot.calibrateStage);
 
         return telemetry;
     }
+
 }

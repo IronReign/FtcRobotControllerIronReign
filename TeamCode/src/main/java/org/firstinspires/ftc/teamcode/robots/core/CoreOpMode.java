@@ -23,7 +23,7 @@ public class CoreOpMode extends OpMode {
         robot = new Robot(hardwareMap, gamepad1);
         dashboard = FtcDashboard.getInstance();
         robot.init();
-        Robot.calibrateStage = 0;
+        robot.calibrateStage = 0;
     }
 
     public void init_loop() {
@@ -38,6 +38,8 @@ public class CoreOpMode extends OpMode {
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
 
     }
+
+
 
     private void handleTelemetry(Map<String, Object> telemetryMap, String telemetryName) {
         TelemetryPacket p = new TelemetryPacket();

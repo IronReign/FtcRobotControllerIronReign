@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.core;
 
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.joysticksActive;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.notJoystickDeadZone;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.wrapAngle;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
@@ -29,7 +31,7 @@ import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-@Config(value = "CORE")
+@Config(value = "CORE_ROBOT")
 public class Robot implements Subsystem {
     HardwareMap hardwareMap;
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
@@ -47,7 +49,7 @@ public class Robot implements Subsystem {
 
     public boolean clawOpen = false;
     public double clawOpenPosition = 1;
-    public double clawClosePosition = 0;
+    public double clawClosePosition = .55;
     public static int shoulderTargetPosition = 0;
     public static int slideTargetPosition = 0;
     public int rotaterPosition = 0;
@@ -107,7 +109,7 @@ public class Robot implements Subsystem {
 
         shoulder.setPower(1);
         shoulder.setVelocity(50);
-        shoulder.setTargetPosition(1500);
+        shoulder.setTargetPosition(shoulder.getCurrentPosition());
         shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         slide.setPower(1);
@@ -244,7 +246,8 @@ public class Robot implements Subsystem {
         }
 
         updateMotors();
-        mecanumDrive(gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.left_stick_x);
+        if (joysticksActive(gamepad1))
+            mecanumDrive(gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.left_stick_x);
     }
 
     static boolean calibrated = true;
@@ -255,11 +258,29 @@ public class Robot implements Subsystem {
             calibrated = false;
         }
         if (! calibrated){
-            if (calibrate()){calibrated = true;};
+            {
+                if (calibrate()) {
+                    calibrateStage=0;
+                    calibrated = true;
+                }
+            }
         }
 
+        if (gamepad1.dpad_up) //hold dpad to test distance keeping
+            testDistanceSensor();
+
+        if (gamepad1.dpad_down) // hold dpad down to test pid turns
+            testTurn();
+
+        if (spad1.dpad_left) // hit left to change test targe
+            testTurnAngle = (testTurnAngle - 90) % 360;
+
+        if (spad1.dpad_right) // hit left to change test targe
+            testTurnAngle = (testTurnAngle + 90) % 360;
+
         updateMotors();
-        mecanumDrive(gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.left_stick_x);
+        if (joysticksActive(gamepad1))
+            mecanumDrive(gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.left_stick_x);
     }
 
     public int debugAuton(int autonIndex){
@@ -287,6 +308,14 @@ public class Robot implements Subsystem {
         imu.initialize(parameters);
     }
 
+    public void testDistanceSensor(){
+        driveDistance(50, 1);
+    }
+
+    int testTurnAngle;
+    public void testTurn(){
+        turnUntilDegreesIMU(testTurnAngle, 1);
+    }
     public void updateMotors() {
 
         if (clawOpen) {
@@ -361,14 +390,14 @@ public class Robot implements Subsystem {
 
         claw.setPosition(clawOpenPosition);
     }
-
+    Orientation angles = new Orientation();
     //request a turn in degrees units
     //this is an absolute (non-relative) implementation.
     //the direction of the turn will favor the shortest approach
     public boolean turnUntilDegreesIMU(double turnAngle, double maxSpeed) {
         targetHeading = wrapAngle(turnAngle);
         headingPID.setPID(HEADING_PID_PWR);
-        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         headingPID.setInput(angles.firstAngle); // todo - is this yaw?
         headingPID.setSetpoint(targetHeading);
         headingPID.setOutputRange(-maxSpeed, maxSpeed);
@@ -382,7 +411,7 @@ public class Robot implements Subsystem {
             return imuTurnDone = true;
         } else {
             headingPID.enable();
-            mecanumDrive(0,0,correction);
+            mecanumDrive(0,0,-correction);
             return imuTurnDone = false;
         }
     }
@@ -404,7 +433,7 @@ public class Robot implements Subsystem {
             return distDriveDone = true;
         } else {
             distancePID.enable();
-            mecanumDrive(-correction,0,0);
+            mecanumDrive(correction,0,0);
             return distDriveDone = false;
         }
     }
@@ -426,6 +455,11 @@ public class Robot implements Subsystem {
         telemetry.put("Horizontal", horizontal.getCurrentPosition());
         telemetry.put("Vertical", vertical.getCurrentPosition());
         telemetry.put("Calibrate Stage", calibrateStage);
+        telemetry.put("testTurnAngle", testTurnAngle);
+        telemetry.put("turn pid err", headingPID.getError());
+        telemetry.put("imu", angles.firstAngle);
+        telemetry.put("dist pid err", distancePID.getError());
+        telemetry.put("distance", sensorDistance.getDistance(DistanceUnit.CM));
 
         return telemetry;
     }
@@ -435,16 +469,16 @@ public class Robot implements Subsystem {
         return "Core Robot";
     }
 
-    public static int calibrateStage = 0;
+    public int calibrateStage = 0;
     public boolean calibrate() {
         switch (calibrateStage) {
             case 0:
                 shoulder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                shoulder.setPower(.4);
+                shoulder.setPower(-.4);
                 calibrateStage++;
                 break;
             case 1:
-                if (CALIBRATE_POSITION == shoulder.getCurrentPosition()) {
+                if (CALIBRATE_POSITION == shoulder.getCurrentPosition()) { //detect motion stopped
                     shoulder.setPower(0);
                     shoulder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     calibrateStage++;
@@ -452,14 +486,15 @@ public class Robot implements Subsystem {
                 CALIBRATE_POSITION = shoulder.getCurrentPosition();
                 break;
             case 2:
-                shoulder.setPower(10);
-                shoulder.setTargetPosition(0);
+                shoulder.setPower(1);
+                shoulder.setTargetPosition(1500);
                 shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 calibrateStage++;
                 break;
             case 3:
                 shoulder.setTargetPosition(1500); //1647
                 slide.setTargetPosition(0); //44
+                calibrateStage=0;
                 return true;
         }
         return false;
