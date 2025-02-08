@@ -49,12 +49,33 @@ public class Robot implements Subsystem {
     public boolean clawOpen = false;
     public double clawOpenPosition = 1;
     public double clawClosePosition = .6;
-    public static int shoulderTargetPosition = 0;
+
+    public int getShoulderTargetPosition() {
+        return shoulderTargetPosition;
+    }
+
+    public void setShoulderTargetPosition(int shoulderTargetPosition) {
+        shoulderTargetPosition = shoulderTargetPosition;
+    }
+
+    public int shoulderTargetPosition = 0;
     public static int slideTargetPosition = 0;
     public int rotaterPosition = 0;
     private boolean motorUpdated;
     public StickyGamepad spad1;
-    
+
+    public static int SPECIMEN_WALLTAKE_SHOULDER = 824;
+    public static int SPECIMEN_WALLTAKE_SLIDE = 30;
+    public static int SPECIMEN_PRELATCH_SHOULDER = 1800;
+    public static int SPECIMEN_PRELATCH_SLIDE=350;
+    public static int SPECIMEN_PRELATCH_DISTANCE=20; //todo tune
+
+
+    public static int SPECIMEN_LATCH_SHOULDER = 1360;
+
+
+
+
     //pid stuff
     BNO055IMU imu;
     public static PIDController headingPID;
@@ -75,6 +96,8 @@ public class Robot implements Subsystem {
     public static double TRAVEL_PID_TOLERANCE = .01; //this is a percentage of the input range .063 of 2PI is 1 degree
     private double travelPIDCorrection, travelPIDError;
     boolean travelDriveDone;
+
+
     
     
 
@@ -101,8 +124,9 @@ public class Robot implements Subsystem {
         leftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        shoulder.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        slide.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        // shoulder and slide should not reset except in calibration
+        //shoulder.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        //slide.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         vertical.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         horizontal.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
@@ -176,14 +200,15 @@ public class Robot implements Subsystem {
             slideTargetPosition = 440;
         }
 
-        /*if(spad1.x) { //preset for wall
-            shoulderTargetPosition= 824;
-            slideTargetPosition = 30;
+        if(spad1.x) { //preset for wall
+            shoulderTargetPosition= SPECIMEN_WALLTAKE_SHOULDER;
+            slideTargetPosition = SPECIMEN_WALLTAKE_SLIDE;
         }
         if(spad1.y) { //preset for specimen score
-            shoulderTargetPosition = 1900;
-            slideTargetPosition = 280;
-        }*/
+            shoulderTargetPosition = SPECIMEN_PRELATCH_SHOULDER; //1900
+            slideTargetPosition = SPECIMEN_PRELATCH_SLIDE; //280
+        }
+
         if(clawOpen) {
             claw.setPosition(clawOpenPosition);
         } else {
@@ -194,22 +219,23 @@ public class Robot implements Subsystem {
 
         // Attaching the specimen on the high bar preset (test)
         if(spad1.left_bumper){
-            shoulderTargetPosition=1800;
-            slideTargetPosition=350;
+            shoulderTargetPosition=SPECIMEN_PRELATCH_SHOULDER;
+            slideTargetPosition=SPECIMEN_PRELATCH_SLIDE;
             autonTimer = futureTime(1);
             if(isPast(autonTimer)) {
-                shoulderTargetPosition=1360;
+                shoulderTargetPosition=SPECIMEN_LATCH_SHOULDER;
             }
         }
 
         // Picking up the specimen from the wall (test)
         if(spad1.right_bumper){
-            shoulderTargetPosition=824;
-            slideTargetPosition=30;
+            shoulderTargetPosition=SPECIMEN_WALLTAKE_SHOULDER;
+            slideTargetPosition=SPECIMEN_WALLTAKE_SHOULDER;
             autonTimer=futureTime(1);
             if(isPast(autonTimer)){
                 claw.setPosition(clawClosePosition);
-                shoulderTargetPosition=1800;
+                // TODO PROBABLY NEED A SHORT DELAY HERE
+                shoulderTargetPosition=SPECIMEN_PRELATCH_SHOULDER;
             }
         }
 
@@ -261,7 +287,21 @@ public class Robot implements Subsystem {
         mecanumDrive(gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.left_stick_x);
     }
 
-    static boolean calibrated = true;
+    public void preLatchPresets()
+    {
+        shoulderTargetPosition=SPECIMEN_PRELATCH_SHOULDER;
+        slideTargetPosition=SPECIMEN_PRELATCH_SLIDE;
+    }
+
+    public void wallTakePresets(){
+        shoulderTargetPosition= SPECIMEN_WALLTAKE_SHOULDER;
+        slideTargetPosition = SPECIMEN_WALLTAKE_SLIDE;
+    }
+
+    boolean calibrated = true;
+    boolean suppressMecanum = false;
+
+
     public void initloopDrive(){
         spad1.update();
         if (spad1.guide) {
@@ -275,8 +315,13 @@ public class Robot implements Subsystem {
                     calibrateStage=0;
                     calibrated = true;
                 }
+
             }
         }
+        if (gamepad1.dpad_up || gamepad1.dpad_down)
+            suppressMecanum = true;
+        else
+            suppressMecanum = false;
 
         if (gamepad1.dpad_up) //hold dpad to test distance keeping
             testDistanceSensor();
@@ -290,9 +335,9 @@ public class Robot implements Subsystem {
         if (spad1.dpad_right) // hit left to change test targe
             testTurnAngle = (testTurnAngle + 90) % 360;
 
-        updateMotors();
-        if (joysticksActive(gamepad1))
-            mecanumDrive(gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.left_stick_x);
+        //updateMotors();
+        if (!suppressMecanum)
+            mecanumDrive(gamepad1.left_stick_y*.4, gamepad1.right_stick_x*.4, gamepad1.left_stick_x*.4);
     }
 
     public int debugAuton(int autonIndex){
@@ -385,12 +430,12 @@ public class Robot implements Subsystem {
 
         shoulder.setPower(1);
         shoulder.setVelocity(300);
-        shoulder.setTargetPosition(1467);
+        shoulder.setTargetPosition(shoulder.getCurrentPosition());  //should not move
         shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         slide.setPower(1);
         slide.setVelocity(300);
-        slide.setTargetPosition(44);
+        slide.setTargetPosition(0); //44
         slide.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         leftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
@@ -525,9 +570,11 @@ public class Robot implements Subsystem {
                 calibrateStage++;
                 break;
             case 3:
-                claw.setPosition(clawClosePosition);
-                shoulder.setTargetPosition(1512); //1647
+                shoulder.setTargetPosition(1500); //1647
+                slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                // slide should have relaxed
                 slide.setTargetPosition(0); //44
+                slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 calibrateStage=0;
                 return true;
         }
