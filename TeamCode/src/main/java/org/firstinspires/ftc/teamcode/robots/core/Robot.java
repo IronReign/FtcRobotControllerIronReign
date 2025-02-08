@@ -525,7 +525,8 @@ public class Robot implements Subsystem {
                 calibrateStage++;
                 break;
             case 3:
-                shoulder.setTargetPosition(1500); //1647
+                claw.setPosition(clawClosePosition);
+                shoulder.setTargetPosition(1512); //1647
                 slide.setTargetPosition(0); //44
                 calibrateStage=0;
                 return true;
