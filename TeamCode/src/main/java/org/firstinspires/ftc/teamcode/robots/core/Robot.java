@@ -49,7 +49,7 @@ public class Robot implements Subsystem {
 
     public boolean clawOpen = false;
     public double clawOpenPosition = 1;
-    public double clawClosePosition = .55;
+    public double clawClosePosition = .6;
     public static int shoulderTargetPosition = 0;
     public static int slideTargetPosition = 0;
     public int rotaterPosition = 0;
@@ -246,8 +246,8 @@ public class Robot implements Subsystem {
         }
 
         updateMotors();
-        if (joysticksActive(gamepad1))
-            mecanumDrive(gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.left_stick_x);
+        //if (joysticksActive(gamepad1))
+        mecanumDrive(gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.left_stick_x);
     }
 
     static boolean calibrated = true;
