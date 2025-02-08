@@ -33,6 +33,15 @@ public class AutonCode4 extends OpMode {
     boolean runAuton = true;
     public int autonIndex = 0;
     public long autonTimer = 0;
+    int startpos = 0;
+    public double wheelCircum = ((3.5)*Math.PI);
+    public int ticksrev = 1440;
+    boolean moving = false;
+    boolean turning = false;
+    public int targetTicks = 0;
+    boolean vertical = true;
+    boolean horizontal = false;
+    double distance = 0;
 
     @Override
     public void init() {
@@ -52,6 +61,44 @@ public class AutonCode4 extends OpMode {
         handleTelemetry(getTelemetry(true), robot.getTelemetryName());
     }
 
+    public void strafe(double length, double direction){
+        if (!moving){
+            // Number of encoder ticks per distance
+            targetTicks = (int)((length/wheelCircum)*ticksrev);
+
+            // Assign initial encoder values
+            startpos = robot.horizontal.getCurrentPosition();
+
+            // Indicate Vertical/Horizontal
+            vertical = false;
+            horizontal = true;
+
+            // Travel Distance
+            robot.mecanumDrive(0, direction,0);
+
+            // Update moving
+            moving = true;
+        }
+    }
+
+    public boolean completed(){
+        if (moving) {
+            if (horizontal){
+                distance = robot.horizontal.getCurrentPosition()-startpos;
+            }
+
+            if (Math.abs(distance) >= Math.abs(targetTicks)) {
+                robot.mecanumDrive(0, 0, 0);
+                vertical = false;
+                horizontal = false;
+                moving = false;
+                return true;
+
+            }
+        }
+        return false;
+    }
+
     public boolean execute(){
         switch(autonIndex) {
             // Starting Position: A3 facing submersible with specimen in hand
@@ -59,16 +106,17 @@ public class AutonCode4 extends OpMode {
             case 0:
                 //TODO: shoulder adjust; hunch its too low
                 robot.claw.setPosition(robot.clawClosePosition);
-                robot.driveDistance(30, 1);
-                robot.shoulder.setTargetPosition(1785);
-                robot.slide.setTargetPosition(350);
-                autonIndex++;
-                autonTimer = futureTime(1);
+                if (robot.driveDistance(20, 0.25)){
+                    robot.shoulder.setTargetPosition(1800);
+                    robot.slide.setTargetPosition(315);
+                    autonIndex++;
+                    autonTimer = futureTime(1);
+                }
                 break;
 
             case 1:
                 if (isPast(autonTimer)) {
-                    robot.shoulder.setTargetPosition(1360);
+                    robot.shoulder.setTargetPosition(1400);
                     if (robot.shoulder.getCurrentPosition() <= robot.shoulder.getTargetPosition()) {
                         autonIndex++;
                         autonTimer = futureTime(1);
@@ -84,11 +132,11 @@ public class AutonCode4 extends OpMode {
                 }
                 break;
 
-            case 3:
+            /*case 3:
                 //Back up
-                robot.driveDistance(6, -1);
-                robot.shoulder.setTargetPosition(824);
-                robot.slide.setTargetPosition(30);
+                robot.driveDistance((85-42), -1);
+                robot.shoulder.setTargetPosition(950);
+                robot.slide.setTargetPosition(110);
                 autonIndex++;
                 break;
 
@@ -101,8 +149,8 @@ public class AutonCode4 extends OpMode {
                 break;
 
             case 5:
-                robot.strafeDistance(24, -1);
-                robot.driveDistance(24, 1);
+                strafe(35, -1);
+                robot.driveDistance(5, 1);
                 autonIndex++;
                 break;
 
@@ -177,7 +225,7 @@ public class AutonCode4 extends OpMode {
                 robot.strafeDistance(12,1);
                 robot.driveDistance(45,-1);
                 autonIndex =0;
-                return true;
+                return true;*/
 
             default:
                 break;
