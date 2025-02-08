@@ -9,6 +9,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -24,7 +25,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-
+@Disabled
 @Autonomous(name = "COREAUTON2")
 public class AutonCode2 extends OpMode {
     Robot robot;
