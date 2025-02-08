@@ -48,7 +48,7 @@ public class Robot implements Subsystem {
 
     public boolean clawOpen = false;
     public double clawOpenPosition = 1;
-    public double clawClosePosition = .55;
+    public double clawClosePosition = .6;
     public static int shoulderTargetPosition = 0;
     public static int slideTargetPosition = 0;
     public int rotaterPosition = 0;
