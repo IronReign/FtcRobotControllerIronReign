@@ -174,14 +174,14 @@ public class Robot implements Subsystem {
             slideTargetPosition = 440;
         }
 
-        if(spad1.x) { //preset for wall
+        /*if(spad1.x) { //preset for wall
             shoulderTargetPosition= 824;
             slideTargetPosition = 30;
         }
         if(spad1.y) { //preset for specimen score
             shoulderTargetPosition = 1900;
             slideTargetPosition = 280;
-        }
+        }*/
         if(clawOpen) {
             claw.setPosition(clawOpenPosition);
         } else {
@@ -200,7 +200,7 @@ public class Robot implements Subsystem {
             }
         }
 
-        // Attaching picking up the specimen from the wall (test)
+        // Picking up the specimen from the wall (test)
         if(spad1.right_bumper){
             shoulderTargetPosition=824;
             slideTargetPosition=30;
@@ -209,6 +209,12 @@ public class Robot implements Subsystem {
                 claw.setPosition(clawClosePosition);
                 shoulderTargetPosition=1800;
             }
+        }
+
+        //OVERIDE
+        if(spad1.x){
+            shoulderTargetPosition=shoulder.getCurrentPosition();
+            slideTargetPosition=slide.getCurrentPosition();
         }
 
         if(gamepad1.left_trigger >= 0.3){
@@ -253,7 +259,7 @@ public class Robot implements Subsystem {
             calibrateStage = 0;
             calibrated = false;
         }
-        if (! calibrated){
+        if (!calibrated){
             if (calibrate()){calibrated = true;};
         }
 
@@ -404,6 +410,27 @@ public class Robot implements Subsystem {
         } else {
             distancePID.enable();
             mecanumDrive(-correction,0,0);
+            return distDriveDone = false;
+        }
+    }
+
+    public boolean strafeDistance(double distance, double maxSpeed) {
+        targetDistance = wrapAngle(distance);
+        distancePID.setPID(DISTANCE_PID_PWR);
+        distancePID.setInput(sensorDistance.getDistance(DistanceUnit.CM));  // distance reported by distance sensor
+        distancePID.setSetpoint(targetDistance);
+        distancePID.setOutputRange(-maxSpeed, maxSpeed);
+        distancePID.setTolerance(DISTANCE_PID_TOLERANCE);
+        double correction = distancePID.performPID();
+        distPIDCorrection = correction;
+        distPIDError = distancePID.getError();
+        if (distancePID.onTarget()) {
+            //distance meets accuracy requirement
+            mecanumDrive(0,0,0);
+            return distDriveDone = true;
+        } else {
+            distancePID.enable();
+            mecanumDrive(0,-correction,0);
             return distDriveDone = false;
         }
     }
