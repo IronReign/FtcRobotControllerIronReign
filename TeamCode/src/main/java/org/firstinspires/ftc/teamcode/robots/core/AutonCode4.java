@@ -32,20 +32,7 @@ public class AutonCode4 extends OpMode {
     private FtcDashboard dashboard;
     boolean runAuton = true;
     public int autonIndex = 0;
-    int startpos = 0;
-    public double wheelCircum = ((3.5)*Math.PI);
-    public int ticksrev = 1440;
-    boolean moving = false;
-    boolean turning = false;
-    public int targetTicks = 0;
-    boolean vertical = true;
-    boolean horizontal = false;
-    double distance = 0;
-    double target = 0;
-    double initialzOrientation = 0;
-    double nowOrientation = 0;
     public long autonTimer = 0;
-    boolean reached = false;
 
     @Override
     public void init() {
@@ -116,15 +103,10 @@ public class AutonCode4 extends OpMode {
             case 5:
                 robot.strafeDistance(24, -1);
                 robot.driveDistance(24, 1);
-                autonIndex+=2;
+                autonIndex++;
                 break;
 
-           /* case 6:
-                robot.driveDistance(24, 1);
-                autonIndex++;
-                break;*/
-
-            case 7:
+            case 6:
                 //close
                 robot.claw.setPosition(robot.clawClosePosition);
                 //TODO: edit here based on 1
@@ -135,13 +117,13 @@ public class AutonCode4 extends OpMode {
                 break;
 
             //back to submersible
-            case 8:
+            case 7:
                 robot.strafeDistance(24, -1);
                 robot.driveDistance(30, 1);
                 autonIndex++;
                 break;
 
-            case 9:
+            case 8:
                 //TODO: edit here based on 1
                 robot.shoulder.setTargetPosition(1785);
                 robot.slide.setTargetPosition(350);
@@ -151,7 +133,7 @@ public class AutonCode4 extends OpMode {
 
             //attach on high
             //TODO: edit based on 1
-            case 10:
+            case 9:
                 if (isPast(autonTimer)) {
                     robot.shoulder.setTargetPosition(1360);
                     if (robot.shoulder.getCurrentPosition() <= robot.shoulder.getTargetPosition()) {
@@ -161,7 +143,7 @@ public class AutonCode4 extends OpMode {
                 }
                 break;
 
-            case 11:
+            case 10:
                 //open claw
                 if (isPast(autonTimer)) {
                     robot.claw.setPosition(robot.clawOpenPosition);
@@ -169,17 +151,32 @@ public class AutonCode4 extends OpMode {
                 }
                 break;
 
-            case 12:
+            // pushing in starts
+
+            case 11:
                 //Back up
-                robot.driveDistance(30, -1);
+                robot.driveDistance(6, -1);
                 robot.slide.setTargetPosition(0);
                 autonIndex++;
 
-            // Park
-            case 13:
-                robot.strafeDistance(24, -1);
+
+            case 12:
+                //move to the right towards blocks
+                robot.strafeDistance(36, -1);
                 robot.slide.setTargetPosition(0);
-                autonIndex = 0;
+                autonIndex++;
+
+            case 13:
+                //go past
+                robot.driveDistance(30,1);
+                autonIndex++;
+                break;
+
+            case 14:
+                //turn 180
+                robot.strafeDistance(12,1);
+                robot.driveDistance(45,-1);
+                autonIndex =0;
                 return true;
 
             default:
@@ -219,11 +216,7 @@ public class AutonCode4 extends OpMode {
         telemetry.put("Shoulder runMode", robot.shoulder.getMode());
 
         telemetry.put("Power", robot.leftFront.getPower());
-        telemetry.put("Target Ticks", targetTicks);
-        telemetry.put("Moving", moving);
-        telemetry.put("Distance", distance);
-        telemetry.put("Reached", reached);
-        telemetry.put("Degrees", robot.getZorient()); // you want to comment this out - getting the imu heading is expensive - get only when needed
+        //telemetry.put("Degrees", robot.getZorient()); // you want to comment this out - getting the imu heading is expensive - get only when needed
 
         telemetry.put("Slide Position", robot.slide.getCurrentPosition());
         telemetry.put("Slide Target Position", robot.slideTargetPosition);

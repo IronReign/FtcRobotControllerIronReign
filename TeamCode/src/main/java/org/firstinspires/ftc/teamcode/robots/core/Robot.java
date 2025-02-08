@@ -216,6 +216,12 @@ public class Robot implements Subsystem {
             shoulderTargetPosition=shoulder.getCurrentPosition();
             slideTargetPosition=slide.getCurrentPosition();
         }
+        
+        //Lower reach
+        if(spad1.y){
+            driveDistance(1, -1);
+            slideTargetPosition=slide.getCurrentPosition()+10;
+        }
 
         if(gamepad1.left_trigger >= 0.3){
             if (shoulder.getCurrentPosition() < 2000){
