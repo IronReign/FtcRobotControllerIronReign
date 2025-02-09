@@ -221,7 +221,7 @@ public class IntoTheDeep_6832 extends OpMode {
 
         if (gameState.equals(GameState.RELOCALIZATION_TEST)) {
             robot.driveTrain.setPose(startingPosition);
-            dc.manualDiagnosticMethods();
+            dc.relocalizationTestMethods();
             //robot.driveTrain.imu.resetYaw(); TODO - how is the imu reset gonna work now?
         }
 
@@ -274,6 +274,7 @@ public class IntoTheDeep_6832 extends OpMode {
             case MANUAL_DIAGNOSTIC:
                 break;
             case RELOCALIZATION_TEST:
+                dc.relocalizationTestMethods();
                 auton.pingPong(packet);
                 break;
         }

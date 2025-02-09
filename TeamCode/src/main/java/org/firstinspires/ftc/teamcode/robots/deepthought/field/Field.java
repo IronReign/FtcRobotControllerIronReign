@@ -39,7 +39,7 @@ public class Field {
     public POI ground3 = new POI(-2.375, -2.35, 110, "GROUND3");
 
     // alliance samples - approx settings for using back plate to push samples to ozone
-    public POI ground4 = new POI(1.75, -.5, 90, "GROUND4");
+    public POI ground4 = new POI(2, -.5, 90, "GROUND4");
     public POI ground5 = new POI(2.25, -.5, 90, "GROUND5");
     public POI ground6 = new POI(2.6, -.5, 90, "GROUND6"); // grazing back wall
 
@@ -53,8 +53,8 @@ public class Field {
     public POI oZoneWalltake = new POI(2.0, -1.5, -90, "OZoneWalltake");
     public POI hibarPrep = new POI(0, -1.5, -90, "HiBarPrep");
     public POI hibar = new POI(0, -1.45, -90, "HiBar");
-    public POI zig = new POI(1.5, -1.5, 90, "Zig"); // zig from speciminer scoring
-    public POI zag = new POI(1.5, -.5, 90, "Zag"); // zag from zig to safely get back of robot on  far side of alliance samples
+    public POI zig = new POI(1.5, -1.7, -90, "Zig"); // zig from speciminer scoring
+    public POI zag = new POI(2, -.5, -90, "Zag"); // zag from zig to safely get back of robot on  far side of alliance samples
 
 
     public static final double MAX_Y_VALUE = 3;

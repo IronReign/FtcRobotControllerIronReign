@@ -37,6 +37,10 @@
                 name="specElbow"
                 port="5" />
             <RevRobotics40HDHexMotor
+                name="led"
+                port="1" />
+
+            <RevRobotics40HDHexMotor
                 name="specSlide"
                 port="0" />
             <RevRobotics40HDHexMotor

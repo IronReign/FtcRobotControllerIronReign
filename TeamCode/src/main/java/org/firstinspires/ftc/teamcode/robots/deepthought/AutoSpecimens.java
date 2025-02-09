@@ -38,6 +38,7 @@ public class AutoSpecimens implements TelemetryProvider {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("autonState\t ", autonState);
         telemetryMap.put("autonIndex\t", autonIndex);
+        telemetryMap.put("shiftSampleIndex", autonShiftIndex);
         telemetryMap.put("outtakeIndex\t", autonOuttakeIndex);
         telemetryMap.put("outtake timer\t", isPast(autonOuttakeTimer));
         telemetryMap.put("intakeIndex\t", autonShiftIndex);
@@ -89,8 +90,8 @@ public class AutoSpecimens implements TelemetryProvider {
                 }
                 break;
             case 2: // set pre latch arm position todo start near very end of drive
-                    robot.trident.speciMiner.prelatchHigh();  // preset arm position
-                    autonIndex++;
+                robot.trident.speciMiner.prelatchHigh();  // preset arm position
+                autonIndex++;
 
                 break;
 
@@ -100,22 +101,24 @@ public class AutoSpecimens implements TelemetryProvider {
                 break;
             case 4: // latch specimen
                 if (robot.trident.speciMiner.latch()) {
-                        robot.resetStates();
-                        robot.articulate(Robot.Articulation.MANUAL);
-                        autonIndex++;
-                    }
+                    robot.resetStates();
+                    robot.articulate(Robot.Articulation.MANUAL);
+                    autonIndex++;
+                }
                 break;
             case 5: // eject - might not be needed?
                 if (robot.trident.speciMiner.eject())
-                    if(robot.trident.tuck()) autonIndex++;
+                    if (robot.trident.tuck()) autonIndex++;
                 break;
 
             case 6: // back up a bit? in case strafe conflicts with sub
+//                return true;
                 autonIndex++;
                 break;
             case 7: // start sweeping the ground samples
                 if (autonShiftSample(field.ground4, packet)) {
                     autonIndex++;
+                    return true;
                 }
                 break;
             case 8:
@@ -129,7 +132,7 @@ public class AutoSpecimens implements TelemetryProvider {
                 }
                 break;
             case 10:
-                autonIndex=0;
+                autonIndex = 0;
                 return true;
         }
         return false;
@@ -152,7 +155,7 @@ public class AutoSpecimens implements TelemetryProvider {
                 autonState = AutonState.DRIVE_TO_HIGHBAR; // drive to sub
                 if (isPast(autonTimer)) {
                     if (driveAndLatch(packet)) {
-                        autonIndex=7;
+                        autonIndex = 7;
                     }
                 }
                 break;
@@ -177,6 +180,7 @@ public class AutoSpecimens implements TelemetryProvider {
         }
         return false;
     }
+
     //includes driving to outtake, actual latching, and leaves the robot in outtake position
     public int autonOuttakeIndex = 0;
     public long autonOuttakeTimer = 0;
@@ -225,6 +229,7 @@ public class AutoSpecimens implements TelemetryProvider {
     // only safe to start from a field position that can direct travel to hibar
     int driveAndLatchIndex = 0;
     double driveAndLatchTimer = 0;
+
     boolean driveAndLatch(TelemetryPacket packet) {
         switch (driveAndLatchIndex) { //auton delay
             case 0:
@@ -269,6 +274,7 @@ public class AutoSpecimens implements TelemetryProvider {
     // only safe to start from a field position that can direct travel to wall pickup
     int driveAndWalltakeIndex = 0;
     double driveAndWalltakeTimer = 0;
+
     boolean driveAndWalltake(TelemetryPacket packet) {
         switch (driveAndWalltakeIndex) { //auton delay
             case 0:
@@ -287,16 +293,14 @@ public class AutoSpecimens implements TelemetryProvider {
                 }
                 break;
             case 2: // start testing intake - stops on color sensor detection - todo start near very end of drive
-                if (robot.trident.speciMiner.wallTake())
-                {
-                    robot.driveTrain.drive(0,0,0); // stop chassis driving
+                if (robot.trident.speciMiner.wallTake()) {
+                    robot.driveTrain.drive(0, 0, 0); // stop chassis driving
                     driveAndWalltakeIndex = 0;
                     return true;
                 }
-                robot.driveTrain.drive(.2,0,0); // drive forward on low power
-                if (isPast(driveAndWalltakeTimer))
-                {
-                    robot.driveTrain.drive(0,0,0); // stop chassis driving
+                robot.driveTrain.drive(.2, 0, 0); // drive forward on low power
+                if (isPast(driveAndWalltakeTimer)) {
+                    robot.driveTrain.drive(0, 0, 0); // stop chassis driving
                     driveAndWalltakeIndex = 0;
                     return true;
                 }
@@ -305,12 +309,14 @@ public class AutoSpecimens implements TelemetryProvider {
         }
         return false;
     }
+
     public int autonShiftIndex = 0;
     public int autonShiftTimer = 0;
     int numAttempts = 2;
 
     //shift a given sample to ozone using the chassis backplate
     public boolean autonShiftSample(POI ground, TelemetryPacket packet) {
+//        robot.aprilTagRelocalization();
         switch (autonShiftIndex) {
             case 0: // drive from hibar or from starting position to safe intermediate
                 if (robot.driveTrain.strafeToPose(field.zig.getPose(), packet)) {
@@ -341,6 +347,7 @@ public class AutoSpecimens implements TelemetryProvider {
         }
         return false;
     }
+
     public int autonSweepIndex = 0;
     public int autonSweepTimer = 0;
 
@@ -364,16 +371,16 @@ public class AutoSpecimens implements TelemetryProvider {
                     return true;
                 }
                 break;
-            
+
         }
         return false;
     }
 
-void resetStates(){
+    void resetStates() {
         //do NOT reset autonIndex
         driveAndLatchIndex = 0;
         autonSweepIndex = 0;
         autonShiftIndex = 0;
         robot.resetStates();
-}
+    }
 }

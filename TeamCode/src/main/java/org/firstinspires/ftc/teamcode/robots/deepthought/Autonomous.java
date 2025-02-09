@@ -224,15 +224,15 @@ public class Autonomous implements TelemetryProvider {
     public void pingPong(TelemetryPacket packet) {
         switch (pingPongIndex) {
             case 0:
-                robot.aprilTagRelocalization();
+//                robot.aprilTagRelocalization();
 
-                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet)) {
-
-                    pingPongIndex++;
-                }
+//                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet)) {
+//
+//                    pingPongIndex++;
+//                }
                 break;
             case 1:
-                robot.aprilTagRelocalization();
+//                robot.aprilTagRelocalization();
 
 
 //                if (robot.driveTrain.strafeToPose(P2D(-1.5, -.5, 0), packet)) {

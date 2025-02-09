@@ -141,7 +141,7 @@ public abstract class Arm implements Subsystem {
 
                 slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 slide.setPower(1);
-                slide.setTargetPosition(0);
+                slide.setTargetPosition(10);
                 slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 calibrateIndex = 0;
                 calibrated = true;
