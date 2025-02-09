@@ -25,7 +25,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-@Disabled
+
 @Autonomous(name = "COREAUTON2")
 public class AutonCode2 extends OpMode {
     Robot robot;
