@@ -71,9 +71,6 @@ public class Trident implements Subsystem {
     public static int SHOULDER_CALIBRATE_HORIZONTAL = -2020; // offset to get to horizontal when shoulder is at max
     public static int SHOULDER_SIZING = 540;  //todo re-tune after horizontal tuning
     public int SHOULDER_HORIZONTAL = 0;
-    public static int SHOULDER_INTAKE_POSITION = 250;
-    public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
-    public static int SHOULDER_HIGHOUTTAKE_POSITION = 1925;
     public static int SHOULDER_MIN_POSITION = -625;
 
 
@@ -124,7 +121,7 @@ public class Trident implements Subsystem {
         return articulation;
     }
 
-    int calibrateIndex = 0;
+    public int calibrateIndex = 0;
     public long calibrateTimer = 0;
 
     public boolean calibrate() {

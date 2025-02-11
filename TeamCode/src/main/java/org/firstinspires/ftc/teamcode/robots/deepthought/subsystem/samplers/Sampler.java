@@ -38,11 +38,22 @@ public class Sampler extends Arm {
     // Shoulder values to request from Trident
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
-    public static int SHOULDER_PREINTAKE_POSITION = -100;
+    public static int SHOULDER_PREINTAKE_POSITION = 0;
     public static int SHOULDER_INTAKE_POSITION = -375;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
     public static int SHOULDER_HIGHOUTTAKE_POSITION = 1385;
     public static int SLIDE_ADJUST_SPEED = 80;
+
+    // sweep config uses sampler to slide samples to ozone
+    // this sweep config is right at 42"
+    public static int SWEEP_SLIDE_POS = 1840;
+    public static int SWEEP_SHOULDER_POS = -90;
+
+    int SWEEP_OVER_SHOULDER_POS = 100;
+
+    // note for Sweep returning to alliance samples, set shoulder to horizontal
+    public static double SWEEP_ELBOW_ANGLE = 0;
+
     public int shoulderPositionMax = 850;
 
     public static int colorSensorGain = 12;
@@ -54,7 +65,7 @@ public class Sampler extends Arm {
 
         articulation = Articulation.MANUAL;
 
-        SLIDE_HIGHOUTTAKE_POSITION = 2400;
+        SLIDE_HIGHOUTTAKE_POSITION = 2800;
 
 
         //defaults specific to sampler
@@ -124,6 +135,12 @@ public class Sampler extends Arm {
     public void stop() {
         servoPower = 0;
         beater.setPower(0);
+        setElbowAngle(ELBOW_START_ANGLE);
+        try {
+            wait(250);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         slide.setTargetPosition(slide.getCurrentPosition());
     }
 
@@ -154,6 +171,7 @@ public class Sampler extends Arm {
     }
 
     public Articulation articulate() {
+
         switch (articulation) {
             case MANUAL:
                 break;
@@ -312,8 +330,10 @@ public class Sampler extends Arm {
                 slideTargetPosition = 20;
                 servoPower = 0;
                 tuckIndex++;
+                break;
+            case 1:
+                tuckIndex = 0;
                 return true;
-
         }
         return false;
     }
@@ -335,6 +355,32 @@ public class Sampler extends Arm {
             currentSample = Sample.NO_SAMPLE;
             return "NO SAMPLE";
         }
+    }
+
+    public long sweepTimer = 0;
+    public static int sweepIndex = 0;
+    public boolean sweepConfig(boolean flyOver) {
+        switch (sweepIndex) {
+            case 0:
+                elbow.setTargetAngle(SWEEP_ELBOW_ANGLE);
+                slideTargetPosition = SWEEP_SLIDE_POS;
+                if (flyOver)
+                    trident.setShoulderTarget(this,SWEEP_OVER_SHOULDER_POS);
+                else
+                    trident.setShoulderTarget(this,SWEEP_SHOULDER_POS);
+                servoPower = 0;
+                sweepIndex++;
+                break;
+            case 1: // wait until shoulder and slide have reached position
+                if (
+                        withinError(slideTargetPosition, slide.getCurrentPosition(),10)
+                        && withinError((flyOver ? SWEEP_OVER_SHOULDER_POS : SWEEP_SHOULDER_POS), trident.getShoulderCurrentPosition(), 10)
+                ) {
+                    sweepIndex = 0;
+                    return true;
+                }
+        }
+        return false;
     }
 
     @Override
