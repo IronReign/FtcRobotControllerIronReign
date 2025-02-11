@@ -66,12 +66,12 @@ public class Trident implements Subsystem {
 
     //shoulder - these are defaults - but the Sampler and Speciminer classes define their own local versions
     public int SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
-    public static int shoulderTargetPosition = 0;
+    int shoulderTargetPosition = 0;
     public static int shoulderSpeed = 45;
     public static int SHOULDER_CALIBRATE_HORIZONTAL = -2020; // offset to get to horizontal when shoulder is at max
     public static int SHOULDER_SIZING = 540;  //todo re-tune after horizontal tuning
     public int SHOULDER_HORIZONTAL = 0;
-    public static int SHOULDER_MIN_POSITION = -625;
+    public static int SHOULDER_MIN_POSITION = -625;  //todo is this right? should be a small negative angle
 
 
     //BEATER
@@ -242,6 +242,9 @@ public class Trident implements Subsystem {
         return shoulder.getCurrentPosition();
     }
 
+    public void adjustShoulder(int upTics){
+            setShoulderTarget(getShoulderTarget()+upTics);
+    }
     public void setShoulderTarget(Arm subsystem, int targetTics) {
         setActiveArm(subsystem);
         setShoulderTarget(targetTics);
@@ -253,6 +256,8 @@ public class Trident implements Subsystem {
         } else {
             shoulderTargetPosition = SHOULDER_MIN_POSITION;
         }
+
+        // todo - seems there should be a guard on Max position too
     }
 
     public Arm getActiveArm() {

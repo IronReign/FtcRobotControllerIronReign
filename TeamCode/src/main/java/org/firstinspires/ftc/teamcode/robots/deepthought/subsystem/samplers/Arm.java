@@ -61,7 +61,7 @@ public abstract class Arm implements Subsystem {
     public double ELBOW_MIN_ANGLE;
     public double ELBOW_MAX_ANGLE;
     public static int ELBOW_ADJUST_ANGLE;
-    public double ELBOW_PREINTAKE_ANGLE;
+    public double ELBOW_PREINTAKE_ANGLE;  // used to set the intake at a height to clear the sub perimeter
     public double ELBOW_LOWOUTTAKE_ANGLE;
     public double ELBOW_HIGHOUTTAKE_ANGLE;
 

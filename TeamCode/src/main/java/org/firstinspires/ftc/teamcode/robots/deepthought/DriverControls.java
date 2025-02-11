@@ -83,13 +83,12 @@ public class DriverControls {
 
     public void manualDiagnosticMethods() {
         robotOrientedDrive();
-        //this is a quick fix for now, shouldertargetpos should not be public
+        //adjust shoulder
         if (gamepad1.right_bumper) {
-            robot.trident.shoulderTargetPosition -= shoulderSpeed;
+            robot.trident.adjustShoulder(-shoulderSpeed);
         }
         if (gamepad1.left_bumper) {
-            robot.trident.shoulderTargetPosition += shoulderSpeed;
-        }
+            robot.trident.adjustShoulder(shoulderSpeed);        }
 
 //
         if (gamepad1.left_trigger > .2) {
@@ -214,15 +213,14 @@ public class DriverControls {
             fieldOrientedDrive();
         else
             robotOrientedDrive();
-        //this is a quick fix for now, shouldertargetpos should not be public
+        // adjust shoulder
         if (gamepad1.right_bumper) {
-            robot.trident.shoulderTargetPosition -= shoulderSpeed;
+            robot.trident.adjustShoulder(-shoulderSpeed);
         }
         if (gamepad1.left_bumper) {
-            robot.trident.shoulderTargetPosition += shoulderSpeed;
+            robot.trident.adjustShoulder(shoulderSpeed);
         }
 
-//
         if (gamepad1.left_trigger > .2) {
             Trident.enforceSlideLimits = false;
             robot.trident.getActiveArm().adjustSlide(-SLIDE_ADJUST_SPEED);
