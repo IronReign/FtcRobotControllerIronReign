@@ -12,6 +12,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.ExponentialSmoother;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
+import org.firstinspires.ftc.teamcode.robots.deepthought.vision.Demos;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -24,6 +25,7 @@ public class IntoTheDeep_6832 extends OpMode {
     //COMPONENTS
     public static Robot robot;
     static Autonomous auton;
+    static Demos demos;
     static AutoSpecimens autoSpecimens;
     private FtcDashboard dashboard;
     public static Field field;
@@ -76,6 +78,8 @@ public class IntoTheDeep_6832 extends OpMode {
 
                 case 5:
                     return GameState.RELOCALIZATION_TEST;
+                case 6:
+                    return GameState.DEMO;
                 default:
                     return GameState.TEST;
             }
@@ -86,7 +90,7 @@ public class IntoTheDeep_6832 extends OpMode {
         }
 
         public static int getNumGameStates() {
-            return 6;
+            return 7;
         }
 
         public boolean isAutonomous() {
@@ -135,6 +139,7 @@ public class IntoTheDeep_6832 extends OpMode {
         robot = new Robot(hardwareMap, false);
         dc = new DriverControls(gamepad1, gamepad2);
         auton = new Autonomous(robot);
+        demos = new Demos(robot);
         autoSpecimens = new AutoSpecimens(robot);
         field = new Field();
 
@@ -250,6 +255,11 @@ public class IntoTheDeep_6832 extends OpMode {
                 }
                 break;
 
+            case DEMO:
+                if(demos.execute()) {
+                    gameState = GameState.TELE_OP;
+                }
+                break;
             case TELE_OP:
                 dc.joystickDrive();
                 break;
@@ -311,8 +321,8 @@ public class IntoTheDeep_6832 extends OpMode {
             case RELOCALIZATION_TEST:
 
                 break;
-            case TELE_OP:
-
+            case DEMO:
+                handleTelemetry(demos.getTelemetry(debugTelemetryEnabled), demos.getTelemetryName(), packet);
                 break;
             case AUTONOMOUS:
                 handleTelemetry(auton.getTelemetry(debugTelemetryEnabled), auton.getTelemetryName(), packet);

@@ -45,8 +45,8 @@ public abstract class Arm implements Subsystem {
     //SLIDE VARIABLES - todo, values should be moved into implementations
     public static int slidePositionMax = 3300;
     public static int slidePositionMin = 0;
-    public int SLIDE_INTAKE_MIN_POSITION = 0;
-    public int SLIDE_PREINTAKE_POSITION = 1000;
+    public int SLIDE_INTAKE_MIN_POSITION = 200;
+    public int SLIDE_PREINTAKE_POSITION = 2000;
     public int SLIDE_LOWOUTTAKE_POSITION = 320;
     public int SLIDE_HIGHOUTTAKE_POSITION = 1820;
     public static int slideSpeed = 80;

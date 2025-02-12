@@ -66,11 +66,11 @@ public class Robot implements Subsystem {
 
     public DTPosition fetchedPosition;
 
-    PIDController sampleAlignmentPID;
-    PIDCoefficients sampleAlignmentCoefficients = new PIDCoefficients(0.03, 0.04, 0);
+    public PIDController sampleAlignmentPID;
+    public static PIDCoefficients sampleAlignmentCoefficients = new PIDCoefficients(0.03, 0.04, 0);
 
     public static double SAMPLE_ALIGN_TARGET_TX = 8;
-    public static double SAMPLE_ALIGN_TOLERANCE = .5;
+    public static double SAMPLE_ALIGN_TOLERANCE = 3;
     public double PIDError, PIDCorrection;
 
     //vision variables
@@ -105,6 +105,7 @@ public class Robot implements Subsystem {
     public static double panTargetAngle = PAN_BASKET_APRILTAG;
 
     DcMotor LED;
+    public static boolean onTarget;
 
     public enum Articulation {
         MANUAL, SAMPLER_INTAKE, TRAVEL, SAMPLER_OUTTAKE, SPECIMINER_GROUNDTAKE, SPECIMINER_WALLTAKE, SAMPLER_PREP, SPECIMINER_OUTTAKE
@@ -185,8 +186,8 @@ public class Robot implements Subsystem {
 
         pan.setTargetAngle(panTargetAngle);
         pan.update();
-        if (!gameState.isAutonomous())
-            aprilTagRelocalization();
+//        if (!gameState.isAutonomous)
+//            aprilTagRelocalization();
         articulate(articulation);
         driveTrain.updatePoseEstimate();
 
@@ -382,6 +383,8 @@ public class Robot implements Subsystem {
         telemetryMap.put("april tag pose", "(" + aprilTagPose.position.x / 23.5 + ", " + aprilTagPose.position.y / 23.5 + ")");
         telemetryMap.put("MemoryPose", positionCache.readPose());
 
+
+        telemetryMap.put("onTarget", onTarget);
         telemetryMap.put("pid error", PIDError);
         telemetryMap.put("pid correction", PIDCorrection);
         telemetryMap.put("pan target", panTargetAngle);
@@ -463,6 +466,7 @@ public class Robot implements Subsystem {
             if (llResult.getTx() != 0.0) {
                 double targetTx = SAMPLE_ALIGN_TARGET_TX;
                 sampleAlignmentPID.setPID(sampleAlignmentCoefficients);
+//                sampleAlignmentPID.setInputRange(-25, 25);
                 sampleAlignmentPID.setInput(llResult.getTx());
                 sampleAlignmentPID.setSetpoint(targetTx);
                 sampleAlignmentPID.setOutputRange(-.8, .8);
@@ -471,9 +475,11 @@ public class Robot implements Subsystem {
                 PIDCorrection = correction;
                 PIDError = sampleAlignmentPID.getError();
                 if (sampleAlignmentPID.onTarget()) {
+                    onTarget = true;
                     driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                     return true;
                 } else {
+                    onTarget = false;
                     sampleAlignmentPID.enable();
                     driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
                     return false;
