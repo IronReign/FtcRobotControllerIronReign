@@ -60,8 +60,8 @@ public class Demos implements TelemetryProvider {
     public boolean scoop() {
         switch (scoopIndex) {
             case 0:
-                 robot.alignOnSample();
-                 if(robot.sampleAlignmentPID.onTarget()) {
+
+                 if(robot.alignOnSample()) {
                      robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                      scoopIndex ++;
                  }
@@ -74,6 +74,7 @@ public class Demos implements TelemetryProvider {
                 if (robot.articulation == Robot.Articulation.MANUAL) {
                     robot.trident.sampler.servoPower = 0;
                     robot.articulate(Robot.Articulation.TRAVEL);
+                    scoopIndex = 0;
                 }
                 break;
         }

@@ -94,7 +94,7 @@ public class Robot implements Subsystem {
     public static double PAN_START_ANGLE = 145;
     public static int PAN_HOME_POSITION = 2050;
     public static double PAN_PWM_PER_DEGREE = -5.672222222222222;
-    public static double PAN_JOINT_SPEED = 120;
+    public static double PAN_JOINT_SPEED = 1000;
     public static double PAN_MIN_ANGLE = -15;
     public static double PAN_MAX_ANGLE = 220;
     public static double PAN_ADJUST_ANGLE = 5;
@@ -466,7 +466,7 @@ public class Robot implements Subsystem {
             if (llResult.getTx() != 0.0) {
                 double targetTx = SAMPLE_ALIGN_TARGET_TX;
                 sampleAlignmentPID.setPID(sampleAlignmentCoefficients);
-//                sampleAlignmentPID.setInputRange(-25, 25);
+                sampleAlignmentPID.setInputRange(-25, 25);
                 sampleAlignmentPID.setInput(llResult.getTx());
                 sampleAlignmentPID.setSetpoint(targetTx);
                 sampleAlignmentPID.setOutputRange(-.8, .8);
@@ -474,13 +474,13 @@ public class Robot implements Subsystem {
                 double correction = sampleAlignmentPID.performPID();
                 PIDCorrection = correction;
                 PIDError = sampleAlignmentPID.getError();
+                sampleAlignmentPID.enable();
                 if (sampleAlignmentPID.onTarget()) {
                     onTarget = true;
                     driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                     return true;
                 } else {
                     onTarget = false;
-                    sampleAlignmentPID.enable();
                     driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
                     return false;
                 }

@@ -42,7 +42,7 @@ public class Autonomous implements TelemetryProvider {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("autonState\t ", autonState);
         telemetryMap.put("field finalized?\t", field.finalized);
-        telemetryMap.put("target basket\t", ""+ field.basket.x + field.basket.y);
+        telemetryMap.put("target basket\t", "" + field.basket.x + field.basket.y);
         telemetryMap.put("autonIndex\t", autonIndex);
         telemetryMap.put("outtakeIndex\t", autonOuttakeIndex);
         telemetryMap.put("outtake timer\t", isPast(autonOuttakeTimer));
@@ -116,7 +116,7 @@ public class Autonomous implements TelemetryProvider {
                     robot.resetStates();
                     robot.trident.sampler.articulate(Sampler.Articulation.MANUAL);
 
-                    autonIndex = 7;
+                    autonIndex++;
                 }
                 break;
             case 6:
@@ -157,7 +157,8 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 2:
                 if (isPast(autonOuttakeTimer)) {
-//                    robot.aprilTagRelocalization();
+                    robot.aprilTagRelocalization();
+                    robot.trident.sampler.adjustSlide(200);
                     robot.trident.sampler.servoPower = .3;
                     autonOuttakeTimer = futureTime(1);
                     autonOuttakeIndex++;
@@ -186,11 +187,11 @@ public class Autonomous implements TelemetryProvider {
     public boolean autonSamplerIntake(POI ground, TelemetryPacket packet) {
         switch (autonIntakeIndex) {
             case 0:
-                if (robot.driveTrain.strafeToPose(field.basketPrep.getPose(), packet)) {
-                    autonIntakeIndex++;
-                    robot.resetStates();
-                    //ADD LIMELIGHT ALIGNMENT HERE
-                }
+//                if (robot.driveTrain.strafeToPose(field.basketPrep.getPose(), packet)) {
+                autonIntakeIndex++;
+//                    robot.resetStates();
+                //ADD LIMELIGHT ALIGNMENT HERE
+//                }
             case 1:
                 if (robot.driveTrain.strafeToPose(ground.getPose(), packet)) {
                     autonIntakeIndex++;
@@ -199,9 +200,9 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 2:
-//                if (robot.alignOnSample()) {
-                autonIntakeIndex++;
-//                }
+                if (robot.alignOnSample()) {
+                    autonIntakeIndex++;
+                }
                 break;
             case 3:
                 robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
@@ -210,7 +211,7 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 4:
-                robot.articulate(Robot.Articulation.TRAVEL);
+//                robot.articulate(Robot.Articulation.TRAVEL);
                 autonIntakeIndex = 0;
                 return true;
 
@@ -222,6 +223,7 @@ public class Autonomous implements TelemetryProvider {
     int pingPongIndex = 0;
 
     public void pingPong(TelemetryPacket packet) {
+        robot.alignOnSample();
         switch (pingPongIndex) {
             case 0:
 //                robot.aprilTagRelocalization();

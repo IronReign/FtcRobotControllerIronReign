@@ -92,12 +92,18 @@ public class DriverControls {
 
 //
         if (gamepad1.left_trigger > .2) {
+            robot.trident.sampler.articulate(Sampler.Articulation.MANUAL);
+            robot.trident.speciMiner.articulate(SpeciMiner.Articulation.MANUAL);
             Trident.enforceSlideLimits = false;
-            robot.trident.getActiveArm().adjustSlide(-SLIDE_ADJUST_SPEED);
+            robot.trident.sampler.adjustSlide(-SLIDE_ADJUST_SPEED);
+            robot.trident.speciMiner.adjustSlide(-SLIDE_ADJUST_SPEED);
         }
         if (gamepad1.right_trigger > .2) {
+            robot.trident.sampler.articulate(Sampler.Articulation.MANUAL);
+            robot.trident.speciMiner.articulate(SpeciMiner.Articulation.MANUAL);
             Trident.enforceSlideLimits = false;
-            robot.trident.getActiveArm().adjustSlide(SLIDE_ADJUST_SPEED);
+            robot.trident.sampler.adjustSlide(SLIDE_ADJUST_SPEED);
+            robot.trident.speciMiner.adjustSlide(SLIDE_ADJUST_SPEED);
         }
 //
         if (stickyGamepad1.a) {

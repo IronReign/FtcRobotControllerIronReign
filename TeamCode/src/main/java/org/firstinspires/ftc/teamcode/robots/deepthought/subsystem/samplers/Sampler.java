@@ -252,8 +252,8 @@ public class Sampler extends Arm {
                 break;
             case 3:
                 if (slideTargetPosition > SLIDE_INTAKE_MIN_POSITION) {
-                    slideTargetPosition -= 60;
-                    trident.setShoulderTarget(this, (int) (trident.getShoulderTarget() - 60 * 0.1534090909090909));
+                    slideTargetPosition -= 400;
+                    trident.setShoulderTarget(this, (int) (trident.getShoulderTarget() - 400 * 0.1534090909090909));
 
                 }
                 if (stopOnSample() || isPast(intakeTimer)) {

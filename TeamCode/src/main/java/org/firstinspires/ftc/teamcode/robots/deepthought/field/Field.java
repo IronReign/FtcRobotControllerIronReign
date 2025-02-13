@@ -34,8 +34,8 @@ public class Field {
     public POI subAccess = new POI(-1.5, -.5, 180, "SUBACCESS");
 
     //neutral samples
-    public POI ground1 = new POI(-2.4, -2, 93, "GROUND1");
-    public POI ground2 = new POI(-2.2, -1.60, 45, "GROUND2");
+    public POI ground1 = new POI(-2.4, -1.3, 93, "GROUND1");
+    public POI ground2 = new POI(-2.3, -1.50, 45, "GROUND2");
     public POI ground3 = new POI(-2.375, -2.35, 110, "GROUND3");
 
     // alliance samples - approx settings for using back plate to push samples to ozone
@@ -141,7 +141,7 @@ public class Field {
         basket = new POI(-2.3 * allianceMultiplier, -2.3 * allianceMultiplier, isRed ? 55  : 55 + 180, "BASKET");
         basket2 = new POI(-2.375 * allianceMultiplier, -2.375 * allianceMultiplier, 55, "BASKET");
         basketPrep = new POI(-2.4*allianceMultiplier, -2*allianceMultiplier, isRed ? 50 : 50 + 180, "BASKET");
-        ground1 = new POI(-2.4*allianceMultiplier, -2*allianceMultiplier, isRed ? 93 : 93 + 180, "GROUND1");
+        ground1 = new POI(-2.4*allianceMultiplier, -1.6*allianceMultiplier, isRed ? 93 : 93 + 180, "GROUND1");
         ground2 = new POI(-2.2*allianceMultiplier,-1.60 *allianceMultiplier, isRed ? 50 : 50 + 180, "GROUND2");
     }
 
