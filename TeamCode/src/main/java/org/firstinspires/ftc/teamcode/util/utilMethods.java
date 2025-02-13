@@ -16,6 +16,27 @@ public class utilMethods {
         double normalized = (double)pulse;
         return (normalized - 750.0) / 1500.0; //convert mr servo controller pulse width to double on _0 - 1 scale
     }
+
+
+    /**
+     * Computes the minimal difference between two angles.
+     *
+     * @param targetAngle  The target angle in degrees.
+     * @param currentAngle The current angle in degrees.
+     * @return The smallest difference between the angles (in the range -180 to 180 degrees).
+     */
+    public static double angleDifference(double targetAngle, double currentAngle) {
+        double diff = targetAngle - currentAngle;
+        while (diff > 180) {
+            diff -= 360;
+        }
+        while (diff < -180) {
+            diff += 360;
+        }
+        return diff;
+    }
+
+
     /**
      * returns the minimum difference (in absolute terms) between two angles,
      * preserves the sign of the difference
@@ -27,6 +48,8 @@ public class utilMethods {
     public static double diffAngle(double angle1, double angle2){
         return Math.abs(angle1 - angle2) < Math.abs(angle2-angle1) ? Math.abs(angle1 - angle2) : Math.abs(angle2-angle1);
     }
+
+
 
     public static double diffAngle2(double angle1, double angle2){
 

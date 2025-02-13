@@ -2,39 +2,41 @@ package org.firstinspires.ftc.teamcode.robots.swerve;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Swerve", group = "Challenge")
 public class SwerveOp extends OpMode {
 
-CrapSwerve robot;
-
-StickyGamepad stickyGamepad1;
-
+    MonoSwerve robot;
+    StickyGamepad stickyGamepad1;
 
     @Override
     public void init() {
-        robot = new CrapSwerve(hardwareMap);
+        robot = new MonoSwerve(hardwareMap);
         stickyGamepad1 = new StickyGamepad(gamepad1);
     }
 
     @Override
     public void loop() {
+        // Process the left joystick (x and y) to compute desired velocity.
+        // hold left bumper to allow drive motor, otherwise only steering will update
+        if (gamepad1.left_bumper)
+            robot.processDriverInput(gamepad1.left_stick_x, -gamepad1.left_stick_y, true);
+        else
+            robot.processDriverInput(gamepad1.left_stick_x, -gamepad1.left_stick_y, false);
+
+        // Update chassis (which in turn updates the swerve module and IMU data)
         robot.update(new Canvas());
-        robot.simplySwerve(Math.abs(gamepad1.right_stick_x), gamepad1.left_stick_x, gamepad1.left_stick_y);
         updateTelemetry();
     }
 
     public void updateTelemetry() {
-        telemetry.addData("raw encoder position", robot.yawEncoder.getCurrentPosition());
-        telemetry.addData("real yaw", robot.realYaw);
-        telemetry.addData("target yaw", robot.targetYaw);
-        telemetry.addData("yaw error", robot.yawController.getError());
-        telemetry.addData("yaw power", robot.yawPower);
-
-//      **** DIRECT DRIVE ONLY ****
-//        telemetry.addData("dampen?: ", dampenRotation);
-//        telemetry.addData("goPower: ", "stick (%.2f), power (%.2f)", gamepad1.left_stick_y, robot.goPower);
+        // Telemetry now shows chassis heading and swerve module status.
+        telemetry.addData("Chassis Heading", robot.chassisHeading);
+        telemetry.addData("Module Target Angle", robot.swerveModule.getTargetAngle());
+        telemetry.addData("Module Current Angle", robot.swerveModule.getCurrentAngle());
+        telemetry.addData("Yaw Error", robot.swerveModule.getYawError());
+        telemetry.addData("Drive Speed", robot.swerveModule.getDrivePowerActual());
+        telemetry.addData("Drive Amps", robot.swerveModule.getDriveAmps());
     }
 }
