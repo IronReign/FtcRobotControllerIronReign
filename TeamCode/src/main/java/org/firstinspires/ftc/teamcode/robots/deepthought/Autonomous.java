@@ -181,7 +181,7 @@ public class Autonomous implements TelemetryProvider {
 
     //includes driving to ground intake, intaking, ends in tuck()
     public int autonIntakeIndex = 0;
-    public int autonIntakeTimer = 0;
+    public long autonIntakeTimer = 0;
     int numAttempts = 2;
 
     public boolean autonSamplerIntake(POI ground, TelemetryPacket packet) {
@@ -196,21 +196,27 @@ public class Autonomous implements TelemetryProvider {
                 if (robot.driveTrain.strafeToPose(ground.getPose(), packet)) {
                     autonIntakeIndex++;
                     robot.resetStates();
+                    autonIntakeTimer = futureTime(2);
                     //ADD LIMELIGHT ALIGNMENT HERE
                 }
                 break;
             case 2:
-                if (robot.alignOnSample()) {
+                if(isPast(autonIntakeTimer)) {
                     autonIntakeIndex++;
                 }
                 break;
             case 3:
+                if (robot.alignOnSample()) {
+                    autonIntakeIndex++;
+                }
+                break;
+            case 4:
                 robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
                 if (robot.articulation == Robot.Articulation.MANUAL) {
                     autonIntakeIndex++;
                 }
                 break;
-            case 4:
+            case 5:
 //                robot.articulate(Robot.Articulation.TRAVEL);
                 autonIntakeIndex = 0;
                 return true;

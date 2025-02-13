@@ -19,6 +19,7 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -29,7 +30,6 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Samp
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.SpeciMiner;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
-import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.deepthought.vision.Target;
 import org.firstinspires.ftc.teamcode.util.PIDController;
@@ -44,7 +44,6 @@ import java.util.Map;
 public class Robot implements Subsystem {
 
     public static double LED_POWER = .1;
-    public static double PAN_SPECIMINER_APRILTAG = 170;
     public static double APRILTAG_Y_OFFSET = 0;
     public static double APRILTAG_X_OFFSET = 0;
     //components and subsystems
@@ -54,7 +53,7 @@ public class Robot implements Subsystem {
 //    public VisionProvider visionProviderBack, visionProviderFront;
 
     public Trident trident;
-    public Joint pan; // pan servo for the Limelight
+    public Servo pan; // pan servo for the Limelight
     public Limelight3A limelight; // smart camera
     public static boolean updatePositionCache = false;
     public static boolean visionOn = true;
@@ -99,10 +98,11 @@ public class Robot implements Subsystem {
     public static double PAN_MAX_ANGLE = 220;
     public static double PAN_ADJUST_ANGLE = 5;
 
-    public static double PAN_FORWARD = 82;
-    public static double PAN_BASKET_APRILTAG = 200;
+    public static double PAN_FORWARD = 1660;
+    public static double PAN_BASKET_APRILTAG = 750;
+    public static double PAN_SPECIMINER_APRILTAG = 950;
 
-    public static double panTargetAngle = PAN_BASKET_APRILTAG;
+    public static double panTargetPosition = PAN_BASKET_APRILTAG;
 
     DcMotor LED;
     public static boolean onTarget;
@@ -141,7 +141,7 @@ public class Robot implements Subsystem {
             //sensors = new Sensors(this);
 
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
-            pan = new Joint(hardwareMap, "pan", false, PAN_HOME_POSITION, PAN_PWM_PER_DEGREE, PAN_MIN_ANGLE, PAN_MAX_ANGLE, PAN_START_ANGLE, PAN_JOINT_SPEED);
+            pan = hardwareMap.get(Servo.class, "pan");
 
 
             subsystems = new Subsystem[]{driveTrain, trident};
@@ -184,8 +184,8 @@ public class Robot implements Subsystem {
 
         LED.setPower(LED_POWER);
 
-        pan.setTargetAngle(panTargetAngle);
-        pan.update();
+        pan.setPosition(panTargetPosition);
+
 //        if (!gameState.isAutonomous)
 //            aprilTagRelocalization();
         articulate(articulation);
@@ -387,7 +387,7 @@ public class Robot implements Subsystem {
         telemetryMap.put("onTarget", onTarget);
         telemetryMap.put("pid error", PIDError);
         telemetryMap.put("pid correction", PIDCorrection);
-        telemetryMap.put("pan target", panTargetAngle);
+        telemetryMap.put("pan target", panTargetPosition);
         telemetryMap.put("limelight running?", limelight.isRunning());
         LLStatus status = limelight.getStatus();
         telemetryMap.put("limelight fps, ", status.getFps());
@@ -461,7 +461,7 @@ public class Robot implements Subsystem {
     public boolean alignOnSample() {
         limelight.pipelineSwitch(3);
         LLResult llResult;
-        panTargetAngle = PAN_FORWARD;
+        panTargetPosition = PAN_FORWARD;
         if ((llResult = limelight.getLatestResult()) != null) {
             if (llResult.getTx() != 0.0) {
                 double targetTx = SAMPLE_ALIGN_TARGET_TX;
@@ -494,10 +494,10 @@ public class Robot implements Subsystem {
     public void aprilTagRelocalization() {
         if (trident.activeArm instanceof SpeciMiner) {
             limelight.pipelineSwitch(4);
-            panTargetAngle = PAN_SPECIMINER_APRILTAG;
+            panTargetPosition = PAN_SPECIMINER_APRILTAG;
         } else {
             limelight.pipelineSwitch(2);
-            panTargetAngle = PAN_BASKET_APRILTAG;
+            panTargetPosition = PAN_BASKET_APRILTAG;
         }
         LLResult llResult;
         if ((llResult = limelight.getLatestResult()) != null) {

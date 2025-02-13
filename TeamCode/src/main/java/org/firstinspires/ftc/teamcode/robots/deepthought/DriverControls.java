@@ -64,19 +64,19 @@ public class DriverControls {
     public void relocalizationTestMethods() {
         robotOrientedDrive();
         if (gamepad1.right_bumper) {
-            Robot.panTargetAngle = Robot.PAN_FORWARD;
+            Robot.panTargetPosition = Robot.PAN_FORWARD;
             robot.alignOnSample();
         }
 
         if (gamepad1.left_bumper) {
             robot.limelight.pipelineSwitch(2);
-            Robot.panTargetAngle = Robot.PAN_BASKET_APRILTAG;
+            Robot.panTargetPosition = Robot.PAN_BASKET_APRILTAG;
             robot.aprilTagRelocalization();
         }
 
         if (gamepad1.dpad_up) {
             robot.limelight.pipelineSwitch(4);
-            Robot.panTargetAngle = Robot.PAN_SPECIMINER_APRILTAG;
+            Robot.panTargetPosition = Robot.PAN_SPECIMINER_APRILTAG;
             robot.aprilTagRelocalization();
         }
     }
@@ -273,7 +273,7 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.guide) {
-            robot.driveTrain.setPose(new Pose2d(robot.driveTrain.getPose().position, alliance.isRed() ? 90 : -90));
+            robot.aprilTagRelocalization();
         }
 
         double power;
