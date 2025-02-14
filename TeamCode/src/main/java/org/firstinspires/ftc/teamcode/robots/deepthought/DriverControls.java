@@ -62,7 +62,7 @@ public class DriverControls {
     }
 
     public void relocalizationTestMethods() {
-        robotOrientedDrive();
+//        robotOrientedDrive();
         if (gamepad1.right_bumper) {
             Robot.panTargetPosition = Robot.PAN_FORWARD;
             robot.alignOnSample();

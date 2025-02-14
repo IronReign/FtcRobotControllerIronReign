@@ -34,9 +34,9 @@ public class Field {
     public POI subAccess = new POI(-1.5, -.5, 180, "SUBACCESS");
 
     //neutral samples
-    public POI ground1 = new POI(-2.4, -1.3, 93, "GROUND1");
-    public POI ground2 = new POI(-2.3, -1.50, 45, "GROUND2");
-    public POI ground3 = new POI(-2.375, -2.35, 110, "GROUND3");
+    public POI ground1;
+    public POI ground2;
+    public POI ground3;
 
     // alliance samples - approx settings for using back plate to push samples to ozone
     public POI ground4 = new POI(2, -.5, 90, "GROUND4");
@@ -138,11 +138,12 @@ public class Field {
         zones = Zone.getNamedZones();
         isRed = alliance.isRed();
         allianceMultiplier = isRed ? 1 : -1;
-        basket = new POI(-2.3 * allianceMultiplier, -2.3 * allianceMultiplier, isRed ? 55  : 55 + 180, "BASKET");
+        basket = new POI(-2.3 * allianceMultiplier, -2.3 * allianceMultiplier, isRed ? 55 : 55 + 180, "BASKET");
         basket2 = new POI(-2.375 * allianceMultiplier, -2.375 * allianceMultiplier, 55, "BASKET");
-        basketPrep = new POI(-2.4*allianceMultiplier, -2*allianceMultiplier, isRed ? 50 : 50 + 180, "BASKET");
-        ground1 = new POI(-2.4*allianceMultiplier, -1.75*allianceMultiplier, isRed ? 85 : 85 + 180, "GROUND1");
-        ground2 = new POI(-1.9*allianceMultiplier,-1.7 *allianceMultiplier, isRed ? 90 : 90 + 180, "GROUND2");
+        basketPrep = new POI(-2.4 * allianceMultiplier, -2 * allianceMultiplier, isRed ? 50 : 50 + 180, "BASKET");
+        ground1 = new POI(-2.4 * allianceMultiplier, -1.85 * allianceMultiplier, isRed ? 70 : 70 + 180, "GROUND1");
+        ground2 = new POI(-1.9 * allianceMultiplier, -1.7 * allianceMultiplier, isRed ? 87 : 87 + 180, "GROUND2");
+        ground3 = new POI(-2.6 * allianceMultiplier, -1.65 * allianceMultiplier, isRed ? 99 : 99 + 180, "GROUND3");
     }
 
     public void flipField(boolean alliance) {

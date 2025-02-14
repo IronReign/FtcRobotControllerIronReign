@@ -468,7 +468,6 @@ public class Robot implements Subsystem {
                 LLResult llResult;
                 panTargetPosition = PAN_FORWARD;
 
-                alignOnSampleState++;
 //                break;
 //            case 1:
                 if ((llResult = limelight.getLatestResult()) != null) {
@@ -494,6 +493,13 @@ public class Robot implements Subsystem {
                             return false;
                         }
                     }
+                    else {
+                        driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                    }
+                }
+                else {
+                    driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+
                 }
 //                break;
 //        }
