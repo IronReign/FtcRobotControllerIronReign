@@ -141,8 +141,8 @@ public class Field {
         basket = new POI(-2.3 * allianceMultiplier, -2.3 * allianceMultiplier, isRed ? 55  : 55 + 180, "BASKET");
         basket2 = new POI(-2.375 * allianceMultiplier, -2.375 * allianceMultiplier, 55, "BASKET");
         basketPrep = new POI(-2.4*allianceMultiplier, -2*allianceMultiplier, isRed ? 50 : 50 + 180, "BASKET");
-        ground1 = new POI(-2.4*allianceMultiplier, -1.6*allianceMultiplier, isRed ? 93 : 93 + 180, "GROUND1");
-        ground2 = new POI(-2.2*allianceMultiplier,-1.60 *allianceMultiplier, isRed ? 50 : 50 + 180, "GROUND2");
+        ground1 = new POI(-2.4*allianceMultiplier, -1.75*allianceMultiplier, isRed ? 85 : 85 + 180, "GROUND1");
+        ground2 = new POI(-1.9*allianceMultiplier,-1.7 *allianceMultiplier, isRed ? 90 : 90 + 180, "GROUND2");
     }
 
     public void flipField(boolean alliance) {

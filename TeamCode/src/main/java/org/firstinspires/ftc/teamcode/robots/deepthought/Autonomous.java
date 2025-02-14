@@ -106,7 +106,7 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 4:
                 //todo - need to find a way to manage failed intakes
-                if (autonSamplerIntake(field.ground2, packet)) {
+                if (autonSamplerIntake(field.ground1, packet)) {
                     autonIndex++;
                 }
                 break;
@@ -121,11 +121,19 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 6:
 
-                if (autonSamplerIntake(field.ground1, packet)) {
+                if (autonSamplerIntake(field.ground2, packet)) {
                     autonIndex++;
                 }
                 break;
             case 7:
+                if (autonSamplerOuttake(field.basket, packet)) {
+                    robot.resetStates();
+                    robot.trident.sampler.articulate(Sampler.Articulation.MANUAL);
+
+                    autonIndex++;
+                }
+                break;
+            case 8:
                 robot.articulate(Robot.Articulation.TRAVEL);
                 robot.positionCache.update(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
                 autonIndex = 0;
@@ -187,8 +195,11 @@ public class Autonomous implements TelemetryProvider {
     public boolean autonSamplerIntake(POI ground, TelemetryPacket packet) {
         switch (autonIntakeIndex) {
             case 0:
+                Robot.panTargetPosition = Robot.PAN_FORWARD;
+                robot.limelight.pipelineSwitch(3);
 //                if (robot.driveTrain.strafeToPose(field.basketPrep.getPose(), packet)) {
                 autonIntakeIndex++;
+
 //                    robot.resetStates();
                 //ADD LIMELIGHT ALIGNMENT HERE
 //                }
@@ -196,12 +207,12 @@ public class Autonomous implements TelemetryProvider {
                 if (robot.driveTrain.strafeToPose(ground.getPose(), packet)) {
                     autonIntakeIndex++;
                     robot.resetStates();
-                    autonIntakeTimer = futureTime(2);
+                    autonIntakeTimer = futureTime(0);
                     //ADD LIMELIGHT ALIGNMENT HERE
                 }
                 break;
             case 2:
-                if(isPast(autonIntakeTimer)) {
+                if (isPast(autonIntakeTimer)) {
                     autonIntakeIndex++;
                 }
                 break;

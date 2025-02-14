@@ -32,6 +32,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.deepthought.vision.Target;
+import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.ArrayList;
@@ -99,8 +100,8 @@ public class Robot implements Subsystem {
     public static double PAN_ADJUST_ANGLE = 5;
 
     public static double PAN_FORWARD = 1660;
-    public static double PAN_BASKET_APRILTAG = 750;
-    public static double PAN_SPECIMINER_APRILTAG = 950;
+    public static double PAN_BASKET_APRILTAG = 870;
+    public static double PAN_SPECIMINER_APRILTAG = 1050;
 
     public static double panTargetPosition = PAN_BASKET_APRILTAG;
 
@@ -184,7 +185,8 @@ public class Robot implements Subsystem {
 
         LED.setPower(LED_POWER);
 
-        pan.setPosition(panTargetPosition);
+        pan.setDirection(Servo.Direction.FORWARD);
+        pan.setPosition(Utils.servoNormalize(panTargetPosition));
 
 //        if (!gameState.isAutonomous)
 //            aprilTagRelocalization();
@@ -387,7 +389,7 @@ public class Robot implements Subsystem {
         telemetryMap.put("onTarget", onTarget);
         telemetryMap.put("pid error", PIDError);
         telemetryMap.put("pid correction", PIDCorrection);
-        telemetryMap.put("pan target", panTargetPosition);
+        telemetryMap.put("pan target", Utils.servoDenormalize(pan.getPosition()));
         telemetryMap.put("limelight running?", limelight.isRunning());
         LLStatus status = limelight.getStatus();
         telemetryMap.put("limelight fps, ", status.getFps());
@@ -458,34 +460,43 @@ public class Robot implements Subsystem {
     }
 
 
+    public int alignOnSampleState = 0;
     public boolean alignOnSample() {
-        limelight.pipelineSwitch(3);
-        LLResult llResult;
-        panTargetPosition = PAN_FORWARD;
-        if ((llResult = limelight.getLatestResult()) != null) {
-            if (llResult.getTx() != 0.0) {
-                double targetTx = SAMPLE_ALIGN_TARGET_TX;
-                sampleAlignmentPID.setPID(sampleAlignmentCoefficients);
-                sampleAlignmentPID.setInputRange(-25, 25);
-                sampleAlignmentPID.setInput(llResult.getTx());
-                sampleAlignmentPID.setSetpoint(targetTx);
-                sampleAlignmentPID.setOutputRange(-.8, .8);
-                sampleAlignmentPID.setTolerance(SAMPLE_ALIGN_TOLERANCE);
-                double correction = sampleAlignmentPID.performPID();
-                PIDCorrection = correction;
-                PIDError = sampleAlignmentPID.getError();
-                sampleAlignmentPID.enable();
-                if (sampleAlignmentPID.onTarget()) {
-                    onTarget = true;
-                    driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
-                    return true;
-                } else {
-                    onTarget = false;
-                    driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
-                    return false;
+//        switch (alignOnSampleState) {
+//            case 0:
+                limelight.pipelineSwitch(3);
+                LLResult llResult;
+                panTargetPosition = PAN_FORWARD;
+
+                alignOnSampleState++;
+//                break;
+//            case 1:
+                if ((llResult = limelight.getLatestResult()) != null) {
+                    if (llResult.getTx() != 0.0) {
+                        double targetTx = SAMPLE_ALIGN_TARGET_TX;
+                        sampleAlignmentPID.setPID(sampleAlignmentCoefficients);
+                        sampleAlignmentPID.setInputRange(-25, 25);
+                        sampleAlignmentPID.setInput(llResult.getTx());
+                        sampleAlignmentPID.setSetpoint(targetTx);
+                        sampleAlignmentPID.setOutputRange(-.8, .8);
+                        sampleAlignmentPID.setTolerance(SAMPLE_ALIGN_TOLERANCE);
+                        double correction = sampleAlignmentPID.performPID();
+                        PIDCorrection = correction;
+                        PIDError = sampleAlignmentPID.getError();
+                        sampleAlignmentPID.enable();
+                        if (sampleAlignmentPID.onTarget()) {
+                            onTarget = true;
+                            driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                            return true;
+                        } else {
+                            onTarget = false;
+                            driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
+                            return false;
+                        }
+                    }
                 }
-            }
-        }
+//                break;
+//        }
 
         return false;
     }
