@@ -79,7 +79,7 @@ public class DriverControls {
             Robot.panTargetPosition = Robot.PAN_SPECIMINER_APRILTAG;
             robot.aprilTagRelocalization();
         }
-        if(gamepad1.dpad_up) {
+        if(gamepad1.dpad_down) {
             robot.forwardRelocalize();
         }
     }
