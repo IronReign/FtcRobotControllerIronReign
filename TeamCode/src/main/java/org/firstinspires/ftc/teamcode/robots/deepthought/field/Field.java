@@ -7,6 +7,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.*;
 
+import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.util.Vector2;
@@ -141,9 +142,9 @@ public class Field {
         basket = new POI(-2.3 * allianceMultiplier, -2.3 * allianceMultiplier, isRed ? 55 : 55 + 180, "BASKET");
         basket2 = new POI(-2.375 * allianceMultiplier, -2.375 * allianceMultiplier, 55, "BASKET");
         basketPrep = new POI(-2.4 * allianceMultiplier, -2 * allianceMultiplier, isRed ? 50 : 50 + 180, "BASKET");
-        ground1 = new POI(-2.4 * allianceMultiplier, -1.85 * allianceMultiplier, isRed ? 70 : 70 + 180, "GROUND1");
-        ground2 = new POI(-1.9 * allianceMultiplier, -1.7 * allianceMultiplier, isRed ? 87 : 87 + 180, "GROUND2");
-        ground3 = new POI(-2.6 * allianceMultiplier, -1.65 * allianceMultiplier, isRed ? 99 : 99 + 180, "GROUND3");
+        ground1 = new POI(-2.4 * allianceMultiplier, -1.8 * allianceMultiplier, isRed ? 70 : 70 + 180, "GROUND1");
+        ground2 = new POI(-1.9 * allianceMultiplier, -1.8 * allianceMultiplier, isRed ? 89 : 89 + 180, "GROUND2");
+        ground3 = new POI(-2.6 * allianceMultiplier, -1.65 * allianceMultiplier, isRed ? 95 : 95 + 180, "GROUND3");
     }
 
     public void flipField(boolean alliance) {

@@ -96,7 +96,8 @@ public class Autonomous implements TelemetryProvider {
                 if (autonSamplerOuttake(field.basket, packet)) {
                     robot.resetStates();
                     robot.articulate(Robot.Articulation.MANUAL);
-                    autonIndex++;
+                    return true;
+                    //                    autonIndex++;
                 }
                 break;
             case 3:
@@ -107,7 +108,11 @@ public class Autonomous implements TelemetryProvider {
             case 4:
                 //todo - need to find a way to manage failed intakes
                 if (autonSamplerIntake(field.ground2, packet)) {
-                    autonIndex++;
+                    if (robot.trident.sampler.servoPower == 0)
+                        autonIndex++;
+                    else {
+                        autonIndex += 2;
+                    }
 //                    return true;
                 }
                 break;
@@ -123,8 +128,12 @@ public class Autonomous implements TelemetryProvider {
             case 6:
 
                 if (autonSamplerIntake(field.ground1, packet)) {
-//                return true;
-                                        autonIndex++;
+                    if (robot.trident.sampler.servoPower == 0)
+                        autonIndex++;
+                    else {
+                        autonIndex += 2;
+                    }
+//                    return true;
                 }
                 break;
             case 7:
@@ -137,10 +146,13 @@ public class Autonomous implements TelemetryProvider {
                 break;
 
             case 8:
-
                 if (autonSamplerIntake(field.ground3, packet)) {
+                    if (robot.trident.sampler.servoPower == 0)
+                        autonIndex++;
+                    else {
+                        autonIndex += 2;
+                    }
 //                    return true;
-                                        autonIndex++;
                 }
                 break;
             case 9:
@@ -168,6 +180,8 @@ public class Autonomous implements TelemetryProvider {
     public boolean autonSamplerOuttake(POI basket, TelemetryPacket packet) {
         switch (autonOuttakeIndex) {
             case 0:
+                robot.limelight.pipelineSwitch(2);
+                robot.panTargetPosition = Robot.PAN_BASKET_APRILTAG;
                 robot.resetStates();
                 autonOuttakeTimer = futureTime(AUTON_OUTTAKE_WAIT_TIMER);
                 autonOuttakeIndex++;
@@ -237,10 +251,9 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 3:
-                if(ground.name.equals("GROUND3")) {
+                if (ground.name.equals("GROUND3")) {
                     autonIntakeIndex++;
-                }
-                else {
+                } else {
                     if (robot.alignOnSample()) {
                         autonIntakeIndex++;
                     }
@@ -267,37 +280,37 @@ public class Autonomous implements TelemetryProvider {
     public void pingPong(TelemetryPacket packet) {
 //        robot.alignOnSample();
 
-        switch (pingPongIndex) {
-            case 0:
-                Robot.panTargetPosition = Robot.PAN_FORWARD;
-                robot.limelight.pipelineSwitch(3);
-                robot.articulate(Robot.Articulation.SAMPLER_PREP);
-                if(robot.driveTrain.strafeToPose(field.ground3.getPose(), packet)) {
-
-                    pingPongIndex++;
-                }
+//        switch (pingPongIndex) {
+//            case 0:
+//                Robot.panTargetPosition = Robot.PAN_FORWARD;
+//                robot.limelight.pipelineSwitch(3);
+//                robot.articulate(Robot.Articulation.SAMPLER_PREP);
+//                if (robot.driveTrain.strafeToPose(field.ground3.getPose(), packet)) {
+//
+//                    pingPongIndex++;
+//                }
 //                robot.aprilTagRelocalization();
 
 //                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet)) {
 //
 //                    pingPongIndex++;
 //                }
-                break;
-            case 1:
-                if(robot.alignOnSample()){
-                    pingPongIndex++;
-                }
+//                break;
+//            case 1:
+//                if (robot.alignOnSample()) {
+//                    pingPongIndex++;
+//                }
 //                robot.aprilTagRelocalization();
 
 
 //                if (robot.driveTrain.strafeToPose(P2D(-1.5, -.5, 0), packet)) {
 //                    pingPongIndex--;
 //                }
-                break;
-            case 3:
-                robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
-                break;
-        }
+//                break;
+//            case 3:
+//                robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
+//                break;
+//        }
 
     }
 }

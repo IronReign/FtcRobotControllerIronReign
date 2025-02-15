@@ -99,9 +99,9 @@ public class Robot implements Subsystem {
     public static double PAN_MAX_ANGLE = 220;
     public static double PAN_ADJUST_ANGLE = 5;
 
-    public static double PAN_FORWARD = 1660;
-    public static double PAN_BASKET_APRILTAG = 870;
-    public static double PAN_SPECIMINER_APRILTAG = 1050;
+    public static double PAN_FORWARD = 1630;
+    public static double PAN_BASKET_APRILTAG = 900;
+    public static double PAN_SPECIMINER_APRILTAG = 1020;
 
     public static double panTargetPosition = PAN_BASKET_APRILTAG;
 

@@ -181,17 +181,16 @@ public class DriverControls {
         }
 
         if (gamepad1.dpad_down) {
-            robot.trident.getActiveArm().adjustElbow(Arm.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(Arm.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad1.dpad_up) {
-            robot.trident.getActiveArm().adjustElbow(-Arm.ELBOW_ADJUST_ANGLE);
+            robot.trident.sampler.adjustElbow(-Arm.ELBOW_ADJUST_ANGLE);
         }
-        if (stickyGamepad1.dpad_left) {
-            robot.trident.setActiveArm(robot.trident.sampler);
+        if (gamepad1.dpad_left) {
+            robot.trident.speciMiner.adjustElbow(Arm.ELBOW_ADJUST_ANGLE);
         }
-        if (stickyGamepad1.dpad_right) {
-            robot.trident.setActiveArm(robot.trident.speciMiner);
-
+        if (gamepad1.dpad_right) {
+            robot.trident.speciMiner.adjustElbow(-Arm.ELBOW_ADJUST_ANGLE);
         }
 
     }
