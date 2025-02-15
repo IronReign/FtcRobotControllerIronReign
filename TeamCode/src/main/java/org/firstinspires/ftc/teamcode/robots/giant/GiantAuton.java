@@ -71,22 +71,22 @@ public class GiantAuton extends OpMode {
         switch (autonIndex) {
             case 0:
                 robot.close();
-                robot.setUpExtend(2250);        //2250
+                robot.setUpExtend(2280);        //2250
                 autonIndex++;
                 break;
             case 1:
                 if(robot.getUpExtend()>2000){
                     robot.resetDrive();
-                    robot.setShoulder(1250);        //1350
+                    robot.setShoulder(1250+420);        //1350
                 }
-                if(robot.getShoulder()>1230){
+                if(robot.getShoulder()>1230+420){
                     autonIndex++;
                 }
 
                 break;
             case 2:
               //  robot.driveDistance(13,.5);
-                if (robot.driveDistance(15.5,.6)){    //17.5    .5
+                if (robot.driveDistance(12.9,1)){    //17.5    .5
                     autonTimer=futureTime(.5);
                     autonIndex++;
                 }
@@ -108,247 +108,147 @@ public class GiantAuton extends OpMode {
                 }
                 break;
             case 5:
-                if(robot.driveDistance(35,.8)){
-                    autonTimer=futureTime(.2);
+                if(robot.driveDistance(38,.8)){
+                    autonTimer=futureTime(.3);
                     autonIndex++;
                 }
                 break;
             case 6:
                 if(isPast(autonTimer)){
+                    robot.resetDrive();
+                    //robot.setDrive(0,1,0);
                     autonIndex++;
                 }
                 break;
             case 7:
-                if(robot.strafe(43,.9,true)){    //         closer??
-                    robot.resetDrive();
-                    robot.setDrive(0,0,.25);
-//                    robot.setTilt(740);
-//                    robot.setOutExtend(1150);
-                    ////robot.setOutExtend(2380);
-//                    robot.suck();
+                if(robot.strafe(43,1)){       //speed up??
                     autonIndex++;
                 }
                 break;
             case 8:
-
-                if(robot.getHor()<=(-3780) &&robot.getVert()<=(-7180)){      //robot.getHor()<=(-3780) &&robot.getVert()<=(-7180)
+                if(robot.turnUntilDegreesIMU(180,1)){      //robot.getHor()<=(-3780) &&robot.getVert()<=(-7180)
                     robot.resetDrive();
-                    robot.setDrive(0,0,-.5);    //930
-                    autonTimer=futureTime(.05);            //.065
+                   // robot.setDrive(0,0,-.5);    //930
+                    //autonTimer=futureTime(.01);
+                     autonTimer=futureTime(2);
                     //autonTimer=futureTime(1.5);
                     autonIndex++;
                 }
                 break;
             case 9:
-                if(isPast(autonTimer)){
-                    autonTimer=futureTime(1.5);
-                    robot.setDrive(0,0,0);
+                if(robot.driveDistance(18.7,1)){
+                    autonTimer=futureTime(.4);
                     autonIndex++;
+
                 }
                 break;
             case 10:
                 if(isPast(autonTimer)){
-                    robot.resetDrive();
-                    robot.setDrive(.45,0,0);        //.45
+                    robot.close();
+                    autonTimer=futureTime(.2);
                     autonIndex++;
                 }
                 break;
             case 11:
-                if(robot.getVert()<-1778){      //-1760     //-1650
-                    robot.setDrive(0,0,0);
-                    autonTimer=futureTime(.02);
+                if(isPast(autonTimer)){
+                    robot.hookit();
+                    robot.setUpExtend(1500);
                     autonIndex++;
                 }
                 break;
             case 12:
-                if(isPast(autonTimer)){
-                    robot.close();
-                    autonTimer=futureTime(.7);
+                if(robot.getUpExtend()>200){
                     autonIndex++;
                 }
                 break;
-            case 13:
-                if(isPast(autonTimer)){
-                    robot.hookit();
-                    robot.setUpExtend(2265);
+            case 13:        //47.8
+                if(robot.driveDistance(45,1)){        //47.8
                     autonIndex++;
+                    robot.setShoulder(1250+420);
+//                if(isPast(autonTimer))
                 }
                 break;
             case 14:
-                if(robot.getUpExtend()>150){
-                    robot.resetDrive();
-                    robot.setDrive(-.8,0,0);
+                if(robot.turnUntilDegreesIMU(-90,1)){
                     autonIndex++;
                 }
                 break;
             case 15:
-                if(robot.getVert()>2100){       //3200
-                    robot.setShoulder(1250);
+                if(robot.driveDistance(70,1)){   //robot.getHor()<-13000
+                    robot.setUpExtend(2288);
                     robot.resetDrive();
-                    robot.setDrive(0,1,0);
+                    autonTimer=futureTime(1.1);
+                    robot.setDrive(-1,0,0);
                     autonIndex++;
                 }
                 break;
             case 16:
-                if(robot.getHor()<-13100){
-                //if(robot.strafe(130,1,false)){
-                    robot.resetDrive();
-                    robot.setDrive(0,0,.25);
+                if(isPast(autonTimer)){
+                    robot.setDrive(0,0,0);
                     autonIndex++;
                 }
+                break;
             case 17:
-                if(robot.getHor()<=(-3850) &&robot.getVert()<=(-7250) ){         //robot.getHor()>=2270 &&robot.getVert()>=6270
-                    robot.setDrive(0,0,0);    //930
+                if(robot.turnUntilDegreesIMU(0,1)){
                     autonIndex++;
                 }
                 break;
             case 18:
-                if(isPast(autonTimer)){
-                    robot.setDrive(-.8,0,0);
-                    autonTimer=futureTime(.15);
+                if (robot.driveDistance(11.8,1)){    //9.1   .5
+                    autonTimer=futureTime(.5);
                     autonIndex++;
                 }
                 break;
             case 19:
                 if(isPast(autonTimer)){
-                    autonIndex++;
-                }
-                break;
-
-            case 20:
-                if (robot.driveDistance(9,.6)){    //17.5    .5
-                    autonTimer=futureTime(.5);
-                    autonIndex++;
-                }
-                break;
-            case 21:
-                if(isPast(autonTimer)){
-                    robot.downHook();
+                    //robot.downHook();
+                    robot.setUpExtend(1310);
                     autonTimer=futureTime(.6);
                     autonIndex++;
                 }
                 break;
-            case 22:
+            case 20:
                 if(isPast(autonTimer)){
                     robot.open();
-                    autonTimer=futureTime(.02);
+                    robot.wallGrab();
+                    autonIndex++;
+                }
+                break;
+            case 21:
+                if(robot.driveDistance(35,.8)){
+                    autonTimer=futureTime(.5);
+                    robot.setUpExtend(1600);
+                    autonIndex++;
+                }
+                break;
+            case 22:
+                if(isPast(autonTimer)) {
+                    robot.setShoulder(750+420);
+                    autonTimer=futureTime(.2);
                     autonIndex++;
                 }
                 break;
             case 23:
                 if(isPast(autonTimer)){
-                    autonTimer=futureTime(.5);
-                    robot.setDrive(-.8,0,0);
-                    robot.setUpExtend(1800);
-                    autonIndex++;
-                }
-                break;
-            case 24:
-                if(isPast(autonTimer)){
-                    robot.setDrive(0,0,0);
-                    robot.setShoulder(750);
                     robot.setUpExtend(0);
                     autonIndex++;
                 }
                 break;
-
-//            case 23:
-//                if(isPast(autonTimer)){
-//                    robot.hookit();
-//                    robot.setShoulder(1250);
-//                    autonIndex++;
-//                }
-//                break;
-//            case 24:
-//
-//
-//
-//                if(isPast(autonTimer)){
-//                    robot.open();
-//                    autonIndex++;
-//                }
-//                break;
+            case 24:
+                if(robot.strafe(40,1)){           //speedup???
+                    autonTimer=futureTime(.44);
+                    robot.setDrive(-1,0,0);
+                    autonIndex++;
+                }
+                break;
+            case 25:
+                if(isPast(autonTimer)){
+                    robot.setDrive(0,0,0);
+                    autonIndex++;
+                }
+                break;
 
 
-                ////SPIT ROUTINE????
-//            if(robot.getOutExtend()>950){
-//                autonTimer=futureTime(1);
-//                robot.spit(true);
-//                autonIndex++;
-//            }
-//            break;
-//            case 15:
-//                if(isPast(autonTimer)){
-//                    robot.spit(false);
-//                    robot.setOutExtend(50);
-////                    robot.setOutExtend(100);
-////                    robot.setShoulder(1450);
-//                    robot.resetDrive();
-//                    robot.setDrive(0,0,-.8);
-//                    robot.setOutPower(.7);
-//                    autonIndex++;
-//                }
-//                break;
-
-
-
-                ////GATHER MORE BLOCKS CODE????
-
-
-//            case 17:
-//                //if(robot.strafe(15,.3,false)){
-//                robot.setDrive(0,-.7,0);
-//                autonTimer=futureTime(1.2);
-//                autonIndex++;
-//            //    }
-//                break;
-//            case 18:
-//                if(isPast(autonTimer)){
-//                    robot.setOutPower(1);
-//                    robot.resetDrive();
-//                    robot.setDrive(0,0,-.8);        //speed up?
-//                    autonIndex++;
-//                }
-//                break;
-//            case 19:
-//                if(robot.getHor()>=2270 &&robot.getVert()>=6270){           //robot.getHor()>=3550 &&robot.getVert()>=7550
-//                    robot.setDrive(0,0,0);
-//                    robot.setOutExtend(1400);
-//                    autonIndex++;
-//                }
-//                break;
-//            case 20:
-//                if(robot.getOutExtend()>1350){
-//                    autonTimer=futureTime(1);
-//                    robot.spit(true);
-//                    autonIndex++;
-//                }
-//                break;
-//            case 21:
-//                break;
-
-
-            //IDK????
-
-//            case 16:
-//                if(robot.getOutExtend()<300){
-//                    robot.setDrive(0,0,-.5);
-//                    autonIndex++;
-//                }
-//                break;
-//            case 17:
-//                if(robot.getHor()>=3700 &&robot.getVert()>=7700){
-//                    robot.setDrive(0,0,0);
-//                    //robot.prep();
-//                    autonIndex++;
-//                }
-//                break;
-//            case 18:
-//                if(robot.strafe(16,.5)){
-//                    robot.prep();
-//                    autonIndex++;
-//                }
-//                break;
         }
     }
 
