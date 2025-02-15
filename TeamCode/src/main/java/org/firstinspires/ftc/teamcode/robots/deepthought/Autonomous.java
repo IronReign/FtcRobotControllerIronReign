@@ -96,9 +96,9 @@ public class Autonomous implements TelemetryProvider {
                 if (autonSamplerOuttake(field.basket, packet)) {
                     robot.resetStates();
                     robot.articulate(Robot.Articulation.MANUAL);
-                    return true;
-                    //                    autonIndex++;
-                }
+//                    return true;
+                                        autonIndex++;
+                } 
                 break;
             case 3:
                 if (robot.articulation == Robot.Articulation.MANUAL) {

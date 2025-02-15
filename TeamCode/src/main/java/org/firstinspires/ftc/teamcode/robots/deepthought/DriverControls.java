@@ -62,7 +62,7 @@ public class DriverControls {
     }
 
     public void relocalizationTestMethods() {
-//        robotOrientedDrive();
+        robot.driveTrain.DirectDriveMecanums(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
         if (gamepad1.right_bumper) {
             Robot.panTargetPosition = Robot.PAN_FORWARD;
             robot.alignOnSample();
@@ -78,6 +78,9 @@ public class DriverControls {
             robot.limelight.pipelineSwitch(4);
             Robot.panTargetPosition = Robot.PAN_SPECIMINER_APRILTAG;
             robot.aprilTagRelocalization();
+        }
+        if(gamepad1.dpad_up) {
+            robot.forwardRelocalize();
         }
     }
 

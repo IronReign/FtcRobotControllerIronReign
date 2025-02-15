@@ -483,8 +483,9 @@ public class Robot implements Subsystem {
                         PIDCorrection = correction;
                         PIDError = sampleAlignmentPID.getError();
                         sampleAlignmentPID.enable();
-                        if (sampleAlignmentPID.onTarget()) {
+                        if (sampleAlignmentPID.lockedOnTarget()) {
                             onTarget = true;
+                            sampleAlignmentPID.clearCache();
                             driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                             return true;
                         } else {
@@ -516,6 +517,21 @@ public class Robot implements Subsystem {
             limelight.pipelineSwitch(2);
             panTargetPosition = PAN_BASKET_APRILTAG;
         }
+        LLResult llResult;
+        if ((llResult = limelight.getLatestResult()) != null) {
+            //limelight returns everything in meters
+            aprilTagPose = new Pose2d(new Vector2d(llResult.getBotpose().getPosition().x * 39.37, llResult.getBotpose().getPosition().y * 39.37), llResult.getBotpose().getOrientation().getYaw(AngleUnit.RADIANS));
+            if (llResult.getBotpose().getPosition().x != 0)
+                driveTrain.setPose(aprilTagPose);
+        }
+//            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
+//            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
+//            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
+    }
+
+    public void forwardRelocalize() {
+        limelight.pipelineSwitch(5);
+        panTargetPosition = PAN_FORWARD;
         LLResult llResult;
         if ((llResult = limelight.getLatestResult()) != null) {
             //limelight returns everything in meters
