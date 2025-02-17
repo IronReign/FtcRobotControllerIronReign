@@ -149,7 +149,7 @@ public class Robot implements Subsystem {
             subsystemUpdateTimes = new long[subsystems.length];
 
             batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
-            trident.sampler.slideTargetPosition = 0;
+            trident.sampler.setSlideTargetPosition(0);
 
             sampleAlignmentPID = new PIDController(sampleAlignmentCoefficients);
             articulation = Articulation.MANUAL;

@@ -50,7 +50,7 @@ public abstract class Arm implements Subsystem {
     public int SLIDE_LOWOUTTAKE_POSITION = 320;
     public int SLIDE_HIGHOUTTAKE_POSITION = 1890;
     public static int slideSpeed = 80;
-    public static double SLIDE_SPEED = 2000;
+    public static double SLIDE_SPEED = 8000;
 
 
     //ELBOW JOINT VARIABLES - expect these to be set in implementation

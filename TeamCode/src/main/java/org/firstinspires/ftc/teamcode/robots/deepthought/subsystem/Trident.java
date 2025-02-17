@@ -31,6 +31,17 @@ public class Trident implements Subsystem {
     public SpeciMiner speciMiner;
 
     Arm activeArm; //just to keep track of which arm is actively requesting shoulder services
+
+    public boolean isAutoTuck() {
+        return autoTuck;
+    }
+
+    public void setAutoTuck(boolean autoTuck) {
+        this.autoTuck = autoTuck;
+    }
+
+    boolean autoTuck = true; // when true - auto tuck the inactive arm
+
     public static boolean enforceSlideLimits;
     DcMotorExResetable shoulder = null;
     public Joint elbow;
@@ -45,12 +56,14 @@ public class Trident implements Subsystem {
         speciMiner.finalizeTargets();
     }
 
-    public void setActiveArm(Arm arm) {
+    public void setActiveArm(Arm arm, boolean autoTuck) {
         this.activeArm = arm;
-        if (arm instanceof Sampler) {
-            speciMiner.articulate(SpeciMiner.Articulation.TUCK);
-        } else {
-            sampler.articulate(Sampler.Articulation.TUCK);
+        if (autoTuck) {
+            if (arm instanceof Sampler) {
+                speciMiner.articulate(SpeciMiner.Articulation.TUCK);
+            } else {
+                sampler.articulate(Sampler.Articulation.TUCK);
+            }
         }
     }
 
@@ -246,7 +259,12 @@ public class Trident implements Subsystem {
             setShoulderTarget(getShoulderTarget()+upTics);
     }
     public void setShoulderTarget(Arm subsystem, int targetTics) {
-        setActiveArm(subsystem);
+        setActiveArm(subsystem, autoTuck);
+        setShoulderTarget(targetTics);
+    }
+
+    public void setShoulderTarget(Arm subsystem, int targetTics, boolean autoTuck) {
+        setActiveArm(subsystem, autoTuck);
         setShoulderTarget(targetTics);
     }
 

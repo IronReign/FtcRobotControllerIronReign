@@ -59,8 +59,10 @@ public class Constants {
     public enum Position {
         ORIGIN_DEFAULT (new Pose2d(0, 0, 0)), //this if used will reset the origin to FTC Dashboard's default
         START_LEFT_RED(P2D(-1.5, -2.6, 90)),
-        START_RIGHT_RED(P2D(0.5, -2.6, -90)), //start backwards for specimens
-        START_RIGHT_BLUE(P2D(-0.5, 2.6, 90)), //start backwards for specimens
+        START_RIGHT_RED_BACK(P2D(0.5, -2.6, -90)), //start backwards for specimens
+        START_RIGHT_RED(P2D(0.5, -2.6, 45)), //start angled at alliance floor samples
+        START_RIGHT_BLUE(P2D(0.5, 2.6, -45)), //start angled at alliance floor samples
+        START_RIGHT_BLUE_BACK(P2D(-0.5, 2.6, 90)), //start backwards for specimens
         START_LEFT_BLUE(P2D(1.5, 2.6, -90));
         private Pose2d pose;
 

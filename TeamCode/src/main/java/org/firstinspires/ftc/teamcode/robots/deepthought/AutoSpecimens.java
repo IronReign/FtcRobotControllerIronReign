@@ -149,34 +149,42 @@ public class AutoSpecimens implements TelemetryProvider {
                 gameTimer = futureTime(27);
                 autonState = AutonState.INIT;
                 autonTimer = futureTime(AUTON_START_DELAY);
-                autonIndex++;
+                autonIndex=7; //skip over preload
                 break;
             case 1: // drive to hibar with gripped specimen and latch
                 autonState = AutonState.DRIVE_TO_HIGHBAR; // drive to sub
                 if (isPast(autonTimer)) {
                     if (driveAndLatch(packet)) {
+                        //return true;
                         autonIndex = 7;
                     }
                 }
                 break;
             case 7: // start sweeping the ground samples
-                if (autonSweepSample(field.sweep1, field.sweep1Oz, packet)) {
+                if (autonSweepSample(field.sweep1, field.sweep1Oz, true, packet)) {
                     autonIndex++;
                 }
                 break;
             case 8:
-                if (autonSweepSample(field.sweep2, field.sweep2Oz, packet)) {
+                if (autonSweepSample(field.sweep2, field.sweep2Oz, true, packet)) {
                     autonIndex++;
                 }
                 break;
             case 9:
-                if (autonSweepSample(field.sweep3, field.sweep3Oz, packet)) {
+                if (autonSweepSample(field.sweep3, field.sweep3Oz, false, packet)) {
                     autonIndex++;
                 }
                 break;
             case 10:
-                autonIndex = 0; //so we can test autons back to back
-                return true;
+                if (driveAndWalltake(packet)) {
+                    autonIndex++;
+                }
+            case 11:
+                if (driveAndLatch(packet)) {
+                    autonIndex = 0; //so we can test autons back to back
+                    robot.resetStates();
+                    return true;
+                }
         }
         return false;
     }
@@ -238,14 +246,17 @@ public class AutoSpecimens implements TelemetryProvider {
                 break;
             case 1: // travel to hibar field position
                 autonState = AutonState.DRIVE_TO_HIGHBAR; // drive to sub
-                if (isPast(driveAndLatchTimer)) {
-                    if (robot.driveTrain.strafeToPose(field.hibar.getPose(), packet)) {
+                robot.trident.speciMiner.prelatchHighSlide(); //slide is slow, start extending
+                if (field.hibar.distTo(robot.driveTrain.getPose())<1) { //trigger shoulder on reaching within 1 field tile of highbar position
+                    robot.trident.speciMiner.prelatchHigh();  // preset arm positions}
+                    }
+                if (robot.driveTrain.strafeToPose(field.hibar.getPose(), packet)) {
                         driveAndLatchIndex++;
                     }
-                }
                 break;
             case 2: // set pre latch arm position todo start near very end of drive
-                robot.trident.speciMiner.prelatchHigh();  // preset arm position
+                robot.trident.sampler.setSlideTargetPosition(robot.trident.speciMiner.SAMPLER_SLIDE_HIBAR_POSITION);
+                robot.trident.speciMiner.prelatchHigh();  // preset arm positions
                 driveAndLatchIndex++;
 
                 break;
@@ -260,7 +271,8 @@ public class AutoSpecimens implements TelemetryProvider {
                 break;
             case 5: // eject - might not be needed?
                 if (robot.trident.speciMiner.eject())
-                    if (robot.trident.tuck()) driveAndLatchIndex++;
+                    driveAndLatchIndex++;
+                    //if (robot.trident.tuck())
                 break;
 
             case 6: // back up a bit? in case strafe conflicts with sub
@@ -352,26 +364,36 @@ public class AutoSpecimens implements TelemetryProvider {
     public int autonSweepTimer = 0;
 
     //Sweep a given sample to ozone using the Sampler
-    public boolean autonSweepSample(POI sweepFrom, POI ozone, TelemetryPacket packet) {
+    public boolean autonSweepSample(POI sweepFrom, POI ozone, boolean recover, TelemetryPacket packet) {
         switch (autonSweepIndex) {
             case 0: // set sampler for sweeping over
-                if (robot.trident.sampler.sweepConfig(true))
+                if(robot.trident.sampler.sweepConfig(true))
                     autonSweepIndex++;
                 break;
-            case 1: // drive from hibar or from starting position to sweeping position
+            case 1: // drive to sweeping start position
                 if (robot.driveTrain.strafeToPose(sweepFrom.getPose(), packet)) {
                     if (robot.trident.sampler.sweepConfig(false)) // sampler floats just above floor
                         autonSweepIndex++;
                 }
                 break;
-            case 2: // let's sweep and return
+            case 2: // let's sweep
                 if (robot.driveTrain.strafeToPose(ozone.getPose(), packet)) {
+                    robot.trident.sampler.sweepConfig(true); //set for sweepOver return
                     autonSweepIndex++;
+                }
+                break;
+            case 3: // sweepOver back to beginning position
+                if (recover) { // can skip recovery for last floor sample
+                    if (robot.driveTrain.strafeToPose(sweepFrom.getPose(), packet)) {
+                        resetStates(); //be careful with this
+                        return true;
+                    }
+                }
+                else {
                     resetStates(); //be careful with this
                     return true;
                 }
                 break;
-
         }
         return false;
     }

@@ -184,20 +184,20 @@ public class DriverControls {
         }
 
         if (gamepad1.dpad_down) {
-            robot.trident.sampler.adjustElbow(Arm.ELBOW_ADJUST_ANGLE);
+            robot.trident.getActiveArm().adjustElbow(Arm.ELBOW_ADJUST_ANGLE);
         }
         if (gamepad1.dpad_up) {
-            robot.trident.sampler.adjustElbow(-Arm.ELBOW_ADJUST_ANGLE);
+            robot.trident.getActiveArm().adjustElbow(-Arm.ELBOW_ADJUST_ANGLE);
         }
-        if (gamepad1.dpad_left) {
-            robot.trident.speciMiner.adjustElbow(Arm.ELBOW_ADJUST_ANGLE);
+        if (stickyGamepad1.dpad_left) {
+            robot.trident.setActiveArm(robot.trident.sampler, false);
         }
-        if (gamepad1.dpad_right) {
-            robot.trident.speciMiner.adjustElbow(-Arm.ELBOW_ADJUST_ANGLE);
+        if (stickyGamepad1.dpad_right) {
+            robot.trident.setActiveArm(robot.trident.speciMiner, false);
+
         }
 
     }
-
     public boolean joysticksInactive() {
         return gamepad1.left_stick_x < DEADZONE && gamepad1.left_stick_y < DEADZONE
                 && gamepad1.right_stick_x < DEADZONE && gamepad1.right_stick_y < DEADZONE
@@ -319,10 +319,10 @@ public class DriverControls {
             robot.trident.getActiveArm().adjustElbow(-Arm.ELBOW_ADJUST_ANGLE);
         }
         if (stickyGamepad1.dpad_left) {
-            robot.trident.setActiveArm(robot.trident.sampler);
+            robot.trident.setActiveArm(robot.trident.sampler, true);
         }
         if (stickyGamepad1.dpad_right) {
-            robot.trident.setActiveArm(robot.trident.speciMiner);
+            robot.trident.setActiveArm(robot.trident.speciMiner, true);
 
         }
         // ------------------------------------------------------------------

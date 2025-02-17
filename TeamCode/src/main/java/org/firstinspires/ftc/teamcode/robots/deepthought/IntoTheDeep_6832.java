@@ -74,8 +74,8 @@ public class IntoTheDeep_6832 extends OpMode {
                     return GameState.TEST;
                 case 3:
                     return GameState.AUTO_SPECIMEN;
-                case 4: return GameState.AUTO_SPECIMEN_SWEEP;
-
+                case 4:
+                    return GameState.AUTO_SPECIMEN_SWEEP;
                 case 5:
                     return GameState.RELOCALIZATION_TEST;
                 case 6:

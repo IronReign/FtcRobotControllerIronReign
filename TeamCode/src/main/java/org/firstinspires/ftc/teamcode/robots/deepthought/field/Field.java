@@ -44,12 +44,12 @@ public class Field {
     public POI ground5 = new POI(2.25, -.5, 90, "GROUND5");
     public POI ground6 = new POI(2.6, -.5, 90, "GROUND6"); // grazing back wall
 
-    public POI sweep1 = new POI(1, -1.5, 40, "SWEEP1");
-    public POI sweep1Oz = new POI(1, -1.5, -40, "SWEEP1Ozone");
-    public POI sweep2 = new POI(1.4, -1.5, 40, "SWEEP2");
-    public POI sweep2Oz = new POI(1.4, -1.5, -40, "SWEEP2Ozone");
-    public POI sweep3 = new POI(1.7, -1.5, 40, "SWEEP3"); // grazing back wall
-    public POI sweep3Oz = new POI(1.7, -1.5, -40, "SWEEP3Ozone");
+    public POI sweep1 = new POI(1, -2, 45, "SWEEP1");
+    public POI sweep1Oz = new POI(1, -2, -40, "SWEEP1Ozone");
+    public POI sweep2 = new POI(1.3, -1.7, 35, "SWEEP2");
+    public POI sweep2Oz = new POI(1.3, -1.7, -65, "SWEEP2Ozone");
+    public POI sweep3 = new POI(1.55, -1.45, 25, "SWEEP3"); // grazing back wall
+    public POI sweep3Oz = new POI(1.55, -1.45, -80, "SWEEP3Ozone");
     public POI ozone = new POI(2.4, -1.75, -90, "OZone");
     public POI oZoneWalltake = new POI(2.0, -1.5, -90, "OZoneWalltake");
     public POI hibarPrep = new POI(0, -1.5, -90, "HiBarPrep");

@@ -33,7 +33,15 @@ public class Sampler extends Arm {
     //ELBOW JOINT VARIABLES
     public static boolean preferHighOuttake = true;
 
-    public int slideTargetPosition = 0;
+    public int getSlideTargetPosition() {
+        return slideTargetPosition;
+    }
+
+    public void setSlideTargetPosition(int slideTargetPosition) {
+        this.slideTargetPosition = slideTargetPosition;
+    }
+
+    int slideTargetPosition = 0;
 
     // Shoulder values to request from Trident
     public static int shoulderSpeed = 45;
@@ -46,13 +54,13 @@ public class Sampler extends Arm {
 
     // sweep config uses sampler to slide samples to ozone
     // this sweep config is right at 42"
-    public static int SWEEP_SLIDE_POS = 1840;
-    public static int SWEEP_SHOULDER_POS = -90;
+    public static int SWEEP_SLIDE_POS = 2240;
+    public static int SWEEP_SHOULDER_POS = -220;
 
-    int SWEEP_OVER_SHOULDER_POS = 0;
+    int SWEEP_OVER_SHOULDER_POS = -85;
 
     // note for Sweep returning to alliance samples, set shoulder to horizontal
-    public static double SWEEP_ELBOW_ANGLE = 0;
+    public static double SWEEP_ELBOW_ANGLE = 205; // was 0 for axon
 
     double ELBOW_TUCK_ANGLE = 30; //softly resting on CF tube - was 140 for axon
 
@@ -325,7 +333,7 @@ public class Sampler extends Arm {
     public static int tuckIndex = 0;
 
     @Override
-    public boolean tuck() {
+    boolean tuck() {
         switch (tuckIndex) {
             case 0:
                 elbow.setTargetAngle(ELBOW_TUCK_ANGLE);
@@ -373,7 +381,7 @@ public class Sampler extends Arm {
                 servoPower = 0;
                 sweepIndex++;
                 break;
-            case 1: // wait until shoulder and slide have reached position
+            case 1: // wait until shoulder and slide have reached position to return true
                 if (
                         withinError(slideTargetPosition, slide.getCurrentPosition(),10)
                         && withinError((flyOver ? SWEEP_OVER_SHOULDER_POS : SWEEP_SHOULDER_POS), trident.getShoulderCurrentPosition(), 10)

@@ -29,8 +29,11 @@ public class POI extends Flippable {
     }
 
 
+    public double distTo(Pose2d pose) {
+        return Math.hypot(pose.position.x / FIELD_INCHES_PER_GRID - x, pose.position.y / FIELD_INCHES_PER_GRID - y);
+    }
     public boolean atPOI(Pose2d pose) {
-        return Math.hypot(pose.position.x / FIELD_INCHES_PER_GRID - x, pose.position.y / FIELD_INCHES_PER_GRID - y) < POI_ERROR_RADIUS;
+        return distTo(pose) < POI_ERROR_RADIUS;
     }
 }
 

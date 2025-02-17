@@ -5,6 +5,8 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
+import android.text.AndroidCharacter;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -43,7 +45,7 @@ public class SpeciMiner extends Arm {
 
     public static int SHOULDER_WALLTAKE_OFFSET = 100; // how much to raise the shoulder to lift off the wall
     public static int SHOULDER_LOWOUTTAKE_POSITION = 0;
-    public static int SHOULDER_HIGHBAR_POSITION = 1710;
+    public static int SHOULDER_HIGHBAR_POSITION = 1710; //vertical latch 1710
     public int shoulderPositionMax = 850;
 
 
@@ -51,10 +53,10 @@ public class SpeciMiner extends Arm {
     public static int colorSensorGain = 12;
     public int slideTargetPosition = 0;
     public static int SLIDE_WALLTAKE_POSITION = 1300;
-    public int SLIDE_HIGHBAR_POSITION = 1540; //1220
-    int SAMPLER_SLIDE_HIBAR_POSITION = 720;
+    public int SLIDE_HIGHBAR_POSITION = 1200; // 1200 vertical
+    public int SAMPLER_SLIDE_HIBAR_POSITION = 720; // 720 to bump, 880 to clear - sampler needs to be just above the lowbar so it doesn't get in the way
 
-    public int SLIDE_LATCH_OFFSET = 500; //not tuned - how much further to extend slide to latch
+    public int SLIDE_LATCH_OFFSET = 880; //500 for vertical version,  how much further to extend slide to latch
 
     public double ELBOW_WALLTAKE_ANGLE = 65;
     public double ELBOW_HIGHBAR_ANGLE = 15;
@@ -145,13 +147,17 @@ public class SpeciMiner extends Arm {
 
     public boolean prelatchHigh() { // set angle and extension for high bar, exits immediately
         elbow.setTargetAngle(ELBOW_HIGHBAR_ANGLE);
-        trident.setShoulderTarget(this, SHOULDER_HIGHBAR_POSITION);
+        trident.setShoulderTarget(this, SHOULDER_HIGHBAR_POSITION, false);
         slideTargetPosition = SLIDE_HIGHBAR_POSITION;
         trident.sampler.slideTargetPosition = SAMPLER_SLIDE_HIBAR_POSITION; // move sample out of the way todo - doesn't work
         return true;
     }
 
-    public boolean latch(){ // set speciminer to latching extent - assumes should already achieved
+    public boolean prelatchHighSlide() { // set just the slide to pre-latch position
+        slideTargetPosition = SLIDE_HIGHBAR_POSITION;
+        return true;
+    }
+    public boolean latch(){ // set speciminer to latching extent - assumes position should already achieved
         slideTargetPosition = SLIDE_HIGHBAR_POSITION + SLIDE_LATCH_OFFSET;
         return withinError(slide.getCurrentPosition(), SLIDE_HIGHBAR_POSITION + SLIDE_LATCH_OFFSET, 10);
     }
