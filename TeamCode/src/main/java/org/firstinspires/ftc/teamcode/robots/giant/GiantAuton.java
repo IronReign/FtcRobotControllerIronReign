@@ -38,6 +38,7 @@ public class GiantAuton extends OpMode {
     public void init() {
         robot = new Robot(hardwareMap, gamepad1,gamepad2);
         robot.init();
+        robot.autonMotors();
         //  robot.setRotate(950);
     }
     @Override
@@ -51,6 +52,7 @@ public class GiantAuton extends OpMode {
         }
         robot.update(new Canvas());
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
+
     }
 
 
@@ -71,7 +73,7 @@ public class GiantAuton extends OpMode {
         switch (autonIndex) {
             case 0:
                 robot.close();
-                robot.setUpExtend(2280);        //2250
+                robot.setUpExtend(2295);        //2285
                 autonIndex++;
                 break;
             case 1:
@@ -86,7 +88,7 @@ public class GiantAuton extends OpMode {
                 break;
             case 2:
               //  robot.driveDistance(13,.5);
-                if (robot.driveDistance(12.9,1)){    //17.5    .5
+                if (robot.driveDistance(12.9,1)){    //12.65    .5
                     autonTimer=futureTime(.5);
                     autonIndex++;
                 }
@@ -103,41 +105,53 @@ public class GiantAuton extends OpMode {
             case 4:
                 if(isPast(autonTimer)){
                     robot.open();
-                    robot.wallGrab();
+                    //robot.wallGrab();
+                    robot.setShoulder(1450+420);
+                    robot.setUpExtend(8);
                     autonIndex++;
                 }
                 break;
             case 5:
-                if(robot.driveDistance(38,.8)){
+                if(robot.driveDistance(54,1)){
                     autonTimer=futureTime(.3);
                     autonIndex++;
                 }
                 break;
             case 6:
-                if(isPast(autonTimer)){
-                    robot.resetDrive();
-                    //robot.setDrive(0,1,0);
-                    autonIndex++;
+                if(isPast(autonTimer)) {
+                    if (robot.turnUntilDegreesIMU(-90, 1)) {
+                        autonIndex++;
+                    }
                 }
-                break;
+                    break;
+
+//                if(isPast(autonTimer)){
+//                    robot.resetDrive();
+//                    //robot.setDrive(0,1,0);
+//                    autonIndex++;
+//                }
+//                break;
             case 7:
-                if(robot.strafe(43,1)){       //speed up??
+                if(robot.driveDistance(50,1)){
                     autonIndex++;
                 }
                 break;
+//                if(robot.strafe(43,1)){       //speed up??
+//                    autonIndex++;
+//                }
             case 8:
-                if(robot.turnUntilDegreesIMU(180,1)){      //robot.getHor()<=(-3780) &&robot.getVert()<=(-7180)
+                if(robot.turnUntilDegreesIMU(-180,1)){      //robot.getHor()<=(-3780) &&robot.getVert()<=(-7180)
                     robot.resetDrive();
                    // robot.setDrive(0,0,-.5);    //930
                     //autonTimer=futureTime(.01);
-                     autonTimer=futureTime(2);
+                     autonTimer=futureTime(1.1);
                     //autonTimer=futureTime(1.5);
                     autonIndex++;
                 }
                 break;
             case 9:
-                if(robot.driveDistance(18.7,1)){
-                    autonTimer=futureTime(.4);
+                if(robot.driveDistance(18.6,1)){
+                    autonTimer=futureTime(.05);
                     autonIndex++;
 
                 }
@@ -145,7 +159,7 @@ public class GiantAuton extends OpMode {
             case 10:
                 if(isPast(autonTimer)){
                     robot.close();
-                    autonTimer=futureTime(.2);
+                    autonTimer=futureTime(.05);
                     autonIndex++;
                 }
                 break;
@@ -170,17 +184,22 @@ public class GiantAuton extends OpMode {
                 break;
             case 14:
                 if(robot.turnUntilDegreesIMU(-90,1)){
+                    robot.setUpExtend(2302);        //2290
+                    robot.resetDrive();
+                    autonTimer=futureTime(.9);
+                    robot.setDrive(-1,0,0);
                     autonIndex++;
                 }
                 break;
             case 15:
-                if(robot.driveDistance(70,1)){   //robot.getHor()<-13000
-                    robot.setUpExtend(2288);
-                    robot.resetDrive();
-                    autonTimer=futureTime(1.1);
-                    robot.setDrive(-1,0,0);
-                    autonIndex++;
-                }
+                autonIndex++;
+//                if(robot.driveDistance(70,1)){   //robot.getHor()<-13000
+//                    robot.setUpExtend(2302);        //2290
+//                    robot.resetDrive();
+//                    autonTimer=futureTime(1.1);
+//                    robot.setDrive(-1,0,0);
+//                    autonIndex++;
+//                }
                 break;
             case 16:
                 if(isPast(autonTimer)){
@@ -194,7 +213,7 @@ public class GiantAuton extends OpMode {
                 }
                 break;
             case 18:
-                if (robot.driveDistance(11.8,1)){    //9.1   .5
+                if (robot.driveDistance(11.8,1)){    //11.74   .5
                     autonTimer=futureTime(.5);
                     autonIndex++;
                 }

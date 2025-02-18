@@ -394,7 +394,7 @@ public class Robot implements Subsystem {
     int outExtendTicks=0;
     int upExtendTicks=0;
 
-    int clawTicks=1200;
+    int clawTicks=1150;
     boolean clawOpen=false;
 
     boolean hook=true;
@@ -425,16 +425,16 @@ public class Robot implements Subsystem {
 
 
 //shoulder grab intake ticks 870
-    public static double pval=0.025;
+    public static double pval=0.037;        //.025
     public static PIDController headingPID;
-    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(pval, 0.015, 0);
-    public static double HEADING_PID_TOLERANCE = .15;           //.08 //this is a percentage of the input range .063 of 2PI is 1 degree
+    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(pval, 0.018, 0);      //.012  //i: .015
+    public static double HEADING_PID_TOLERANCE = .18;           //.17 //this is a percentage of the input range .063 of 2PI is 1 degree
     private double PIDCorrection, PIDError, targetHeading, targetDistance;
     boolean imuTurnDone = false;
 
     public static PIDController distancePID;
-    public static PIDCoefficients DISTANCE_PID_PWR = new PIDCoefficients(0.03, 0.003, 0);       //p=.023
-    public static double DISTANCE_PID_TOLERANCE = 4.5; //this is a percentage of the input range .063 of 2PI is 1 degree
+    public static PIDCoefficients DISTANCE_PID_PWR = new PIDCoefficients(0.028, 0.01, 0);       //p=.023
+    public static double DISTANCE_PID_TOLERANCE = 2.7; //this is a percentage of the input range .063 of 2PI is 1 degree
     private double distPIDCorrection, distPIDError;
     boolean distDriveDone;
 
@@ -571,8 +571,15 @@ public class Robot implements Subsystem {
         imustuff();
     }
 
-    public static void p(double x){
-        pval+=x;
+    public static void p(double x){        pval+=x;
+    }
+
+
+    public void autonMotors(){
+        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
 
@@ -600,6 +607,7 @@ public class Robot implements Subsystem {
         correct= headingPID.getError();
         if (headingPID.onTarget()) {
             //turn meets accuracy requirement
+
             setDrive(0,0,0);
             return imuTurnDone = true;
         } else {
@@ -703,7 +711,7 @@ public class Robot implements Subsystem {
     public void goodBlock(){
         tiltTicks=780;//1440
         outExtendTicks=120;     //-25
-        shoulderTicks=1250;
+//        shoulderTicks=1250;
     }
 
     public void plsnobad(){
@@ -752,7 +760,7 @@ public class Robot implements Subsystem {
     public void wallGrab(){
         open();
         shoulderTicks=1450+420; //1510  1450
-        upExtendTicks=5;    //0
+        upExtendTicks=154;    //5
     }
 
     public void setOutPower(double x){
@@ -1021,8 +1029,8 @@ public class Robot implements Subsystem {
     public int getUpMotor(){return upExtend1.getCurrentPosition();}
 
     //CLAW THINGS
-    public void grabBlock(){clawTicks=1200;}
-    public void dropBlock(){clawTicks=1800;}
+    public void grabBlock(){clawTicks=1150;}
+    public void dropBlock(){clawTicks=1700;}
     public void setClaw(int x){clawTicks+=x;}
     public void setClawP(){clawOpen=!clawOpen;}
     public void open(){clawOpen=true;}

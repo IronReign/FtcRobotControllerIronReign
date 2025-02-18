@@ -52,6 +52,7 @@ public class GiantAutonNew extends OpMode {
         robot.update(new Canvas());
         execute();
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
+        robot.autonMotors();
     }
 
     int autonIndex = 0;
@@ -59,13 +60,11 @@ public class GiantAutonNew extends OpMode {
     public void execute() {
         switch (autonIndex) {
             case 0:
-                //if(robot.driveDistance(20,1)){
-                if(robot.turnUntilDegreesIMU(-90,1)){
+               // robot.driveDistance(20,1);
+                if(robot.turnUntilDegreesIMU(-90,1)) {
                     autonIndex++;
                 }
-                break;
-            case 1:
-                break;
+
 
         }
     }
