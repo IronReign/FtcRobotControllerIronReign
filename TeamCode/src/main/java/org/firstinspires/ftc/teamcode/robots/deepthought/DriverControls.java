@@ -82,6 +82,10 @@ public class DriverControls {
         if(gamepad1.dpad_down) {
             robot.forwardRelocalize();
         }
+
+        if(stickyGamepad1.a) {
+            Autonomous.pingPongIndex = 0;
+        }
     }
 
     public void manualDiagnosticMethods() {

@@ -69,7 +69,7 @@ public class Robot implements Subsystem {
     public PIDController sampleAlignmentPID;
     public static PIDCoefficients sampleAlignmentCoefficients = new PIDCoefficients(0.03, 0.04, 0);
 
-    public static double SAMPLE_ALIGN_TARGET_TX = 8;
+    public static double SAMPLE_ALIGN_TARGET_TX = 10;
     public static double SAMPLE_ALIGN_TOLERANCE = 3;
     public double PIDError, PIDCorrection;
 
@@ -462,7 +462,8 @@ public class Robot implements Subsystem {
 
     public int alignOnSampleState = 0;
     public boolean alignOnSample() {
-//        switch (alignOnSampleState) {
+
+        //        switch (alignOnSampleState) {
 //            case 0:
                 limelight.pipelineSwitch(3);
                 LLResult llResult;
@@ -477,17 +478,18 @@ public class Robot implements Subsystem {
                         sampleAlignmentPID.setInputRange(-25, 25);
                         sampleAlignmentPID.setInput(llResult.getTx());
                         sampleAlignmentPID.setSetpoint(targetTx);
-                        sampleAlignmentPID.setOutputRange(-.8, .8);
+                        sampleAlignmentPID.setOutputRange(-.6, .6 );
                         sampleAlignmentPID.setTolerance(SAMPLE_ALIGN_TOLERANCE);
                         double correction = sampleAlignmentPID.performPID();
                         PIDCorrection = correction;
                         PIDError = sampleAlignmentPID.getError();
                         sampleAlignmentPID.enable();
-                        if (sampleAlignmentPID.lockedOnTarget()) {
+                        if (sampleAlignmentPID.onTarget()) {
                             onTarget = true;
                             sampleAlignmentPID.clearCache();
                             driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                             return true;
+
                         } else {
                             onTarget = false;
                             driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
@@ -504,7 +506,10 @@ public class Robot implements Subsystem {
                 }
 //                break;
 //        }
-
+//        driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+//
+//        return true;
+//
         return false;
     }
 

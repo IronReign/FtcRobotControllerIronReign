@@ -46,7 +46,7 @@ public class Sampler extends Arm {
     // Shoulder values to request from Trident
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
-    public static int SHOULDER_PREINTAKE_POSITION = -150;
+    public static int SHOULDER_PREINTAKE_POSITION = -50;
     public static int SHOULDER_INTAKE_POSITION = -375;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
     public static int SHOULDER_HIGHOUTTAKE_POSITION = 1385;
@@ -87,8 +87,8 @@ public class Sampler extends Arm {
         ELBOW_MAX_ANGLE = 220;  // 220 for Axon
         ELBOW_ADJUST_ANGLE = 5;
         ELBOW_PREINTAKE_ANGLE = 205;  // to clear over the sub wall // 5 for axon
-        ELBOW_LOWOUTTAKE_ANGLE = 102; // 120 for axon
-        ELBOW_HIGHOUTTAKE_ANGLE = 140; // 60 for axon
+        ELBOW_LOWOUTTAKE_ANGLE = 110; // 120 for axon
+        ELBOW_HIGHOUTTAKE_ANGLE = 120; // 60 for axon
 
         elbow = new Joint(hardwareMap, "samplerElbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "samplerSlide");

@@ -251,24 +251,29 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 3:
-                if (ground.name.equals("GROUND3")) {
-                    autonIntakeIndex++;
-                } else {
-                    if (robot.alignOnSample()) {
+//                if (ground.name.equals("GROUND3")) {
+//                    autonIntakeIndex++;
+//                } else {
+//                    if (robot.alignOnSample()) {
                         autonIntakeIndex++;
-                    }
-                }
+//                    }
+//                }
                 break;
             case 4:
-                robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
-                if (robot.articulation == Robot.Articulation.MANUAL) {
+
+                if (robot.alignOnSample()) {
                     autonIntakeIndex++;
                 }
+
                 break;
             case 5:
+                robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
+                if (robot.articulation == Robot.Articulation.MANUAL) {
+                    autonIntakeIndex = 0;
+                    return true;
+                }
 //                robot.articulate(Robot.Articulation.TRAVEL);
-                autonIntakeIndex = 0;
-                return true;
+
 
         }
 
@@ -278,39 +283,20 @@ public class Autonomous implements TelemetryProvider {
     public static int pingPongIndex = 0;
 
     public void pingPong(TelemetryPacket packet) {
-//        robot.alignOnSample();
+        robot.articulate(Robot.Articulation.SAMPLER_PREP);
+        switch (pingPongIndex){
+            case 0:
+                if(robot.alignOnSample()) {
+                    pingPongIndex++;
+                }
+                break;
+            case 1:
 
-//        switch (pingPongIndex) {
-//            case 0:
-//                Robot.panTargetPosition = Robot.PAN_FORWARD;
-//                robot.limelight.pipelineSwitch(3);
-//                robot.articulate(Robot.Articulation.SAMPLER_PREP);
-//                if (robot.driveTrain.strafeToPose(field.ground3.getPose(), packet)) {
-//
-//                    pingPongIndex++;
-//                }
-//                robot.aprilTagRelocalization();
+                break;
+            case 2:
 
-//                if (robot.driveTrain.strafeToPose(field.basket.getPose(), packet)) {
-//
-//                    pingPongIndex++;
-//                }
-//                break;
-//            case 1:
-//                if (robot.alignOnSample()) {
-//                    pingPongIndex++;
-//                }
-//                robot.aprilTagRelocalization();
-
-
-//                if (robot.driveTrain.strafeToPose(P2D(-1.5, -.5, 0), packet)) {
-//                    pingPongIndex--;
-//                }
-//                break;
-//            case 3:
-//                robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
-//                break;
-//        }
+                break;
+        }
 
     }
 }
