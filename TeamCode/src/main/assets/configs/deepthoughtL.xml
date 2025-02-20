@@ -12,16 +12,16 @@
             port="173">
             <RevRobotics20HDHexMotor
                 name="rightFront"
-                port="0" />
+                port="3" />
             <RevRobotics20HDHexMotor
                 name="rightBack"
-                port="1" />
-            <RevRobotics20HDHexMotor
-                name="leftBack"
                 port="2" />
             <RevRobotics20HDHexMotor
+                name="leftBack"
+                port="1" />
+            <RevRobotics20HDHexMotor
                 name="leftFront"
-                port="3" />
+                port="0" />
             <LynxEmbeddedIMU
                 name="imu"
                 bus="0"

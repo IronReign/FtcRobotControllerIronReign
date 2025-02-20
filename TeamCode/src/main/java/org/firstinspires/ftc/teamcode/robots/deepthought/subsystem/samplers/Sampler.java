@@ -26,7 +26,7 @@ import java.util.Map;
 
 @Config(value = "00_ITD_SAMPLER")
 public class Sampler extends Arm {
-    public static double TUNABLE_COEFFICIENT = .1;
+    public static double TUNABLE_COEFFICIENT = 100;
     CRServo beater = null;
     //public DcMotorEx slide = null;
 
@@ -86,7 +86,7 @@ public class Sampler extends Arm {
         ELBOW_MIN_ANGLE = 15; // -15 for Axon
         ELBOW_MAX_ANGLE = 220;  // 220 for Axon
         ELBOW_ADJUST_ANGLE = 5;
-        ELBOW_PREINTAKE_ANGLE = 205;  // to clear over the sub wall // 5 for axon
+        ELBOW_PREINTAKE_ANGLE = 175;  // to clear over the sub wall // 5 for axon
         ELBOW_LOWOUTTAKE_ANGLE = 110; // 120 for axon
         ELBOW_HIGHOUTTAKE_ANGLE = 120; // 60 for axon
 
@@ -125,6 +125,7 @@ public class Sampler extends Arm {
 
     @Override
     public void update(Canvas fieldOverlay) {
+        ELBOW_PREINTAKE_ANGLE = TUNABLE_COEFFICIENT;
         beater.setPower(-servoPower);
         elbow.update();
         if (trident.calibrated) {
@@ -261,7 +262,7 @@ public class Sampler extends Arm {
             case 3:
                 if (slideTargetPosition > SLIDE_INTAKE_MIN_POSITION) {
                     slideTargetPosition -= 400;
-                    trident.setShoulderTarget(this, (int) (trident.getShoulderTarget() - 400 * 0.1534090909090909));
+                    trident.setShoulderTarget(this, (int) (trident.getShoulderTarget() - 400 * 0.234090909090909));
 
                 }
                 if (stopOnSample() || isPast(intakeTimer)) {
