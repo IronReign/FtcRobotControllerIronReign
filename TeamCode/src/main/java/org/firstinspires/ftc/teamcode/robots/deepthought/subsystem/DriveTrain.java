@@ -153,10 +153,10 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     //this is an absolute (non-relative) implementation.
     //the direction of the turn will favor the shortest approach
     public boolean turnUntilDegreesIMU(double turnAngle, double maxSpeed) {
-//        Sensors.driveIMUEnabled = true;
+        Sensors.driveIMUEnabled = true;
         targetHeading = wrapAngle(turnAngle);
         headingPID.setPID(HEADING_PID_PWR);
-        headingPID.setInput(wrapAngle(Robot.sensors.driveIMUYaw));
+        headingPID.setInput(wrapAngle(Robot.sensors.driveIMUYaw)); //seems to be heading from roadrunner
         headingPID.setSetpoint(targetHeading);
         headingPID.setOutputRange(-maxSpeed, maxSpeed);
         headingPID.setTolerance(HEADING_PID_TOLERANCE);
@@ -166,7 +166,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
         if (headingPID.onTarget()) {
             //turn meets accuracy target
             //todo is this a good time to update getPose() heading from imu?
-            setPose(new Pose2d(getPose().position, Math.toRadians(Robot.sensors.driveIMUYaw)));
+            //setPose(new Pose2d(getPose().position, Math.toRadians(Robot.sensors.driveIMUYaw)));
             //stop
             Sensors.driveIMUEnabled = false;
             setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));

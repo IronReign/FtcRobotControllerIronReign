@@ -59,9 +59,8 @@ public class Sensors implements Subsystem {
             averageDistSensorValue = (leftDistSensorValue + rightDistSensorValue)/2;
         }
         if(driveIMUEnabled){ //todo - is this test valid? don't we always want a heading? also, need to validate if this is a legit way to get heading once we start swapping out pinpoint, sparkfun optical, etc.
-            driveIMUYaw = Utils.wrapAngle(Math.toDegrees(robot.driveTrain.getPose().heading.log()) + (alliance.isRed()? -90 : 90));
+            driveIMUYaw = Utils.wrapAngle(Math.toDegrees(robot.driveTrain.getPose().heading.log())); //+ (alliance.isRed()? -90 : 90));
         }
-
 
 //        if(pixelSensorEnabled) {
 //            rightPixelSensorValue = robot.intake.pixelSensorRight.getDistance(DistanceUnit.INCH);

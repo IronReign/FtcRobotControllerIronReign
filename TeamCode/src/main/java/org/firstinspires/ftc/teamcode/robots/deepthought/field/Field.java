@@ -44,7 +44,7 @@ public class Field {
     public POI ground5 = new POI(2.25, -.5, 90, "GROUND5");
     public POI ground6 = new POI(2.6, -.5, 90, "GROUND6"); // grazing back wall
 
-    public POI sweep1 = new POI(1, -2, 45, "SWEEP1");
+    public POI sweep1 = new POI(1, -2, 45.5, "SWEEP1");
     public POI sweep1Oz = new POI(1, -2, -40, "SWEEP1Ozone");
     public POI sweep2 = new POI(1.3, -1.7, 35, "SWEEP2");
     public POI sweep2Oz = new POI(1.3, -1.7, -65, "SWEEP2Ozone");

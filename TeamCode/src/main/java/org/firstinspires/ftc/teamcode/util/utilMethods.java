@@ -129,7 +129,7 @@ public class utilMethods {
     }
 
     public static double wrapAngle(double angle){
-        return (angle) % 360;
+        return ((angle % 360) + 360) % 360;
     }
     /**
      * Apply an angular adjustment to a base angle with result wrapping around at 360 degress

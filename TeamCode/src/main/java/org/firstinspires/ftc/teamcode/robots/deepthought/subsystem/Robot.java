@@ -139,13 +139,13 @@ public class Robot implements Subsystem {
             // initializing subsystems
             driveTrain = new DriveTrain(hardwareMap, this, false);
             trident = new Trident(hardwareMap, this);
-            //sensors = new Sensors(this);
+            sensors = new Sensors(this);
 
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
             pan = hardwareMap.get(Servo.class, "pan");
 
 
-            subsystems = new Subsystem[]{driveTrain, trident};
+            subsystems = new Subsystem[]{driveTrain, trident, sensors};
             subsystemUpdateTimes = new long[subsystems.length];
 
             batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();

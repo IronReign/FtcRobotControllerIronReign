@@ -4,6 +4,8 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.wrap360;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.wrapAngle;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -179,6 +181,7 @@ public class AutoSpecimens implements TelemetryProvider {
                 if (driveAndWalltake(packet)) {
                     autonIndex++;
                 }
+                break;
             case 11:
                 if (driveAndLatch(packet)) {
                     autonIndex = 0; //so we can test autons back to back
@@ -367,24 +370,26 @@ public class AutoSpecimens implements TelemetryProvider {
     public boolean autonSweepSample(POI sweepFrom, POI ozone, boolean recover, TelemetryPacket packet) {
         switch (autonSweepIndex) {
             case 0: // set sampler for sweeping over
-                if(robot.trident.sampler.sweepConfig(true))
+                //if(robot.trident.sampler.sweepConfig(true))
                     autonSweepIndex++;
                 break;
             case 1: // drive to sweeping start position
                 if (robot.driveTrain.strafeToPose(sweepFrom.getPose(), packet)) {
-                    if (robot.trident.sampler.sweepConfig(false)) // sampler floats just above floor
+                    //if (robot.trident.sampler.sweepConfig(false)) // sampler floats just above floor
                         autonSweepIndex++;
                 }
                 break;
             case 2: // let's sweep
-                if (robot.driveTrain.strafeToPose(ozone.getPose(), packet)) {
-                    robot.trident.sampler.sweepConfig(true); //set for sweepOver return
+                //if (robot.driveTrain.strafeToPose(ozone.getPose(), packet)) { //strafeToPose is slow
+                if (robot.driveTrain.turnUntilDegreesIMU(wrapAngle(ozone.heading),.5)){
+                    //robot.trident.sampler.sweepConfig(true); //set for sweepOver return
                     autonSweepIndex++;
                 }
                 break;
             case 3: // sweepOver back to beginning position
                 if (recover) { // can skip recovery for last floor sample
-                    if (robot.driveTrain.strafeToPose(sweepFrom.getPose(), packet)) {
+                    //if (robot.driveTrain.strafeToPose(sweepFrom.getPose(), packet)) {
+                    if (robot.driveTrain.turnUntilDegreesIMU(wrapAngle(sweepFrom.heading),.5)) {
                         resetStates(); //be careful with this
                         return true;
                     }
@@ -403,6 +408,7 @@ public class AutoSpecimens implements TelemetryProvider {
         driveAndLatchIndex = 0;
         autonSweepIndex = 0;
         autonShiftIndex = 0;
-        robot.resetStates();
+        //do not call robot.resetStates - creates a loop since it calls all subsystem resets
+        //robot.resetStates();
     }
 }

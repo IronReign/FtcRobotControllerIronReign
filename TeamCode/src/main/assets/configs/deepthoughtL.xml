@@ -8,8 +8,32 @@
         parentModuleAddress="173"
         serialNumber="(embedded)">
         <LynxModule
-            name="Expansion Hub 1"
-            port="1">
+            name="Control Hub"
+            port="173">
+            <RevRobotics20HDHexMotor
+                name="rightFront"
+                port="0" />
+            <RevRobotics20HDHexMotor
+                name="rightBack"
+                port="1" />
+            <RevRobotics20HDHexMotor
+                name="leftBack"
+                port="2" />
+            <RevRobotics20HDHexMotor
+                name="leftFront"
+                port="3" />
+            <LynxEmbeddedIMU
+                name="imu"
+                bus="0"
+                port="0" />
+            <RevColorSensorV3 name="samplerSensor" port="1" bus="0" />
+            <LynxColorSensor name="specSensor" port="0" bus="1" />
+        </LynxModule>
+    </LynxUsbDevice>
+    <LynxUsbDevice name="Expansion Hub Portal 1" serialNumber="DQ233M2L" parentModuleAddress="2">
+        <LynxModule
+            name="Expansion Hub 2"
+            port="2">
             <REV_VL53L0X_RANGE_SENSOR
                 name="backDistLeft"
                 bus="2"
@@ -39,7 +63,6 @@
             <RevRobotics40HDHexMotor
                 name="led"
                 port="1" />
-
             <RevRobotics40HDHexMotor
                 name="specSlide"
                 port="0" />
@@ -53,28 +76,6 @@
                 name="eimu"
                 bus="0"
                 port="0" />
-        </LynxModule>
-        <LynxModule
-            name="Control Hub"
-            port="173">
-            <RevRobotics20HDHexMotor
-                name="rightFront"
-                port="0" />
-            <RevRobotics20HDHexMotor
-                name="rightBack"
-                port="1" />
-            <RevRobotics20HDHexMotor
-                name="leftBack"
-                port="2" />
-            <RevRobotics20HDHexMotor
-                name="leftFront"
-                port="3" />
-            <LynxEmbeddedIMU
-                name="imu"
-                bus="0"
-                port="0" />
-            <RevColorSensorV3 name="samplerSensor" port="1" bus="0" />
-            <LynxColorSensor name="specSensor" port="0" bus="1" />
         </LynxModule>
     </LynxUsbDevice>
     <EthernetDevice name="limelight" serialNumber="EthernetOverUsb:eth0:172.29.0.31" name="limelight" port="-1" ipAddress="172.29.0.1" />
