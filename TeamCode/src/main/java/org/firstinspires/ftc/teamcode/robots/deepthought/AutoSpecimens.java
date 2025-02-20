@@ -75,7 +75,7 @@ public class AutoSpecimens implements TelemetryProvider {
         if (!alliance.isRed()) {
             allianceMultiplier = -1;
         }
-        robot.positionCache.update(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), false);
+        robot.positionCache.update(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), false);
         switch (autonIndex) { //auton delay
             case 0:
                 gameTimer = futureTime(27);
@@ -144,7 +144,7 @@ public class AutoSpecimens implements TelemetryProvider {
         if (!alliance.isRed()) {
             allianceMultiplier = -1;
         }
-        robot.positionCache.update(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), false);
+        robot.positionCache.update(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), false);
         switch (autonIndex) { //auton delay
             case 0:
                 resetStates(); // resets all state variables
@@ -250,7 +250,7 @@ public class AutoSpecimens implements TelemetryProvider {
             case 1: // travel to hibar field position
                 autonState = AutonState.DRIVE_TO_HIGHBAR; // drive to sub
                 robot.trident.speciMiner.prelatchHighSlide(); //slide is slow, start extending
-                if (field.hibar.distTo(robot.driveTrain.getPose())<1) { //trigger shoulder on reaching within 1 field tile of highbar position
+                if (field.hibar.distTo(robot.driveTrain.localizer.getPose())<1) { //trigger shoulder on reaching within 1 field tile of highbar position
                     robot.trident.speciMiner.prelatchHigh();  // preset arm positions}
                     }
                 if (robot.driveTrain.strafeToPose(field.hibar.getPose(), packet)) {

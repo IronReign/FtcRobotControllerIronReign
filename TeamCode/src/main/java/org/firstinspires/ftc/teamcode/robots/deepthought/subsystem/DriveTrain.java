@@ -142,7 +142,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
                 x,
                 y);
         //additional rotation needed if blue alliance perspective
-        Rotation2d heading = (!isRed) ? getPose().heading : getPose().heading.plus(Math.PI);
+        Rotation2d heading = (!isRed) ? localizer.getPose().heading : localizer.getPose().heading.plus(Math.PI);
         input = heading.inverse().times(
                 new Vector2d(-input.x, input.y));
         setDrivePowers(new PoseVelocity2d(input, -theta));
@@ -183,7 +183,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     }
 
     public void setPose(Pose2d pose) {
-        super.setPose(pose);
+        super.localizer.setPose(pose);
     }
 
     @Override
@@ -200,15 +200,15 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
 
         Map<String, Object> telemetryMap = new HashMap<>();
-        telemetryMap.put("x in fieldCoords", getPose().position.x / Constants.FIELD_INCHES_PER_GRID);
-        telemetryMap.put("y in fieldCoords", getPose().position.y / Constants.FIELD_INCHES_PER_GRID);
-        telemetryMap.put("x in inches", getPose().position.x);
-        telemetryMap.put("y in inches", getPose().position.y);
+        telemetryMap.put("x in fieldCoords", localizer.getPose().position.x / Constants.FIELD_INCHES_PER_GRID);
+        telemetryMap.put("y in fieldCoords", localizer.getPose().position.y / Constants.FIELD_INCHES_PER_GRID);
+        telemetryMap.put("x in inches", localizer.getPose().position.x);
+        telemetryMap.put("y in inches", localizer.getPose().position.y);
 
 //        telemetryMap.put("Right Distance Sensor Value", robot.sensors.rightDistSensorValue);
 //        telemetryMap.put("Left Distance Sensor Value", robot.sensors.leftDistSensorValue);
 
-        telemetryMap.put("heading", Math.toDegrees(getPose().heading.log()));
+        telemetryMap.put("heading", Math.toDegrees(localizer.getPose().heading.log()));
         telemetryMap.put("Left Odometry Pod:\t", leftFront.getCurrentPosition());
         telemetryMap.put("Right Odometry Pod:\t", rightFront.getCurrentPosition());
         telemetryMap.put("Cross Odometry Pod:\t", rightBack.getCurrentPosition());
@@ -238,7 +238,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
         if (roadRunnerDrive) {
             switch (strafeToPoseIndex) {
                 case 0:
-                    TrajectoryActionBuilder strafeActionBuilder = robot.driveTrain.actionBuilder(getPose())
+                    TrajectoryActionBuilder strafeActionBuilder = robot.driveTrain.actionBuilder(localizer.getPose())
                             .strafeTo(pose2d.position)
                             .turnTo(pose2d.heading);
                     strafeToPoseAction = new SequentialAction(strafeActionBuilder.build());

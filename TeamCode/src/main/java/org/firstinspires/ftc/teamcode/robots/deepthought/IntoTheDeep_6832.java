@@ -249,7 +249,7 @@ public class IntoTheDeep_6832 extends OpMode {
         switch (gameState) {
             case AUTONOMOUS:
                 if (auton.execute(packet)) {
-                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
+                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
                     robot.articulate(Robot.Articulation.TRAVEL);
                     gameState = GameState.TELE_OP;
                 }
@@ -265,14 +265,14 @@ public class IntoTheDeep_6832 extends OpMode {
                 break;
             case AUTO_SPECIMEN:
                 if (autoSpecimens.execute(packet)) {
-                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
+                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
                     robot.articulate(Robot.Articulation.TRAVEL);
                     gameState = GameState.TELE_OP;
                 }
                 break;
             case AUTO_SPECIMEN_SWEEP:
                 if (autoSpecimens.execSweeping(packet)) {
-                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
+                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
                     robot.articulate(Robot.Articulation.TRAVEL);
                     gameState = GameState.TELE_OP;
                 }

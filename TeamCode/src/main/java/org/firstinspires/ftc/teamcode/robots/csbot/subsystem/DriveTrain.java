@@ -206,11 +206,11 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     }
 
     public void setPose(Pose2d pose) {
-        super.setPose(pose);
+        super.localizer.setPose(pose);
     }
 
     public Pose2d getPose(){
-        return  super.getPose();
+        return  super.localizer.getPose();
     }
 
     @Override

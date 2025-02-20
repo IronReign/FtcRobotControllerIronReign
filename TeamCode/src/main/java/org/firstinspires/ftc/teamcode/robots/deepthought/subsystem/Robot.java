@@ -179,7 +179,7 @@ public class Robot implements Subsystem {
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         if (updatePositionCache && gameState.isAutonomous()) {
-            currPosition = new DTPosition(driveTrain.getPose(), -trident.shoulder.getCurrentPosition(), trident.sampler.slide.getCurrentPosition(), trident.speciMiner.slide.getCurrentPosition());
+            currPosition = new DTPosition(driveTrain.localizer.getPose(), -trident.shoulder.getCurrentPosition(), trident.sampler.slide.getCurrentPosition(), trident.speciMiner.slide.getCurrentPosition());
             positionCache.update(currPosition, false);
         }
 
@@ -193,7 +193,7 @@ public class Robot implements Subsystem {
         articulate(articulation);
         driveTrain.updatePoseEstimate();
 
-        drawRobot(fieldOverlay, driveTrain.getPose());
+        drawRobot(fieldOverlay, driveTrain.localizer.getPose());
         //update subsystems
         for (int i = 0; i < subsystems.length; i++) {
             Subsystem subsystem = subsystems[i];
@@ -368,7 +368,7 @@ public class Robot implements Subsystem {
 
     @Override
     public void stop() {
-        currPosition = new DTPosition(driveTrain.getPose(), -trident.shoulder.getCurrentPosition(), trident.sampler.slide.getCurrentPosition(), trident.speciMiner.slide.getCurrentPosition());
+        currPosition = new DTPosition(driveTrain.localizer.getPose(), -trident.shoulder.getCurrentPosition(), trident.sampler.slide.getCurrentPosition(), trident.speciMiner.slide.getCurrentPosition());
         positionCache.update(currPosition, true);
         for (Subsystem component : subsystems) {
             component.stop();

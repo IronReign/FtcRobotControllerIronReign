@@ -78,7 +78,7 @@ public class Autonomous implements TelemetryProvider {
         if (!alliance.isRed()) {
             allianceMultiplier = -1;
         }
-        robot.positionCache.update(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), false);
+        robot.positionCache.update(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), false);
         switch (autonIndex) {
             case 0:
                 gameTimer = futureTime(27);
@@ -166,7 +166,7 @@ public class Autonomous implements TelemetryProvider {
 
             case 10:
                 robot.articulate(Robot.Articulation.TRAVEL);
-                robot.positionCache.update(new DTPosition(robot.driveTrain.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
+                robot.positionCache.update(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
                 autonIndex = 0;
                 return true;
         }

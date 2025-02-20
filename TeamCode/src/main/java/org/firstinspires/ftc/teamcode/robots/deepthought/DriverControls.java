@@ -150,7 +150,7 @@ public class DriverControls {
         }
 
         if (stickyGamepad1.guide) {
-            robot.driveTrain.setPose(new Pose2d(robot.driveTrain.getPose().position, Math.toRadians(alliance.isRed() ? 90 : -90)));
+            robot.driveTrain.setPose(new Pose2d(robot.driveTrain.localizer.getPose().position, Math.toRadians(alliance.isRed() ? 90 : -90)));
         }
 
         double power;
