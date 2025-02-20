@@ -234,6 +234,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
 
     int strafeToPoseIndex = 0;
     SequentialAction strafeToPoseAction;
+
     public boolean strafeToPose(Pose2d pose2d, TelemetryPacket packet) {
         if (roadRunnerDrive) {
             switch (strafeToPoseIndex) {
@@ -248,6 +249,34 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
                     robot.driveTrain.trajectoryIsActive = true;
                     if (!strafeToPoseAction.run(packet)) {
                         strafeToPoseIndex = 0;
+                        robot.driveTrain.trajectoryIsActive = false;
+                        return true;
+                    }
+                    break;
+            }
+        }
+        return false;
+    }
+
+
+    int turnThenStrafeIndex = 0;
+    SequentialAction turnThenStrafeAction;
+
+    public boolean turnThenStrafe(Pose2d pose2d, TelemetryPacket packet) {
+        if (roadRunnerDrive) {
+            switch (strafeToPoseIndex) {
+                case 0:
+                    TrajectoryActionBuilder strafeActionBuilder = robot.driveTrain.actionBuilder(localizer.getPose())
+                            .turnTo(pose2d.heading)
+                            .strafeTo(pose2d.position);
+
+                    turnThenStrafeAction = new SequentialAction(strafeActionBuilder.build());
+                    turnThenStrafeIndex++;
+                    break;
+                case 1:
+                    robot.driveTrain.trajectoryIsActive = true;
+                    if (!turnThenStrafeAction.run(packet)) {
+                        turnThenStrafeIndex = 0;
                         robot.driveTrain.trajectoryIsActive = false;
                         return true;
                     }

@@ -59,6 +59,7 @@ public class Robot implements Subsystem {
     public static boolean updatePositionCache = false;
     public static boolean visionOn = true;
 
+    public static boolean relocalizeForward = false;
     public boolean calibrating = false;
 
     public PositionCache positionCache;
@@ -270,6 +271,8 @@ public class Robot implements Subsystem {
     public int speciMinerOuttakeIndex = 0;
 
     public boolean speciMinerOuttake() {
+        relocalizeForward = true;
+        aprilTagRelocalization();
         switch (speciMinerOuttakeIndex) {
             case 0:
                 trident.speciMiner.articulate(SpeciMiner.Articulation.OUTTAKE);
@@ -288,6 +291,8 @@ public class Robot implements Subsystem {
     public int walltakeIndex = 0;
 
     public boolean speciMinerWalltake() {
+        relocalizeForward = false;
+        aprilTagRelocalization();
         switch (walltakeIndex) {
             case 0:
                 trident.speciMiner.articulate(SpeciMiner.Articulation.WALLTAKE);
@@ -347,6 +352,8 @@ public class Robot implements Subsystem {
     public int outtakeIndex = 0;
 
     public boolean samplerOuttake() {
+        relocalizeForward = false;
+        aprilTagRelocalization();
         switch (outtakeIndex) {
             case 0:
                 Trident.enforceSlideLimits = false; // todo this might be at wrong level or ignored
@@ -515,10 +522,18 @@ public class Robot implements Subsystem {
 
     //to be called repeatedly until success
     public void aprilTagRelocalization() {
-        if (trident.activeArm instanceof SpeciMiner) {
-            limelight.pipelineSwitch(4);
-            panTargetPosition = PAN_SPECIMINER_APRILTAG;
-        } else {
+if(relocalizeForward) {
+    limelight.pipelineSwitch(5);
+    panTargetPosition = PAN_FORWARD;
+    LLResult llResult;
+    if ((llResult = limelight.getLatestResult()) != null) {
+        //limelight returns everything in meters
+        aprilTagPose = new Pose2d(new Vector2d(llResult.getBotpose().getPosition().x * 39.37, llResult.getBotpose().getPosition().y * 39.37), llResult.getBotpose().getOrientation().getYaw(AngleUnit.RADIANS));
+        if (llResult.getBotpose().getPosition().x != 0)
+            driveTrain.setPose(aprilTagPose);
+    }
+}
+ else {
             limelight.pipelineSwitch(2);
             panTargetPosition = PAN_BASKET_APRILTAG;
         }
@@ -529,24 +544,6 @@ public class Robot implements Subsystem {
             if (llResult.getBotpose().getPosition().x != 0)
                 driveTrain.setPose(aprilTagPose);
         }
-//            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
-//            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
-//            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
-    }
-
-    public void forwardRelocalize() {
-        limelight.pipelineSwitch(5);
-        panTargetPosition = PAN_FORWARD;
-        LLResult llResult;
-        if ((llResult = limelight.getLatestResult()) != null) {
-            //limelight returns everything in meters
-            aprilTagPose = new Pose2d(new Vector2d(llResult.getBotpose().getPosition().x * 39.37, llResult.getBotpose().getPosition().y * 39.37), llResult.getBotpose().getOrientation().getYaw(AngleUnit.RADIANS));
-            if (llResult.getBotpose().getPosition().x != 0)
-                driveTrain.setPose(aprilTagPose);
-        }
-//            aprilTagRelocalizationX = field.getAprilTagPose(targetTag.id).position.x - targetTag.pose.z * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_X;
-//            aprilTagRelocalizationY = field.getAprilTagPose(targetTag.id).position.y + targetTag.pose.x * 39.37 - DISTANCE_FROM_CAMERA_TO_CENTER_Y;
-//            aprilTagPose = new Pose2d(targetTag.pose.z, targetTag.pose.x, driveTrain.pose.heading.log());
     }
 
 

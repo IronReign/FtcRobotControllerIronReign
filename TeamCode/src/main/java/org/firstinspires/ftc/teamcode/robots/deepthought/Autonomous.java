@@ -11,6 +11,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.field.POI;
+import org.firstinspires.ftc.teamcode.robots.deepthought.rr_localize.MecanumDriveReign;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
@@ -97,8 +98,8 @@ public class Autonomous implements TelemetryProvider {
                     robot.resetStates();
                     robot.articulate(Robot.Articulation.MANUAL);
 //                    return true;
-                                        autonIndex++;
-                } 
+                    autonIndex++;
+                }
                 break;
             case 3:
                 if (robot.articulation == Robot.Articulation.MANUAL) {
@@ -140,13 +141,14 @@ public class Autonomous implements TelemetryProvider {
                 if (autonSamplerOuttake(field.basket, packet)) {
                     robot.resetStates();
                     robot.trident.sampler.articulate(Sampler.Articulation.MANUAL);
-
+//                    MecanumDriveReign.PARAMS.maxAngVel = Math.PI/4;
                     autonIndex++;
                 }
                 break;
 
             case 8:
                 if (autonSamplerIntake(field.ground3, packet)) {
+//                    MecanumDriveReign.PARAMS.maxAngVel = Math.PI;
                     if (robot.trident.sampler.servoPower == 0)
                         autonIndex++;
                     else {
@@ -165,7 +167,7 @@ public class Autonomous implements TelemetryProvider {
                 break;
 
             case 10:
-                robot.articulate(Robot.Articulation.TRAVEL);
+                robot.articulate(Robot.Articulation.SAMPLER_PREP);
                 robot.positionCache.update(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
                 autonIndex = 0;
                 return true;
@@ -238,11 +240,20 @@ public class Autonomous implements TelemetryProvider {
                 //ADD LIMELIGHT ALIGNMENT HERE
 //                }
             case 1:
-                if (robot.driveTrain.strafeToPose(ground.getPose(), packet)) {
-                    autonIntakeIndex++;
-                    robot.resetStates();
-                    autonIntakeTimer = futureTime(0);
-                    //ADD LIMELIGHT ALIGNMENT HERE
+                if (ground.name.equals("GROUND3")) {
+                    if ((robot.driveTrain.turnThenStrafe(ground.getPose(), packet))) {
+                        autonIntakeIndex++;
+                        robot.resetStates();
+                        autonIntakeTimer = futureTime(0);
+                        //ADD LIMELIGHT ALIGNMENT HERE
+                    }
+                } else {
+                    if ((robot.driveTrain.strafeToPose(ground.getPose(), packet))) {
+                        autonIntakeIndex++;
+                        robot.resetStates();
+                        autonIntakeTimer = futureTime(0);
+                        //ADD LIMELIGHT ALIGNMENT HERE
+                    }
                 }
                 break;
             case 2:
@@ -251,17 +262,18 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 3:
+                autonIntakeTimer = futureTime(3);
 //                if (ground.name.equals("GROUND3")) {
 //                    autonIntakeIndex++;
 //                } else {
 //                    if (robot.alignOnSample()) {
-                        autonIntakeIndex++;
+                autonIntakeIndex++;
 //                    }
 //                }
                 break;
             case 4:
 
-                if (robot.alignOnSample()) {
+                if (robot.alignOnSample() || isPast(autonIntakeTimer)) {
                     autonIntakeIndex++;
                 }
 
@@ -284,9 +296,9 @@ public class Autonomous implements TelemetryProvider {
 
     public void pingPong(TelemetryPacket packet) {
         robot.articulate(Robot.Articulation.SAMPLER_PREP);
-        switch (pingPongIndex){
+        switch (pingPongIndex) {
             case 0:
-                if(robot.alignOnSample()) {
+                if (robot.alignOnSample()) {
                     pingPongIndex++;
                 }
                 break;

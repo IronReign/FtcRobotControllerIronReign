@@ -46,7 +46,7 @@ public class Sampler extends Arm {
     // Shoulder values to request from Trident
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
-    public static int SHOULDER_PREINTAKE_POSITION = -50;
+    public static int SHOULDER_PREINTAKE_POSITION = -150;
     public static int SHOULDER_INTAKE_POSITION = -375;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
     public static int SHOULDER_HIGHOUTTAKE_POSITION = 1385;
@@ -86,7 +86,7 @@ public class Sampler extends Arm {
         ELBOW_MIN_ANGLE = 15; // -15 for Axon
         ELBOW_MAX_ANGLE = 220;  // 220 for Axon
         ELBOW_ADJUST_ANGLE = 5;
-        ELBOW_PREINTAKE_ANGLE = 175;  // to clear over the sub wall // 5 for axon
+        ELBOW_PREINTAKE_ANGLE = 160;  // to clear over the sub wall // 5 for axon
         ELBOW_LOWOUTTAKE_ANGLE = 110; // 120 for axon
         ELBOW_HIGHOUTTAKE_ANGLE = 120; // 60 for axon
 
@@ -125,7 +125,7 @@ public class Sampler extends Arm {
 
     @Override
     public void update(Canvas fieldOverlay) {
-        ELBOW_PREINTAKE_ANGLE = TUNABLE_COEFFICIENT;
+//        ELBOW_PREINTAKE_ANGLE = TUNABLE_COEFFICIENT;
         beater.setPower(-servoPower);
         elbow.update();
         if (trident.calibrated) {
