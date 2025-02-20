@@ -202,15 +202,19 @@ public class SpeciMiner extends Arm {
     // prepare the arm and speciminer for grabbing from wall
     // no driving
     // returns true if it grabs an alliance specimen and lifts it off the wall
-    public boolean wallTake() {
+    public boolean wallTake(boolean auto) {
         switch (wallTakeIndex) {
             case 0:
                 wallTakePresets();
+                if (auto)
+                    robot.driveTrain.drive(.2,0,0); //drive forward
                 wallTakeIndex++;
 
             case 1: // assume chassis is driving forward under driver or auton control
-                if (grab())
+                if (grab()) {
+                    robot.driveTrain.drive(0,0,0);
                     wallTakeIndex++;
+                }
                 break;
             case 2: //raise the captured specimen off the wall
                 trident.setShoulderTarget(this, SHOULDER_WALLTAKE_POSITION + SHOULDER_WALLTAKE_OFFSET);
@@ -266,6 +270,7 @@ public class SpeciMiner extends Arm {
     public void setIntaking(){servoPower = 1; }
     public void setEjecting(){servoPower = -1; }
     public void setResting(){servoPower = 0; }
+
 
     public boolean grab() {  //grab target samples, reject opposing alliance samples
         setIntaking();
@@ -386,8 +391,8 @@ public class SpeciMiner extends Arm {
                 if (outtake()) articulation = Articulation.MANUAL;
                 break;
 
-            case WALLTAKE: // get specimens from the wall
-                if (wallTake()) articulation = Articulation.MANUAL;
+            case WALLTAKE: // get specimens from the wall under driver control
+                if (wallTake(false)) articulation = Articulation.MANUAL;
                 break;
 
             default:

@@ -293,7 +293,7 @@ public class AutoSpecimens implements TelemetryProvider {
     boolean driveAndWalltake(TelemetryPacket packet) {
         switch (driveAndWalltakeIndex) { //auton delay
             case 0:
-                resetStates(); // resets all state variables
+                //resetStates(); // resets all state variables
                 driveAndWalltakeIndex++;
                 break;
             case 1: // travel to walltake field position
@@ -308,7 +308,7 @@ public class AutoSpecimens implements TelemetryProvider {
                 }
                 break;
             case 2: // start testing intake - stops on color sensor detection - todo start near very end of drive
-                if (robot.trident.speciMiner.wallTake()) {
+                if (robot.trident.speciMiner.wallTake(true)) {
                     robot.driveTrain.drive(0, 0, 0); // stop chassis driving
                     driveAndWalltakeIndex = 0;
                     return true;
@@ -371,18 +371,19 @@ public class AutoSpecimens implements TelemetryProvider {
         switch (autonSweepIndex) {
             case 0: // set sampler for sweeping over
                 //if(robot.trident.sampler.sweepConfig(true))
+                robot.trident.sampler.sweepConfig(true);
                     autonSweepIndex++;
                 break;
             case 1: // drive to sweeping start position
                 if (robot.driveTrain.strafeToPose(sweepFrom.getPose(), packet)) {
-                    //if (robot.trident.sampler.sweepConfig(false)) // sampler floats just above floor
+                    if (robot.trident.sampler.sweepConfig(false)) // sampler floats just above floor
                         autonSweepIndex++;
                 }
                 break;
             case 2: // let's sweep
                 //if (robot.driveTrain.strafeToPose(ozone.getPose(), packet)) { //strafeToPose is slow
                 if (robot.driveTrain.turnUntilDegreesIMU(wrapAngle(ozone.heading),.5)){
-                    //robot.trident.sampler.sweepConfig(true); //set for sweepOver return
+                    robot.trident.sampler.sweepConfig(true); //set for sweepOver return
                     autonSweepIndex++;
                 }
                 break;
