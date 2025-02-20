@@ -264,7 +264,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
 
     public boolean turnThenStrafe(Pose2d pose2d, TelemetryPacket packet) {
         if (roadRunnerDrive) {
-            switch (strafeToPoseIndex) {
+            switch (turnThenStrafeIndex) {
                 case 0:
                     TrajectoryActionBuilder strafeActionBuilder = robot.driveTrain.actionBuilder(localizer.getPose())
                             .turnTo(pose2d.heading)

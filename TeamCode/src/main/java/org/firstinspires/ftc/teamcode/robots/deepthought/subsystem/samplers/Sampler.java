@@ -75,7 +75,7 @@ public class Sampler extends Arm {
 
         articulation = Articulation.MANUAL;
 
-        SLIDE_HIGHOUTTAKE_POSITION = 2240;
+        SLIDE_HIGHOUTTAKE_POSITION = 2140;
 
 
         //defaults specific to sampler
@@ -161,6 +161,7 @@ public class Sampler extends Arm {
         outtakeIndex = 0;
         tuckIndex = 0;
         calibrateIndex = 0;
+        samplerPrepIndex = 0;
     }
 
     public void setElbowAngle(double elbowAngle) {
@@ -262,7 +263,7 @@ public class Sampler extends Arm {
             case 3:
                 if (slideTargetPosition > SLIDE_INTAKE_MIN_POSITION) {
                     slideTargetPosition -= 400;
-                    trident.setShoulderTarget(this, (int) (trident.getShoulderTarget() - 400 * 0.234090909090909));
+                    trident.setShoulderTarget(this, (int) (trident.getShoulderTarget() - 400 * 0.44090909090909));
 
                 }
                 if (stopOnSample() || isPast(intakeTimer)) {
@@ -275,16 +276,29 @@ public class Sampler extends Arm {
         return false;
     }
 
+    int samplerPrepIndex = 0;
+
     public boolean samplerPrep() {
         // all we want to do here is set the sampler out horizontal to maximum horizontal extension
         // and just above sample or wall height
         // this should happen while the driver is approaching the target, usually in the sub
         // if there is a danger of contact with another robot, driver should trigger tuck
 
-        elbow.setTargetAngle(ELBOW_PREINTAKE_ANGLE);
-        trident.setShoulderTarget(this, SHOULDER_PREINTAKE_POSITION);
-        slideTargetPosition = SLIDE_PREINTAKE_POSITION;
-        return true;
+        switch (samplerPrepIndex) {
+            case 0:
+                trident.setShoulderTarget(this, SHOULDER_PREINTAKE_POSITION);
+                samplerPrepIndex++;
+                break;
+            case 1:
+                if (trident.getShoulderCurrentPosition() < 1000)
+                    elbow.setTargetAngle(ELBOW_PREINTAKE_ANGLE);
+                slideTargetPosition = SLIDE_PREINTAKE_POSITION;
+                samplerPrepIndex = 0;
+                return true;
+
+
+        }
+        return false;
     }
 
 
@@ -370,22 +384,23 @@ public class Sampler extends Arm {
 
     public long sweepTimer = 0;
     public static int sweepIndex = 0;
+
     public boolean sweepConfig(boolean flyOver) {
         switch (sweepIndex) {
             case 0:
                 elbow.setTargetAngle(SWEEP_ELBOW_ANGLE);
                 slideTargetPosition = SWEEP_SLIDE_POS;
                 if (flyOver)
-                    trident.setShoulderTarget(this,SWEEP_OVER_SHOULDER_POS);
+                    trident.setShoulderTarget(this, SWEEP_OVER_SHOULDER_POS);
                 else
-                    trident.setShoulderTarget(this,SWEEP_SHOULDER_POS);
+                    trident.setShoulderTarget(this, SWEEP_SHOULDER_POS);
                 servoPower = 0;
                 sweepIndex++;
                 break;
             case 1: // wait until shoulder and slide have reached position to return true
                 if (
-                        withinError(slideTargetPosition, slide.getCurrentPosition(),10)
-                        && withinError((flyOver ? SWEEP_OVER_SHOULDER_POS : SWEEP_SHOULDER_POS), trident.getShoulderCurrentPosition(), 10)
+                        withinError(slideTargetPosition, slide.getCurrentPosition(), 10)
+                                && withinError((flyOver ? SWEEP_OVER_SHOULDER_POS : SWEEP_SHOULDER_POS), trident.getShoulderCurrentPosition(), 10)
                 ) {
                     sweepIndex = 0;
                     return true;

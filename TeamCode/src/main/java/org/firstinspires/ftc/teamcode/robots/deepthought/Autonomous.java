@@ -76,6 +76,7 @@ public class Autonomous implements TelemetryProvider {
     public long gameTimer;
 
     public boolean execute(TelemetryPacket packet) {
+        MecanumDriveReign.PARAMS.maxWheelVel = 25;
         if (!alliance.isRed()) {
             allianceMultiplier = -1;
         }
@@ -201,7 +202,7 @@ public class Autonomous implements TelemetryProvider {
             case 2:
                 if (isPast(autonOuttakeTimer)) {
                     robot.aprilTagRelocalization();
-                    robot.trident.sampler.adjustSlide(250);
+                    robot.trident.sampler.adjustSlide(150);
                     robot.trident.sampler.servoPower = .3;
                     autonOuttakeTimer = futureTime(1);
                     autonOuttakeIndex++;
