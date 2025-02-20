@@ -202,8 +202,7 @@ public class Autonomous implements TelemetryProvider {
             case 2:
                 if (isPast(autonOuttakeTimer)) {
                     robot.aprilTagRelocalization();
-                    robot.trident.sampler.adjustSlide(150);
-                    robot.trident.sampler.servoPower = .3;
+                    robot.trident.sampler.incrementOuttake();
                     autonOuttakeTimer = futureTime(1);
                     autonOuttakeIndex++;
                 }

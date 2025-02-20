@@ -72,12 +72,12 @@ public class DriverControls {
             robot.relocalizeForward = false;
             robot.aprilTagRelocalization();
         }
-        if(gamepad1.dpad_down) {
+        if (gamepad1.dpad_down) {
             robot.relocalizeForward = true;
             robot.aprilTagRelocalization();
         }
 
-        if(stickyGamepad1.a) {
+        if (stickyGamepad1.a) {
             Autonomous.pingPongIndex = 0;
         }
     }
@@ -89,7 +89,8 @@ public class DriverControls {
             robot.trident.adjustShoulder(-shoulderSpeed);
         }
         if (gamepad1.left_bumper) {
-            robot.trident.adjustShoulder(shoulderSpeed);        }
+            robot.trident.adjustShoulder(shoulderSpeed);
+        }
 
 //
         if (gamepad1.left_trigger > .2) {
@@ -126,13 +127,14 @@ public class DriverControls {
         }
 //
         if (stickyGamepad1.b) {
-//            robot.trident.getActiveArm().currentSample = Arm.Sample.NO_SAMPLE;
-
             dampenDrive = true;
-
             if (robot.trident.getActiveArm() instanceof Sampler) {
-                robot.resetStates();
-                robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
+                if (robot.trident.sampler.articulation == Sampler.Articulation.OUTTAKE || robot.articulation == Robot.Articulation.SAMPLER_OUTTAKE)
+                    robot.trident.sampler.incrementOuttake();
+                else {
+                    robot.resetStates();
+                    robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
+                }
             } else {
                 if (robot.trident.speciMiner.articulation == SpeciMiner.Articulation.OUTTAKE || robot.articulation == Robot.Articulation.SPECIMINER_OUTTAKE) {
                     robot.trident.speciMiner.incrementOuttake();
@@ -196,6 +198,7 @@ public class DriverControls {
         }
 
     }
+
     public boolean joysticksInactive() {
         return gamepad1.left_stick_x < DEADZONE && gamepad1.left_stick_y < DEADZONE
                 && gamepad1.right_stick_x < DEADZONE && gamepad1.right_stick_y < DEADZONE
@@ -255,13 +258,14 @@ public class DriverControls {
         }
 //
         if (stickyGamepad1.b) {
-//            robot.trident.getActiveArm().currentSample = Arm.Sample.NO_SAMPLE;
-
             dampenDrive = true;
-
             if (robot.trident.getActiveArm() instanceof Sampler) {
-                robot.resetStates();
-                robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
+                if (robot.trident.sampler.articulation == Sampler.Articulation.OUTTAKE || robot.articulation == Robot.Articulation.SAMPLER_OUTTAKE)
+                    robot.trident.sampler.incrementOuttake();
+                else {
+                    robot.resetStates();
+                    robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
+                }
             } else {
                 if (robot.trident.speciMiner.articulation == SpeciMiner.Articulation.OUTTAKE || robot.articulation == Robot.Articulation.SPECIMINER_OUTTAKE) {
                     robot.trident.speciMiner.incrementOuttake();

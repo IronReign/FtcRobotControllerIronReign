@@ -335,6 +335,12 @@ public class Sampler extends Arm {
                 }
                 break;
             case 4:
+
+                break;
+            case 5:
+                slideTargetPosition += 150;
+                servoPower = .8;
+            case 6:
                 if (!sampleDetected()) {
                     outtakeIndex = 0;
                     return true;
@@ -342,6 +348,10 @@ public class Sampler extends Arm {
                 break;
         }
         return false;
+    }
+
+    public void incrementOuttake() {
+        outtakeIndex++;
     }
 
     public long tuckTimer = 0;
