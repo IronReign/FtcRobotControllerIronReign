@@ -61,12 +61,12 @@ public class SpeciMiner extends Arm {
     public double ELBOW_WALLTAKE_ANGLE = 65;
     public double ELBOW_HIGHBAR_ANGLE = 15;
 
-    public double ELBOW_FLOORTAKE_ANGLE = 160; // todo tune
+    public double ELBOW_FLOORTAKE_ANGLE = 140; // todo tune
 
     double ElbowBowHigh = ELBOW_WALLTAKE_ANGLE + 25;  // vertical
     double ElbowBowLow = ELBOW_FLOORTAKE_ANGLE; // out and down
 
-    int SlideBowOut = 1000;
+    int SlideBowOut = 1500;
 
 
     public SpeciMiner(HardwareMap hardwareMap, Robot robot, Trident trident) {

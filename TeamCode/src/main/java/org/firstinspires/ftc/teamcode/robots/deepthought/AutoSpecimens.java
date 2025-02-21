@@ -40,10 +40,9 @@ public class AutoSpecimens implements TelemetryProvider {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("autonState\t ", autonState);
         telemetryMap.put("autonIndex\t", autonIndex);
-        telemetryMap.put("shiftSampleIndex", autonShiftIndex);
-        telemetryMap.put("outtakeIndex\t", autonOuttakeIndex);
-        telemetryMap.put("outtake timer\t", isPast(autonOuttakeTimer));
-        telemetryMap.put("intakeIndex\t", autonShiftIndex);
+        telemetryMap.put("autonSweepIndex", autonSweepIndex);
+        telemetryMap.put("driveAndLatchIndex\t", driveAndLatchIndex);
+        telemetryMap.put("driveandWalltakeIndex\t", driveAndWalltakeIndex);
         return telemetryMap;
     }
 
@@ -372,22 +371,25 @@ public class AutoSpecimens implements TelemetryProvider {
             case 0: // set sampler for sweeping over
                 //if(robot.trident.sampler.sweepConfig(true))
                 robot.trident.sampler.sweepConfig(true);
-                    autonSweepIndex++;
+                autonSweepIndex++;
                 break;
             case 1: // drive to sweeping start position
                 if (robot.driveTrain.strafeToPose(sweepFrom.getPose(), packet)) {
-                    if (robot.trident.sampler.sweepConfig(false)) // sampler floats just above floor
-                        autonSweepIndex++;
+                    autonSweepIndex++;
                 }
                 break;
-            case 2: // let's sweep
+            case 2: // sweep setting
+                if (robot.trident.sampler.sweepConfig(false)) // sampler floats just above floor
+                    autonSweepIndex++;
+                break;
+            case 3: // let's sweep
                 //if (robot.driveTrain.strafeToPose(ozone.getPose(), packet)) { //strafeToPose is slow
                 if (robot.driveTrain.turnUntilDegreesIMU(wrapAngle(ozone.heading),.5)){
                     robot.trident.sampler.sweepConfig(true); //set for sweepOver return
                     autonSweepIndex++;
                 }
                 break;
-            case 3: // sweepOver back to beginning position
+            case 4: // sweepOver back to beginning position
                 if (recover) { // can skip recovery for last floor sample
                     //if (robot.driveTrain.strafeToPose(sweepFrom.getPose(), packet)) {
                     if (robot.driveTrain.turnUntilDegreesIMU(wrapAngle(sweepFrom.heading),.5)) {

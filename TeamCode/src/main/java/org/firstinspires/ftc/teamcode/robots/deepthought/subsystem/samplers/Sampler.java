@@ -67,7 +67,7 @@ public class Sampler extends Arm {
     double ElbowBowHigh = 90;  // vertical
     double ElbowBowLow = SWEEP_ELBOW_ANGLE; // out and down
 
-    int SlideBowOut = 1000;
+    int SlideBowOut = 1500;
 
 
     public int shoulderPositionMax = 850;
@@ -450,10 +450,9 @@ public class Sampler extends Arm {
                 sweepIndex++;
                 break;
             case 1: // wait until shoulder and slide have reached position to return true
-                if (
-                        withinError(slideTargetPosition, slide.getCurrentPosition(), 10)
-                                && withinError((flyOver ? SWEEP_OVER_SHOULDER_POS : SWEEP_SHOULDER_POS), trident.getShoulderCurrentPosition(), 10)
-                ) {
+                if (withinError(slideTargetPosition, slide.getCurrentPosition(), 10)
+                        && withinError(trident.getShoulderTarget(), trident.getShoulderCurrentPosition(), 10))
+                {
                     sweepIndex = 0;
                     return true;
                 }
@@ -480,6 +479,7 @@ public class Sampler extends Arm {
         telemetryMap.put("elbow angle target : real", elbow.getTargetAngle() + " : " + elbow.getCurrentAngle());
 
         telemetryMap.put("calibrate stage", calibrateIndex);
+        telemetryMap.put("sweep stage", sweepIndex);
 
         return telemetryMap;
     }

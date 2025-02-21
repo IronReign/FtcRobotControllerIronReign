@@ -330,12 +330,15 @@ public class IntoTheDeep_6832 extends OpMode {
             case AUTO_SPECIMEN:
                 handleTelemetry(autoSpecimens.getTelemetry(debugTelemetryEnabled), auton.getTelemetryName(), packet);
                 break;
+            case AUTO_SPECIMEN_SWEEP:
+                handleTelemetry(autoSpecimens.getTelemetry(debugTelemetryEnabled), auton.getTelemetryName(), packet);
+                break;
+
             case TEST:
                 break;
         }
         //handle this class' telemetry
         handleTelemetry(opModeTelemetryMap, gameState.getName(), packet);
-
 
         if (debugTelemetryEnabled) {
             //NOW HANDLING VISION TELEMETRY WITHIN ROBOT BC IT MAKES MORE SENSE TO JAI
