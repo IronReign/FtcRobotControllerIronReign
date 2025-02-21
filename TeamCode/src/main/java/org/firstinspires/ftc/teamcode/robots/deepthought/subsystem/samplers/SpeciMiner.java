@@ -198,7 +198,7 @@ public class SpeciMiner extends Arm {
     }
 
     long bowTimer = 0;
-    int bowIndex = 0;
+    public int bowIndex = 0;
 
     public boolean bow() {
         switch (bowIndex) {

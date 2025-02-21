@@ -379,7 +379,7 @@ public class Sampler extends Arm {
         return false;
     }
     long bowTimer = 0;
-    int bowIndex = 0;
+    public int bowIndex = 0;
 
     public boolean bow() {
         switch (bowIndex) {

@@ -171,6 +171,8 @@ public class Trident implements Subsystem {
                     shoulder.setVelocity(400);
                     shoulder.setTargetPosition(0);
                     shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    resetBowIndex();
+                    calibrated=true;
                     calibrateIndex++;
                 }
                 break;
@@ -207,6 +209,7 @@ public class Trident implements Subsystem {
 //                SpeciMiner.tuckIndex = 0;
                     speciMiner.articulate(SpeciMiner.Articulation.TUCK);
                 }
+                // todo Jai why is there no break here? and no reset of tuckIndex?
             case 2:
                 if (sampler.slide.getCurrentPosition() < 150 && speciMiner.slide.getCurrentPosition() < 150) {
                     return true;
@@ -225,6 +228,13 @@ public class Trident implements Subsystem {
     double bowTimer = 0;
     boolean specBowDone;
     boolean samplerBowDone;
+    void resetBowIndex(){
+        specBowDone = false;
+        samplerBowDone = false;
+        bowIndex = 0;
+        sampler.bowIndex = 0;
+        speciMiner.bowIndex = 0;
+    }
     public boolean bow(){
         switch(bowIndex) {
             case 0: // bow sampler

@@ -110,7 +110,7 @@ public class Autonomous implements TelemetryProvider {
             case 4:
                 //todo - need to find a way to manage failed intakes
                 if (autonSamplerIntake(field.ground2, packet)) {
-                    if (robot.trident.sampler.servoPower == 0)
+                    if (robot.trident.sampler.servoPower == 0) // proxy for got sample?
                         autonIndex++;
                     else {
                         autonIndex += 2;
