@@ -225,7 +225,7 @@ public class AutoSpecimens implements TelemetryProvider {
                 break;
 
             case 3:
-                robot.aprilTagRelocalization();
+                robot.aprilTagRelocalization(true);
                 if (isPast(autonOuttakeTimer)) {
                     robot.trident.sampler.servoPower = 0;
                     autonOuttakeIndex = 0;

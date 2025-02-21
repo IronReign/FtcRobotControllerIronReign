@@ -59,7 +59,6 @@ public class Robot implements Subsystem {
     public static boolean updatePositionCache = false;
     public static boolean visionOn = true;
 
-    public static boolean relocalizeForward = false;
     public boolean calibrating = false;
 
     public PositionCache positionCache;
@@ -76,10 +75,6 @@ public class Robot implements Subsystem {
 
     //vision variables
     public static boolean visionProviderFinalized = false;
-    //    public static int backVisionProviderIndex = 0;
-//    public static int frontVisionProviderIndex = 0;
-    public double aprilTagRelocalizationX = 0;
-    public double aprilTagRelocalizationY = 0;
     //REMOVE
     public Pose2d aprilTagPose = new Pose2d(0, 0, 0);
 
@@ -271,8 +266,7 @@ public class Robot implements Subsystem {
     public int speciMinerOuttakeIndex = 0;
 
     public boolean speciMinerOuttake() {
-        relocalizeForward = true;
-        aprilTagRelocalization();
+        aprilTagRelocalization(true);
         switch (speciMinerOuttakeIndex) {
             case 0:
                 trident.speciMiner.articulate(SpeciMiner.Articulation.OUTTAKE);
@@ -291,8 +285,8 @@ public class Robot implements Subsystem {
     public int walltakeIndex = 0;
 
     public boolean speciMinerWalltake() {
-        relocalizeForward = false;
-        aprilTagRelocalization();
+
+        aprilTagRelocalization(false);
         switch (walltakeIndex) {
             case 0:
                 trident.speciMiner.articulate(SpeciMiner.Articulation.WALLTAKE);
@@ -353,7 +347,6 @@ public class Robot implements Subsystem {
     public int outtakeIndex = 0;
 
     public boolean samplerOuttake() {
-        relocalizeForward = false;
 //        if (Sampler.outtakeIndex > 3) ;
 //        aprilTagRelocalization();
         switch (outtakeIndex) {
@@ -522,8 +515,8 @@ public class Robot implements Subsystem {
     }
 
     //to be called repeatedly until success
-    public void aprilTagRelocalization() {
-        if (relocalizeForward) {
+    public void aprilTagRelocalization(boolean forward) {
+        if (forward) {
             limelight.pipelineSwitch(5);
             panTargetPosition = PAN_FORWARD;
             LLResult llResult;

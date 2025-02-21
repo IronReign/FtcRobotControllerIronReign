@@ -69,12 +69,10 @@ public class DriverControls {
         }
 
         if (gamepad1.dpad_up) {
-            robot.relocalizeForward = false;
-            robot.aprilTagRelocalization();
+            robot.aprilTagRelocalization(false);
         }
         if (gamepad1.dpad_down) {
-            robot.relocalizeForward = true;
-            robot.aprilTagRelocalization();
+            robot.aprilTagRelocalization(true);
         }
 
         if (stickyGamepad1.a) {
@@ -276,8 +274,8 @@ public class DriverControls {
             }
         }
 
-        if (stickyGamepad1.guide) {
-            robot.aprilTagRelocalization();
+        if (gamepad1.guide) {
+            robot.aprilTagRelocalization(false);
         }
 
         double power;

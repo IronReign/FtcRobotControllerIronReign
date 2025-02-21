@@ -98,8 +98,9 @@ public class Autonomous implements TelemetryProvider {
                 if (autonSamplerOuttake(field.basket, packet)) {
                     robot.resetStates();
                     robot.articulate(Robot.Articulation.MANUAL);
-//                    return true;
                     autonIndex++;
+                    return true;
+
                 }
                 break;
             case 3:
@@ -306,7 +307,7 @@ public class Autonomous implements TelemetryProvider {
     public static int pingPongIndex = 0;
 
     public void pingPong(TelemetryPacket packet) {
-//        robot.articulate(Robot.Articulation.SAMPLER_PREP);
+
         switch (pingPongIndex) {
             case 0:
 //                if (robot.alignOnSample()) {
