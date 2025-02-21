@@ -174,7 +174,11 @@ public class Trident implements Subsystem {
                     calibrateIndex++;
                 }
                 break;
-            case 4:
+            case 4: // bow
+                if (bow())
+                    calibrateIndex++;
+                break;
+            case 5:
                 shoulderTargetPosition = SHOULDER_SIZING;
 
                 speciMiner.shoulderTargetPosition = shoulderTargetPosition;
@@ -215,6 +219,38 @@ public class Trident implements Subsystem {
         //return (sampler.articulation==Sampler.Articulation.MANUAL)? true : false;
         // kinda moot, shouldn't really be a tuck operation at this level
         // this is a relic of short term migration needs
+    }
+
+    int bowIndex = 0;
+    double bowTimer = 0;
+    boolean specBowDone;
+    boolean samplerBowDone;
+    public boolean bow(){
+        switch(bowIndex) {
+            case 0: // bow sampler
+                if (sampler.bow()) {
+                    bowIndex++;
+                    samplerBowDone = false;
+                }
+                break;
+            case 1: // bow speciMiner
+                if (speciMiner.bow()) {
+                    specBowDone = false;
+                    bowIndex++;
+                }
+                break;
+            case 2: // bow both
+                if (!specBowDone)
+                    specBowDone = speciMiner.bow();
+                if (!samplerBowDone)
+                    samplerBowDone = sampler.bow();
+                if (samplerBowDone && specBowDone) {
+                    bowIndex = 0;
+                    return true;
+                }
+                break;
+        }
+        return false;
     }
 
     public boolean sampleDetected() {

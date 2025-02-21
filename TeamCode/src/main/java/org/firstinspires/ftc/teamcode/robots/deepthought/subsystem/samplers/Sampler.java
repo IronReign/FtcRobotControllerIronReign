@@ -64,6 +64,12 @@ public class Sampler extends Arm {
 
     double ELBOW_TUCK_ANGLE = 30; //softly resting on CF tube - was 140 for axon
 
+    double ElbowBowHigh = 90;  // vertical
+    double ElbowBowLow = SWEEP_ELBOW_ANGLE; // out and down
+
+    int SlideBowOut = 1000;
+
+
     public int shoulderPositionMax = 850;
 
     public static int colorSensorGain = 12;
@@ -372,7 +378,43 @@ public class Sampler extends Arm {
         }
         return false;
     }
+    long bowTimer = 0;
+    int bowIndex = 0;
 
+    public boolean bow() {
+        switch (bowIndex) {
+            case 0:  //assume this is triggered from a tucked position
+                // extend the slide and raise the end effector elbow
+                bowTimer = futureTime(2);
+                elbow.setTargetAngle(ElbowBowHigh);
+                slideTargetPosition = SlideBowOut;
+                servoPower = 0;
+                bowIndex++;
+                break;
+            case 1: // bow the elbow low
+                if (isPast(bowTimer)) {
+                    servoPower = .8;
+                    elbow.setTargetAngle(ElbowBowLow);
+                    slideTargetPosition = SlideBowOut;
+                    bowTimer = futureTime(2);
+                    bowIndex++;
+                }
+                break;
+            case 2: // return
+                if (isPast(bowTimer)) {
+                    slideTargetPosition = 20;
+                    elbow.setTargetAngle(ELBOW_START_ANGLE);
+                    servoPower = 0;
+                    if (slide.getCurrentPosition() < 25) {
+                        bowIndex = 0;
+                        return true;
+                    }
+                }
+                break;
+        }
+        return false;
+
+    }
     @Override
     public String updateColorSensor() {
         colorSensor.setGain(colorSensorGain);

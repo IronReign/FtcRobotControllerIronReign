@@ -61,6 +61,14 @@ public class SpeciMiner extends Arm {
     public double ELBOW_WALLTAKE_ANGLE = 65;
     public double ELBOW_HIGHBAR_ANGLE = 15;
 
+    public double ELBOW_FLOORTAKE_ANGLE = 160; // todo tune
+
+    double ElbowBowHigh = ELBOW_WALLTAKE_ANGLE + 25;  // vertical
+    double ElbowBowLow = ELBOW_FLOORTAKE_ANGLE; // out and down
+
+    int SlideBowOut = 1000;
+
+
     public SpeciMiner(HardwareMap hardwareMap, Robot robot, Trident trident) {
         this.hardwareMap = hardwareMap;
         this.robot = robot;
@@ -184,6 +192,44 @@ public class SpeciMiner extends Arm {
                 if (slide.getCurrentPosition() < 150) {
                     return true;
                 }
+        }
+        return false;
+
+    }
+
+    long bowTimer = 0;
+    int bowIndex = 0;
+
+    public boolean bow() {
+        switch (bowIndex) {
+            case 0:  //assume this is triggered from a tucked position
+                // extend the slide and raise the end effector elbow
+                bowTimer = futureTime(2);
+                elbow.setTargetAngle(ElbowBowHigh);
+                slideTargetPosition = SlideBowOut;
+                servoPower = 0; //stop beaters
+                bowIndex++;
+                break;
+            case 1: // bow the elbow
+                if (isPast(bowTimer)) {
+                    servoPower = .8;
+                    elbow.setTargetAngle(ElbowBowLow);
+                    slideTargetPosition = SlideBowOut;
+                    bowTimer = futureTime(2);
+                    bowIndex++;
+                }
+                break;
+            case 2: // return
+                if (isPast(bowTimer)) {
+                    slideTargetPosition = 20;
+                    elbow.setTargetAngle(ELBOW_START_ANGLE);
+                    servoPower = 0;
+                    if (slide.getCurrentPosition() < 25) {
+                        bowIndex = 0;
+                        return true;
+                    }
+                }
+                break;
         }
         return false;
 
