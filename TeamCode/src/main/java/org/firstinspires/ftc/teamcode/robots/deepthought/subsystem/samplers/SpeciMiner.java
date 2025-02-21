@@ -36,7 +36,7 @@ public class SpeciMiner extends Arm {
 
 
     // Shoulder values to request from Trident
-    public int shoulderTargetPosition = 0;
+
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
     public static int SHOULDER_PREINTAKE_POSITION = 250;
@@ -53,12 +53,12 @@ public class SpeciMiner extends Arm {
     public static int colorSensorGain = 12;
     public int slideTargetPosition = 0;
     public static int SLIDE_WALLTAKE_POSITION = 1300;
-    public int SLIDE_HIGHBAR_POSITION = 1200; // 1200 vertical
+    public int SLIDE_HIGHBAR_POSITION = 1440; // 1200 vertical
     public int SAMPLER_SLIDE_HIBAR_POSITION = 720; // 720 to bump, 880 to clear - sampler needs to be just above the lowbar so it doesn't get in the way
 
     public int SLIDE_LATCH_OFFSET = 880; //500 for vertical version,  how much further to extend slide to latch
 
-    public double ELBOW_WALLTAKE_ANGLE = 65;
+    public double ELBOW_WALLTAKE_ANGLE = 68;
     public double ELBOW_HIGHBAR_ANGLE = 15;
 
     public double ELBOW_FLOORTAKE_ANGLE = 140; // todo tune
@@ -165,7 +165,8 @@ public class SpeciMiner extends Arm {
         slideTargetPosition = SLIDE_HIGHBAR_POSITION;
         return true;
     }
-    public boolean latch(){ // set speciminer to latching extent - assumes position should already achieved
+
+    public boolean latch() { // set speciminer to latching extent - assumes position should already achieved
         slideTargetPosition = SLIDE_HIGHBAR_POSITION + SLIDE_LATCH_OFFSET;
         return withinError(slide.getCurrentPosition(), SLIDE_HIGHBAR_POSITION + SLIDE_LATCH_OFFSET, 10);
     }
@@ -234,7 +235,8 @@ public class SpeciMiner extends Arm {
         return false;
 
     }
-    public void wallTakePresets(){
+
+    public void wallTakePresets() {
         trident.sampler.tuck();
         trident.setShoulderTarget(this, SHOULDER_WALLTAKE_POSITION);
         slideTargetPosition = SLIDE_WALLTAKE_POSITION;
@@ -253,12 +255,12 @@ public class SpeciMiner extends Arm {
             case 0:
                 wallTakePresets();
                 if (auto)
-                    robot.driveTrain.drive(.2,0,0); //drive forward
+                    robot.driveTrain.drive(.15, 0, 0); //drive forward
                 wallTakeIndex++;
 
             case 1: // assume chassis is driving forward under driver or auton control
                 if (grab()) {
-                    robot.driveTrain.drive(0,0,0);
+                    robot.driveTrain.drive(0, 0, 0);
                     wallTakeIndex++;
                 }
                 break;
@@ -313,30 +315,37 @@ public class SpeciMiner extends Arm {
         return targetSamples.contains(currentSample);
     }
 
-    public void setIntaking(){servoPower = 1; }
-    public void setEjecting(){servoPower = -1; }
-    public void setResting(){servoPower = 0; }
+    public void setIntaking() {
+        servoPower = 1;
+    }
+
+    public void setEjecting() {
+        servoPower = -1;
+    }
+
+    public void setResting() {
+        servoPower = 0;
+    }
 
 
     public boolean grab() {  //grab target samples, reject opposing alliance samples
         setIntaking();
         updateColorSensor();
         if (currentSample == Sample.NO_SAMPLE) return false;
-        else if (targetSamples.contains(currentSample))
-        {
+        else if (targetSamples.contains(currentSample)) {
             setResting();
             return true;
-        }
-        else eject();
+        } else eject();
         return false; //todo this really needs to return an enum, because false just means
         // we don't have the sample we want, but we could have just ejected an opposing sample
         // which means we are likely to pick it up again - probably need to signal the elbow
         // to raise or slide to adjust temporarily to a different position
     }
-    public boolean eject(){
+
+    public boolean eject() {
         setEjecting();
         updateColorSensor();
-        if (currentSample == Sample.NO_SAMPLE){
+        if (currentSample == Sample.NO_SAMPLE) {
             setResting();
             return true;
         }

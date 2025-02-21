@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem;
 
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
@@ -13,6 +14,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Arm;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.SpeciMiner;
@@ -176,14 +178,16 @@ public class Trident implements Subsystem {
                     calibrateIndex++;
                 }
                 break;
-            case 4: // bow
-                if (bow())
+            case 4:
+                if(gameState != IntoTheDeep_6832.GameState.DEMO){
+                    calibrateIndex++;
+                }
+                // bow
+                else if (bow())
                     calibrateIndex++;
                 break;
             case 5:
                 shoulderTargetPosition = SHOULDER_SIZING;
-
-                speciMiner.shoulderTargetPosition = shoulderTargetPosition;
                 calibrateIndex = 0;
                 calibrated = true;
                 return true;
@@ -199,7 +203,7 @@ public class Trident implements Subsystem {
             case 0:
                 shoulderTargetPosition = SHOULDER_HORIZONTAL;
 
-                speciMiner.shoulderTargetPosition = SHOULDER_HORIZONTAL;
+
                 tuckIndex++;
                 break;
             case 1:
