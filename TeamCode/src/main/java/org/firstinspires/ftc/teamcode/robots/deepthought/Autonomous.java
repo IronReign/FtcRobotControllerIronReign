@@ -143,8 +143,10 @@ public class Autonomous implements TelemetryProvider {
                     robot.resetStates();
                     robot.trident.sampler.articulate(Sampler.Articulation.MANUAL);
 //                    MecanumDriveReign.PARAMS.maxAngVel = Math.PI/4;
-                    autonIndex++;
+//                    autonIndex++;
+                    autonIndex = 10;
                 }
+
                 break;
 
             case 8:
@@ -168,9 +170,16 @@ public class Autonomous implements TelemetryProvider {
                 break;
 
             case 10:
+                autonTimer = futureTime(1);
                 robot.articulate(Robot.Articulation.SAMPLER_PREP);
-                robot.positionCache.update(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
-                autonIndex = 0;
+
+            case 11:
+                if (isPast(autonTimer)) {
+                    robot.articulate(Robot.Articulation.TRAVEL);
+                    autonIndex = 0;
+                    robot.positionCache.update(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
+                    return true;
+                }
                 return true;
         }
         return false;
@@ -201,9 +210,11 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 2:
                 if (isPast(autonOuttakeTimer)) {
-                    robot.aprilTagRelocalization();
+//                    robot.aprilTagRelocalization();
                     robot.trident.sampler.incrementOuttake();
-                    autonOuttakeTimer = futureTime(1);
+                    robot.trident.sampler.setSlideTargetPosition(robot.trident.sampler.getSlideTargetPosition() + 150);
+                    robot.trident.sampler.servoPower = .5;
+                    autonOuttakeTimer = futureTime(.8);
                     autonOuttakeIndex++;
                 }
                 break;
@@ -295,12 +306,12 @@ public class Autonomous implements TelemetryProvider {
     public static int pingPongIndex = 0;
 
     public void pingPong(TelemetryPacket packet) {
-        robot.articulate(Robot.Articulation.SAMPLER_PREP);
+//        robot.articulate(Robot.Articulation.SAMPLER_PREP);
         switch (pingPongIndex) {
             case 0:
-                if (robot.alignOnSample()) {
-                    pingPongIndex++;
-                }
+//                if (robot.alignOnSample()) {
+//                    pingPongIndex++;
+//                }
                 break;
             case 1:
 

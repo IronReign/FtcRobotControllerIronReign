@@ -100,8 +100,8 @@ public class Robot implements Subsystem {
     public static double PAN_MAX_ANGLE = 220;
     public static double PAN_ADJUST_ANGLE = 5;
 
-    public static double PAN_FORWARD = 2020;
-    public static double PAN_BASKET_APRILTAG = 1120;
+    public static double PAN_FORWARD = 1970;
+    public static double PAN_BASKET_APRILTAG = 1220;
     public static double PAN_SPECIMINER_APRILTAG = 1020;
 
     public static double panTargetPosition = PAN_BASKET_APRILTAG;
@@ -354,7 +354,8 @@ public class Robot implements Subsystem {
 
     public boolean samplerOuttake() {
         relocalizeForward = false;
-        aprilTagRelocalization();
+//        if (Sampler.outtakeIndex > 3) ;
+//        aprilTagRelocalization();
         switch (outtakeIndex) {
             case 0:
                 Trident.enforceSlideLimits = false; // todo this might be at wrong level or ignored
@@ -469,49 +470,48 @@ public class Robot implements Subsystem {
 
 
     public int alignOnSampleState = 0;
+
     public boolean alignOnSample() {
 
         //        switch (alignOnSampleState) {
 //            case 0:
-                limelight.pipelineSwitch(3);
-                LLResult llResult;
-                panTargetPosition = PAN_FORWARD;
+        limelight.pipelineSwitch(3);
+        LLResult llResult;
+        panTargetPosition = PAN_FORWARD;
 
 //                break;
 //            case 1:
-                if ((llResult = limelight.getLatestResult()) != null) {
-                    if (llResult.getTx() != 0.0) {
-                        double targetTx = SAMPLE_ALIGN_TARGET_TX;
-                        sampleAlignmentPID.setPID(sampleAlignmentCoefficients);
-                        sampleAlignmentPID.setInputRange(-25, 25);
-                        sampleAlignmentPID.setInput(llResult.getTx());
-                        sampleAlignmentPID.setSetpoint(targetTx);
-                        sampleAlignmentPID.setOutputRange(-.6, .6 );
-                        sampleAlignmentPID.setTolerance(SAMPLE_ALIGN_TOLERANCE);
-                        double correction = sampleAlignmentPID.performPID();
-                        PIDCorrection = correction;
-                        PIDError = sampleAlignmentPID.getError();
-                        sampleAlignmentPID.enable();
-                        if (sampleAlignmentPID.onTarget()) {
-                            onTarget = true;
-                            sampleAlignmentPID.clearCache();
-                            driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
-                            return true;
-
-                        } else {
-                            onTarget = false;
-                            driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
-                            return false;
-                        }
-                    }
-                    else {
-                        driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
-                    }
-                }
-                else {
+        if ((llResult = limelight.getLatestResult()) != null) {
+            if (llResult.getTx() != 0.0) {
+                double targetTx = SAMPLE_ALIGN_TARGET_TX;
+                sampleAlignmentPID.setPID(sampleAlignmentCoefficients);
+                sampleAlignmentPID.setInputRange(-25, 25);
+                sampleAlignmentPID.setInput(llResult.getTx());
+                sampleAlignmentPID.setSetpoint(targetTx);
+                sampleAlignmentPID.setOutputRange(-.6, .6);
+                sampleAlignmentPID.setTolerance(SAMPLE_ALIGN_TOLERANCE);
+                double correction = sampleAlignmentPID.performPID();
+                PIDCorrection = correction;
+                PIDError = sampleAlignmentPID.getError();
+                sampleAlignmentPID.enable();
+                if (sampleAlignmentPID.onTarget()) {
+                    onTarget = true;
+                    sampleAlignmentPID.clearCache();
                     driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                    return true;
 
+                } else {
+                    onTarget = false;
+                    driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), correction));
+                    return false;
                 }
+            } else {
+                driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+            }
+        } else {
+            driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+
+        }
 //                break;
 //        }
 //        driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
@@ -523,18 +523,17 @@ public class Robot implements Subsystem {
 
     //to be called repeatedly until success
     public void aprilTagRelocalization() {
-if(relocalizeForward) {
-    limelight.pipelineSwitch(5);
-    panTargetPosition = PAN_FORWARD;
-    LLResult llResult;
-    if ((llResult = limelight.getLatestResult()) != null) {
-        //limelight returns everything in meters
-        aprilTagPose = new Pose2d(new Vector2d(llResult.getBotpose().getPosition().x * 39.37, llResult.getBotpose().getPosition().y * 39.37), llResult.getBotpose().getOrientation().getYaw(AngleUnit.RADIANS));
-        if (llResult.getBotpose().getPosition().x != 0)
-            driveTrain.setPose(aprilTagPose);
-    }
-}
- else {
+        if (relocalizeForward) {
+            limelight.pipelineSwitch(5);
+            panTargetPosition = PAN_FORWARD;
+            LLResult llResult;
+            if ((llResult = limelight.getLatestResult()) != null) {
+                //limelight returns everything in meters
+                aprilTagPose = new Pose2d(new Vector2d(llResult.getBotpose().getPosition().x * 39.37, llResult.getBotpose().getPosition().y * 39.37), llResult.getBotpose().getOrientation().getYaw(AngleUnit.RADIANS));
+                if (llResult.getBotpose().getPosition().x != 0)
+                    driveTrain.setPose(aprilTagPose);
+            }
+        } else {
             limelight.pipelineSwitch(2);
             panTargetPosition = PAN_BASKET_APRILTAG;
         }

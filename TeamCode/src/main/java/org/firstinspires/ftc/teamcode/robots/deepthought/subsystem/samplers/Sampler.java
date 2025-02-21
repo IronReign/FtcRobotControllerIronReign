@@ -338,7 +338,7 @@ public class Sampler extends Arm {
 
                 break;
             case 5:
-                slideTargetPosition += 150;
+                slideTargetPosition += 220;
                 servoPower = .8;
             case 6:
                 if (!sampleDetected()) {

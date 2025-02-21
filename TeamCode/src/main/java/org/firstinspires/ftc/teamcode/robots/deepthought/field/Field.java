@@ -139,7 +139,7 @@ public class Field {
         zones = Zone.getNamedZones();
         isRed = alliance.isRed();
         allianceMultiplier = isRed ? 1 : -1;
-        basket = new POI(-2.3 * allianceMultiplier, -2.4 * allianceMultiplier, isRed ? 53 : 53 + 180, "BASKET");
+        basket = new POI(-2.35 * allianceMultiplier, -2.4 * allianceMultiplier, isRed ? 53 : 53 + 180, "BASKET");
         basket2 = new POI(-2.375 * allianceMultiplier, -2.375 * allianceMultiplier, 55, "BASKET");
         basketPrep = new POI(-2.4 * allianceMultiplier, -2 * allianceMultiplier, isRed ? 50 : 50 + 180, "BASKET");
         ground1 = new POI(-2.4 * allianceMultiplier, -1.8 * allianceMultiplier, isRed ? 85 : 85  + 180, "GROUND1");
