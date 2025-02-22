@@ -17,6 +17,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.teamcode.robots.deepthought.field.POI;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
+import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
 
@@ -110,8 +111,7 @@ public class AutoSpecimens implements TelemetryProvider {
                 }
                 break;
             case 5: // eject - might not be needed?
-                if (robot.trident.speciMiner.eject())
-                    if (robot.trident.tuck()) autonIndex++;
+                if (robot.trident.speciMiner.eject()) if (robot.trident.tuck()) autonIndex++;
                 break;
 
             case 6: // back up a bit? in case strafe conflicts with sub
@@ -157,7 +157,7 @@ public class AutoSpecimens implements TelemetryProvider {
             case 1: // drive to hibar with gripped specimen and latch
                 autonState = AutonState.DRIVE_TO_HIGHBAR; // drive to sub
                 if (isPast(autonTimer)) {
-                    if (driveAndLatch(packet)) {
+                    if (driveAndLatch(packet, 0)) {
                         //return true;
                         autonIndex = 7;
                     }
@@ -181,34 +181,47 @@ public class AutoSpecimens implements TelemetryProvider {
                 break;
             case 10:
                 if (driveAndWalltake(packet)) {
-//                    return true;
+                    resetStates();
                     robot.resetStates();
-//                    driveAndLatchIndex = 0;
                     robot.trident.speciMiner.setIntaking();
                     autonIndex++;
                 }
                 break;
             case 11:
-                if (driveAndLatch(packet)) {
-//                    driveAndWalltakeIndex = 0;
-
+                if (driveAndLatch(packet, 1)) {
                     robot.resetStates();
                     autonIndex++;
                 }
+                break;
             case 12:
                 if (driveAndWalltake(packet)) {
-//                    return true;
+                    resetStates();
+                    robot.resetStates();
                     robot.trident.speciMiner.setIntaking();
                     autonIndex++;
                 }
                 break;
             case 13:
-                if (driveAndLatch(packet)) {
-                    autonIndex = 0; //so we can test autons back to back
-
+                if (driveAndLatch(packet, 2)) {
                     robot.resetStates();
-                    return true;
+                    autonIndex++;
                 }
+                break;
+            case 14:
+                driveAndWalltake(packet);
+                if (driveAndWalltakeIndex > 1) {
+                    resetStates();
+                    robot.resetStates();
+                    robot.articulate(Robot.Articulation.TRAVEL);
+                    autonIndex++;
+                }
+
+
+                break;
+            case 15:
+                resetStates();
+                return true;
+
 
         }
         return false;
@@ -263,48 +276,54 @@ public class AutoSpecimens implements TelemetryProvider {
     int driveAndLatchIndex = 0;
     double driveAndLatchTimer = 0;
 
-    boolean driveAndLatch(TelemetryPacket packet) {
+    boolean driveAndLatch(TelemetryPacket packet, int num) {
         switch (driveAndLatchIndex) { //auton delay
             case 0:
                 resetStates(); // resets all state variables
                 driveAndLatchIndex++;
                 break;
             case 1: // travel to hibar field position
+
                 autonState = AutonState.DRIVE_TO_HIGHBAR; // drive to sub
                 robot.trident.speciMiner.prelatchHighSlide(); //slide is slow, start extending
                 if (field.hibar.distTo(robot.driveTrain.localizer.getPose()) < 1) { //trigger shoulder on reaching within 1 field tile of highbar position
+                    robot.trident.sampler.setElbowAngle(Sampler.SWEEP_ELBOW_ANGLE);
                     robot.trident.speciMiner.prelatchHigh();  // preset arm positions}
                 }
                 if (robot.driveTrain.strafeToPose(field.hibar.getPose(), packet)) {
-                    driveAndLatchTimer = futureTime(5);
+//                    driveAndLatchTimer = futureTime(5);
+                    robot.trident.sampler.setElbowAngle(Sampler.SWEEP_ELBOW_ANGLE);
                     driveAndLatchIndex++;
                     robot.trident.speciMiner.setResting();
                 }
                 break;
             case 2: // set pre latch arm position todo start near very end of drive
-                robot.trident.sampler.setSlideTargetPosition(robot.trident.speciMiner.SAMPLER_SLIDE_HIBAR_POSITION);
+                robot.trident.sampler.setElbowAngle(Sampler.SWEEP_ELBOW_ANGLE);
                 robot.trident.speciMiner.prelatchHigh();  // preset arm positions
-                    driveAndLatchIndex++;
+                driveAndLatchIndex++;
 
                 break;
 
+
             case 3: // reserve in case we need to micro adjust field position before latching
-                driveAndLatchTimer = futureTime(1);
+//                driveAndLatchTimer = futureTime(1);
                 driveAndLatchIndex++;
                 break;
             case 4: // latch specimen
-                if (robot.trident.speciMiner.latch() && isPast(driveAndLatchTimer)) {
+                if (robot.trident.speciMiner.latch()) {
                     driveAndLatchIndex++;
                 }
                 break;
             case 5: // eject - might not be needed?
 //                if (robot.trident.speciMiner.eject())
-                    driveAndLatchIndex++;
+                driveAndLatchIndex++;
                 //if (robot.trident.tuck())
                 break;
 
             case 6: // back up a bit? in case strafe conflicts with sub
+                robot.trident.speciMiner.setEjecting();
                 resetStates();
+                driveAndLatchIndex = 0;
                 return true;
         }
         return false;
@@ -318,7 +337,7 @@ public class AutoSpecimens implements TelemetryProvider {
     boolean driveAndWalltake(TelemetryPacket packet) {
         switch (driveAndWalltakeIndex) { //auton delay
             case 0:
-                resetStates(); // resets all state variables
+//                resetStates(); // resets all state variables
                 driveAndWalltakeIndex++;
                 break;
             case 1: // travel to walltake field position
@@ -341,7 +360,7 @@ public class AutoSpecimens implements TelemetryProvider {
 //                    return true;
 //                }
                 robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.15, 0), 0));
-                if (isPast(driveAndWalltakeTimer)) {
+                if (isPast(driveAndWalltakeTimer) && Math.abs(robot.driveTrain.localizer.getPose().position.y) > 2.75) {
                     driveAndWalltakeTimer = futureTime(1);
                     robot.trident.setShoulderTarget(robot.trident.speciMiner, robot.trident.getShoulderTarget() + 200);
                     robot.driveTrain.drive(0, 0, 0); // stop chassis driving
@@ -349,7 +368,7 @@ public class AutoSpecimens implements TelemetryProvider {
                 }
                 break;
             case 3:
-                if(isPast(driveAndWalltakeTimer)) {
+                if (isPast(driveAndWalltakeTimer)) {
                     driveAndWalltakeIndex = 0;
                     return true;
                 }

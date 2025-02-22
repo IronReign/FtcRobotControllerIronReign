@@ -51,7 +51,7 @@ public class Field {
     public POI sweep3 = new POI(1.55, -1.45, 25, "SWEEP3"); // grazing back wall
     public POI sweep3Oz = new POI(1.55, -1.45, -60, "SWEEP3Ozone");
     public POI ozone = new POI(2.4, -1.75, -90, "OZone");
-    public POI oZoneWalltake = new POI(1.75, -1.8, -88, "OZoneWalltake");
+    public POI oZoneWalltake = new POI(2, -1.8, -88, "OZoneWalltake");
     public POI hibarPrep = new POI(0, -1.5, -90, "HiBarPrep");
     public POI hibar = new POI(0, -1.45, -90, "HiBar");
     public POI zig = new POI(1.5, -1.7, -90, "Zig"); // zig from speciminer scoring
@@ -139,7 +139,7 @@ public class Field {
         zones = Zone.getNamedZones();
         isRed = alliance.isRed();
         allianceMultiplier = isRed ? 1 : -1;
-        basket = new POI(-2.35 * allianceMultiplier, -2.4 * allianceMultiplier, isRed ? 53 : 53 + 180, "BASKET");
+        basket = new POI(-2.4 * allianceMultiplier, -2.45 * allianceMultiplier, isRed ? 53 : 53 + 180, "BASKET");
         basket2 = new POI(-2.375 * allianceMultiplier, -2.375 * allianceMultiplier, 55, "BASKET");
         basketPrep = new POI(-2.4 * allianceMultiplier, -2 * allianceMultiplier, isRed ? 50 : 50 + 180, "BASKET");
         ground1 = new POI(-2.4 * allianceMultiplier, -1.8 * allianceMultiplier, isRed ? 85 : 85  + 180, "GROUND1");

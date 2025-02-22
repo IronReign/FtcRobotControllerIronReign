@@ -24,7 +24,7 @@ import java.util.Map;
 
 @Config(value = "AA_ITD_Auto_Basket")
 public class Autonomous implements TelemetryProvider {
-    public static double AUTON_OUTTAKE_WAIT_TIMER = 2;
+    public static double AUTON_OUTTAKE_WAIT_TIMER = 1;
     public static int numCycles = 4;
     private Robot robot;
     private HardwareMap hardwareMap;
@@ -99,7 +99,7 @@ public class Autonomous implements TelemetryProvider {
                     robot.resetStates();
                     robot.articulate(Robot.Articulation.MANUAL);
                     autonIndex++;
-                    return true;
+//                    return true;
 
                 }
                 break;

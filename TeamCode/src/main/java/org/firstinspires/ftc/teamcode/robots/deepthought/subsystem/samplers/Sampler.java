@@ -49,7 +49,7 @@ public class Sampler extends Arm {
     public static int SHOULDER_PREINTAKE_POSITION = -150;
     public static int SHOULDER_INTAKE_POSITION = -375;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
-    public static int SHOULDER_HIGHOUTTAKE_POSITION = 1385;
+    public static int SHOULDER_HIGHOUTTAKE_POSITION = 1485;
     public static int SLIDE_ADJUST_SPEED = 80;
 
     // sweep config uses sampler to slide samples to ozone

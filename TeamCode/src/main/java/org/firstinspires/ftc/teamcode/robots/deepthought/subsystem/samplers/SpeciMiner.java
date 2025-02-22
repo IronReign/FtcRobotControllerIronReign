@@ -54,9 +54,9 @@ public class SpeciMiner extends Arm {
     public int slideTargetPosition = 0;
     public static int SLIDE_WALLTAKE_POSITION = 1300;
     public int SLIDE_HIGHBAR_POSITION = 1440; // 1200 vertical
-    public int SAMPLER_SLIDE_HIBAR_POSITION = 720; // 720 to bump, 880 to clear - sampler needs to be just above the lowbar so it doesn't get in the way
+    public int SAMPLER_SLIDE_HIBAR_POSITION = 200; // 720 to bump, 880 to clear - sampler needs to be just above the lowbar so it doesn't get in the way
 
-    public int SLIDE_LATCH_OFFSET = 880; //500 for vertical version,  how much further to extend slide to latch
+    public int SLIDE_LATCH_OFFSET = 680; //500 for vertical version,  how much further to extend slide to latch
 
     public double ELBOW_WALLTAKE_ANGLE = 68;
     public double ELBOW_HIGHBAR_ANGLE = 15;
@@ -157,7 +157,7 @@ public class SpeciMiner extends Arm {
         elbow.setTargetAngle(ELBOW_HIGHBAR_ANGLE);
         trident.setShoulderTarget(this, SHOULDER_HIGHBAR_POSITION, false);
         slideTargetPosition = SLIDE_HIGHBAR_POSITION;
-        trident.sampler.slideTargetPosition = SAMPLER_SLIDE_HIBAR_POSITION; // move sample out of the way todo - doesn't work
+        robot.trident.sampler.setElbowAngle(Sampler.SWEEP_ELBOW_ANGLE);
         return true;
     }
 
