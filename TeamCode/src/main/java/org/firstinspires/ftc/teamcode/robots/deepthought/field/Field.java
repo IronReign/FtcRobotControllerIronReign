@@ -45,13 +45,13 @@ public class Field {
     public POI ground6 = new POI(2.6, -.5, 90, "GROUND6"); // grazing back wall
 
     public POI sweep1 = new POI(1, -2, 45.5, "SWEEP1");
-    public POI sweep1Oz = new POI(1, -2, -30, "SWEEP1Ozone");
+    public POI sweep1Oz = new POI(1, -2, -20, "SWEEP1Ozone");
     public POI sweep2 = new POI(1.3, -1.7, 35, "SWEEP2");
     public POI sweep2Oz = new POI(1.3, -1.7, -55, "SWEEP2Ozone");
     public POI sweep3 = new POI(1.55, -1.45, 25, "SWEEP3"); // grazing back wall
     public POI sweep3Oz = new POI(1.55, -1.45, -60, "SWEEP3Ozone");
     public POI ozone = new POI(2.4, -1.75, -90, "OZone");
-    public POI oZoneWalltake = new POI(2, -1.8, -88, "OZoneWalltake");
+    public POI oZoneWalltake = new POI(2, -2, -88, "OZoneWalltake");
     public POI hibarPrep = new POI(0, -1.5, -90, "HiBarPrep");
     public POI hibar = new POI(0, -1.45, -90, "HiBar");
     public POI zig = new POI(1.5, -1.7, -90, "Zig"); // zig from speciminer scoring

@@ -134,7 +134,7 @@ public class Autonomous implements TelemetryProvider {
                     if (robot.trident.sampler.servoPower == 0)
                         autonIndex++;
                     else {
-                        autonIndex += 2;
+                        autonIndex =10;
                     }
 //                    return true;
                 }
@@ -274,7 +274,7 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 3:
-                autonIntakeTimer = futureTime(3);
+                autonIntakeTimer = futureTime(2);
 //                if (ground.name.equals("GROUND3")) {
 //                    autonIntakeIndex++;
 //                } else {

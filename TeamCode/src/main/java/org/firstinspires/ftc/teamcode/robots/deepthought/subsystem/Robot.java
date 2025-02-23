@@ -286,7 +286,7 @@ public class Robot implements Subsystem {
 
     public boolean speciMinerWalltake() {
 
-        aprilTagRelocalization(false);
+//        aprilTagRelocalization(false);
         switch (walltakeIndex) {
             case 0:
                 trident.speciMiner.articulate(SpeciMiner.Articulation.WALLTAKE);

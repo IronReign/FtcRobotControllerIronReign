@@ -164,13 +164,13 @@ public class AutoSpecimens implements TelemetryProvider {
                 }
                 break;
             case 7: // start sweeping the ground samples
-                if (autonSweepSample(field.sweep1, field.sweep1Oz, true, packet)) {
+                if (autonSweepSample(field.sweep1, field.sweep1Oz, false, packet)) {
 //                    robot.aprilTagRelocalization(false);
-                    autonIndex++;
+                    autonIndex+=3;
                 }
                 break;
             case 8:
-                if (autonSweepSample(field.sweep2, field.sweep2Oz, true, packet)) {
+                if (autonSweepSample(field.sweep2, field.sweep2Oz, false, packet)) {
                     autonIndex++;
                 }
                 break;
@@ -205,11 +205,12 @@ public class AutoSpecimens implements TelemetryProvider {
                 if (driveAndLatch(packet, 2)) {
                     robot.resetStates();
                     autonIndex++;
+                    autonTimer = futureTime(2);
                 }
                 break;
             case 14:
                 driveAndWalltake(packet);
-                if (driveAndWalltakeIndex > 1) {
+                if (driveAndWalltakeIndex > 1 || isPast(autonTimer)) {
                     resetStates();
                     robot.resetStates();
                     robot.articulate(Robot.Articulation.TRAVEL);
@@ -348,7 +349,7 @@ public class AutoSpecimens implements TelemetryProvider {
                     robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.15, 0), 0));
                     robot.trident.speciMiner.resetStates();
                     driveAndWalltakeIndex++;
-                    driveAndWalltakeTimer = futureTime(3);
+                    driveAndWalltakeTimer = futureTime(2.5);
                 }
 //                }
                 break;
@@ -360,10 +361,10 @@ public class AutoSpecimens implements TelemetryProvider {
 //                    return true;
 //                }
                 robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(.15, 0), 0));
-                if (isPast(driveAndWalltakeTimer) && Math.abs(robot.driveTrain.localizer.getPose().position.y) > 2.75) {
-                    driveAndWalltakeTimer = futureTime(1);
+                if (Math.abs(robot.driveTrain.localizer.getPose().position.y) / FIELD_INCHES_PER_GRID > 2.3  || isPast(driveAndWalltakeTimer)) {
+                    driveAndWalltakeTimer = futureTime(.2);
                     robot.trident.setShoulderTarget(robot.trident.speciMiner, robot.trident.getShoulderTarget() + 200);
-                    robot.driveTrain.drive(0, 0, 0); // stop chassis driving
+                    robot.driveTrain.drive(0, 0, 0); // stop chassis drivings
                     driveAndWalltakeIndex++;
                 }
                 break;
@@ -428,7 +429,7 @@ public class AutoSpecimens implements TelemetryProvider {
                 autonSweepIndex++;
                 break;
             case 1: // drive to sweeping start position
-                if (robot.driveTrain.strafeToPose(sweepFrom.getPose(), packet)) {
+                if (robot.driveTrain.strafeAndTurn(sweepFrom.getPose(), packet)) {
                     autonSweepIndex++;
                 }
                 break;
@@ -438,7 +439,7 @@ public class AutoSpecimens implements TelemetryProvider {
                 break;
             case 3: // let's sweep
                 //if (robot.driveTrain.strafeToPose(ozone.getPose(), packet)) { //strafeToPose is slow
-                if (robot.driveTrain.turnUntilDegreesIMU(wrapAngle(ozone.heading), .5)) {
+                if (robot.driveTrain.turnUntilDegreesIMU(wrapAngle(ozone.heading), .5 )) {
                     robot.trident.sampler.sweepConfig(true); //set for sweepOver return
                     autonSweepIndex++;
                 }
@@ -446,7 +447,7 @@ public class AutoSpecimens implements TelemetryProvider {
             case 4: // sweepOver back to beginning position
                 if (recover) { // can skip recovery for last floor sample
                     //if (robot.driveTrain.strafeToPose(sweepFrom.getPose(), packet)) {
-                    if (robot.driveTrain.turnUntilDegreesIMU(wrapAngle(sweepFrom.heading), .5)) {
+                    if (robot.driveTrain.turnUntilDegreesIMU(wrapAngle(sweepFrom.heading), .6)) {
                         resetStates(); //be careful with this
                         return true;
                     }

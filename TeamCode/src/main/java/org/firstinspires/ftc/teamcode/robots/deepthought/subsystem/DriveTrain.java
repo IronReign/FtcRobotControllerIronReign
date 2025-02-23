@@ -46,7 +46,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     private double targetHeading, targetVelocity = 0;
     public static PIDController headingPID;
     public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0.03, 0.04, 0);
-    public static double HEADING_PID_TOLERANCE = 3.6; //this is a percentage of the input range .063 of 2PI is 1 degree
+    public static double HEADING_PID_TOLERANCE = 3.5; //this is a percentage of the input range .063 of 2PI is 1 degree
     private double PIDCorrection, PIDError;
     public static int turnToTest = 0;
     public static double turnToSpeed = .8; //max angular speed for turn
@@ -230,6 +230,28 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     @Override
     public String getTelemetryName() {
         return "DRIVETRAIN";
+    }
+
+    int strafeAndTurnIndex = 0;
+    SequentialAction strafeAndTurnAction;
+    public boolean strafeAndTurn(Pose2d pose2d, TelemetryPacket packet) {
+        switch (strafeAndTurnIndex) {
+            case 0:
+                TrajectoryActionBuilder strafeAndTurnActionBuilder = robot.driveTrain.actionBuilder(localizer.getPose())
+                        .strafeToLinearHeading(pose2d.position, pose2d.heading);
+                strafeAndTurnAction = new SequentialAction(strafeAndTurnActionBuilder.build());
+                strafeAndTurnIndex++;
+                break;
+            case 1:
+                robot.driveTrain.trajectoryIsActive = true;
+                if (!strafeAndTurnAction.run(packet)) {
+                    strafeAndTurnIndex = 0;
+                    robot.driveTrain.trajectoryIsActive = false;
+                    return true;
+                }
+                break;
+        }
+        return false;
     }
 
     int strafeToPoseIndex = 0;
