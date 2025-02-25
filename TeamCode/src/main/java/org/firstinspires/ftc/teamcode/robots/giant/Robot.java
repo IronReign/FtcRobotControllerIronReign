@@ -394,7 +394,7 @@ public class Robot implements Subsystem {
     int outExtendTicks=0;
     int upExtendTicks=0;
 
-    int clawTicks=1150;
+    int clawTicks=1460;
     boolean clawOpen=false;
 
     boolean hook=true;
@@ -425,16 +425,17 @@ public class Robot implements Subsystem {
 
 
 //shoulder grab intake ticks 870
-    public static double pval=0.037;        //.025
+    //oscilate value .129       .0645
+    public static double pval=0.027;    //.027   //shake&oscillate .037    //.025
     public static PIDController headingPID;
-    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(pval, 0.018, 0);      //.012  //i: .015
-    public static double HEADING_PID_TOLERANCE = .18;           //.17 //this is a percentage of the input range .063 of 2PI is 1 degree
+    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(pval, 0.12, 0.00);      //.012  //i: .015
+    public static double HEADING_PID_TOLERANCE = .21;           //.21 //this is a percentage of the input range .063 of 2PI is 1 degree
     private double PIDCorrection, PIDError, targetHeading, targetDistance;
     boolean imuTurnDone = false;
-
+//penis
     public static PIDController distancePID;
-    public static PIDCoefficients DISTANCE_PID_PWR = new PIDCoefficients(0.028, 0.01, 0);       //p=.023
-    public static double DISTANCE_PID_TOLERANCE = 2.7; //this is a percentage of the input range .063 of 2PI is 1 degree
+    public static PIDCoefficients DISTANCE_PID_PWR = new PIDCoefficients(0.023, 0.01, 0);       //p=.023
+    public static double DISTANCE_PID_TOLERANCE = 2; //this is a percentage of the input range .063 of 2PI is 1 degree
     private double distPIDCorrection, distPIDError;
     boolean distDriveDone;
 
@@ -523,11 +524,11 @@ public class Robot implements Subsystem {
         }
 
         //TEST THIS THING
-        if(turning){
-            if(turnUntilDegreesIMU(whereTurn(),1)){
-                turning=false;
-            }
-        }
+//        if(turning){
+//            if(turnUntilDegreesIMU(whereTurn(),1)){
+//                turning=false;
+//            }
+//        }
         //^^^TEST THIS THING
 
 
@@ -683,10 +684,12 @@ public class Robot implements Subsystem {
 
                     if(currentSample.equals(Robot.CurrentSample.NEUTRAL)){
                         //hook=false;
+                        outExtend.setPower(.7);
                         yellow();
 
                     }else{
                         //hook=true;
+                        outExtend.setPower(.7);
                         goodBlock();       //place holder till figure out the fuck we doing
                     }
             }
@@ -703,14 +706,14 @@ public class Robot implements Subsystem {
 
     public void yellow(){
         tiltTicks=1240;//1440
-        outExtendTicks=120;
+        outExtendTicks=50;
         upExtendTicks=30;
 
     }
 
     public void goodBlock(){
         tiltTicks=780;//1440
-        outExtendTicks=120;     //-25
+        outExtendTicks=50;     //-25
 //        shoulderTicks=1250;
     }
 
@@ -730,7 +733,7 @@ public class Robot implements Subsystem {
 //        setUpExtend(350);
 //        setShoulder(950);     //930
         //setTilt(970);
-        outExtendTicks=1900;        //2750;
+        outExtendTicks=1050;        //2750;
     }
 
     public void scooch(){
@@ -739,7 +742,7 @@ public class Robot implements Subsystem {
 
     public void dunk(){
         upExtendTicks=3150;
-        shoulderTicks=990;
+        shoulderTicks=950;      //
     }
 
     public void pullBack(){
@@ -754,7 +757,7 @@ public class Robot implements Subsystem {
     }
 
     public void downHook(){
-        upExtendTicks=1275;
+        upExtendTicks=1275;     //1275
     }
 
     public void wallGrab(){
@@ -783,12 +786,16 @@ public class Robot implements Subsystem {
     public void setSuck(boolean x){sucking=x;}
     public void spit(boolean x){eject=x;}
     public void setSlurp(boolean x){slurp=x;}
-    public double getSuck(){
-        return suck.getPower();
-    }
+//    public double getSuck(){
+//        return suck.getPower();
+//    }
 
     public void eject(double x){
         suck.setPower(x);
+    }
+
+    public boolean getSuck(){
+        return sucking;
     }
 
 
@@ -1029,8 +1036,8 @@ public class Robot implements Subsystem {
     public int getUpMotor(){return upExtend1.getCurrentPosition();}
 
     //CLAW THINGS
-    public void grabBlock(){clawTicks=1150;}
-    public void dropBlock(){clawTicks=1700;}
+    public void grabBlock(){clawTicks=1460;}
+    public void dropBlock(){clawTicks=2050;}
     public void setClaw(int x){clawTicks+=x;}
     public void setClawP(){clawOpen=!clawOpen;}
     public void open(){clawOpen=true;}
