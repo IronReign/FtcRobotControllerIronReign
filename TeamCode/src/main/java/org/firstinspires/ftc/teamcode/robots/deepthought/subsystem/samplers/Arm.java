@@ -41,7 +41,7 @@ public abstract class Arm implements Subsystem {
     int slideMinPosition = 0;
     //todo - determine this
     int slideMaxPosition = Integer.MAX_VALUE;
-qzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+
     //SLIDE VARIABLES - todo, values should be moved into implementations
     public static int slidePositionMax = 3300;
     public static int slidePositionMin = 0;
