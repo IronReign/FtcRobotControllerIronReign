@@ -1,3 +1,8 @@
+//java {
+//    toolchain {
+//        languageVersion = JavaLanguageVersion.of(17)
+//    }
+//}
 import java.text.SimpleDateFormat
 
 //
@@ -19,7 +24,8 @@ android {
         buildConfig = true
     }
 
-    compileSdkVersion 30
+    compileSdkVersion 35
+
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
