@@ -18,6 +18,7 @@ public class SwerveModule {
     private double targetAngle;       // in degrees, as a wrapped value (0-360)
     private double yawError;          // current yaw error (in degrees)
     private double thresholdAngle;    // if error is greater than this, do not enable drive
+    private double desiredAnglePrivy;
     private boolean invertedDrive;    // whether the drive motor should be inverted
 
     /**
@@ -59,21 +60,23 @@ public class SwerveModule {
      * @param speed        Desired speed (value from 0 to 1)
      */
     public void setDesiredState(double desiredAngle, double speed) {
+        // Used for desiredAngle telemetry
+        desiredAnglePrivy = desiredAngle;
         double currentAngle = getCurrentAngle();
         // Compute the minimal angle difference (–180 to 180)
         double angleDiff = utilMethods.angleDifference(desiredAngle, currentAngle);
 
-        // If rotating more than 90° is required, invert drive to minimize rotation.
-        if (Math.abs(angleDiff) > 90) {
-            desiredAngle = Utils.wrapAngle(desiredAngle + 180);
+         //If rotating more than 90° is required, invert drive to minimize rotation.
+        if (Math.abs(angleDiff) >= 90) {
             invertedDrive = true;
+            targetAngle = Utils.wrapAngle(desiredAngle - 180);
         } else {
             invertedDrive = false;
+            targetAngle = Utils.wrapAngle(desiredAngle);
         }
-        targetAngle = Utils.wrapAngle(desiredAngle);
 
-        // Optionally, only allow the drive motor to run if the yaw error is within threshold.
-        if (Math.abs(angleDiff) < thresholdAngle) {
+        // Optionally, only allow the drive motor to run if the yaw error is within threshold or about opposite of the current angle.
+        if (Math.abs(angleDiff) < thresholdAngle || Math.abs(angleDiff) > 180 - thresholdAngle && Math.abs(angleDiff) < 180 + thresholdAngle) {
             driveMotor.setPower(invertedDrive ? -speed : speed);
         } else {
             driveMotor.setPower(0);
@@ -112,5 +115,9 @@ public class SwerveModule {
      */
     public double getDriveAmps() {
         return driveMotor.getCurrent(CurrentUnit.AMPS);
+    }
+
+    public double getDesiredAngle() {
+        return desiredAnglePrivy;
     }
 }

@@ -21,7 +21,10 @@ public class DualSwerveOp extends OpMode {
     public void loop() {
         // Process the left joystick (x and y) to compute desired velocity.
         // hold left bumper to allow drive motor, otherwise only steering will update
-        if (gamepad1.left_bumper)
+        double deflection = Math.hypot(gamepad1.left_stick_x, gamepad1.left_stick_y);
+//        to toggle drive and direction separately
+//        if (gamepad1.left_bumper)
+        if (deflection > 0.2)
             robot.processDriverInput(gamepad1.left_stick_x, -gamepad1.left_stick_y, true);
         else
             robot.processDriverInput(gamepad1.left_stick_x, -gamepad1.left_stick_y, false);
@@ -39,11 +42,13 @@ public class DualSwerveOp extends OpMode {
         telemetry.addData("Yaw Error", robot.swerveModuleOne.getYawError());
         telemetry.addData("Drive Speed", robot.swerveModuleOne.getDrivePowerActual());
         telemetry.addData("Drive Amps", robot.swerveModuleOne.getDriveAmps());
+        telemetry.addData("Desired Angle", robot.swerveModuleOne.getDesiredAngle());
 
         telemetry.addData("Module Target Angle", robot.swerveModuleTwo.getTargetAngle());
         telemetry.addData("Module Current Angle", robot.swerveModuleTwo.getCurrentAngle());
         telemetry.addData("Yaw Error", robot.swerveModuleTwo.getYawError());
         telemetry.addData("Drive Speed", robot.swerveModuleTwo.getDrivePowerActual());
         telemetry.addData("Drive Amps", robot.swerveModuleTwo.getDriveAmps());
+        telemetry.addData("Desired Angle", robot.swerveModuleTwo.getDesiredAngle());
     }
 }
