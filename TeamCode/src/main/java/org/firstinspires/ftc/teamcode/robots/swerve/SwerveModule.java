@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.swerve;
 
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
@@ -14,6 +15,7 @@ public class SwerveModule {
     private DcMotorEx yawEncoder;
     private PIDController yawPID;
     private double ticksPerDegree;
+    public boolean swerveAligned;
 
     private double targetAngle;       // in degrees, as a wrapped value (0-360)
     private double yawError;          // current yaw error (in degrees)
@@ -77,8 +79,9 @@ public class SwerveModule {
 
         // Optionally, only allow the drive motor to run if the yaw error is within threshold or about opposite of the current angle.
         if (Math.abs(angleDiff) < thresholdAngle || Math.abs(angleDiff) > 180 - thresholdAngle && Math.abs(angleDiff) < 180 + thresholdAngle) {
-            driveMotor.setPower(invertedDrive ? -speed : speed);
+            swerveAligned = true;
         } else {
+            swerveAligned = false;
             driveMotor.setPower(0);
         }
 
@@ -110,6 +113,11 @@ public class SwerveModule {
     /**
      * Returns the current yaw angle of the module, in degrees (wrapped between 0 and 360).
      */
+
+    public void aligned(double speed){
+        driveMotor.setPower(invertedDrive ? -speed : speed);
+    }
+
     public double getCurrentAngle() {
         return Utils.wrapAngle(yawEncoder.getCurrentPosition() / ticksPerDegree);
     }
@@ -143,5 +151,10 @@ public class SwerveModule {
 
     public double getDesiredAngle() {
         return desiredAnglePrivy;
+    }
+
+    public void resetEncoders() {
+        yawEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        yawEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 }

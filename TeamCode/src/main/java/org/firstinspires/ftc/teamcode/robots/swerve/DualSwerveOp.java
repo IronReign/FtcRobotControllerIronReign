@@ -25,6 +25,13 @@ public class DualSwerveOp extends OpMode {
         double rightDeflection = Math.hypot(gamepad1.right_stick_x, gamepad1.right_stick_y);
 //        to toggle drive and direction separately
 //        if (gamepad1.left_bumper)
+        if(stickyGamepad1.a){
+            DualSwerve.enabled = !DualSwerve.enabled;
+        }
+        if(stickyGamepad1.b)
+        {
+            robot.resetEncoders();
+        }
         if (leftDeflection > 0.2)
             robot.processDriverInputDrive(gamepad1.left_stick_x, -gamepad1.left_stick_y, true);
         else
@@ -42,7 +49,6 @@ public class DualSwerveOp extends OpMode {
 
     public void updateTelemetry() {
         // Telemetry now shows chassis heading and swerve module status.
-        telemetry.addData("Chassis Heading", robot.chassisHeading);
         telemetry.addData("Module Target Angle", robot.swerveModuleOne.getTargetAngle());
         telemetry.addData("Module Current Angle", robot.swerveModuleOne.getCurrentAngle());
         telemetry.addData("Yaw Error", robot.swerveModuleOne.getYawError());
@@ -56,5 +62,10 @@ public class DualSwerveOp extends OpMode {
         telemetry.addData("Drive Speed", robot.swerveModuleTwo.getDrivePowerActual());
         telemetry.addData("Drive Amps", robot.swerveModuleTwo.getDriveAmps());
         telemetry.addData("Desired Angle", robot.swerveModuleTwo.getDesiredAngle());
+
+        telemetry.addData("actual chassis angle", robot.chassisHeading);
+        telemetry.addData("target chassis angle", DualSwerve.desiredChassisAngle);
+        telemetry.addData("pid correction", DualSwerve.PIDCorrection);
+        telemetry.addData("pid error", DualSwerve.PIDError);
     }
 }
