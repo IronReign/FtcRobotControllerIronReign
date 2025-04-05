@@ -14,6 +14,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils;
+import org.firstinspires.ftc.teamcode.util.utilMethods;
+
 import java.util.Map;
 @Config(value = "swerve")
 public class DualSwerve implements Subsystem {
@@ -83,22 +85,22 @@ public class DualSwerve implements Subsystem {
      * - The speed is set from the overall deflection.
      * The chassis IMU heading is added so that the command is field oriented.
      *
-     * @param joystickX left stick X (lateral)
-     * @param joystickY left stick Y (forward/backward)
+     * @param leftJoystickX left stick X (lateral)
+     * @param leftJoystickY left stick Y (forward/backward)
      */
-    public void processDriverInput(double joystickX, double joystickY, boolean drive) {
-        double deflection = Math.hypot(joystickX, joystickY);
+    public void processDriverInputDrive(double leftJoystickX, double leftJoystickY, boolean drive) {
+        double leftDeflection = Math.hypot(leftJoystickX, leftJoystickY);
         double desiredAngleOne;
         double speedOne;
         double desiredAngleTwo;
         double speedTwo;
 
-        if (deflection > 0.2) {  // Only update desired angle if joystick deflection is significant.
+        if (leftDeflection > 0.2) {  // Only update desired angle if joystick deflection is significant.
             // Compute the desired angle from joystick input and add chassisHeading for field orientation.
-            desiredAngleOne = Utils.wrapAngle(Math.toDegrees(Math.atan2(joystickX, joystickY)) + chassisHeading);
-            speedOne = drive ? deflection: 0;
-            desiredAngleTwo = Utils.wrapAngle(Math.toDegrees(Math.atan2(joystickX, joystickY)) + chassisHeading);
-            speedTwo = drive ? deflection: 0;
+            desiredAngleOne = Utils.wrapAngle(Math.toDegrees(Math.atan2(leftJoystickX, leftJoystickY)) + chassisHeading);
+            speedOne = drive ? leftDeflection: 0;
+            desiredAngleTwo = Utils.wrapAngle(Math.toDegrees(Math.atan2(leftJoystickX, leftJoystickY)) + chassisHeading);
+            speedTwo = drive ? leftDeflection: 0;
         } else {
             // No new input: hold the previous target angle.
             desiredAngleOne = swerveModuleOne.getTargetAngle();
@@ -107,10 +109,36 @@ public class DualSwerve implements Subsystem {
             speedTwo = 0;
         }
 
-        swerveModuleOne.setDesiredState(desiredAngleOne, speedOne);
-        swerveModuleTwo.setDesiredState(desiredAngleTwo, speedTwo);
+        swerveModuleOne.setDesiredState(desiredAngleOne, speedOne, false, false);
+        swerveModuleTwo.setDesiredState(desiredAngleTwo, speedTwo, false, false);
     }
 
+    public void processDriverInputRotation( double rightJoyStickX, double rightJoyStickY, boolean power){
+        double rightDeflection = Math.hypot(rightJoyStickX, rightJoyStickY);
+        double desiredChassisAngle;
+        double angleDiff;
+        double speed;
+
+        if(rightDeflection > 0.2){
+            desiredChassisAngle = Utils.wrapAngle(Math.toDegrees(Math.atan2(rightJoyStickX, rightJoyStickY)));
+            angleDiff = utilMethods.angleDifference(desiredChassisAngle, chassisHeading);
+            speed = power ? rightDeflection : 0;
+
+            if(desiredChassisAngle > 0 && desiredChassisAngle <= 179){
+                swerveModuleOne.setDesiredState(0, speed, true, false);
+                swerveModuleTwo.setDesiredState(0, speed, true, true);
+
+            }
+            else if( desiredChassisAngle >= 180 && desiredChassisAngle <= 360){
+                swerveModuleOne.setDesiredState(0, speed, true, true);
+                swerveModuleTwo.setDesiredState(0, speed, true, false);
+            }
+            else{
+                swerveModuleOne.setDesiredState(0, speed, false, false);
+                swerveModuleTwo.setDesiredState(0, speed, false, false);
+            }
+        }
+    }
     @Override
     public void update(Canvas fieldOverlay) {
         // Update chassis heading from the IMU.

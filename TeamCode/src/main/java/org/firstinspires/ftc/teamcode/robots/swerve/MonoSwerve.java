@@ -86,7 +86,7 @@ public class MonoSwerve implements Subsystem {
             speed = 0;
         }
 
-        swerveModule.setDesiredState(desiredAngle, speed);
+        swerveModule.setDesiredState(desiredAngle, speed, false, false);
     }
     @Override
     public void update(Canvas fieldOverlay) {

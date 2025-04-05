@@ -59,7 +59,7 @@ public class SwerveModule {
      * @param desiredAngle Desired chassis–relative angle (in degrees)
      * @param speed        Desired speed (value from 0 to 1)
      */
-    public void setDesiredState(double desiredAngle, double speed) {
+    public void setDesiredState(double desiredAngle, double speed, boolean turn, boolean forward) {
         // Used for desiredAngle telemetry
         desiredAnglePrivy = desiredAngle;
         double currentAngle = getCurrentAngle();
@@ -80,6 +80,30 @@ public class SwerveModule {
             driveMotor.setPower(invertedDrive ? -speed : speed);
         } else {
             driveMotor.setPower(0);
+        }
+
+        if(turn){
+            targetAngle = desiredAngle;
+            if(forward) {
+                //invertedDrive = false;
+                targetAngle = desiredAngle;
+                driveMotor.setPower(speed);
+            }
+            if(!forward) {
+                //invertedDrive = true;
+                targetAngle = desiredAngle;
+                driveMotor.setPower(-speed);
+            }
+            //driveMotor.setPower(invertedDrive ? -speed : speed);
+
+//            if(!invertedDrive){
+//                targetAngle = desiredAngle;
+//                driveMotor.setPower(-speed);
+//            }
+//            else{
+//                targetAngle = desiredAngle;
+//                driveMotor.setPower(speed);
+//            }
         }
     }
 
