@@ -81,7 +81,7 @@ public class Sampler extends Arm {
 
         articulation = Articulation.MANUAL;
 
-        SLIDE_HIGHOUTTAKE_POSITION = 2000;
+        SLIDE_HIGHOUTTAKE_POSITION = 2320;
 
 
         //defaults specific to sampler

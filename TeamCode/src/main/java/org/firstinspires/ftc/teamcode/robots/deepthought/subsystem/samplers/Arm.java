@@ -48,7 +48,11 @@ qzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
     public int SLIDE_INTAKE_MIN_POSITION = 200;
     public int SLIDE_PREINTAKE_POSITION = 1200;
     public int SLIDE_LOWOUTTAKE_POSITION = 320;
+<<<<<<< Updated upstream
     public int SLIDE_HIGHOUTTAKE_POSITION = 1850;
+=======
+    public int SLIDE_HIGHOUTTAKE_POSITION = 2320;
+>>>>>>> Stashed changes
     public static int slideSpeed = 80;
     public static double SLIDE_SPEED = 8000;
 
