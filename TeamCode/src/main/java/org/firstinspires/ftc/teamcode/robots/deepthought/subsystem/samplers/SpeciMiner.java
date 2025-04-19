@@ -5,6 +5,8 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
 
+import android.text.AndroidCharacter;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -34,16 +36,16 @@ public class SpeciMiner extends Arm {
 
 
     // Shoulder values to request from Trident
-    public int shoulderTargetPosition = 0;
+
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
     public static int SHOULDER_PREINTAKE_POSITION = 250;
     public static int SHOULDER_PREOUTTAKE_POSITION = 810;
-    public static int SHOULDER_WALLTAKE_POSITION = -465;
+    public static int SHOULDER_WALLTAKE_POSITION = -390;
 
     public static int SHOULDER_WALLTAKE_OFFSET = 100; // how much to raise the shoulder to lift off the wall
     public static int SHOULDER_LOWOUTTAKE_POSITION = 0;
-    public static int SHOULDER_HIGHBAR_POSITION = 1710;
+    public static int SHOULDER_HIGHBAR_POSITION = 1710; //vertical latch 1710
     public int shoulderPositionMax = 850;
 
 
@@ -51,13 +53,21 @@ public class SpeciMiner extends Arm {
     public static int colorSensorGain = 12;
     public int slideTargetPosition = 0;
     public static int SLIDE_WALLTAKE_POSITION = 1300;
-    public int SLIDE_HIGHBAR_POSITION = 1540; //1220
-    int SAMPLER_SLIDE_HIBAR_POSITION = 720;
+    public int SLIDE_HIGHBAR_POSITION = 1440; // 1200 vertical
+    public int SAMPLER_SLIDE_HIBAR_POSITION = 200; // 720 to bump, 880 to clear - sampler needs to be just above the lowbar so it doesn't get in the way
 
-    public int SLIDE_LATCH_OFFSET = 500; //not tuned - how much further to extend slide to latch
+    public int SLIDE_LATCH_OFFSET = 680; //500 for vertical version,  how much further to extend slide to latch
 
-    public double ELBOW_WALLTAKE_ANGLE = 65;
+    public double ELBOW_WALLTAKE_ANGLE = 83;
     public double ELBOW_HIGHBAR_ANGLE = 15;
+
+    public double ELBOW_FLOORTAKE_ANGLE = 140; // todo tune
+
+    double ElbowBowHigh = ELBOW_WALLTAKE_ANGLE + 25;  // vertical
+    double ElbowBowLow = ELBOW_FLOORTAKE_ANGLE; // out and down
+
+    int SlideBowOut = 1500;
+
 
     public SpeciMiner(HardwareMap hardwareMap, Robot robot, Trident trident) {
         this.hardwareMap = hardwareMap;
@@ -145,13 +155,18 @@ public class SpeciMiner extends Arm {
 
     public boolean prelatchHigh() { // set angle and extension for high bar, exits immediately
         elbow.setTargetAngle(ELBOW_HIGHBAR_ANGLE);
-        trident.setShoulderTarget(this, SHOULDER_HIGHBAR_POSITION);
+        trident.setShoulderTarget(this, SHOULDER_HIGHBAR_POSITION, false);
         slideTargetPosition = SLIDE_HIGHBAR_POSITION;
-        trident.sampler.slideTargetPosition = SAMPLER_SLIDE_HIBAR_POSITION; // move sample out of the way todo - doesn't work
+        robot.trident.sampler.setElbowAngle(Sampler.SWEEP_ELBOW_ANGLE);
         return true;
     }
 
-    public boolean latch(){ // set speciminer to latching extent - assumes should already achieved
+    public boolean prelatchHighSlide() { // set just the slide to pre-latch position
+        slideTargetPosition = SLIDE_HIGHBAR_POSITION;
+        return true;
+    }
+
+    public boolean latch() { // set speciminer to latching extent - assumes position should already achieved
         slideTargetPosition = SLIDE_HIGHBAR_POSITION + SLIDE_LATCH_OFFSET;
         return withinError(slide.getCurrentPosition(), SLIDE_HIGHBAR_POSITION + SLIDE_LATCH_OFFSET, 10);
     }
@@ -182,7 +197,46 @@ public class SpeciMiner extends Arm {
         return false;
 
     }
-    public void wallTakePresets(){
+
+    long bowTimer = 0;
+    public int bowIndex = 0;
+
+    public boolean bow() {
+        switch (bowIndex) {
+            case 0:  //assume this is triggered from a tucked position
+                // extend the slide and raise the end effector elbow
+                bowTimer = futureTime(2);
+                elbow.setTargetAngle(ElbowBowHigh);
+                slideTargetPosition = SlideBowOut;
+                servoPower = 0; //stop beaters
+                bowIndex++;
+                break;
+            case 1: // bow the elbow
+                if (isPast(bowTimer)) {
+                    servoPower = .8;
+                    elbow.setTargetAngle(ElbowBowLow);
+                    slideTargetPosition = SlideBowOut;
+                    bowTimer = futureTime(2);
+                    bowIndex++;
+                }
+                break;
+            case 2: // return
+                if (isPast(bowTimer)) {
+                    slideTargetPosition = 20;
+                    elbow.setTargetAngle(ELBOW_START_ANGLE);
+                    servoPower = 0;
+                    if (slide.getCurrentPosition() < 25) {
+                        bowIndex = 0;
+                        return true;
+                    }
+                }
+                break;
+        }
+        return false;
+
+    }
+
+    public void wallTakePresets() {
         trident.sampler.tuck();
         trident.setShoulderTarget(this, SHOULDER_WALLTAKE_POSITION);
         slideTargetPosition = SLIDE_WALLTAKE_POSITION;
@@ -196,15 +250,19 @@ public class SpeciMiner extends Arm {
     // prepare the arm and speciminer for grabbing from wall
     // no driving
     // returns true if it grabs an alliance specimen and lifts it off the wall
-    public boolean wallTake() {
+    public boolean wallTake(boolean auto) {
         switch (wallTakeIndex) {
             case 0:
                 wallTakePresets();
+                if (auto)
+                    robot.driveTrain.drive(.15, 0, 0); //drive forward
                 wallTakeIndex++;
 
             case 1: // assume chassis is driving forward under driver or auton control
-                if (grab())
+                if (grab()) {
+                    robot.driveTrain.drive(0, 0, 0);
                     wallTakeIndex++;
+                }
                 break;
             case 2: //raise the captured specimen off the wall
                 trident.setShoulderTarget(this, SHOULDER_WALLTAKE_POSITION + SHOULDER_WALLTAKE_OFFSET);
@@ -257,29 +315,37 @@ public class SpeciMiner extends Arm {
         return targetSamples.contains(currentSample);
     }
 
-    public void setIntaking(){servoPower = 1; }
-    public void setEjecting(){servoPower = -1; }
-    public void setResting(){servoPower = 0; }
+    public void setIntaking() {
+        servoPower = 1;
+    }
+
+    public void setEjecting() {
+        servoPower = -1;
+    }
+
+    public void setResting() {
+        servoPower = 0;
+    }
+
 
     public boolean grab() {  //grab target samples, reject opposing alliance samples
         setIntaking();
         updateColorSensor();
         if (currentSample == Sample.NO_SAMPLE) return false;
-        else if (targetSamples.contains(currentSample))
-        {
+        else if (targetSamples.contains(currentSample)) {
             setResting();
             return true;
-        }
-        else eject();
+        } else eject();
         return false; //todo this really needs to return an enum, because false just means
         // we don't have the sample we want, but we could have just ejected an opposing sample
         // which means we are likely to pick it up again - probably need to signal the elbow
         // to raise or slide to adjust temporarily to a different position
     }
-    public boolean eject(){
+
+    public boolean eject() {
         setEjecting();
         updateColorSensor();
-        if (currentSample == Sample.NO_SAMPLE){
+        if (currentSample == Sample.NO_SAMPLE) {
             setResting();
             return true;
         }
@@ -380,8 +446,8 @@ public class SpeciMiner extends Arm {
                 if (outtake()) articulation = Articulation.MANUAL;
                 break;
 
-            case WALLTAKE: // get specimens from the wall
-                if (wallTake()) articulation = Articulation.MANUAL;
+            case WALLTAKE: // get specimens from the wall under driver control
+                if (wallTake(false)) articulation = Articulation.MANUAL;
                 break;
 
             default:

@@ -26,33 +26,49 @@ import java.util.Map;
 
 @Config(value = "00_ITD_SAMPLER")
 public class Sampler extends Arm {
-    public static double TUNABLE_COEFFICIENT = .1;
+    public static double TUNABLE_COEFFICIENT = 100;
     CRServo beater = null;
     //public DcMotorEx slide = null;
 
     //ELBOW JOINT VARIABLES
     public static boolean preferHighOuttake = true;
 
-    public int slideTargetPosition = 0;
+    public int getSlideTargetPosition() {
+        return slideTargetPosition;
+    }
+
+    public void setSlideTargetPosition(int slideTargetPosition) {
+        this.slideTargetPosition = slideTargetPosition;
+    }
+
+    int slideTargetPosition = 0;
 
     // Shoulder values to request from Trident
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
-    public static int SHOULDER_PREINTAKE_POSITION = 0;
+    public static int SHOULDER_PREINTAKE_POSITION = -150;
     public static int SHOULDER_INTAKE_POSITION = -375;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
-    public static int SHOULDER_HIGHOUTTAKE_POSITION = 1385;
+    public static int SHOULDER_HIGHOUTTAKE_POSITION = 1485;
     public static int SLIDE_ADJUST_SPEED = 80;
 
     // sweep config uses sampler to slide samples to ozone
     // this sweep config is right at 42"
-    public static int SWEEP_SLIDE_POS = 1840;
-    public static int SWEEP_SHOULDER_POS = -90;
+    public static int SWEEP_SLIDE_POS = 2240;
+    public static int SWEEP_SHOULDER_POS = -120;
 
-    int SWEEP_OVER_SHOULDER_POS = 100;
+    public static int SWEEP_OVER_SHOULDER_POS = -0;
 
     // note for Sweep returning to alliance samples, set shoulder to horizontal
-    public static double SWEEP_ELBOW_ANGLE = 0;
+    public static double SWEEP_ELBOW_ANGLE = 205; // was 0 for axon
+
+    double ELBOW_TUCK_ANGLE = 30; //softly resting on CF tube - was 140 for axon
+
+    double ElbowBowHigh = 90;  // vertical
+    double ElbowBowLow = SWEEP_ELBOW_ANGLE; // out and down
+
+    int SlideBowOut = 1500;
+
 
     public int shoulderPositionMax = 850;
 
@@ -65,20 +81,20 @@ public class Sampler extends Arm {
 
         articulation = Articulation.MANUAL;
 
-        SLIDE_HIGHOUTTAKE_POSITION = 2240;
+        SLIDE_HIGHOUTTAKE_POSITION = 2320;
 
 
         //defaults specific to sampler
-        ELBOW_START_ANGLE = 140;
-        ELBOW_HOME_POSITION = 2050;
-        ELBOW_PWM_PER_DEGREE = -5.672222222222222;
+        ELBOW_START_ANGLE = 15; // was 140 for axon - 190 for blue dsservo45 is pressing firmly
+        ELBOW_HOME_POSITION = 900; // 2050 for axon  - 900 for dsservo 45kg
+        ELBOW_PWM_PER_DEGREE = 5.672222222222222; // -5.672222222222222 for axon - the dsservo 45kg goes the other way
         ELBOW_JOINT_SPEED = 120;
-        ELBOW_MIN_ANGLE = -15;
-        ELBOW_MAX_ANGLE = 220;
+        ELBOW_MIN_ANGLE = 15; // -15 for Axon
+        ELBOW_MAX_ANGLE = 220;  // 220 for Axon
         ELBOW_ADJUST_ANGLE = 5;
-        ELBOW_PREINTAKE_ANGLE = 5;
-        ELBOW_LOWOUTTAKE_ANGLE = 102;
-        ELBOW_HIGHOUTTAKE_ANGLE = 60;
+        ELBOW_PREINTAKE_ANGLE = 160;  // to clear over the sub wall // 5 for axon
+        ELBOW_LOWOUTTAKE_ANGLE = 110; // 120 for axon
+        ELBOW_HIGHOUTTAKE_ANGLE = 120; // 60 for axon
 
         elbow = new Joint(hardwareMap, "samplerElbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "samplerSlide");
@@ -115,6 +131,7 @@ public class Sampler extends Arm {
 
     @Override
     public void update(Canvas fieldOverlay) {
+//        ELBOW_PREINTAKE_ANGLE = TUNABLE_COEFFICIENT;
         beater.setPower(-servoPower);
         elbow.update();
         if (trident.calibrated) {
@@ -150,6 +167,7 @@ public class Sampler extends Arm {
         outtakeIndex = 0;
         tuckIndex = 0;
         calibrateIndex = 0;
+        samplerPrepIndex = 0;
     }
 
     public void setElbowAngle(double elbowAngle) {
@@ -223,7 +241,6 @@ public class Sampler extends Arm {
         return true;
     }
 
-
     public static int intakeIndex;
     public long intakeTimer;
 
@@ -241,18 +258,19 @@ public class Sampler extends Arm {
                     intakeIndex++;
                 }
                 break;
-            case 2:
+            case 2: // start the intake beater when shoulder and slide are in position
                 if (withinError(trident.getShoulderCurrentPosition(), SHOULDER_INTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
                     servoPower = .8;
-                    intakeTimer = futureTime(4);
+                    intakeTimer = futureTime(2);
                     intakeIndex++;
                     colorSensorEnabled = true;
                 }
                 break;
             case 3:
                 if (slideTargetPosition > SLIDE_INTAKE_MIN_POSITION) {
-                    slideTargetPosition -= 60;
-                    trident.setShoulderTarget(this, (int) (trident.getShoulderTarget() - 60 * 0.1534090909090909));
+                    slideTargetPosition -= 400;
+                    trident.setShoulderTarget(this, (int) (trident.getShoulderTarget() - 400 * 0.44090909090909));
+
                 }
                 if (stopOnSample() || isPast(intakeTimer)) {
                     intakeIndex = 0;
@@ -264,16 +282,29 @@ public class Sampler extends Arm {
         return false;
     }
 
+    int samplerPrepIndex = 0;
+
     public boolean samplerPrep() {
         // all we want to do here is set the sampler out horizontal to maximum horizontal extension
         // and just above sample or wall height
         // this should happen while the driver is approaching the target, usually in the sub
         // if there is a danger of contact with another robot, driver should trigger tuck
 
-        elbow.setTargetAngle(ELBOW_PREINTAKE_ANGLE);
-        trident.setShoulderTarget(this, SHOULDER_PREINTAKE_POSITION);
-        slideTargetPosition = SLIDE_PREINTAKE_POSITION;
-        return true;
+        switch (samplerPrepIndex) {
+            case 0:
+                trident.setShoulderTarget(this, SHOULDER_PREINTAKE_POSITION);
+                samplerPrepIndex++;
+                break;
+            case 1:
+                if (trident.getShoulderCurrentPosition() < 1000)
+                    elbow.setTargetAngle(ELBOW_PREINTAKE_ANGLE);
+                slideTargetPosition = SLIDE_PREINTAKE_POSITION;
+                samplerPrepIndex = 0;
+                return true;
+
+
+        }
+        return false;
     }
 
 
@@ -310,6 +341,14 @@ public class Sampler extends Arm {
                 }
                 break;
             case 4:
+
+                break;
+            case 5:
+                slideTargetPosition += 90;
+                servoPower = .8;
+                outtakeIndex++;
+                break;
+            case 6:
                 if (!sampleDetected()) {
                     outtakeIndex = 0;
                     return true;
@@ -319,14 +358,18 @@ public class Sampler extends Arm {
         return false;
     }
 
+    public void incrementOuttake() {
+        outtakeIndex++;
+    }
+
     public long tuckTimer = 0;
     public static int tuckIndex = 0;
 
     @Override
-    public boolean tuck() {
+    boolean tuck() {
         switch (tuckIndex) {
             case 0:
-                elbow.setTargetAngle(ELBOW_START_ANGLE);
+                elbow.setTargetAngle(ELBOW_TUCK_ANGLE);
                 slideTargetPosition = 20;
                 servoPower = 0;
                 tuckIndex++;
@@ -337,7 +380,43 @@ public class Sampler extends Arm {
         }
         return false;
     }
+    long bowTimer = 0;
+    public int bowIndex = 0;
 
+    public boolean bow() {
+        switch (bowIndex) {
+            case 0:  //assume this is triggered from a tucked position
+                // extend the slide and raise the end effector elbow
+                bowTimer = futureTime(2);
+                elbow.setTargetAngle(ElbowBowHigh);
+                slideTargetPosition = SlideBowOut;
+                servoPower = 0;
+                bowIndex++;
+                break;
+            case 1: // bow the elbow low
+                if (isPast(bowTimer)) {
+                    servoPower = .8;
+                    elbow.setTargetAngle(ElbowBowLow);
+                    slideTargetPosition = SlideBowOut;
+                    bowTimer = futureTime(2);
+                    bowIndex++;
+                }
+                break;
+            case 2: // return
+                if (isPast(bowTimer)) {
+                    slideTargetPosition = 20;
+                    elbow.setTargetAngle(ELBOW_START_ANGLE);
+                    servoPower = 0;
+                    if (slide.getCurrentPosition() < 25) {
+                        bowIndex = 0;
+                        return true;
+                    }
+                }
+                break;
+        }
+        return false;
+
+    }
     @Override
     public String updateColorSensor() {
         colorSensor.setGain(colorSensorGain);
@@ -359,23 +438,23 @@ public class Sampler extends Arm {
 
     public long sweepTimer = 0;
     public static int sweepIndex = 0;
+
     public boolean sweepConfig(boolean flyOver) {
         switch (sweepIndex) {
             case 0:
                 elbow.setTargetAngle(SWEEP_ELBOW_ANGLE);
                 slideTargetPosition = SWEEP_SLIDE_POS;
                 if (flyOver)
-                    trident.setShoulderTarget(this,SWEEP_OVER_SHOULDER_POS);
+                    trident.setShoulderTarget(this, SWEEP_OVER_SHOULDER_POS);
                 else
-                    trident.setShoulderTarget(this,SWEEP_SHOULDER_POS);
+                    trident.setShoulderTarget(this, SWEEP_SHOULDER_POS);
                 servoPower = 0;
                 sweepIndex++;
                 break;
-            case 1: // wait until shoulder and slide have reached position
-                if (
-                        withinError(slideTargetPosition, slide.getCurrentPosition(),10)
-                        && withinError((flyOver ? SWEEP_OVER_SHOULDER_POS : SWEEP_SHOULDER_POS), trident.getShoulderCurrentPosition(), 10)
-                ) {
+            case 1: // wait until shoulder and slide have reached position to return true
+                if (withinError(slideTargetPosition, slide.getCurrentPosition(), 10)
+                        && withinError(trident.getShoulderTarget(), trident.getShoulderCurrentPosition(), 10))
+                {
                     sweepIndex = 0;
                     return true;
                 }
@@ -402,6 +481,7 @@ public class Sampler extends Arm {
         telemetryMap.put("elbow angle target : real", elbow.getTargetAngle() + " : " + elbow.getCurrentAngle());
 
         telemetryMap.put("calibrate stage", calibrateIndex);
+        telemetryMap.put("sweep stage", sweepIndex);
 
         return telemetryMap;
     }

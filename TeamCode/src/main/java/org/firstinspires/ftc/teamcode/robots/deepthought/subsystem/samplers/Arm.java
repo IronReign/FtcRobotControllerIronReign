@@ -40,17 +40,16 @@ public abstract class Arm implements Subsystem {
 
     int slideMinPosition = 0;
     //todo - determine this
-    int slideMaxPosition = 2450;
-
+    int slideMaxPosition = Integer.MAX_VALUE;
     //SLIDE VARIABLES - todo, values should be moved into implementations
     public static int slidePositionMax = 3300;
     public static int slidePositionMin = 0;
-    public int SLIDE_INTAKE_MIN_POSITION = 0;
-    public int SLIDE_PREINTAKE_POSITION = 1000;
+    public int SLIDE_INTAKE_MIN_POSITION = 200;
+    public int SLIDE_PREINTAKE_POSITION = 1200;
     public int SLIDE_LOWOUTTAKE_POSITION = 320;
-    public int SLIDE_HIGHOUTTAKE_POSITION = 1820;
+    public int SLIDE_HIGHOUTTAKE_POSITION = 2320;
     public static int slideSpeed = 80;
-    public static double SLIDE_SPEED = 2000;
+    public static double SLIDE_SPEED = 8000;
 
 
     //ELBOW JOINT VARIABLES - expect these to be set in implementation
@@ -61,7 +60,7 @@ public abstract class Arm implements Subsystem {
     public double ELBOW_MIN_ANGLE;
     public double ELBOW_MAX_ANGLE;
     public static int ELBOW_ADJUST_ANGLE;
-    public double ELBOW_PREINTAKE_ANGLE;
+    public double ELBOW_PREINTAKE_ANGLE;  // used to set the intake at a height to clear the sub perimeter
     public double ELBOW_LOWOUTTAKE_ANGLE;
     public double ELBOW_HIGHOUTTAKE_ANGLE;
 
@@ -141,7 +140,7 @@ public abstract class Arm implements Subsystem {
 
                 slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 slide.setPower(1);
-                slide.setTargetPosition(0);
+                slide.setTargetPosition(10);
                 slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 calibrateIndex = 0;
                 calibrated = true;

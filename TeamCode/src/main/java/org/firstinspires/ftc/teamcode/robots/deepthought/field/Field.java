@@ -7,6 +7,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.*;
 
+import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.util.Vector2;
@@ -34,27 +35,27 @@ public class Field {
     public POI subAccess = new POI(-1.5, -.5, 180, "SUBACCESS");
 
     //neutral samples
-    public POI ground1 = new POI(-2.4, -2, 93, "GROUND1");
-    public POI ground2 = new POI(-2.2, -1.60, 45, "GROUND2");
-    public POI ground3 = new POI(-2.375, -2.35, 110, "GROUND3");
+    public POI ground1;
+    public POI ground2;
+    public POI ground3;
 
     // alliance samples - approx settings for using back plate to push samples to ozone
-    public POI ground4 = new POI(1.75, -.5, 90, "GROUND4");
+    public POI ground4 = new POI(2, -.5, 90, "GROUND4");
     public POI ground5 = new POI(2.25, -.5, 90, "GROUND5");
     public POI ground6 = new POI(2.6, -.5, 90, "GROUND6"); // grazing back wall
 
-    public POI sweep1 = new POI(1, -1.5, 40, "SWEEP1");
-    public POI sweep1Oz = new POI(1, -1.5, -40, "SWEEP1Ozone");
-    public POI sweep2 = new POI(1.4, -1.5, 40, "SWEEP2");
-    public POI sweep2Oz = new POI(1.4, -1.5, -40, "SWEEP2Ozone");
-    public POI sweep3 = new POI(1.7, -1.5, 40, "SWEEP3"); // grazing back wall
-    public POI sweep3Oz = new POI(1.7, -1.5, -40, "SWEEP3Ozone");
+    public POI sweep1 = new POI(1, -2, 48, "SWEEP1");
+    public POI sweep1Oz = new POI(1, -2, -20, "SWEEP1Ozone");
+    public POI sweep2 = new POI(1.3, -1.7, 35, "SWEEP2");
+    public POI sweep2Oz = new POI(1.3, -1.7, -55, "SWEEP2Ozone");
+    public POI sweep3 = new POI(1.45, -1.45, 10, "SWEEP3"); // grazing back wall
+    public POI sweep3Oz = new POI(1.45, -1.45, -50, "SWEEP3Ozone");
     public POI ozone = new POI(2.4, -1.75, -90, "OZone");
-    public POI oZoneWalltake = new POI(2.0, -1.5, -90, "OZoneWalltake");
+    public POI oZoneWalltake = new POI(2, -2, -88, "OZoneWalltake");
     public POI hibarPrep = new POI(0, -1.5, -90, "HiBarPrep");
     public POI hibar = new POI(0, -1.45, -90, "HiBar");
-    public POI zig = new POI(1.5, -1.5, 90, "Zig"); // zig from speciminer scoring
-    public POI zag = new POI(1.5, -.5, 90, "Zag"); // zag from zig to safely get back of robot on  far side of alliance samples
+    public POI zig = new POI(1.5, -1.7, -90, "Zig"); // zig from speciminer scoring
+    public POI zag = new POI(2, -.5, -90, "Zag"); // zag from zig to safely get back of robot on  far side of alliance samples
 
 
     public static final double MAX_Y_VALUE = 3;
@@ -138,11 +139,12 @@ public class Field {
         zones = Zone.getNamedZones();
         isRed = alliance.isRed();
         allianceMultiplier = isRed ? 1 : -1;
-        basket = new POI(-2.3 * allianceMultiplier, -2.3 * allianceMultiplier, isRed ? 55  : 55 + 180, "BASKET");
+        basket = new POI(-2.35 * allianceMultiplier, -2.35 * allianceMultiplier, isRed ? 56 : 56 + 180, "BASKET");
         basket2 = new POI(-2.375 * allianceMultiplier, -2.375 * allianceMultiplier, 55, "BASKET");
-        basketPrep = new POI(-2.4*allianceMultiplier, -2*allianceMultiplier, isRed ? 50 : 50 + 180, "BASKET");
-        ground1 = new POI(-2.4*allianceMultiplier, -2*allianceMultiplier, isRed ? 93 : 93 + 180, "GROUND1");
-        ground2 = new POI(-2.2*allianceMultiplier,-1.60 *allianceMultiplier, isRed ? 50 : 50 + 180, "GROUND2");
+        basketPrep = new POI(-2.4 * allianceMultiplier, -2 * allianceMultiplier, isRed ? 50 : 50 + 180, "BASKET");
+        ground1 = new POI(-2.4 * allianceMultiplier, -1.8 * allianceMultiplier, isRed ? 85 : 85  + 180, "GROUND1");
+        ground2 = new POI(-2 * allianceMultiplier, -1.8 * allianceMultiplier, isRed ? 85 : 85 + 180, "GROUND2");
+        ground3 = new POI(-2.7 * allianceMultiplier, -1.7 * allianceMultiplier, isRed ? 95 : 95 + 180, "GROUND3");
     }
 
     public void flipField(boolean alliance) {
