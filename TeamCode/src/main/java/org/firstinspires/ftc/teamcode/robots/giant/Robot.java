@@ -330,13 +330,14 @@ public class Robot implements Subsystem {
     public static long totalRunTime;
     long startTime;
 
+    boolean calibrate=false;
+
 
     //0:leftback
     //1:leftfront
     //2:rightfront
 
     //2250-750 for shoulder servo
-    int i=0;
 
     public NormalizedColorSensor colorSensor = null;
     public static int colorSensorGain = 12;
@@ -388,12 +389,12 @@ public class Robot implements Subsystem {
     double targetF, targetS, targetT;
 
     int tiltTicks=1200; //800     //780
-    int shoulderTicks=750;
+    int shoulderTicks=750+420;
 
     int outExtendTicks=0;
     int upExtendTicks=0;
 
-    int clawTicks=850;
+    int clawTicks=1460;
     boolean clawOpen=false;
 
     boolean hook=true;
@@ -403,7 +404,6 @@ public class Robot implements Subsystem {
     int transferShoulderTicks=0;
 
     static boolean allianceRed=true;
-    long timer = 0;
 
     boolean blockSucked=false;
     String block="";
@@ -414,27 +414,38 @@ public class Robot implements Subsystem {
     double strafelim=0;
     double turnlim=0;
 
+    double first=0;
+    double second=0;
+    double third=0;
+
+    double correct=0;
+
+    boolean thisTurn=false;
+    boolean turning=false;
+
+
 //shoulder grab intake ticks 870
+    //oscilate value .129       .0645
+    public static double pval=0.027;    //.027   //shake&oscillate .037    //.025
     public static PIDController headingPID;
-    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0.03, 0.04, 0);
-    public static double HEADING_PID_TOLERANCE = .08;           //.08 //this is a percentage of the input range .063 of 2PI is 1 degree
+    public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(pval, 0.12, 0.00);      //.012  //i: .015
+    public static double HEADING_PID_TOLERANCE = .21;           //.21 //this is a percentage of the input range .063 of 2PI is 1 degree
     private double PIDCorrection, PIDError, targetHeading, targetDistance;
     boolean imuTurnDone = false;
-
+//penis
     public static PIDController distancePID;
-    public static PIDCoefficients DISTANCE_PID_PWR = new PIDCoefficients(0.03, 0.04, 0);
-    public static double DISTANCE_PID_TOLERANCE = 1; //this is a percentage of the input range .063 of 2PI is 1 degree
+    public static PIDCoefficients DISTANCE_PID_PWR = new PIDCoefficients(0.023, 0.01, 0);       //p=.023
+    public static double DISTANCE_PID_TOLERANCE = 2; //this is a percentage of the input range .063 of 2PI is 1 degree
     private double distPIDCorrection, distPIDError;
     boolean distDriveDone;
 
-   // BNO055IMU imu;
+    BNO055IMU imu;
 
     public Robot(HardwareMap hardwareMap, Gamepad gamepad, Gamepad gamepad2two) {
         this.hardwareMap = hardwareMap;
         this.gamepad1 = gamepad;
         this.gamepad2 = gamepad2two;
         targetSamples.add(Robot.CurrentSample.NEUTRAL);
-       //      //CHANGE
         if(targetSamples.contains(Robot.CurrentSample.RED)){
             opp=Robot.CurrentSample.BLUE;
             op="BLUE";
@@ -484,6 +495,7 @@ public class Robot implements Subsystem {
     public void update(Canvas fieldOverlay) {
         lastLoopClockTime = System.nanoTime();
         totalRunTime = (System.currentTimeMillis() - startTime) / 1000;
+       // HEADING_PID_PWR = new PIDCoefficients(pval, 0, 0);
 
         if(allianceRed){
             targetSamples.add(Robot.CurrentSample.RED);
@@ -497,7 +509,6 @@ public class Robot implements Subsystem {
         distSide=sensorDistSide.getDistance(DistanceUnit.CM);
 
 //        camera.update(true);
-        String block=updateColorSensor();
         colorSensor.setGain(colorSensorGain);
         g1.update();
         g2.update();
@@ -511,6 +522,16 @@ public class Robot implements Subsystem {
         }else{
             mode="basket";
         }
+
+        //TEST THIS THING
+//        if(turning){
+//            if(turnUntilDegreesIMU(whereTurn(),1)){
+//                turning=false;
+//            }
+//        }
+        //^^^TEST THIS THING
+
+
 
         claw.setPosition(servoNormalize(clawTicks));
         tilt.setPosition(servoNormalize(tiltTicks));
@@ -547,45 +568,56 @@ public class Robot implements Subsystem {
         } else{
             suck.setPower(1);
         }
+
+        imustuff();
     }
 
-    public double getVert(){
-        return leftFront.getCurrentPosition();
-    }
-    public double getHor(){
-        return leftBack.getCurrentPosition();
+    public static void p(double x){        pval+=x;
     }
 
-    public void resetDrive(){
-        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        leftBack.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+
+    public void autonMotors(){
+        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
+
+
+    public void imustuff(){
+        Orientation angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        first=angles.firstAngle;
+        second=angles.secondAngle;
+        third=angles.thirdAngle;
     }
     //request a turn in degrees units
     //this is an absolute (non-relative) implementation.
     //the direction of the turn will favor the shortest approach
-//    public boolean turnUntilDegreesIMU(double turnAngle, double maxSpeed) {
-//        targetHeading = wrapAngle(turnAngle);
-//        headingPID.setPID(HEADING_PID_PWR);
-//        Orientation angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-//        headingPID.setInput(angles.firstAngle); // todo - is this yaw?
-//        headingPID.setSetpoint(targetHeading);
-//        headingPID.setOutputRange(-maxSpeed, maxSpeed);
-//        headingPID.setTolerance(HEADING_PID_TOLERANCE);
-//        double correction = headingPID.performPID();
-//        PIDCorrection = correction;
-//        PIDError = headingPID.getError();
-//        if (headingPID.onTarget()) {
-//            //turn meets accuracy requirement
-//            setDrive(0,0,0);
-//            return imuTurnDone = true;
-//        } else {
-//            headingPID.enable();
-//            setDrive(0,0,correction);
-//            return imuTurnDone = false;
-//        }
-//    }
+    public boolean turnUntilDegreesIMU(double turnAngle, double maxSpeed) {
+        targetHeading = wrapAngle(turnAngle);
+        headingPID.setPID(HEADING_PID_PWR);
+        Orientation angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        headingPID.setInput(angles.firstAngle); // todo - is this yaw?
+        headingPID.setSetpoint(targetHeading);
+        headingPID.setOutputRange(-maxSpeed, maxSpeed);
+        headingPID.setTolerance(HEADING_PID_TOLERANCE);
+        double correction = headingPID.performPID();
+
+        PIDCorrection = correction;
+        PIDError = headingPID.getError();
+        correct= headingPID.getError();
+        if (headingPID.onTarget()) {
+            //turn meets accuracy requirement
+
+            setDrive(0,0,0);
+            return imuTurnDone = true;
+        } else {
+            headingPID.enable();
+            setDrive(0,0,-correction);
+            return imuTurnDone = false;
+        }
+       // return true;
+    }
 
     // pid to drive to a target distance sensor value
     public boolean driveDistance(double distance, double maxSpeed) {
@@ -598,6 +630,8 @@ public class Robot implements Subsystem {
         double correction = distancePID.performPID();
         distPIDCorrection = correction;
         distPIDError = distancePID.getError();
+        correct=distancePID.getError();
+
         if (distancePID.onTarget()) {
             //distance meets accuracy requirement
             setDrive(0,0,0);
@@ -609,7 +643,7 @@ public class Robot implements Subsystem {
         }
     }
 
-    public boolean strafe(double distance, double maxSpeed,boolean direction) {
+    public boolean strafe(double distance, double maxSpeed) {
         targetDistance = wrapAngle(distance);
         distancePID.setPID(DISTANCE_PID_PWR);
         distancePID.setInput(distSide);     //true is left sensor looking at robot from front
@@ -621,6 +655,7 @@ public class Robot implements Subsystem {
         double correction = distancePID.performPID();
         distPIDCorrection = correction;
         distPIDError = distancePID.getError();
+        correct=distancePID.getError();
         if (distancePID.onTarget()) {
             //distance meets accuracy requirement
             setDrive(0,0,0);
@@ -632,10 +667,6 @@ public class Robot implements Subsystem {
             return distDriveDone = false;
         }
     }
-
-
-    public void mode(){hook=!hook;}
-    public boolean getMode(){return hook;}
 
 
     public void grab(){
@@ -653,10 +684,12 @@ public class Robot implements Subsystem {
 
                     if(currentSample.equals(Robot.CurrentSample.NEUTRAL)){
                         //hook=false;
+                        outExtend.setPower(.7);
                         yellow();
 
                     }else{
                         //hook=true;
+                        outExtend.setPower(.7);
                         goodBlock();       //place holder till figure out the fuck we doing
                     }
             }
@@ -673,14 +706,15 @@ public class Robot implements Subsystem {
 
     public void yellow(){
         tiltTicks=1240;//1440
-        outExtendTicks=120;
+        outExtendTicks=50;
         upExtendTicks=30;
 
     }
 
     public void goodBlock(){
         tiltTicks=780;//1440
-        outExtendTicks=120;     //-25
+        outExtendTicks=50;     //-25
+//        shoulderTicks=1250;
     }
 
     public void plsnobad(){
@@ -698,8 +732,8 @@ public class Robot implements Subsystem {
 //        open();
 //        setUpExtend(350);
 //        setShoulder(950);     //930
-        setTilt(970);
-        outExtendTicks=1900;        //2750;
+        //setTilt(970);
+        outExtendTicks=1050;        //2750;
     }
 
     public void scooch(){
@@ -708,7 +742,7 @@ public class Robot implements Subsystem {
 
     public void dunk(){
         upExtendTicks=3150;
-        shoulderTicks=1730;
+        shoulderTicks=950;      //
     }
 
     public void pullBack(){
@@ -718,22 +752,32 @@ public class Robot implements Subsystem {
     public void hookit(){
 //        upExtendTicks=1800; //1950
 //        shoulderTicks=1510;
-        upExtendTicks=2245;
+        upExtendTicks=2275;      //2280
         //shoulderTicks=1150;
     }
 
     public void downHook(){
-        upExtendTicks=1275;
+        upExtendTicks=1275;     //1275
     }
 
     public void wallGrab(){
         open();
-        shoulderTicks=1450; //1510  1450
-        upExtendTicks=5;    //0
+        shoulderTicks=1450+420; //1510  1450
+        upExtendTicks=154;    //5
     }
 
     public void setOutPower(double x){
         outExtend.setPower(x);
+    }
+    public void turnIt(){
+        thisTurn=!thisTurn;
+        turning=true;
+    }
+
+
+    public int whereTurn(){
+        if(thisTurn){return 180;}
+        return 0;
     }
 
 
@@ -742,12 +786,16 @@ public class Robot implements Subsystem {
     public void setSuck(boolean x){sucking=x;}
     public void spit(boolean x){eject=x;}
     public void setSlurp(boolean x){slurp=x;}
-    public double getSuck(){
-        return suck.getPower();
-    }
+//    public double getSuck(){
+//        return suck.getPower();
+//    }
 
     public void eject(double x){
         suck.setPower(x);
+    }
+
+    public boolean getSuck(){
+        return sucking;
     }
 
 
@@ -763,31 +811,7 @@ public class Robot implements Subsystem {
         return false;
     }
 
-    public boolean up(){
-        int old=upExtend1.getCurrentPosition()-upExtend1.getTargetPosition();
-        if(old<0){
-            return true;
-        }
-        return false;
-    }
 
-    public void moving(){
-        if(upExtend1.isBusy()){
-            int old=upExtend1.getCurrentPosition()-upExtend1.getTargetPosition();
-            if(Math.abs(old)>30){
-                if(up()){
-                    upExtend2.setPower(1);
-                }else{
-                    upExtend2.setPower(-1);
-                }
-            }else{
-                upExtend2.setPower(0);
-            }
-        }
-        else{
-            upExtend2.setPower(0);
-        }
-    }
 
     public void init() {
         g1 = new StickyGamepad(gamepad1);
@@ -803,11 +827,11 @@ public class Robot implements Subsystem {
         sensorDistance = hardwareMap.get(DistanceSensor.class, "sensorDistance");
         sensorDistSide = hardwareMap.get(DistanceSensor.class, "sensorDistSide");
         //dist2= hardwareMap.get(DistanceSensor.class, "dist2");
-//        imu = hardwareMap.get(BNO055IMU.class, "imu");
-//        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-//        parameters.mode = BNO055IMU.SensorMode.IMU;
-//        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-//        imu.initialize(parameters);
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.mode = BNO055IMU.SensorMode.IMU;
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        imu.initialize(parameters);
         // you can also cast this to a Rev2mDistanceSensor if you want to use added
         // methods associated with the Rev2mDistanceSensor class.
 
@@ -866,16 +890,26 @@ public class Robot implements Subsystem {
         LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
         TelemetryPacket p = new TelemetryPacket();
 
+        telemetry.put("ERROR ", correct);
+        telemetry.put("RECALLIBRATE: ",calibrate);
+
         telemetry.put("GAMEMODE: ", mode);
         telemetry.put("RED ALLIANCE", allianceRed);
         telemetry.put("DISTANCE SENSOR: ", dist);
         telemetry.put("AVERAGE LOOP TIME: " , averageLoopTime);
 
+        telemetry.put("FIRST ANGLE: ", first);
+//        telemetry.put("SECOND ANGLE: ", second);
+//        telemetry.put("THIRD ANGLE: ", third);
+
+
         telemetry.put("Horizontal", leftBack.getCurrentPosition());
         telemetry.put("Vertical", leftFront.getCurrentPosition());
 
         telemetry.put("out extend", outExtendTicks);
+        telemetry.put("out extend GET POSITION", outExtend.getCurrentPosition());
         telemetry.put("up extend", upExtendTicks);
+        telemetry.put("up extend GET POSITION", upExtend1.getCurrentPosition());
 
         telemetry.put("FORWARD: ", targetF);
         telemetry.put("TURN: ", targetT);
@@ -954,11 +988,29 @@ public class Robot implements Subsystem {
         leftBack.setPower((r * Math.sin(robotAngle) - rightX));
         rightBack.setPower((r * Math.cos(robotAngle) + rightX));
     }
-
     public void setDrive(double forwardX, double strafeX, double turnX) {
         targetF=forwardX;
         targetT=turnX;
         targetS=strafeX;
+    }
+    public double getVert(){return leftFront.getCurrentPosition();}
+    public double getHor(){return leftBack.getCurrentPosition();}
+    public void resetDrive(){
+        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        leftBack.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
+
+    //MANUAL VERTICLE SLIDES RECALLIBRATION
+    public boolean getlimit(){return calibrate;}
+    public void recallibrate(){calibrate=!calibrate;}
+    public void calibrateUp(){
+        upExtend1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        upExtend1.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        upExtend1.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        calibrate=false;
     }
 
     //TILT THINGS
@@ -975,15 +1027,17 @@ public class Robot implements Subsystem {
     public void addOutExtend(int x){outExtendTicks+=x;}
     public void setOutExtend(int x){outExtendTicks=x;}
     public int getOutExtend(){return outExtendTicks;}
+    public int getOutMotor(){return outExtend.getCurrentPosition();}
 
     //UP SLIDES THINGS
     public void addUpExtend(int x){upExtendTicks+=x;}
     public void setUpExtend(int x){upExtendTicks=x;}
-    public int getUpExtend(){return upExtendTicks;}
+    public int getUpExtend(){return upExtendTicks;}     //maybe change to return upExtend1.getCurrentPosition();
+    public int getUpMotor(){return upExtend1.getCurrentPosition();}
 
-//CLAW THINGS
-    public void grabBlock(){clawTicks=850;}
-    public void dropBlock(){clawTicks=1500;}
+    //CLAW THINGS
+    public void grabBlock(){clawTicks=1460;}
+    public void dropBlock(){clawTicks=2050;}
     public void setClaw(int x){clawTicks+=x;}
     public void setClawP(){clawOpen=!clawOpen;}
     public void open(){clawOpen=true;}
@@ -991,12 +1045,42 @@ public class Robot implements Subsystem {
     public boolean isClawOpen(){return clawOpen;}
     public int getClaw(){return clawTicks;}
 
+    //GAMEMODE HOOK VS BASKET
+    public void mode(){hook=!hook;}
+    public boolean getMode(){return hook;}
+
     public static void changeAlly(){
         allianceRed=!allianceRed;
     }
 
     public double getDistance(){
         return dist;
+    }
+
+    //VERTICLE SLIDE MOVEMENT TOGETHER
+    public boolean up(){
+        int old=upExtend1.getCurrentPosition()-upExtend1.getTargetPosition();
+        if(old<0){
+            return true;
+        }
+        return false;
+    }
+    public void moving(){
+        if(upExtend1.isBusy()){
+            int old=upExtend1.getCurrentPosition()-upExtend1.getTargetPosition();
+            if(Math.abs(old)>30){
+                if(up()){
+                    upExtend2.setPower(1);
+                }else{
+                    upExtend2.setPower(-1);
+                }
+            }else{
+                upExtend2.setPower(0);
+            }
+        }
+        else{
+            upExtend2.setPower(0);
+        }
     }
 
 }
