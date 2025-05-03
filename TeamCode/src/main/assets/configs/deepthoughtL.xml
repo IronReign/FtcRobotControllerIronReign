@@ -26,9 +26,9 @@
             <Servo name="specElbow" port="5" />
             <REV_VL53L0X_RANGE_SENSOR name="backDistRight" port="0" bus="1" />
             <LynxEmbeddedIMU name="eimu" port="0" bus="0" />
-            <RevColorSensorV3 name="samplerSensor" port="1" bus="0" />
+            <RevColorSensorV3 name="specSensor" port="1" bus="0" />
             <REV_VL53L0X_RANGE_SENSOR name="backDistLeft" port="0" bus="3" />
-            <LynxColorSensor name="specSensor" port="0" bus="2" />
+            <LynxColorSensor name="samplerSensor" port="0" bus="2" />
         </LynxModule>
     </LynxUsbDevice>
 </Robot>

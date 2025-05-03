@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 
@@ -69,7 +70,7 @@ public class Sampler extends Arm {
 
     int SlideBowOut = 1500;
 
-
+DigitalChannel digiColorSensorP0, digiColorSensorP1;
     public int shoulderPositionMax = 850;
 
     public static int colorSensorGain = 12;
@@ -107,6 +108,9 @@ public class Sampler extends Arm {
         slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slide.setVelocity(SLIDE_SPEED);
         colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "samplerSensor");
+        digiColorSensorP0 = this.hardwareMap.get(DigitalChannel.class, "samplerSensorP0");
+        digiColorSensorP1 = this.hardwareMap.get(DigitalChannel.class, "samplerSensorP1");
+
         beater = this.hardwareMap.get(CRServo.class, "samplerBeater");
     }
 
@@ -421,7 +425,7 @@ public class Sampler extends Arm {
     public String updateColorSensor() {
         colorSensor.setGain(colorSensorGain);
         double hue = getHSV()[0];
-        if (hue > 60 && hue < 80) {
+        if (hue > 35 && hue < 45) {
             currentSample = Sample.NEUTRAL;
             return "NEUTRAL";
         } else if (hue < 26) {

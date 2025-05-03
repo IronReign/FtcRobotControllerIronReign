@@ -3,8 +3,8 @@
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Control Hub" port="173">
             <AnalogInput name="brushlandcolor0" port="0" />
-            <DigitalDevice name="samplerP0" port="0" />
-            <DigitalDevice name="samplerP1" port="1" />
+            <DigitalDevice name="samplerP0" port="2" />
+            <DigitalDevice name="samplerP1" port="3" />
             <RevColorSensorV3 name="Color" port="0" bus="0" />
         </LynxModule>
     </LynxUsbDevice>
