@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
+<Robot type="FirstInspires-FTC">
+    <Webcam
+        name="Webcam 1"
+        serialNumber="6E1F05D0" />
+    <LynxUsbDevice
+        name="Control Hub Portal"
+        parentModuleAddress="173"
+        serialNumber="(embedded)">
+        <LynxModule
+            name="Control Hub"
+            port="173">
+            <LynxEmbeddedIMU
+                name="imu"
+                bus="0"
+                port="0" />
+
+        </LynxModule>
+    </LynxUsbDevice>
+    <LynxUsbDevice
+        name="Expansion Hub Portal 1"
+        parentModuleAddress="2"
+        serialNumber="DQ233M2L">
+        <LynxModule
+            name="Expansion Hub 2"
+            port="2">
+            <LynxEmbeddedIMU
+                name="eimu"
+                bus="0"
+                port="0" />
+            <LynxColorSensor
+                name="x"
+                bus="0"
+                port="1" />
+            <LynxColorSensor
+                name="sensor_color"
+                bus="2"
+                port="0" />
+        </LynxModule>
+    </LynxUsbDevice>
+</Robot>
+
+
