@@ -70,7 +70,7 @@ public class Sampler extends Arm {
 
     int SlideBowOut = 1500;
 
-DigitalChannel digiColorSensorP0, digiColorSensorP1;
+    DigitalChannel digiColorSensorP0, digiColorSensorP1;
     public int shoulderPositionMax = 850;
 
     public static int colorSensorGain = 12;
@@ -145,9 +145,9 @@ DigitalChannel digiColorSensorP0, digiColorSensorP1;
             elbow.setSpeed(ELBOW_JOINT_SPEED);
 //            trident.setShoulderTarget(this, shoulderTargetPosition);
         }
-        if (colorSensorEnabled) {
-            updateColorSensor();
-        }
+//        if (colorSensorEnabled) {
+//            updateColorSensor();
+//        }
         //compute the current articulation/behavior
         articulate();
     }
@@ -384,6 +384,7 @@ DigitalChannel digiColorSensorP0, digiColorSensorP1;
         }
         return false;
     }
+
     long bowTimer = 0;
     public int bowIndex = 0;
 
@@ -421,23 +422,45 @@ DigitalChannel digiColorSensorP0, digiColorSensorP1;
         return false;
 
     }
+
     @Override
     public String updateColorSensor() {
-        colorSensor.setGain(colorSensorGain);
-        double hue = getHSV()[0];
-        if (hue > 35 && hue < 45) {
-            currentSample = Sample.NEUTRAL;
-            return "NEUTRAL";
-        } else if (hue < 26) {
-            currentSample = Sample.RED;
-            return "RED";
-        } else if (hue < 235 && hue > 200) {
-            currentSample = Sample.BLUE;
-            return "BLUE";
+
+        if (digiColorSensorP0.getState()) {
+            if (digiColorSensorP0.getState()) {
+                currentSample = Sample.NEUTRAL;
+                return "NEUTRAL";
+            } else {
+                currentSample = Sample.BLUE;
+                return "BLUE";
+            }
         } else {
-            currentSample = Sample.NO_SAMPLE;
-            return "NO SAMPLE";
+            if (digiColorSensorP0.getState()) {
+                currentSample = Sample.RED;
+                return "RED";
+            }
+            else{
+                currentSample = Sample.NO_SAMPLE;
+                return "NO_SAMPLE";
+            }
         }
+
+
+//        colorSensor.setGain(colorSensorGain);
+//        double hue = getHSV()[0];
+//        if (hue > 35 && hue < 45) {
+//            currentSample = Sample.NEUTRAL;
+//            return "NEUTRAL";
+//        } else if (hue < 26) {
+//            currentSample = Sample.RED;
+//            return "RED";
+//        } else if (hue < 235 && hue > 200) {
+//            currentSample = Sample.BLUE;
+//            return "BLUE";
+//        } else {
+//            currentSample = Sample.NO_SAMPLE;
+//            return "NO SAMPLE";
+//        }
     }
 
     public long sweepTimer = 0;
@@ -457,8 +480,7 @@ DigitalChannel digiColorSensorP0, digiColorSensorP1;
                 break;
             case 1: // wait until shoulder and slide have reached position to return true
                 if (withinError(slideTargetPosition, slide.getCurrentPosition(), 10)
-                        && withinError(trident.getShoulderTarget(), trident.getShoulderCurrentPosition(), 10))
-                {
+                        && withinError(trident.getShoulderTarget(), trident.getShoulderCurrentPosition(), 10)) {
                     sweepIndex = 0;
                     return true;
                 }
