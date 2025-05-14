@@ -27,7 +27,7 @@ public abstract class Arm implements Subsystem {
     Trident trident;
 
     public DcMotorEx slide;
-    Joint elbow;
+    public Joint elbow;
 
     NormalizedColorSensor colorSensor = null;
     float[] colorLastHSV = {0.0f, 0.0f, 0.0f};

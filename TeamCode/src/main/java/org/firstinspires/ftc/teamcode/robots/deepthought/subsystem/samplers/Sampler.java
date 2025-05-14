@@ -81,8 +81,7 @@ public class Sampler extends Arm {
         this.trident = trident; // to request services from Trident - mainly setting the shoulder angle
 
         articulation = Articulation.MANUAL;
-
-        SLIDE_HIGHOUTTAKE_POSITION = 2320;
+        SLIDE_HIGHOUTTAKE_POSITION = 1900;
 
 
         //defaults specific to sampler
@@ -108,8 +107,8 @@ public class Sampler extends Arm {
         slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slide.setVelocity(SLIDE_SPEED);
         colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "samplerSensor");
-        digiColorSensorP0 = this.hardwareMap.get(DigitalChannel.class, "samplerSensorP0");
-        digiColorSensorP1 = this.hardwareMap.get(DigitalChannel.class, "samplerSensorP1");
+        digiColorSensorP0 = this.hardwareMap.get(DigitalChannel.class, "samplerP0");
+        digiColorSensorP1 = this.hardwareMap.get(DigitalChannel.class, "samplerP1");
 
         beater = this.hardwareMap.get(CRServo.class, "samplerBeater");
     }
@@ -348,12 +347,13 @@ public class Sampler extends Arm {
 
                 break;
             case 5:
-                slideTargetPosition += 90;
+                slideTargetPosition += 170;
                 servoPower = .8;
                 outtakeIndex++;
                 break;
             case 6:
                 if (!sampleDetected()) {
+                    elbow.setTargetAngle(180);
                     outtakeIndex = 0;
                     return true;
                 }

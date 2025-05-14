@@ -73,11 +73,11 @@ public class SwerveModule {
         targetAngle = Utils.wrapAngle(desiredAngle);
 
         // Optionally, only allow the drive motor to run if the yaw error is within threshold.
-        if (Math.abs(angleDiff) < thresholdAngle) {
+//        if (Math.abs(angleDiff) < thresholdAngle) {
             driveMotor.setPower(invertedDrive ? -speed : speed);
-        } else {
-            driveMotor.setPower(0);
-        }
+//        } else {
+//            driveMotor.setPower(0);
+//        }
     }
 
     /**

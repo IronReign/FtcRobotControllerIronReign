@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.field.Field.P2D;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler.preferHighOuttake;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -92,11 +93,15 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 1:
                 if (isPast(autonTimer)) {
+                    robot.trident.sampler.elbow.setTargetAngle(120);
+
                     autonState = AutonState.DRIVE_TO_BASKET;
+
                     autonIndex++;
                 }
                 break;
             case 2:
+
                 if (autonSamplerOuttake(field.basket, packet)) {
                     robot.resetStates();
                     robot.articulate(Robot.Articulation.MANUAL);
@@ -274,7 +279,7 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 3:
-                autonIntakeTimer = futureTime(2);
+                autonIntakeTimer = futureTime(3);
 //                if (ground.name.equals("GROUND3")) {
 //                    autonIntakeIndex++;
 //                } else {
