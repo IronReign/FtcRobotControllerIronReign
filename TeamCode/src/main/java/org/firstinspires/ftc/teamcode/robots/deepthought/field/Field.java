@@ -44,12 +44,12 @@ public class Field {
     public POI ground5 = new POI(2.25, -.5, 90, "GROUND5");
     public POI ground6 = new POI(2.6, -.5, 90, "GROUND6"); // grazing back wall
 
-    public POI sweep1 = new POI(1, -2, 48, "SWEEP1");
+    public POI sweep1 = new POI(1, -2, 45.5, "SWEEP1");
     public POI sweep1Oz = new POI(1, -2, -20, "SWEEP1Ozone");
     public POI sweep2 = new POI(1.3, -1.7, 35, "SWEEP2");
     public POI sweep2Oz = new POI(1.3, -1.7, -55, "SWEEP2Ozone");
-    public POI sweep3 = new POI(1.45, -1.45, 10, "SWEEP3"); // grazing back wall
-    public POI sweep3Oz = new POI(1.45, -1.45, -50, "SWEEP3Ozone");
+    public POI sweep3 = new POI(1.55, -1.45, 25, "SWEEP3"); // grazing back wall
+    public POI sweep3Oz = new POI(1.55, -1.45, -60, "SWEEP3Ozone");
     public POI ozone = new POI(2.4, -1.75, -90, "OZone");
     public POI oZoneWalltake = new POI(2, -2, -88, "OZoneWalltake");
     public POI hibarPrep = new POI(0, -1.5, -90, "HiBarPrep");
@@ -139,7 +139,7 @@ public class Field {
         zones = Zone.getNamedZones();
         isRed = alliance.isRed();
         allianceMultiplier = isRed ? 1 : -1;
-        basket = new POI(-2.35 * allianceMultiplier, -2.35 * allianceMultiplier, isRed ? 56 : 56 + 180, "BASKET");
+        basket = new POI(-2.35 * allianceMultiplier, -2.4 * allianceMultiplier, isRed ? 56 : 56 + 180, "BASKET");
         basket2 = new POI(-2.375 * allianceMultiplier, -2.375 * allianceMultiplier, 55, "BASKET");
         basketPrep = new POI(-2.4 * allianceMultiplier, -2 * allianceMultiplier, isRed ? 50 : 50 + 180, "BASKET");
         ground1 = new POI(-2.4 * allianceMultiplier, -1.8 * allianceMultiplier, isRed ? 85 : 85  + 180, "GROUND1");

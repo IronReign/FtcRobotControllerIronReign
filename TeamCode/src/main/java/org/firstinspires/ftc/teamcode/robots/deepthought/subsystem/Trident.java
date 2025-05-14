@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.deepthought.subsystem;
 
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
@@ -13,6 +14,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Arm;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.SpeciMiner;
@@ -31,6 +33,17 @@ public class Trident implements Subsystem {
     public SpeciMiner speciMiner;
 
     Arm activeArm; //just to keep track of which arm is actively requesting shoulder services
+
+    public boolean isAutoTuck() {
+        return autoTuck;
+    }
+
+    public void setAutoTuck(boolean autoTuck) {
+        this.autoTuck = autoTuck;
+    }
+
+    boolean autoTuck = true; // when true - auto tuck the inactive arm
+
     public static boolean enforceSlideLimits;
     DcMotorExResetable shoulder = null;
     public Joint elbow;
@@ -45,12 +58,14 @@ public class Trident implements Subsystem {
         speciMiner.finalizeTargets();
     }
 
-    public void setActiveArm(Arm arm) {
+    public void setActiveArm(Arm arm, boolean autoTuck) {
         this.activeArm = arm;
-        if (arm instanceof Sampler) {
-            speciMiner.articulate(SpeciMiner.Articulation.TUCK);
-        } else {
-            sampler.articulate(Sampler.Articulation.TUCK);
+        if (autoTuck) {
+            if (arm instanceof Sampler) {
+                speciMiner.articulate(SpeciMiner.Articulation.TUCK);
+            } else {
+                sampler.articulate(Sampler.Articulation.TUCK);
+            }
         }
     }
 
@@ -66,12 +81,12 @@ public class Trident implements Subsystem {
 
     //shoulder - these are defaults - but the Sampler and Speciminer classes define their own local versions
     public int SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
-    public static int shoulderTargetPosition = 0;
+    int shoulderTargetPosition = 0;
     public static int shoulderSpeed = 45;
     public static int SHOULDER_CALIBRATE_HORIZONTAL = -2020; // offset to get to horizontal when shoulder is at max
     public static int SHOULDER_SIZING = 540;  //todo re-tune after horizontal tuning
     public int SHOULDER_HORIZONTAL = 0;
-    public static int SHOULDER_MIN_POSITION = -625;
+    public static int SHOULDER_MIN_POSITION = -625;  //todo is this right? should be a small negative angle
 
 
     //BEATER
@@ -158,13 +173,21 @@ public class Trident implements Subsystem {
                     shoulder.setVelocity(400);
                     shoulder.setTargetPosition(0);
                     shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    resetBowIndex();
+                    calibrated=true;
                     calibrateIndex++;
                 }
                 break;
             case 4:
+                if(gameState != IntoTheDeep_6832.GameState.DEMO){
+                    calibrateIndex++;
+                }
+                // bow
+                else if (bow())
+                    calibrateIndex++;
+                break;
+            case 5:
                 shoulderTargetPosition = SHOULDER_SIZING;
-
-                speciMiner.shoulderTargetPosition = shoulderTargetPosition;
                 calibrateIndex = 0;
                 calibrated = true;
                 return true;
@@ -180,7 +203,7 @@ public class Trident implements Subsystem {
             case 0:
                 shoulderTargetPosition = SHOULDER_HORIZONTAL;
 
-                speciMiner.shoulderTargetPosition = SHOULDER_HORIZONTAL;
+
                 tuckIndex++;
                 break;
             case 1:
@@ -190,6 +213,7 @@ public class Trident implements Subsystem {
 //                SpeciMiner.tuckIndex = 0;
                     speciMiner.articulate(SpeciMiner.Articulation.TUCK);
                 }
+                // todo Jai why is there no break here? and no reset of tuckIndex?
             case 2:
                 if (sampler.slide.getCurrentPosition() < 150 && speciMiner.slide.getCurrentPosition() < 150) {
                     return true;
@@ -202,6 +226,45 @@ public class Trident implements Subsystem {
         //return (sampler.articulation==Sampler.Articulation.MANUAL)? true : false;
         // kinda moot, shouldn't really be a tuck operation at this level
         // this is a relic of short term migration needs
+    }
+
+    int bowIndex = 0;
+    double bowTimer = 0;
+    boolean specBowDone;
+    boolean samplerBowDone;
+    void resetBowIndex(){
+        specBowDone = false;
+        samplerBowDone = false;
+        bowIndex = 0;
+        sampler.bowIndex = 0;
+        speciMiner.bowIndex = 0;
+    }
+    public boolean bow(){
+        switch(bowIndex) {
+            case 0: // bow sampler
+                if (sampler.bow()) {
+                    bowIndex++;
+                    samplerBowDone = false;
+                }
+                break;
+            case 1: // bow speciMiner
+                if (speciMiner.bow()) {
+                    specBowDone = false;
+                    bowIndex++;
+                }
+                break;
+            case 2: // bow both
+                if (!specBowDone)
+                    specBowDone = speciMiner.bow();
+                if (!samplerBowDone)
+                    samplerBowDone = sampler.bow();
+                if (samplerBowDone && specBowDone) {
+                    bowIndex = 0;
+                    return true;
+                }
+                break;
+        }
+        return false;
     }
 
     public boolean sampleDetected() {
@@ -242,8 +305,16 @@ public class Trident implements Subsystem {
         return shoulder.getCurrentPosition();
     }
 
+    public void adjustShoulder(int upTics){
+            setShoulderTarget(getShoulderTarget()+upTics);
+    }
     public void setShoulderTarget(Arm subsystem, int targetTics) {
-        setActiveArm(subsystem);
+        setActiveArm(subsystem, autoTuck);
+        setShoulderTarget(targetTics);
+    }
+
+    public void setShoulderTarget(Arm subsystem, int targetTics, boolean autoTuck) {
+        setActiveArm(subsystem, autoTuck);
         setShoulderTarget(targetTics);
     }
 
@@ -253,6 +324,8 @@ public class Trident implements Subsystem {
         } else {
             shoulderTargetPosition = SHOULDER_MIN_POSITION;
         }
+
+        // todo - seems there should be a guard on Max position too
     }
 
     public Arm getActiveArm() {

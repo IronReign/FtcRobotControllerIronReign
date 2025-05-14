@@ -31,6 +31,12 @@ public class CoreOpMode extends OpMode {
         robot.initloopDrive();
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
     }
+
+    @Override
+    public void start()
+    {
+        robot.setShoulderTargetPosition(robot.shoulder.getTargetPosition());
+    }
     @Override
     public void loop() {
         robot.update(new Canvas());

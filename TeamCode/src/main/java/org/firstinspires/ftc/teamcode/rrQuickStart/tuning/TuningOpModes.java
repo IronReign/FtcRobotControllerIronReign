@@ -22,6 +22,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpModeManager;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeRegistrar;
 
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeMeta;
+import org.firstinspires.ftc.teamcode.robots.deepthought.rr_localize.MecanumDriveReign;
 import org.firstinspires.ftc.teamcode.rrQuickStart.MecanumDrive;
 import org.firstinspires.ftc.teamcode.rrQuickStart.TankDrive;
 import org.firstinspires.ftc.teamcode.rrQuickStart.ThreeDeadWheelLocalizer;
@@ -33,7 +34,7 @@ import java.util.List;
 
 public final class TuningOpModes {
     // TODO: change this to TankDrive.class if you're using tank
-    public static final Class<?> DRIVE_CLASS = MecanumDrive.class;
+    public static final Class<?> DRIVE_CLASS = MecanumDriveReign   .class;
 
     public static final String GROUP = "quickstart";
     public static final String PREFIX = "XX "; //XX indicates this is just an unintegrated template. change prefix to team number during integration

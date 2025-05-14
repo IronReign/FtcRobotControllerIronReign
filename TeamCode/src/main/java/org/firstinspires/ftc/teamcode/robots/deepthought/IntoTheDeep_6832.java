@@ -26,7 +26,7 @@ public class IntoTheDeep_6832 extends OpMode {
     public static Robot robot;
     static Autonomous auton;
     static Demos demos;
-    public static AutoSpecimens autoSpecimens;
+    static AutoSpecimens autoSpecimens;
     private FtcDashboard dashboard;
     public static Field field;
     public static DriverControls dc;
@@ -252,11 +252,12 @@ public class IntoTheDeep_6832 extends OpMode {
                     robot.positionCache.writePose(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
                     robot.articulate(Robot.Articulation.TRAVEL);
                     gameState = GameState.TELE_OP;
+                    robot.trident.sampler.elbow.setTargetAngle(15);
                 }
                 break;
 
             case DEMO:
-                if (demos.execute()) {
+                if(demos.execute()) {
                     gameState = GameState.TELE_OP;
                 }
                 break;

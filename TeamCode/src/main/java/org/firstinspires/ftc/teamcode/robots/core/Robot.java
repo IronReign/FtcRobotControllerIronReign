@@ -37,6 +37,7 @@ public class Robot implements Subsystem {
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
     DcMotorEx vertical, horizontal;
     Servo claw;
+
     Gamepad gamepad1;
     DcMotorEx shoulder;
     DcMotorEx slide;
@@ -49,13 +50,15 @@ public class Robot implements Subsystem {
     public boolean clawOpen = false;
     public double clawOpenPosition = 1;
     public double clawClosePosition = .6;
+    public double clawSoftClosePosition = .7;
+
 
     public int getShoulderTargetPosition() {
         return shoulderTargetPosition;
     }
 
     public void setShoulderTargetPosition(int shoulderTargetPosition) {
-        shoulderTargetPosition = shoulderTargetPosition;
+        this.shoulderTargetPosition = shoulderTargetPosition;
     }
 
     public int shoulderTargetPosition = 0;
@@ -66,12 +69,12 @@ public class Robot implements Subsystem {
 
     public static int SPECIMEN_WALLTAKE_SHOULDER = 824;
     public static int SPECIMEN_WALLTAKE_SLIDE = 30;
-    public static int SPECIMEN_PRELATCH_SHOULDER = 1800;
+    public static int SPECIMEN_PRELATCH_SHOULDER = 1850;
     public static int SPECIMEN_PRELATCH_SLIDE=350;
-    public static int SPECIMEN_PRELATCH_DISTANCE=20; //todo tune
+    public static int SPECIMEN_PRELATCH_DISTANCE=15; //todo tune
 
 
-    public static int SPECIMEN_LATCH_SHOULDER = 1360;
+    public static int SPECIMEN_LATCH_SHOULDER = 1200;
 
 
 
@@ -131,12 +134,12 @@ public class Robot implements Subsystem {
         horizontal.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
         shoulder.setPower(1);
-        shoulder.setVelocity(50);
+        shoulder.setVelocity(1000); //this is the culprit - was set to 50
         shoulder.setTargetPosition(shoulder.getCurrentPosition());
         shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         slide.setPower(1);
-        slide.setVelocity(50);
+        slide.setVelocity(600);
         slide.setTargetPosition(0);
         slide.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
@@ -423,13 +426,13 @@ public class Robot implements Subsystem {
         leftFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFront.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        shoulder.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        slide.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        //shoulder.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        //slide.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         horizontal.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         vertical.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
         shoulder.setPower(1);
-        shoulder.setVelocity(300);
+        shoulder.setVelocity(1000);
         shoulder.setTargetPosition(shoulder.getCurrentPosition());  //should not move
         shoulder.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
@@ -445,7 +448,7 @@ public class Robot implements Subsystem {
         horizontal.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         vertical.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
 
-        claw.setPosition(clawOpenPosition);
+        claw.setPosition(clawClosePosition);
     }
     Orientation angles = new Orientation();
     //request a turn in degrees units
@@ -565,16 +568,17 @@ public class Robot implements Subsystem {
                 break;
             case 2:
                 shoulder.setPower(1);
-                shoulder.setTargetPosition(1500);
+                shoulder.setTargetPosition(1420);
                 shoulder.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 calibrateStage++;
                 break;
             case 3:
-                shoulder.setTargetPosition(1500); //1647
+                shoulder.setTargetPosition(1420); //1647
                 slide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 // slide should have relaxed
                 slide.setTargetPosition(0); //44
                 slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                claw.setPosition(clawSoftClosePosition);
                 calibrateStage=0;
                 return true;
         }

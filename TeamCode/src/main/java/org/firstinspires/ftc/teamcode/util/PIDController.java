@@ -7,6 +7,8 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.between;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -74,38 +76,46 @@ public class PIDController {
     private double pwrD = 0.0;
     private double pwrF = 0.0;
 
-    public boolean isEnabled(){
+    private List<Boolean> lastTenStates;
+
+    public boolean isEnabled() {
         return m_enabled;
+    }
+
+    public void clearCache() {
+        lastTenStates = new ArrayList<Boolean>();
     }
 
     /**
      * Allocate a PID object with the given constants for P, I, D
+     *
      * @param Kp the proportional coefficient
      * @param Ki the integral coefficient
      * @param Kd the derivative coefficient
      */
     public PIDController(double Kp, double Ki, double Kd) {
-
+        lastTenStates = new ArrayList<Boolean>();
         m_P = Kp;
         m_I = Ki;
         m_D = Kd;
-        m_prevTime=System.nanoTime();
+        m_prevTime = System.nanoTime();
     }
 
     public PIDController(double Kp, double Ki, double Kd, Function<Double, Double> kF) {
-
+        lastTenStates = new ArrayList<Boolean>();
         m_P = Kp;
         m_I = Ki;
         m_D = Kd;
         m_F = kF;
-        m_prevTime=System.nanoTime();
+        m_prevTime = System.nanoTime();
     }
 
     public PIDController(PIDCoefficients coefficients) {
+        lastTenStates = new ArrayList<Boolean>();
         m_P = coefficients.p;
         m_I = coefficients.i;
         m_D = coefficients.d;
-        m_prevTime=System.nanoTime();
+        m_prevTime = System.nanoTime();
     }
 
 
@@ -122,6 +132,10 @@ public class PIDController {
             // Calculate the error signal
             m_error = m_setpoint - m_input;
 
+            lastTenStates.add(onTarget());
+            if (lastTenStates.size() > 10) {
+                lastTenStates.remove(0);
+            }
             // !!!!DEBUG!!!
             //System.out.println(m_setpoint);
             //Log.d("PID", String.valueOf(m_setpoint));
@@ -142,23 +156,22 @@ public class PIDController {
 
             //time since last iteration
             m_currentTime = System.nanoTime();
-            m_deltaTime=(m_currentTime-m_prevTime)/1E9;
-            m_prevTime=m_currentTime;
+            m_deltaTime = (m_currentTime - m_prevTime) / 1E9;
+            m_prevTime = m_currentTime;
 
-            if(m_deltaTime > .15)
-            {
-                Log.e("", "Laggy Loop! " + m_deltaTime  + "  sec");
+            if (m_deltaTime > .15) {
+                Log.e("", "Laggy Loop! " + m_deltaTime + "  sec");
                 //m_deltaTime = 0;
             }
 
             //integrate with windup prevention
             //reset total error if we are outside the integral control regime or if current error crosses zero
 //            if (!(Math.abs(m_integralCutIn) < .00000000001)) { //this is just a check if integralCutIn is zero - zero actually means we ignore cut-in and allow total error to accumulate regardless of current error magnitude
-                if (Math.abs(m_integralCutIn) < Math.abs(m_error)){ //we are outside of intended integral regime - reset accumulated error
-                    m_totalError = 0.0;
+            if (Math.abs(m_integralCutIn) < Math.abs(m_error)) { //we are outside of intended integral regime - reset accumulated error
+                m_totalError = 0.0;
             }
 
-            if(between(m_I * m_totalError, m_minimumOutput, m_maximumOutput)){ //extra sanity check - only accumulate error if the integral output on it's own is inside the output range
+            if (between(m_I * m_totalError, m_minimumOutput, m_maximumOutput)) { //extra sanity check - only accumulate error if the integral output on it's own is inside the output range
                 //integral calculation factored for time
                 m_totalError += (m_error * m_deltaTime);
             }
@@ -177,7 +190,7 @@ public class PIDController {
             pwrP = m_P * m_error;
             pwrI = m_I * m_totalError;
             pwrD = m_D * m_deltaError;
-            if(m_F != null)
+            if (m_F != null)
                 pwrF = m_F.apply(m_input);
             else
                 pwrF = 0;
@@ -199,6 +212,7 @@ public class PIDController {
     /**
      * Set the PID Controller gain parameters.
      * Set the proportional, integral, and differential coefficients.
+     *
      * @param p Proportional coefficient
      * @param i Integral coefficient
      * @param d Differential coefficient
@@ -224,6 +238,7 @@ public class PIDController {
 
     /**
      * Get the Proportional coefficient
+     *
      * @return proportional coefficient
      */
     public synchronized double getP() {
@@ -232,6 +247,7 @@ public class PIDController {
 
     /**
      * Get the Integral coefficient
+     *
      * @return integral coefficient
      */
     public synchronized double getI() {
@@ -240,6 +256,7 @@ public class PIDController {
 
     /**
      * Get the Differential coefficient
+     *
      * @return differential coefficient
      */
     public synchronized double getD() {
@@ -250,6 +267,7 @@ public class PIDController {
     /**
      * Return the current PID result
      * This is always centered on zero and constrained the the max and min outs
+     *
      * @return the latest calculated output
      */
     public double performPID() {
@@ -258,10 +276,11 @@ public class PIDController {
     }
 
     /**
-     *  Set the PID controller to consider the input to be continuous,
-     *  Rather than using the max and min in as constraints, it considers them to
-     *  be the same point and automatically calculates the shortest route to
-     *  the setpoint.
+     * Set the PID controller to consider the input to be continuous,
+     * Rather than using the max and min in as constraints, it considers them to
+     * be the same point and automatically calculates the shortest route to
+     * the setpoint.
+     *
      * @param continuous Set to true turns on continuous, false turns off continuous
      */
     public void setContinuous(boolean continuous) {
@@ -269,10 +288,10 @@ public class PIDController {
     }
 
     /**
-     *  Set the PID controller to consider the input to be continuous,
-     *  Rather than using the max and min in as constraints, it considers them to
-     *  be the same point and automatically calculates the shortest route to
-     *  the setpoint.
+     * Set the PID controller to consider the input to be continuous,
+     * Rather than using the max and min in as constraints, it considers them to
+     * be the same point and automatically calculates the shortest route to
+     * the setpoint.
      */
     public void setContinuous() {
         this.setContinuous(true);
@@ -306,23 +325,26 @@ public class PIDController {
      * This assumes that we want to prevent integral wind-up while the proportional constant can do the correction
      * But when the error is small, the proportional response is weak and the integral should come into play
      * if zero, then the error will always be integrated regardless of current error size - almost guaranteed to lead to wind-up
+     *
      * @param cutIn
      */
-    public void setIntegralCutIn(double cutIn){
+    public void setIntegralCutIn(double cutIn) {
         m_integralCutIn = cutIn;
     }
 
     /**
      * By default integral zero-crossing windup is enabled - this will help prevent oscillations around the setpoint
      * This is really here only so it can be turned of for special cases
+     *
      * @param reset
      */
-    public void enableIntegralZeroCrossingReset(boolean reset){
+    public void enableIntegralZeroCrossingReset(boolean reset) {
         m_integralCrossingReset = reset;
     }
 
     /**
      * Set the setpoint for the PIDController
+     *
      * @param setpoint the desired setpoint
      */
     public void setSetpoint(double setpoint) {
@@ -341,6 +363,7 @@ public class PIDController {
 
     /**
      * Returns the current setpoint of the PIDController
+     *
      * @return the current setpoint
      */
     public double getSetpoint() {
@@ -349,6 +372,7 @@ public class PIDController {
 
     /**
      * Returns the current difference of the input from the setpoint
+     *
      * @return the current error
      */
     public synchronized double getError() {
@@ -359,7 +383,9 @@ public class PIDController {
         return m_totalError;
     }
 
-    public synchronized void setTotalError( double totalError ) { m_totalError = totalError; }
+    public synchronized void setTotalError(double totalError) {
+        m_totalError = totalError;
+    }
 
     public synchronized double getDeltaError() {
         return m_deltaError;
@@ -369,21 +395,22 @@ public class PIDController {
         return m_deltaTime;
     }
 
-    public synchronized double getPwrP () {
+    public synchronized double getPwrP() {
         return pwrP;
     }
 
-    public synchronized double getPwrI () {
+    public synchronized double getPwrI() {
         return pwrI;
     }
 
-    public synchronized double getPwrD () {
+    public synchronized double getPwrD() {
         return pwrD;
     }
 
     /**
      * Set the percentage error which is considered tolerable for use with
      * OnTarget. (Input of 15.0 = 15 percent)
+     *
      * @param percent error which is tolerable
      */
     public void setTolerance(double percent) {
@@ -394,6 +421,7 @@ public class PIDController {
      * Return true if the error is within the percentage of the total input range,
      * determined by setTolerance. This asssumes that the maximum and minimum input
      * were set using setInput.
+     *
      * @return true if the error is less than the tolerance
      */
     public boolean onTarget() {
@@ -401,12 +429,17 @@ public class PIDController {
                 (m_maximumInput - m_minimumInput));
     }
 
+    public boolean lockedOnTarget() {
+        return lastTenStates.contains(false);
+    }
+
+
     /**
      * Begin running the PIDController
      */
     public void enable() {
 
-        if (!m_enabled) m_prevTime=System.nanoTime(); //if it's been false for a while, the previous time is likely very stale
+        if (!m_enabled) m_prevTime = System.nanoTime(); //if it's been false for a while, the previous time is likely very stale
         m_enabled = true;
     }
 
@@ -426,10 +459,10 @@ public class PIDController {
         m_prevError = 0;
         m_totalError = 0;
         m_result = 0;
-        m_prevTime=System.nanoTime();
+        m_prevTime = System.nanoTime();
     }
 
-    public void setInput(double input){
+    public void setInput(double input) {
         m_input = input;
     }
 

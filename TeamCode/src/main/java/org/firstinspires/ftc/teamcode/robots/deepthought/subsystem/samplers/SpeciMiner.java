@@ -41,7 +41,7 @@ public class SpeciMiner extends Arm {
     public static int SHOULDER_HOME_POSITION = 250;
     public static int SHOULDER_PREINTAKE_POSITION = 250;
     public static int SHOULDER_PREOUTTAKE_POSITION = 810;
-    public static int SHOULDER_WALLTAKE_POSITION = -390;
+    public static int SHOULDER_WALLTAKE_POSITION = -400;
 
     public static int SHOULDER_WALLTAKE_OFFSET = 100; // how much to raise the shoulder to lift off the wall
     public static int SHOULDER_LOWOUTTAKE_POSITION = 0;
@@ -58,7 +58,7 @@ public class SpeciMiner extends Arm {
 
     public int SLIDE_LATCH_OFFSET = 680; //500 for vertical version,  how much further to extend slide to latch
 
-    public double ELBOW_WALLTAKE_ANGLE = 83;
+    public double ELBOW_WALLTAKE_ANGLE = 68;
     public double ELBOW_HIGHBAR_ANGLE = 15;
 
     public double ELBOW_FLOORTAKE_ANGLE = 140; // todo tune

@@ -14,7 +14,6 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.deepthought.field.POI;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Trident;
@@ -167,7 +166,7 @@ public class AutoSpecimens implements TelemetryProvider {
             case 7: // start sweeping the ground samples
                 if (autonSweepSample(field.sweep1, field.sweep1Oz, false, packet)) {
 //                    robot.aprilTagRelocalization(false);
-                    autonIndex++;
+                    autonIndex+=3;
                 }
                 break;
             case 8:
@@ -177,7 +176,7 @@ public class AutoSpecimens implements TelemetryProvider {
                 break;
             case 9:
                 if (autonSweepSample(field.sweep3, field.sweep3Oz, false, packet)) {
-                    autonIndex = 15;
+                    autonIndex++;
                 }
                 break;
             case 10:
@@ -418,35 +417,27 @@ public class AutoSpecimens implements TelemetryProvider {
         return false;
     }
 
-    public void incrementSweepSample() {
-        autonSweepIndex++;
-    }
-
-
     public int autonSweepIndex = 0;
-    public long autonSweepTimer = 0;
+    public int autonSweepTimer = 0;
 
     //Sweep a given sample to ozone using the Sampler
     public boolean autonSweepSample(POI sweepFrom, POI ozone, boolean recover, TelemetryPacket packet) {
-
         switch (autonSweepIndex) {
             case 0: // set sampler for sweeping over
                 //if(robot.trident.sampler.sweepConfig(true))
-                robot.trident.sampler.sweepConfig(true);
+                robot.trident.sampler.sweepConfig(false);
                 autonSweepIndex++;
                 break;
             case 1: // drive to sweeping start position
                 if (robot.driveTrain.strafeAndTurn(sweepFrom.getPose(), packet)) {
-                    autonSweepTimer = futureTime(.5);
                     autonSweepIndex++;
                 }
                 break;
             case 2: // sweep setting
-                if (robot.trident.sampler.sweepConfig(false) && isPast(autonSweepTimer)) // sampler floats just above floor
+                if (robot.trident.sampler.sweepConfig(false)) // sampler floats just above floor
                     autonSweepIndex++;
                 break;
             case 3: // let's sweep
-                robot.trident.sampler.sweepConfig(false);
                 //if (robot.driveTrain.strafeToPose(ozone.getPose(), packet)) { //strafeToPose is slow
                 if (robot.driveTrain.turnUntilDegreesIMU(wrapAngle(ozone.heading), .5 )) {
                     robot.trident.sampler.sweepConfig(true); //set for sweepOver return

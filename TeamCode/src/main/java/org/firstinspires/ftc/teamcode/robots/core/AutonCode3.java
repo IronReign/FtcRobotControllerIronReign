@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.robots.core;
 
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.withinError;
+
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
@@ -135,43 +137,47 @@ public class AutonCode3 extends OpMode {
             case 0:
                 robot.claw.setPosition(robot.clawClosePosition);
                 // set up for high bar
+                robot.shoulder.setPower(1);
                 robot.preLatchPresets();
-                autonTimer=futureTime(1); // maximum time to allow next case
+                autonTimer=futureTime(2); // maximum time to allow next case
+                autonIndex++;
+
+            case 1:
                 //drive forward to set distance from the sub perimeter
                 if (robot.driveDistance(Robot.SPECIMEN_PRELATCH_DISTANCE, 1) || isPast(autonTimer))
                 {
-                    autonTimer=futureTime(1); // maximum time to allow next case
+                    autonTimer=futureTime(4); // maximum time to allow next case
                     autonIndex++;
                     //autonIndex--;
                 }
                 break;
 
-            case 1:
+            case 2:
                 //latch the specimen
-                    robot.shoulder.setTargetPosition(robot.SPECIMEN_LATCH_SHOULDER);
-                    if (!robot.shoulder.isBusy() || isPast(autonTimer))
-                    //if (robot.shoulder.getCurrentPosition() <= robot.shoulder.getTargetPosition() || isPast(autonTimer)) {
+                    robot.shoulderTargetPosition = robot.SPECIMEN_LATCH_SHOULDER;
+                    //if (!robot.shoulder.isBusy() || isPast(autonTimer))
+                    if (withinError(robot.shoulder.getCurrentPosition(), robot.shoulder.getTargetPosition(), 10) || isPast(autonTimer))
                     {
                         autonIndex++;
                         //autonIndex--; //if we need to step through
-                        robot.claw.setPosition(robot.clawOpenPosition);
+                        robot.clawOpen = true;
                         autonTimer = futureTime(.25);
+                        autonTimer2 = futureTime(1.5);
                     }
 
                 break;
 
-            case 2:
-                //back up after short delay
-                if (isPast(autonTimer)) {
-                    if (robot.driveDistance(24.0 * 2.54, 1) || isPast(autonTimer)) {
-                        autonTimer=futureTime(1); // maximum time to allow next case
-                        autonIndex++;
-                        //autonIndex--; //if we need to step through
+            case 3:
+                //back up to 1st tile seam after short delay
+                if (isPast(autonTimer)) { // wait for claww to open before driving back
+                    if (robot.driveDistance(30.0 * 2.54, 1) || isPast(autonTimer2)) {
+                        autonTimer = futureTime(1); // maximum time to allow next case
+                        autonIndex++;  //the end
                     }
                 }
                 break;
 
-            case 3:
+            case 4:
                 //turn right
                 if (robot.turnUntilDegreesIMU(-90, .75) || isPast(autonTimer)) {
                     autonTimer=futureTime(2); // maximum time to allow next case
@@ -182,24 +188,25 @@ public class AutonCode3 extends OpMode {
                 break;
 
 
-            case 4:
+            case 5:
                 //drive targeting the apriltag with distance sensor
                 if (robot.driveDistance(24.0*2.54, 1) || isPast(autonTimer))
                 {
                     robot.wallTakePresets(); // set arm for specimens on wall
                     autonTimer=futureTime(1); // maximum time to allow next case
-                    autonIndex++;
+                    autonIndex=0;
+                    return true;
                 }
                 break;
 
-            case 5:
+            /*case 6:
                 // turn right
-                if (robot.turnUntilDegreesIMU(-90, .75) || isPast(autonTimer)) {
+                if (robot.turnUntilDegreesIMU(-180, .75) || isPast(autonTimer)) {
                     autonTimer = futureTime(1); // maximum time to allow next case
                     autonIndex++;
                 }
                 break;
-            case 6: //approach wall
+            case 7: //approach wall
                 if (robot.driveDistance(12.0*2.54, 1) || isPast(autonTimer))
                 {
                     autonTimer=futureTime(1); // maximum time to allow next case
@@ -290,14 +297,20 @@ public class AutonCode3 extends OpMode {
                         autonIndex=0;  //the end
                         return true;
                     }
-            }
+            }*/
         }
         return false;
+    }
+    @Override
+    public void start()
+    {
+        robot.setShoulderTargetPosition(robot.shoulder.getTargetPosition());
     }
 
     @Override
     public void loop() {
         debug(new Canvas());
+        robot.updateMotors();
         if (runAuton) {
             runAuton = !execute();
         }

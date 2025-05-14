@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.robots.deepthought.field;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants.FIELD_INCHES_PER_GRID;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.P2D;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.withinError;
 
 import com.acmerobotics.roadrunner.Pose2d;
 
@@ -29,8 +30,11 @@ public class POI extends Flippable {
     }
 
 
+    public double distTo(Pose2d pose) {
+        return Math.hypot(pose.position.x / FIELD_INCHES_PER_GRID - x, pose.position.y / FIELD_INCHES_PER_GRID - y);
+    }
     public boolean atPOI(Pose2d pose) {
-        return Math.hypot(pose.position.x / FIELD_INCHES_PER_GRID - x, pose.position.y / FIELD_INCHES_PER_GRID - y) < POI_ERROR_RADIUS;
+        return distTo(pose) < POI_ERROR_RADIUS && withinError(this.pose.heading.real, this.pose.heading.real, 2);
     }
 }
 

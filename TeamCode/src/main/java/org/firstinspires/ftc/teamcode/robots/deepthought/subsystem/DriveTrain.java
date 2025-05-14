@@ -46,7 +46,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     private double targetHeading, targetVelocity = 0;
     public static PIDController headingPID;
     public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(0.03, 0.04, 0);
-    public static double HEADING_PID_TOLERANCE = .08; //this is a percentage of the input range .063 of 2PI is 1 degree
+    public static double HEADING_PID_TOLERANCE = 3.5; //this is a percentage of the input range .063 of 2PI is 1 degree
     private double PIDCorrection, PIDError;
     public static int turnToTest = 0;
     public static double turnToSpeed = .8; //max angular speed for turn
@@ -142,7 +142,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
                 x,
                 y);
         //additional rotation needed if blue alliance perspective
-        Rotation2d heading = (!isRed) ? getPose().heading : getPose().heading.plus(Math.PI);
+        Rotation2d heading = (!isRed) ? localizer.getPose().heading : localizer.getPose().heading.plus(Math.PI);
         input = heading.inverse().times(
                 new Vector2d(-input.x, input.y));
         setDrivePowers(new PoseVelocity2d(input, -theta));
@@ -153,10 +153,10 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     //this is an absolute (non-relative) implementation.
     //the direction of the turn will favor the shortest approach
     public boolean turnUntilDegreesIMU(double turnAngle, double maxSpeed) {
-//        Sensors.driveIMUEnabled = true;
+        Sensors.driveIMUEnabled = true;
         targetHeading = wrapAngle(turnAngle);
         headingPID.setPID(HEADING_PID_PWR);
-        headingPID.setInput(wrapAngle(Robot.sensors.driveIMUYaw));
+        headingPID.setInput(wrapAngle(Robot.sensors.driveIMUYaw)); //seems to be heading from roadrunner
         headingPID.setSetpoint(targetHeading);
         headingPID.setOutputRange(-maxSpeed, maxSpeed);
         headingPID.setTolerance(HEADING_PID_TOLERANCE);
@@ -166,7 +166,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
         if (headingPID.onTarget()) {
             //turn meets accuracy target
             //todo is this a good time to update getPose() heading from imu?
-            setPose(new Pose2d(getPose().position, Math.toRadians(Robot.sensors.driveIMUYaw)));
+            //setPose(new Pose2d(getPose().position, Math.toRadians(Robot.sensors.driveIMUYaw)));
             //stop
             Sensors.driveIMUEnabled = false;
             setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
@@ -183,7 +183,7 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     }
 
     public void setPose(Pose2d pose) {
-        super.setPose(pose);
+        super.localizer.setPose(pose);
     }
 
     @Override
@@ -200,15 +200,15 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
 
         Map<String, Object> telemetryMap = new HashMap<>();
-        telemetryMap.put("x in fieldCoords", getPose().position.x / Constants.FIELD_INCHES_PER_GRID);
-        telemetryMap.put("y in fieldCoords", getPose().position.y / Constants.FIELD_INCHES_PER_GRID);
-        telemetryMap.put("x in inches", getPose().position.x);
-        telemetryMap.put("y in inches", getPose().position.y);
+        telemetryMap.put("x in fieldCoords", localizer.getPose().position.x / Constants.FIELD_INCHES_PER_GRID);
+        telemetryMap.put("y in fieldCoords", localizer.getPose().position.y / Constants.FIELD_INCHES_PER_GRID);
+        telemetryMap.put("x in inches", localizer.getPose().position.x);
+        telemetryMap.put("y in inches", localizer.getPose().position.y);
 
 //        telemetryMap.put("Right Distance Sensor Value", robot.sensors.rightDistSensorValue);
 //        telemetryMap.put("Left Distance Sensor Value", robot.sensors.leftDistSensorValue);
 
-        telemetryMap.put("heading", Math.toDegrees(getPose().heading.log()));
+        telemetryMap.put("heading", Math.toDegrees(localizer.getPose().heading.log()));
         telemetryMap.put("Left Odometry Pod:\t", leftFront.getCurrentPosition());
         telemetryMap.put("Right Odometry Pod:\t", rightFront.getCurrentPosition());
         telemetryMap.put("Cross Odometry Pod:\t", rightBack.getCurrentPosition());
@@ -232,13 +232,36 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
         return "DRIVETRAIN";
     }
 
+    int strafeAndTurnIndex = 0;
+    SequentialAction strafeAndTurnAction;
+    public boolean strafeAndTurn(Pose2d pose2d, TelemetryPacket packet) {
+        switch (strafeAndTurnIndex) {
+            case 0:
+                TrajectoryActionBuilder strafeAndTurnActionBuilder = robot.driveTrain.actionBuilder(localizer.getPose())
+                        .strafeToLinearHeading(pose2d.position, pose2d.heading);
+                strafeAndTurnAction = new SequentialAction(strafeAndTurnActionBuilder.build());
+                strafeAndTurnIndex++;
+                break;
+            case 1:
+                robot.driveTrain.trajectoryIsActive = true;
+                if (!strafeAndTurnAction.run(packet)) {
+                    strafeAndTurnIndex = 0;
+                    robot.driveTrain.trajectoryIsActive = false;
+                    return true;
+                }
+                break;
+        }
+        return false;
+    }
+
     int strafeToPoseIndex = 0;
     SequentialAction strafeToPoseAction;
+
     public boolean strafeToPose(Pose2d pose2d, TelemetryPacket packet) {
         if (roadRunnerDrive) {
             switch (strafeToPoseIndex) {
                 case 0:
-                    TrajectoryActionBuilder strafeActionBuilder = robot.driveTrain.actionBuilder(getPose())
+                    TrajectoryActionBuilder strafeActionBuilder = robot.driveTrain.actionBuilder(localizer.getPose())
                             .strafeTo(pose2d.position)
                             .turnTo(pose2d.heading);
                     strafeToPoseAction = new SequentialAction(strafeActionBuilder.build());
@@ -248,6 +271,34 @@ public class DriveTrain extends MecanumDriveReign implements Subsystem {
                     robot.driveTrain.trajectoryIsActive = true;
                     if (!strafeToPoseAction.run(packet)) {
                         strafeToPoseIndex = 0;
+                        robot.driveTrain.trajectoryIsActive = false;
+                        return true;
+                    }
+                    break;
+            }
+        }
+        return false;
+    }
+
+
+    int turnThenStrafeIndex = 0;
+    SequentialAction turnThenStrafeAction;
+
+    public boolean turnThenStrafe(Pose2d pose2d, TelemetryPacket packet) {
+        if (roadRunnerDrive) {
+            switch (turnThenStrafeIndex) {
+                case 0:
+                    TrajectoryActionBuilder strafeActionBuilder = robot.driveTrain.actionBuilder(localizer.getPose())
+                            .turnTo(pose2d.heading)
+                            .strafeTo(pose2d.position);
+
+                    turnThenStrafeAction = new SequentialAction(strafeActionBuilder.build());
+                    turnThenStrafeIndex++;
+                    break;
+                case 1:
+                    robot.driveTrain.trajectoryIsActive = true;
+                    if (!turnThenStrafeAction.run(packet)) {
+                        turnThenStrafeIndex = 0;
                         robot.driveTrain.trajectoryIsActive = false;
                         return true;
                     }
