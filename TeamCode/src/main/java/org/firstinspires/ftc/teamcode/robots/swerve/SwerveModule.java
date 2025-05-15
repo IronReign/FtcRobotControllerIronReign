@@ -110,6 +110,10 @@ public class SwerveModule {
         }
     }
 
+    public void resetEncoder () {
+        yawEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+
     /**
      * Returns the current yaw angle of the module, in degrees (wrapped between 0 and 360).
      */
