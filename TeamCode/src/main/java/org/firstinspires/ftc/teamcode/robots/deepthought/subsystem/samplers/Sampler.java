@@ -48,7 +48,7 @@ public class Sampler extends Arm {
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
     public static int SHOULDER_PREINTAKE_POSITION = -150;
-    public static int SHOULDER_INTAKE_POSITION = -375;
+    public static int SHOULDER_INTAKE_POSITION = -305;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
     public static int SHOULDER_HIGHOUTTAKE_POSITION = 1485;
     public static int SLIDE_ADJUST_SPEED = 80;
@@ -74,6 +74,7 @@ public class Sampler extends Arm {
     public int shoulderPositionMax = 850;
 
     public static int colorSensorGain = 12;
+    public static int elbowRange = 10;
 
     public Sampler(HardwareMap hardwareMap, Robot robot, Trident trident) {
         this.hardwareMap = hardwareMap;
@@ -84,6 +85,7 @@ public class Sampler extends Arm {
         SLIDE_HIGHOUTTAKE_POSITION = 1900;
 
 
+
         //defaults specific to sampler
         ELBOW_START_ANGLE = 15; // was 140 for axon - 190 for blue dsservo45 is pressing firmly
         ELBOW_HOME_POSITION = 900; // 2050 for axon  - 900 for dsservo 45kg
@@ -92,9 +94,11 @@ public class Sampler extends Arm {
         ELBOW_MIN_ANGLE = 15; // -15 for Axon
         ELBOW_MAX_ANGLE = 220;  // 220 for Axon
         ELBOW_ADJUST_ANGLE = 5;
-        ELBOW_PREINTAKE_ANGLE = 160;  // to clear over the sub wall // 5 for axon
+        ELBOW_PREINTAKE_ANGLE = 150;  // to clear over the sub wall // 5 for axon
         ELBOW_LOWOUTTAKE_ANGLE = 110; // 120 for axon
         ELBOW_HIGHOUTTAKE_ANGLE = 120; // 60 for axon
+
+        TUNABLE_COEFFICIENT = ELBOW_PREINTAKE_ANGLE;
 
         elbow = new Joint(hardwareMap, "samplerElbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "samplerSlide");
@@ -144,6 +148,7 @@ public class Sampler extends Arm {
             elbow.setSpeed(ELBOW_JOINT_SPEED);
 //            trident.setShoulderTarget(this, shoulderTargetPosition);
         }
+        ELBOW_PREINTAKE_ANGLE = TUNABLE_COEFFICIENT;
 //        if (colorSensorEnabled) {
 //            updateColorSensor();
 //        }
@@ -271,8 +276,15 @@ public class Sampler extends Arm {
                 break;
             case 3:
                 if (slideTargetPosition > SLIDE_INTAKE_MIN_POSITION) {
-                    slideTargetPosition -= 400;
-                    trident.setShoulderTarget(this, (int) (trident.getShoulderTarget() - 400 * 0.44090909090909));
+                    slideTargetPosition = 0;
+                    int slideRange = 1040;
+                    int slideProgress = ((trident.getShoulderCurrentPosition()))/slideRange;
+                    int shoulderRange = 90;
+                    int interpShoulder= -420 + slideProgress*shoulderRange;
+                    int interpElbow = 150 + slideProgress*elbowRange;
+                    //trident.setShoulderTarget(this, (int) (trident.getShoulderTarget() - 200 * 0.44090909090909));
+                    trident.setShoulderTarget(this, interpShoulder);
+                    setElbowAngle(interpElbow);
 
                 }
                 if (stopOnSample() || isPast(intakeTimer)) {

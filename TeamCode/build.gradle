@@ -32,39 +32,39 @@ android {
 
 // vvvvvvv added this section to copy config files from assets/configs to sdcard/FIRST since Limelight breaks the build with malformed xml if in /res/xml
 // 1) Copy all *.xml files from assets to build/stagedXml, flattening structure
-task stageXmlAssets(type: Copy) {
-    from("${project.projectDir}/src/main/assets") {
-        // Recursively include *.xml in any subfolder
-        include "configs/*.xml"
-    }
-
-    // Flatten any subdirectories so everything ends up in one directory.
-    eachFile { details ->
-        // Get just the filename
-        def filename = details.file.getName()
-        // Create a new RelativePath
-        details.relativePath = new RelativePath(!details.file.isDirectory(), filename)
-    }
-
-    into("$buildDir/stagedXml")
-}
+//task stageXmlAssets(type: Copy) {
+//    from("${project.projectDir}/src/main/assets") {
+//        // Recursively include *.xml in any subfolder
+//        include "configs/*.xml"
+//    }
+//
+//    // Flatten any subdirectories so everything ends up in one directory.
+//    eachFile { details ->
+//        // Get just the filename
+//        def filename = details.file.getName()
+//        // Create a new RelativePath
+//        details.relativePath = new RelativePath(!details.file.isDirectory(), filename)
+//    }
+//
+//    into("$buildDir/stagedXml")
+//}
 
 // 2) Push all staged XML files to /sdcard/FIRST
-task deployXmlAssets(type: Exec) {
-    dependsOn stageXmlAssets  // Make sure the copy happens first
-
-    // This single command will push all the contents of stagedXml into /sdcard/FIRST
-    commandLine "adb", "push", "$buildDir/stagedXml/.", "/sdcard/FIRST"
-}
-
-// 3) (Optional) Hook into installDebug so it happens automatically
-afterEvaluate {
-    tasks.getByPath(":TeamCode:assembleDebug").dependsOn(deployXmlAssets)
-
-//     If you also have installRelease, uncomment below:
-    tasks.getByPath(":TeamCode:installRelease").dependsOn(deployXmlAssets)
-}
-// ^^^^^^^ added this section to copy config files from assets/configs to sdcard/FIRST since Limelight breaks the build with malformed xml if in /res/xml
+//task deployXmlAssets(type: Exec) {
+//    dependsOn stageXmlAssets  // Make sure the copy happens first
+//
+//    // This single command will push all the contents of stagedXml into /sdcard/FIRST
+//    commandLine "adb", "push", "$buildDir/stagedXml/.", "/sdcard/FIRST"
+//}
+//
+//// 3) (Optional) Hook into installDebug so it happens automatically
+//afterEvaluate {
+//    tasks.getByPath(":TeamCode:assembleDebug").dependsOn(deployXmlAssets)
+//
+////     If you also have installRelease, uncomment below:
+//    tasks.getByPath(":TeamCode:installRelease").dependsOn(deployXmlAssets)
+//}
+//// ^^^^^^^ added this section to copy config files from assets/configs to sdcard/FIRST since Limelight breaks the build with malformed xml if in /res/xml
 
 repositories {
    maven {
