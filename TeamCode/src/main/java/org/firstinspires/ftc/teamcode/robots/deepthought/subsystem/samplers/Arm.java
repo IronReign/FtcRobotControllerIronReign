@@ -67,6 +67,7 @@ public abstract class Arm implements Subsystem {
     public double ELBOW_HIGHOUTTAKE_ANGLE;
 
     public double servoPower = 0;
+    public static double beaterIntakeSpeed = 0.4;
 
     public static boolean colorSensorEnabled = false;
 

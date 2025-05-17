@@ -124,7 +124,7 @@ public class Sampler extends Arm {
 
     @Override
     public boolean stopOnSample() {
-        servoPower = 0.8;
+        servoPower = beaterIntakeSpeed;
         if (sampleDetected()) {
             servoPower = 0;
             return true;
@@ -268,7 +268,7 @@ public class Sampler extends Arm {
                 break;
             case 2: // start the intake beater when shoulder and slide are in position
                 if (withinError(trident.getShoulderCurrentPosition(), SHOULDER_INTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
-                    servoPower = .8;
+                    servoPower = beaterIntakeSpeed;
                     intakeTimer = futureTime(2);
                     intakeIndex++;
                     colorSensorEnabled = true;
@@ -360,7 +360,7 @@ public class Sampler extends Arm {
                 break;
             case 5:
                 slideTargetPosition += 170;
-                servoPower = .8;
+                servoPower = beaterIntakeSpeed;
                 outtakeIndex++;
                 break;
             case 6:
@@ -412,7 +412,7 @@ public class Sampler extends Arm {
                 break;
             case 1: // bow the elbow low
                 if (isPast(bowTimer)) {
-                    servoPower = .8;
+                    servoPower = beaterIntakeSpeed;
                     elbow.setTargetAngle(ElbowBowLow);
                     slideTargetPosition = SlideBowOut;
                     bowTimer = futureTime(2);
