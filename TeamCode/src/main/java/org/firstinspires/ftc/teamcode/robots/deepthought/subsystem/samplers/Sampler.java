@@ -360,11 +360,12 @@ public class Sampler extends Arm {
                 break;
             case 5:
                 slideTargetPosition += 170;
-                servoPower = beaterIntakeSpeed;
+                servoPower = beaterIntakeSpeed *2;
+                outtakeTimer = futureTime(.3);
                 outtakeIndex++;
                 break;
             case 6:
-                if (!sampleDetected()) {
+                if (!sampleDetected() && isPast(outtakeTimer)) {
                     elbow.setTargetAngle(180);
                     outtakeIndex = 0;
                     return true;
