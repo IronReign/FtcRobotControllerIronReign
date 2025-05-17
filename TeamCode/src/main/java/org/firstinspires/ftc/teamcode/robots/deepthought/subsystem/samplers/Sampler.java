@@ -87,11 +87,11 @@ public class Sampler extends Arm {
 
 
         //defaults specific to sampler
-        ELBOW_START_ANGLE = 15; // was 140 for axon - 190 for blue dsservo45 is pressing firmly
+        ELBOW_START_ANGLE = 0; // was 140 for axon - 190 for blue dsservo45 is pressing firmly
         ELBOW_HOME_POSITION = 900; // 2050 for axon  - 900 for dsservo 45kg
         ELBOW_PWM_PER_DEGREE = 5.672222222222222; // -5.672222222222222 for axon - the dsservo 45kg goes the other way
         ELBOW_JOINT_SPEED = 120;
-        ELBOW_MIN_ANGLE = 15; // -15 for Axon
+        ELBOW_MIN_ANGLE = 0; // -15 for Axon
         ELBOW_MAX_ANGLE = 220;  // 220 for Axon
         ELBOW_ADJUST_ANGLE = 5;
         ELBOW_PREINTAKE_ANGLE = 150;  // to clear over the sub wall // 5 for axon
@@ -110,7 +110,7 @@ public class Sampler extends Arm {
         slide.setTargetPosition(0);
         slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slide.setVelocity(SLIDE_SPEED);
-        colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "samplerSensor");
+        //colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "samplerSensor");
         digiColorSensorP0 = this.hardwareMap.get(DigitalChannel.class, "samplerP0");
         digiColorSensorP1 = this.hardwareMap.get(DigitalChannel.class, "samplerP1");
 
@@ -139,6 +139,8 @@ public class Sampler extends Arm {
     @Override
     public void update(Canvas fieldOverlay) {
 //        ELBOW_PREINTAKE_ANGLE = TUNABLE_COEFFICIENT;
+        updateColorSensor(); // can do this without penalty when calling digital brushlabs color sensor
+
         beater.setPower(-servoPower);
         elbow.update();
         if (trident.calibrated) {
@@ -149,9 +151,7 @@ public class Sampler extends Arm {
 //            trident.setShoulderTarget(this, shoulderTargetPosition);
         }
         ELBOW_PREINTAKE_ANGLE = TUNABLE_COEFFICIENT;
-//        if (colorSensorEnabled) {
-//            updateColorSensor();
-//        }
+
         //compute the current articulation/behavior
         articulate();
     }
@@ -439,7 +439,7 @@ public class Sampler extends Arm {
     public String updateColorSensor() {
 
         if (digiColorSensorP0.getState()) {
-            if (digiColorSensorP0.getState()) {
+            if (digiColorSensorP1.getState()) {
                 currentSample = Sample.NEUTRAL;
                 return "NEUTRAL";
             } else {
@@ -447,7 +447,7 @@ public class Sampler extends Arm {
                 return "BLUE";
             }
         } else {
-            if (digiColorSensorP0.getState()) {
+            if (digiColorSensorP1.getState()) {
                 currentSample = Sample.RED;
                 return "RED";
             }
@@ -512,8 +512,8 @@ public class Sampler extends Arm {
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
         telemetryMap.put("slide amps", slide.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("current sample", currentSample.name());
-        telemetryMap.put("colorsensor hsv", "" + HSVasString()); // cached - changes when HSV is read
-        telemetryMap.put("colorsensor rgb", colorLastRGBA.red + " " + colorLastRGBA.green + " " + colorLastRGBA.blue);
+        //telemetryMap.put("colorsensor hsv", "" + HSVasString()); // cached - changes when HSV is read
+        //telemetryMap.put("colorsensor rgb", colorLastRGBA.red + " " + colorLastRGBA.green + " " + colorLastRGBA.blue);
 //        0 40 214
         telemetryMap.put("beater speed", beater.getPower());
         telemetryMap.put("elbow angle target : real", elbow.getTargetAngle() + " : " + elbow.getCurrentAngle());

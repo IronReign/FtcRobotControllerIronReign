@@ -83,7 +83,7 @@ public class Trident implements Subsystem {
     public int SHOULDER_CALIBRATE_ENCODER = Integer.MIN_VALUE;
     int shoulderTargetPosition = 0;
     public static int shoulderSpeed = 45;
-    public static int SHOULDER_CALIBRATE_HORIZONTAL = -2020; // offset to get to horizontal when shoulder is at max
+    public static int SHOULDER_CALIBRATE_HORIZONTAL = -2120; // offset to get to horizontal when shoulder is at max
     public static int SHOULDER_SIZING = 540;  //todo re-tune after horizontal tuning
     public int SHOULDER_HORIZONTAL = 0;
     public static int SHOULDER_MIN_POSITION = -625;  //todo is this right? should be a small negative angle
