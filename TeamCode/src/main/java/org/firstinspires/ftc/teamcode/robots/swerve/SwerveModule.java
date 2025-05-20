@@ -67,7 +67,7 @@ public class SwerveModule {
         double currentAngle = getCurrentAngle();
         // Compute the minimal angle difference (–180 to 180)
         double angleDiff = utilMethods.angleDifference(desiredAngle, currentAngle);
-
+//easter egg
          //If rotating more than 90° is required, invert drive to minimize rotation.
         if (Math.abs(angleDiff) >= 90) {
             invertedDrive = true;
