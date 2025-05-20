@@ -77,6 +77,7 @@ public class SwerveModule {
             targetAngle = Utils.wrapAngle(desiredAngle);
         }
 
+
         // Optionally, only allow the drive motor to run if the yaw error is within threshold or about opposite of the current angle.
         if (Math.abs(angleDiff) < thresholdAngle || Math.abs(angleDiff) > 180 - thresholdAngle && Math.abs(angleDiff) < 180 + thresholdAngle) {
             swerveAligned = true;
@@ -112,6 +113,13 @@ public class SwerveModule {
 
     public void resetEncoder () {
         yawEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        // Optionally, only allow the drive motor to run if the yaw error is within threshold.
+//        if (Math.abs(angleDiff) < thresholdAngle) {
+           // driveMotor.setPower(invertedDrive ? -speed : speed);
+//        } else {
+//            driveMotor.setPower(0);
+//        }
     }
 
     /**

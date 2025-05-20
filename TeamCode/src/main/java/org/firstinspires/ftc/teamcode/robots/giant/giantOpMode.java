@@ -20,6 +20,7 @@ public class giantOpMode extends OpMode {
     StickyGamepad g1=null;
     StickyGamepad g2=null;
     int dunk=0;
+    boolean turn=true;
 
     @Override
     public void init() {
@@ -43,7 +44,7 @@ public class giantOpMode extends OpMode {
     public void handleJoysticks(Gamepad gamepad, Gamepad gamepadtwo){
         //change gamemode transfer,
         if(g1.dpad_up){
-            if(robot.getUpExtend()<950){
+            if(robot.getUpMotor()<950){
                 robot.setUpExtend(1000);
             }
             robot.wallGrab();
@@ -53,15 +54,18 @@ public class giantOpMode extends OpMode {
             prep();
             if(!robot.getMode()){
                 robot.open();
-                if(robot.getUpExtend()<1250){       //1600
+                if(robot.getUpMotor()<1250){       //1600
                     robot.setUpExtend(1300);        //1700
                 }
-                robot.setShoulder(800);
-                robot.setUpExtend(30);
+                if(robot.getUpMotor()>1280){
+                    robot.setShoulder(1250);     //800
+                }
+                robot.setUpExtend(0);
             }
             robot.open();
-            if(robot.getOutExtend()>1700){          //if(robot.getOutExtend()>2600){
+            if(robot.getOutMotor()>300){          //if(robot.getOutExtend()>2600){
                 robot.suck();
+                robot.setTilt(760);     //750
             }
         }
         if(gamepad1.dpad_left){
@@ -79,66 +83,93 @@ public class giantOpMode extends OpMode {
             robot.setClawP();
         }
         if(g1.x){
-            //robot.close();        maybe see if work or check if too quick motion
          //   if(robot.getMode()){
                 robot.hookit();
-                if(robot.getUpExtend()>2150){
-                    robot.setShoulder(1270);        //1270
+                if(robot.getUpMotor()>2000){        //<--try new one
+                //if(robot.getUpExtend()>2150){     //<--old one that works
+                    robot.setShoulder(1270+420);        //check value make sure still good
                 }
-
-
             // robot.setUpExtend(2250);
-
         }
         if(g1.y){
             if(robot.getMode()){
                 robot.downHook();
             }else{
-                robot.dunk();
+                robot.dunk();           //fix with new sample transfer presets
             }
-
         }
         if(g1.b){
             robot.setSuck(false);
         }
 
 
-        if(g2.guide){
-            robot.resetDrive();
+        if(robot.getlimit() && g2.guide){
+
+            robot.calibrateUp();
         }
+        if(g2.back){
+            robot.recallibrate();
+        }
+
+        //TEST THIS THING
+        if(g2.a){
+            if(turn){
+                robot.turnUntilDegreesIMU(0,1);
+            }else{
+                robot.turnUntilDegreesIMU(180,1);
+            }
+            turn=!turn;
+        }
+        //^^^TEST THIS THING
+
         if(g2.x){
+            //SCOOCH SPECIMEN TO ONE SIDE OF BAR, MAKE SPACE
             robot.scooch();
         }
         if(g2.y){
+            //NO PROJECTILE SPIT
             robot.plsnobad();
         }
 
-        if(g1.back){
-            robot.mode();
+        if(g1.guide){
+            robot.resetDrive();
         }
 
 
-        if(gamepad2.dpad_down && robot.getUpExtend()<3155){
-            robot.addUpExtend(150);
-        }//LOL PENIS - Poovid Pwyer
-        if(gamepad2.dpad_up && robot.getUpExtend()>10){
-            robot.addUpExtend(-150);
-        }
-        if(robot.getUpExtend()<0){
-            robot.setUpExtend(0);
-        }
-        if(robot.getUpExtend()>3155){
-            robot.setUpExtend(3150);
+
+
+
+        if(!robot.getlimit()){
+            if(gamepad2.dpad_down && robot.getUpExtend()<3155){
+                robot.addUpExtend(150);
+            }//LOL PENIS - Poovid Pwyer
+            if(gamepad2.dpad_up && robot.getUpExtend()>10){
+                robot.addUpExtend(-150);
+            }
+            if(robot.getUpExtend()<0){
+                robot.setUpExtend(0);
+            }
+            if(robot.getUpExtend()>3155){
+                robot.setUpExtend(3150);
+            }
+        }else{
+            if(gamepad2.dpad_down){
+                robot.addUpExtend(150);
+            }//LOL PENIS - Poovid Pwyer
+            if(gamepad2.dpad_up){
+                robot.addUpExtend(-150);
+            }
         }
 
-        if(gamepad2.dpad_left && robot.getOutExtend()>-20){
+
+        if(gamepad2.dpad_right && robot.getOutExtend()>-20){
             robot.addOutExtend(-150);
         }
-        if(gamepad2.dpad_right && robot.getOutExtend()<1950){
+        if(gamepad2.dpad_left && robot.getOutExtend()<1080){        //&& robot.getOutExtend()<1950
             robot.addOutExtend(150);
         }
-        if(robot.getOutExtend()>1950){
-            robot.setOutExtend(1900);
+        if(robot.getOutExtend()>1080){
+            robot.setOutExtend(1050);
         }
         if(robot.getOutExtend()<-20){
             robot.setOutExtend(-5);
@@ -159,9 +190,11 @@ public class giantOpMode extends OpMode {
 
 
 
+        if(g1.back){
+            robot.mode();
+        }
 
         robot.setDrive(gamepad1.left_stick_y,-gamepad1.left_stick_x,gamepad1.right_stick_x);
-
     }
 
     private void handleTelemetry(Map<String, Object> telemetryMap, String telemetryName) {
@@ -176,7 +209,8 @@ public class giantOpMode extends OpMode {
         //robot.open();
         //robot.setUpExtend(350);
        // robot.setShoulder(950);     //930
-        robot.setTilt(970);
-        robot.setOutExtend(2750);
+        //robot.setTilt(970);
+        robot.setOutPower(1);
+        robot.setOutExtend(1050);
     }
 }

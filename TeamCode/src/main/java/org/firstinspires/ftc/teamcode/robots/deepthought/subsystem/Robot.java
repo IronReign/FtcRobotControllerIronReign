@@ -69,7 +69,7 @@ public class Robot implements Subsystem {
     public PIDController sampleAlignmentPID;
     public static PIDCoefficients sampleAlignmentCoefficients = new PIDCoefficients(0.03, 0.04, 0);
 
-    public static double SAMPLE_ALIGN_TARGET_TX = 10;
+    public static double SAMPLE_ALIGN_TARGET_TX = 7;
     public static double SAMPLE_ALIGN_TOLERANCE = 3;
     public double PIDError, PIDCorrection;
 
@@ -481,7 +481,7 @@ public class Robot implements Subsystem {
                 sampleAlignmentPID.setInputRange(-25, 25);
                 sampleAlignmentPID.setInput(llResult.getTx());
                 sampleAlignmentPID.setSetpoint(targetTx);
-                sampleAlignmentPID.setOutputRange(-.6, .6);
+                sampleAlignmentPID.setOutputRange(-.7, .7);
                 sampleAlignmentPID.setTolerance(SAMPLE_ALIGN_TOLERANCE);
                 double correction = sampleAlignmentPID.performPID();
                 PIDCorrection = correction;

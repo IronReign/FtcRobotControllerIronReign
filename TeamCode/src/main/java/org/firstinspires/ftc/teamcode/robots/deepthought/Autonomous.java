@@ -2,12 +2,15 @@ package org.firstinspires.ftc.teamcode.robots.deepthought;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.field.Field.P2D;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.samplers.Sampler.preferHighOuttake;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.field.POI;
@@ -90,11 +93,15 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 1:
                 if (isPast(autonTimer)) {
+                    robot.trident.sampler.elbow.setTargetAngle(120);
+
                     autonState = AutonState.DRIVE_TO_BASKET;
+
                     autonIndex++;
                 }
                 break;
             case 2:
+
                 if (autonSamplerOuttake(field.basket, packet)) {
                     robot.resetStates();
                     robot.articulate(Robot.Articulation.MANUAL);
@@ -131,10 +138,9 @@ public class Autonomous implements TelemetryProvider {
             case 6:
 
                 if (autonSamplerIntake(field.ground1, packet)) {
-                    if (robot.trident.sampler.servoPower == 0)
-                        autonIndex++;
+                    if (robot.trident.sampler.servoPower == 0) autonIndex++;
                     else {
-                        autonIndex =10;
+                        autonIndex = 10;
                     }
 //                    return true;
                 }
@@ -153,8 +159,7 @@ public class Autonomous implements TelemetryProvider {
             case 8:
                 if (autonSamplerIntake(field.ground3, packet)) {
 //                    MecanumDriveReign.PARAMS.maxAngVel = Math.PI;
-                    if (robot.trident.sampler.servoPower == 0)
-                        autonIndex++;
+                    if (robot.trident.sampler.servoPower == 0) autonIndex++;
                     else {
                         autonIndex += 2;
                     }
@@ -274,7 +279,7 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
             case 3:
-                autonIntakeTimer = futureTime(2);
+                autonIntakeTimer = futureTime(3);
 //                if (ground.name.equals("GROUND3")) {
 //                    autonIntakeIndex++;
 //                } else {
@@ -308,18 +313,33 @@ public class Autonomous implements TelemetryProvider {
 
     public void pingPong(TelemetryPacket packet) {
 
+        robot.aprilTagRelocalization(false);
+
         switch (pingPongIndex) {
             case 0:
-//                if (robot.alignOnSample()) {
-//                    pingPongIndex++;
+                if (field.basket.atPOI(robot.driveTrain.localizer.getPose()))
+//                if (pose.position.x > -2.3 && pose.position.x < -2.2) {
+                    pingPongIndex = 3;
 //                }
+
                 break;
             case 1:
+//                if (pose.position.y > -2.3 && pose.position.y < -2.2) {
+//                    pingPongIndex++;
+//                }
 
                 break;
             case 2:
-
+//                if (Math.toDegrees(pose.heading.real) > 47 && Math.toDegrees(pose.heading.real) < 52) {
+//                    pingPongIndex++;
+//
+//                }
                 break;
+            case 3:
+                robot.trident.sampler.incrementOuttake();
+                pingPongIndex++;
+                break;
+
         }
 
     }

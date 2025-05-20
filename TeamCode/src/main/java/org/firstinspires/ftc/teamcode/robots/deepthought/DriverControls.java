@@ -63,7 +63,12 @@ public class DriverControls {
 
     public void relocalizationTestMethods() {
         robot.driveTrain.DirectDriveMecanums(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
-        if (gamepad1.a) {
+        if (stickyGamepad1.y) {
+            dampenDrive = false;
+            robot.resetStates();
+            robot.articulate(Robot.Articulation.TRAVEL);
+        }
+        if (gamepad1.guide) {
             Robot.panTargetPosition = Robot.PAN_FORWARD;
             robot.alignOnSample();
         }
@@ -75,9 +80,74 @@ public class DriverControls {
             robot.aprilTagRelocalization(true);
         }
 
-        if (stickyGamepad1.a) {
+        if(gamepad1.right_bumper) {
+            robot.trident.getActiveArm().servoPower = 0;
             Autonomous.pingPongIndex = 0;
+
         }
+
+
+
+        if (stickyGamepad1.a) {
+            robot.resetStates();
+            robot.trident.getActiveArm().currentSample = Arm.Sample.NO_SAMPLE;
+
+            dampenDrive = true;
+
+            if (robot.trident.getActiveArm() instanceof Sampler) {
+                if (robot.trident.sampler.articulation == Sampler.Articulation.INTAKE_PREP) {
+                    robot.resetStates();
+                    robot.articulate(Robot.Articulation.SAMPLER_INTAKE);
+                } else {
+                    robot.articulate(Robot.Articulation.SAMPLER_PREP);
+                }
+            } else {
+                robot.articulate(Robot.Articulation.SPECIMINER_WALLTAKE);
+            }
+        }
+        double power;
+        if (stickyGamepad1.x) {
+            if (stickyGamepad1.x) {
+                if (robot.trident.sampler.articulation == Sampler.Articulation.INTAKE) {
+                    robot.trident.sampler.currentSample = Arm.Sample.NEUTRAL;
+                } else {
+                    if (robot.trident.getActiveArm() instanceof Sampler) {
+                        robot.trident.getActiveArm().servoPower = robot.trident.getActiveArm().servoPower == .8 ? 0 : .8;
+                    } else {
+                        power = robot.trident.getActiveArm().servoPower;
+                        if (power == 1) {
+                            robot.trident.getActiveArm().servoPower = 0;
+                        }
+                        if (power == 0) {
+                            robot.trident.getActiveArm().servoPower = -1;
+                        }
+                        if (power == -1) {
+                            robot.trident.getActiveArm().servoPower = 1;
+                        }
+                    }
+
+                }
+            }
+
+        }
+
+        if (stickyGamepad1.b) {
+            if (robot.trident.getActiveArm() instanceof Sampler) {
+                if (robot.trident.sampler.articulation == Sampler.Articulation.OUTTAKE || robot.articulation == Robot.Articulation.SAMPLER_OUTTAKE) robot.trident.sampler.incrementOuttake();
+                else {
+                    robot.resetStates();
+                    robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
+                }
+            } else {
+                if (robot.trident.speciMiner.articulation == SpeciMiner.Articulation.OUTTAKE || robot.articulation == Robot.Articulation.SPECIMINER_OUTTAKE) {
+                    robot.trident.speciMiner.incrementOuttake();
+                } else {
+                    robot.resetStates();
+                    robot.articulate(Robot.Articulation.SPECIMINER_OUTTAKE);
+                }
+            }
+        }
+
     }
 
     public void manualDiagnosticMethods() {
@@ -127,8 +197,7 @@ public class DriverControls {
         if (stickyGamepad1.b) {
             dampenDrive = true;
             if (robot.trident.getActiveArm() instanceof Sampler) {
-                if (robot.trident.sampler.articulation == Sampler.Articulation.OUTTAKE || robot.articulation == Robot.Articulation.SAMPLER_OUTTAKE)
-                    robot.trident.sampler.incrementOuttake();
+                if (robot.trident.sampler.articulation == Sampler.Articulation.OUTTAKE || robot.articulation == Robot.Articulation.SAMPLER_OUTTAKE) robot.trident.sampler.incrementOuttake();
                 else {
                     robot.resetStates();
                     robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
@@ -198,17 +267,12 @@ public class DriverControls {
     }
 
     public boolean joysticksInactive() {
-        return gamepad1.left_stick_x < DEADZONE && gamepad1.left_stick_y < DEADZONE
-                && gamepad1.right_stick_x < DEADZONE && gamepad1.right_stick_y < DEADZONE
-                && gamepad2.left_stick_x < DEADZONE && gamepad2.left_stick_y < DEADZONE
-                && gamepad2.right_stick_x < DEADZONE && gamepad2.right_stick_x < DEADZONE;
+        return gamepad1.left_stick_x < DEADZONE && gamepad1.left_stick_y < DEADZONE && gamepad1.right_stick_x < DEADZONE && gamepad1.right_stick_y < DEADZONE && gamepad2.left_stick_x < DEADZONE && gamepad2.left_stick_y < DEADZONE && gamepad2.right_stick_x < DEADZONE && gamepad2.right_stick_x < DEADZONE;
     }
 
     public void rumble(int gamepad, int duration) {
-        if (gamepad == 1)
-            gamepad1.rumble(duration);
-        else
-            gamepad2.rumble(duration);
+        if (gamepad == 1) gamepad1.rumble(duration);
+        else gamepad2.rumble(duration);
     }
 
     public void joystickDrive() {
@@ -216,10 +280,8 @@ public class DriverControls {
 
         //GAMEPAD 1 CONTROLS
         // ------------------------------------------------------------------
-        if (fieldOrientedDrive)
-            fieldOrientedDrive();
-        else
-            robotOrientedDrive();
+        if (fieldOrientedDrive) fieldOrientedDrive();
+        else robotOrientedDrive();
         // adjust shoulder
         if (gamepad1.right_bumper) {
             robot.trident.adjustShoulder(-shoulderSpeed);
@@ -258,8 +320,7 @@ public class DriverControls {
         if (stickyGamepad1.b) {
             dampenDrive = true;
             if (robot.trident.getActiveArm() instanceof Sampler) {
-                if (robot.trident.sampler.articulation == Sampler.Articulation.OUTTAKE || robot.articulation == Robot.Articulation.SAMPLER_OUTTAKE)
-                    robot.trident.sampler.incrementOuttake();
+                if (robot.trident.sampler.articulation == Sampler.Articulation.OUTTAKE || robot.articulation == Robot.Articulation.SAMPLER_OUTTAKE) robot.trident.sampler.incrementOuttake();
                 else {
                     robot.resetStates();
                     robot.articulate(Robot.Articulation.SAMPLER_OUTTAKE);
@@ -346,29 +407,20 @@ public class DriverControls {
     }
 
     public void fieldOrientedDrive() {
-        if (Math.abs(gamepad1.left_stick_x) > DEADZONE ||
-                Math.abs(gamepad1.left_stick_y) > DEADZONE ||
-                Math.abs(gamepad1.right_stick_x) > DEADZONE) {
+        if (Math.abs(gamepad1.left_stick_x) > DEADZONE || Math.abs(gamepad1.left_stick_y) > DEADZONE || Math.abs(gamepad1.right_stick_x) > DEADZONE) {
             if (dampenDrive)
                 robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x * driveDampener, gamepad1.left_stick_y * driveDampener, gamepad1.right_stick_x * driveDampener, alliance.isRed());
-            else
-                robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, alliance.isRed());
+            else robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, alliance.isRed());
         } else robot.driveTrain.drive(0, 0, 0);
     }
 
     public void robotOrientedDrive() {
         if (DriveTrain.roadRunnerDrive) {
-            if (Math.abs(gamepad1.left_stick_x) > DEADZONE ||
-                    Math.abs(gamepad1.left_stick_y) > DEADZONE ||
-                    Math.abs(gamepad1.right_stick_x) > DEADZONE) {
-                if (dampenDrive)
-                    robot.driveTrain.drive(gamepad1.left_stick_x * driveDampener, gamepad1.left_stick_y * driveDampener, -gamepad1.right_stick_x * driveDampener);
-                else
-                    robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
-            } else
-                robot.driveTrain.drive(0, 0, 0);
-        } else
-            robot.driveTrain.DirectDriveMecanums(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x);
+            if (Math.abs(gamepad1.left_stick_x) > DEADZONE || Math.abs(gamepad1.left_stick_y) > DEADZONE || Math.abs(gamepad1.right_stick_x) > DEADZONE) {
+                if (dampenDrive) robot.driveTrain.drive(gamepad1.left_stick_x * driveDampener, gamepad1.left_stick_y * driveDampener, -gamepad1.right_stick_x * driveDampener);
+                else robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+            } else robot.driveTrain.drive(0, 0, 0);
+        } else robot.driveTrain.DirectDriveMecanums(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x);
     }
 
 
@@ -381,12 +433,9 @@ public class DriverControls {
             IntoTheDeep_6832.gameStateIndex = 1;
         }
 
-        if (stickyGamepad1.left_bumper || stickyGamepad2.left_bumper)
-            IntoTheDeep_6832.gameStateIndex -= 1;
-        if (stickyGamepad1.right_bumper || stickyGamepad2.right_bumper)
-            IntoTheDeep_6832.gameStateIndex += 1;
-        if (IntoTheDeep_6832.gameStateIndex < 0)
-            IntoTheDeep_6832.gameStateIndex = IntoTheDeep_6832.GameState.getNumGameStates() - 1;
+        if (stickyGamepad1.left_bumper || stickyGamepad2.left_bumper) IntoTheDeep_6832.gameStateIndex -= 1;
+        if (stickyGamepad1.right_bumper || stickyGamepad2.right_bumper) IntoTheDeep_6832.gameStateIndex += 1;
+        if (IntoTheDeep_6832.gameStateIndex < 0) IntoTheDeep_6832.gameStateIndex = IntoTheDeep_6832.GameState.getNumGameStates() - 1;
         IntoTheDeep_6832.gameStateIndex %= IntoTheDeep_6832.GameState.getNumGameStates();
         IntoTheDeep_6832.gameState = IntoTheDeep_6832.GameState.getGameState(IntoTheDeep_6832.gameStateIndex);
 
@@ -401,19 +450,13 @@ public class DriverControls {
         if (stickyGamepad1.x || stickyGamepad2.x) {
             visionProviderFinalized = false;
             alliance = Constants.Alliance.BLUE;
-            startingPosition = startingPosition.isRed() == false ?
-                    startingPosition :
-                    startingPosition == Constants.Position.START_LEFT_RED ?
-                            Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
+            startingPosition = startingPosition.isRed() == false ? startingPosition : startingPosition == Constants.Position.START_LEFT_RED ? Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
 //            robot.visionProviderBack.setRedAlliance(false);
         }
         if (stickyGamepad1.b || stickyGamepad2.b) {
             alliance = Constants.Alliance.RED;
             visionProviderFinalized = false;
-            startingPosition = startingPosition.isRed() == true ?
-                    startingPosition :
-                    startingPosition == Constants.Position.START_LEFT_BLUE ?
-                            Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
+            startingPosition = startingPosition.isRed() == true ? startingPosition : startingPosition == Constants.Position.START_LEFT_BLUE ? Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
 //            robot.visionProviderBack.setRedAlliance(true);
         }
 
@@ -421,11 +464,9 @@ public class DriverControls {
             robot.visionProviderFinalized = false;
         }
 
-        if (stickyGamepad1.dpad_left || stickyGamepad2.dpad_left)
-            startingPosition = alliance == Constants.Alliance.RED ? Constants.Position.START_LEFT_RED : Constants.Position.START_LEFT_BLUE;
+        if (stickyGamepad1.dpad_left || stickyGamepad2.dpad_left) startingPosition = alliance == Constants.Alliance.RED ? Constants.Position.START_LEFT_RED : Constants.Position.START_LEFT_BLUE;
 
-        if (stickyGamepad1.dpad_right || stickyGamepad2.dpad_right)
-            startingPosition = alliance == Constants.Alliance.RED ? Constants.Position.START_RIGHT_RED : Constants.Position.START_RIGHT_BLUE;
+        if (stickyGamepad1.dpad_right || stickyGamepad2.dpad_right) startingPosition = alliance == Constants.Alliance.RED ? Constants.Position.START_RIGHT_RED : Constants.Position.START_RIGHT_BLUE;
     }
 
 

@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 
@@ -47,7 +48,7 @@ public class Sampler extends Arm {
     public static int shoulderSpeed = 45;
     public static int SHOULDER_HOME_POSITION = 250;
     public static int SHOULDER_PREINTAKE_POSITION = -150;
-    public static int SHOULDER_INTAKE_POSITION = -375;
+    public static int SHOULDER_INTAKE_POSITION = -305;
     public static int SHOULDER_LOWOUTTAKE_POSITION = 2105;
     public static int SHOULDER_HIGHOUTTAKE_POSITION = 1485;
     public static int SLIDE_ADJUST_SPEED = 80;
@@ -69,10 +70,11 @@ public class Sampler extends Arm {
 
     int SlideBowOut = 1500;
 
-
+    DigitalChannel digiColorSensorP0, digiColorSensorP1;
     public int shoulderPositionMax = 850;
 
     public static int colorSensorGain = 12;
+    public static int elbowRange = 10;
 
     public Sampler(HardwareMap hardwareMap, Robot robot, Trident trident) {
         this.hardwareMap = hardwareMap;
@@ -80,21 +82,23 @@ public class Sampler extends Arm {
         this.trident = trident; // to request services from Trident - mainly setting the shoulder angle
 
         articulation = Articulation.MANUAL;
+        SLIDE_HIGHOUTTAKE_POSITION = 1900;
 
-        SLIDE_HIGHOUTTAKE_POSITION = 2000;
 
 
         //defaults specific to sampler
-        ELBOW_START_ANGLE = 15; // was 140 for axon - 190 for blue dsservo45 is pressing firmly
+        ELBOW_START_ANGLE = 0; // was 140 for axon - 190 for blue dsservo45 is pressing firmly
         ELBOW_HOME_POSITION = 900; // 2050 for axon  - 900 for dsservo 45kg
         ELBOW_PWM_PER_DEGREE = 5.672222222222222; // -5.672222222222222 for axon - the dsservo 45kg goes the other way
         ELBOW_JOINT_SPEED = 120;
-        ELBOW_MIN_ANGLE = 15; // -15 for Axon
+        ELBOW_MIN_ANGLE = 0; // -15 for Axon
         ELBOW_MAX_ANGLE = 220;  // 220 for Axon
         ELBOW_ADJUST_ANGLE = 5;
-        ELBOW_PREINTAKE_ANGLE = 160;  // to clear over the sub wall // 5 for axon
+        ELBOW_PREINTAKE_ANGLE = 150;  // to clear over the sub wall // 5 for axon
         ELBOW_LOWOUTTAKE_ANGLE = 110; // 120 for axon
         ELBOW_HIGHOUTTAKE_ANGLE = 120; // 60 for axon
+
+        TUNABLE_COEFFICIENT = ELBOW_PREINTAKE_ANGLE;
 
         elbow = new Joint(hardwareMap, "samplerElbow", false, ELBOW_HOME_POSITION, ELBOW_PWM_PER_DEGREE, ELBOW_MIN_ANGLE, ELBOW_MAX_ANGLE, ELBOW_START_ANGLE, ELBOW_JOINT_SPEED);
         DcMotorEx bruh = this.hardwareMap.get(DcMotorEx.class, "samplerSlide");
@@ -106,7 +110,10 @@ public class Sampler extends Arm {
         slide.setTargetPosition(0);
         slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slide.setVelocity(SLIDE_SPEED);
-        colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "samplerSensor");
+        //colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "samplerSensor");
+        digiColorSensorP0 = this.hardwareMap.get(DigitalChannel.class, "samplerP0");
+        digiColorSensorP1 = this.hardwareMap.get(DigitalChannel.class, "samplerP1");
+
         beater = this.hardwareMap.get(CRServo.class, "samplerBeater");
     }
 
@@ -117,7 +124,7 @@ public class Sampler extends Arm {
 
     @Override
     public boolean stopOnSample() {
-        servoPower = 0.8;
+        servoPower = beaterIntakeSpeed;
         if (sampleDetected()) {
             servoPower = 0;
             return true;
@@ -132,6 +139,8 @@ public class Sampler extends Arm {
     @Override
     public void update(Canvas fieldOverlay) {
 //        ELBOW_PREINTAKE_ANGLE = TUNABLE_COEFFICIENT;
+        updateColorSensor(); // can do this without penalty when calling digital brushlabs color sensor
+
         beater.setPower(-servoPower);
         elbow.update();
         if (trident.calibrated) {
@@ -141,9 +150,8 @@ public class Sampler extends Arm {
             elbow.setSpeed(ELBOW_JOINT_SPEED);
 //            trident.setShoulderTarget(this, shoulderTargetPosition);
         }
-        if (colorSensorEnabled) {
-            updateColorSensor();
-        }
+        ELBOW_PREINTAKE_ANGLE = TUNABLE_COEFFICIENT;
+
         //compute the current articulation/behavior
         articulate();
     }
@@ -260,7 +268,7 @@ public class Sampler extends Arm {
                 break;
             case 2: // start the intake beater when shoulder and slide are in position
                 if (withinError(trident.getShoulderCurrentPosition(), SHOULDER_INTAKE_POSITION, 10) && withinError(slide.getCurrentPosition(), SLIDE_PREINTAKE_POSITION, 10)) {
-                    servoPower = .8;
+                    servoPower = beaterIntakeSpeed;
                     intakeTimer = futureTime(2);
                     intakeIndex++;
                     colorSensorEnabled = true;
@@ -268,8 +276,15 @@ public class Sampler extends Arm {
                 break;
             case 3:
                 if (slideTargetPosition > SLIDE_INTAKE_MIN_POSITION) {
-                    slideTargetPosition -= 400;
-                    trident.setShoulderTarget(this, (int) (trident.getShoulderTarget() - 400 * 0.44090909090909));
+                    slideTargetPosition = 0;
+                    int slideRange = 1040;
+                    int slideProgress = ((trident.getShoulderCurrentPosition()))/slideRange;
+                    int shoulderRange = 90;
+                    int interpShoulder= -420 + slideProgress*shoulderRange;
+                    int interpElbow = 150 + slideProgress*elbowRange;
+                    //trident.setShoulderTarget(this, (int) (trident.getShoulderTarget() - 200 * 0.44090909090909));
+                    trident.setShoulderTarget(this, interpShoulder);
+                    setElbowAngle(interpElbow);
 
                 }
                 if (stopOnSample() || isPast(intakeTimer)) {
@@ -344,12 +359,14 @@ public class Sampler extends Arm {
 
                 break;
             case 5:
-                slideTargetPosition += 90;
-                servoPower = .8;
+                slideTargetPosition += 170;
+                servoPower = beaterIntakeSpeed *2;
+                outtakeTimer = futureTime(.3);
                 outtakeIndex++;
                 break;
             case 6:
-                if (!sampleDetected()) {
+                if (!sampleDetected() && isPast(outtakeTimer)) {
+                    elbow.setTargetAngle(180);
                     outtakeIndex = 0;
                     return true;
                 }
@@ -380,6 +397,7 @@ public class Sampler extends Arm {
         }
         return false;
     }
+
     long bowTimer = 0;
     public int bowIndex = 0;
 
@@ -395,7 +413,7 @@ public class Sampler extends Arm {
                 break;
             case 1: // bow the elbow low
                 if (isPast(bowTimer)) {
-                    servoPower = .8;
+                    servoPower = beaterIntakeSpeed;
                     elbow.setTargetAngle(ElbowBowLow);
                     slideTargetPosition = SlideBowOut;
                     bowTimer = futureTime(2);
@@ -417,23 +435,45 @@ public class Sampler extends Arm {
         return false;
 
     }
+
     @Override
     public String updateColorSensor() {
-        colorSensor.setGain(colorSensorGain);
-        double hue = getHSV()[0];
-        if (hue > 60 && hue < 80) {
-            currentSample = Sample.NEUTRAL;
-            return "NEUTRAL";
-        } else if (hue < 26) {
-            currentSample = Sample.RED;
-            return "RED";
-        } else if (hue < 235 && hue > 200) {
-            currentSample = Sample.BLUE;
-            return "BLUE";
+
+        if (digiColorSensorP0.getState()) {
+            if (digiColorSensorP1.getState()) {
+                currentSample = Sample.NEUTRAL;
+                return "NEUTRAL";
+            } else {
+                currentSample = Sample.BLUE;
+                return "BLUE";
+            }
         } else {
-            currentSample = Sample.NO_SAMPLE;
-            return "NO SAMPLE";
+            if (digiColorSensorP1.getState()) {
+                currentSample = Sample.RED;
+                return "RED";
+            }
+            else{
+                currentSample = Sample.NO_SAMPLE;
+                return "NO_SAMPLE";
+            }
         }
+
+
+//        colorSensor.setGain(colorSensorGain);
+//        double hue = getHSV()[0];
+//        if (hue > 35 && hue < 45) {
+//            currentSample = Sample.NEUTRAL;
+//            return "NEUTRAL";
+//        } else if (hue < 26) {
+//            currentSample = Sample.RED;
+//            return "RED";
+//        } else if (hue < 235 && hue > 200) {
+//            currentSample = Sample.BLUE;
+//            return "BLUE";
+//        } else {
+//            currentSample = Sample.NO_SAMPLE;
+//            return "NO SAMPLE";
+//        }
     }
 
     public long sweepTimer = 0;
@@ -453,8 +493,7 @@ public class Sampler extends Arm {
                 break;
             case 1: // wait until shoulder and slide have reached position to return true
                 if (withinError(slideTargetPosition, slide.getCurrentPosition(), 10)
-                        && withinError(trident.getShoulderTarget(), trident.getShoulderCurrentPosition(), 10))
-                {
+                        && withinError(trident.getShoulderTarget(), trident.getShoulderCurrentPosition(), 10)) {
                     sweepIndex = 0;
                     return true;
                 }
@@ -474,8 +513,8 @@ public class Sampler extends Arm {
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
         telemetryMap.put("slide amps", slide.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("current sample", currentSample.name());
-        telemetryMap.put("colorsensor hsv", "" + HSVasString()); // cached - changes when HSV is read
-        telemetryMap.put("colorsensor rgb", colorLastRGBA.red + " " + colorLastRGBA.green + " " + colorLastRGBA.blue);
+        //telemetryMap.put("colorsensor hsv", "" + HSVasString()); // cached - changes when HSV is read
+        //telemetryMap.put("colorsensor rgb", colorLastRGBA.red + " " + colorLastRGBA.green + " " + colorLastRGBA.blue);
 //        0 40 214
         telemetryMap.put("beater speed", beater.getPower());
         telemetryMap.put("elbow angle target : real", elbow.getTargetAngle() + " : " + elbow.getCurrentAngle());

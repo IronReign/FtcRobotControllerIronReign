@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 
@@ -32,6 +33,8 @@ import java.util.Map;
 public class SpeciMiner extends Arm {
     public CRServo CRSOne;
     public CRServo CRSTwo;
+
+    DigitalChannel digiColorSensorP0, digiColorSensorP1;
     public static boolean preferHighOuttake = true;
 
 
@@ -98,9 +101,12 @@ public class SpeciMiner extends Arm {
         slide.setTargetPosition(0);
         slide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slide.setVelocity(SLIDE_SPEED);
-        colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "specSensor");
+        //colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "specSensor");
         CRSOne = this.hardwareMap.get(CRServo.class, "specBeater1");
         CRSTwo = this.hardwareMap.get(CRServo.class, "specBeater2");
+        digiColorSensorP0 = this.hardwareMap.get(DigitalChannel.class, "specP0"); //brushlabs color sensor digital ports P0 and P1
+        digiColorSensorP1 = this.hardwareMap.get(DigitalChannel.class, "specP1");
+
 
         articulation = Articulation.MANUAL;
     }
@@ -293,21 +299,40 @@ public class SpeciMiner extends Arm {
 
     @Override
     public String updateColorSensor() {
-        colorSensor.setGain(colorSensorGain);
-        double hue = getHSV()[0];
-        if (hue < 45 && hue > 35) {
-            currentSample = Sample.NEUTRAL;
-            return "NEUTRAL";
-        } else if (hue < 15 || hue > 350) {
-            currentSample = Sample.RED;
-            return "RED";
-        } else if (hue < 225 && hue > 200) {
-            currentSample = Sample.BLUE;
-            return "BLUE";
+        if (digiColorSensorP0.getState()) {
+            if (digiColorSensorP1.getState()) {
+                currentSample = Sample.NEUTRAL;
+                return "NEUTRAL";
+            } else {
+                currentSample = Sample.BLUE;
+                return "BLUE";
+            }
         } else {
-            currentSample = Sample.NO_SAMPLE;
-            return "NO SAMPLE";
+            if (digiColorSensorP1.getState()) {
+                currentSample = Sample.RED;
+                return "RED";
+            }
+            else{
+                currentSample = Sample.NO_SAMPLE;
+                return "NO_SAMPLE";
+            }
         }
+
+//        colorSensor.setGain(colorSensorGain);
+//        double hue = getHSV()[0];
+//        if (hue < 45 && hue > 35) {
+//            currentSample = Sample.NEUTRAL;
+//            return "NEUTRAL";
+//        } else if (hue < 15 || hue > 350) {
+//            currentSample = Sample.RED;
+//            return "RED";
+//        } else if (hue < 225 && hue > 200) {
+//            currentSample = Sample.BLUE;
+//            return "BLUE";
+//        } else {
+//            currentSample = Sample.NO_SAMPLE;
+//            return "NO SAMPLE";
+//        }
     }
 
     public boolean sampleDetected() {
@@ -370,6 +395,7 @@ public class SpeciMiner extends Arm {
 
     @Override
     public void update(Canvas fieldOverlay) {
+        updateColorSensor(); // can do this without penalty when calling digital brushlabs color sensor
         CRSOne.setPower(-servoPower);
         CRSTwo.setPower(servoPower);
         if (slideTargetPosition > slideMaxPosition)
@@ -481,8 +507,8 @@ public class SpeciMiner extends Arm {
         telemetryMap.put("slide target : real", slideTargetPosition + " : " + slide.getCurrentPosition());
         telemetryMap.put("slide amps", slide.getCurrent(CurrentUnit.AMPS));
         telemetryMap.put("current sample", currentSample.name());
-        telemetryMap.put("colorsensor hsv", "" + HSVasString()); // cached - changes when HSV is read
-        telemetryMap.put("colorsensor rgb", colorLastRGBA.red + " " + colorLastRGBA.green + " " + colorLastRGBA.blue);
+        //telemetryMap.put("colorsensor hsv", "" + HSVasString()); // cached - changes when HSV is read
+        //telemetryMap.put("colorsensor rgb", colorLastRGBA.red + " " + colorLastRGBA.green + " " + colorLastRGBA.blue);
 
         telemetryMap.put("beater speed", servoPower);
         telemetryMap.put("elbow angle target : real", elbow.getTargetAngle() + " : " + elbow.getCurrentAngle() + " " + elbow.getPosition());

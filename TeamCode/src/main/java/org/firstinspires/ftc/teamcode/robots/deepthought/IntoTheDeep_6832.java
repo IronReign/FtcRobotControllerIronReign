@@ -35,7 +35,7 @@ public class IntoTheDeep_6832 extends OpMode {
 
     //GLOBAL STATES
 
-    public static boolean debugTelemetryEnabled = true;
+    public static boolean debugTelemetryEnabled = false;
     private boolean initializing;
     public static boolean setStartPose = false; // use to set the pose from the current starting position via dashboard - but only in init_loop
     public static boolean ignoreCachePosition = false;
@@ -103,7 +103,7 @@ public class IntoTheDeep_6832 extends OpMode {
     static public int gameStateIndex;
 
     //CONSTANTS FOR GAME
-    public static boolean DEFAULT_DEBUG_TELEMETRY_ENABLED = true;
+    public static boolean DEFAULT_DEBUG_TELEMETRY_ENABLED = false;
     public static Constants.Alliance alliance = Constants.Alliance.RED;
     public static Constants.Position startingPosition = Constants.Position.START_LEFT_RED;
     long startTime;
@@ -149,8 +149,8 @@ public class IntoTheDeep_6832 extends OpMode {
 
         //TELEMETRY SETUP
         dashboard = FtcDashboard.getInstance();
-        dashboard.setTelemetryTransmissionInterval(25);
-        telemetry.setMsTransmissionInterval(25);
+        dashboard.setTelemetryTransmissionInterval(250);
+        telemetry.setMsTransmissionInterval(250);
         //TODO - Differentiate between debug and non debug telemetry
         if (debugTelemetryEnabled) {
 
@@ -252,6 +252,7 @@ public class IntoTheDeep_6832 extends OpMode {
                     robot.positionCache.writePose(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
                     robot.articulate(Robot.Articulation.TRAVEL);
                     gameState = GameState.TELE_OP;
+                    robot.trident.sampler.elbow.setTargetAngle(15);
                 }
                 break;
 

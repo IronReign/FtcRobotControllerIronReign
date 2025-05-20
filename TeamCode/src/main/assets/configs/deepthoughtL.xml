@@ -4,6 +4,12 @@
     <EthernetDevice name="limelight" serialNumber="EthernetOverUsb:eth0:172.29.0.31" name="limelight" port="-1" ipAddress="172.29.0.1" />
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Control Hub" port="173">
+
+            <AnalogInput name="brushlandcolor0" port="0" />
+            <DigitalDevice name="samplerP0" port="2" />
+            <DigitalDevice name="samplerP1" port="3" />
+            <DigitalDevice name="specP0" port="0" />
+            <DigitalDevice name="specP1" port="1" />
             <RevRobotics20HDHexMotor name="leftFront" port="0" />
             <RevRobotics20HDHexMotor name="leftBack" port="1" />
             <RevRobotics20HDHexMotor name="rightBack" port="2" />
@@ -26,9 +32,9 @@
             <Servo name="specElbow" port="5" />
             <REV_VL53L0X_RANGE_SENSOR name="backDistRight" port="0" bus="1" />
             <LynxEmbeddedIMU name="eimu" port="0" bus="0" />
-            <RevColorSensorV3 name="samplerSensor" port="1" bus="0" />
+            <!--<RevColorSensorV3 name="specSensor" port="1" bus="0" />-->
             <REV_VL53L0X_RANGE_SENSOR name="backDistLeft" port="0" bus="3" />
-            <LynxColorSensor name="specSensor" port="0" bus="2" />
+            <!--<LynxColorSensor name="samplerSensor" port="0" bus="2" />-->
         </LynxModule>
     </LynxUsbDevice>
 </Robot>

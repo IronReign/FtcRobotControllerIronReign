@@ -27,7 +27,7 @@ public abstract class Arm implements Subsystem {
     Trident trident;
 
     public DcMotorEx slide;
-    Joint elbow;
+    public Joint elbow;
 
     NormalizedColorSensor colorSensor = null;
     float[] colorLastHSV = {0.0f, 0.0f, 0.0f};
@@ -48,7 +48,8 @@ public abstract class Arm implements Subsystem {
     public int SLIDE_INTAKE_MIN_POSITION = 200;
     public int SLIDE_PREINTAKE_POSITION = 1200;
     public int SLIDE_LOWOUTTAKE_POSITION = 320;
-    public int SLIDE_HIGHOUTTAKE_POSITION = 2050;
+
+    public int SLIDE_HIGHOUTTAKE_POSITION = 2320;
     public static int slideSpeed = 80;
     public static double SLIDE_SPEED = 8000;
 
@@ -66,6 +67,7 @@ public abstract class Arm implements Subsystem {
     public double ELBOW_HIGHOUTTAKE_ANGLE;
 
     public double servoPower = 0;
+    public static double beaterIntakeSpeed = 0.4;
 
     public static boolean colorSensorEnabled = false;
 
