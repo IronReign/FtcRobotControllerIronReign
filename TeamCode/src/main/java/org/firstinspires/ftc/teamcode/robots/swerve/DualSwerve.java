@@ -138,8 +138,8 @@ public class DualSwerve implements Subsystem {
             speedTwo = 0;
         }
 
-        swerveModuleOne.setDesiredState(desiredAngleOne, speedOne, false, false);
-        swerveModuleTwo.setDesiredState(desiredAngleTwo, speedTwo, false, false);
+        swerveModuleOne.setDesiredState(desiredAngleOne, speedOne);
+        swerveModuleTwo.setDesiredState(desiredAngleTwo, speedTwo);
 
         if (swerveModuleOne.swerveAligned && swerveModuleTwo.swerveAligned) {
             swerveModuleTwo.aligned(speedOne);
@@ -208,8 +208,8 @@ public class DualSwerve implements Subsystem {
 
             return true;
         } else {
-            swerveModuleOne.setDesiredState(0, correction, true, false);
-            swerveModuleTwo.setDesiredState(0, correction, true, true);
+            swerveModuleOne.setDesiredState(0, correction);
+            swerveModuleTwo.setDesiredState(0, correction);
             turnController.enable();
 
             return false;

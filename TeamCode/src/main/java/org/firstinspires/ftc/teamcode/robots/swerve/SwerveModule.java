@@ -61,7 +61,7 @@ public class SwerveModule {
      * @param desiredAngle Desired chassis–relative angle (in degrees)
      * @param speed        Desired speed (value from 0 to 1)
      */
-    public void setDesiredState(double desiredAngle, double speed, boolean turn, boolean forward) {
+    public void setDesiredState(double desiredAngle, double speed) {
         // Used for desiredAngle telemetry
         desiredAnglePrivy = desiredAngle;
         double currentAngle = getCurrentAngle();
