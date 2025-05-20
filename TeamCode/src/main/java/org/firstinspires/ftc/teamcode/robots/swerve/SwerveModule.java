@@ -85,30 +85,10 @@ public class SwerveModule {
             swerveAligned = false;
             driveMotor.setPower(0);
         }
+                driveMotor.setPower(invertedDrive? -speed : speed);
 
-        if(turn){
-            targetAngle = desiredAngle;
-            if(forward) {
-                //invertedDrive = false;
-                targetAngle = desiredAngle;
-                driveMotor.setPower(speed);
-            }
-            if(!forward) {
-                //invertedDrive = true;
-                targetAngle = desiredAngle;
-                driveMotor.setPower(-speed);
-            }
-            //driveMotor.setPower(invertedDrive ? -speed : speed);
 
-//            if(!invertedDrive){
-//                targetAngle = desiredAngle;
-//                driveMotor.setPower(-speed);
-//            }
-//            else{
-//                targetAngle = desiredAngle;
-//                driveMotor.setPower(speed);
-//            }
-        }
+
     }
 
     public void resetEncoder () {
