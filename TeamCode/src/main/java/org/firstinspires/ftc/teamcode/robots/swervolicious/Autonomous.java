@@ -1,3 +1,4 @@
+/*
 package org.firstinspires.ftc.teamcode.robots.swervolicious;
 
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
@@ -42,7 +43,7 @@ public class Autonomous implements TelemetryProvider {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
         telemetryMap.put("autonState\t ", autonState);
         telemetryMap.put("field finalized?\t", field.finalized);
-        telemetryMap.put("target basket\t", "" + field.basket.x + field.basket.y);
+
         telemetryMap.put("autonIndex\t", autonIndex);
         telemetryMap.put("outtakeIndex\t", autonOuttakeIndex);
         telemetryMap.put("outtake timer\t", isPast(autonOuttakeTimer));
@@ -79,7 +80,6 @@ public class Autonomous implements TelemetryProvider {
         if (!alliance.isRed()) {
             allianceMultiplier = -1;
         }
-        robot.positionCache.update(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), false);
         switch (autonIndex) {
             case 0:
                 gameTimer = futureTime(27);
@@ -89,7 +89,6 @@ public class Autonomous implements TelemetryProvider {
                 break;
             case 1:
                 if (isPast(autonTimer)) {
-                    robot.trident.sampler.elbow.setTargetAngle(120);
 
                     autonState = AutonState.DRIVE_TO_BASKET;
 
@@ -340,3 +339,4 @@ public class Autonomous implements TelemetryProvider {
 
     }
 }
+*/
