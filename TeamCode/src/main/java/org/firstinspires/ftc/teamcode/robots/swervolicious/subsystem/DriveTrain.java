@@ -160,6 +160,14 @@ public class DriveTrain extends SwerveDriveReign implements Subsystem {
         super.localizer.setPose(pose);
     }
 
+    /**
+     * Exposes the current and target angles of each swerve module for telemetry.
+     * @return array of ModuleState objects (current + target angle in radians).
+     */
+    public SwerveDriveReign.ModuleState[] getModuleStates() {
+        return super.getModuleStates();
+    }
+
     @Override
     public void stop() {
         drive(0, 0, 0);

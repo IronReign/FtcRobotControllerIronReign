@@ -24,7 +24,7 @@ import java.lang.Math;
 import java.util.Arrays;
 
 /**
- * SwerveDriveReign — Road Runner drive class for the three‑module “isosceles‑triangle” swerve.
+ * SwerveDriveReign — Road Runner drive class for the three‑module “isosceles‑triangle” swerve.
  */
 @Config
 public class SwerveDriveReign {
@@ -157,6 +157,33 @@ public class SwerveDriveReign {
         }
 
     }
+
+    /** Lightweight holder for steering telemetry (radians). */
+    public static class ModuleState {
+        public final double currentAngle;
+        public final double targetAngle;
+        public ModuleState(double currentRad, double targetRad) {
+            this.currentAngle = currentRad;
+            this.targetAngle = targetRad;
+        }
+    }
+
+    /**
+     * Returns the current vs. target angle for each swerve module
+     * in the order: back, left, right (radians).
+     * <p>
+     * <b>Implementation notes:</b> This assumes each {@code SwerveModule}
+     * exposes {@code getCurrentAngleDeg()} and {@code getTargetAngleDeg()}.
+     * Rename these calls if your API differs.
+     */
+    public ModuleState[] getModuleStates() {
+        return new ModuleState[] {
+                new ModuleState(Math.toRadians(backModule.getCurrentAngle()),  Math.toRadians(backModule.getTargetAngle())),
+                new ModuleState(Math.toRadians(leftModule.getCurrentAngle()),  Math.toRadians(leftModule.getTargetAngle())),
+                new ModuleState(Math.toRadians(rightModule.getCurrentAngle()), Math.toRadians(rightModule.getTargetAngle()))
+        };
+    }
+
 
     /* ============================ HELPERS ============================== */
     private static double ticksToInches(int t){return t*PARAMS.inPerTick;}

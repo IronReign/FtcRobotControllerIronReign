@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.robots.swervolicious.rr_localize.SwerveDriveReign;
 import org.firstinspires.ftc.teamcode.robots.swervolicious.subsystem.DriveTrain;
 import org.firstinspires.ftc.teamcode.robots.swervolicious.rr_localize.PinpointLocalizer;
 
@@ -62,6 +63,18 @@ public class PinpointTeleOpTest extends OpMode {
         telemetry.addData("Heading rad", "%.3f", pll.driver.getHeading());
         telemetry.addData("parDir", pll.initialParDirection);
         telemetry.addData("perpDir", pll.initialPerpDirection);
+
+        // ---- Swerve Module Angles ----
+        try {
+            SwerveDriveReign.ModuleState[] states = driveTrain.getModuleStates();
+            for (int i = 0; i < states.length; i++) {
+                telemetry.addData("M" + i + " cur/tgt (deg)", "%.1f / %.1f",
+                        (states[i].currentAngle),
+                        (states[i].targetAngle));
+            }
+        } catch (Exception e) {
+            telemetry.addLine("(Module angle telemetry needs DriveTrain.getModuleStates())");
+        }
 
         telemetry.addData("Alliance", isRedAlliance ? "RED" : "BLUE");
         telemetry.update();
