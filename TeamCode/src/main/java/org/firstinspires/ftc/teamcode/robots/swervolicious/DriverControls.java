@@ -79,7 +79,7 @@ public class DriverControls {
 
         if(gamepad1.right_bumper) {
             robot.trident.getActiveArm().servoPower = 0;
-            Autonomous.pingPongIndex = 0;
+//            Autonomous.pingPongIndex = 0;
 
         }
 
@@ -423,18 +423,18 @@ public class DriverControls {
 
     public void handleStateSwitch() {
         if (stickyGamepad1.a) {
-            IntoTheSwerve_6832.gameStateIndex = 0;
+            Roborama.gameStateIndex = 0;
         }
 
         if (stickyGamepad1.y) {
-            IntoTheSwerve_6832.gameStateIndex = 1;
+            Roborama.gameStateIndex = 1;
         }
 
-        if (stickyGamepad1.left_bumper || stickyGamepad2.left_bumper) IntoTheSwerve_6832.gameStateIndex -= 1;
-        if (stickyGamepad1.right_bumper || stickyGamepad2.right_bumper) IntoTheSwerve_6832.gameStateIndex += 1;
-        if (IntoTheSwerve_6832.gameStateIndex < 0) IntoTheSwerve_6832.gameStateIndex = IntoTheSwerve_6832.GameState.getNumGameStates() - 1;
-        IntoTheSwerve_6832.gameStateIndex %= IntoTheSwerve_6832.GameState.getNumGameStates();
-        IntoTheSwerve_6832.gameState = IntoTheSwerve_6832.GameState.getGameState(IntoTheSwerve_6832.gameStateIndex);
+        if (stickyGamepad1.left_bumper || stickyGamepad2.left_bumper) Roborama.gameStateIndex -= 1;
+        if (stickyGamepad1.right_bumper || stickyGamepad2.right_bumper) Roborama.gameStateIndex += 1;
+        if (Roborama.gameStateIndex < 0) Roborama.gameStateIndex = Roborama.GameState.getNumGameStates() - 1;
+        Roborama.gameStateIndex %= Roborama.GameState.getNumGameStates();
+        Roborama.gameState = Roborama.GameState.getGameState(Roborama.gameStateIndex);
 
         if (stickyGamepad1.guide) {
             robot.trident.calibrateIndex = 0;

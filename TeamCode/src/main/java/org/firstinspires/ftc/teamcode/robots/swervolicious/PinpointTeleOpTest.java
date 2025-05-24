@@ -26,6 +26,8 @@ public class PinpointTeleOpTest extends OpMode {
     private boolean lastBState = false;
     private final ElapsedTime runtime = new ElapsedTime();
 
+
+
     @Override
     public void init() {
         // NOTE: Robot reference is unused for basic driving/telemetry – pass null.
@@ -80,7 +82,6 @@ public class PinpointTeleOpTest extends OpMode {
         telemetry.update();
     }
 
-    @Override
     public void stop() {
         driveTrain.stop();
     }

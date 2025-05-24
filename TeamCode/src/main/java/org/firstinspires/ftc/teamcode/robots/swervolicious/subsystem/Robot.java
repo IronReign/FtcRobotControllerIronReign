@@ -4,10 +4,14 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.DriverControls.f
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.gameState;
+import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.IntoTheDeep_6832.startingPosition;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -29,7 +33,9 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.DTPosition;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.deepthought.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
-import org.firstinspires.ftc.teamcode.robots.swervolicious.IntoTheSwerve_6832;
+//import org.firstinspires.ftc.teamcode.robots.swervolicious.Roborama;
+import org.firstinspires.ftc.teamcode.robots.swervolicious.Roborama;
+import org.firstinspires.ftc.teamcode.robots.swervolicious.rr_localize.SwerveDriveReign;
 import org.firstinspires.ftc.teamcode.robots.swervolicious.subsystem.samplers.Sampler;
 import org.firstinspires.ftc.teamcode.robots.swervolicious.subsystem.samplers.SpeciMiner;
 import org.firstinspires.ftc.teamcode.util.PIDController;
@@ -40,7 +46,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Config(value = "0_ITD_Robot")
+@Config(value = "0_ITD_SWERVE")
 public class Robot implements Subsystem {
 
     public static double LED_POWER = .1;
@@ -52,8 +58,6 @@ public class Robot implements Subsystem {
     //public TriSwerve driveTrain;
 //    public VisionProvider visionProviderBack, visionProviderFront;
 
-    public Trident trident;
-    public Servo pan; // pan servo for the Limelight
     public Limelight3A limelight; // smart camera
     public static boolean updatePositionCache = false;
     public static boolean visionOn = true;
@@ -85,14 +89,6 @@ public class Robot implements Subsystem {
     public List<Target> targets = new ArrayList<Target>();
     public boolean fetched;
 
-    //pan servo
-    public static double PAN_START_ANGLE = 145;
-    public static int PAN_HOME_POSITION = 2050;
-    public static double PAN_PWM_PER_DEGREE = -5.672222222222222;
-    public static double PAN_JOINT_SPEED = 1000;
-    public static double PAN_MIN_ANGLE = -15;
-    public static double PAN_MAX_ANGLE = 220;
-    public static double PAN_ADJUST_ANGLE = 5;
 
     public static double PAN_FORWARD = 1970;
     public static double PAN_BASKET_APRILTAG = 1220;
@@ -103,23 +99,49 @@ public class Robot implements Subsystem {
     DcMotor LED;
     public static boolean onTarget;
 
+
+    public int quickTripStage = 0;
+    public long quickTripTimer = 0;
+
+    public static int travelDistance = 5;
+
+    public boolean quickTrip(TelemetryPacket packet) {
+        switch (quickTripStage) {
+            case 0:
+                if (robot.driveTrain.strafeToPose(new Pose2d(new Vector2d(travelDistance, 0), 0), packet)) {
+                    quickTripStage++;
+                    quickTripTimer = futureTime(5);
+                }
+                break;
+            case 1:
+                if (isPast(quickTripTimer)) {
+                    quickTripStage++;
+                }
+                break;
+            case 2:
+                if (robot.driveTrain.strafeToPose(new Pose2d(new Vector2d(0, 0), 0), packet)) {
+                    quickTripStage++;
+                }
+                break;
+            case 3:
+            return true;
+        }
+        return false;
+    }
+
     public enum Articulation {
         MANUAL, SAMPLER_INTAKE, TRAVEL, SAMPLER_OUTTAKE, SPECIMINER_GROUNDTAKE, SPECIMINER_WALLTAKE, SAMPLER_PREP, SPECIMINER_OUTTAKE
     }
 
     public void start() {
-        if (gameState.equals(IntoTheSwerve_6832.GameState.TELE_OP)) {
-            trident.shoulder.setPosition(250);
-        }
+
         limelight.start();
-        trident.finalizeTargets();
         field.finalizeField(alliance);
     }
     //end start
 
 
     public Robot(HardwareMap hardwareMap, boolean simulated) {
-        LED = hardwareMap.get(DcMotor.class, "led");
         if (!simulated) {
             this.hardwareMap = hardwareMap;
             hubs = hardwareMap.getAll(LynxModule.class);
@@ -133,17 +155,14 @@ public class Robot implements Subsystem {
 
             // initializing subsystems
             driveTrain = new DriveTrain(hardwareMap, this, false);
-            trident = new Trident(hardwareMap, this);
 
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
-            pan = hardwareMap.get(Servo.class, "pan");
 
 
-            subsystems = new Subsystem[]{driveTrain, trident};
+            subsystems = new Subsystem[]{driveTrain};
             subsystemUpdateTimes = new long[subsystems.length];
 
             batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
-            trident.sampler.setSlideTargetPosition(0);
 
             sampleAlignmentPID = new PIDController(sampleAlignmentCoefficients);
             articulation = Articulation.MANUAL;
@@ -173,14 +192,11 @@ public class Robot implements Subsystem {
         clearBulkCaches(); //ALWAYS FIRST LINE IN UPDATE
 
         if (updatePositionCache && gameState.isAutonomous()) {
-            currPosition = new DTPosition(driveTrain.localizer.getPose(), -trident.shoulder.getCurrentPosition(), trident.sampler.slide.getCurrentPosition(), trident.speciMiner.slide.getCurrentPosition());
             positionCache.update(currPosition, false);
         }
 
         LED.setPower(LED_POWER);
 
-        pan.setDirection(Servo.Direction.FORWARD);
-        pan.setPosition(Utils.servoNormalize(panTargetPosition));
 
 //        if (!gameState.isAutonomous)
 //            aprilTagRelocalization();
@@ -212,50 +228,14 @@ public class Robot implements Subsystem {
     }
 
 
-    public void preloadAllianceSelect() {
-        trident.sampler.updateColorSensor();
-        if (trident.currentSample == Trident.Sample.RED) {
-            alliance = Constants.Alliance.RED;
-            startingPosition = startingPosition.isRed() ? startingPosition : startingPosition == Constants.Position.START_LEFT_BLUE ? Constants.Position.START_LEFT_RED : Constants.Position.START_RIGHT_RED;
-        } else if (trident.currentSample == Trident.Sample.BLUE) {
-            alliance = Constants.Alliance.BLUE;
-            startingPosition = !startingPosition.isRed() ? startingPosition : startingPosition == Constants.Position.START_LEFT_RED ? Constants.Position.START_LEFT_BLUE : Constants.Position.START_RIGHT_BLUE;
-        }
-    }
-
-
     public Articulation articulate(Articulation target) {
         articulation = target;
         switch (this.articulation) {
             case MANUAL:
-                break;
 //            case CALIBRATE:
 //                if (calibrate())
-//                    articulation = Articulation.MANUAL;
-//                break;
-            case SAMPLER_INTAKE:
-                if (samplerIntake()) articulation = Articulation.MANUAL;
-                break;
-            case SAMPLER_PREP:
-                if (samplerPrep()) articulation = Articulation.MANUAL;
-                break;
-            case TRAVEL:
-                trident.articulate(Trident.Articulation.TUCK);
-                if (trident.articulation == Trident.Articulation.MANUAL) {
-                    articulation = Articulation.MANUAL;
-                }
-                break;
-            case SAMPLER_OUTTAKE:
-                if (samplerOuttake()) articulation = Articulation.MANUAL;
-                break;
-            case SPECIMINER_GROUNDTAKE:
-                if (speciMinerGroundtake()) articulation = Articulation.MANUAL;
-                break;
-            case SPECIMINER_WALLTAKE:
-                if (speciMinerWalltake()) articulation = Articulation.MANUAL;
                 break;
             case SPECIMINER_OUTTAKE:
-                if (speciMinerOuttake()) articulation = Articulation.MANUAL;
                 break;
         }
         return articulation;
@@ -264,112 +244,21 @@ public class Robot implements Subsystem {
 
     public int speciMinerOuttakeIndex = 0;
 
-    public boolean speciMinerOuttake() {
-        aprilTagRelocalization(true);
-        switch (speciMinerOuttakeIndex) {
-            case 0:
-                trident.speciMiner.articulate(SpeciMiner.Articulation.OUTTAKE);
-                speciMinerOuttakeIndex++;
-                break;
-            case 1:
-                if (trident.speciMiner.articulation == SpeciMiner.Articulation.MANUAL) {
-                    return true;
-                }
-                break;
-        }
-        return false;
-    }
-
 
     public int walltakeIndex = 0;
 
-    public boolean speciMinerWalltake() {
-
-//        aprilTagRelocalization(false);
-        switch (walltakeIndex) {
-            case 0:
-                trident.speciMiner.articulate(SpeciMiner.Articulation.WALLTAKE);
-                walltakeIndex++;
-                break;
-            case 1:
-                if (trident.speciMiner.articulation == SpeciMiner.Articulation.MANUAL) {
-                    return true;
-                }
-                break;
-        }
-        return false;
-    }
 
     public int groundtakeIndex = 0;
-
-    public boolean speciMinerGroundtake() {
-        switch (groundtakeIndex) {
-            case 0:
-                trident.speciMiner.articulate(SpeciMiner.Articulation.GROUNDTAKE);
-                groundtakeIndex++;
-                break;
-            case 1:
-                if (trident.speciMiner.articulation == SpeciMiner.Articulation.MANUAL) {
-                    return true;
-                }
-                break;
-        }
-        return false;
-    }
 
 
     public int intakeIndex = 0;
 
-    public boolean samplerIntake() {
-        switch (intakeIndex) {
-            case 0:
-                trident.sampler.articulate(Sampler.Articulation.INTAKE);
-                intakeIndex++;
-                break;
-            case 1:
-                if (trident.sampler.articulation == Sampler.Articulation.MANUAL) {
-                    intakeIndex = 0;
-                    return true;
-                }
-                break;
-        }
-        return false;
-    }
-
-
-    public boolean samplerPrep() {
-        panTargetPosition = PAN_FORWARD;
-        trident.sampler.articulate(Sampler.Articulation.INTAKE_PREP);
-        return true;
-    }
 
     public int outtakeIndex = 0;
-
-    public boolean samplerOuttake() {
-//        if (Sampler.outtakeIndex > 3) ;
-//        aprilTagRelocalization();
-        switch (outtakeIndex) {
-            case 0:
-                Trident.enforceSlideLimits = false; // todo this might be at wrong level or ignored
-                trident.sampler.articulate(Sampler.Articulation.OUTTAKE);
-                outtakeIndex++;
-                break;
-            case 1:
-                if (trident.sampler.articulation == Sampler.Articulation.MANUAL) {
-                    Trident.enforceSlideLimits = true;
-                    outtakeIndex = 0;
-                    return true;
-                }
-                break;
-        }
-
-        return false;
-    }
 
 
     @Override
     public void stop() {
-        currPosition = new DTPosition(driveTrain.localizer.getPose(), -trident.shoulder.getCurrentPosition(), trident.sampler.slide.getCurrentPosition(), trident.speciMiner.slide.getCurrentPosition());
         positionCache.update(currPosition, true);
         for (Subsystem component : subsystems) {
             component.stop();
@@ -390,7 +279,6 @@ public class Robot implements Subsystem {
         telemetryMap.put("onTarget", onTarget);
         telemetryMap.put("pid error", PIDError);
         telemetryMap.put("pid correction", PIDCorrection);
-        telemetryMap.put("pan target", Utils.servoDenormalize(pan.getPosition()));
         telemetryMap.put("limelight running?", limelight.isRunning());
         LLStatus status = limelight.getStatus();
         telemetryMap.put("limelight fps, ", status.getFps());
@@ -441,23 +329,6 @@ public class Robot implements Subsystem {
     public void fetchCachedDTPosition() {
         fetchedPosition = positionCache.readPose();
         fetched = fetchedPosition != null;
-    }
-
-    public void resetRobotPosFromCache(double loggerTimeoutMinutes, boolean ignoreCache) {
-        if (!ignoreCache) {
-            fetchCachedDTPosition();
-            if (gameState.equals(IntoTheSwerve_6832.GameState.TELE_OP) || gameState.equals((IntoTheSwerve_6832.GameState.TEST))) {
-                int loggerTimeout = (int) (loggerTimeoutMinutes * 60000);
-                if (!(System.currentTimeMillis() - fetchedPosition.getTimestamp() > loggerTimeout)) {
-                    //apply cached position
-                    driveTrain.setPose(fetchedPosition.getPose());
-                    trident.shoulder.setPosition(-fetchedPosition.getShoulderPosition());
-                    trident.sampler.slide.setTargetPosition(fetchedPosition.getSlidePosition());
-                    trident.speciMiner.slide.setTargetPosition(fetchedPosition.getSlide2Position());
-                    trident.shoulder.setDirection(DcMotor.Direction.REVERSE);
-                }
-            }
-        }
     }
 
 
@@ -522,8 +393,8 @@ public class Robot implements Subsystem {
             if ((llResult = limelight.getLatestResult()) != null) {
                 //limelight returns everything in meters
                 aprilTagPose = new Pose2d(new Vector2d(llResult.getBotpose().getPosition().x * 39.37, llResult.getBotpose().getPosition().y * 39.37), llResult.getBotpose().getOrientation().getYaw(AngleUnit.RADIANS));
-                if (llResult.getBotpose().getPosition().x != 0)
-                    driveTrain.setPose(aprilTagPose);
+                if (llResult.getBotpose().getPosition().x != 0) ;
+//                    driveTrain.setPose(aprilTagPose);
             }
         } else {
             limelight.pipelineSwitch(2);
@@ -533,8 +404,8 @@ public class Robot implements Subsystem {
         if ((llResult = limelight.getLatestResult()) != null) {
             //limelight returns everything in meters
             aprilTagPose = new Pose2d(new Vector2d(llResult.getBotpose().getPosition().x * 39.37, llResult.getBotpose().getPosition().y * 39.37), llResult.getBotpose().getOrientation().getYaw(AngleUnit.RADIANS));
-            if (llResult.getBotpose().getPosition().x != 0)
-                driveTrain.setPose(aprilTagPose);
+            if (llResult.getBotpose().getPosition().x != 0) ;
+//                driveTrain.setPose(aprilTagPose);
         }
     }
 
@@ -548,9 +419,10 @@ public class Robot implements Subsystem {
 //                visionProviderFinalized = true;
 ////
 //            }
-////            if (frontVision) {
-////                visionProviderFront.update(debugTelemetryEnabled);
-////            } else visionProviderBack.update(debugTelemetryEnabled);
+
+    /// /            if (frontVision) {
+    /// /                visionProviderFront.update(debugTelemetryEnabled);
+    /// /            } else visionProviderBack.update(debugTelemetryEnabled);
 //        }
 //    }
 
@@ -578,10 +450,9 @@ public class Robot implements Subsystem {
 //            visionProviderFinalized = false;
 //        }
 //    }
-
-public boolean calibrate(){
+    public boolean calibrate() {
+        return driveTrain.calibrate();
         // todo this can only be called if trident calibrationIndex started at zero
-        return trident.calibrate();
-}
+    }
 
 }

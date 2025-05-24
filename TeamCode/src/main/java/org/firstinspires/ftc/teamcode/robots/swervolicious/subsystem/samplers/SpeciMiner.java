@@ -160,7 +160,6 @@ public class SpeciMiner extends Arm {
         elbow.setTargetAngle(ELBOW_HIGHBAR_ANGLE);
         trident.setShoulderTarget(this, SHOULDER_HIGHBAR_POSITION, false);
         slideTargetPosition = SLIDE_HIGHBAR_POSITION;
-        robot.trident.sampler.setElbowAngle(Sampler.SWEEP_ELBOW_ANGLE);
         return true;
     }
 

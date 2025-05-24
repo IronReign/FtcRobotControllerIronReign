@@ -24,9 +24,7 @@ public class Roborama extends OpMode {
     public static long totalRunTime;
     //COMPONENTS
     public static Robot robot;
-    static Autonomous auton;
-    static Demos demos;
-    static AutoSpecimens autoSpecimens;
+//    static Autonomous auton;
     private FtcDashboard dashboard;
     public static Field field;
     public static DriverControls dc;
@@ -139,14 +137,12 @@ public class Roborama extends OpMode {
         //INITIALIZE COMPONENTS
         robot = new Robot(hardwareMap, false);
         dc = new DriverControls(gamepad1, gamepad2);
-        auton = new Autonomous(robot);
         //demos = new Demos(robot);
         //autoSpecimens = new AutoSpecimens(robot);
         field = new Field();
 
         robot.updatePositionCache = false;
-        robot.trident.calibrated = false;
-        robot.driveTrain.setPose(startingPosition);
+        robot.driveTrain.localizer.setPose(startingPosition.getPose());
 
         //TELEMETRY SETUP
         dashboard = FtcDashboard.getInstance();
@@ -168,8 +164,7 @@ public class Roborama extends OpMode {
         dc.init_loop();
         dc.robotOrientedDrive();
         if (gameState.isAutonomous()) {
-            robot.preloadAllianceSelect();
-            robot.driveTrain.setPose(startingPosition);
+            robot.driveTrain.localizer.setPose(startingPosition.getPose());
             //if (!robot.trident.calibrated) {
                 //robot.trident.articulate(Trident.Articulation.CALIBRATE);
             //}
@@ -181,8 +176,6 @@ public class Roborama extends OpMode {
 
         telemetry.addData("Alliance", alliance);
         telemetry.addData("startingPosition", startingPosition);
-
-        telemetry.addData("calibrated", robot.trident.calibrated);
 
         robot.driveTrain.updatePoseEstimate();
 
@@ -213,7 +206,7 @@ public class Roborama extends OpMode {
         field.finalizeField(alliance);
 
         //roborama starting pos is always where the robot is now
-        robot.driveTrain.setPose(startingPosition);
+        robot.driveTrain.localizer.setPose(startingPosition.getPose());
 //
 //        if (gameState.equals(GameState.QUICKTRIP)) {
 //            robot.driveTrain.setPose(startingPosition);
@@ -229,7 +222,7 @@ public class Roborama extends OpMode {
 //        }
 
         if (gameState.equals(GameState.RELOCALIZATION_TEST)) {
-            robot.driveTrain.setPose(startingPosition);
+            robot.driveTrain.localizer.setPose(startingPosition.getPose());
             dc.relocalizationTestMethods();
             //robot.driveTrain.imu.resetYaw(); TODO - how is the imu reset gonna work now?
         }
@@ -237,9 +230,9 @@ public class Roborama extends OpMode {
     }
 
     //end start()
-    public void restoreRobotPositionFromCache() {
-        robot.resetRobotPosFromCache(5, false);
-    }
+//    public void restoreRobotPositionFromCache() {
+//        robot.resetRobotPosFromCache(5, false);
+//    }
 
 
     @Override
@@ -252,35 +245,22 @@ public class Roborama extends OpMode {
         update(packet);
         switch (gameState) {
             case QUICKTRIP:
-                if (auton.execute(packet)) {
-                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
-                    robot.articulate(Robot.Articulation.TRAVEL);
+                if (robot.quickTrip(packet)) {
                     gameState = GameState.TELE_OP;
-                    robot.trident.sampler.elbow.setTargetAngle(15);
                 }
                 break;
 
             case BARRELRACE:
-                if(demos.execute()) {
-                    gameState = GameState.TELE_OP;
-                }
+
                 break;
             case TELE_OP:
                 dc.joystickDrive();
                 break;
             case FOURSQUARE:
-                if (autoSpecimens.execute(packet)) {
-                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
-                    robot.articulate(Robot.Articulation.TRAVEL);
-                    gameState = GameState.TELE_OP;
-                }
+
                 break;
             case SIXCAN:
-                if (autoSpecimens.execSweeping(packet)) {
-                    robot.positionCache.writePose(new DTPosition(robot.driveTrain.localizer.getPose(), robot.trident.getShoulderCurrentPosition(), robot.trident.sampler.slide.getCurrentPosition(), robot.trident.speciMiner.slide.getCurrentPosition()), true);
-                    robot.articulate(Robot.Articulation.TRAVEL);
-                    gameState = GameState.TELE_OP;
-                }
+
                 break;
             case TEST:
                 debugTelemetryEnabled = true;
@@ -290,7 +270,6 @@ public class Roborama extends OpMode {
                 break;
             case RELOCALIZATION_TEST:
                 dc.relocalizationTestMethods();
-                auton.pingPong(packet);
                 break;
         }
     }
@@ -327,16 +306,13 @@ public class Roborama extends OpMode {
 
                 break;
             case BARRELRACE:
-                handleTelemetry(demos.getTelemetry(debugTelemetryEnabled), demos.getTelemetryName(), packet);
                 break;
             case QUICKTRIP:
-                handleTelemetry(auton.getTelemetry(debugTelemetryEnabled), auton.getTelemetryName(), packet);
+                handleTelemetry(robot.getTelemetry(debugTelemetryEnabled), robot.getTelemetryName(), packet);
                 break;
             case FOURSQUARE:
-                handleTelemetry(autoSpecimens.getTelemetry(debugTelemetryEnabled), auton.getTelemetryName(), packet);
                 break;
             case SIXCAN:
-                handleTelemetry(autoSpecimens.getTelemetry(debugTelemetryEnabled), auton.getTelemetryName(), packet);
                 break;
 
             case TEST:
@@ -368,8 +344,8 @@ public class Roborama extends OpMode {
             for (TelemetryProvider telemetryProvider : robot.subsystems)
                 handleTelemetry(telemetryProvider.getTelemetry(debugTelemetryEnabled), telemetryProvider.getTelemetryName(), packet);
         }
-        handleTelemetry(robot.trident.sampler.getTelemetry(true), "SAMPLER", packet);
-        handleTelemetry(robot.trident.speciMiner.getTelemetry(true), "SPECIMINER", packet);
+//        handleTelemetry(robot.trident.sampler.getTelemetry(true), "SAMPLER", packet);
+//        handleTelemetry(robot.trident.speciMiner.getTelemetry(true), "SPECIMINER", packet);
 //        handleTelemetry(robot.trident.speciMiner.getTelemetry(true), "SPECIMINER", packet);
         telemetry.update();
         dashboard.sendTelemetryPacket(packet);
