@@ -9,6 +9,7 @@
             <DigitalDevice name="samplerP1" port="3" />
             <DigitalDevice name="specP0" port="0" />
             <DigitalDevice name="specP1" port="1" />
+
             <RevRoboticsUltraplanetaryHDHexMotor
                 name="go1"
                 port="0" />
@@ -38,6 +39,8 @@
             <RevRobotics40HDHexMotor name="led" port="1" />
             <RevRobotics40HDHexMotor name="shoulder" port="2" />
             <RevRobotics40HDHexMotor name="samplerSlide" port="3" />
+            <Servo name="gripper" port="5" />
+
             <RevRoboticsUltraplanetaryHDHexMotor
                 name="encoder3"
                 port="2" />
@@ -52,7 +55,6 @@
             <Servo name="samplerElbow" port="2" />
             <ContinuousRotationServo name="specBeater1" port="3" />
             <ContinuousRotationServo name="specBeater2" port="4" />
-            <Servo name="specElbow" port="5" />
             <REV_VL53L0X_RANGE_SENSOR name="backDistRight" port="0" bus="1" />
             <LynxEmbeddedIMU name="eimu" port="0" bus="0" />
             <!--<RevColorSensorV3 name="specSensor" port="1" bus="0" />-->
