@@ -69,8 +69,8 @@ public class PinpointTeleOpTest extends OpMode {
             SwerveDriveReign.ModuleState[] states = driveTrain.getModuleStates();
             for (int i = 0; i < states.length; i++) {
                 telemetry.addData("M" + i + " cur/tgt (deg)", "%.1f / %.1f",
-                        (states[i].currentAngle),
-                        (states[i].targetAngle));
+                        Math.toDegrees(states[i].currentAngle),
+                        Math.toDegrees(states[i].targetAngle));
             }
         } catch (Exception e) {
             telemetry.addLine("(Module angle telemetry needs DriveTrain.getModuleStates())");

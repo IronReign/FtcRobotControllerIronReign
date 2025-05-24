@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.util.PIDController;
 import org.firstinspires.ftc.teamcode.util.utilMethods;
 
 public class SwerveModule {
-    private DcMotorEx driveMotor;
+    public DcMotorEx driveMotor;
     private CRServo yawServo;
     private DcMotorEx yawEncoder;
     private PIDController yawPID;
@@ -58,38 +58,46 @@ public class SwerveModule {
 
     /**
      * Sets the desired state for the module.
-     * @param desiredAngle Desired chassis–relative angle (in degrees)
-     * @param speed        Desired speed (value from 0 to 1)
+     * @param desiredAngle chassis-relative angle (deg)
+     * @param speed        desired speed 0 – 1 (sign ignored; we invert internally)
      */
     public void setDesiredState(double desiredAngle, double speed) {
-        // Used for desiredAngle telemetry
+        // ---- 1. Harden inputs ----------------------------------------------
+        if (Double.isNaN(desiredAngle))   desiredAngle = targetAngle; // hold last target
+        if (Double.isNaN(speed))          speed        = 0;
+
+        // store for telemetry
         desiredAnglePrivy = desiredAngle;
+
         double currentAngle = getCurrentAngle();
-        // Compute the minimal angle difference (–180 to 180)
-        double angleDiff = utilMethods.angleDifference(desiredAngle, currentAngle);
-//easter egg
-         //If rotating more than 90° is required, invert drive to minimize rotation.
+        double angleDiff    = utilMethods.angleDifference(desiredAngle, currentAngle);
+
+        // ---- 2. Choose the shorter rotation path ---------------------------
         if (Math.abs(angleDiff) >= 90) {
             invertedDrive = true;
-            targetAngle = Utils.wrapAngle(desiredAngle - 180);
+            targetAngle   = Utils.wrapAngle(desiredAngle - 180);
         } else {
             invertedDrive = false;
-            targetAngle = Utils.wrapAngle(desiredAngle);
+            targetAngle   = Utils.wrapAngle(desiredAngle);
         }
 
+        // ---- 3. Check if yaw error is inside the steering threshold --------
+        boolean withinPrimary   = Math.abs(angleDiff) < thresholdAngle;
+        boolean withinOpposite  = Math.abs(angleDiff) > 180 - thresholdAngle &&
+                Math.abs(angleDiff) < 180 + thresholdAngle;
+        swerveAligned = withinPrimary || withinOpposite;
 
-        // Optionally, only allow the drive motor to run if the yaw error is within threshold or about opposite of the current angle.
-        if (Math.abs(angleDiff) < thresholdAngle || Math.abs(angleDiff) > 180 - thresholdAngle && Math.abs(angleDiff) < 180 + thresholdAngle) {
-            swerveAligned = true;
+        // ---- 4. Apply drive only when aligned ------------------------------
+        if (swerveAligned) {
+            driveMotor.setPower(invertedDrive ? -speed : speed);
         } else {
-            swerveAligned = false;
             driveMotor.setPower(0);
         }
-                driveMotor.setPower(invertedDrive? -speed : speed);
 
-
-
+        // PID yaw servo always needs the target, even while drive is zero
+        yawPID.setSetpoint(targetAngle);
     }
+
 
     public void resetEncoder () {
         yawEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

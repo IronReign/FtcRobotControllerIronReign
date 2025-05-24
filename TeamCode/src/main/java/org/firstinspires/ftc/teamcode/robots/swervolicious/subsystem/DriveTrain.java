@@ -74,6 +74,7 @@ public class DriveTrain extends SwerveDriveReign implements Subsystem {
 
     @Override
     public void update(Canvas c) {
+
         if (roadRunnerDrive) {
 //            imuRoadrunnerError = Robot.sensors.driveIMUYaw - Math.toDegrees(pose.heading.log());
 //            if (distanceSensorsEnabled) {
@@ -81,6 +82,7 @@ public class DriveTrain extends SwerveDriveReign implements Subsystem {
 //                leftDistanceSensorValue = Robot.sensors.leftDistSensorValue;
 //            }
             updatePoseEstimate();
+            super.updateModules();
 
 //        update pose heading from imu regularly
 //            if (RELOCALIZE_WITH_IMU) {
@@ -92,6 +94,7 @@ public class DriveTrain extends SwerveDriveReign implements Subsystem {
             //test imu based turning from dashboard - todo comment out when not needed
 //            if (turnToTest != 0) turnUntilDegreesIMU(turnToTest, turnToSpeed); //can target any angle but zero
         }
+
     }
 
 

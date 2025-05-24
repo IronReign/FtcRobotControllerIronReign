@@ -93,6 +93,16 @@ public class SwerveDriveReign {
         backModule .setDesiredState(wheel.bAngDeg, wheel.bVel/max);
         leftModule .setDesiredState(wheel.lAngDeg, wheel.lVel/max);
         rightModule.setDesiredState(wheel.rAngDeg, wheel.rVel/max);
+
+        boolean allAligned = backModule.swerveAligned &&
+                leftModule.swerveAligned &&
+                rightModule.swerveAligned;
+
+        if (!allAligned) {
+            backModule.driveMotor.setPower(0);
+            leftModule.driveMotor.setPower(0);
+            rightModule.driveMotor.setPower(0);
+        }
     }
 
     /* ============================= LOCALIZER (based on swerve steering and drive for this specific chassis =========================== */
@@ -197,6 +207,13 @@ public class SwerveDriveReign {
         poseHistory.add(localizer.getPose());
         while (poseHistory.size() > 100) poseHistory.removeFirst();
         return vel;
+    }
+
+    /** Call every robot loop to keep each module’s yaw PID active. */
+    public void updateModules() {
+        backModule.update();
+        leftModule.update();
+        rightModule.update();
     }
 
     /** Draws a breadcrumb trail of the recent robot poses on the FTC Dashboard. */
