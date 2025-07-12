@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.swerve;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -41,24 +42,27 @@ public class NSwerve implements Subsystem {
         this.hardwareMap = hardwareMap;
 
         for(int i = 0; i < numSwerves; i++) {
-            DcMotorEx driveMotor = hardwareMap.get(DcMotorEx.class, "go" + i+1);
+            DcMotorEx driveMotor = hardwareMap.get(DcMotorEx.class, "go" + i);
             driveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             driveMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             driveMotor.setMotorEnable();
         }
 
-        // Get hardware devices for the swerve module.
-        DcMotorEx driveMotor1 = hardwareMap.get(DcMotorEx.class, "go1");
-        CRServo yawServo1 = hardwareMap.get(CRServo.class, "yaw1");
-        DcMotorEx yawEncoder1 = hardwareMap.get(DcMotorEx.class, "encoder1");
+        // Get hardware devices for the swerve modules.
+        DcMotorEx driveMotor1 = hardwareMap.get(DcMotorEx.class, "go0");
+        CRServo yawServo1 = hardwareMap.get(CRServo.class, "yaw0");
+        DcMotorEx yawEncoder1 = hardwareMap.get(DcMotorEx.class, "encoder0");
+        AnalogInput a0 = hardwareMap.get(AnalogInput.class, "a0");
 
-        DcMotorEx driveMotor2 = hardwareMap.get(DcMotorEx.class, "go2");
-        CRServo yawServo2 = hardwareMap.get(CRServo.class, "yaw2");
-        DcMotorEx yawEncoder2 = hardwareMap.get(DcMotorEx.class, "encoder2");
+        DcMotorEx driveMotor2 = hardwareMap.get(DcMotorEx.class, "go1");
+        CRServo yawServo2 = hardwareMap.get(CRServo.class, "yaw1");
+        DcMotorEx yawEncoder2 = hardwareMap.get(DcMotorEx.class, "encoder1");
+        AnalogInput a1 = hardwareMap.get(AnalogInput.class, "a1");
 
-        DcMotorEx driveMotor3 = hardwareMap.get(DcMotorEx.class, "go3");
-        CRServo yawServo3 = hardwareMap.get(CRServo.class, "yaw3");
-        DcMotorEx yawEncoder3 = hardwareMap.get(DcMotorEx.class, "encoder3");
+        DcMotorEx driveMotor3 = hardwareMap.get(DcMotorEx.class, "go2");
+        CRServo yawServo3 = hardwareMap.get(CRServo.class, "yaw2");
+        DcMotorEx yawEncoder3 = hardwareMap.get(DcMotorEx.class, "encoder2");
+        AnalogInput a2 = hardwareMap.get(AnalogInput.class, "a2");
 
         // Reset encoders and configure the drive motor.
         yawEncoder1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -100,9 +104,9 @@ public class NSwerve implements Subsystem {
 
 
         // Create the SwerveModule.
-        swerveModule1 = new SwerveModule(driveMotor1, yawServo1, yawEncoder1, yawPID1, ticksPerDegree, yawThreshold);
-        swerveModule2 = new SwerveModule(driveMotor2, yawServo2, yawEncoder2, yawPID2, ticksPerDegree, yawThreshold);
-        swerveModule3 = new SwerveModule(driveMotor3, yawServo3, yawEncoder3, yawPID3, ticksPerDegree, yawThreshold);
+        swerveModule1 = new SwerveModule(driveMotor1, yawServo1, yawEncoder1, a0, yawPID1, ticksPerDegree, yawThreshold);
+        swerveModule2 = new SwerveModule(driveMotor2, yawServo2, yawEncoder2, a1, yawPID2, ticksPerDegree, yawThreshold);
+        swerveModule3 = new SwerveModule(driveMotor3, yawServo3, yawEncoder3, a2, yawPID3, ticksPerDegree, yawThreshold);
 
         initIMU();
     }

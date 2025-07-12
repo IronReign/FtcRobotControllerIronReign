@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.swerve;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -41,6 +42,7 @@ public class MonoSwerve implements Subsystem {
         DcMotorEx driveMotor = hardwareMap.get(DcMotorEx.class, "go");
         CRServo yawServo = hardwareMap.get(CRServo.class, "yaw");
         DcMotorEx yawEncoder = hardwareMap.get(DcMotorEx.class, "encoder");
+        AnalogInput a0 = hardwareMap.get(AnalogInput.class, "a0");
 
         // Reset encoders and configure the drive motor.
         yawEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -57,7 +59,7 @@ public class MonoSwerve implements Subsystem {
         yawPID.enable();
 
         // Create the SwerveModule.
-        swerveModule = new SwerveModule(driveMotor, yawServo, yawEncoder, yawPID, ticksPerDegree, yawThreshold);
+        swerveModule = new SwerveModule(driveMotor, yawServo, yawEncoder, a0, yawPID, ticksPerDegree, yawThreshold);
 
         initIMU();
     }

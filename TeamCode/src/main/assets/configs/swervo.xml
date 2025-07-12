@@ -4,37 +4,41 @@
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Control Hub" port="173">
 
-            <AnalogInput name="brushlandcolor0" port="0" />
+            <AnalogInput name="a0" port="3" />
+            <AnalogInput name="a1" port="0" />
+            <AnalogInput name="a2" port="1" />
+            <AnalogInput name="a3" port="2" />
             <DigitalDevice name="samplerP0" port="2" />
             <DigitalDevice name="samplerP1" port="3" />
             <DigitalDevice name="specP0" port="0" />
             <DigitalDevice name="specP1" port="1" />
 
             <RevRoboticsUltraplanetaryHDHexMotor
-                name="go1"
+                name="go0"
                 port="0" />
             <ContinuousRotationServo
-                name="yaw1"
+                name="yaw0"
                 port="0" />
+
+            <RevRoboticsUltraplanetaryHDHexMotor
+                name="go1"
+                port="1" />
+            <ContinuousRotationServo
+                name="yaw1"
+                port="1" />
 
             <RevRoboticsUltraplanetaryHDHexMotor
                 name="go2"
-                port="1" />
-            <ContinuousRotationServo
-                name="yaw2"
-                port="1" />
-
-            <RevRoboticsUltraplanetaryHDHexMotor
-                name="go3"
                 port="2" />
             <ContinuousRotationServo
-                name="yaw3"
+                name="yaw2"
                 port="2" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
             <goBILDAPinpoint name="pinpoint" port="0" bus="1" />
         </LynxModule>
 
         <LynxModule name="Expansion Hub 2" port="2">
+            <AnalogInput name="brushlandcolor0" port="0" />
             <RevRobotics40HDHexMotor name="specSlide" port="0" />
             <RevRobotics40HDHexMotor name="led" port="1" />
             <RevRobotics40HDHexMotor name="shoulder" port="2" />
@@ -42,13 +46,13 @@
             <Servo name="gripper" port="5" />
 
             <RevRoboticsUltraplanetaryHDHexMotor
-                name="encoder3"
+                name="encoder2"
                 port="2" />
             <RevRoboticsUltraplanetaryHDHexMotor
-                name="encoder2"
+                name="encoder1"
                 port="1" />
             <RevRoboticsUltraplanetaryHDHexMotor
-                name="encoder1"
+                name="encoder0"
                 port="0" />
             <Servo name="pan" port="0" />
             <ContinuousRotationServo name="samplerBeater" port="1" />

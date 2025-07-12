@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 
 @Config
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "TriSwerve", group = "Challenge")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "TriSwerveOp", group = "Challenge")
 public class TriSwerveOp extends OpMode {
     public static boolean quickTripEnabled = false;
 
@@ -22,10 +22,12 @@ public class TriSwerveOp extends OpMode {
     }
 
     public void init_loop() {
+        stickyGamepad1.update();
         updateTelemetry();
-        if (gamepad1.b) {
+        if (stickyGamepad1.b) {
             quickTripEnabled = !quickTripEnabled;
         }
+        robot.calibrate(); // calibrate the serve modules - harmless if calibration is complete
     }
     public void start() {
         robot.gripperReady  =true;
@@ -74,6 +76,7 @@ public class TriSwerveOp extends OpMode {
         telemetry.addData("Module Target Angle", robot.swerveModule1.getTargetAngle());
         telemetry.addData("Module Current Angle", robot.swerveModule1.getCurrentAngle());
         telemetry.addData("Yaw Error", robot.swerveModule1.getYawError());
+        telemetry.addData("Yaw Analog", robot.swerveModule1.getYawAnalog());
         telemetry.addData("Drive Speed", robot.swerveModule1.getDrivePowerActual());
         telemetry.addData("Drive Amps", robot.swerveModule1.getDriveAmps());
 
@@ -81,6 +84,7 @@ public class TriSwerveOp extends OpMode {
         telemetry.addData("Module Target Angle", robot.swerveModule2.getTargetAngle());
         telemetry.addData("Module Current Angle", robot.swerveModule2.getCurrentAngle());
         telemetry.addData("Yaw Error", robot.swerveModule2.getYawError());
+        telemetry.addData("Yaw Analog", robot.swerveModule2.getYawAnalog());
         telemetry.addData("Drive Speed", robot.swerveModule2.getDrivePowerActual());
         telemetry.addData("Drive Amps", robot.swerveModule2.getDriveAmps());
 
@@ -88,6 +92,7 @@ public class TriSwerveOp extends OpMode {
         telemetry.addData("Module Target Angle", robot.swerveModule3.getTargetAngle());
         telemetry.addData("Module Current Angle", robot.swerveModule3.getCurrentAngle());
         telemetry.addData("Yaw Error", robot.swerveModule3.getYawError());
+        telemetry.addData("Yaw Analog", robot.swerveModule3.getYawAnalog());
         telemetry.addData("Drive Speed", robot.swerveModule3.getDrivePowerActual());
         telemetry.addData("Drive Amps", robot.swerveModule3.getDriveAmps());
 

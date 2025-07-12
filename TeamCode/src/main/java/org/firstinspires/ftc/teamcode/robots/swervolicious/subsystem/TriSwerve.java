@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.swervolicious.subsystem;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -69,9 +70,9 @@ public class TriSwerve implements Subsystem {
 
     public TriSwerve(HardwareMap hw) {
         /* ---------- module creation ---------- */
-        back  = makeModule(hw, "go1","yaw1","encoder1");
-        left  = makeModule(hw, "go2","yaw2","encoder2");
-        right = makeModule(hw, "go3","yaw3","encoder3");
+        back  = makeModule(hw, "go0","yaw0","encoder0", "a0");
+        left  = makeModule(hw, "go1","yaw1","encoder1", "a1");
+        right = makeModule(hw, "go2","yaw2","encoder2", "a2");
 
         /* ---------- IMU ---------- */
         imu = hw.get(BNO055IMU.class, "imu");
@@ -95,11 +96,13 @@ public class TriSwerve implements Subsystem {
     private SwerveModule makeModule(HardwareMap hw,
                                     String driveName,
                                     String yawName,
-                                    String encName) {
+                                    String encName,
+                                    String analogName) {
 
         DcMotorEx drive = hw.get(DcMotorEx.class, driveName);
         CRServo   servo = hw.get(CRServo.class,    yawName);
         DcMotorEx enc   = hw.get(DcMotorEx.class,  encName);
+        AnalogInput a = hw.get(AnalogInput.class, analogName);
 
         enc.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         drive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -113,7 +116,7 @@ public class TriSwerve implements Subsystem {
         pid.setInputRange(0, 360);
         pid.enable();
 
-        return new SwerveModule(drive, servo, enc, pid, ticksPerDegree, yawThreshold);
+        return new SwerveModule(drive, servo, enc, a, pid, ticksPerDegree, yawThreshold);
     }
 
 

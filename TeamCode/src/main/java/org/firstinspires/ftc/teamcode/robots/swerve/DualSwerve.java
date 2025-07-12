@@ -8,6 +8,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -61,10 +62,12 @@ public class DualSwerve implements Subsystem {
         DcMotorEx driveMotorOne = hardwareMap.get(DcMotorEx.class, "goOne");
         CRServo yawServoOne = hardwareMap.get(CRServo.class, "yawOne");
         DcMotorEx yawEncoderOne = hardwareMap.get(DcMotorEx.class, "encoderOne");
+        AnalogInput a0 = hardwareMap.get(AnalogInput.class, "a0");
 
         DcMotorEx driveMotorTwo = hardwareMap.get(DcMotorEx.class, "goTwo");
         CRServo yawServoTwo = hardwareMap.get(CRServo.class, "yawTwo");
         DcMotorEx yawEncoderTwo = hardwareMap.get(DcMotorEx.class, "encoderTwo");
+        AnalogInput a1 = hardwareMap.get(AnalogInput.class, "a1");
 
         // Reset encoders and configure the drive motor.
         yawEncoderOne.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -100,8 +103,8 @@ public class DualSwerve implements Subsystem {
 
 
         // Create the SwerveModule.
-        swerveModuleOne = new SwerveModule(driveMotorOne, yawServoOne, yawEncoderOne, yawPIDOne, ticksPerDegree, yawThreshold);
-        swerveModuleTwo = new SwerveModule(driveMotorTwo, yawServoTwo, yawEncoderTwo, yawPIDTwo, ticksPerDegree, yawThreshold);
+        swerveModuleOne = new SwerveModule(driveMotorOne, yawServoOne, yawEncoderOne, a0, yawPIDOne, ticksPerDegree, yawThreshold);
+        swerveModuleTwo = new SwerveModule(driveMotorTwo, yawServoTwo, yawEncoderTwo, a1, yawPIDTwo, ticksPerDegree, yawThreshold);
 
         initIMU();
     }

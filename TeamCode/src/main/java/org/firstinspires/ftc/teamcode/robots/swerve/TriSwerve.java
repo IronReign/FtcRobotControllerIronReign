@@ -12,6 +12,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -23,7 +24,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.swervolicious.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.swervolicious.subsystem.SwerveModule;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils;
 import org.firstinspires.ftc.teamcode.robots.swervolicious.rr_localize.PinpointLocalizer;
 import org.firstinspires.ftc.teamcode.rrQuickStart.Localizer;
@@ -62,18 +64,21 @@ public class TriSwerve implements Subsystem {
     public TriSwerve(HardwareMap hardwareMap) {
         this.hardwareMap = hardwareMap;
         localizer = new PinpointLocalizer(hardwareMap, IN_PER_TICK, new Pose2d(new Vector2d(0, 0), 0));
-        // Get hardware devices for the swerve module.
-        DcMotorEx driveMotor1 = hardwareMap.get(DcMotorEx.class, "go1");
-        CRServo yawServo1 = hardwareMap.get(CRServo.class, "yaw1");
-        DcMotorEx yawEncoder1 = hardwareMap.get(DcMotorEx.class, "encoder1");
+        // Get hardware devices for the swerve modules.
+        DcMotorEx driveMotor1 = hardwareMap.get(DcMotorEx.class, "go0");
+        CRServo yawServo1 = hardwareMap.get(CRServo.class, "yaw0");
+        DcMotorEx yawEncoder1 = hardwareMap.get(DcMotorEx.class, "encoder0");
+        AnalogInput a0 = hardwareMap.get(AnalogInput.class, "a0");
 
-        DcMotorEx driveMotor2 = hardwareMap.get(DcMotorEx.class, "go2");
-        CRServo yawServo2 = hardwareMap.get(CRServo.class, "yaw2");
-        DcMotorEx yawEncoder2 = hardwareMap.get(DcMotorEx.class, "encoder2");
+        DcMotorEx driveMotor2 = hardwareMap.get(DcMotorEx.class, "go1");
+        CRServo yawServo2 = hardwareMap.get(CRServo.class, "yaw1");
+        DcMotorEx yawEncoder2 = hardwareMap.get(DcMotorEx.class, "encoder1");
+        AnalogInput a1 = hardwareMap.get(AnalogInput.class, "a1");
 
-        DcMotorEx driveMotor3 = hardwareMap.get(DcMotorEx.class, "go3");
-        CRServo yawServo3 = hardwareMap.get(CRServo.class, "yaw3");
-        DcMotorEx yawEncoder3 = hardwareMap.get(DcMotorEx.class, "encoder3");
+        DcMotorEx driveMotor3 = hardwareMap.get(DcMotorEx.class, "go2");
+        CRServo yawServo3 = hardwareMap.get(CRServo.class, "yaw2");
+        DcMotorEx yawEncoder3 = hardwareMap.get(DcMotorEx.class, "encoder2");
+        AnalogInput a2 = hardwareMap.get(AnalogInput.class, "a2");
 
         gripper = hardwareMap.get(Servo.class, "gripper");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -118,9 +123,9 @@ public class TriSwerve implements Subsystem {
 
 
         // Create the SwerveModule.
-        swerveModule1 = new SwerveModule(driveMotor1, yawServo1, yawEncoder1, yawPID1, ticksPerDegree, yawThreshold);
-        swerveModule2 = new SwerveModule(driveMotor2, yawServo2, yawEncoder2, yawPID2, ticksPerDegree, yawThreshold);
-        swerveModule3 = new SwerveModule(driveMotor3, yawServo3, yawEncoder3, yawPID3, ticksPerDegree, yawThreshold);
+        swerveModule1 = new SwerveModule("back",driveMotor1, yawServo1, yawEncoder1, a0,yawPID1, ticksPerDegree, yawThreshold);
+        swerveModule2 = new SwerveModule("right",driveMotor2, yawServo2, yawEncoder2, a1 ,yawPID2, ticksPerDegree, yawThreshold);
+        swerveModule3 = new SwerveModule("left",driveMotor3, yawServo3, yawEncoder3, a2,yawPID3, ticksPerDegree, yawThreshold);
 
         initIMU();
     }
@@ -270,9 +275,9 @@ public class TriSwerve implements Subsystem {
         chassisHeading = angles.firstAngle;
 
         // Update the swerve module control.
-        swerveModule1.update();
-        swerveModule2.update();
-        swerveModule3.update();
+        swerveModule1.update(fieldOverlay);
+        swerveModule2.update(fieldOverlay);
+        swerveModule3.update(fieldOverlay);
         localizer.update();
         if(gripperReady) {
             gripper.setPosition(Utils.servoNormalize(gripperOpen ? gripperOpenPosition : gripperClosedPosition));
@@ -284,6 +289,23 @@ public class TriSwerve implements Subsystem {
         drawRobot(fieldOverlay);
     }
 
+    boolean calibrationStarted = false;
+    @Override
+    public boolean calibrate() {
+
+        if (!calibrationStarted) {
+            calibrationStarted = true;
+            swerveModule1.startCalibration();
+            swerveModule2.startCalibration();
+            swerveModule3.startCalibration();
+        }
+
+        return true;
+                //(swerveModule1.calibrate()) &&
+                    //(swerveModule2.calibrate()) &&
+                    //(swerveModule3.calibrate());
+
+    }
 
     public void initIMU() {
         imu = hardwareMap.get(BNO055IMU.class, "imu");
@@ -319,6 +341,6 @@ public class TriSwerve implements Subsystem {
 
     @Override
     public String getTelemetryName() {
-        return "Swerve";
+        return "TriSwerveClassic";
     }
 }

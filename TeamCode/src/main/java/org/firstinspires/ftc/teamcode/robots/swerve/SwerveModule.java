@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.swerve;
 
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -13,6 +14,7 @@ public class SwerveModule {
     private DcMotorEx driveMotor;
     private CRServo yawServo;
     private DcMotorEx yawEncoder;
+    private AnalogInput yawAnalog;
     private PIDController yawPID;
     private double ticksPerDegree;
     public boolean swerveAligned;
@@ -27,15 +29,17 @@ public class SwerveModule {
      * @param driveMotor      The drive motor (for wheel propulsion)
      * @param yawServo        The continuous rotation servo that steers the module
      * @param yawEncoder      The encoder providing feedback on the module’s yaw position
+     * @param yawAnalog       The analog optical sensor for detecting the index position of the module's steering (yaw)
      * @param pidController   The PID controller instance to control the yaw
      * @param ticksPerDegree  Conversion factor from encoder ticks to degrees
      * @param thresholdAngle  Threshold (in degrees) below which the drive motor is enabled
      */
-    public SwerveModule(DcMotorEx driveMotor, CRServo yawServo, DcMotorEx yawEncoder,
+    public SwerveModule(DcMotorEx driveMotor, CRServo yawServo, DcMotorEx yawEncoder, AnalogInput yawAnalog,
                         PIDController pidController, double ticksPerDegree, double thresholdAngle) {
         this.driveMotor = driveMotor;
         this.yawServo = yawServo;
         this.yawEncoder = yawEncoder;
+        this.yawAnalog = yawAnalog;
         this.yawPID = pidController;
         this.ticksPerDegree = ticksPerDegree;
         this.thresholdAngle = thresholdAngle;
@@ -126,6 +130,10 @@ public class SwerveModule {
      */
     public double getYawError() {
         return yawError;
+    }
+
+    public double getYawAnalog() {
+        return yawAnalog.getVoltage();
     }
 
     /**

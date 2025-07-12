@@ -82,7 +82,7 @@ public class DriveTrain extends SwerveDriveReign implements Subsystem {
 //                leftDistanceSensorValue = Robot.sensors.leftDistSensorValue;
 //            }
             updatePoseEstimate();
-            super.updateModules();
+            super.updateModules(c);
 
 //        update pose heading from imu regularly
 //            if (RELOCALIZE_WITH_IMU) {

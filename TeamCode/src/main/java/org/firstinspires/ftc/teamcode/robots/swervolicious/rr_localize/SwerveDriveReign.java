@@ -35,8 +35,8 @@ public class SwerveDriveReign {
         public RevHubOrientationOnRobot.LogoFacingDirection logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.LEFT;
         public RevHubOrientationOnRobot.UsbFacingDirection  usbFacingDirection  = RevHubOrientationOnRobot.UsbFacingDirection.UP;
         public Vector2d backPosMM  = new Vector2d(-191.029,   0.000);
-        public Vector2d leftPosMM  = new Vector2d( 106.754,  158.500);
-        public Vector2d rightPosMM = new Vector2d( 106.754, -158.500);
+        public Vector2d leftPosMM  = new Vector2d( 106.754,  -158.500);
+        public Vector2d rightPosMM = new Vector2d( 106.754, 158.500);
         public double   inPerTick  = 0.00293063133; // convert SwerveModule ticks of drive motor into travel
         public double   degPerTick = 360.0 / 4920.0; // convert SwerveModule through bore encoder ticks to degrees of steering
         public double   maxWheelVel = 50;  // in/s
@@ -77,9 +77,9 @@ public class SwerveDriveReign {
 
     public SwerveDriveReign(HardwareMap hw, Pose2d startPose){
         for(LynxModule m: hw.getAll(LynxModule.class)) m.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-        backModule  = SwerveModuleFactory.make("go1","yaw1","encoder1",hw);
-        leftModule  = SwerveModuleFactory.make("go2","yaw2","encoder2",hw);
-        rightModule = SwerveModuleFactory.make("go3","yaw3","encoder3",hw);
+        backModule  = SwerveModuleFactory.make("back","go0","yaw0","encoder0","a0",hw);
+        leftModule  = SwerveModuleFactory.make("left","go1","yaw1","encoder1","a1",hw);
+        rightModule = SwerveModuleFactory.make("right","go2","yaw2","encoder2","a2",hw);
         voltageSensor = hw.voltageSensor.iterator().next();
         lazyImu = new LazyHardwareMapImu(hw,"imu",new RevHubOrientationOnRobot(PARAMS.logoFacingDirection,PARAMS.usbFacingDirection));
         //localizer = new SwerveDriveReignLocalizer(startPose);
@@ -211,10 +211,10 @@ public class SwerveDriveReign {
     }
 
     /** Call every robot loop to keep each module’s yaw PID active. */
-    public void updateModules() {
-        backModule.update();
-        leftModule.update();
-        rightModule.update();
+    public void updateModules(Canvas c) {
+        backModule.update(c);
+        leftModule.update(c);
+        rightModule.update(c);
     }
 
     /** Draws a breadcrumb trail of the recent robot poses on the FTC Dashboard. */
@@ -272,14 +272,17 @@ public class SwerveDriveReign {
 
 /* ---------------- SwerveModule factory -------------------------------- */
 class SwerveModuleFactory{
-    static SwerveModule make(String drive,String yaw,String enc,HardwareMap hw){
-        DcMotorEx d=hw.get(DcMotorEx.class,drive); CRServo y=hw.get(CRServo.class,yaw); DcMotorEx e=hw.get(DcMotorEx.class,enc);
+    static SwerveModule make(String name, String drive,String yawMotor,String yawEnc,String yawIndex, HardwareMap hw){
+        DcMotorEx d=hw.get(DcMotorEx.class,drive);
+        CRServo y=hw.get(CRServo.class,yawMotor);
+        DcMotorEx e=hw.get(DcMotorEx.class,yawEnc);
+        AnalogInput a=hw.get(AnalogInput.class, yawIndex);
         PIDController pid=new PIDController(PARAMS.pidCoefficients);
         pid.setOutputRange(-0.5, 0.5);
         pid.setContinuous();
         pid.setTolerance(50);
         pid.setInputRange(0, 360);
         pid.enable();
-        return new SwerveModule(d,y,e,pid,1/ PARAMS.degPerTick,PARAMS.yawThreshold);
+        return new SwerveModule(name,d,y,e,a,pid,1/ PARAMS.degPerTick,PARAMS.yawThreshold);
     }
 }
