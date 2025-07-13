@@ -42,6 +42,7 @@ public class TriSwerve implements Subsystem {
     HardwareMap hardwareMap;
     Limelight3A limelight;
     SwerveModule swerveModule1, swerveModule2, swerveModule3;
+    public SwerveModule[] modules;
     Servo gripper;
     Localizer localizer;
 
@@ -126,7 +127,7 @@ public class TriSwerve implements Subsystem {
         swerveModule1 = new SwerveModule("back",driveMotor1, yawServo1, yawEncoder1, a0,yawPID1, ticksPerDegree, yawThreshold);
         swerveModule2 = new SwerveModule("right",driveMotor2, yawServo2, yawEncoder2, a1 ,yawPID2, ticksPerDegree, yawThreshold);
         swerveModule3 = new SwerveModule("left",driveMotor3, yawServo3, yawEncoder3, a2,yawPID3, ticksPerDegree, yawThreshold);
-
+        modules = new SwerveModule[] {swerveModule1, swerveModule2, swerveModule3};
         initIMU();
     }
 
@@ -299,12 +300,12 @@ public class TriSwerve implements Subsystem {
             swerveModule2.startCalibration();
             swerveModule3.startCalibration();
         }
-
+//        if(swerveModule1.calibrate() && swerveModule2.calibrate() && swerveModule3.calibrate())
         return true;
                 //(swerveModule1.calibrate()) &&
                     //(swerveModule2.calibrate()) &&
                     //(swerveModule3.calibrate());
-
+//        return false;
     }
 
     public void initIMU() {

@@ -5,6 +5,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
+import org.firstinspires.ftc.teamcode.robots.swervolicious.subsystem.SwerveModule;
 
 @Config
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "TriSwerveOp", group = "Challenge")
@@ -72,30 +73,19 @@ public class TriSwerveOp extends OpMode {
         telemetry.addData("heading", robot.localizer.getPose().heading.log());
         // Telemetry now shows chassis heading and swerve module status.
         telemetry.addData("Chassis Heading", robot.chassisHeading);
-        telemetry.addData("\nMODULE", "1");
-        telemetry.addData("Module Target Angle", robot.swerveModule1.getTargetAngle());
-        telemetry.addData("Module Current Angle", robot.swerveModule1.getCurrentAngle());
-        telemetry.addData("Yaw Error", robot.swerveModule1.getYawError());
-        telemetry.addData("Yaw Analog", robot.swerveModule1.getYawAnalog());
-        telemetry.addData("Drive Speed", robot.swerveModule1.getDrivePowerActual());
-        telemetry.addData("Drive Amps", robot.swerveModule1.getDriveAmps());
 
-        telemetry.addData("\nMODULE", "2");
-        telemetry.addData("Module Target Angle", robot.swerveModule2.getTargetAngle());
-        telemetry.addData("Module Current Angle", robot.swerveModule2.getCurrentAngle());
-        telemetry.addData("Yaw Error", robot.swerveModule2.getYawError());
-        telemetry.addData("Yaw Analog", robot.swerveModule2.getYawAnalog());
-        telemetry.addData("Drive Speed", robot.swerveModule2.getDrivePowerActual());
-        telemetry.addData("Drive Amps", robot.swerveModule2.getDriveAmps());
-
-        telemetry.addData("\nMODULE", "3");
-        telemetry.addData("Module Target Angle", robot.swerveModule3.getTargetAngle());
-        telemetry.addData("Module Current Angle", robot.swerveModule3.getCurrentAngle());
-        telemetry.addData("Yaw Error", robot.swerveModule3.getYawError());
-        telemetry.addData("Yaw Analog", robot.swerveModule3.getYawAnalog());
-        telemetry.addData("Drive Speed", robot.swerveModule3.getDrivePowerActual());
-        telemetry.addData("Drive Amps", robot.swerveModule3.getDriveAmps());
-
-
+        for(int i = 0; i < robot.modules.length; i++) {
+            SwerveModule module = robot.modules[i];
+            telemetry.addData("\nMODULE", i+1);
+            telemetry.addData("Module Target Angle", module.getTargetAngle());
+            telemetry.addData("Module Current Angle", module.getCurrentAngle());
+            telemetry.addData("Yaw Power",module.getYawPower());
+            telemetry.addData("Yaw Error", module.getYawError());
+            telemetry.addData("Yaw Analog", module.getYawAnalog());
+            telemetry.addData("atJump?", module.atJump());
+            telemetry.addData("arr", module.pastAnalogValues);
+            telemetry.addData("Drive Speed",module.getDrivePowerActual());
+            telemetry.addData("Drive Amps", module.getDriveAmps());
+        }
     }
 }

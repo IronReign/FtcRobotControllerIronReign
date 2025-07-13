@@ -12,6 +12,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 import org.firstinspires.ftc.teamcode.util.utilMethods;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,40 +33,45 @@ public class SwerveModule implements Subsystem {
     private boolean invertedDrive;    // whether the drive motor should be inverted
 
     // calibration constants - todo, change to private once done with dashboard tuning
-    public static final double FAST_PWR      =  0.9;   // open-loop power while searching
-    public static final double SLOW_PWR      =  0.25;  // open-loop power when refining
-    public static final int    MIN_SCAN_TICS = 150;    // turn at least this long before giving up
-    public static final double ANALOG_HYST   = 0.02;   // ignore noise around thresholds
-    public static final double OFFSET_EPS    = 1.0;    // deg – when to accept “at offset”
+    public static final double FAST_PWR = 0.9;   // open-loop power while searching
+    public static final double SLOW_PWR = 0.25;  // open-loop power when refining
+    public static final int MIN_SCAN_TICS = 150;    // turn at least this long before giving up
+    public static final double ANALOG_HYST = 0.02;   // ignore noise around thresholds
+    public static final double OFFSET_EPS = 1.0;    // deg – when to accept “at offset”
 
 
     // ---------- CALIBRATION ---------------------------------------------------
-    private enum CalibKind   { NONE, NORMAL, TICK_CHAR, OFFSET_CHAR }
-    private enum CalibState  { IDLE, SEEK_FAST, SEEK_SLOW, FIND_EXTREMES,
+    private enum CalibKind {NONE, NORMAL, TICK_CHAR, OFFSET_CHAR, ANALOG}
+
+    private enum CalibState {
+        IDLE, SEEK_FAST, SEEK_SLOW, FIND_EXTREMES,
         CENTER_FROM_POS, CENTER_FROM_NEG,
         TEMP_ZERO, GOTO_OFFSET, DONE,
         ONE_REV_START, ONE_REV_COUNT, BACKLASH_FWD,
-        BACKLASH_REV, CAPTURE_END }               //  for other routines
+        BACKLASH_REV, CAPTURE_END
+    }               //  for other routines
 
-    private CalibKind  calibKind  = CalibKind.NONE;
+    private CalibKind calibKind = CalibKind.NONE;
     private CalibState calibState = CalibState.IDLE;
-    private int        scanTicks;               // generic counter
-    private double     analogMin, analogMax;    // found extremes
-    private double     midValue;                // boundary value
-    private double     startAngle;              // for 360-deg count
-    private int        revTicks;                // ticks in one revolution
-    private double     backlashTicks;           // slop
+    private int scanTicks;               // generic counter
+    private double analogMin, analogMax;    // found extremes
+    private double midValue;                // boundary value
+    private double startAngle;              // for 360-deg count
+    private int revTicks;                // ticks in one revolution
+    private double backlashTicks;           // slop
     private final double alignmentOffsetDeg = 10;    // <- module-specific, ctor param
+
+    public ArrayList<Double> pastAnalogValues = new ArrayList<Double>();
 
 
     /**
-     * @param driveMotor      The drive motor (for wheel propulsion)
-     * @param yawServo        The continuous rotation servo that steers the module
-     * @param yawEncoder      The encoder providing feedback on the module’s yaw position
-     * @param yawAnalog       The analog optical sensor for detecting the index position of the module's steering (yaw)
-     * @param pidController   The PID controller instance to control the yaw
-     * @param ticksPerDegree  Conversion factor from encoder ticks to degrees
-     * @param thresholdAngle  Threshold (in degrees) below which the drive motor is enabled
+     * @param driveMotor     The drive motor (for wheel propulsion)
+     * @param yawServo       The continuous rotation servo that steers the module
+     * @param yawEncoder     The encoder providing feedback on the module’s yaw position
+     * @param yawAnalog      The analog optical sensor for detecting the index position of the module's steering (yaw)
+     * @param pidController  The PID controller instance to control the yaw
+     * @param ticksPerDegree Conversion factor from encoder ticks to degrees
+     * @param thresholdAngle Threshold (in degrees) below which the drive motor is enabled
      */
     public SwerveModule(String name, DcMotorEx driveMotor, CRServo yawServo, DcMotorEx yawEncoder, AnalogInput yawAnalog,
                         PIDController pidController, double ticksPerDegree, double thresholdAngle) {
@@ -83,25 +89,32 @@ public class SwerveModule implements Subsystem {
     /**
      * Call this periodically to update the yaw servo power.
      */
-    @Override public void update(Canvas fieldOverlay) {
-        double currentAngle = getCurrentAngle();
-        // Compute the current error using a helper that returns the smallest difference (-180, 180)
-        yawError = utilMethods.angleDifference(targetAngle, currentAngle);
-        yawPID.setInput(currentAngle);
-        yawPID.setSetpoint(targetAngle);
-        double pidOutput = yawPID.performPID();
-        // Negative because of the servo’s orientation (adjust sign as needed)
-        yawServo.setPower(-pidOutput);
+    @Override
+    public void update(Canvas fieldOverlay) {
+//        if (isCalibrationDone()) {
+            double currentAngle = getCurrentAngle();
+            // Compute the current error using a helper that returns the smallest difference (-180, 180)
+            yawError = utilMethods.angleDifference(targetAngle, currentAngle);
+            yawPID.setInput(currentAngle);
+            yawPID.setSetpoint(targetAngle);
+            double pidOutput = yawPID.performPID();
+            // Negative because of the servo’s orientation (adjust sign as needed)
+            yawServo.setPower(-pidOutput);
+//        }
     }
 
-    @Override public void stop() {
+    @Override
+    public void stop() {
         driveMotor.setPower(0);
         yawServo.setPower(0);
     }
 
-    @Override public void resetStates() {}
+    @Override
+    public void resetStates() {
+    }
 
-    @Override public Map<String, Object> getTelemetry(boolean debug) {
+    @Override
+    public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> t = new HashMap<>();
         if (debug) {
             t.put("steer current", getCurrentAngle());
@@ -111,35 +124,41 @@ public class SwerveModule implements Subsystem {
         }
         return t;
     }
-    @Override public String getTelemetryName() { return "SwerveModule " + this.name; }
+
+    @Override
+    public String getTelemetryName() {
+        return "SwerveModule " + this.name;
+    }
+
     /**
      * Sets the desired state for the module.
+     *
      * @param desiredAngle chassis-relative angle (deg)
      * @param speed        desired speed 0 – 1 (sign ignored; we invert internally)
      */
     public void setDesiredState(double desiredAngle, double speed) {
         // ---- 1. Harden inputs ----------------------------------------------
-        if (Double.isNaN(desiredAngle))   desiredAngle = targetAngle; // hold last target
-        if (Double.isNaN(speed))          speed        = 0;
+        if (Double.isNaN(desiredAngle)) desiredAngle = targetAngle; // hold last target
+        if (Double.isNaN(speed)) speed = 0;
 
         // store for telemetry
         desiredAnglePrivy = desiredAngle;
 
         double currentAngle = getCurrentAngle();
-        double angleDiff    = utilMethods.angleDifference(desiredAngle, currentAngle);
+        double angleDiff = utilMethods.angleDifference(desiredAngle, currentAngle);
 
         // ---- 2. Choose the shorter rotation path ---------------------------
         if (Math.abs(angleDiff) >= 90) {
             invertedDrive = true;
-            targetAngle   = Utils.wrapAngle(desiredAngle - 180);
+            targetAngle = Utils.wrapAngle(desiredAngle - 180);
         } else {
             invertedDrive = false;
-            targetAngle   = Utils.wrapAngle(desiredAngle);
+            targetAngle = Utils.wrapAngle(desiredAngle);
         }
 
         // ---- 3. Check if yaw error is inside the steering threshold --------
-        boolean withinPrimary   = Math.abs(angleDiff) < thresholdAngle;
-        boolean withinOpposite  = Math.abs(angleDiff) > 180 - thresholdAngle &&
+        boolean withinPrimary = Math.abs(angleDiff) < thresholdAngle;
+        boolean withinOpposite = Math.abs(angleDiff) > 180 - thresholdAngle &&
                 Math.abs(angleDiff) < 180 + thresholdAngle;
         swerveAligned = withinPrimary || withinOpposite;
 
@@ -155,7 +174,7 @@ public class SwerveModule implements Subsystem {
     }
 
 
-    public void resetEncoder () {
+    public void resetEncoder() {
         yawEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
@@ -163,7 +182,7 @@ public class SwerveModule implements Subsystem {
      * Returns the current yaw angle of the module, in degrees (wrapped between 0 and 360).
      */
 
-    public void aligned(double speed){
+    public void aligned(double speed) {
         driveMotor.setPower(invertedDrive ? -speed : speed);
     }
 
@@ -192,6 +211,7 @@ public class SwerveModule implements Subsystem {
     public double getDrivePowerActual() {
         return driveMotor.getPower();
     }
+
     /**
      * Returns the current drive power setting.
      */
@@ -220,34 +240,69 @@ public class SwerveModule implements Subsystem {
         return yawAnalog.getVoltage();
     }
 
-    public void startCalibration()        { calibKind = CalibKind.NORMAL;  calibState = CalibState.SEEK_FAST; resetScan(); }
-    public void startTickCharacterisation()    { calibKind = CalibKind.TICK_CHAR; calibState = CalibState.ONE_REV_START; resetScan(); }
-    public void startOffsetCharacterisation()  { calibKind = CalibKind.OFFSET_CHAR; calibState = CalibState.SEEK_FAST; resetScan(); }
-    public boolean isCalibrationDone()         { return calibState == CalibState.DONE; }
+    public double getYawPower() {
+        return yawServo.getPower();
+
+    }
+
+    public void startCalibration() {
+        calibKind = CalibKind.ANALOG;
+        calibState = CalibState.SEEK_FAST;
+        resetScan();
+    }
+
+    public void startTickCharacterisation() {
+        calibKind = CalibKind.TICK_CHAR;
+        calibState = CalibState.ONE_REV_START;
+        resetScan();
+    }
+
+    public void startOffsetCharacterisation() {
+        calibKind = CalibKind.OFFSET_CHAR;
+        calibState = CalibState.SEEK_FAST;
+        resetScan();
+    }
+
+    public boolean isCalibrationDone() {
+        return calibState == CalibState.DONE;
+    }
 
     private void resetScan() {
-        scanTicks   = 0;
-        analogMin   =  1e9;
-        analogMax   = -1e9;
+        scanTicks = 0;
+        analogMin = .1;
+        analogMax = .3;
     }
 
     /**
      * Call every loop() *before* normal driving so the steer motor is free.
+     *
      * @return true once the chosen calibration routine completes
      */
     public boolean calibrate() {
 
         switch (calibKind) {
 
-            case NONE: return true; // no calibration or characterization to be done
+            case NONE:
+                return true; // no calibration or characterization to be done
 
             // ---------- DAILY CALIBRATION ----------------------------
+
+            case ANALOG:
+                yawServo.setPower(-.5);
+                if (atJump()) {
+                    yawServo.setPower(0);
+                    calibKind = CalibKind.NORMAL;
+                    calibState = CalibState.TEMP_ZERO;
+                }
+                break;
             case NORMAL:
                 switch (calibState) {
 
                     case SEEK_FAST: {             // spin CW fast until we hit *either* tape
                         yawServo.setPower(FAST_PWR);
-                        if (tapeSeen()) { calibState = CalibState.SEEK_SLOW; }
+                        if (tapeSeen()) {
+                            calibState = CalibState.SEEK_SLOW;
+                        }
                         break;
                     }
 
@@ -259,7 +314,7 @@ public class SwerveModule implements Subsystem {
 
                         // after MIN_SCAN_TICS of slow scan assume we have both extremes
                         if (++scanTicks > MIN_SCAN_TICS) {
-                            midValue   = (analogMin + analogMax) / 2.0;
+                            midValue = (analogMin + analogMax) / 2.0;
                             calibState = CalibState.FIND_EXTREMES;
                         }
                         break;
@@ -299,8 +354,8 @@ public class SwerveModule implements Subsystem {
 
                     case GOTO_OFFSET: {           // use PID to drive to real-world align
                         double current = getCurrentAngle();
-                        double error   = utilMethods.angleDifference(alignmentOffsetDeg, current);
-                        double out     = yawPID.performPID();
+                        double error = utilMethods.angleDifference(alignmentOffsetDeg, current);
+                        double out = yawPID.performPID();
                         yawServo.setPower(-out);
 
                         if (Math.abs(error) < OFFSET_EPS) {
@@ -333,7 +388,7 @@ public class SwerveModule implements Subsystem {
                     case ONE_REV_COUNT: {
                         if (Math.abs(utilMethods.angleDifference(getCurrentAngle(), startAngle)) > 350) {
                             yawServo.setPower(0);
-                            revTicks   = yawEncoder.getCurrentPosition();
+                            revTicks = yawEncoder.getCurrentPosition();
                             calibState = CalibState.BACKLASH_FWD;
                             resetEncoders();
                         }
@@ -355,7 +410,7 @@ public class SwerveModule implements Subsystem {
                         if (tapeSeen()) {          // saw boundary from opposite dir
                             yawServo.setPower(0);
                             backlashTicks = Math.abs(yawEncoder.getCurrentPosition());
-                            calibState    = CalibState.DONE;
+                            calibState = CalibState.DONE;
                         }
                         break;
                     }
@@ -385,19 +440,40 @@ public class SwerveModule implements Subsystem {
                 }
                 break;
 
-            default: break;
+            default:
+                break;
         }
 
         return false;      // still calibrating
     }
 
-    /** True if sensor is over either tape (outside “normal” material). */
+    //    True when the optical sensor detects the jump from solid white to solid(ish) black
+    public boolean atJump() {
+        //only looking at the last value but could use the list for smarter detection later
+//        if (pastAnalogValues.size() > 4) {
+//            pastAnalogValues.remove(0);
+//        }
+//        pastAnalogValues.add(yawAnalog.getVoltage());
+        if (yawAnalog.getVoltage() > .245   ) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * True if sensor is over either tape (outside “normal” material).
+     */
     private boolean tapeSeen() {
         double v = yawAnalog.getVoltage();
         return (v < analogMin + ANALOG_HYST) || (v > analogMax - ANALOG_HYST);
     }
 
-    public int    getRevTicks()     { return revTicks; }
-    public double getBacklashTicks(){ return backlashTicks; }
+    public int getRevTicks() {
+        return revTicks;
+    }
+
+    public double getBacklashTicks() {
+        return backlashTicks;
+    }
 
 }
