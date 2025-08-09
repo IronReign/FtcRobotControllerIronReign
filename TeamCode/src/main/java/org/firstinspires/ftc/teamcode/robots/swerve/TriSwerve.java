@@ -135,22 +135,27 @@ public class TriSwerve implements Subsystem {
 
         // Where each module sits, measured CCW from the robot’s +Y (forward) axis
         // -- adjust these three numbers if your frame layout is different.
-        final double[] MODULE_BEARINGS = {0, 240, 120};   // deg
+        //final double[] MODULE_BEARINGS = {0, 240, 120};   // deg
+        final double[] MODULE_BEARINGS = {0, 0, 0};   // deg
 
         // Tangential direction = bearing ±90 deg
-        double tangentOffset = turnPower >= 0 ? 90 : -90;
-        double speed = Math.abs(turnPower);                 // 0-1 drive power
+        //double tangentOffset = turnPower >= 0 ? 135 : -135;
+        double tangentOffset = 135;
+
+        //double speed = Math.abs(turnPower);
+        double speed = turnPower;// 0-1 drive power
 
         // Module 1
-        double tgt1 = Utils.wrapAngle(MODULE_BEARINGS[0] + tangentOffset);
+        //double tgt1 = Utils.wrapAngle(MODULE_BEARINGS[0] + tangentOffset);
+        double tgt1 = Utils.wrapAngle(MODULE_BEARINGS[0] + 90);
         swerveModule1.setDesiredState(tgt1, speed);
 
         // Module 2
         double tgt2 = Utils.wrapAngle(MODULE_BEARINGS[1] + tangentOffset);
-        swerveModule2.setDesiredState(tgt2, speed);
+        swerveModule2.setDesiredState(tgt2, -speed);
 
         // Module 3
-        double tgt3 = Utils.wrapAngle(MODULE_BEARINGS[2] + tangentOffset);
+        double tgt3 = Utils.wrapAngle(MODULE_BEARINGS[2] - tangentOffset);
         swerveModule3.setDesiredState(tgt3, speed);
     }
 

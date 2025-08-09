@@ -108,6 +108,7 @@ public class testLeg extends OpMode{
         }
 
         if(gamepad1.x){
+            myWait(0.05);
             jump();
         }
         if(gamepad1.right_trigger > 0.3){
@@ -174,7 +175,7 @@ public class testLeg extends OpMode{
             muscleOne.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
             muscleOne.setPower(1);
 
-            if(muscleOne.getCurrent(CurrentUnit.AMPS) > 0.85){
+            if(muscleOne.getCurrent(CurrentUnit.AMPS) > 1.6){
                 go = false;
             }
         }
