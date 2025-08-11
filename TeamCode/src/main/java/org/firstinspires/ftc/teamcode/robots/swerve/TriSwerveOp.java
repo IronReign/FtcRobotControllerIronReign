@@ -46,7 +46,10 @@ public class TriSwerveOp extends OpMode {
             else {
                 if (Math.abs(gamepad1.right_stick_x) > .2)
                     robot.rotate(-gamepad1.right_stick_x);
-                robot.processDriverInput(gamepad1.left_stick_x, -gamepad1.left_stick_y, false);
+                else
+                    robot.rotate(0);
+
+                //robot.processDriverInput(gamepad1.left_stick_x, -gamepad1.left_stick_y, false);
             }
 
 
