@@ -56,7 +56,7 @@ task deployXmlAssets(type: Exec) {
     // This single command will push all the contents of stagedXml into /sdcard/FIRST
     commandLine "adb", "push", "$buildDir/stagedXml/.", "/sdcard/FIRST"
 }
-
+/*
 // 3) (Optional) Hook into installDebug so it happens automatically
 afterEvaluate {
     tasks.getByPath(":TeamCode:assembleDebug").dependsOn(deployXmlAssets)
@@ -65,7 +65,7 @@ afterEvaluate {
     tasks.getByPath(":TeamCode:installDebug").dependsOn(deployXmlAssets)
 }
 // ^^^^^^^ added this section to copy config files from assets/configs to sdcard/FIRST since Limelight breaks the build with malformed xml if in /res/xml
-
+*/
 repositories {
    maven {
       url = 'https://maven.brott.dev/'

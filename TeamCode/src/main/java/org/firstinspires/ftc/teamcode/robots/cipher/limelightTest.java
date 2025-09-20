@@ -4,13 +4,14 @@ import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.har
 
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-@TeleOp(name="limelight test", group="game")
+@Autonomous
 
 public class limelightTest extends OpMode {
     private Limelight3A limelight3A;
@@ -31,14 +32,13 @@ public class limelightTest extends OpMode {
     public void loop(){
         LLResult llResult = limelight3A.getLatestResult();
         if(llResult!=null && llResult.isValid()){
-            Pose3D botpose = llResult.getBotpose();
+            //Pose3D botpose = llResult.getBotpose();
             telemetry.addData("target x offset", llResult.getTx());
             telemetry.addData("target y offset", llResult.getTy());
             telemetry.addData("target area offset", llResult.getTa());
-            telemetry.addData("Botpose", botpose.toString());
+            //telemetry.addData("Botpose", botpose.toString());
 
         }
+        telemetry.update();
     }
-
-
 }
