@@ -32,18 +32,21 @@ import com.acmerobotics.roadrunner.ftc.PinpointEncoderGroup;
 import com.acmerobotics.roadrunner.ftc.PinpointIMU;
 import com.acmerobotics.roadrunner.ftc.PinpointView;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeManager;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeRegistrar;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeMeta;
 import org.firstinspires.ftc.teamcode.GoBildaPinpointDriver;
-import org.firstinspires.ftc.teamcode.robots.deepthought.rr_localize.MecanumDriveReign;
-import org.firstinspires.ftc.teamcode.robots.deepthought.rr_localize.OTOSLocalizer;
-import org.firstinspires.ftc.teamcode.robots.deepthought.rr_localize.PinpointLocalizer;
-import org.firstinspires.ftc.teamcode.robots.deepthought.rr_localize.ThreeDeadWheelLocalizer;
-import org.firstinspires.ftc.teamcode.rrQuickStart.MecanumDrive;
+import org.firstinspires.ftc.teamcode.robots.cipher.rr_localize.MecanumDrive;
+import org.firstinspires.ftc.teamcode.robots.cipher.rr_localize.PinpointLocalizer;
+import org.firstinspires.ftc.teamcode.robots.cipher.rr_localize.ThreeDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.robots.cipher.rr_localize.OTOSLocalizer;
+//import org.firstinspires.ftc.teamcode.rrQuickStart.robots.cipher.MecanumDrive;
 import org.firstinspires.ftc.teamcode.rrQuickStart.TwoDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.rrQuickStart.TankDrive;
 
@@ -51,15 +54,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public final class TuningOpModes {
+@Autonomous (name="Cipher")
+public final class TuningOpModes extends LinearOpMode {
     // TODO: change this to TankDrive.class if you're using tank
-    public static final Class<?> DRIVE_CLASS = PinpointLocalizer.class;
+    public static final Class<?> DRIVE_CLASS = MecanumDrive.class;
 
     public static final String GROUP = "rr_quickstart_reign";
-    public static final String PREFIX = "6832 ";
+    public static final String PREFIX = "TESTING!!! ";
     public static final boolean DISABLED = false;
 
     private TuningOpModes() {}
+
+    @Override
+    public void runOpMode() throws InterruptedException {
+
+    }
 
     private static OpModeMeta metaForClass(Class<? extends OpMode> cls) {
         return new OpModeMeta.Builder()
