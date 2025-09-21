@@ -9,23 +9,26 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
+
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
-import org.firstinspires.ftc.teamcode.util.PIDController;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils;
+import org.firstinspires.ftc.teamcode.util.PIDController;
+
 import java.util.Map;
 
-@Config(value = "Swerve")
-public class MonoSwerve implements Subsystem {
+@Config(value = "NSwerve")
+public class NSwerve implements Subsystem {
 
     HardwareMap hardwareMap;
-    SwerveModule swerveModule;
+    SwerveModule swerveModule1, swerveModule2, swerveModule3;
 
     BNO055IMU imu;
     Orientation angles = new Orientation();
+    int numSwerves;
     public double chassisHeading;
     public double lastSpeed;
 
@@ -35,31 +38,75 @@ public class MonoSwerve implements Subsystem {
     // Set a threshold (in degrees) below which the drive motor is allowed to run.
     public static double yawThreshold = 10;
 
-    public MonoSwerve(HardwareMap hardwareMap) {
+    public NSwerve(HardwareMap hardwareMap, int numSwerves) {
         this.hardwareMap = hardwareMap;
 
-        // Get hardware devices for the swerve module.
-        DcMotorEx driveMotor = hardwareMap.get(DcMotorEx.class, "go");
-        CRServo yawServo = hardwareMap.get(CRServo.class, "yaw");
-        DcMotorEx yawEncoder = hardwareMap.get(DcMotorEx.class, "encoder");
+        for(int i = 0; i < numSwerves; i++) {
+            DcMotorEx driveMotor = hardwareMap.get(DcMotorEx.class, "go" + i);
+            driveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            driveMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            driveMotor.setMotorEnable();
+        }
+
+        // Get hardware devices for the swerve modules.
+        DcMotorEx driveMotor1 = hardwareMap.get(DcMotorEx.class, "go0");
+        CRServo yawServo1 = hardwareMap.get(CRServo.class, "yaw0");
+        DcMotorEx yawEncoder1 = hardwareMap.get(DcMotorEx.class, "encoder0");
         AnalogInput a0 = hardwareMap.get(AnalogInput.class, "a0");
 
+        DcMotorEx driveMotor2 = hardwareMap.get(DcMotorEx.class, "go1");
+        CRServo yawServo2 = hardwareMap.get(CRServo.class, "yaw1");
+        DcMotorEx yawEncoder2 = hardwareMap.get(DcMotorEx.class, "encoder1");
+        AnalogInput a1 = hardwareMap.get(AnalogInput.class, "a1");
+
+        DcMotorEx driveMotor3 = hardwareMap.get(DcMotorEx.class, "go2");
+        CRServo yawServo3 = hardwareMap.get(CRServo.class, "yaw2");
+        DcMotorEx yawEncoder3 = hardwareMap.get(DcMotorEx.class, "encoder2");
+        AnalogInput a2 = hardwareMap.get(AnalogInput.class, "a2");
+
         // Reset encoders and configure the drive motor.
-        yawEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        driveMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        driveMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        driveMotor.setMotorEnable();
+        yawEncoder1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        driveMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        driveMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        driveMotor1.setMotorEnable();
+
+        yawEncoder2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        driveMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        driveMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        driveMotor2.setMotorEnable();
+
+        yawEncoder3.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        driveMotor3.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        driveMotor3.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        driveMotor3.setMotorEnable();
 
         // Initialize the PID controller for yaw.
-        PIDController yawPID = new PIDController(pidCoefficients);
-        yawPID.setOutputRange(-0.5, 0.5);
-        yawPID.setContinuous();
-        yawPID.setTolerance(50);
-        yawPID.setInputRange(0, 360);
-        yawPID.enable();
+        PIDController yawPID1 = new PIDController(pidCoefficients);
+        yawPID1.setOutputRange(-0.5, 0.5);
+        yawPID1.setContinuous();
+        yawPID1.setTolerance(50);
+        yawPID1.setInputRange(0, 360);
+        yawPID1.enable();
+
+        PIDController yawPID2 = new PIDController(pidCoefficients);
+        yawPID2.setOutputRange(-0.5, 0.5);
+        yawPID2.setContinuous();
+        yawPID2.setTolerance(50);
+        yawPID2.setInputRange(0, 360);
+        yawPID2.enable();
+
+        PIDController yawPID3 = new PIDController(pidCoefficients);
+        yawPID3.setOutputRange(-0.5, 0.5);
+        yawPID3.setContinuous();
+        yawPID3.setTolerance(50);
+        yawPID3.setInputRange(0, 360);
+        yawPID3.enable();
+
 
         // Create the SwerveModule.
-        swerveModule = new SwerveModule(driveMotor, yawServo, yawEncoder, a0, yawPID, ticksPerDegree, yawThreshold);
+        swerveModule1 = new SwerveModule(driveMotor1, yawServo1, yawEncoder1, a0, yawPID1, ticksPerDegree, yawThreshold);
+        swerveModule2 = new SwerveModule(driveMotor2, yawServo2, yawEncoder2, a1, yawPID2, ticksPerDegree, yawThreshold);
+        swerveModule3 = new SwerveModule(driveMotor3, yawServo3, yawEncoder3, a2, yawPID3, ticksPerDegree, yawThreshold);
 
         initIMU();
     }
@@ -84,11 +131,13 @@ public class MonoSwerve implements Subsystem {
             speed = drive ? deflection: 0;
         } else {
             // No new input: hold the previous target angle.
-            desiredAngle = swerveModule.getTargetAngle();
+            desiredAngle = swerveModule1.getTargetAngle();
             speed = 0;
         }
 
-        swerveModule.setDesiredState(desiredAngle, speed);
+        swerveModule1.setDesiredState(desiredAngle, speed);
+        swerveModule2.setDesiredState(desiredAngle, speed);
+        swerveModule3.setDesiredState(desiredAngle, speed);
     }
     @Override
     public void update(Canvas fieldOverlay) {
@@ -97,7 +146,9 @@ public class MonoSwerve implements Subsystem {
         chassisHeading = angles.firstAngle;
 
         // Update the swerve module control.
-        swerveModule.update();
+        swerveModule1.update();
+        swerveModule2.update();
+        swerveModule3.update();
 
         // Draw chassis/robot representation on the dashboard.
         drawRobot(fieldOverlay);
