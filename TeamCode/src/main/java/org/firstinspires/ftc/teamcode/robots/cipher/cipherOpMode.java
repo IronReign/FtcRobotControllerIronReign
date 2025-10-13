@@ -8,11 +8,11 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.cipher.rr_localize.Robot;
+import org.firstinspires.ftc.teamcode.robots.cipher.Robot;
 
 import java.util.Map;
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Decode", group = "Challenge")
+@TeleOp
 @Config(value = "CIPHER")
 public class cipherOpMode extends OpMode {
     Robot robot;
@@ -20,13 +20,12 @@ public class cipherOpMode extends OpMode {
 
     @Override
     public void init() {
-        robot = new Robot(hardwareMap);
+        robot = new Robot(hardwareMap, gamepad1);
         dashboard = FtcDashboard.getInstance();
         robot.init();
     }
 
     public void init_loop() {
-        // calibrate by pressing gamepad1 guide (Logitech) button
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
     }
 
