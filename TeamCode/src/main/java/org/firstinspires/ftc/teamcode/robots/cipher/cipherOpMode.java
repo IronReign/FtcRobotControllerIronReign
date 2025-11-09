@@ -34,6 +34,7 @@ public class cipherOpMode extends OpMode {
     {
 
     }
+
     @Override
     public void loop() {
         robot.update(new Canvas());
@@ -41,8 +42,6 @@ public class cipherOpMode extends OpMode {
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
 
     }
-
-
 
     private void handleTelemetry(Map<String, Object> telemetryMap, String telemetryName) {
         TelemetryPacket p = new TelemetryPacket();
