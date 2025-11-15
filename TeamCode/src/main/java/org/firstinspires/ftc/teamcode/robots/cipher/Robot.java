@@ -29,10 +29,12 @@ public class Robot implements Subsystem {
     private final Gamepad gamepad1;
     HardwareMap hardwareMap;
     DcMotorEx leftFront, leftBack, rightFront, rightBack;
+    DcMotorEx vertical, horizontal;
     public StickyGamepad spad1;
     Gamepad gamepad;
     long totalRunTime=0;
     long startTime;
+
 
     //pid stuff
     BNO055IMU imu;
@@ -239,6 +241,8 @@ public class Robot implements Subsystem {
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
         rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
+        horizontal = hardwareMap.get(DcMotorEx.class, "horizontal");
+        vertical = hardwareMap.get(DcMotorEx.class, "vertical");
         // Set motor run modes
         leftBack.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
