@@ -15,33 +15,31 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
-import org.firstinspires.ftc.teamcode.robots.giant.Robot;
+import org.firstinspires.ftc.teamcode.robots.lebot.Robot;
 
 @TeleOp (name = "test")
 public class opMode extends OpMode {
-    Robot robot;
-    StickyGamepad g1;
+    Robot robot = new Robot(hardwareMap, gamepad1);
     tankDrive drivetrain = new tankDrive();
-    StaticHeading turn = new StaticHeading();
-    boolean turning=false;
+    StickyGamepad g1;
+    private BNO055IMU imu;
     double throttle, spin;
+
+    boolean turning = false;
     double refrenceAngle = Math.toRadians(90);
     double integralSum = 0;
+    private double lastError = 0;
     double Kp = PIDConstants.Kp;
     double Ki = PIDConstants.Ki;
     double Kd = PIDConstants.Kd;
-    long timer1;
 
     ElapsedTime timer = new ElapsedTime();
-    private double lastError = 0;
-
-    private BNO055IMU imu;
-
 
     @Override
     public void init() {
         drivetrain.init(hardwareMap);
-        g1=new StickyGamepad(gamepad1);
+        robot.init(hardwareMap);
+        g1 = new StickyGamepad(gamepad1);
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.mode = BNO055IMU.SensorMode.IMU;
@@ -54,57 +52,46 @@ public class opMode extends OpMode {
     public void loop() {
         g1.update();
         handleJoysticks(gamepad1);
-        throttle = -gamepad1.left_stick_y;
-        spin = -gamepad1.left_stick_x;
-        //drivetrain.drive(throttle, spin);
-
     }
 
+    //TODO: direction of joystick correlates to turning angle
     public void handleJoysticks(Gamepad gamepad) {
-        //change gamemode transfer,
-        if (g1.a) {
-            timer1 = futureTime(3);
-            drivetrain.power(PIDControl(refrenceAngle, imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle));
-            if (isPast(timer1)) {
+        if (g1.a && !turning) {
+            turning = true;
+            integralSum = 0;
+            lastError = 0;
+        }
+
+        if(turning){
+
+            double currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
+            double error = angleWrap(refrenceAngle - currentAngle);
+
+            integralSum += error * timer.seconds();
+            double derivative = (error - lastError) / timer.seconds();
+            lastError = error;
+            timer.reset();
+
+            double output = (error * Kp) + (derivative * Kd) + (integralSum * Ki);
+
+            drivetrain.power(output);
+
+            if (Math.abs(error) < Math.toRadians(2)){
                 drivetrain.power(0);
+                turning = false;
             }
+
+        } else {
+            throttle = -gamepad1.left_stick_y;
+            spin = -gamepad1.left_stick_x;
+            drivetrain.drive(throttle, spin);
+        }
+
+        if(g1.b) {
+            robot.fireBall();
         }
     }
 
-
-//    public void turnit(double target){
-//        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-//        drivetrain.init(hardwareMap);
-//
-//        imu = hardwareMap.get(BNO055IMU.class, "imu");
-//        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-//        parameters.mode = BNO055IMU.SensorMode.IMU;
-//        parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
-//        imu.initialize(parameters);
-//
-//        double refrenceAngle = Math.toRadians(target);
-//
-//        while(Math.toDegrees(refrenceAngle)>=imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle*1.1 && Math.toDegrees(refrenceAngle)<=imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle*.9) {
-//            telemetry.addData("Target IMU Angle", Math.toDegrees(refrenceAngle));
-//            telemetry.addData("Current IMU Angle", imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
-//            double power = PIDControl(refrenceAngle, imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle);
-//            drivetrain.power(power);
-//            telemetry.update();
-//        }
-//        turning=false;
-//
-//    }
-
-    public double PIDControl(double refrence, double state) {
-        double error = angleWrap(refrence - state);
-        telemetry.addData("Error: ", error);
-        integralSum += error * timer.seconds();
-        double derivative = (error - lastError) / (timer.seconds());
-        lastError = error;
-        timer.reset();
-        double output = (error * Kp) + (derivative * Kd) + (integralSum * Ki);
-        return output;
-    }
     public double angleWrap(double radians){
         while(radians > Math.PI){
             radians -= 2 * Math.PI;

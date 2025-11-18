@@ -8,11 +8,14 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
+import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.List;
 
@@ -21,6 +24,9 @@ public class Robot {
     public DcMotor intake, conveyor, shooter;
     public Servo paddle, adjustor;
     public DistanceSensor frontDist, backDist;
+    HardwareMap hardwareMap;
+    StickyGamepad g1 = null;
+    Gamepad gamepad1;
 
     public Limelight3A limelight;
 
@@ -55,6 +61,8 @@ public class Robot {
     private long timer;
 
     public void init (HardwareMap hardwareMap){
+        g1 = new StickyGamepad(gamepad1);
+
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
 
@@ -84,6 +92,11 @@ public class Robot {
         shooter.setPower(0);
 
         shootingState = shootingState.RESET;
+    }
+
+    public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
+        this.hardwareMap = hardwareMap;
+        this.gamepad1 = gamepad;
     }
 
     public void intakeOn() {

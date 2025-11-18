@@ -61,6 +61,7 @@ public class StaticHeading extends LinearOpMode {
         double output = (error * Kp) + (derivative * Kd) + (integralSum * Ki);
         return output;
     }
+
     public double angleWrap(double radians){
         while(radians > Math.PI){
             radians -= 2 * Math.PI;
@@ -70,6 +71,4 @@ public class StaticHeading extends LinearOpMode {
         }
         return radians;
     }
-
-
 }
