@@ -10,6 +10,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import java.util.List;
 
@@ -17,6 +20,7 @@ public class Robot {
     public DcMotor leftFront, rightFront;
     public DcMotor intake, conveyor, shooter;
     public Servo paddle, adjustor;
+    public DistanceSensor frontDist, backDist;
 
     public Limelight3A limelight;
 
@@ -42,7 +46,11 @@ public class Robot {
 
     private int numBalls = 0;
     private final int maxBalls = 3;
-    int lastBallCount = 0;
+    private final double ballThreshold = 2; //TODO: inches adjust
+    private boolean frontBlocked = false;
+    private boolean backBlocked = false;
+    private boolean wasFrontBlocked = false;
+    private boolean wasBackBlocked = false;
 
     private long timer;
 
@@ -56,6 +64,9 @@ public class Robot {
 
         paddle = hardwareMap.get(Servo.class, "paddle");
         adjustor = hardwareMap.get(Servo.class, "adjustor");
+
+        frontDist = hardwareMap.get(DistanceSensor.class, "frontDist");
+        backDist = hardwareMap.get(DistanceSensor.class, "backDist");
 
         rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -102,9 +113,8 @@ public class Robot {
         intake.setPower(0);
     }
 
-    // ball detection using limelight
     public void countBalls(){
-        int ballsDetected = 0;
+        /* int ballsDetected = 0;
 
         limelight.pipelineSwitch(0); // green
         LLResult greenResult = limelight.getLatestResult();
@@ -124,7 +134,38 @@ public class Robot {
             numBalls = numBalls + newBalls;
         }
 
-        lastBallCount = ballsDetected;
+        lastBallCount = ballsDetected; */
+
+        frontBlocked = frontDist.getDistance(DistanceUnit.INCH) < ballThreshold;
+        backBlocked = backDist.getDistance(DistanceUnit.INCH) < ballThreshold;
+
+        if(frontBlocked && !wasFrontBlocked){
+            if(numBalls<maxBalls){
+                numBalls++;
+            }
+        }
+
+        if(!frontBlocked && wasFrontBlocked){
+            if(numBalls>0){
+                numBalls--;
+            }
+        }
+
+        if(backBlocked && !wasBackBlocked){
+            if(numBalls<maxBalls){
+                numBalls++;
+            }
+        }
+
+        if(!backBlocked && wasBackBlocked){
+            if(numBalls>0){
+                numBalls--;
+            }
+        }
+
+        wasFrontBlocked = frontBlocked;
+        wasBackBlocked = backBlocked;
+
     }
 
     public boolean channelFull() {
@@ -166,7 +207,6 @@ public class Robot {
 
             case FIRE:
                 if (isPast(timer)){
-                    numBalls--;
                     closedChannel();
                     if(numBalls == 0){
                         shooter.setPower(0);
