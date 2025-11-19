@@ -59,7 +59,7 @@ task deployXmlAssets(type: Exec) {
 
 // 3) (Optional) Hook into installDebug so it happens automatically
 afterEvaluate {
-    tasks.getByPath(":TeamCode:assembleDebug").dependsOn(deployXmlAssets)
+    tasks.getByPath(":TeamCode:installDebug").dependsOn(deployXmlAssets)
 
 //     If you also have installRelease, uncomment below:
     tasks.getByPath(":TeamCode:installRelease").dependsOn(deployXmlAssets)
