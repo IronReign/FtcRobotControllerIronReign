@@ -56,40 +56,21 @@ public class opMode extends OpMode {
 
     //TODO: direction of joystick correlates to turning angle
     public void handleJoysticks(Gamepad gamepad) {
-        if (g1.a && !turning) {
-            turning = true;
-            integralSum = 0;
-            lastError = 0;
+        if (!turning) {
+            calculateTurn();
         }
 
-        if(turning){
-
-            double currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
-            double error = angleWrap(refrenceAngle - currentAngle);
-
-            integralSum += error * timer.seconds();
-            double derivative = (error - lastError) / timer.seconds();
-            lastError = error;
-            timer.reset();
-
-            double output = (error * Kp) + (derivative * Kd) + (integralSum * Ki);
-
-            drivetrain.power(output);
-
-            if (Math.abs(error) < Math.toRadians(2)){
-                drivetrain.power(0);
-                turning = false;
-            }
-
-        } else {
-            throttle = -gamepad1.left_stick_y;
-            spin = -gamepad1.left_stick_x;
-            drivetrain.drive(throttle, spin);
+        if (turning) {
+            turnIt();
+            return;
         }
 
         if(g1.b) {
             robot.fireBall();
         }
+
+        throttle = -gamepad1.left_stick_y;
+        drivetrain.drive(throttle, 0);
     }
 
     public double angleWrap(double radians){
@@ -100,5 +81,38 @@ public class opMode extends OpMode {
             radians += 2 * Math.PI;
         }
         return radians;
+    }
+
+    public void calculateTurn(){
+        double rightx = gamepad1.right_stick_x;
+        double righty = gamepad1.right_stick_y;
+
+        if (Math.hypot(rightx, righty)>0.15) {
+            refrenceAngle = Math.atan2(-rightx, -righty);
+            turning = true;
+            integralSum = 0;
+            lastError = 0;
+            timer.reset();
+        }
+    }
+
+    public void turnIt(){
+
+        double currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
+        double error = angleWrap(refrenceAngle - currentAngle);
+
+        integralSum += error * timer.seconds();
+        double derivative = (error - lastError) / timer.seconds();
+        lastError = error;
+        timer.reset();
+
+        double output = (error * Kp) + (derivative * Kd) + (integralSum * Ki);
+
+        drivetrain.power(output);
+
+        if (Math.abs(error) < Math.toRadians(2)){
+            drivetrain.power(0);
+            turning = false;
+        }
     }
 }
