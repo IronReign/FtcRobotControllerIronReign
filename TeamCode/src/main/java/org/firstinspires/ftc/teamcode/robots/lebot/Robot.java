@@ -36,10 +36,11 @@ public class Robot {
     private shootingState shootingState;
 
     /*
-    Gamepad Controls:
-    - Button to adjust limelight servo
-    - Button for fireBall()
-    - PID turning
+    Next Steps:
+    - Ball color detection using limelight (if color sensor can't sense purple) or color sensor
+    - April Tag detection
+    - Auton!!
+    - Auto Projectile :/
      */
 
     private final double intakeSpeed = 1.0;
