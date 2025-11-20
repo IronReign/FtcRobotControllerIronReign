@@ -150,6 +150,7 @@ public class Robot {
 
         lastBallCount = ballsDetected; */
 
+        // detects number of balls that enter channel
         frontBlocked = frontDist.getDistance(DistanceUnit.INCH) < ballThreshold;
         backBlocked = backDist.getDistance(DistanceUnit.INCH) < ballThreshold;
 
@@ -159,18 +160,7 @@ public class Robot {
             }
         }
 
-        if(!frontBlocked && wasFrontBlocked){
-            if(numBalls>0){
-                numBalls--;
-            }
-        }
-
-        if(backBlocked && !wasBackBlocked){
-            if(numBalls<maxBalls){
-                numBalls++;
-            }
-        }
-
+        // open channel; leaves through back if no firing
         if(!backBlocked && wasBackBlocked){
             if(numBalls>0){
                 numBalls--;
@@ -179,7 +169,6 @@ public class Robot {
 
         wasFrontBlocked = frontBlocked;
         wasBackBlocked = backBlocked;
-
     }
 
     public boolean channelFull() {
