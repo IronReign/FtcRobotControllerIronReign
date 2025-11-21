@@ -147,6 +147,7 @@ public class opMode extends OpMode {
         telemetry.addLine();
     }
 
+<<<<<<< HEAD
 //    public double angleWrap(double radians){
 //        while(radians > Math.PI){
 //            radians -= 2 * Math.PI;
@@ -190,3 +191,38 @@ public class opMode extends OpMode {
 //        }
 //    }
 }
+=======
+    public void calculateTurn(){
+        double rightx = gamepad1.right_stick_x;
+        double righty = gamepad1.right_stick_y;
+
+        if (Math.hypot(rightx, righty)>0.15) {
+            refrenceAngle = Math.atan2(-rightx, -righty);
+            turning = true;
+            integralSum = 0;
+            lastError = 0;
+            timer.reset();
+        }
+    }
+
+    public void turnIt(){
+
+        double currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
+        double error = angleWrap(refrenceAngle - currentAngle);
+
+        integralSum += error * timer.seconds();
+        double derivative = (error - lastError) / timer.seconds();
+        lastError = error;
+        timer.reset();
+
+        double output = (error * Kp) + (derivative * Kd) + (integralSum * Ki);
+
+        drivetrain.power(output);
+
+        if (Math.abs(error) < Math.toRadians(1.5)){
+            drivetrain.power(0);
+            turning = false;
+        }
+    }
+}
+>>>>>>> 2db94ab490084c5d4273c10b5f8d20de5a3a580e
