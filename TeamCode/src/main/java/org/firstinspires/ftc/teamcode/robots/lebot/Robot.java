@@ -18,12 +18,14 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.util.PIDController;
@@ -36,8 +38,22 @@ public class Robot implements Subsystem {
     public DcMotor leftBack, rightBack;         //testing only
 
     static FtcDashboard dashboard = FtcDashboard.getInstance();
-    //private BNO055IMU imu;
-    static boolean turning=false;
+    tankDrive drivetrain = new tankDrive();
+    private BNO055IMU imu;
+    double throttle, spin;
+
+    boolean turning = false;
+    boolean turningT = false;
+    double refrenceAngle=Math.toRadians(45);
+    double integralSum = 0;
+    private double lastError = 0;
+    double Kp = PIDConstants.Kp;
+    double Ki = PIDConstants.Ki;
+    double Kd = PIDConstants.Kd;
+
+    ElapsedTime timer = new ElapsedTime();
+
+
     public DcMotor leftFront, rightFront;
     public DcMotor intake, conveyor, shooter;
     public Servo paddle, adjustor;
@@ -47,10 +63,12 @@ public class Robot implements Subsystem {
     Gamepad gamepad1;
 
     public Limelight3A limelight;
+    public boolean allianceRed=true;
 
     private enum shootingState {
         IDLE, SPIN, FEED, FIRE, RESET
     }
+    public static boolean shooting=false;
     private shootingState shootingState;
 
     /*
@@ -76,7 +94,7 @@ public class Robot implements Subsystem {
     private boolean wasFrontBlocked = false;
     private boolean wasBackBlocked = false;
 
-    private long timer;
+    //private long timer;
 
     //public StaticHeading turn=new StaticHeading();
 
@@ -92,13 +110,14 @@ public class Robot implements Subsystem {
 
         g1 = new StickyGamepad(gamepad1);
 
-        //init for turning pid stuff
-//        imu = hardwareMap.get(BNO055IMU.class, "imu");
-//        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-//        parameters.mode = BNO055IMU.SensorMode.IMU;
-//        parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
-//        imu.initialize(parameters);
-//
+        drivetrain.init(hardwareMap);
+
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.mode = BNO055IMU.SensorMode.IMU;
+        parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
+        imu.initialize(parameters);
+
 
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
@@ -106,6 +125,7 @@ public class Robot implements Subsystem {
 //        intake = hardwareMap.get(DcMotor.class, "intake");
 //        conveyor = hardwareMap.get(DcMotor.class, "conveyor");
         shooter = hardwareMap.get(DcMotor.class, "shooter");
+        shooter.setDirection(DcMotorSimple.Direction.REVERSE);
 //
 //        paddle = hardwareMap.get(Servo.class, "paddle");
 //        adjustor = hardwareMap.get(Servo.class, "adjustor");
@@ -119,7 +139,11 @@ public class Robot implements Subsystem {
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.pipelineSwitch(0);
+        if(allianceRed){
+            limelight.pipelineSwitch(1);
+        }else{
+            limelight.pipelineSwitch(0);
+        }         //pipeline 6 reads blue(20) and red(24)
         limelight.start();
 
         //closedChannel();
@@ -138,8 +162,20 @@ public class Robot implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
+        if(shooting){
+            shooter.setPower(1);
+        }else{
+            shooter.setPower(0);
+        }
 
 
+    }
+
+    public void shoot(boolean x){
+        if(x)
+            shooter.setPower(1);
+        else
+            shooter.setPower(0);
     }
 
 
@@ -149,7 +185,22 @@ public class Robot implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
         TelemetryPacket p = new TelemetryPacket();
+        telemetry.put("Red Alliance??? ",allianceRed);
+        telemetry.put("turnIt? ",turning);
+        telemetry.put("turnToAprilTag? ",turningT);
+        LLResult llResult=limelight.getLatestResult();
+        if(llResult!=null && llResult.isValid()){
+            telemetry.put("tx: ",llResult.getTx());
+            telemetry.put("ty: ",llResult.getTy());
+            telemetry.put("ta: ",llResult.getTa());
+            telemetry.put("bot pose heading: ", getPoseHeading());
+            telemetry.put("angle diff: ",angleDif());
+        }
 
+
+        telemetry.put("current IMU: ",getCurrentIMU());
+
+        //telemetry.put()
         dashboard.sendTelemetryPacket(p);
         return telemetry;
     }
@@ -169,6 +220,156 @@ public class Robot implements Subsystem {
     public String getTelemetryName() {
         return "lebot robot";
     }
+
+    public double angleDif(){
+        return getPoseHeading() - getCurrentIMU();
+    }
+
+    public double getPoseHeading(){
+        double headingRadians=getBotPose().getOrientation().getYaw();
+        return Math.toRadians(headingRadians);
+    }
+
+    public Pose3D getBotPose(){
+        LLResult llResult=limelight.getLatestResult();
+        if(llResult!=null && llResult.isValid()) {
+            return llResult.getBotpose();
+        }
+        return null;
+    }
+
+    public double angleWrap(double radians){
+        while(radians > Math.PI){
+            radians -= 2 * Math.PI;
+        }
+        while(radians < -Math.PI){
+            radians += 2 * Math.PI;
+        }
+        return radians;
+    }
+
+//    public void calculateTurn(){
+//        double rightx = gamepad1.right_stick_x;
+//        double righty = gamepad1.right_stick_y;
+//
+//        if (Math.hypot(rightx, righty)>0.15) {
+//            refrenceAngle = Math.atan2(-rightx, -righty);
+//            turning = true;
+//            integralSum = 0;
+//            lastError = 0;
+//            timer.reset();
+//        }
+//    }
+
+    public void turnIt(){
+
+        double currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
+        double error = angleWrap(refrenceAngle - currentAngle);
+
+        integralSum += error * timer.seconds();
+        double derivative = (error - lastError) / timer.seconds();
+        lastError = error;
+        timer.reset();
+
+        double output = (error * Kp) + (derivative * Kd) + (integralSum * Ki);
+
+        drivetrain.power(output);
+
+        if (Math.abs(error) < Math.toRadians(1.5)){
+            drivetrain.power(0);
+            turning = false;
+        }
+    }
+    public void turnItShoot(){
+
+        double currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
+        refrenceAngle=currentAngle+gettx();
+        double error = angleWrap(refrenceAngle - currentAngle);
+
+        integralSum += error * timer.seconds();
+        double derivative = (error - lastError) / timer.seconds();
+        lastError = error;
+        timer.reset();
+
+        double output = (error * Kp) + (derivative * Kd) + (integralSum * Ki);
+
+        drivetrain.power(output);
+
+        if (Math.abs(error) < Math.toRadians(1.5)){
+            drivetrain.power(0);
+            turningT = false;
+        }
+    }
+
+    public boolean tx(){
+        if(limelight.getLatestResult()!=null && limelight.getLatestResult().isValid()) {
+            return true;
+        }
+        return false;
+    }
+    public double gettx(){
+        return limelight.getLatestResult().getTx();
+    }
+
+    public void turnToTag(){
+        integralSum=0;
+        lastError=0;
+        double currentAngle = Math.toRadians(gettx());
+        double error = angleWrap(0 - currentAngle);
+
+        integralSum += error * timer.seconds();
+        double derivative = (error - lastError) / timer.seconds();
+        lastError = error;
+        timer.reset();
+
+        double output = (error * (Kp+.55)) + (derivative * Kd) + (integralSum * Ki);
+
+        drivetrain.power(output);
+
+        if (Math.abs(error) < Math.toRadians(4)){
+            drivetrain.power(0);
+            turningT = false;
+//            long timer=futureTime(.5);
+//            if(isPast(timer)){
+//                if(Math.abs(error) < Math.toRadians(3)){
+//                    drivetrain.power(0);
+//                    turningT = false;
+//                }
+//            }
+
+        }
+    }
+
+    public double getCurrentIMU(){
+        return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
+    }
+
+    public double getRefrenceAngle(){
+        return refrenceAngle;
+    }
+
+    public void setTurning(boolean x){
+        turning=x;
+    }
+    public void setTurningT(boolean x){
+        turningT=x;
+    }
+    public boolean getTurning(){return turning;}
+    public boolean getTurningT(){return turningT;}
+    public void setDrivetrain(double t,double s){
+        drivetrain.drive(t,s);
+    }
+
+    public void setRedALliance(boolean x){
+        allianceRed=x;
+    }
+    public boolean getRedALliance(){return allianceRed;}
+    public void switchPipeline(int x){
+        limelight.pipelineSwitch(x);        //0 is blue 1 is red
+        limelight.start();
+    }
+
+
 
 //    public void intakeOn() {
 //        if (!channelFull()){
