@@ -21,11 +21,16 @@ public class StaticHeading extends LinearOpMode {
     double Kd = PIDConstants.Kd;
 
     tankDrive drivetrain = new tankDrive();
-
+    //tankDrive drivetrain;
     ElapsedTime timer = new ElapsedTime();
     private double lastError = 0;
 
     private BNO055IMU imu;
+
+//    public StaticHeading(tankDrive drive){
+//        drivetrain=drive;
+//    }
+
 
     @Override
     public void runOpMode() throws InterruptedException {

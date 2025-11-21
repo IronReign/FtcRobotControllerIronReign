@@ -52,26 +52,44 @@ public class opMode extends OpMode {
     public void loop() {
         g1.update();
         handleJoysticks(gamepad1);
+
+
+//        if(g1.b) {
+//            robot.fireBall();
+//        }
+
+
     }
 
     //TODO: direction of joystick correlates to turning angle
     public void handleJoysticks(Gamepad gamepad) {
-        if (!turning) {
-            calculateTurn();
+        throttle = -gamepad1.left_stick_y;
+        if(g1.a){
+            if(Math.abs(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle-refrenceAngle)>Math.toRadians(1.5)) {
+                turning=true;
+            }else{
+                turning=false;
+            }
         }
+//        if (!turning) {
+//            calculateTurn();
+//        }
 
         if (turning) {
             turnIt();
+            drivetrain.drive(throttle, 0);
             return;
+        }else{
+            drivetrain.drive(throttle, -gamepad1.left_stick_x);
+        }
+        if(g1.x){
+            turning=false;
         }
 
-        if(g1.b) {
-            robot.fireBall();
-        }
 
-        throttle = -gamepad1.left_stick_y;
-        drivetrain.drive(throttle, 0);
     }
+
+
 
     public double angleWrap(double radians){
         while(radians > Math.PI){
@@ -110,7 +128,7 @@ public class opMode extends OpMode {
 
         drivetrain.power(output);
 
-        if (Math.abs(error) < Math.toRadians(2)){
+        if (Math.abs(error) < Math.toRadians(1.5)){
             drivetrain.power(0);
             turning = false;
         }
