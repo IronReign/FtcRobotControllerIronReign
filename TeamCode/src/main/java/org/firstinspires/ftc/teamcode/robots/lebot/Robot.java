@@ -44,7 +44,7 @@ public class Robot implements Subsystem {
 
     boolean turning = false;
     boolean turningT = false;
-    double refrenceAngle=Math.toRadians(45);
+    double refrenceAngle = Math.toRadians(45);
     double integralSum = 0;
     private double lastError = 0;
     double Kp = PIDConstants.Kp;
@@ -56,21 +56,31 @@ public class Robot implements Subsystem {
 
     public DcMotor leftFront, rightFront;
     public DcMotor intake, conveyor, shooter;
-    public Servo paddle, adjustor;
-    public DistanceSensor frontDist, backDist;
+
+
+    public Servo paddle;
+    private final int paddleUp =800;
+    private final int paddleDown = 0;
+
+    public DistanceSensor  backDist;
+    public double dist;
+    public boolean channelDistFull = false;
     HardwareMap hardwareMap;
     StickyGamepad g1 = null;
     Gamepad gamepad1;
 
     public Limelight3A limelight;
-    public boolean allianceRed=true;
+    public static boolean allianceRed = true;
 
-    private enum shootingState {
-        IDLE, SPIN, FEED, FIRE, RESET
-    }
-    public static boolean shooting=false;
-    private shootingState shootingState;
+//    private enum shootingState {
+//        IDLE, SPIN, FEED, FIRE, RESET
+//    }
+    public String shootingCase="";
 
+    public boolean shooting = false;
+    //private shootingState shootingState;
+
+    public boolean sucking=false;
     /*
     Gamepad Controls:
     - Button to adjust limelight servo
@@ -83,8 +93,7 @@ public class Robot implements Subsystem {
     private final double conveyorFeedingSpeed = 0.35;
     private final double shooterPower = 2;
 
-    private final double paddleUp = 0.8;
-    private final double paddleDown = 0.2;
+
 
     private int numBalls = 0;
     private final int maxBalls = 3;
@@ -94,20 +103,20 @@ public class Robot implements Subsystem {
     private boolean wasFrontBlocked = false;
     private boolean wasBackBlocked = false;
 
-    //private long timer;
+    private long timer2;
 
     //public StaticHeading turn=new StaticHeading();
 
 
-    public void init (HardwareMap hardwareMap){
+    public void init(HardwareMap hardwareMap) {
 
-        rightBack = hardwareMap.get(DcMotor.class, "rightBack");
+        /*rightBack = hardwareMap.get(DcMotor.class, "rightBack");
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
         rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
         //TESTING^^^^
-
+*/
         g1 = new StickyGamepad(gamepad1);
 
         drivetrain.init(hardwareMap);
@@ -122,16 +131,16 @@ public class Robot implements Subsystem {
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
 
-//        intake = hardwareMap.get(DcMotor.class, "intake");
-//        conveyor = hardwareMap.get(DcMotor.class, "conveyor");
+        intake = hardwareMap.get(DcMotor.class, "intake");
+        conveyor = hardwareMap.get(DcMotor.class, "conveyor");
         shooter = hardwareMap.get(DcMotor.class, "shooter");
         shooter.setDirection(DcMotorSimple.Direction.REVERSE);
-//
-//        paddle = hardwareMap.get(Servo.class, "paddle");
-//        adjustor = hardwareMap.get(Servo.class, "adjustor");
+
+        paddle = hardwareMap.get(Servo.class, "paddle");
+ //       adjustor = hardwareMap.get(Servo.class, "adjustor");
 //
 //        frontDist = hardwareMap.get(DistanceSensor.class, "frontDist");
-//        backDist = hardwareMap.get(DistanceSensor.class, "backDist");
+        //backDist = hardwareMap.get(DistanceSensor.class, "backDist");
 
         rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -139,20 +148,21 @@ public class Robot implements Subsystem {
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        if(allianceRed){
+        if (allianceRed) {
             limelight.pipelineSwitch(1);
-        }else{
+        } else {
             limelight.pipelineSwitch(0);
         }         //pipeline 6 reads blue(20) and red(24)
         limelight.start();
 
-        //closedChannel();
+        closedChannel();
 
-//        intake.setPower(0);
-//        conveyor.setPower(0);
+
+        intake.setPower(0);
+        conveyor.setPower(0);
         shooter.setPower(0);
 
-//        shootingState = shootingState.RESET;
+        //shootingState = shootingState.RESET;
     }
 
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
@@ -162,43 +172,73 @@ public class Robot implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
-        if(shooting){
-            shooter.setPower(1);
-        }else{
-            shooter.setPower(0);
-        }
+//        if(sucking){
+//            intakeOn();
+//        }else{
+//            intakeOff();
+//        }
+//
+//        if (shooting) {
+//            shooter.setPower(1);
+//        } else {
+//            shooter.setPower(0);
+//        }
 
+//        if(shootingState== shootingState.IDLE){
+//            shootingCase="idle";
+//        }
+//        if(shootingState== shootingState.FEED){
+//            shootingCase="feed";
+//        }
+//        if(shootingState== shootingState.FIRE){
+//            shootingCase="fire";
+//        }
+//        if(shootingState== shootingState.RESET){
+//            shootingCase="reset";
+//        }
+//        if(shootingState== shootingState.SPIN){
+//            shootingCase="spin";
+//        }
 
     }
 
-    public void shoot(boolean x){
-        if(x)
+
+//    public void updateDistance(){
+//        dist=backDist.getDistance(DistanceUnit.CM);
+//    }
+
+    public void shoot(boolean x) {
+        if (x)
             shooter.setPower(1);
         else
             shooter.setPower(0);
     }
 
 
-
-
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
         TelemetryPacket p = new TelemetryPacket();
-        telemetry.put("Red Alliance??? ",allianceRed);
-        telemetry.put("turnIt? ",turning);
-        telemetry.put("turnToAprilTag? ",turningT);
-        LLResult llResult=limelight.getLatestResult();
-        if(llResult!=null && llResult.isValid()){
-            telemetry.put("tx: ",llResult.getTx());
-            telemetry.put("ty: ",llResult.getTy());
-            telemetry.put("ta: ",llResult.getTa());
+        telemetry.put("Red Alliance??? ", allianceRed);
+        //telemetry.put("back distance sensor: ",dist);
+        telemetry.put("fire ball case: ", index);
+        telemetry.put("shooting state ", shooting);
+        telemetry.put("identifying filled channel?", channelDistFull);
+        telemetry.put("turnIt? ", turning);
+        telemetry.put("turnToAprilTag? ", turningT);
+        telemetry.put("fly wheel shooting? ", shooting);
+
+        LLResult llResult = limelight.getLatestResult();
+        if (llResult != null && llResult.isValid()) {
+            telemetry.put("tx: ", llResult.getTx());
+            telemetry.put("ty: ", llResult.getTy());
+            telemetry.put("ta: ", llResult.getTa());
             telemetry.put("bot pose heading: ", getPoseHeading());
-            telemetry.put("angle diff: ",angleDif());
+            telemetry.put("angle diff: ", angleDif());
         }
 
 
-        telemetry.put("current IMU: ",getCurrentIMU());
+        telemetry.put("current IMU: ", getCurrentIMU());
 
         //telemetry.put()
         dashboard.sendTelemetryPacket(p);
@@ -221,28 +261,28 @@ public class Robot implements Subsystem {
         return "lebot robot";
     }
 
-    public double angleDif(){
+    public double angleDif() {
         return getPoseHeading() - getCurrentIMU();
     }
 
-    public double getPoseHeading(){
-        double headingRadians=getBotPose().getOrientation().getYaw();
+    public double getPoseHeading() {
+        double headingRadians = getBotPose().getOrientation().getYaw();
         return Math.toRadians(headingRadians);
     }
 
-    public Pose3D getBotPose(){
-        LLResult llResult=limelight.getLatestResult();
-        if(llResult!=null && llResult.isValid()) {
+    public Pose3D getBotPose() {
+        LLResult llResult = limelight.getLatestResult();
+        if (llResult != null && llResult.isValid()) {
             return llResult.getBotpose();
         }
         return null;
     }
 
-    public double angleWrap(double radians){
-        while(radians > Math.PI){
+    public double angleWrap(double radians) {
+        while (radians > Math.PI) {
             radians -= 2 * Math.PI;
         }
-        while(radians < -Math.PI){
+        while (radians < -Math.PI) {
             radians += 2 * Math.PI;
         }
         return radians;
@@ -261,7 +301,7 @@ public class Robot implements Subsystem {
 //        }
 //    }
 
-    public void turnIt(){
+    public void turnIt() {
 
         double currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
         double error = angleWrap(refrenceAngle - currentAngle);
@@ -275,15 +315,16 @@ public class Robot implements Subsystem {
 
         drivetrain.power(output);
 
-        if (Math.abs(error) < Math.toRadians(1.5)){
+        if (Math.abs(error) < Math.toRadians(1.5)) {
             drivetrain.power(0);
             turning = false;
         }
     }
-    public void turnItShoot(){
+
+    public void turnItShoot() {
 
         double currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
-        refrenceAngle=currentAngle+gettx();
+        refrenceAngle = currentAngle + gettx();
         double error = angleWrap(refrenceAngle - currentAngle);
 
         integralSum += error * timer.seconds();
@@ -295,25 +336,26 @@ public class Robot implements Subsystem {
 
         drivetrain.power(output);
 
-        if (Math.abs(error) < Math.toRadians(1.5)){
+        if (Math.abs(error) < Math.toRadians(1.5)) {
             drivetrain.power(0);
             turningT = false;
         }
     }
 
-    public boolean tx(){
-        if(limelight.getLatestResult()!=null && limelight.getLatestResult().isValid()) {
+    public boolean tx() {
+        if (limelight.getLatestResult() != null && limelight.getLatestResult().isValid()) {
             return true;
         }
         return false;
     }
-    public double gettx(){
+
+    public double gettx() {
         return limelight.getLatestResult().getTx();
     }
 
-    public void turnToTag(){
-        integralSum=0;
-        lastError=0;
+    public void turnToTag() {
+        integralSum = 0;
+        lastError = 0;
         double currentAngle = Math.toRadians(gettx());
         double error = angleWrap(0 - currentAngle);
 
@@ -322,11 +364,11 @@ public class Robot implements Subsystem {
         lastError = error;
         timer.reset();
 
-        double output = (error * (Kp+.55)) + (derivative * Kd) + (integralSum * Ki);
+        double output = (error * (Kp)) + (derivative * Kd) + (integralSum * Ki);
 
         drivetrain.power(output);
 
-        if (Math.abs(error) < Math.toRadians(4)){
+        if (Math.abs(error) < Math.toRadians(4)) {
             drivetrain.power(0);
             turningT = false;
 //            long timer=futureTime(.5);
@@ -340,63 +382,77 @@ public class Robot implements Subsystem {
         }
     }
 
-    public double getCurrentIMU(){
+    public double getCurrentIMU() {
         return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
     }
 
-    public double getRefrenceAngle(){
+    public double getRefrenceAngle() {
         return refrenceAngle;
     }
 
-    public void setTurning(boolean x){
-        turning=x;
-    }
-    public void setTurningT(boolean x){
-        turningT=x;
-    }
-    public boolean getTurning(){return turning;}
-    public boolean getTurningT(){return turningT;}
-    public void setDrivetrain(double t,double s){
-        drivetrain.drive(t,s);
+    public void setTurning(boolean x) {
+        turning = x;
     }
 
-    public void setRedALliance(boolean x){
-        allianceRed=x;
+    public void setTurningT(boolean x) {
+        turningT = x;
     }
-    public boolean getRedALliance(){return allianceRed;}
-    public void switchPipeline(int x){
+
+    public boolean getTurning() {
+        return turning;
+    }
+
+    public boolean getTurningT() {
+        return turningT;
+    }
+
+    public void setDrivetrain(double t, double s) {
+        drivetrain.drive(t, s);
+    }
+
+    public void setRedALliance(boolean x) {
+        allianceRed = x;
+    }
+
+    public boolean getRedALliance() {
+        return allianceRed;
+    }
+
+    public void switchPipeline(int x) {
         limelight.pipelineSwitch(x);        //0 is blue 1 is red
         limelight.start();
     }
 
 
+    public void intakeOn() {
+        conveyor.setPower(1);
+        intake.setPower(1);
 
-//    public void intakeOn() {
 //        if (!channelFull()){
 //            intake.setPower(intakeSpeed);
 //            conveyor.setPower(conveyorSpeed);
 //        } else {
 //            intakeOff();
 //        }
-//    }
-//
-//    public void intakeOff(){
-//        intake.setPower(0);
-//        conveyor.setPower(0);
-//    }
-//
-//    public void openChannel(){
-//        paddle.setPosition(paddleUp);
-//    }
-//
-//    public void closedChannel(){
-//        paddle.setPosition(paddleDown);
-//    }
-//
-//    public void feedPaddle(){
-//        conveyor.setPower(conveyorFeedingSpeed);
-//        intake.setPower(0);
-//    }
+}
+
+    public void intakeOff(){
+        intake.setPower(0);
+        conveyor.setPower(0);
+    }
+
+    public void openChannel(){
+        paddle.setPosition(paddleUp);
+    }
+
+    public void closedChannel(){
+        paddle.setPosition(paddleDown);
+    }
+
+    public void feedPaddle(){
+        conveyor.setPower(conveyorFeedingSpeed);
+        intake.setPower(0);
+    }
 
 //    public void countBalls(){
 //        /* int ballsDetected = 0;
@@ -456,51 +512,85 @@ public class Robot implements Subsystem {
 //    public boolean channelFull() {
 //        return (numBalls == maxBalls);
 //    }
+    public void setChannelDistFull(boolean x){
+        channelDistFull=x;
+    }
+//    public double getDist(){
+//        updateDistance();
+//        return dist;
+//    }
+   /* public boolean channelFull(){
+        if(dist<(15)){      //figure out dist of when nothing in channel and make it when dist is less than that
+            return true;
+        }
+        return false;
 
-//    public void fireBall(){
-//        countBalls();
+    }*/
+
+    int index=0;
+    public void resetIndex(){
+        index=0;
+    }
+//    public void fireBall() {
+//        //countBalls();
 //
-//        switch (shootingState){
-//            case RESET:
+//
+////        ElapsedTime time = new ElapsedTime();
+////        time.reset();
+//        switch (index){
+//            case 0:
 //                closedChannel();
 //                intakeOn();
-//                if (channelFull()){
-//                    shootingState = shootingState.IDLE;
+////                time.reset();
+////                while(time.milliseconds()<2000){
+////
+////                }
+////                index=index+1;
+//                if (channelDistFull){
+//                    index++;
 //                }
 //                break;
 //
-//            case IDLE:
+//            case 1:
 //                intakeOff();
 //                shooter.setPower(shooterPower);
-//                timer = futureTime(5);
-//                shootingState = shootingState.SPIN;
+//                timer2 = futureTime(5);
+//                if (isPast(timer2)){
+//                index++;
+//                }
+//
 //                break;
 //
-//            case SPIN:
-//                if(isPast(timer)){
+//            case 2:
+//                if(isPast(timer2)){
 //                    feedPaddle();
-//                    shootingState = shootingState.FEED;
+//                    index++;
 //                }
 //                break;
 //
-//            case FEED:
+//            case 3:
 //                openChannel();
 //                conveyor.setPower(0);
-//                timer = futureTime(3);
-//                shootingState = shootingState.FIRE;
+//                timer2 = futureTime(3);
+//                index++;
 //                break;
 //
-//            case FIRE:
-//                if (isPast(timer)){
+//            case 4:
+//                if (isPast(timer2)){
 //                    closedChannel();
-//                    if(numBalls == 0){
-//                        shooter.setPower(0);
-//                        shootingState = shootingState.RESET;
-//                    } else {
-//                        shootingState = shootingState.SPIN;
-//                    }
+////                    if(numBalls == 0){
+////                        shooter.setPower(0);
+////                        shootingState = shootingState.RESET;
+////                    } else {
+////                        shootingState = shootingState.SPIN;
+////                    }
+//
 //                }
 //                break;
 //        }
-//    }
+    //}
+    public static double servoNormalize(int pulse) {
+        double normalized = (double) pulse;
+        return (normalized - 750.0) / 1500.0; //convert mr servo controller pulse width to double on _0 - 1 scale
+    }
 }

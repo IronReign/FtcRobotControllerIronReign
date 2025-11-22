@@ -29,6 +29,9 @@ public class opMode extends OpMode {
     //private BNO055IMU imu;
     double throttle, spin;
     boolean damp=false;
+    boolean suck=false;
+    boolean shoot=false;
+    boolean pushUp=false;
 
 //    boolean turning = false;
 //    double refrenceAngle = Math.toRadians(90);
@@ -45,11 +48,6 @@ public class opMode extends OpMode {
         //drivetrain.init(hardwareMap);
         robot.init(hardwareMap);
         g1 = new StickyGamepad(gamepad1);
-        //imu = hardwareMap.get(BNO055IMU.class, "imu");
-//        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-//        parameters.mode = BNO055IMU.SensorMode.IMU;
-//        parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
-        //imu.initialize(parameters);
 
     }
 
@@ -58,10 +56,13 @@ public class opMode extends OpMode {
         g1.update();
         handleJoysticks(gamepad1);
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
-
-//        if(g1.b) {
-//            robot.fireBall();
+//        robot.updateDistance();
+//        if(robot.getDist()<15){
+//            robot.setChannelDistFull(true);
+//        }else{
+//            robot.setChannelDistFull(false);
 //        }
+//
 
 
     }
@@ -85,12 +86,12 @@ public class opMode extends OpMode {
     //TODO: direction of joystick correlates to turning angle
     public void handleJoysticks(Gamepad gamepad) {
         throttle = -gamepad1.left_stick_y;
-        if(g1.y) {
-            robot.shooting = !robot.shooting;
+        if(g1.dpad_up) {
+            shoot=!shoot;
         }
         double dampen;
 
-        if(g1.right_bumper){
+        if(g1.left_bumper){
             damp=!damp;
         }
         if(damp){
@@ -98,45 +99,134 @@ public class opMode extends OpMode {
         }else{
             dampen=1;
         }
-        if(g1.a){
-            if(Math.abs(robot.getCurrentIMU()-robot.getRefrenceAngle())>Math.toRadians(1.5)){
-                robot.setTurning(true);
-            }else{
-                robot.setTurning(false);
-            }
-//            if(Math.abs(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle-refrenceAngle)>Math.toRadians(1.5)) {
-//                turning=true;
+        if(g1.dpad_down){
+            suck=!suck;
+        }
+        if(g1.dpad_right){
+            pushUp=!pushUp;
+        }
+        if(pushUp){
+            robot.openChannel();
+        }else{
+            robot.closedChannel();
+        }
+        if(shoot){
+            robot.shoot(true);
+        }else{
+            robot.shoot(false);
+        }
+        if(suck){
+            robot.intakeOn();
+        }else{
+            robot.intakeOff();
+        }
+
+//        if(g1.a){
+//            if(Math.abs(robot.getCurrentIMU()-robot.getRefrenceAngle())>Math.toRadians(1.5)){
+//                robot.setTurning(true);
 //            }else{
-//                turning=false;
+//                robot.setTurning(false);
 //            }
-        }
-        if(g1.x){
-            if(robot.tx()){
-            //if(robot.tx() && Math.abs(robot.gettx())>Math.toRadians(1.5)){
-                robot.setTurningT(true);
-            }else{
-                robot.setTurningT(false);
-            }
-        }
-        if(robot.getTurningT()){
-            robot.turnToTag();
-            //robot.turnItShoot();
-            robot.setDrivetrain(throttle, 0);
-        }
-//        if (!turning) {
-//            calculateTurn();
+//        }
+//        if(g1.x){
+//            if(robot.tx()){
+//            //if(robot.tx() && Math.abs(robot.gettx())>Math.toRadians(1.5)){
+//                robot.setTurningT(true);
+//            }else{
+//                robot.setTurningT(false);
+//            }
+//        }
+//        if(robot.getTurningT()){
+//            robot.turnToTag();
+//            //robot.turnItShoot();
+//            robot.setDrivetrain(throttle, 0);
 //        }
 
-        else if (robot.getTurning()) {
-            robot.turnIt();
-            robot.setDrivetrain(throttle, 0);
-            return;
-        }else{
-            robot.setDrivetrain(throttle, (dampen)*-gamepad1.left_stick_x);
-        }
+
+//        if (robot.getTurning()) {
+//            robot.turnIt();
+//            robot.setDrivetrain(throttle, 0);
+//            return;
+//        }else{
+            robot.setDrivetrain(throttle, (dampen)*gamepad1.right_stick_x);
+        //}
+
+//        if(g1.b) {
+//            //robot.resetIndex();
+//            index=0;
+//            fireBall();
+//        }
+//
+//        if(g1.dpad_right) {
+//            index++;
+//        }
+//
+//        if (g1.dpad_left){
+//            index--;
+//        }
 
 
     }
+//    int index=0;
+//    private long timer2;
+//    public void fireBall() {
+//        //countBalls();
+//
+//
+////        ElapsedTime time = new ElapsedTime();
+////        time.reset();
+//        switch (index) {
+//            case 0:
+//                robot.closedChannel();
+//                robot.intakeOn();
+////                time.reset();
+////                while(time.milliseconds()<2000){
+////
+////                }
+////                index=index+1;
+//                if (robot.channelDistFull) {
+//                    index++;
+//                }
+//                break;
+//
+//            case 1:
+//                robot.intakeOff();
+//                robot.shoot(true);
+//                timer2 = futureTime(5);
+//                if (isPast(timer2)) {
+//                    index++;
+//                }
+//
+//                break;
+//
+//            case 2:
+//                if (isPast(timer2)) {
+//                    robot.feedPaddle();
+//                    index++;
+//                }
+//                break;
+//
+//            case 3:
+//                robot.openChannel();
+//                robot.conveyor.setPower(0);
+//                timer2 = futureTime(3);
+//                index++;
+//                break;
+//
+//            case 4:
+//                if (isPast(timer2)) {
+//                    robot.closedChannel();
+////                    if(numBalls == 0){
+////                        shooter.setPower(0);
+////                        shootingState = shootingState.RESET;
+////                    } else {
+////                        shootingState = shootingState.SPIN;
+////                    }
+//
+//                }
+//                break;
+//        }
+    //}
 
     private void handleTelemetry(Map<String, Object> telemetryMap, String telemetryName) {
         telemetry.addLine(telemetryName);
@@ -146,48 +236,4 @@ public class opMode extends OpMode {
         }
         telemetry.addLine();
     }
-
-//    public double angleWrap(double radians){
-//        while(radians > Math.PI){
-//            radians -= 2 * Math.PI;
-//        }
-//        while(radians < -Math.PI){
-//            radians += 2 * Math.PI;
-//        }
-//        return radians;
-//    }
-//
-//    public void calculateTurn(){
-//        double rightx = gamepad1.right_stick_x;
-//        double righty = gamepad1.right_stick_y;
-//
-//        if (Math.hypot(rightx, righty)>0.15) {
-//            refrenceAngle = Math.atan2(-rightx, -righty);
-//            turning = true;
-//            integralSum = 0;
-//            lastError = 0;
-//            timer.reset();
-//        }
-//    }
-//
-//    public void turnIt(){
-//
-//        double currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
-//        double error = angleWrap(refrenceAngle - currentAngle);
-//
-//        integralSum += error * timer.seconds();
-//        double derivative = (error - lastError) / timer.seconds();
-//        lastError = error;
-//        timer.reset();
-//
-//        double output = (error * Kp) + (derivative * Kd) + (integralSum * Ki);
-//
-//        drivetrain.power(output);
-//
-//        if (Math.abs(error) < Math.toRadians(1.5)){
-//            drivetrain.power(0);
-//            turning = false;
-//        }
-//    }
-
 }
