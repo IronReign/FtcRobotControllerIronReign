@@ -59,8 +59,9 @@ public class Robot implements Subsystem {
 
 
     public Servo paddle;
-    private final int paddleUp =800;
-    private final int paddleDown = 0;
+    private final int paddleUp =1457;
+    private final int paddleDown = 950;
+    private final int paddleClear=1400;
 
     public DistanceSensor  backDist;
     public double dist;
@@ -105,6 +106,9 @@ public class Robot implements Subsystem {
 
     private long timer2;
 
+    double turninput=0;
+    boolean turningR=false;
+    boolean turningL=false;
     //public StaticHeading turn=new StaticHeading();
 
 
@@ -134,7 +138,9 @@ public class Robot implements Subsystem {
         intake = hardwareMap.get(DcMotor.class, "intake");
         conveyor = hardwareMap.get(DcMotor.class, "conveyor");
         shooter = hardwareMap.get(DcMotor.class, "shooter");
-        shooter.setDirection(DcMotorSimple.Direction.REVERSE);
+        //shooter.setDirection(DcMotorSimple.Direction.REVERSE);
+        intake.setDirection(DcMotorSimple.Direction.REVERSE);
+        conveyor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         paddle = hardwareMap.get(Servo.class, "paddle");
  //       adjustor = hardwareMap.get(Servo.class, "adjustor");
@@ -155,9 +161,9 @@ public class Robot implements Subsystem {
         }         //pipeline 6 reads blue(20) and red(24)
         limelight.start();
 
-        closedChannel();
+        //closedChannel();
 
-
+        paddle.setPosition(paddleDown);
         intake.setPower(0);
         conveyor.setPower(0);
         shooter.setPower(0);
@@ -172,6 +178,12 @@ public class Robot implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
+//        if(turningL){
+//            drivetrain.turnLeft(turninput*.3);
+//        }
+//        else if(turningR){
+//            drivetrain.turnRight(turninput*.3);
+//        }
 //        if(sucking){
 //            intakeOn();
 //        }else{
@@ -206,10 +218,16 @@ public class Robot implements Subsystem {
 //    public void updateDistance(){
 //        dist=backDist.getDistance(DistanceUnit.CM);
 //    }
+    public void setTurningR(boolean x){
+        turningR=x;
+    }
+    public void setTurningL(boolean x){
+        turningT=x;
+    }
 
     public void shoot(boolean x) {
         if (x)
-            shooter.setPower(1);
+            shooter.setPower(.95);
         else
             shooter.setPower(0);
     }
@@ -263,6 +281,33 @@ public class Robot implements Subsystem {
 
     public double angleDif() {
         return getPoseHeading() - getCurrentIMU();
+    }
+
+    public void driveTrainTurnLeft(boolean y,double x){
+        if(y){
+            drivetrain.turnLeft(x*.3);
+        }else{
+            drivetrain.turnRight(x*.3);
+        }
+    }
+
+    public void setPaddleUp(){
+        paddle.setPosition(servoNormalize(paddleUp));
+    }
+    public void setPaddleDown(){
+        paddle.setPosition(servoNormalize(paddleDown));
+    }
+    public void setPaddleClear(){
+        paddle.setPosition(servoNormalize(paddleClear));
+    }
+//    public void littlePush(){
+//        conveyor.setPower(.2);
+//        intake.setPower(0);
+//    }
+
+    public void setIntakeSpeed(double x){
+        conveyor.setPower(x);
+        intake.setPower(x);
     }
 
     public double getPoseHeading() {
@@ -441,18 +486,18 @@ public class Robot implements Subsystem {
         conveyor.setPower(0);
     }
 
-    public void openChannel(){
-        paddle.setPosition(paddleUp);
-    }
-
-    public void closedChannel(){
-        paddle.setPosition(paddleDown);
-    }
-
-    public void feedPaddle(){
-        conveyor.setPower(conveyorFeedingSpeed);
-        intake.setPower(0);
-    }
+//    public void openChannel(){
+//        paddle.setPosition(paddleUp);
+//    }
+//
+//    public void closedChannel(){
+//        paddle.setPosition(paddleDown);
+//    }
+//
+//    public void feedPaddle(){
+//        conveyor.setPower(conveyorFeedingSpeed);
+//        intake.setPower(0);
+//    }
 
 //    public void countBalls(){
 //        /* int ballsDetected = 0;

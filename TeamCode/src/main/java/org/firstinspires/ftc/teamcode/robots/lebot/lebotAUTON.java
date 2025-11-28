@@ -39,6 +39,7 @@ public class lebotAUTON extends OpMode{
         public void init_loop(){
             g1=new StickyGamepad(gamepad1);
             g1.update();
+            robot.setPaddleDown();
             if(g1.b){
                 robot.setRedALliance(true);
                 robot.switchPipeline(1);
@@ -70,7 +71,7 @@ public class lebotAUTON extends OpMode{
             switch (autonIndex) {
                 case 0:
                     robot.setDrivetrain(1, 0);       //2285
-                    autonTimer = futureTime(3);
+                    autonTimer = futureTime(.2);
                     autonIndex++;
                     break;
                 case 1:

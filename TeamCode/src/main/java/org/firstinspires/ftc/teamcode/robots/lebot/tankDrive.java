@@ -51,4 +51,11 @@ public class tankDrive {
         rightBack.setPower(-output);*/
 
     }
+
+    public void turnLeft(double x){
+        rightFront.setPower(x*.3);
+    }
+    public void turnRight(double x){
+        leftFront.setPower(x*.3);
+    }
 }

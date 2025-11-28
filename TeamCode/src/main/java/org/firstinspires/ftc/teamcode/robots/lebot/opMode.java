@@ -32,6 +32,7 @@ public class opMode extends OpMode {
     boolean suck=false;
     boolean shoot=false;
     boolean pushUp=false;
+    boolean eject=false;
 
 //    boolean turning = false;
 //    double refrenceAngle = Math.toRadians(90);
@@ -47,6 +48,7 @@ public class opMode extends OpMode {
     public void init() {
         //drivetrain.init(hardwareMap);
         robot.init(hardwareMap);
+        robot.setPaddleDown();
         g1 = new StickyGamepad(gamepad1);
 
     }
@@ -86,8 +88,18 @@ public class opMode extends OpMode {
     //TODO: direction of joystick correlates to turning angle
     public void handleJoysticks(Gamepad gamepad) {
         throttle = -gamepad1.left_stick_y;
-        if(g1.dpad_up) {
+        if(g1.b) {
             shoot=!shoot;
+        }
+        if(g1.a){
+            robot.setPaddleUp();
+        }
+        if(g1.dpad_up){
+            robot.setPaddleClear();
+            //pushUp=!pushUp;
+        }
+        if(g1.dpad_down){
+            robot.setPaddleDown();
         }
         double dampen;
 
@@ -97,19 +109,21 @@ public class opMode extends OpMode {
         if(damp){
             dampen=.2;
         }else{
-            dampen=1;
+            dampen=.45;
         }
-        if(g1.dpad_down){
+        if(g1.dpad_left){
             suck=!suck;
         }
+
         if(g1.dpad_right){
-            pushUp=!pushUp;
+            //pushUp=!pushUp;
+            eject=!eject;
         }
-        if(pushUp){
-            robot.openChannel();
-        }else{
-            robot.closedChannel();
-        }
+//        if(pushUp){
+//            robot.openChannel();
+//        }else{
+//            robot.closedChannel();
+//        }
         if(shoot){
             robot.shoot(true);
         }else{
@@ -117,6 +131,8 @@ public class opMode extends OpMode {
         }
         if(suck){
             robot.intakeOn();
+        }else if(eject) {
+            robot.setIntakeSpeed(.2);
         }else{
             robot.intakeOff();
         }
@@ -148,7 +164,19 @@ public class opMode extends OpMode {
 //            robot.setDrivetrain(throttle, 0);
 //            return;
 //        }else{
+//        if(!damp){
             robot.setDrivetrain(throttle, (dampen)*gamepad1.right_stick_x);
+//            robot.setTurningL(false);
+//            robot.setTurningR(false);
+        }
+//        else{
+//            if(gamepad1.right_stick_x>0){
+//                robot.setTurningR(true);
+//            }else{
+//                robot.setTurningL(true);
+//            }
+//        }
+
         //}
 
 //        if(g1.b) {
@@ -166,7 +194,7 @@ public class opMode extends OpMode {
 //        }
 
 
-    }
+   // }
 //    int index=0;
 //    private long timer2;
 //    public void fireBall() {
