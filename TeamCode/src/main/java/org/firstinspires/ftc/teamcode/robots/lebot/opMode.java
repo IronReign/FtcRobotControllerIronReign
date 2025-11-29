@@ -169,7 +169,9 @@ public class opMode extends OpMode {
             robot.index++;
         }
 
-        robot.fireBall(); //Intake will always run unless shooting
+        if(g1.y){
+            robot.fireBall();
+        }
 
 
 //        if(g1.a){

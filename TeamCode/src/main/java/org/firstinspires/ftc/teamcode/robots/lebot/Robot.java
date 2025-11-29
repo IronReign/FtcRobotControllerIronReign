@@ -640,19 +640,27 @@ public class Robot implements Subsystem {
 
     public void fireBall() {
         switch (index){
-            case 0:
+            case -1:
                 //driver has to check the number of balls - press x when 3 are in; no index++
                 //should be able to still eject and dampen (might overide?--TEST)
                 setPaddleDown();
                 intakeOn();
                 break;
 
-            case 1:
-                intake.setPower(0);
-                conveyor.setPower(conveyorFeedingSpeed);
-                shooter.setPower(shooterPower);
+            case 0:
+                //Aligns to goal
+                turnItShoot(); //or turntoTag() whichever works
                 timer2 = futureTime(5);
                 index++;
+
+            case 1:
+                if(isPast(timer2)){
+                    intake.setPower(0);
+                    conveyor.setPower(conveyorFeedingSpeed);
+                    shooter.setPower(shooterPower);
+                    timer2 = futureTime(5);
+                    index++;
+                }
                 break;
 
             case 2:

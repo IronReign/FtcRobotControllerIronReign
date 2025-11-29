@@ -64,7 +64,12 @@ public class lebotAUTON extends OpMode{
 
         //forward vertical for one tile practice    vertical=4000;
 
-        //angled towards first three balls
+    /*
+    - robot angled towards the three balls
+    - robot aligned for intake?
+        - limelight pipeline to get error angle? (but how to detect both green and purple if filter is on) or timer (more probable)
+        - fireBall()
+     */
         int autonIndex = 0;
         long autonTimer = 0;
         public void execute() {
