@@ -64,7 +64,7 @@ public class lebotAUTON extends OpMode{
 
         //forward vertical for one tile practice    vertical=4000;
 
-        //forward one tile, turn 135, forward 1.25, extend arm, drop
+        //angled towards first three balls
         int autonIndex = 0;
         long autonTimer = 0;
         public void execute() {
@@ -78,8 +78,9 @@ public class lebotAUTON extends OpMode{
                     if (isPast(autonTimer)) {
                         robot.setDrivetrain(0, 0);
                     }
-
                     break;
+                case 2:
+
             }
         }
 

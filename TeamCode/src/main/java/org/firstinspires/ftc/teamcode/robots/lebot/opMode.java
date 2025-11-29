@@ -164,6 +164,14 @@ public class opMode extends OpMode {
             }
         }
 
+        //TODO: Test fireBall() code
+        if(g1.x){
+            robot.index++;
+        }
+
+        robot.fireBall(); //Intake will always run unless shooting
+
+
 //        if(g1.a){
 //            if(Math.abs(robot.getCurrentIMU()-robot.getRefrenceAngle())>Math.toRadians(1.5)){
 //                robot.setTurning(true);

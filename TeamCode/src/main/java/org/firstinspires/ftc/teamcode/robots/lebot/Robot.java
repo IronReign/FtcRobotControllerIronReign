@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.lebot;
 
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -636,64 +637,67 @@ public class Robot implements Subsystem {
     public void resetIndex(){
         index=0;
     }
-//    public void fireBall() {
-//        //countBalls();
-//
-//
-////        ElapsedTime time = new ElapsedTime();
-////        time.reset();
-//        switch (index){
-//            case 0:
-//                closedChannel();
-//                intakeOn();
-////                time.reset();
-////                while(time.milliseconds()<2000){
-////
-////                }
-////                index=index+1;
-//                if (channelDistFull){
-//                    index++;
-//                }
-//                break;
-//
-//            case 1:
-//                intakeOff();
-//                shooter.setPower(shooterPower);
-//                timer2 = futureTime(5);
-//                if (isPast(timer2)){
-//                index++;
-//                }
-//
-//                break;
-//
-//            case 2:
-//                if(isPast(timer2)){
-//                    feedPaddle();
-//                    index++;
-//                }
-//                break;
-//
-//            case 3:
-//                openChannel();
-//                conveyor.setPower(0);
-//                timer2 = futureTime(3);
-//                index++;
-//                break;
-//
-//            case 4:
-//                if (isPast(timer2)){
-//                    closedChannel();
-////                    if(numBalls == 0){
-////                        shooter.setPower(0);
-////                        shootingState = shootingState.RESET;
-////                    } else {
-////                        shootingState = shootingState.SPIN;
-////                    }
-//
-//                }
-//                break;
-//        }
-    //}
+
+    public void fireBall() {
+        switch (index){
+            case 0:
+                //driver has to check the number of balls - press x when 3 are in; no index++
+                //should be able to still eject and dampen (might overide?--TEST)
+                setPaddleDown();
+                intakeOn();
+                break;
+
+            case 1:
+                intake.setPower(0);
+                conveyor.setPower(conveyorFeedingSpeed);
+                shooter.setPower(shooterPower);
+                timer2 = futureTime(5);
+                index++;
+                break;
+
+            case 2:
+                if (isPast(timer2)){
+                    setPaddleClear();
+                    timer2 = futureTime(3);
+                    index++;
+                }
+                break;
+
+            case 3:
+                if(isPast(timer2)){
+                    setPaddleDown();
+                    timer2 = futureTime(3);
+                }
+
+            case 4:
+                if (isPast(timer2)){
+                    setPaddleClear();
+                    timer2 = futureTime(3);
+                    index++;
+                }
+                break;
+
+            case 5:
+                if(isPast(timer2)){
+                    setPaddleDown();
+                    timer2 = futureTime(3);
+                }
+
+            case 6:
+                if (isPast(timer2)){
+                    setPaddleClear();
+                    timer2 = futureTime(3);
+                    index++;
+                }
+                break;
+
+            case 7:
+                if(isPast(timer2)){
+                    setPaddleDown();
+                }
+                break;
+        }
+    }
     public static double servoNormalize(int pulse) {
         double normalized = (double) pulse;
         return (normalized - 750.0) / 1500.0; //convert mr servo controller pulse width to double on _0 - 1 scale
