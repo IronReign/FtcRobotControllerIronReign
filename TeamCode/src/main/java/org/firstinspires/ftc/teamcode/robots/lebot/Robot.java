@@ -76,11 +76,16 @@ public class Robot implements Subsystem {
     //private shootingState shootingState;
 
     public boolean sucking=false;
+
     /*
-    Gamepad Controls:
-    - Button to adjust limelight servo
-    - Button for fireBall()
-    - PID turning
+    Controls:
+    - Automated shooting sequence (DONE)
+    - PID turning to Goal April Tags (DONE)
+    - Automated robot horizontal distance (DONE)
+    - AFTER WINTER? Obelisk April Tag Detection
+        - Scan April Tag
+        - Color Sensor checks color -> Paddle moves up or down for collection
+    - Auton!!
      */
 
     private final double intakeSpeed = 1.0;
@@ -111,6 +116,8 @@ public class Robot implements Subsystem {
     double GOALHEIGHT = 18.5 * 0.0254; // 18.5 inches to m
     double SHOOTERANGLE = Math.toRadians(45);
     double GRAVITY = 9.8; // m/s
+
+    public double obeliskCode = 0;
 
     public void init(HardwareMap hardwareMap) {
 
@@ -516,6 +523,27 @@ public class Robot implements Subsystem {
     public void intakeOff(){
         intake.setPower(0);
         conveyor.setPower(0);
+    }
+
+    public double scanObelisk(){
+        switchPipeline(3); // ID Filter: 21 //TODO: Setup
+        LLResult GPP = limelight.getLatestResult();
+
+        switchPipeline(4); // ID Filter: 23 //TODO: Setup
+        LLResult PPG = limelight.getLatestResult();
+
+        switchPipeline(5); // ID Filter: 22 //TODO: Setup
+        LLResult PGP = limelight.getLatestResult();
+
+        if (GPP.isValid()){
+            obeliskCode = 21;
+        } else if (PPG.isValid()){
+            obeliskCode = 23;
+        } else if (PGP.isValid()){
+            obeliskCode = 22;
+        }
+
+        return obeliskCode;
     }
 
 //    public void openChannel(){
