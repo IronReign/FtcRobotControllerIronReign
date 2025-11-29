@@ -1,20 +1,17 @@
 package org.firstinspires.ftc.teamcode.robots.lebot;
 
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -23,14 +20,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
-import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 public class Robot implements Subsystem {
@@ -42,6 +36,7 @@ public class Robot implements Subsystem {
     double throttle, spin;
 
     boolean turning = false;
+    boolean turnJoystick = false;
     boolean turningT = false;
     double refrenceAngle = Math.toRadians(45);
     double integralSum = 0;
@@ -62,7 +57,7 @@ public class Robot implements Subsystem {
     private final int paddleDown = 950;
     private final int paddleClear=1400;
 
-    public DistanceSensor  backDist;
+    public DistanceSensor frontDist, backDist;
     public double dist;
     public boolean channelDistFull = false;
     HardwareMap hardwareMap;
@@ -109,7 +104,13 @@ public class Robot implements Subsystem {
     boolean turningR=false;
     boolean turningL=false;
     //public StaticHeading turn=new StaticHeading();
+    double distToGoal = 0;
 
+    double SHOOTERSPEED = 0.5; // m/s
+    double ROBOTHEIGHT = 16 * 0.0254; // 16 inches to m
+    double GOALHEIGHT = 18.5 * 0.0254; // 18.5 inches to m
+    double SHOOTERANGLE = Math.toRadians(45);
+    double GRAVITY = 9.8; // m/s
 
     public void init(HardwareMap hardwareMap) {
 
@@ -144,7 +145,7 @@ public class Robot implements Subsystem {
         paddle = hardwareMap.get(Servo.class, "paddle");
  //       adjustor = hardwareMap.get(Servo.class, "adjustor");
 //
-//        frontDist = hardwareMap.get(DistanceSensor.class, "frontDist");
+        frontDist = hardwareMap.get(DistanceSensor.class, "frontDist");
         //backDist = hardwareMap.get(DistanceSensor.class, "backDist");
 
         rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -345,15 +346,18 @@ public class Robot implements Subsystem {
 //        }
 //    }
 
-    public void turnIt() {
+    public void turnJoystick() {
+        double refrenceAngle = Math.atan2(getX(), -getY());
 
         double currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
         double error = angleWrap(refrenceAngle - currentAngle);
 
-        integralSum += error * timer.seconds();
-        double derivative = (error - lastError) / timer.seconds();
-        lastError = error;
+        double dt = timer.seconds();
         timer.reset();
+
+        integralSum += error * dt;
+        double derivative = (error - lastError) / dt;
+        lastError = error;
 
         double output = (error * Kp) + (derivative * Kd) + (integralSum * Ki);
 
@@ -397,6 +401,15 @@ public class Robot implements Subsystem {
         return limelight.getLatestResult().getTx();
     }
 
+    public double getX(){
+        return gamepad1.right_stick_x;
+    }
+
+    public double getY(){
+        return gamepad1.right_stick_y;
+    }
+
+
     public void turnToTag() {
         integralSum = 0;
         lastError = 0;
@@ -438,6 +451,10 @@ public class Robot implements Subsystem {
         turning = x;
     }
 
+    public void setJoystickTurning(boolean x){
+        turnJoystick = true;
+    }
+
     public void setTurningT(boolean x) {
         turningT = x;
     }
@@ -448,6 +465,10 @@ public class Robot implements Subsystem {
 
     public boolean getTurningT() {
         return turningT;
+    }
+
+    public boolean getTurnJoystick(){
+        return turnJoystick;
     }
 
     public void setDrivetrain(double t, double s) {
@@ -479,6 +500,18 @@ public class Robot implements Subsystem {
 //            intakeOff();
 //        }
 }
+
+    public double calculateDist(){
+        double vcostheta = (SHOOTERSPEED * Math.cos(SHOOTERANGLE));
+        double vsintheta = (SHOOTERSPEED * Math.sin(SHOOTERANGLE));
+
+        return ((vcostheta/GRAVITY)*(vsintheta - Math.sqrt(Math.pow(vsintheta, 2)-(2*GRAVITY*(GOALHEIGHT-ROBOTHEIGHT)))));
+    }
+
+    public double getFrontDistance(){
+        distToGoal = frontDist.getDistance(DistanceUnit.INCH);
+        return distToGoal;
+    }
 
     public void intakeOff(){
         intake.setPower(0);

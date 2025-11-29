@@ -33,6 +33,7 @@ public class opMode extends OpMode {
     boolean shoot=false;
     boolean pushUp=false;
     boolean eject=false;
+    boolean adjust = false;
 
 //    boolean turning = false;
 //    double refrenceAngle = Math.toRadians(90);
@@ -85,7 +86,6 @@ public class opMode extends OpMode {
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
     }
 
-    //TODO: direction of joystick correlates to turning angle
     public void handleJoysticks(Gamepad gamepad) {
         throttle = -gamepad1.left_stick_y;
         if(g1.b) {
@@ -135,6 +135,33 @@ public class opMode extends OpMode {
             robot.setIntakeSpeed(.2);
         }else{
             robot.intakeOff();
+        }
+
+        // Spin to right stick position
+        if((Math.hypot(robot.getY(), robot.getX()))>0.2){
+            robot.setJoystickTurning(true);
+        }
+        if(robot.getTurnJoystick()){
+            throttle = 0;
+            robot.turnJoystick();
+        }
+
+        if(!robot.getTurnJoystick()){
+            throttle = -gamepad1.left_stick_y;
+        }
+
+        // Adjust distance for shooting
+        double target = robot.calculateDist();
+        double current = robot.getFrontDistance();
+        double error = current - target;
+
+        if (Math.abs(error) > 0.02) {
+            adjust = true;
+            if (error > 0) {
+                throttle = 0.5;
+            } else {
+                throttle = -0.5;
+            }
         }
 
 //        if(g1.a){
