@@ -151,6 +151,7 @@ public class opMode extends OpMode {
         }
 
         // Adjust distance for shooting
+        //TODO: Would be ideal to implement method to call here and in auton
         double target = robot.calculateDist();
         double current = robot.getFrontDistance();
         double error = current - target;
@@ -165,10 +166,6 @@ public class opMode extends OpMode {
         }
 
         //TODO: Test fireBall() code
-        if(g1.x){
-            robot.index++;
-        }
-
         if(g1.y){
             robot.fireBall();
         }

@@ -67,7 +67,7 @@ public class lebotAUTON extends OpMode{
     /*
     - robot angled towards the three balls
     - robot aligned for intake?
-        - limelight pipeline to get error angle? (but how to detect both green and purple if filter is on) or timer (more probable)
+        - timer
         - fireBall()
      */
         int autonIndex = 0;
@@ -86,6 +86,53 @@ public class lebotAUTON extends OpMode{
                     break;
                 case 2:
 
+            }
+        }
+
+        public void execute2(){
+            switch(autonIndex){
+                case 0:
+                    robot.setDrivetrain(1, 0);
+                    autonIndex++;
+                    break;
+                case 1:
+                    if(robot.getFrontDistance()<2) {
+                        autonIndex++;
+                        robot.setDrivetrain(0,0);
+                    }
+                    break;
+                case 2:
+                    robot.setDrivetrain(0, 1);
+                    autonTimer = futureTime(.2);
+                    autonIndex++;
+                    break;
+                case 3:
+                    if(isPast(autonTimer)){
+                        autonIndex++;
+                        robot.setDrivetrain(0,0);
+                    }
+                    break;
+                case 4:
+                    //TODO: Distance adjusting function equivalent -- still have to finish
+                    double target = robot.calculateDist();
+                    double current = robot.getFrontDistance();
+                    double error = current - target;
+                    autonTimer = futureTime(2);
+
+                    if (Math.abs(error) > 0.02) {
+                        if (error > 0) {
+                            robot.setDrivetrain(1, 0);
+                        } else {
+                            robot.setDrivetrain(-1, 0);
+                        }
+                    }
+                    autonIndex++;
+                    break;
+                case 5:
+                    //NOTE: Depending on alliance, robot has to turn to range somewhat near goal before turnItShoot can run
+                case 6:
+                    robot.fireBall();
+                    break;
             }
         }
 
