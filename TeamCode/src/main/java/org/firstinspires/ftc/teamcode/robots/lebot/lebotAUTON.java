@@ -64,7 +64,12 @@ public class lebotAUTON extends OpMode{
 
         //forward vertical for one tile practice    vertical=4000;
 
-        //forward one tile, turn 135, forward 1.25, extend arm, drop
+    /*
+    - robot angled towards the three balls
+    - robot aligned for intake?
+        - timer
+        - fireBall()
+     */
         int autonIndex = 0;
         long autonTimer = 0;
         public void execute() {
@@ -78,7 +83,55 @@ public class lebotAUTON extends OpMode{
                     if (isPast(autonTimer)) {
                         robot.setDrivetrain(0, 0);
                     }
+                    break;
+                case 2:
 
+            }
+        }
+
+        public void execute2(){
+            switch(autonIndex){
+                case 0:
+                    robot.setDrivetrain(1, 0);
+                    autonIndex++;
+                    break;
+                case 1:
+                    if(robot.getFrontDistance()<2) {
+                        autonIndex++;
+                        robot.setDrivetrain(0,0);
+                    }
+                    break;
+                case 2:
+                    robot.setDrivetrain(0, 1);
+                    autonTimer = futureTime(.2);
+                    autonIndex++;
+                    break;
+                case 3:
+                    if(isPast(autonTimer)){
+                        autonIndex++;
+                        robot.setDrivetrain(0,0);
+                    }
+                    break;
+                case 4:
+                    //TODO: Distance adjusting function equivalent -- still have to finish
+                    double target = robot.calculateDist();
+                    double current = robot.getFrontDistance();
+                    double error = current - target;
+                    autonTimer = futureTime(2);
+
+                    if (Math.abs(error) > 0.02) {
+                        if (error > 0) {
+                            robot.setDrivetrain(1, 0);
+                        } else {
+                            robot.setDrivetrain(-1, 0);
+                        }
+                    }
+                    autonIndex++;
+                    break;
+                case 5:
+                    //NOTE: Depending on alliance, robot has to turn to range somewhat near goal before turnItShoot can run
+                case 6:
+                    robot.fireBall();
                     break;
             }
         }
