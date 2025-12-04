@@ -58,7 +58,7 @@ public class opMode extends OpMode {
         g1.update();
         handleJoysticks(gamepad1);
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
-//        robot.updateDistance();
+        robot.updateDistance();
 //        if(robot.getDist()<15){
 //            robot.setChannelDistFull(true);
 //        }else{
@@ -144,19 +144,18 @@ public class opMode extends OpMode {
 //                robot.setTurning(false);
 //            }
 //        }
-//        if(g1.x){
-//            if(robot.tx()){
-//            //if(robot.tx() && Math.abs(robot.gettx())>Math.toRadians(1.5)){
-//                robot.setTurningT(true);
-//            }else{
-//                robot.setTurningT(false);
-//            }
-//        }
-//        if(robot.getTurningT()){
-//            robot.turnToTag();
-//            //robot.turnItShoot();
-//            robot.setDrivetrain(throttle, 0);
-//        }
+        if(g1.x){
+            if(robot.tx()){
+                //if(robot.tx() && Math.abs(robot.gettx())>Math.toRadians(1.5)){
+                robot.setTurningT(true);
+            }else{
+                robot.setTurningT(false);
+            }
+        }
+
+        if(!robot.getTurningT()){
+            robot.setDrivetrain(throttle, (dampen)*gamepad1.right_stick_x);
+        }
 
 
 //        if (robot.getTurning()) {
@@ -165,7 +164,7 @@ public class opMode extends OpMode {
 //            return;
 //        }else{
 //        if(!damp){
-            robot.setDrivetrain(throttle, (dampen)*gamepad1.right_stick_x);
+
 //            robot.setTurningL(false);
 //            robot.setTurningR(false);
         }

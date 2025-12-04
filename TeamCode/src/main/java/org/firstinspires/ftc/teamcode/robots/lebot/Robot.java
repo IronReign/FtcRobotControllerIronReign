@@ -12,9 +12,11 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.I2cAddressableDevice;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
@@ -40,6 +42,7 @@ public class Robot implements Subsystem {
     static FtcDashboard dashboard = FtcDashboard.getInstance();
     tankDrive drivetrain = new tankDrive();
     private BNO055IMU imu;
+    public I2cAddressableDevice odos;
     double throttle, spin;
 
     boolean turning = false;
@@ -53,18 +56,27 @@ public class Robot implements Subsystem {
 
     ElapsedTime timer = new ElapsedTime();
 
-
-    public DcMotor leftFront, rightFront;
-    public DcMotor intake, conveyor, shooter;
+    //public DcMotorEx leftOdo, rightOdo;
+    public DcMotorEx leftFront, rightFront;
+    public DcMotorEx intake, conveyor, shooter;
 
 
     public Servo paddle;
     private final int paddleUp =1457;
-    private final int paddleDown = 950;
+    private final int paddleDown = 899;
     private final int paddleClear=1400;
 
     public DistanceSensor  backDist;
     public double dist;
+    public double ballThere=15;     //change to be whatever dist shows when ball in front of sensor& at paddle
+
+    public int tagIndex=0;
+
+    public int index=0;
+    public double minShooterSpeed=20;       //change to speed of flywheel
+    public ElapsedTime time = new ElapsedTime();
+    public double shootTime=2;      //change to seconds it takes to shoot ball
+
     public boolean channelDistFull = false;
     HardwareMap hardwareMap;
     StickyGamepad g1 = null;
@@ -131,14 +143,12 @@ public class Robot implements Subsystem {
         parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
         imu.initialize(parameters);
 
+        rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+        leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
 
-        rightFront = hardwareMap.get(DcMotor.class, "rightFront");
-        leftFront = hardwareMap.get(DcMotor.class, "leftFront");
-
-        intake = hardwareMap.get(DcMotor.class, "intake");
-        conveyor = hardwareMap.get(DcMotor.class, "conveyor");
-        shooter = hardwareMap.get(DcMotor.class, "shooter");
-        //shooter.setDirection(DcMotorSimple.Direction.REVERSE);
+        intake = hardwareMap.get(DcMotorEx.class, "intake");
+        conveyor = hardwareMap.get(DcMotorEx.class, "conveyor");
+        shooter = hardwareMap.get(DcMotorEx.class, "shooter");
         intake.setDirection(DcMotorSimple.Direction.REVERSE);
         conveyor.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -146,7 +156,7 @@ public class Robot implements Subsystem {
  //       adjustor = hardwareMap.get(Servo.class, "adjustor");
 //
 //        frontDist = hardwareMap.get(DistanceSensor.class, "frontDist");
-        //backDist = hardwareMap.get(DistanceSensor.class, "backDist");
+        backDist = hardwareMap.get(DistanceSensor.class, "backDist");
 
         rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -178,12 +188,9 @@ public class Robot implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
-//        if(turningL){
-//            drivetrain.turnLeft(turninput*.3);
-//        }
-//        else if(turningR){
-//            drivetrain.turnRight(turninput*.3);
-//        }
+        if(turningT){
+            turnToTag();
+        }
 //        if(sucking){
 //            intakeOn();
 //        }else{
@@ -213,24 +220,80 @@ public class Robot implements Subsystem {
 //        }
 
     }
-
-
-//    public void updateDistance(){
-//        dist=backDist.getDistance(DistanceUnit.CM);
-//    }
-    public void setTurningR(boolean x){
-        turningR=x;
-    }
-    public void setTurningL(boolean x){
-        turningT=x;
-    }
-
     public void shoot(boolean x) {
         if (x)
             shooter.setPower(.95);
         else
             shooter.setPower(0);
     }
+    public void resetShootIndex(){index=0;}
+
+
+    public void shootSequence(){
+        //resetTagIndex();
+        //if(tagCenteringSequene()) {
+            switch (index) {
+                case 0:
+                    shooter.setPower(1);
+                    littlePush(true);
+                    index++;
+                    break;
+                case 1:
+                    if (dist < ballThere) {
+                        littlePush(false);
+                        index++;
+                    }
+                    break;
+                case 2:
+                    if (shooter.getVelocity() >= minShooterSpeed) {
+                        setPaddleClear();
+                        time.reset();
+                        index++;
+                    }
+                    break;
+                case 3:
+                    if (paddle.getPosition() > paddleClear - 20) {
+                        setPaddleDown();
+                        index++;
+                    }
+                    break;
+                case 4:
+                    if (time.seconds() > shootTime) {
+                        shooter.setPower(0);
+                        index++;
+                    }
+                    break;
+
+            }
+        //}
+    }
+
+    public void resetTagIndex(){
+        tagIndex=0;
+    }
+
+    public boolean tagCenteringSequene(){
+        if(tx()) {
+            switch (tagIndex) {
+                case 0:
+                    turningT=true;
+                    tagIndex++;
+                    break;
+                case 1:
+                    if(!turningT){
+                        tagIndex++;
+                    }
+                    break;
+            }
+            return true;
+        }
+        return false;
+    }
+
+
+
+
+
 
 
     @Override
@@ -238,8 +301,8 @@ public class Robot implements Subsystem {
         LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
         TelemetryPacket p = new TelemetryPacket();
         telemetry.put("Red Alliance??? ", allianceRed);
-        //telemetry.put("back distance sensor: ",dist);
-        telemetry.put("fire ball case: ", index);
+        telemetry.put("shooter speed: ",shooter.getVelocity());
+        telemetry.put("back distance sensor: ",dist);
         telemetry.put("shooting state ", shooting);
         telemetry.put("identifying filled channel?", channelDistFull);
         telemetry.put("turnIt? ", turning);
@@ -283,14 +346,6 @@ public class Robot implements Subsystem {
         return getPoseHeading() - getCurrentIMU();
     }
 
-    public void driveTrainTurnLeft(boolean y,double x){
-        if(y){
-            drivetrain.turnLeft(x*.3);
-        }else{
-            drivetrain.turnRight(x*.3);
-        }
-    }
-
     public void setPaddleUp(){
         paddle.setPosition(servoNormalize(paddleUp));
     }
@@ -300,10 +355,17 @@ public class Robot implements Subsystem {
     public void setPaddleClear(){
         paddle.setPosition(servoNormalize(paddleClear));
     }
-//    public void littlePush(){
-//        conveyor.setPower(.2);
-//        intake.setPower(0);
-//    }
+    public void littlePush(boolean x){
+        if(x){
+            conveyor.setPower(.2);
+            intake.setPower(0);
+        }
+        else{
+            conveyor.setPower(0);
+            intake.setPower(0);
+        }
+
+    }
 
     public void setIntakeSpeed(double x){
         conveyor.setPower(x);
@@ -398,6 +460,8 @@ public class Robot implements Subsystem {
         return limelight.getLatestResult().getTx();
     }
 
+
+
     public void turnToTag() {
         integralSum = 0;
         lastError = 0;
@@ -413,7 +477,7 @@ public class Robot implements Subsystem {
 
         drivetrain.power(output);
 
-        if (Math.abs(error) < Math.toRadians(4)) {
+        if (Math.abs(error) < Math.toRadians(2)) {
             drivetrain.power(0);
             turningT = false;
 //            long timer=futureTime(.5);
@@ -479,25 +543,17 @@ public class Robot implements Subsystem {
 //        } else {
 //            intakeOff();
 //        }
-}
+    }
 
     public void intakeOff(){
         intake.setPower(0);
         conveyor.setPower(0);
     }
 
-//    public void openChannel(){
-//        paddle.setPosition(paddleUp);
-//    }
-//
-//    public void closedChannel(){
-//        paddle.setPosition(paddleDown);
-//    }
-//
-//    public void feedPaddle(){
-//        conveyor.setPower(conveyorFeedingSpeed);
-//        intake.setPower(0);
-//    }
+    public void updateDistance(){
+        dist=backDist.getDistance(DistanceUnit.CM);
+    }
+
 
 //    public void countBalls(){
 //        /* int ballsDetected = 0;
@@ -560,80 +616,7 @@ public class Robot implements Subsystem {
     public void setChannelDistFull(boolean x){
         channelDistFull=x;
     }
-//    public double getDist(){
-//        updateDistance();
-//        return dist;
-//    }
-   /* public boolean channelFull(){
-        if(dist<(15)){      //figure out dist of when nothing in channel and make it when dist is less than that
-            return true;
-        }
-        return false;
 
-    }*/
-
-    int index=0;
-    public void resetIndex(){
-        index=0;
-    }
-//    public void fireBall() {
-//        //countBalls();
-//
-//
-////        ElapsedTime time = new ElapsedTime();
-////        time.reset();
-//        switch (index){
-//            case 0:
-//                closedChannel();
-//                intakeOn();
-////                time.reset();
-////                while(time.milliseconds()<2000){
-////
-////                }
-////                index=index+1;
-//                if (channelDistFull){
-//                    index++;
-//                }
-//                break;
-//
-//            case 1:
-//                intakeOff();
-//                shooter.setPower(shooterPower);
-//                timer2 = futureTime(5);
-//                if (isPast(timer2)){
-//                index++;
-//                }
-//
-//                break;
-//
-//            case 2:
-//                if(isPast(timer2)){
-//                    feedPaddle();
-//                    index++;
-//                }
-//                break;
-//
-//            case 3:
-//                openChannel();
-//                conveyor.setPower(0);
-//                timer2 = futureTime(3);
-//                index++;
-//                break;
-//
-//            case 4:
-//                if (isPast(timer2)){
-//                    closedChannel();
-////                    if(numBalls == 0){
-////                        shooter.setPower(0);
-////                        shootingState = shootingState.RESET;
-////                    } else {
-////                        shootingState = shootingState.SPIN;
-////                    }
-//
-//                }
-//                break;
-//        }
-    //}
     public static double servoNormalize(int pulse) {
         double normalized = (double) pulse;
         return (normalized - 750.0) / 1500.0; //convert mr servo controller pulse width to double on _0 - 1 scale
