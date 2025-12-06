@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.lebot;
 
+import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.wrapAngle;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -8,11 +9,15 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.I2cAddressableDevice;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -21,11 +26,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Robot implements Subsystem {
@@ -34,10 +42,10 @@ public class Robot implements Subsystem {
     static FtcDashboard dashboard = FtcDashboard.getInstance();
     tankDrive drivetrain = new tankDrive();
     private BNO055IMU imu;
+    public I2cAddressableDevice odos;
     double throttle, spin;
 
     boolean turning = false;
-    boolean turnJoystick = false;
     boolean turningT = false;
     double refrenceAngle = Math.toRadians(45);
     double integralSum = 0;
@@ -48,18 +56,27 @@ public class Robot implements Subsystem {
 
     ElapsedTime timer = new ElapsedTime();
 
-
-    public DcMotor leftFront, rightFront;
-    public DcMotor intake, conveyor, shooter;
+    //public DcMotorEx leftOdo, rightOdo;
+    public DcMotorEx leftFront, rightFront;
+    public DcMotorEx intake, conveyor, shooter;
 
 
     public Servo paddle;
     private final int paddleUp =1457;
-    private final int paddleDown = 950;
+    private final int paddleDown = 899;
     private final int paddleClear=1400;
 
-    public DistanceSensor frontDist, backDist;
+    public DistanceSensor  backDist;
     public double dist;
+    public double ballThere=15;     //change to be whatever dist shows when ball in front of sensor& at paddle
+
+    public int tagIndex=0;
+
+    public int index=0;
+    public double minShooterSpeed=20;       //change to speed of flywheel
+    public ElapsedTime time = new ElapsedTime();
+    public double shootTime=2;      //change to seconds it takes to shoot ball
+
     public boolean channelDistFull = false;
     HardwareMap hardwareMap;
     StickyGamepad g1 = null;
@@ -77,16 +94,11 @@ public class Robot implements Subsystem {
     //private shootingState shootingState;
 
     public boolean sucking=false;
-
     /*
-    Controls:
-    - Automated shooting sequence (DONE)
-    - PID turning to Goal April Tags (DONE)
-    - Automated robot horizontal distance (DONE)
-    - AFTER WINTER? Obelisk April Tag Detection
-        - Scan April Tag
-        - Color Sensor checks color -> Paddle moves up or down for collection
-    - Auton!!
+    Gamepad Controls:
+    - Button to adjust limelight servo
+    - Button for fireBall()
+    - PID turning
      */
 
     private final double intakeSpeed = 1.0;
@@ -110,15 +122,7 @@ public class Robot implements Subsystem {
     boolean turningR=false;
     boolean turningL=false;
     //public StaticHeading turn=new StaticHeading();
-    double distToGoal = 0;
 
-    double SHOOTERSPEED = 0.5; // m/s
-    double ROBOTHEIGHT = 16 * 0.0254; // 16 inches to m
-    double GOALHEIGHT = 18.5 * 0.0254; // 18.5 inches to m
-    double SHOOTERANGLE = Math.toRadians(45);
-    double GRAVITY = 9.8; // m/s
-
-    public double obeliskCode = 0;
 
     public void init(HardwareMap hardwareMap) {
 
@@ -139,22 +143,20 @@ public class Robot implements Subsystem {
         parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
         imu.initialize(parameters);
 
+        rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+        leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
 
-        rightFront = hardwareMap.get(DcMotor.class, "rightFront");
-        leftFront = hardwareMap.get(DcMotor.class, "leftFront");
-
-        intake = hardwareMap.get(DcMotor.class, "intake");
-        conveyor = hardwareMap.get(DcMotor.class, "conveyor");
-        shooter = hardwareMap.get(DcMotor.class, "shooter");
-        //shooter.setDirection(DcMotorSimple.Direction.REVERSE);
+        intake = hardwareMap.get(DcMotorEx.class, "intake");
+        conveyor = hardwareMap.get(DcMotorEx.class, "conveyor");
+        shooter = hardwareMap.get(DcMotorEx.class, "shooter");
         intake.setDirection(DcMotorSimple.Direction.REVERSE);
         conveyor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         paddle = hardwareMap.get(Servo.class, "paddle");
  //       adjustor = hardwareMap.get(Servo.class, "adjustor");
 //
-        frontDist = hardwareMap.get(DistanceSensor.class, "frontDist");
-        //backDist = hardwareMap.get(DistanceSensor.class, "backDist");
+//        frontDist = hardwareMap.get(DistanceSensor.class, "frontDist");
+        backDist = hardwareMap.get(DistanceSensor.class, "backDist");
 
         rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -186,12 +188,9 @@ public class Robot implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
-//        if(turningL){
-//            drivetrain.turnLeft(turninput*.3);
-//        }
-//        else if(turningR){
-//            drivetrain.turnRight(turninput*.3);
-//        }
+        if(turningT){
+            turnToTag();
+        }
 //        if(sucking){
 //            intakeOn();
 //        }else{
@@ -221,24 +220,80 @@ public class Robot implements Subsystem {
 //        }
 
     }
-
-
-//    public void updateDistance(){
-//        dist=backDist.getDistance(DistanceUnit.CM);
-//    }
-    public void setTurningR(boolean x){
-        turningR=x;
-    }
-    public void setTurningL(boolean x){
-        turningT=x;
-    }
-
     public void shoot(boolean x) {
         if (x)
             shooter.setPower(.95);
         else
             shooter.setPower(0);
     }
+    public void resetShootIndex(){index=0;}
+
+
+    public void shootSequence(){
+        //resetTagIndex();
+        //if(tagCenteringSequene()) {
+            switch (index) {
+                case 0:
+                    shooter.setPower(1);
+                    littlePush(true);
+                    index++;
+                    break;
+                case 1:
+                    if (dist < ballThere) {
+                        littlePush(false);
+                        index++;
+                    }
+                    break;
+                case 2:
+                    if (shooter.getVelocity() >= minShooterSpeed) {
+                        setPaddleClear();
+                        time.reset();
+                        index++;
+                    }
+                    break;
+                case 3:
+                    if (paddle.getPosition() > paddleClear - 20) {
+                        setPaddleDown();
+                        index++;
+                    }
+                    break;
+                case 4:
+                    if (time.seconds() > shootTime) {
+                        shooter.setPower(0);
+                        index++;
+                    }
+                    break;
+
+            }
+        //}
+    }
+
+    public void resetTagIndex(){
+        tagIndex=0;
+    }
+
+    public boolean tagCenteringSequene(){
+        if(tx()) {
+            switch (tagIndex) {
+                case 0:
+                    turningT=true;
+                    tagIndex++;
+                    break;
+                case 1:
+                    if(!turningT){
+                        tagIndex++;
+                    }
+                    break;
+            }
+            return true;
+        }
+        return false;
+    }
+
+
+
+
+
 
 
     @Override
@@ -246,8 +301,8 @@ public class Robot implements Subsystem {
         LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
         TelemetryPacket p = new TelemetryPacket();
         telemetry.put("Red Alliance??? ", allianceRed);
-        //telemetry.put("back distance sensor: ",dist);
-        telemetry.put("fire ball case: ", index);
+        telemetry.put("shooter speed: ",shooter.getVelocity());
+        telemetry.put("back distance sensor: ",dist);
         telemetry.put("shooting state ", shooting);
         telemetry.put("identifying filled channel?", channelDistFull);
         telemetry.put("turnIt? ", turning);
@@ -291,14 +346,6 @@ public class Robot implements Subsystem {
         return getPoseHeading() - getCurrentIMU();
     }
 
-    public void driveTrainTurnLeft(boolean y,double x){
-        if(y){
-            drivetrain.turnLeft(x*.3);
-        }else{
-            drivetrain.turnRight(x*.3);
-        }
-    }
-
     public void setPaddleUp(){
         paddle.setPosition(servoNormalize(paddleUp));
     }
@@ -308,10 +355,17 @@ public class Robot implements Subsystem {
     public void setPaddleClear(){
         paddle.setPosition(servoNormalize(paddleClear));
     }
-//    public void littlePush(){
-//        conveyor.setPower(.2);
-//        intake.setPower(0);
-//    }
+    public void littlePush(boolean x){
+        if(x){
+            conveyor.setPower(.2);
+            intake.setPower(0);
+        }
+        else{
+            conveyor.setPower(0);
+            intake.setPower(0);
+        }
+
+    }
 
     public void setIntakeSpeed(double x){
         conveyor.setPower(x);
@@ -354,18 +408,15 @@ public class Robot implements Subsystem {
 //        }
 //    }
 
-    public void turnJoystick() {
-        double refrenceAngle = Math.atan2(getX(), -getY());
+    public void turnIt() {
 
         double currentAngle = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;
         double error = angleWrap(refrenceAngle - currentAngle);
 
-        double dt = timer.seconds();
-        timer.reset();
-
-        integralSum += error * dt;
-        double derivative = (error - lastError) / dt;
+        integralSum += error * timer.seconds();
+        double derivative = (error - lastError) / timer.seconds();
         lastError = error;
+        timer.reset();
 
         double output = (error * Kp) + (derivative * Kd) + (integralSum * Ki);
 
@@ -409,13 +460,6 @@ public class Robot implements Subsystem {
         return limelight.getLatestResult().getTx();
     }
 
-    public double getX(){
-        return gamepad1.right_stick_x;
-    }
-
-    public double getY(){
-        return gamepad1.right_stick_y;
-    }
 
 
     public void turnToTag() {
@@ -433,7 +477,7 @@ public class Robot implements Subsystem {
 
         drivetrain.power(output);
 
-        if (Math.abs(error) < Math.toRadians(4)) {
+        if (Math.abs(error) < Math.toRadians(2)) {
             drivetrain.power(0);
             turningT = false;
 //            long timer=futureTime(.5);
@@ -459,10 +503,6 @@ public class Robot implements Subsystem {
         turning = x;
     }
 
-    public void setJoystickTurning(boolean x){
-        turnJoystick = true;
-    }
-
     public void setTurningT(boolean x) {
         turningT = x;
     }
@@ -473,10 +513,6 @@ public class Robot implements Subsystem {
 
     public boolean getTurningT() {
         return turningT;
-    }
-
-    public boolean getTurnJoystick(){
-        return turnJoystick;
     }
 
     public void setDrivetrain(double t, double s) {
@@ -507,18 +543,6 @@ public class Robot implements Subsystem {
 //        } else {
 //            intakeOff();
 //        }
-}
-
-    public double calculateDist(){
-        double vcostheta = (SHOOTERSPEED * Math.cos(SHOOTERANGLE));
-        double vsintheta = (SHOOTERSPEED * Math.sin(SHOOTERANGLE));
-
-        return ((vcostheta/GRAVITY)*(vsintheta - Math.sqrt(Math.pow(vsintheta, 2)-(2*GRAVITY*(GOALHEIGHT-ROBOTHEIGHT)))));
-    }
-
-    public double getFrontDistance(){
-        distToGoal = frontDist.getDistance(DistanceUnit.INCH);
-        return distToGoal;
     }
 
     public void intakeOff(){
@@ -526,39 +550,10 @@ public class Robot implements Subsystem {
         conveyor.setPower(0);
     }
 
-    public double scanObelisk(){
-        switchPipeline(3); // ID Filter: 21 //TODO: Setup
-        LLResult GPP = limelight.getLatestResult();
-
-        switchPipeline(4); // ID Filter: 23 //TODO: Setup
-        LLResult PPG = limelight.getLatestResult();
-
-        switchPipeline(5); // ID Filter: 22 //TODO: Setup
-        LLResult PGP = limelight.getLatestResult();
-
-        if (GPP.isValid()){
-            obeliskCode = 21;
-        } else if (PPG.isValid()){
-            obeliskCode = 23;
-        } else if (PGP.isValid()){
-            obeliskCode = 22;
-        }
-
-        return obeliskCode;
+    public void updateDistance(){
+        dist=backDist.getDistance(DistanceUnit.CM);
     }
 
-//    public void openChannel(){
-//        paddle.setPosition(paddleUp);
-//    }
-//
-//    public void closedChannel(){
-//        paddle.setPosition(paddleDown);
-//    }
-//
-//    public void feedPaddle(){
-//        conveyor.setPower(conveyorFeedingSpeed);
-//        intake.setPower(0);
-//    }
 
 //    public void countBalls(){
 //        /* int ballsDetected = 0;
@@ -621,86 +616,7 @@ public class Robot implements Subsystem {
     public void setChannelDistFull(boolean x){
         channelDistFull=x;
     }
-//    public double getDist(){
-//        updateDistance();
-//        return dist;
-//    }
-   /* public boolean channelFull(){
-        if(dist<(15)){      //figure out dist of when nothing in channel and make it when dist is less than that
-            return true;
-        }
-        return false;
 
-    }*/
-
-    int index=0;
-    public void resetIndex(){
-        index=0;
-    }
-
-    //drive must intake before running
-    public void fireBall() {
-        switch (index){
-            case 0:
-                //Aligns to goal
-                turnItShoot(); //or turntoTag() whichever works
-
-                timer2 = futureTime(5);
-                index++;
-
-            case 1:
-                if(isPast(timer2)){
-                    intake.setPower(0);
-                    conveyor.setPower(conveyorFeedingSpeed);
-                    shooter.setPower(shooterPower);
-                    timer2 = futureTime(5);
-                    index++;
-                }
-                break;
-
-            case 2:
-                if (isPast(timer2)){
-                    setPaddleClear();
-                    timer2 = futureTime(3);
-                    index++;
-                }
-                break;
-
-            case 3:
-                if(isPast(timer2)){
-                    setPaddleDown();
-                    timer2 = futureTime(3);
-                }
-
-            case 4:
-                if (isPast(timer2)){
-                    setPaddleClear();
-                    timer2 = futureTime(3);
-                    index++;
-                }
-                break;
-
-            case 5:
-                if(isPast(timer2)){
-                    setPaddleDown();
-                    timer2 = futureTime(3);
-                }
-
-            case 6:
-                if (isPast(timer2)){
-                    setPaddleClear();
-                    timer2 = futureTime(3);
-                    index++;
-                }
-                break;
-
-            case 7:
-                if(isPast(timer2)){
-                    setPaddleDown();
-                }
-                break;
-        }
-    }
     public static double servoNormalize(int pulse) {
         double normalized = (double) pulse;
         return (normalized - 750.0) / 1500.0; //convert mr servo controller pulse width to double on _0 - 1 scale

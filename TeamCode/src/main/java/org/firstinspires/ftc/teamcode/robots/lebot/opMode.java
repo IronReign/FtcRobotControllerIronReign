@@ -59,7 +59,7 @@ public class opMode extends OpMode {
         g1.update();
         handleJoysticks(gamepad1);
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
-//        robot.updateDistance();
+        robot.updateDistance();
 //        if(robot.getDist()<15){
 //            robot.setChannelDistFull(true);
 //        }else{
@@ -137,38 +137,38 @@ public class opMode extends OpMode {
             robot.intakeOff();
         }
 
-        // Spin to right stick position
-        if((Math.hypot(robot.getY(), robot.getX()))>0.2){
-            robot.setJoystickTurning(true);
-        }
-        if(robot.getTurnJoystick()){
-            throttle = 0;
-            robot.turnJoystick();
-        }
-
-        if(!robot.getTurnJoystick()){
-            throttle = -gamepad1.left_stick_y;
-        }
-
-        // Adjust distance for shooting
-        //TODO: Would be ideal to implement method to call here and in auton
-        double target = robot.calculateDist();
-        double current = robot.getFrontDistance();
-        double error = current - target;
-
-        if (Math.abs(error) > 0.02) {
-            adjust = true;
-            if (error > 0) {
-                throttle = 0.5;
-            } else {
-                throttle = -0.5;
-            }
-        }
-
-        //TODO: Test fireBall() code
-        if(g1.y){
-            robot.fireBall();
-        }
+//        // Spin to right stick position
+//        if((Math.hypot(robot.getY(), robot.getX()))>0.2){
+//            robot.setJoystickTurning(true);
+//        }
+//        if(robot.getTurnJoystick()){
+//            throttle = 0;
+//            robot.turnJoystick();
+//        }
+//
+//        if(!robot.getTurnJoystick()){
+//            throttle = -gamepad1.left_stick_y;
+//        }
+//
+//        // Adjust distance for shooting
+//        //TODO: Would be ideal to implement method to call here and in auton
+//        double target = robot.calculateDist();
+//        double current = robot.getFrontDistance();
+//        double error = current - target;
+//
+//        if (Math.abs(error) > 0.02) {
+//            adjust = true;
+//            if (error > 0) {
+//                throttle = 0.5;
+//            } else {
+//                throttle = -0.5;
+//            }
+//        }
+//
+//        //TODO: Test fireBall() code
+//        if(g1.y){
+//            robot.fireBall();
+//        }
 
 
 //        if(g1.a){
@@ -178,19 +178,18 @@ public class opMode extends OpMode {
 //                robot.setTurning(false);
 //            }
 //        }
-//        if(g1.x){
-//            if(robot.tx()){
-//            //if(robot.tx() && Math.abs(robot.gettx())>Math.toRadians(1.5)){
-//                robot.setTurningT(true);
-//            }else{
-//                robot.setTurningT(false);
-//            }
-//        }
-//        if(robot.getTurningT()){
-//            robot.turnToTag();
-//            //robot.turnItShoot();
-//            robot.setDrivetrain(throttle, 0);
-//        }
+        if(g1.x){
+            if(robot.tx()){
+                //if(robot.tx() && Math.abs(robot.gettx())>Math.toRadians(1.5)){
+                robot.setTurningT(true);
+            }else{
+                robot.setTurningT(false);
+            }
+        }
+
+        if(!robot.getTurningT()){
+            robot.setDrivetrain(throttle, (dampen)*gamepad1.right_stick_x);
+        }
 
 
 //        if (robot.getTurning()) {
@@ -199,7 +198,7 @@ public class opMode extends OpMode {
 //            return;
 //        }else{
 //        if(!damp){
-            robot.setDrivetrain(throttle, (dampen)*gamepad1.right_stick_x);
+
 //            robot.setTurningL(false);
 //            robot.setTurningR(false);
         }
