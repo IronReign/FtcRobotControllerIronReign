@@ -137,38 +137,38 @@ public class opMode extends OpMode {
             robot.intakeOff();
         }
 
-        // Spin to right stick position
-        if((Math.hypot(robot.getY(), robot.getX()))>0.2){
-            robot.setJoystickTurning(true);
-        }
-        if(robot.getTurnJoystick()){
-            throttle = 0;
-            robot.turnJoystick();
-        }
-
-        if(!robot.getTurnJoystick()){
-            throttle = -gamepad1.left_stick_y;
-        }
-
-        // Adjust distance for shooting
-        //TODO: Would be ideal to implement method to call here and in auton
-        double target = robot.calculateDist();
-        double current = robot.getFrontDistance();
-        double error = current - target;
-
-        if (Math.abs(error) > 0.02) {
-            adjust = true;
-            if (error > 0) {
-                throttle = 0.5;
-            } else {
-                throttle = -0.5;
-            }
-        }
-
-        //TODO: Test fireBall() code
-        if(g1.y){
-            robot.fireBall();
-        }
+//        // Spin to right stick position
+//        if((Math.hypot(robot.getY(), robot.getX()))>0.2){
+//            robot.setJoystickTurning(true);
+//        }
+//        if(robot.getTurnJoystick()){
+//            throttle = 0;
+//            robot.turnJoystick();
+//        }
+//
+//        if(!robot.getTurnJoystick()){
+//            throttle = -gamepad1.left_stick_y;
+//        }
+//
+//        // Adjust distance for shooting
+//        //TODO: Would be ideal to implement method to call here and in auton
+//        double target = robot.calculateDist();
+//        double current = robot.getFrontDistance();
+//        double error = current - target;
+//
+//        if (Math.abs(error) > 0.02) {
+//            adjust = true;
+//            if (error > 0) {
+//                throttle = 0.5;
+//            } else {
+//                throttle = -0.5;
+//            }
+//        }
+//
+//        //TODO: Test fireBall() code
+//        if(g1.y){
+//            robot.fireBall();
+//        }
 
 
 //        if(g1.a){

@@ -15,15 +15,15 @@ import java.util.Map;
 @Autonomous(name = "auton lebot")
 @Config(value = "auton lebot")
 public class lebotAUTON extends OpMode{
-
-
-
-        public static double FORWARD=1.21;
-        public static double BUFFER=.3;
-        public static double LONGBUFFER= 1.9;        //2.2
-        public static double BACKWARD=.255;     //.255
-
-
+//
+//
+//
+//        public static double FORWARD=1.21;
+//        public static double BUFFER=.3;
+//        public static double LONGBUFFER= 1.9;        //2.2
+//        public static double BACKWARD=.255;     //.255
+//
+//
         Robot robot;
         StickyGamepad g1=null;
         //HardwareMap hardwareMap;
@@ -60,16 +60,16 @@ public class lebotAUTON extends OpMode{
             execute();
             handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
         }
-
-
-        //forward vertical for one tile practice    vertical=4000;
-
-    /*
-    - robot angled towards the three balls
-    - robot aligned for intake?
-        - timer
-        - fireBall()
-     */
+//
+//
+//        //forward vertical for one tile practice    vertical=4000;
+//
+//    /*
+//    - robot angled towards the three balls
+//    - robot aligned for intake?
+//        - timer
+//        - fireBall()
+//     */
         int autonIndex = 0;
         long autonTimer = 0;
         public void execute() {
@@ -88,54 +88,54 @@ public class lebotAUTON extends OpMode{
 
             }
         }
-
-        public void execute2(){
-            switch(autonIndex){
-                case 0:
-                    robot.setDrivetrain(1, 0);
-                    autonIndex++;
-                    break;
-                case 1:
-                    if(robot.getFrontDistance()<2) {
-                        autonIndex++;
-                        robot.setDrivetrain(0,0);
-                    }
-                    break;
-                case 2:
-                    robot.setDrivetrain(0, 1);
-                    autonTimer = futureTime(.2);
-                    autonIndex++;
-                    break;
-                case 3:
-                    if(isPast(autonTimer)){
-                        autonIndex++;
-                        robot.setDrivetrain(0,0);
-                    }
-                    break;
-                case 4:
-                    //TODO: Distance adjusting function equivalent -- still have to finish
-                    double target = robot.calculateDist();
-                    double current = robot.getFrontDistance();
-                    double error = current - target;
-                    autonTimer = futureTime(2);
-
-                    if (Math.abs(error) > 0.02) {
-                        if (error > 0) {
-                            robot.setDrivetrain(1, 0);
-                        } else {
-                            robot.setDrivetrain(-1, 0);
-                        }
-                    }
-                    autonIndex++;
-                    break;
-                case 5:
-                    //NOTE: Depending on alliance, robot has to turn to range somewhat near goal before turnItShoot can run
-                case 6:
-                    robot.fireBall();
-                    break;
-            }
-        }
-
+//
+//        public void execute2(){
+//            switch(autonIndex){
+//                case 0:
+//                    robot.setDrivetrain(1, 0);
+//                    autonIndex++;
+//                    break;
+//                case 1:
+//                    if(robot.getFrontDistance()<2) {
+//                        autonIndex++;
+//                        robot.setDrivetrain(0,0);
+//                    }
+//                    break;
+//                case 2:
+//                    robot.setDrivetrain(0, 1);
+//                    autonTimer = futureTime(.2);
+//                    autonIndex++;
+//                    break;
+//                case 3:
+//                    if(isPast(autonTimer)){
+//                        autonIndex++;
+//                        robot.setDrivetrain(0,0);
+//                    }
+//                    break;
+//                case 4:
+//                    //TODO: Distance adjusting function equivalent -- still have to finish
+//                    double target = robot.calculateDist();
+//                    double current = robot.getFrontDistance();
+//                    double error = current - target;
+//                    autonTimer = futureTime(2);
+//
+//                    if (Math.abs(error) > 0.02) {
+//                        if (error > 0) {
+//                            robot.setDrivetrain(1, 0);
+//                        } else {
+//                            robot.setDrivetrain(-1, 0);
+//                        }
+//                    }
+//                    autonIndex++;
+//                    break;
+//                case 5:
+//                    //NOTE: Depending on alliance, robot has to turn to range somewhat near goal before turnItShoot can run
+//                case 6:
+//                    robot.fireBall();
+//                    break;
+//            }
+//        }
+//
 
         private void handleTelemetry(Map<String, Object> telemetryMap, String telemetryName) {
             telemetry.addLine(telemetryName);
