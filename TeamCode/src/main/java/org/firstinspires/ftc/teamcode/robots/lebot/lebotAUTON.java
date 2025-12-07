@@ -32,7 +32,7 @@ public class lebotAUTON extends OpMode{
         @Override
         public void init() {
             robot = new Robot(hardwareMap, gamepad1);
-            robot.init(hardwareMap);
+            robot.init();
             //  robot.setRotate(950);
         }
         @Override
