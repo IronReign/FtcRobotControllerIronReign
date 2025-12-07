@@ -4,6 +4,8 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.wrapA
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
+import android.graphics.Color;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -11,12 +13,14 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.I2cAddressableDevice;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
@@ -32,6 +36,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,10 +44,10 @@ import java.util.Map;
 public class Robot implements Subsystem {
     public DcMotor leftBack, rightBack;         //testing only
 
+
     static FtcDashboard dashboard = FtcDashboard.getInstance();
     tankDrive drivetrain = new tankDrive();
     private BNO055IMU imu;
-    public I2cAddressableDevice odos;
     double throttle, spin;
 
     boolean turning = false;
@@ -62,26 +67,38 @@ public class Robot implements Subsystem {
 
 
     public Servo paddle;
-    private final int paddleUp =1457;
-    private final int paddleDown = 899;
-    private final int paddleClear=1400;
+    private final int paddleUp =1420;       //1420
+    private final int paddleDown = 985;
+    private final int paddleClear=1420;
 
-    public DistanceSensor  backDist;
+//    public NormalizedColorSensor colorSensor = null;
+//    public static int colorSensorGain = 12;
+//
+//    public enum CurrentSample {
+//        RED, BLUE, NEUTRAL, NO_SAMPLE
+//    }
+
+
+   public Rev2mDistanceSensor backDist;
     public double dist;
-    public double ballThere=15;     //change to be whatever dist shows when ball in front of sensor& at paddle
+    public double ballNotThere=14;     //change to be whatever dist shows when ball in front of sensor& at paddle
 
     public int tagIndex=0;
 
     public int index=0;
-    public double minShooterSpeed=20;       //change to speed of flywheel
+    public double minShooterSpeed=935;       //change to speed of flywheel     //1020 for full power
     public ElapsedTime time = new ElapsedTime();
-    public double shootTime=2;      //change to seconds it takes to shoot ball
+    public double shootTime=.5;      //change to seconds it takes to shoot ball
 
     public boolean channelDistFull = false;
     HardwareMap hardwareMap;
     StickyGamepad g1 = null;
     Gamepad gamepad1;
 
+
+    public Servo tilt;
+    public int servoUp=1600;
+    public int servoDown=1000;
     public Limelight3A limelight;
     public static boolean allianceRed = true;
 
@@ -124,7 +141,7 @@ public class Robot implements Subsystem {
     //public StaticHeading turn=new StaticHeading();
 
 
-    public void init(HardwareMap hardwareMap) {
+    public void init() {
 
         /*rightBack = hardwareMap.get(DcMotor.class, "rightBack");
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
@@ -149,18 +166,23 @@ public class Robot implements Subsystem {
         intake = hardwareMap.get(DcMotorEx.class, "intake");
         conveyor = hardwareMap.get(DcMotorEx.class, "conveyor");
         shooter = hardwareMap.get(DcMotorEx.class, "shooter");
-        intake.setDirection(DcMotorSimple.Direction.REVERSE);
-        conveyor.setDirection(DcMotorSimple.Direction.REVERSE);
+        shooter.setDirection(DcMotorSimple.Direction.REVERSE);
+        shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //intake.setDirection(DcMotorSimple.Direction.REVERSE);
+        //conveyor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         paddle = hardwareMap.get(Servo.class, "paddle");
+        tilt = hardwareMap.get(Servo.class, "tilt");
  //       adjustor = hardwareMap.get(Servo.class, "adjustor");
 //
 //        frontDist = hardwareMap.get(DistanceSensor.class, "frontDist");
-        backDist = hardwareMap.get(DistanceSensor.class, "backDist");
+        backDist = hardwareMap.get(Rev2mDistanceSensor.class, "backDist");
+        //colorSensor = this.hardwareMap.get(NormalizedColorSensor.class, "intakeSensor");
 
         rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
+        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -171,12 +193,15 @@ public class Robot implements Subsystem {
         }         //pipeline 6 reads blue(20) and red(24)
         limelight.start();
 
+        shooting=false;
+        index=0;
         //closedChannel();
 
         paddle.setPosition(paddleDown);
         intake.setPower(0);
         conveyor.setPower(0);
         shooter.setPower(0);
+        tilt.setPosition(servoUp);
 
         //shootingState = shootingState.RESET;
     }
@@ -188,6 +213,12 @@ public class Robot implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
+
+        updateDistance();
+        if(shooting){
+            shootSequence();
+        }
+
         if(turningT){
             turnToTag();
         }
@@ -220,9 +251,14 @@ public class Robot implements Subsystem {
 //        }
 
     }
+    public void setShoot(boolean x){shooting=x;}
+    //public boolean getShoot(){return shooting;}
+
     public void shoot(boolean x) {
         if (x)
-            shooter.setPower(.95);
+            //shooting=x;
+            shooter.setVelocity(minShooterSpeed,AngleUnit.DEGREES);
+            //shooter.setPower(1);
         else
             shooter.setPower(0);
     }
@@ -234,40 +270,56 @@ public class Robot implements Subsystem {
         //if(tagCenteringSequene()) {
             switch (index) {
                 case 0:
-                    shooter.setPower(1);
-                    littlePush(true);
+                    //shoot(true);
+                    shooter.setVelocity(minShooterSpeed,AngleUnit.DEGREES);
+                    conveyor.setPower(1);
+                    intake.setPower(1);
+                    //littlePush(true);
                     index++;
                     break;
                 case 1:
-                    if (dist < ballThere) {
-                        littlePush(false);
+                    if (dist < 9) {
+                        conveyor.setPower(0);
+                        intake.setPower(0);
+                        //littlePush(false);
+                        time.reset();
                         index++;
                     }
                     break;
                 case 2:
-                    if (shooter.getVelocity() >= minShooterSpeed) {
+                    if(time.seconds()>1){
+                        index++;
+                    }
+                    break;
+                case 3:
+                    //double x= shooter.getVelocity()
+                    if (shooter.getVelocity(AngleUnit.DEGREES) >= minShooterSpeed && shooter.getVelocity(AngleUnit.DEGREES)<=minShooterSpeed+8) {
                         setPaddleClear();
                         time.reset();
                         index++;
                     }
                     break;
-                case 3:
-                    if (paddle.getPosition() > paddleClear - 20) {
-                        setPaddleDown();
-                        index++;
-                    }
-                    break;
                 case 4:
-                    if (time.seconds() > shootTime) {
-                        shooter.setPower(0);
+                    if (time.seconds()>shootTime) {
+                        setPaddleDown();
+                        shooting=false;
                         index++;
                     }
                     break;
+//                case 4:
+//                    if (time.seconds() > shootTime) {
+//                        shooter.setPower(0);
+//                        index++;
+//                    }
+//                    break;
 
             }
         //}
     }
 
+    public boolean getShoot(){
+        return shooting;
+    }
     public void resetTagIndex(){
         tagIndex=0;
     }
@@ -301,13 +353,16 @@ public class Robot implements Subsystem {
         LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
         TelemetryPacket p = new TelemetryPacket();
         telemetry.put("Red Alliance??? ", allianceRed);
-        telemetry.put("shooter speed: ",shooter.getVelocity());
+        telemetry.put("shooter speed: ",shooter.getVelocity(AngleUnit.DEGREES));
         telemetry.put("back distance sensor: ",dist);
-        telemetry.put("shooting state ", shooting);
-        telemetry.put("identifying filled channel?", channelDistFull);
+        telemetry.put("shooting state ", index);
+        telemetry.put("shooting boolean: ",shooting);
+        telemetry.put("paddle ticks: ", paddle.getPosition());
         telemetry.put("turnIt? ", turning);
         telemetry.put("turnToAprilTag? ", turningT);
         telemetry.put("fly wheel shooting? ", shooting);
+//        telemetry.put("colorsensor hsv ",  HSVasString());
+//        telemetry.put("what color we got? ", updateColorSensor());
 
         LLResult llResult = limelight.getLatestResult();
         if (llResult != null && llResult.isValid()) {
@@ -355,9 +410,15 @@ public class Robot implements Subsystem {
     public void setPaddleClear(){
         paddle.setPosition(servoNormalize(paddleClear));
     }
+    public void setServoUp(){
+        tilt.setPosition(servoUp);
+    }
+    public void setServoDown(){
+        tilt.setPosition(servoDown);
+    }
     public void littlePush(boolean x){
         if(x){
-            conveyor.setPower(.2);
+            conveyor.setPower(.8);
             intake.setPower(0);
         }
         else{
@@ -616,6 +677,34 @@ public class Robot implements Subsystem {
     public void setChannelDistFull(boolean x){
         channelDistFull=x;
     }
+
+//    public String updateColorSensor() {
+//        double hue = getHSV()[0];
+//        if (hue < 35 && hue > 20) {     //90    70
+//            currentSample = org.firstinspires.ftc.teamcode.robots.giant.Robot.CurrentSample.NEUTRAL;
+//            return "NEUTRAL";
+//        } else if (hue < 360 && hue > 350) {        //60    20
+//            currentSample = org.firstinspires.ftc.teamcode.robots.giant.Robot.CurrentSample.RED;
+//            return "RED";
+//        } else if (hue < 220 && hue > 210) {
+//            currentSample = org.firstinspires.ftc.teamcode.robots.giant.Robot.CurrentSample.BLUE;
+//            return "BLUE";
+//        } else {
+//            currentSample = org.firstinspires.ftc.teamcode.robots.giant.Robot.CurrentSample.NO_SAMPLE;
+//            return "NO SAMPLE";
+//        }
+//    }
+//
+//
+//    public String HSVasString () {
+//        float[] hsv = getHSV();
+//        return hsv[0] + " " + hsv[1] + " " + hsv[2];
+//    }
+//    public float[] getHSV() {
+//        float[] hsv = new float[3];
+//        Color.colorToHSV(colorSensor.getNormalizedColors().toColor(), hsv);
+//        return hsv;
+//    }
 
     public static double servoNormalize(int pulse) {
         double normalized = (double) pulse;

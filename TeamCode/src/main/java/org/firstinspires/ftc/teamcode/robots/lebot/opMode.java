@@ -48,8 +48,10 @@ public class opMode extends OpMode {
     @Override
     public void init() {
         //drivetrain.init(hardwareMap);
-        robot.init(hardwareMap);
+        robot = new Robot(hardwareMap, gamepad1);
+        robot.init();
         robot.setPaddleDown();
+        robot.setServoUp();
         g1 = new StickyGamepad(gamepad1);
 
     }
@@ -60,6 +62,7 @@ public class opMode extends OpMode {
         handleJoysticks(gamepad1);
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
         robot.updateDistance();
+        robot.update(new Canvas());
 //        if(robot.getDist()<15){
 //            robot.setChannelDistFull(true);
 //        }else{
@@ -88,11 +91,12 @@ public class opMode extends OpMode {
 
     public void handleJoysticks(Gamepad gamepad) {
         throttle = -gamepad1.left_stick_y;
-        if(g1.b) {
-            shoot=!shoot;
-        }
+//        if(g1.b) {
+//            shoot=!shoot;
+//        }
         if(g1.a){
-            robot.setPaddleUp();
+            robot.setShoot(false);
+            robot.shoot(false);
         }
         if(g1.dpad_up){
             robot.setPaddleClear();
@@ -109,7 +113,7 @@ public class opMode extends OpMode {
         if(damp){
             dampen=.2;
         }else{
-            dampen=.45;
+            dampen=1;
         }
         if(g1.dpad_left){
             suck=!suck;
@@ -124,17 +128,24 @@ public class opMode extends OpMode {
 //        }else{
 //            robot.closedChannel();
 //        }
-        if(shoot){
-            robot.shoot(true);
-        }else{
-            robot.shoot(false);
+//        if(shoot){
+//            robot.shoot(true);
+//        }else{
+//            robot.shoot(false);
+//        }
+        if(!robot.getShoot()){
+            if(suck){
+                robot.intakeOn();
+            }else if(eject) {
+                robot.setIntakeSpeed(.2);
+            }else{
+                robot.intakeOff();
+            }
         }
-        if(suck){
-            robot.intakeOn();
-        }else if(eject) {
-            robot.setIntakeSpeed(.2);
-        }else{
-            robot.intakeOff();
+
+        if(g1.b){
+            robot.resetShootIndex();
+            robot.setShoot(true);
         }
 
 //        // Spin to right stick position
@@ -188,7 +199,7 @@ public class opMode extends OpMode {
         }
 
         if(!robot.getTurningT()){
-            robot.setDrivetrain(throttle, (dampen)*gamepad1.right_stick_x);
+            robot.setDrivetrain(throttle, (dampen)*-gamepad1.right_stick_x);
         }
 
 
