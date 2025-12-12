@@ -4,7 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 
 @Config
 public class PIDConstants {
-    public static double Kp = 1.185;             //2.38 from mecanum drive
+    public static double Kp = .017;         //.018        //2.38 from mecanum drive
     public static double Ki = 0.0;
     public static double Kd = 0.0;
 }

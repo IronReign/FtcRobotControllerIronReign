@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.robots.lebot;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.wrapAngle;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
@@ -8,6 +9,7 @@ import android.graphics.Color;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.limelightvision.LLResult;
@@ -101,6 +103,7 @@ public class Robot implements Subsystem {
     public int servoDown=1000;
     public Limelight3A limelight;
     public static boolean allianceRed = true;
+    public int pipe=0;
 
 //    private enum shootingState {
 //        IDLE, SPIN, FEED, FIRE, RESET
@@ -143,6 +146,7 @@ public class Robot implements Subsystem {
 
     public void init() {
 
+
         /*rightBack = hardwareMap.get(DcMotor.class, "rightBack");
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
         rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -150,6 +154,7 @@ public class Robot implements Subsystem {
         leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
         //TESTING^^^^
 */
+        //telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         g1 = new StickyGamepad(gamepad1);
 
         drivetrain.init(hardwareMap);
@@ -188,8 +193,10 @@ public class Robot implements Subsystem {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         if (allianceRed) {
             limelight.pipelineSwitch(1);
+            pipe=1;
         } else {
             limelight.pipelineSwitch(0);
+            pipe=0;
         }         //pipeline 6 reads blue(20) and red(24)
         limelight.start();
 
@@ -207,6 +214,8 @@ public class Robot implements Subsystem {
     }
 
     public Robot(HardwareMap hardwareMap, Gamepad gamepad) {
+        //telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
         this.hardwareMap = hardwareMap;
         this.gamepad1 = gamepad;
     }
@@ -219,8 +228,17 @@ public class Robot implements Subsystem {
             shootSequence();
         }
 
+//        if(turningT){
+//            turnToTag();
+//        }
         if(turningT){
-            turnToTag();
+            if(tx()){
+                drivetrain.turnToTag(0,1);
+            }
+            //drivetrain.turnUntilDegreesIMU(,1);
+        }
+        if(drivetrain.gettxTurnDone()){
+            turningT=false;
         }
 //        if(sucking){
 //            intakeOn();
@@ -262,6 +280,8 @@ public class Robot implements Subsystem {
         else
             shooter.setPower(0);
     }
+
+    public void setShoot(double x){shooter.setVelocity(x,AngleUnit.DEGREES);}
     public void resetShootIndex(){index=0;}
 
 
@@ -350,35 +370,40 @@ public class Robot implements Subsystem {
 
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
-        LinkedHashMap<String, Object> telemetry = new LinkedHashMap<>();
+        LinkedHashMap<String, Object> telemetry2 = new LinkedHashMap<>();
         TelemetryPacket p = new TelemetryPacket();
-        telemetry.put("Red Alliance??? ", allianceRed);
-        telemetry.put("shooter speed: ",shooter.getVelocity(AngleUnit.DEGREES));
-        telemetry.put("back distance sensor: ",dist);
-        telemetry.put("shooting state ", index);
-        telemetry.put("shooting boolean: ",shooting);
-        telemetry.put("paddle ticks: ", paddle.getPosition());
-        telemetry.put("turnIt? ", turning);
-        telemetry.put("turnToAprilTag? ", turningT);
-        telemetry.put("fly wheel shooting? ", shooting);
+        telemetry2.put("Red Alliance??? ", allianceRed);
+        telemetry2.put("shooter speed: ",shooter.getVelocity(AngleUnit.DEGREES));
+        telemetry2.put("back distance sensor: ",dist);
+        telemetry2.put("shooting state ", index);
+        telemetry2.put("shooting boolean: ",shooting);
+        telemetry2.put("paddle ticks: ", paddle.getPosition());
+        telemetry2.put("turnIt? ", turning);
+        telemetry2.put("turnToAprilTag? ", turningT);
+        telemetry2.put("fly wheel shooting? ", shooting);
 //        telemetry.put("colorsensor hsv ",  HSVasString());
 //        telemetry.put("what color we got? ", updateColorSensor());
 
         LLResult llResult = limelight.getLatestResult();
         if (llResult != null && llResult.isValid()) {
-            telemetry.put("tx: ", llResult.getTx());
-            telemetry.put("ty: ", llResult.getTy());
-            telemetry.put("ta: ", llResult.getTa());
-            telemetry.put("bot pose heading: ", getPoseHeading());
-            telemetry.put("angle diff: ", angleDif());
+            telemetry2.put("tx: ", llResult.getTx());
+            telemetry2.put("ty: ", llResult.getTy());
+            telemetry2.put("ta: ", llResult.getTa());
+            telemetry2.put("bot pose heading: ", getPoseHeading());
+            telemetry2.put("angle diff: ", angleDif());
         }
 
-
-        telemetry.put("current IMU: ", getCurrentIMU());
-
+//        telemetry.addData("Target IMU Angle", Math.toDegrees(refrenceAngle));
+//        telemetry.addData("Current IMU Angle", imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
+//
+        telemetry2.put("IMU turn done? ", drivetrain.getIMUTurnDone());
+        telemetry2.put("error: ", drivetrain.getErrorPID());
+        telemetry2.put("Kp: ", drivetrain.getKpp());
+        telemetry2.put("current IMU: ", imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
+        //telemetry.update();
         //telemetry.put()
         dashboard.sendTelemetryPacket(p);
-        return telemetry;
+        return telemetry2;
     }
 
 
@@ -523,34 +548,6 @@ public class Robot implements Subsystem {
 
 
 
-    public void turnToTag() {
-        integralSum = 0;
-        lastError = 0;
-        double currentAngle = Math.toRadians(gettx());
-        double error = angleWrap(0 - currentAngle);
-
-        integralSum += error * timer.seconds();
-        double derivative = (error - lastError) / timer.seconds();
-        lastError = error;
-        timer.reset();
-
-        double output = (error * (Kp)) + (derivative * Kd) + (integralSum * Ki);
-
-        drivetrain.power(output);
-
-        if (Math.abs(error) < Math.toRadians(2)) {
-            drivetrain.power(0);
-            turningT = false;
-//            long timer=futureTime(.5);
-//            if(isPast(timer)){
-//                if(Math.abs(error) < Math.toRadians(3)){
-//                    drivetrain.power(0);
-//                    turningT = false;
-//                }
-//            }
-
-        }
-    }
 
     public double getCurrentIMU() {
         return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle;

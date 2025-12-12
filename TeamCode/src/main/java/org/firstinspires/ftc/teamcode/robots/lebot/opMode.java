@@ -24,6 +24,7 @@ import java.util.Map;
 @TeleOp (name = "test")
 public class opMode extends OpMode {
     Robot robot = new Robot(hardwareMap, gamepad1);
+    //private FtcDashboard dashboard;
     //tankDrive drivetrain = new tankDrive();
     StickyGamepad g1;
     //private BNO055IMU imu;
@@ -34,6 +35,8 @@ public class opMode extends OpMode {
     boolean pushUp=false;
     boolean eject=false;
     boolean adjust = false;
+
+
 
 //    boolean turning = false;
 //    double refrenceAngle = Math.toRadians(90);
@@ -53,6 +56,8 @@ public class opMode extends OpMode {
         robot.setPaddleDown();
         robot.setServoUp();
         g1 = new StickyGamepad(gamepad1);
+        //TELEMETRY SETUP
+        telemetry.setMsTransmissionInterval(250);
 
     }
 
@@ -147,55 +152,20 @@ public class opMode extends OpMode {
             robot.resetShootIndex();
             robot.setShoot(true);
         }
-
-//        // Spin to right stick position
-//        if((Math.hypot(robot.getY(), robot.getX()))>0.2){
-//            robot.setJoystickTurning(true);
-//        }
-//        if(robot.getTurnJoystick()){
-//            throttle = 0;
-//            robot.turnJoystick();
-//        }
-//
-//        if(!robot.getTurnJoystick()){
-//            throttle = -gamepad1.left_stick_y;
-//        }
-//
-//        // Adjust distance for shooting
-//        //TODO: Would be ideal to implement method to call here and in auton
-//        double target = robot.calculateDist();
-//        double current = robot.getFrontDistance();
-//        double error = current - target;
-//
-//        if (Math.abs(error) > 0.02) {
-//            adjust = true;
-//            if (error > 0) {
-//                throttle = 0.5;
-//            } else {
-//                throttle = -0.5;
-//            }
-//        }
-//
-//        //TODO: Test fireBall() code
-//        if(g1.y){
-//            robot.fireBall();
-//        }
-
-
-//        if(g1.a){
-//            if(Math.abs(robot.getCurrentIMU()-robot.getRefrenceAngle())>Math.toRadians(1.5)){
-//                robot.setTurning(true);
-//            }else{
-//                robot.setTurning(false);
-//            }
-//        }
-        if(g1.x){
+        if(g1.y){
             if(robot.tx()){
-                //if(robot.tx() && Math.abs(robot.gettx())>Math.toRadians(1.5)){
                 robot.setTurningT(true);
-            }else{
-                robot.setTurningT(false);
             }
+
+        }
+        if(g1.x){
+            shoot=!shoot;
+            //robot.setShoot(1);
+        }
+        if(shoot){
+            robot.setShoot(975);
+        }else{
+            robot.setShoot(0);
         }
 
         if(!robot.getTurningT()){
