@@ -37,20 +37,22 @@ public class StaticHeading extends LinearOpMode {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         drivetrain.init(hardwareMap);
 
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.mode = BNO055IMU.SensorMode.IMU;
-        parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
-        imu.initialize(parameters);
-
-        double refrenceAngle = Math.toRadians(90);
+//        imu = hardwareMap.get(BNO055IMU.class, "imu");
+//        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+//        parameters.mode = BNO055IMU.SensorMode.IMU;
+//        parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
+//        imu.initialize(parameters);
+//
+        double refrenceAngle = 90;
         waitForStart();
 
         while(opModeIsActive()){
             telemetry.addData("Target IMU Angle", Math.toDegrees(refrenceAngle));
             telemetry.addData("Current IMU Angle", imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
-            double power = PIDControl(refrenceAngle, imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle);
-            drivetrain.power(power);
+            telemetry.addData("IMUturnDone: ", drivetrain.getIMUTurnDone());
+//            double power = PIDControl(refrenceAngle, imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle);
+//            drivetrain.power(power);
+            drivetrain.turnUntilDegreesIMU(refrenceAngle,1);
             telemetry.update();
         }
 
