@@ -81,10 +81,9 @@ public class tankDrive {
         leftBack.setDirection(DcMotorSimple.Direction.REVERSE);*/
     }
 
-//    public void setLimelight(int x){
-//        limelight.pipelineSwitch(x);
-//        limelight.start();
-//    }
+    public void setLimelight(int x){
+        limelight.pipelineSwitch(x);
+    }
 
     public void drive(double throttle, double spin) {
         double leftPower = throttle + spin;

@@ -68,14 +68,6 @@ public class opMode extends OpMode {
         handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
         robot.updateDistance();
         robot.update(new Canvas());
-//        if(robot.getDist()<15){
-//            robot.setChannelDistFull(true);
-//        }else{
-//            robot.setChannelDistFull(false);
-//        }
-//
-
-
     }
 
     @Override
@@ -127,7 +119,7 @@ public class opMode extends OpMode {
         if(damp){
             dampen=.15;
         }else{
-            dampen=.4;
+            dampen=.67;
         }
         if(g1.dpad_left){
             suck=!suck;
@@ -167,21 +159,22 @@ public class opMode extends OpMode {
             }
 
         }
-        if(g1.x){
-            shoot=!shoot;
-            //robot.setShoot(1);
-        }
+//        if(g1.x){
+//            //robot.setShoot(898);
+//            shoot=!shoot;
+//            //robot.setShoot(1);
+//        }
 //        if(shoot){
-//            robot.setShoot(975);
+//            robot.setShoot(898);
 //        }else{
 //            robot.setShoot(0);
 //        }
 
 
         if(!robot.getTurningT()){
-            if(throttle>0){
+            //if(throttle>0){
                 robot.setDrivetrain(throttle, (dampen)*-gamepad1.right_stick_x);
-            }
+            //}
 
         }
 
