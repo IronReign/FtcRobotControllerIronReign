@@ -24,15 +24,18 @@ public class lebotAUTON extends OpMode{
 //        public static double BACKWARD=.255;     //.255
 //
 //
+        public double referenceAngle=45;
         Robot robot;
         StickyGamepad g1=null;
         //HardwareMap hardwareMap;
 
+    //start facing goal towards tag, move back till distance sensor sense 80.4 (80)
 
         @Override
         public void init() {
             robot = new Robot(hardwareMap, gamepad1);
             robot.init();
+            robot.setMinShootSpeed(845);
             //  robot.setRotate(950);
         }
         @Override
@@ -43,10 +46,12 @@ public class lebotAUTON extends OpMode{
             if(g1.b){
                 robot.setRedALliance(true);
                 robot.switchPipeline(1);
+                robot.setAutoAngle(-Math.abs(referenceAngle));
             }
             if(g1.x){
                 robot.setRedALliance(false);
                 robot.switchPipeline(0);
+                robot.setAutoAngle(Math.abs(referenceAngle));
             }
             robot.update(new Canvas());
             handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
@@ -75,16 +80,105 @@ public class lebotAUTON extends OpMode{
         public void execute() {
             switch (autonIndex) {
                 case 0:
-                    robot.setDrivetrain(1, 0);       //2285
-                    autonTimer = futureTime(.2);
+                    if(robot.getRedALliance()){
+                        robot.setAutoAngle(-Math.abs(referenceAngle));
+                    }else{
+                        robot.setAutoAngle(Math.abs(referenceAngle));
+                    }
+                    robot.setDrivetrain(-.5, 0);       //2285
+                    //autonTimer = futureTime(.2);
                     autonIndex++;
                     break;
                 case 1:
-                    if (isPast(autonTimer)) {
+                    if (robot.getDistFromTag()>70) {
                         robot.setDrivetrain(0, 0);
+                        autonIndex++;
                     }
                     break;
                 case 2:
+                    if(robot.tx()){
+                        robot.setTurningT(true);
+                        autonIndex++;
+                    }
+                    break;
+
+                case 3:
+                    if(!robot.getTurningT()){
+                        robot.setMinShootSpeed(robot.getShootingSpeed());
+                        autonIndex++;
+                    }
+                    break;
+                case 4:
+                    if(robot.getMinShooterSpeed()>500 && robot.getMinShooterSpeed()<1100){
+                        robot.resetShootIndex();
+                        robot.setShoot(true);
+                        autonIndex++;
+                    }
+                case 5:
+                    if(!robot.getShoot()){
+                        autonTimer=futureTime(.8);
+                        autonIndex++;
+                    }
+                    break;
+                case 6:
+                    if(isPast(autonTimer)){
+                        autonTimer=futureTime(.1);
+                        robot.intakeOn();
+                        autonIndex++;
+                    }
+                    break;
+                case 7:
+                    if(isPast(autonTimer)){
+                        robot.intakeOff();
+                        robot.resetShootIndex();
+                        robot.setShoot(true);
+                        autonIndex++;
+                    }
+                    break;
+                case 8:
+                    if(!robot.getShoot()){
+                        autonTimer=futureTime(.8);
+                        autonIndex++;
+                    }
+                    break;
+                case 9:
+                    if(isPast(autonTimer)){
+                        autonTimer=futureTime(.1);
+                        robot.intakeOn();
+                        autonIndex++;
+                    }
+                    break;
+                case 10:
+                    if(isPast(autonTimer)){
+                        robot.intakeOff();
+                        robot.resetShootIndex();
+                        robot.setShoot(true);
+                        autonIndex++;
+                    }
+                    break;
+                case 11:
+                    if(!robot.getShoot()){
+                        autonTimer=futureTime(1);
+                        robot.setShoot(false);
+                        robot.shoot(false);
+                        robot.setTurningAuto(true);
+                        //autonTimer=futureTime(1.2);
+                        autonIndex++;
+                    }
+                    break;
+                case 12:
+                    if(isPast(autonTimer)){
+                        autonTimer=futureTime(.1);
+                        robot.setDrivetrain(.9,0);
+                        autonIndex++;
+                    }
+                    break;
+                case 13:
+                    if(isPast(autonTimer)){
+                        robot.setDrivetrain(0,0);
+                        autonIndex++;
+                    }
+                    break;
 
             }
         }

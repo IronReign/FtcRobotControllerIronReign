@@ -55,6 +55,8 @@ public class Robot implements Subsystem {
 
     boolean turning = false;
     boolean turningT = false;
+    boolean turningAuto=false;
+    double autoAngle=45;
     double refrenceAngle = Math.toRadians(45);
     double integralSum = 0;
     private double lastError = 0;
@@ -76,6 +78,7 @@ public class Robot implements Subsystem {
 
 
    public Rev2mDistanceSensor backDist;
+    public Rev2mDistanceSensor frontDist;
     public double dist;
     public double ballNotThere=14;     //change to be whatever dist shows when ball in front of sensor& at paddle
 
@@ -101,7 +104,7 @@ public class Robot implements Subsystem {
 
     public double distFromTag=0;
     //TODO: find how far limelight from flywheel
-    public double c=.21;
+    public double c=.23;
     public double d=0;
     public double theta=60;
     public double launchSpeed=0;
@@ -161,6 +164,7 @@ public class Robot implements Subsystem {
 //
 //        frontDist = hardwareMap.get(DistanceSensor.class, "frontDist");
         backDist = hardwareMap.get(Rev2mDistanceSensor.class, "backDist");
+        frontDist = hardwareMap.get(Rev2mDistanceSensor.class, "frontDist");
 
         rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -204,7 +208,7 @@ public class Robot implements Subsystem {
         LLResult llResult= limelight.getLatestResult();
         if(llResult!=null && llResult.isValid()){
             botpose=llResult.getBotpose_MT2();
-            distFromTag=getDistFromTag(llResult.getTa());
+            //distFromTag=getDistFromTag(llResult.getTa());
         }
 //        if(tx()){
 //            a1=getty();
@@ -216,12 +220,16 @@ public class Robot implements Subsystem {
 
             shootSequence();
         }
+        if(turningAuto){
+            drivetrain.turnUntilDegreesIMU(autoAngle,1);
+        }
 
         if(turning){
-            drivetrain.turnUntilDegreesIMU(180,1);
+            drivetrain.turnUntilDegreesIMU(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle+180,1);
         }
         if(drivetrain.getIMUTurnDone()){
             turning=false;
+            turningAuto=false;
         }
         if(turningT){
             if(tx()){
@@ -229,7 +237,7 @@ public class Robot implements Subsystem {
             }
             //drivetrain.turnUntilDegreesIMU(,1);
         }
-        if(drivetrain.gettxTurnDone() &&!shooting){
+        if(drivetrain.gettxTurnDone()){
             turningT=false;
         }
 //        else{
@@ -249,6 +257,7 @@ public class Robot implements Subsystem {
         else
             shooter.setVelocity(0);
     }
+    public double getMinShooterSpeed(){return minShooterSpeed;}
 
     public void setShoot(double x){shooter.setVelocity(x,AngleUnit.DEGREES);}
     public void resetShootIndex(){index=0;}
@@ -258,18 +267,19 @@ public class Robot implements Subsystem {
         //if(tagCenteringSequene()) {
             switch (index) {
                 case 0:
-                    turningT=true;
+                    //turningT=true;
                     index++;
                     break;
                 case 1:
-                    if(drivetrain.gettxTurnDone()){
+                    //if(drivetrain.gettxTurnDone()){
+                        minShooterSpeed=getShootingSpeed();
                     shooter.setVelocity(minShooterSpeed,AngleUnit.DEGREES);
 
-                    //shooter.setVelocity(launchSpeed,AngleUnit.DEGREES);
+                    //shooter.setVelocity(getShootingSpeed(),AngleUnit.DEGREES);
                     conveyor.setPower(1);
                     intake.setPower(1);
                     index++;
-                    }
+                    //}
                     break;
                 case 2:
                     if (dist < 8.7) {
@@ -294,12 +304,19 @@ public class Robot implements Subsystem {
                 case 5:
                     if (time.seconds()>shootTime) {
                         setPaddleDown();
-                        turningT=false;
+                        //turningT=false;
                         shooting=false;
                         index++;
                     }
                     break;
             }
+    }
+
+    public void setMinShootSpeed(double x){
+        minShooterSpeed=x;
+    }
+    public double getDistFromTag(){
+        return distFromTag;
     }
 
     public boolean getShoot(){
@@ -349,6 +366,13 @@ public class Robot implements Subsystem {
         intake.setPower(x);
     }
 
+    public void setAutoAngle(double x){
+        autoAngle=x;
+    }
+    public boolean getTurningAuto(){return turningAuto;}
+    public void setTurningAuto(boolean x){
+        turningAuto=x;
+    }
 //    public double getPoseHeading() {
 //        double headingRadians = getBotPose().getOrientation().getYaw();
 //        return Math.toRadians(headingRadians);
@@ -362,16 +386,16 @@ public class Robot implements Subsystem {
 //        return null;
 //    }
 
-    public double getDistFromTag(double ta){
-        double scale = 1322.488;
-        double distance = (scale/ta);
-        return distance;
+//    public double getDistFromTag(double ta){
+////        double scale = 69444.21;        //1322.488
+////        double distance = (scale/ta);
+////        return distance;
 //        distFromTag=(.711-.235)/Math.tan(Math.toRadians(a1+a2))+c;
 //        //distFromTag=(h2-h1)/Math.tan(Math.toRadians(a1+a2));
 //        return distFromTag;
-    }
+//    }
     public double getShootingSpeed(){
-        launchSpeed=(distFromTag*(1090))/(6.67*(Math.cos(Math.toRadians(theta)))*Math.sqrt(((Math.tan(Math.toRadians(theta))*distFromTag)-.711)/(4.905)));
+        launchSpeed=(((distFromTag+c)/100)*(1090))/(6.67*(Math.cos(Math.toRadians(theta)))*Math.sqrt(((Math.tan(Math.toRadians(theta))*((distFromTag+c)/100))-.711)/(4.905)))+125;
         return launchSpeed;
     }
 
@@ -427,6 +451,7 @@ public class Robot implements Subsystem {
 
     public void switchPipeline(int x) {
         limelight.pipelineSwitch(x);        //0 is blue 1 is red
+        drivetrain.setLimelight(x);
         //limelight.start();
     }
 
@@ -441,6 +466,7 @@ public class Robot implements Subsystem {
 
     public void updateDistance(){
         dist=backDist.getDistance(DistanceUnit.CM);
+        distFromTag=frontDist.getDistance(DistanceUnit.CM);
     }
     public static double servoNormalize(int pulse) {
         double normalized = (double) pulse;
@@ -460,8 +486,10 @@ public class Robot implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         LinkedHashMap<String, Object> telemetry2 = new LinkedHashMap<>();
         TelemetryPacket p = new TelemetryPacket();
+        telemetry2.put("drive odometry: ", rightFront.getCurrentPosition());
         telemetry2.put("andas calculations speed: ", launchSpeed);
-
+        telemetry2.put("min velocity: ", minShooterSpeed);
+        telemetry2.put("distance to goal: ", distFromTag);
         telemetry2.put("Red Alliance??? ", allianceRed);
         telemetry2.put("shooter speed: ",shooter.getVelocity(AngleUnit.DEGREES));
         telemetry2.put("back distance sensor: ",dist);
@@ -470,18 +498,17 @@ public class Robot implements Subsystem {
         telemetry2.put("paddle ticks: ", paddle.getPosition());
         telemetry2.put("turnIt? ", turning);
         telemetry2.put("turnToAprilTag? ", turningT);
-        telemetry2.put("fly wheel shooting? ", shooting);
 //        telemetry.put("colorsensor hsv ",  HSVasString());
 //        telemetry.put("what color we got? ", updateColorSensor());
 
         LLResult llResult = limelight.getLatestResult();
         if (llResult != null && llResult.isValid()) {
             Pose3D botPose=llResult.getBotpose_MT2();
-            telemetry2.put(" dist from april tag: ",distFromTag);
+            //telemetry2.put(" dist from april tag: ",getDistFromTag(llResult.getTa()));
             telemetry2.put("tx: ", llResult.getTx());
             telemetry2.put("ty: ", llResult.getTy());
             telemetry2.put("ta: ", llResult.getTa());
-            telemetry2.put("Botpose, ", botPose.toString());
+            //telemetry2.put("Botpose, ", botPose.toString());
         }
 //        telemetry.addData("Target IMU Angle", Math.toDegrees(refrenceAngle));
 //        telemetry.addData("Current IMU Angle", imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
