@@ -119,7 +119,7 @@ public class opMode extends OpMode {
         if(damp){
             dampen=.15;
         }else{
-            dampen=.4;
+            dampen=.67;
         }
         if(g1.dpad_left){
             suck=!suck;

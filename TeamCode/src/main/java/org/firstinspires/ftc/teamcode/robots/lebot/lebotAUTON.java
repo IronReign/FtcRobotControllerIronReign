@@ -24,7 +24,7 @@ public class lebotAUTON extends OpMode{
 //        public static double BACKWARD=.255;     //.255
 //
 //
-        public double referenceAngle=45;
+        public double referenceAngle=35;
         Robot robot;
         StickyGamepad g1=null;
         //HardwareMap hardwareMap;
@@ -35,6 +35,7 @@ public class lebotAUTON extends OpMode{
         public void init() {
             robot = new Robot(hardwareMap, gamepad1);
             robot.init();
+            robot.setPaddleDown();
             robot.setMinShootSpeed(845);
             //  robot.setRotate(950);
         }
@@ -62,6 +63,7 @@ public class lebotAUTON extends OpMode{
         @Override
         public void loop() {
             robot.update(new Canvas());
+            robot.updateDistance();
             execute();
             handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
         }
@@ -90,39 +92,42 @@ public class lebotAUTON extends OpMode{
                     autonIndex++;
                     break;
                 case 1:
-                    if (robot.getDistFromTag()>70) {
+                    if (robot.getDistFromTag()>75) {
                         robot.setDrivetrain(0, 0);
                         autonIndex++;
                     }
                     break;
                 case 2:
                     if(robot.tx()){
+                        autonTimer=futureTime(.5);
                         robot.setTurningT(true);
                         autonIndex++;
                     }
                     break;
 
                 case 3:
-                    if(!robot.getTurningT()){
+                    if(isPast(autonTimer)){
+                        robot.setDrivetrain(0,0);
+                    //if(!robot.getTurningT()){
                         robot.setMinShootSpeed(robot.getShootingSpeed());
                         autonIndex++;
                     }
                     break;
                 case 4:
-                    if(robot.getMinShooterSpeed()>500 && robot.getMinShooterSpeed()<1100){
+                    //if(robot.getMinShooterSpeed()>500 && robot.getMinShooterSpeed()<1100){
                         robot.resetShootIndex();
                         robot.setShoot(true);
                         autonIndex++;
-                    }
+                    //}
                 case 5:
                     if(!robot.getShoot()){
-                        autonTimer=futureTime(.8);
+                        autonTimer=futureTime(.5);
                         autonIndex++;
                     }
                     break;
                 case 6:
                     if(isPast(autonTimer)){
-                        autonTimer=futureTime(.1);
+                        autonTimer=futureTime(.05);
                         robot.intakeOn();
                         autonIndex++;
                     }
@@ -137,13 +142,13 @@ public class lebotAUTON extends OpMode{
                     break;
                 case 8:
                     if(!robot.getShoot()){
-                        autonTimer=futureTime(.8);
+                        autonTimer=futureTime(.5);
                         autonIndex++;
                     }
                     break;
                 case 9:
                     if(isPast(autonTimer)){
-                        autonTimer=futureTime(.1);
+                        autonTimer=futureTime(.05);
                         robot.intakeOn();
                         autonIndex++;
                     }
@@ -158,7 +163,7 @@ public class lebotAUTON extends OpMode{
                     break;
                 case 11:
                     if(!robot.getShoot()){
-                        autonTimer=futureTime(1);
+                        autonTimer=futureTime(.8);
                         robot.setShoot(false);
                         robot.shoot(false);
                         robot.setTurningAuto(true);
@@ -168,8 +173,8 @@ public class lebotAUTON extends OpMode{
                     break;
                 case 12:
                     if(isPast(autonTimer)){
-                        autonTimer=futureTime(.1);
-                        robot.setDrivetrain(.9,0);
+                        autonTimer=futureTime(.4);
+                        robot.setDrivetrain(1,0);
                         autonIndex++;
                     }
                     break;

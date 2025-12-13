@@ -225,7 +225,8 @@ public class Robot implements Subsystem {
         }
 
         if(turning){
-            drivetrain.turnUntilDegreesIMU(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle+180,1);
+            //drivetrain.turnUntilDegreesIMU(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle+180,1);
+            drivetrain.turnUntilDegreesIMU(0,1);
         }
         if(drivetrain.getIMUTurnDone()){
             turning=false;
@@ -272,7 +273,7 @@ public class Robot implements Subsystem {
                     break;
                 case 1:
                     //if(drivetrain.gettxTurnDone()){
-                        minShooterSpeed=getShootingSpeed();
+                    minShooterSpeed=getShootingSpeed();
                     shooter.setVelocity(minShooterSpeed,AngleUnit.DEGREES);
 
                     //shooter.setVelocity(getShootingSpeed(),AngleUnit.DEGREES);
@@ -306,7 +307,7 @@ public class Robot implements Subsystem {
                         setPaddleDown();
                         //turningT=false;
                         shooting=false;
-                        index++;
+                        index=0;
                     }
                     break;
             }
@@ -395,7 +396,8 @@ public class Robot implements Subsystem {
 //        return distFromTag;
 //    }
     public double getShootingSpeed(){
-        launchSpeed=(((distFromTag+c)/100)*(1090))/(6.67*(Math.cos(Math.toRadians(theta)))*Math.sqrt(((Math.tan(Math.toRadians(theta))*((distFromTag+c)/100))-.711)/(4.905)))+125;
+        launchSpeed=(((distFromTag+c)/100)*(1090))/(6.67*(Math.cos(Math.toRadians(theta)))*Math.sqrt(((Math.tan(Math.toRadians(theta))*((distFromTag+c)/100))-.711)/(4.905)))+105;      //120
+        //launchSpeed=(((distFromTag+c)/100)*(1090))/(6.67*(Math.cos(Math.toRadians(theta)))*Math.sqrt(((Math.tan(Math.toRadians(theta))*((distFromTag+c)/100))-.711)/(4.905)))*1.25;
         return launchSpeed;
     }
 
