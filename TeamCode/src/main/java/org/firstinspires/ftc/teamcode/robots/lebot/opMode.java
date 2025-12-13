@@ -54,7 +54,7 @@ public class opMode extends OpMode {
         robot = new Robot(hardwareMap, gamepad1);
         robot.init();
         robot.setPaddleDown();
-        robot.setServoUp();
+        //robot.setServoUp();
         g1 = new StickyGamepad(gamepad1);
         //TELEMETRY SETUP
         telemetry.setMsTransmissionInterval(250);
@@ -99,9 +99,10 @@ public class opMode extends OpMode {
 //        if(g1.b) {
 //            shoot=!shoot;
 //        }
-        if(g1.a){
+        if(g1.b){
             robot.setShoot(false);
             robot.shoot(false);
+            suck=false;
         }
         if(g1.dpad_up){
             robot.setPaddleClear();
@@ -111,14 +112,22 @@ public class opMode extends OpMode {
             robot.setPaddleDown();
         }
         double dampen;
+        if(Math.abs(gamepad1.right_stick_x) >.3 ||Math.abs(gamepad1.right_stick_y) >.3||Math.abs(gamepad1.left_stick_x) >.3 ||Math.abs(gamepad1.left_stick_y) >.3 ){
+            robot.setTurningT(false);
+            robot.setTurning(false);
+        }
+
+        if(g1.right_bumper){
+            robot.setTurning(true);
+        }
 
         if(g1.left_bumper){
             damp=!damp;
         }
         if(damp){
-            dampen=.2;
+            dampen=.15;
         }else{
-            dampen=1;
+            dampen=.4;
         }
         if(g1.dpad_left){
             suck=!suck;
@@ -148,7 +157,7 @@ public class opMode extends OpMode {
             }
         }
 
-        if(g1.b){
+        if(g1.a){
             robot.resetShootIndex();
             robot.setShoot(true);
         }
@@ -162,14 +171,18 @@ public class opMode extends OpMode {
             shoot=!shoot;
             //robot.setShoot(1);
         }
-        if(shoot){
-            robot.setShoot(975);
-        }else{
-            robot.setShoot(0);
-        }
+//        if(shoot){
+//            robot.setShoot(975);
+//        }else{
+//            robot.setShoot(0);
+//        }
+
 
         if(!robot.getTurningT()){
-            robot.setDrivetrain(throttle, (dampen)*-gamepad1.right_stick_x);
+            if(throttle>0){
+                robot.setDrivetrain(throttle, (dampen)*-gamepad1.right_stick_x);
+            }
+
         }
 
 

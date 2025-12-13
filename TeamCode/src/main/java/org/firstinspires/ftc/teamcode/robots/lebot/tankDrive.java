@@ -36,7 +36,7 @@ public class tankDrive {
     static double Ki = PIDConstants.Ki;
     static double Kd = PIDConstants.Kd;
     public static PIDCoefficients HEADING_PID_PWR = new PIDCoefficients(Kp, Ki, Kd);
-    public static double HEADING_PID_TOLERANCE = .000005; //this is a percentage of the input range .063 of 2PI is 1 degree
+    public static double HEADING_PID_TOLERANCE = .5; //testing val=.000005     //this is a percentage of the input range .063 of 2PI is 1 degree
     private double PIDCorrection, PIDError;
 
     public Limelight3A limelight;

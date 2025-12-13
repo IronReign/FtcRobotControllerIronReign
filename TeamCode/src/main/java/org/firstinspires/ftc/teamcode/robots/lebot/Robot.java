@@ -46,6 +46,8 @@ import java.util.Map;
 public class Robot implements Subsystem {
     public DcMotor leftBack, rightBack;         //testing only
 
+    Pose3D botpose =null;
+
     static FtcDashboard dashboard = FtcDashboard.getInstance();
     tankDrive drivetrain = new tankDrive();
     private BNO055IMU imu;
@@ -69,7 +71,7 @@ public class Robot implements Subsystem {
 
     public Servo paddle;
     private final int paddleUp =1420;       //1420
-    private final int paddleDown = 985;
+    private final int paddleDown = 1000;
     private final int paddleClear=1420;
 
 
@@ -99,13 +101,18 @@ public class Robot implements Subsystem {
 
     public double distFromTag=0;
     //TODO: find how far limelight from flywheel
-    public double c=.10;
+    public double c=.21;
+    public double d=0;
+    public double theta=60;
+    public double launchSpeed=0;
     //TODO: get height of camera above floor
     public double h1=15;
     public double h2=0;
     //TODO: get mounting angle
-    public double a1=0;
+    public double a1=20;
     public double a2=0;
+
+
 
 
     public boolean shooting = false;
@@ -149,7 +156,7 @@ public class Robot implements Subsystem {
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         paddle = hardwareMap.get(Servo.class, "paddle");
-        tilt = hardwareMap.get(Servo.class, "tilt");
+        //tilt = hardwareMap.get(Servo.class, "tilt");
  //       adjustor = hardwareMap.get(Servo.class, "adjustor");
 //
 //        frontDist = hardwareMap.get(DistanceSensor.class, "frontDist");
@@ -178,8 +185,8 @@ public class Robot implements Subsystem {
         paddle.setPosition(paddleDown);
         intake.setPower(0);
         conveyor.setPower(0);
-        shooter.setPower(0);
-        tilt.setPosition(servoUp);
+        shooter.setVelocity(0);
+        //tilt.setPosition(servoUp);
 
         //shootingState = shootingState.RESET;
     }
@@ -194,23 +201,45 @@ public class Robot implements Subsystem {
     @Override
     public void update(Canvas fieldOverlay) {
 
+        LLResult llResult= limelight.getLatestResult();
+        if(llResult!=null && llResult.isValid()){
+            botpose=llResult.getBotpose_MT2();
+            distFromTag=getDistFromTag(llResult.getTa());
+        }
+//        if(tx()){
+//            a1=getty();
+//            getDistFromTag();
+//            getShootingSpeed();
+//        }
         updateDistance();
         if(shooting){
+
             shootSequence();
         }
 
-//        if(turningT){
-//            turnToTag();
-//        }
+        if(turning){
+            drivetrain.turnUntilDegreesIMU(180,1);
+        }
+        if(drivetrain.getIMUTurnDone()){
+            turning=false;
+        }
         if(turningT){
             if(tx()){
                 drivetrain.turnToTag(0,1);
             }
             //drivetrain.turnUntilDegreesIMU(,1);
         }
-        if(drivetrain.gettxTurnDone()){
+        if(drivetrain.gettxTurnDone() &&!shooting){
             turningT=false;
         }
+//        else{
+//            index=0;
+//        }
+
+//        if(turningT){
+//            turnToTag();
+//        }
+
     }
     public void setShoot(boolean x){shooting=x;}
 
@@ -218,7 +247,7 @@ public class Robot implements Subsystem {
         if (x)
             shooter.setVelocity(minShooterSpeed,AngleUnit.DEGREES);
         else
-            shooter.setPower(0);
+            shooter.setVelocity(0);
     }
 
     public void setShoot(double x){shooter.setVelocity(x,AngleUnit.DEGREES);}
@@ -229,34 +258,43 @@ public class Robot implements Subsystem {
         //if(tagCenteringSequene()) {
             switch (index) {
                 case 0:
-                    shooter.setVelocity(minShooterSpeed,AngleUnit.DEGREES);
-                    conveyor.setPower(1);
-                    intake.setPower(1);
+                    turningT=true;
                     index++;
                     break;
                 case 1:
-                    if (dist < 9) {
+                    if(drivetrain.gettxTurnDone()){
+                    shooter.setVelocity(minShooterSpeed,AngleUnit.DEGREES);
+
+                    //shooter.setVelocity(launchSpeed,AngleUnit.DEGREES);
+                    conveyor.setPower(1);
+                    intake.setPower(1);
+                    index++;
+                    }
+                    break;
+                case 2:
+                    if (dist < 8.7) {
                         conveyor.setPower(0);
                         intake.setPower(0);
                         time.reset();
                         index++;
                     }
                     break;
-                case 2:
+                case 3:
                     if(time.seconds()>1){
                         index++;
                     }
                     break;
-                case 3:
+                case 4:
                     if (shooter.getVelocity(AngleUnit.DEGREES) >= minShooterSpeed && shooter.getVelocity(AngleUnit.DEGREES)<=minShooterSpeed+8) {
                         setPaddleClear();
                         time.reset();
                         index++;
                     }
                     break;
-                case 4:
+                case 5:
                     if (time.seconds()>shootTime) {
                         setPaddleDown();
+                        turningT=false;
                         shooting=false;
                         index++;
                     }
@@ -289,9 +327,6 @@ public class Robot implements Subsystem {
         return false;
     }
 
-    public double angleDif() {
-        return getPoseHeading() - getCurrentIMU();
-    }
 
     public void setPaddleUp(){
         paddle.setPosition(servoNormalize(paddleUp));
@@ -302,35 +337,42 @@ public class Robot implements Subsystem {
     public void setPaddleClear(){
         paddle.setPosition(servoNormalize(paddleClear));
     }
-    public void setServoUp(){
-        tilt.setPosition(servoUp);
-    }
-    public void setServoDown(){
-        tilt.setPosition(servoDown);
-    }
+//    public void setServoUp(){
+//        tilt.setPosition(servoUp);
+//    }
+//    public void setServoDown(){
+//        tilt.setPosition(servoDown);
+//    }
 
     public void setIntakeSpeed(double x){
         conveyor.setPower(x);
         intake.setPower(x);
     }
 
-    public double getPoseHeading() {
-        double headingRadians = getBotPose().getOrientation().getYaw();
-        return Math.toRadians(headingRadians);
-    }
+//    public double getPoseHeading() {
+//        double headingRadians = getBotPose().getOrientation().getYaw();
+//        return Math.toRadians(headingRadians);
+//    }
 
-    public Pose3D getBotPose() {
-        LLResult llResult = limelight.getLatestResult();
-        if (llResult != null && llResult.isValid()) {
-            return llResult.getBotpose();
-        }
-        return null;
-    }
+//    public Pose3D getBotPose() {
+//        LLResult llResult = limelight.getLatestResult();
+//        if (llResult != null && llResult.isValid()) {
+//            return llResult.getBotpose();
+//        }
+//        return null;
+//    }
 
-    public double getDistFromTag(){
-        distFromTag=(.711-.235)/Math.tan(Math.toRadians(a1+a2))+c;
-        //distFromTag=(h2-h1)/Math.tan(Math.toRadians(a1+a2));
-        return distFromTag;
+    public double getDistFromTag(double ta){
+        double scale = 1322.488;
+        double distance = (scale/ta);
+        return distance;
+//        distFromTag=(.711-.235)/Math.tan(Math.toRadians(a1+a2))+c;
+//        //distFromTag=(h2-h1)/Math.tan(Math.toRadians(a1+a2));
+//        return distFromTag;
+    }
+    public double getShootingSpeed(){
+        launchSpeed=(distFromTag*(1090))/(6.67*(Math.cos(Math.toRadians(theta)))*Math.sqrt(((Math.tan(Math.toRadians(theta))*distFromTag)-.711)/(4.905)));
+        return launchSpeed;
     }
 
     public boolean tx() {
@@ -341,7 +383,11 @@ public class Robot implements Subsystem {
     }
 
     public double gettx() {
+
         return limelight.getLatestResult().getTx();
+    }
+    public double getty() {
+        return limelight.getLatestResult().getTy();
     }
 
     public double getCurrentIMU() {
@@ -414,6 +460,8 @@ public class Robot implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         LinkedHashMap<String, Object> telemetry2 = new LinkedHashMap<>();
         TelemetryPacket p = new TelemetryPacket();
+        telemetry2.put("andas calculations speed: ", launchSpeed);
+
         telemetry2.put("Red Alliance??? ", allianceRed);
         telemetry2.put("shooter speed: ",shooter.getVelocity(AngleUnit.DEGREES));
         telemetry2.put("back distance sensor: ",dist);
@@ -428,11 +476,12 @@ public class Robot implements Subsystem {
 
         LLResult llResult = limelight.getLatestResult();
         if (llResult != null && llResult.isValid()) {
+            Pose3D botPose=llResult.getBotpose_MT2();
+            telemetry2.put(" dist from april tag: ",distFromTag);
             telemetry2.put("tx: ", llResult.getTx());
             telemetry2.put("ty: ", llResult.getTy());
             telemetry2.put("ta: ", llResult.getTa());
-            telemetry2.put("bot pose heading: ", getPoseHeading());
-            telemetry2.put("angle diff: ", angleDif());
+            telemetry2.put("Botpose, ", botPose.toString());
         }
 //        telemetry.addData("Target IMU Angle", Math.toDegrees(refrenceAngle));
 //        telemetry.addData("Current IMU Angle", imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle);
