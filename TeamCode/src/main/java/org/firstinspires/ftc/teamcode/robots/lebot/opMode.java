@@ -35,7 +35,7 @@ public class opMode extends OpMode {
     boolean pushUp=false;
     boolean eject=false;
     boolean adjust = false;
-
+    boolean s=false;
 
 
 //    boolean turning = false;
@@ -92,7 +92,7 @@ public class opMode extends OpMode {
 //            shoot=!shoot;
 //        }
         if(g1.b){
-            robot.setShoot(false);
+            robot.setShootAll(false);
             robot.shoot(false);
             suck=false;
         }
@@ -150,14 +150,25 @@ public class opMode extends OpMode {
         }
 
         if(g1.a){
-            robot.resetShootIndex();
-            robot.setShoot(true);
+            robot.resetIndexAll();
+            robot.setShootAll(true);
         }
         if(g1.y){
             if(robot.tx()){
                 robot.setTurningT(true);
             }
 
+        }
+
+        if(g1.x){
+            s=!s;
+        }
+        if(s){
+            robot.setShoot(true);
+            robot.setShoot(900);
+        }else{
+            robot.setShoot(false);
+            robot.setShoot(0);
         }
 //        if(g1.x){
 //            //robot.setShoot(898);

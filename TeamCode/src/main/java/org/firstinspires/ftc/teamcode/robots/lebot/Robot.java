@@ -80,6 +80,7 @@ public class Robot implements Subsystem {
    public Rev2mDistanceSensor backDist;
     public Rev2mDistanceSensor frontDist;
     public double dist;
+    public double distFront=0;
     public double ballNotThere=14;     //change to be whatever dist shows when ball in front of sensor& at paddle
 
     public int tagIndex=0;
@@ -87,7 +88,8 @@ public class Robot implements Subsystem {
     public int index=0;
     public double minShooterSpeed=935;       //change to speed of flywheel     //1020 for full power
     public ElapsedTime time = new ElapsedTime();
-    public double shootTime=.5;      //change to seconds it takes to shoot ball
+    public double shootTime=.25;      //change to seconds it takes to shoot ball
+    public boolean shootingAll=false;
 
     public boolean channelDistFull = false;
     HardwareMap hardwareMap;
@@ -104,19 +106,10 @@ public class Robot implements Subsystem {
 
     public double distFromTag=0;
     //TODO: find how far limelight from flywheel
-    public double c=.23;
+    public double c=.23;        //.27
     public double d=0;
     public double theta=60;
     public double launchSpeed=0;
-    //TODO: get height of camera above floor
-    public double h1=15;
-    public double h2=0;
-    //TODO: get mounting angle
-    public double a1=20;
-    public double a2=0;
-
-
-
 
     public boolean shooting = false;
     //private shootingState shootingState;
@@ -215,9 +208,19 @@ public class Robot implements Subsystem {
 //            getDistFromTag();
 //            getShootingSpeed();
 //        }
-        updateDistance();
-        if(shooting){
+        if(numBalls<3){
+            updateBallCount();
+        }
+        if(!shootingAll){
+            shooting=false;
+        }
 
+        updateDistance();
+        if(shootingAll){
+            shootALLSequence();
+            //shootSequence();
+        }
+        if(shooting){
             shootSequence();
         }
         if(turningAuto){
@@ -251,6 +254,7 @@ public class Robot implements Subsystem {
 
     }
     public void setShoot(boolean x){shooting=x;}
+    public void setShootAll(boolean x){shootingAll=x;}
 
     public void shoot(boolean x) {
         if (x)
@@ -263,6 +267,105 @@ public class Robot implements Subsystem {
     public void setShoot(double x){shooter.setVelocity(x,AngleUnit.DEGREES);}
     public void resetShootIndex(){index=0;}
 
+    double llmountAngleDegrees = 29.5;
+    /*double llLenseHeightInches = 12;
+    double goalHeightInches = 29.8;*/
+
+    double llLenseHeightMeters = 12*2.54/100;
+    double goalHeightMeters = 29.8*2.54/100;
+
+    public double getDist(){
+        double targetOffsetAngle_Vertical = getty();
+        double angleTOGoalRadians = Math.toRadians(llmountAngleDegrees + targetOffsetAngle_Vertical);
+        return ((goalHeightMeters - llLenseHeightMeters)/Math.tan(angleTOGoalRadians));
+    }
+
+    public void updateBallCount(){
+        //if(numBalls<3){
+            if(distFront < 8.7){
+                numBalls++;
+            }
+        //}
+
+    }
+    public int indexAll=0;
+    public void shootALLSequence(){
+        switch(indexAll){
+            case 0:
+                resetShootIndex();
+                shooting=true;
+
+                indexAll++;
+                break;
+            case 1:
+                if(!shooting){
+                    indexAll++;
+                    time.reset();
+                }
+                break;
+            case 2:
+                if(time.seconds()>.25) {
+                    intakeOn();
+                    time.reset();
+                    indexAll++;
+                }
+                break;
+            case 3:
+                if(time.seconds()>.25){
+                    indexAll++;
+                }
+                break;
+            case 4:
+                if(dist < ballNotThere-2) {
+                    indexAll=10;
+                }
+                indexAll++;
+                break;
+            case 5:
+                resetShootIndex();
+                shooting=true;
+                indexAll++;
+                break;
+            case 6:
+                if(!shooting){
+                    time.reset();
+                    indexAll++;
+                }
+                break;
+            case 7:
+                if(time.seconds()>.25) {
+                    intakeOn();
+                    time.reset();
+                    indexAll++;
+                }
+                break;
+            case 8:
+                if(time.seconds()>.25){
+                    indexAll++;
+                }
+                break;
+            case 9:
+                if(dist < ballNotThere-2) {
+                    indexAll=10;
+                }
+                indexAll++;
+                break;
+            case 10:
+                resetShootIndex();
+                shooting=true;
+                time.reset();
+                indexAll++;
+                break;
+            case 11:
+                indexAll=0;
+                intakeOff();
+                break;
+
+        }
+    }
+
+    public void resetIndexAll(){indexAll=0;}
+
 
     public void shootSequence(){
         //if(tagCenteringSequene()) {
@@ -273,7 +376,7 @@ public class Robot implements Subsystem {
                     break;
                 case 1:
                     //if(drivetrain.gettxTurnDone()){
-                    minShooterSpeed=getShootingSpeed();
+                    minShooterSpeed=getShootingSpeed()-60;
                     shooter.setVelocity(minShooterSpeed,AngleUnit.DEGREES);
 
                     //shooter.setVelocity(getShootingSpeed(),AngleUnit.DEGREES);
@@ -291,19 +394,20 @@ public class Robot implements Subsystem {
                     }
                     break;
                 case 3:
-                    if(time.seconds()>1){
+                    //if(time.seconds()>.01){
                         index++;
-                    }
+                    //}
                     break;
                 case 4:
-                    if (shooter.getVelocity(AngleUnit.DEGREES) >= minShooterSpeed && shooter.getVelocity(AngleUnit.DEGREES)<=minShooterSpeed+8) {
+                    if (shooter.getVelocity(AngleUnit.DEGREES) >= minShooterSpeed-15) { //&& shooter.getVelocity(AngleUnit.DEGREES)<=minShooterSpeed+10
+                        numBalls--;
                         setPaddleClear();
                         time.reset();
                         index++;
                     }
                     break;
                 case 5:
-                    if (time.seconds()>shootTime) {
+                    if (time.seconds()>shootTime+.25) {
                         setPaddleDown();
                         //turningT=false;
                         shooting=false;
@@ -387,16 +491,9 @@ public class Robot implements Subsystem {
 //        return null;
 //    }
 
-//    public double getDistFromTag(double ta){
-////        double scale = 69444.21;        //1322.488
-////        double distance = (scale/ta);
-////        return distance;
-//        distFromTag=(.711-.235)/Math.tan(Math.toRadians(a1+a2))+c;
-//        //distFromTag=(h2-h1)/Math.tan(Math.toRadians(a1+a2));
-//        return distFromTag;
-//    }
+
     public double getShootingSpeed(){
-        launchSpeed=(((distFromTag+c)/100)*(1090))/(6.67*(Math.cos(Math.toRadians(theta)))*Math.sqrt(((Math.tan(Math.toRadians(theta))*((distFromTag+c)/100))-.711)/(4.905)))+105;      //120
+        launchSpeed=(((distFromTag+c))*(1090))/(6.67*(Math.cos(Math.toRadians(theta)))*Math.sqrt(((Math.tan(Math.toRadians(theta))*((distFromTag+c)))-.711)/(4.905)))+105;      //120
         //launchSpeed=(((distFromTag+c)/100)*(1090))/(6.67*(Math.cos(Math.toRadians(theta)))*Math.sqrt(((Math.tan(Math.toRadians(theta))*((distFromTag+c)/100))-.711)/(4.905)))*1.25;
         return launchSpeed;
     }
@@ -468,7 +565,12 @@ public class Robot implements Subsystem {
 
     public void updateDistance(){
         dist=backDist.getDistance(DistanceUnit.CM);
-        distFromTag=frontDist.getDistance(DistanceUnit.CM);
+        distFront=frontDist.getDistance(DistanceUnit.CM);
+        //distFromTag=frontDist.getDistance(DistanceUnit.CM);
+        if(tx()){
+            distFromTag=getDist();
+        }
+
     }
     public static double servoNormalize(int pulse) {
         double normalized = (double) pulse;
@@ -488,6 +590,7 @@ public class Robot implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         LinkedHashMap<String, Object> telemetry2 = new LinkedHashMap<>();
         TelemetryPacket p = new TelemetryPacket();
+        telemetry2.put("numballs: ",numBalls);
         telemetry2.put("drive odometry: ", rightFront.getCurrentPosition());
         telemetry2.put("andas calculations speed: ", launchSpeed);
         telemetry2.put("min velocity: ", minShooterSpeed);
@@ -506,7 +609,9 @@ public class Robot implements Subsystem {
         LLResult llResult = limelight.getLatestResult();
         if (llResult != null && llResult.isValid()) {
             Pose3D botPose=llResult.getBotpose_MT2();
-            //telemetry2.put(" dist from april tag: ",getDistFromTag(llResult.getTa()));
+            telemetry2.put(" dist from april tag for anda calculation ", (distFromTag+c));
+
+            telemetry2.put(" dist from april tag (inches) variable: ", distFromTag);
             telemetry2.put("tx: ", llResult.getTx());
             telemetry2.put("ty: ", llResult.getTy());
             telemetry2.put("ta: ", llResult.getTa());
