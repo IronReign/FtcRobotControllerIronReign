@@ -96,6 +96,7 @@ public class Robot implements Subsystem {
     StickyGamepad g1 = null;
     Gamepad gamepad1;
 
+    public boolean suck=false;
 
     public Servo tilt;
     public int servoUp=1600;
@@ -132,6 +133,7 @@ public class Robot implements Subsystem {
 
     public void init() {
         //telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
         g1 = new StickyGamepad(gamepad1);
 
         drivetrain.init(hardwareMap);
@@ -183,6 +185,7 @@ public class Robot implements Subsystem {
         intake.setPower(0);
         conveyor.setPower(0);
         shooter.setVelocity(0);
+        resetDrive();
         //tilt.setPosition(servoUp);
 
         //shootingState = shootingState.RESET;
@@ -208,6 +211,7 @@ public class Robot implements Subsystem {
 //            getDistFromTag();
 //            getShootingSpeed();
 //        }
+
         if(numBalls<3){
             updateBallCount();
         }
@@ -255,6 +259,7 @@ public class Robot implements Subsystem {
     }
     public void setShoot(boolean x){shooting=x;}
     public void setShootAll(boolean x){shootingAll=x;}
+    public boolean getShootAll(){return shootingAll;}
 
     public void shoot(boolean x) {
         if (x)
@@ -279,6 +284,7 @@ public class Robot implements Subsystem {
         double angleTOGoalRadians = Math.toRadians(llmountAngleDegrees + targetOffsetAngle_Vertical);
         return ((goalHeightMeters - llLenseHeightMeters)/Math.tan(angleTOGoalRadians));
     }
+    public double getBackDist(){return dist;}
 
     public void updateBallCount(){
         //if(numBalls<3){
@@ -289,63 +295,150 @@ public class Robot implements Subsystem {
 
     }
     public int indexAll=0;
+//    public void shootALLSequence(){
+//        switch(indexAll){
+//            case 0:
+//                resetShootIndex();
+//                shooting=true;
+//
+//                indexAll++;
+//                break;
+//            case 1:
+//                if(!shooting){
+//                    indexAll++;
+//                    time.reset();
+//                }
+//                break;
+//            case 2:
+//                if(time.seconds()>.25) {
+////                    resetShootIndex();
+////                    shooting=true;
+////                    //intakeOn();
+////                    time.reset();
+//                    indexAll++;
+//                }
+//                break;
+//            case 3:
+//                //if(time.seconds()>.3){
+//                    indexAll++;
+//                //}
+//                break;
+//            case 4:
+////                if(dist < ballNotThere-1) {
+////                    indexAll=10;
+////                }
+//                indexAll++;
+//                break;
+//            case 5:
+//                resetShootIndex();
+//                shooting=true;
+//                indexAll++;
+//                break;
+//            case 6:
+//                if(!shooting){
+//                    time.reset();
+//                    indexAll++;
+//                }
+//                break;
+//            case 7:
+//                if(time.seconds()>.25) {
+////                    //intakeOn();
+////                    conveyor.setPower(1);
+////                    intake.setPower(1);
+////                    //suck=true;
+////                    time.reset();
+//                    indexAll++;
+//                }
+//                break;
+//            case 8:
+//                //if(time.seconds()>.3){
+//                    indexAll++;
+//               // }
+//                break;
+//            case 9:
+////                if(dist < ballNotThere-1) {
+////                    indexAll=10;
+////                }
+//                indexAll++;
+//                break;
+//            case 10:
+//                resetShootIndex();
+//                shooting=true;
+//                time.reset();
+//                indexAll++;
+//                break;
+//            case 11:
+//                shootingAll=false;
+//                conveyor.setPower(0);
+//                intake.setPower(0);
+//                //suck=false;
+//                indexAll=0;
+//                intakeOff();
+//                break;
+//
+//        }
+//    }
     public void shootALLSequence(){
         switch(indexAll){
-            case 0:
+            case 0:         //call shoot 1 ball sequence
                 resetShootIndex();
                 shooting=true;
 
                 indexAll++;
                 break;
-            case 1:
+            case 1:     //check if 1 ball sequence done
                 if(!shooting){
                     indexAll++;
                     time.reset();
                 }
                 break;
-            case 2:
+            case 2:     //give time for paddle to go down then turn on intake for next ball
                 if(time.seconds()>.25) {
                     intakeOn();
+//                    conveyor.setPower(1);
+//                    intake.setPower(1);
                     time.reset();
                     indexAll++;
                 }
                 break;
-            case 3:
-                if(time.seconds()>.25){
+            case 3:     //keep intake on this long for ball to move back to paddle
+                if(time.seconds()>3){
                     indexAll++;
                 }
                 break;
-            case 4:
-                if(dist < ballNotThere-2) {
+            case 4:     //check if a ball is there otherwise end sequence early
+                if(dist < (ballNotThere-1)) {
                     indexAll=10;
                 }
                 indexAll++;
                 break;
-            case 5:
+            case 5: //start 2nd ball, call shoot 1 ball sequence
                 resetShootIndex();
                 shooting=true;
                 indexAll++;
                 break;
-            case 6:
+            case 6: //check if 1 ball sequence done
                 if(!shooting){
                     time.reset();
                     indexAll++;
                 }
                 break;
-            case 7:
+            case 7:     //give time for paddle to go down then turn on intake for next ball
                 if(time.seconds()>.25) {
                     intakeOn();
+//                    conveyor.setPower(1);
+//                    intake.setPower(1);
                     time.reset();
                     indexAll++;
                 }
                 break;
-            case 8:
-                if(time.seconds()>.25){
+            case 8:     //keep intake on this long for ball to move back to paddle
+                if(time.seconds()>3){
                     indexAll++;
                 }
                 break;
-            case 9:
-                if(dist < ballNotThere-2) {
+            case 9:     //check if a ball is there otherwise end sequence early
+                if(dist < ballNotThere-1) {
                     indexAll=10;
                 }
                 indexAll++;
@@ -357,8 +450,12 @@ public class Robot implements Subsystem {
                 indexAll++;
                 break;
             case 11:
-                indexAll=0;
+                shootingAll=false;
                 intakeOff();
+//                conveyor.setPower(0);
+//                intake.setPower(0);
+                //suck=false;
+                indexAll=0;
                 break;
 
         }
@@ -370,43 +467,45 @@ public class Robot implements Subsystem {
     public void shootSequence(){
         //if(tagCenteringSequene()) {
             switch (index) {
-                case 0:
+                case 0:     //ignore
                     //turningT=true;
                     index++;
                     break;
-                case 1:
+                case 1:     //start flywheel and start intake
                     //if(drivetrain.gettxTurnDone()){
-                    minShooterSpeed=getShootingSpeed()-60;
+                    minShooterSpeed=getShootingSpeed()-50;      //-60
                     shooter.setVelocity(minShooterSpeed,AngleUnit.DEGREES);
 
                     //shooter.setVelocity(getShootingSpeed(),AngleUnit.DEGREES);
+                    //suck=true;
                     conveyor.setPower(1);
                     intake.setPower(1);
                     index++;
                     //}
                     break;
-                case 2:
-                    if (dist < 8.7) {
+                case 2:     //check if ball is there to shoot then turn off intake
+                    if (dist < 12) {
+                       // suck=false;
                         conveyor.setPower(0);
                         intake.setPower(0);
                         time.reset();
                         index++;
                     }
                     break;
-                case 3:
+                case 3:     //skip
                     //if(time.seconds()>.01){
                         index++;
                     //}
                     break;
-                case 4:
-                    if (shooter.getVelocity(AngleUnit.DEGREES) >= minShooterSpeed-15) { //&& shooter.getVelocity(AngleUnit.DEGREES)<=minShooterSpeed+10
+                case 4:     //check if flywheel up to speed then lift paddle to shoot
+                    if (shooter.getVelocity(AngleUnit.DEGREES) >= minShooterSpeed-8) { //&& shooter.getVelocity(AngleUnit.DEGREES)<=minShooterSpeed+10
                         numBalls--;
                         setPaddleClear();
                         time.reset();
                         index++;
                     }
                     break;
-                case 5:
+                case 5: //give paddle time to go up all the way then go back down and set shooting false
                     if (time.seconds()>shootTime+.25) {
                         setPaddleDown();
                         //turningT=false;
@@ -572,6 +671,7 @@ public class Robot implements Subsystem {
         }
 
     }
+    //public void getB
     public static double servoNormalize(int pulse) {
         double normalized = (double) pulse;
         return (normalized - 750.0) / 1500.0; //convert mr servo controller pulse width to double on _0 - 1 scale
@@ -582,6 +682,17 @@ public class Robot implements Subsystem {
     @Override
     public void resetStates() {
     }
+
+    public void resetDrive(){
+        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFront.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+    }
+    public double getDriveEncoder(){
+        return leftFront.getCurrentPosition();
+    }
+
     @Override
     public String getTelemetryName() {
         return "lebot robot";
@@ -591,7 +702,8 @@ public class Robot implements Subsystem {
         LinkedHashMap<String, Object> telemetry2 = new LinkedHashMap<>();
         TelemetryPacket p = new TelemetryPacket();
         telemetry2.put("numballs: ",numBalls);
-        telemetry2.put("drive odometry: ", rightFront.getCurrentPosition());
+        telemetry2.put("drive odometry right: ", rightFront.getCurrentPosition());
+        telemetry2.put("drive odometry left: ", leftFront.getCurrentPosition());
         telemetry2.put("andas calculations speed: ", launchSpeed);
         telemetry2.put("min velocity: ", minShooterSpeed);
         telemetry2.put("distance to goal: ", distFromTag);
@@ -599,6 +711,8 @@ public class Robot implements Subsystem {
         telemetry2.put("shooter speed: ",shooter.getVelocity(AngleUnit.DEGREES));
         telemetry2.put("back distance sensor: ",dist);
         telemetry2.put("shooting state ", index);
+        telemetry2.put("shooting ALL state: ", indexAll);
+        telemetry2.put("shootingAll boolean: ", shootingAll);
         telemetry2.put("shooting boolean: ",shooting);
         telemetry2.put("paddle ticks: ", paddle.getPosition());
         telemetry2.put("turnIt? ", turning);

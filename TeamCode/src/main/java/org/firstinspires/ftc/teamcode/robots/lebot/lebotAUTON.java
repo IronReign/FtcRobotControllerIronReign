@@ -35,6 +35,7 @@ public class lebotAUTON extends OpMode{
         public void init() {
             robot = new Robot(hardwareMap, gamepad1);
             robot.init();
+            robot.resetDrive();
             robot.setPaddleDown();
             robot.setMinShootSpeed(845);
             //  robot.setRotate(950);
@@ -43,6 +44,9 @@ public class lebotAUTON extends OpMode{
         public void init_loop(){
             g1=new StickyGamepad(gamepad1);
             g1.update();
+            if(g1.guide){
+                robot.resetDrive();
+            }
             robot.setPaddleDown();
             if(g1.b){
                 robot.setRedALliance(true);
@@ -64,7 +68,7 @@ public class lebotAUTON extends OpMode{
         public void loop() {
             robot.update(new Canvas());
             robot.updateDistance();
-            execute();
+            execute2();
             handleTelemetry(robot.getTelemetry(true), robot.getTelemetryName());
         }
 //
@@ -79,114 +83,198 @@ public class lebotAUTON extends OpMode{
 //     */
         int autonIndex = 0;
         long autonTimer = 0;
-        public void execute() {
-            switch (autonIndex) {
-                case 0:
-                    if(robot.getRedALliance()){
-                        robot.setAutoAngle(-Math.abs(referenceAngle));
-                    }else{
-                        robot.setAutoAngle(Math.abs(referenceAngle));
-                    }
-                    robot.setDrivetrain(-.5, 0);       //2285
-                    //autonTimer = futureTime(.2);
+//        public void execute() {
+//            switch (autonIndex) {
+//                case 0:
+//                    if(robot.getRedALliance()){
+//                        robot.setAutoAngle(-Math.abs(referenceAngle));
+//                    }else{
+//                        robot.setAutoAngle(Math.abs(referenceAngle));
+//                    }
+//                    robot.setDrivetrain(-.5, 0);
+//                    //autonTimer = futureTime(.2);
+//                    autonIndex++;
+//                    break;
+//                case 1:
+//                    if (robot.getDistFromTag()>75) {
+//                        robot.setDrivetrain(0, 0);
+//                        autonIndex++;
+//                    }
+//                    break;
+//                case 2:
+//                    if(robot.tx()){
+//                        autonTimer=futureTime(.5);
+//                        robot.setTurningT(true);
+//                        autonIndex++;
+//                    }
+//                    break;
+//
+//                case 3:
+//                    if(isPast(autonTimer)){
+//                        robot.setDrivetrain(0,0);
+//                    //if(!robot.getTurningT()){
+//                        robot.setMinShootSpeed(robot.getShootingSpeed());
+//                        autonIndex++;
+//                    }
+//                    break;
+//                case 4:
+//                    //if(robot.getMinShooterSpeed()>500 && robot.getMinShooterSpeed()<1100){
+//                        robot.resetShootIndex();
+//                        robot.setShoot(true);
+//                        autonIndex++;
+//                    //}
+//                case 5:
+//                    if(!robot.getShoot()){
+//                        autonTimer=futureTime(.5);
+//                        autonIndex++;
+//                    }
+//                    break;
+//                case 6:
+//                    if(isPast(autonTimer)){
+//                        autonTimer=futureTime(.05);
+//                        robot.intakeOn();
+//                        autonIndex++;
+//                    }
+//                    break;
+//                case 7:
+//                    if(isPast(autonTimer)){
+//                        robot.intakeOff();
+//                        robot.resetShootIndex();
+//                        robot.setShoot(true);
+//                        autonIndex++;
+//                    }
+//                    break;
+//                case 8:
+//                    if(!robot.getShoot()){
+//                        autonTimer=futureTime(.5);
+//                        autonIndex++;
+//                    }
+//                    break;
+//                case 9:
+//                    if(isPast(autonTimer)){
+//                        autonTimer=futureTime(.05);
+//                        robot.intakeOn();
+//                        autonIndex++;
+//                    }
+//                    break;
+//                case 10:
+//                    if(isPast(autonTimer)){
+//                        robot.intakeOff();
+//                        robot.resetShootIndex();
+//                        robot.setShoot(true);
+//                        autonIndex++;
+//                    }
+//                    break;
+//                case 11:
+//                    if(!robot.getShoot()){
+//                        autonTimer=futureTime(.8);
+//                        robot.setShoot(false);
+//                        robot.shoot(false);
+//                        robot.setTurningAuto(true);
+//                        //autonTimer=futureTime(1.2);
+//                        autonIndex++;
+//                    }
+//                    break;
+//                case 12:
+//                    if(isPast(autonTimer)){
+//                        autonTimer=futureTime(.4);
+//                        robot.setDrivetrain(1,0);
+//                        autonIndex++;
+//                    }
+//                    break;
+//                case 13:
+//                    if(isPast(autonTimer)){
+//                        robot.setDrivetrain(0,0);
+//                        autonIndex++;
+//                    }
+//                    break;
+//
+//            }
+//        }
+
+    public void execute2() {
+        switch (autonIndex) {
+            case 0:
+                if(robot.getRedALliance()){
+                    robot.setAutoAngle(-Math.abs(referenceAngle));
+                }else{
+                    robot.setAutoAngle(Math.abs(referenceAngle));
+                }
+                robot.setDrivetrain(-.7, 0);       //2200
+                //autonTimer = futureTime(.2);
+                autonIndex++;
+                break;
+            case 1:
+                if (robot.getDriveEncoder()>2195) {        //2200
+                    robot.setDrivetrain(0, 0);
                     autonIndex++;
-                    break;
-                case 1:
-                    if (robot.getDistFromTag()>75) {
-                        robot.setDrivetrain(0, 0);
-                        autonIndex++;
-                    }
-                    break;
-                case 2:
-                    if(robot.tx()){
-                        autonTimer=futureTime(.5);
-                        robot.setTurningT(true);
-                        autonIndex++;
-                    }
-                    break;
+                }
+                break;
+            case 2:
+                if(robot.tx()){
+                    autonTimer=futureTime(.5);
+                    robot.setTurningT(true);
+                    autonIndex++;
+                }
+                break;
 
-                case 3:
-                    if(isPast(autonTimer)){
-                        robot.setDrivetrain(0,0);
+            case 3:
+                if(isPast(autonTimer)){
+                    robot.setDrivetrain(0,0);
                     //if(!robot.getTurningT()){
-                        robot.setMinShootSpeed(robot.getShootingSpeed());
-                        autonIndex++;
-                    }
-                    break;
-                case 4:
-                    //if(robot.getMinShooterSpeed()>500 && robot.getMinShooterSpeed()<1100){
-                        robot.resetShootIndex();
-                        robot.setShoot(true);
-                        autonIndex++;
-                    //}
-                case 5:
-                    if(!robot.getShoot()){
-                        autonTimer=futureTime(.5);
-                        autonIndex++;
-                    }
-                    break;
-                case 6:
-                    if(isPast(autonTimer)){
-                        autonTimer=futureTime(.05);
-                        robot.intakeOn();
-                        autonIndex++;
-                    }
-                    break;
-                case 7:
-                    if(isPast(autonTimer)){
-                        robot.intakeOff();
-                        robot.resetShootIndex();
-                        robot.setShoot(true);
-                        autonIndex++;
-                    }
-                    break;
-                case 8:
-                    if(!robot.getShoot()){
-                        autonTimer=futureTime(.5);
-                        autonIndex++;
-                    }
-                    break;
-                case 9:
-                    if(isPast(autonTimer)){
-                        autonTimer=futureTime(.05);
-                        robot.intakeOn();
-                        autonIndex++;
-                    }
-                    break;
-                case 10:
-                    if(isPast(autonTimer)){
-                        robot.intakeOff();
-                        robot.resetShootIndex();
-                        robot.setShoot(true);
-                        autonIndex++;
-                    }
-                    break;
-                case 11:
-                    if(!robot.getShoot()){
-                        autonTimer=futureTime(.8);
-                        robot.setShoot(false);
-                        robot.shoot(false);
-                        robot.setTurningAuto(true);
-                        //autonTimer=futureTime(1.2);
-                        autonIndex++;
-                    }
-                    break;
-                case 12:
-                    if(isPast(autonTimer)){
-                        autonTimer=futureTime(.4);
-                        robot.setDrivetrain(1,0);
-                        autonIndex++;
-                    }
-                    break;
-                case 13:
-                    if(isPast(autonTimer)){
-                        robot.setDrivetrain(0,0);
-                        autonIndex++;
-                    }
-                    break;
+                    robot.setMinShootSpeed(robot.getShootingSpeed());
+                    autonIndex++;
+                }
+                break;
+            case 4:
+                if(robot.getMinShooterSpeed()>500 && robot.getMinShooterSpeed()<2000){
+                    //autonTimer=futureTime(8);
+                    robot.resetIndexAll();
+                    robot.setShootAll(true);
+                    autonIndex++;
+                }
+                break;
 
-            }
+            case 5:
+                //if(isPast(autonTimer)){
+                //if(!robot.getShootAll()){
+//                    autonTimer=futureTime(.8);
+//                    robot.setShootAll(false);
+//                    robot.shoot(false);
+//                    robot.setTurningAuto(true);
+                    //autonTimer=futureTime(1.2);
+                    autonIndex++;
+                //}
+                break;
+            case 6:
+                if(!robot.getShootAll()){
+               // if(robot.getBackDist()< 12) {
+                    autonTimer=futureTime(.8);
+                    robot.setShootAll(false);
+                    robot.shoot(false);
+                    robot.setTurningAuto(true);
+                    //autonTimer=futureTime(1.2);
+                    autonIndex++;
+                }
+                break;
+            case 7:
+                if(isPast(autonTimer)){
+                    autonTimer=futureTime(.4);
+                    robot.setDrivetrain(1,0);
+                    autonIndex++;
+                }
+                break;
+            case 8:
+                if(isPast(autonTimer)){
+                    robot.setDrivetrain(0,0);
+                    autonIndex++;
+                }
+                break;
+
         }
+    }
+
+
 //
 //        public void execute2(){
 //            switch(autonIndex){
