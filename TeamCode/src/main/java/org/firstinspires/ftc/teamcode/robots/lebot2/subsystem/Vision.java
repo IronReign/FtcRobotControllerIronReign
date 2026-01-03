@@ -87,7 +87,7 @@ public class Vision implements Subsystem {
      * @param ty Vertical offset from Limelight (degrees)
      * @return Distance in meters
      */
-    private double calculateDistanceFromTy(double ty) {
+    public double calculateDistanceFromTy(double ty) {
         double angleToTarget = Math.toRadians(MOUNT_ANGLE_DEGREES + ty);
         double heightDiff = TARGET_HEIGHT_METERS - MOUNT_HEIGHT_METERS;
 
