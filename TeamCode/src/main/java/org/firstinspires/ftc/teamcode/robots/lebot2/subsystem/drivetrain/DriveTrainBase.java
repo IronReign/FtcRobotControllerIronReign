@@ -89,4 +89,6 @@ public interface DriveTrainBase extends Subsystem {
      * Reset the drive encoders.
      */
     void resetEncoders();
+
+    int getLeftTicks();
 }
