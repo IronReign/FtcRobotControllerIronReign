@@ -91,6 +91,15 @@ public class Autonomous implements TelemetryProvider{
                     robot.driveTrain.drive(0, 0, 0);
                     autonSequence(AutonSequence.TARGETING_GOAL);
                 }
+
+                /*
+                // Limelight Distance Check
+                if(robot.vision.calculateDistanceFromTy(robot.vision.getTy())>1){ //TODO: Adjust meters
+                    robot.driveTrain.drive(0, 0, 0);
+                    autonSequence(AutonSequence.TARGETING_GOAL);
+                }
+                */
+
                 break;
 
             case TARGETING_GOAL:
@@ -123,6 +132,15 @@ public class Autonomous implements TelemetryProvider{
                     robot.driveTrain.drive(0, 0, 0);
                     autonSequence(AutonSequence.TARGETING_BALLS);
                 }
+
+                /*
+                // Limelight Distance Check
+                if(robot.vision.calculateDistanceFromTy(robot.vision.getTy())>1.3){ //TODO: Adjust meters + row value
+                    robot.driveTrain.drive(0, 0, 0);
+                    autonSequence(AutonSequence.TARGETING_GOAL);
+                }
+                */
+
                 break;
 
             case TARGETING_BALLS:
