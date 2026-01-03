@@ -31,6 +31,7 @@ public class Lebot2_6832 extends OpMode {
     public static Robot robot;
     public static DriverControls driverControls;
     private FtcDashboard dashboard;
+    private Autonomous autonomous;
 
     // ==================== GAME STATES ====================
     public enum GameState {
@@ -95,6 +96,9 @@ public class Lebot2_6832 extends OpMode {
         // Initialize robot
         robot = new Robot(hardwareMap, false);
         driverControls = new DriverControls(gamepad1, gamepad2);
+        
+        // Create Auton
+        autonomous = new Autonomous(robot);
 
         // Set telemetry transmission rate
         telemetry.setMsTransmissionInterval(250);
@@ -190,6 +194,7 @@ public class Lebot2_6832 extends OpMode {
     private void handleAutonomous(TelemetryPacket packet) {
         // TODO: Implement autonomous routines
         // For now, just run a simple test sequence
+        autonomous.execute();
 
         // Auto-transition to TeleOp after 30 seconds
         long elapsed = System.currentTimeMillis() - startTime;

@@ -68,8 +68,8 @@ public class TankDrive implements DriveTrainBase {
         leftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        leftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Initialize IMU
         imu = hardwareMap.get(BNO055IMU.class, "imu");
@@ -200,6 +200,10 @@ public class TankDrive implements DriveTrainBase {
         setMotorPowers(0, 0);
     }
 
+    public int getLeftTicks(){
+        return leftMotor.getCurrentPosition();
+    }
+
     @Override
     public Pose2d getPose() {
         // TODO: return localizer.getPose();
@@ -227,8 +231,8 @@ public class TankDrive implements DriveTrainBase {
     public void resetEncoders() {
         leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     @Override

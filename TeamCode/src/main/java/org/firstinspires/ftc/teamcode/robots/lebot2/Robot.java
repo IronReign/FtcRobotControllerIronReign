@@ -150,7 +150,7 @@ public class Robot implements TelemetryProvider {
 
     // ==================== ARTICULATION HANDLERS ====================
 
-    private void handleIntakeArticulation() {
+    public void handleIntakeArticulation() {
         // Run intake and loader belt together
         intake.on();
         loader.runBelt();
@@ -169,13 +169,15 @@ public class Robot implements TelemetryProvider {
         loader.stopBelt();
     }
 
-    private void handleTargetingArticulation() {
+    public int headingDegrees = 45;
+
+    public void handleTargetingArticulation() {
         // Two-phase targeting: IMU rough turn, then vision fine tune
         switch (launchSequenceState) {
             case IDLE:
                 // Start with IMU turn toward target area
                 // TODO: Get target heading from field position
-                driveTrain.turnToHeading(0, 0.7);
+                driveTrain.turnToHeading(headingDegrees, 0.7);
                 launchSequenceState = LaunchSequenceState.TARGETING_IMU;
                 break;
 
@@ -242,7 +244,7 @@ public class Robot implements TelemetryProvider {
         }
     }
 
-    private void handleLaunchAllArticulation() {
+    public void handleLaunchAllArticulation() {
         // Launch all balls in sequence
         switch (launchSequenceState) {
             case IDLE:
