@@ -74,6 +74,10 @@ public class opMode extends OpMode {
     public void init_loop(){
         g1=new StickyGamepad(gamepad1);
         g1.update();
+        if(g1.guide){
+            robot.resetDrive();
+        }
+
         if(g1.b){
             robot.setRedALliance(true);
             robot.switchPipeline(1);
@@ -109,8 +113,11 @@ public class opMode extends OpMode {
             robot.setTurning(false);
         }
 
-        if(g1.right_bumper){
-            robot.setTurning(true);
+//        if(g1.right_bumper){
+//            robot.setTurning(true);
+//        }
+        if(g1.guide){
+            robot.resetDrive();
         }
 
         if(g1.left_bumper){
@@ -122,6 +129,7 @@ public class opMode extends OpMode {
             dampen=.67;
         }
         if(g1.dpad_left){
+            //robot.setSuck(!robot.getSuck());
             suck=!suck;
         }
 
@@ -139,7 +147,7 @@ public class opMode extends OpMode {
 //        }else{
 //            robot.shoot(false);
 //        }
-        if(!robot.getShoot()){
+        if(!robot.getShootAll()){
             if(suck){
                 robot.intakeOn();
             }else if(eject) {
@@ -160,16 +168,16 @@ public class opMode extends OpMode {
 
         }
 
-        if(g1.x){
-            s=!s;
-        }
-        if(s){
-            robot.setShoot(true);
-            robot.setShoot(900);
-        }else{
-            robot.setShoot(false);
-            robot.setShoot(0);
-        }
+//        if(g1.x){
+//            s=!s;
+//        }
+//        if(s){
+//            robot.setShoot(true);
+//            robot.setShoot(900);
+//        }else{
+//            robot.setShoot(false);
+//            robot.setSFhoot(0);
+//        }
 //        if(g1.x){
 //            //robot.setShoot(898);
 //            shoot=!shoot;

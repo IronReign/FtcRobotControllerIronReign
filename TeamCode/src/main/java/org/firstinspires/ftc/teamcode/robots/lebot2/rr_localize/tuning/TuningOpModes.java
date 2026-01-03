@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.robots.deepthought.rr_localize.tuning;
+package org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.tuning;
 
 import androidx.annotation.NonNull;
 
@@ -56,7 +56,7 @@ public final class TuningOpModes {
     public static final Class<?> DRIVE_CLASS = PinpointLocalizer.class;
 
     public static final String GROUP = "rr_quickstart_reign";
-    public static final String PREFIX = "6832deep ";
+    public static final String PREFIX = "6832decode ";
     public static final boolean DISABLED = false;
 
     private TuningOpModes() {}
@@ -297,9 +297,9 @@ public final class TuningOpModes {
         manager.register(metaForClass(MecanumMotorDirectionDebugger.class), new MecanumMotorDirectionDebugger(dvf));
         manager.register(metaForClass(DeadWheelDirectionDebugger.class), new DeadWheelDirectionDebugger(dvf));
 
-        manager.register(metaForClass(org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.tuning.ManualFeedbackTuner.class), org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.tuning.ManualFeedbackTuner.class);
-        manager.register(metaForClass(org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.tuning.SplineTest.class), SplineTest.class);
-        manager.register(metaForClass(org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.tuning.LocalizationTest.class), LocalizationTest.class);
+        manager.register(metaForClass(ManualFeedbackTuner.class), ManualFeedbackTuner.class);
+        manager.register(metaForClass(SplineTest.class), SplineTest.class);
+        manager.register(metaForClass(LocalizationTest.class), LocalizationTest.class);
 
         manager.register(metaForClass(OTOSAngularScalarTuner.class), new OTOSAngularScalarTuner(dvf));
         manager.register(metaForClass(OTOSLinearScalarTuner.class), new OTOSLinearScalarTuner(dvf));
@@ -320,4 +320,3 @@ public final class TuningOpModes {
         });
     }
 }
-

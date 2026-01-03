@@ -4,6 +4,8 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.robots.swervolicious.rr_localize.SwerveDriveReign;
 import org.firstinspires.ftc.teamcode.robots.swervolicious.subsystem.DriveTrain;
 import org.firstinspires.ftc.teamcode.robots.swervolicious.rr_localize.PinpointLocalizer;
@@ -60,9 +62,9 @@ public class PinpointTeleOpTest extends OpMode {
         telemetry.addData("Heading (deg)", "%.1f", Math.toDegrees(pll.getPose().heading.log()));
 
         telemetry.addLine("--- Pinpoint Raw ---");
-        telemetry.addData("X ticks", pll.driver.getPosX());
-        telemetry.addData("Y ticks", pll.driver.getPosY());
-        telemetry.addData("Heading rad", "%.3f", pll.driver.getHeading());
+        telemetry.addData("X ticks", pll.driver.getPosX(DistanceUnit.CM));
+        telemetry.addData("Y ticks", pll.driver.getPosY(DistanceUnit.CM));
+        telemetry.addData("Heading rad", "%.3f", pll.driver.getHeading(AngleUnit.DEGREES));
         telemetry.addData("parDir", pll.initialParDirection);
         telemetry.addData("perpDir", pll.initialPerpDirection);
 
