@@ -144,8 +144,8 @@ public class Robot implements Subsystem {
         parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
         imu.initialize(parameters);
 
-        rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
-        leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
+        rightFront = hardwareMap.get(DcMotorEx.class, "rightRear");
+        leftFront = hardwareMap.get(DcMotorEx.class, "leftRear");
 
         intake = hardwareMap.get(DcMotorEx.class, "intake");
         conveyor = hardwareMap.get(DcMotorEx.class, "conveyor");
@@ -403,7 +403,7 @@ public class Robot implements Subsystem {
                 break;
             case 3:     //keep intake on this long for ball to move back to paddle
                 if(time.seconds()>3){
-                    indexAll++;
+                    indexAll=5;
                 }
                 break;
             case 4:     //check if a ball is there otherwise end sequence early

@@ -5,9 +5,15 @@ import static org.firstinspires.ftc.teamcode.robots.lebot2.Lebot2_6832.gameState
 import static org.firstinspires.ftc.teamcode.robots.lebot2.Lebot2_6832.robot;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Loader;
+import org.firstinspires.ftc.teamcode.robots.lebot2.util.TelemetryProvider;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Driver controls handler for Lebot2.
@@ -18,7 +24,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
  * Uses StickyGamepad for edge detection (button press vs button held).
  */
 @Config(value = "Lebot2_DriverControls")
-public class DriverControls {
+public class DriverControls implements TelemetryProvider {
 
     // Configuration
     public static double DRIVE_DAMPENER = 0.7;
@@ -81,8 +87,16 @@ public class DriverControls {
             robot.driveTrain.drive(throttle, 0, turn);
         }
 
+        if (turning()){
+            robot.driveTrain.drive(0,0, turn);
+        }
+
         // Handle button inputs
         handleButtons();
+    }
+
+    private boolean turning(){
+        return (Math.abs(gamepad1.right_stick_x) > 0.3);
     }
 
     private boolean hasSignificantInput() {
@@ -188,5 +202,17 @@ public class DriverControls {
             Robot.isRedAlliance = true;
             robot.setAlliance(true);
         }
+    }
+
+    @Override
+    public String getTelemetryName() {
+        return "Robot";
+    }
+
+    @Override
+    public Map<String, Object> getTelemetry(boolean debug) {
+        Map<String, Object> telemetry = new LinkedHashMap<>();
+
+        return telemetry;
     }
 }

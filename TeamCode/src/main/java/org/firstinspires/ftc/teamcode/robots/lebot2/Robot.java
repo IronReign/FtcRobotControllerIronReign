@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.robots.lebot2;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
@@ -34,6 +35,7 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
  * The Robot does NOT handle gamepad input directly - that's DriverControls' job.
  * The Robot provides articulations that DriverControls (or Autonomous) can trigger.
  */
+
 @Config(value = "Lebot2_Robot")
 public class Robot implements TelemetryProvider {
 
@@ -77,7 +79,7 @@ public class Robot implements TelemetryProvider {
         FEEDING_NEXT,
         COMPLETE
     }
-    private LaunchSequenceState launchSequenceState = LaunchSequenceState.IDLE;
+    public LaunchSequenceState launchSequenceState = LaunchSequenceState.IDLE;
     private long launchTimer = 0;
     public static double FEED_DELAY_SECONDS = 0.3;
 
@@ -221,20 +223,20 @@ public class Robot implements TelemetryProvider {
                 break;
 
             case SPINNING_UP:
-                if (launcher.isReady()) {
+                if (true) {
                     launchSequenceState = LaunchSequenceState.FIRING;
                 }
                 break;
 
             case FIRING:
                 launcher.fire();
-                if (!launcher.isBusy()) {
+                if (launcher.getState() == Launcher.LaunchState.COOLDOWN) {
                     launchSequenceState = LaunchSequenceState.COMPLETE;
                 }
                 break;
 
             case COMPLETE:
-                launcher.abort();
+                //launcher.abort();
                 launchSequenceState = LaunchSequenceState.IDLE;
                 articulate(Articulation.MANUAL);
                 break;
@@ -262,38 +264,38 @@ public class Robot implements TelemetryProvider {
                 break;
 
             case SPINNING_UP:
-                if (launcher.isReady() && loader.isBallAtBack()) {
+                if (launcher.isReady()) { //&& loader.isBallAtBack()
                     launchSequenceState = LaunchSequenceState.FIRING;
-                } else if (launcher.isReady()) {
+                }/* else if (launcher.isReady()) {
                     // Need to feed a ball first
                     loader.feedBall();
                     launchSequenceState = LaunchSequenceState.FEEDING_NEXT;
                     launchTimer = futureTime(1.0);
-                }
+                }*/
                 break;
 
             case FIRING:
                 launcher.fire();
-                if (!launcher.isBusy()) {
-                    if (loader.isEmpty()) {
+                if (launcher.getState() == Launcher.LaunchState.COOLDOWN) {
+                    /*if (loader.isEmpty()) {
                         launchSequenceState = LaunchSequenceState.COMPLETE;
-                    } else {
+                    } else {*/
                         launchSequenceState = LaunchSequenceState.FEEDING_NEXT;
                         loader.feedBall();
                         launchTimer = futureTime(FEED_DELAY_SECONDS);
-                    }
+                    //}
                 }
                 break;
 
             case FEEDING_NEXT:
-                if (isPast(launchTimer) && loader.isBallAtBack()) {
+                //if (isPast(launchTimer) && loader.isBallAtBack()) {
                     loader.stopBelt();
                     launchSequenceState = LaunchSequenceState.FIRING;
-                } else if (isPast(launchTimer) && loader.isEmpty()) {
+                /*} else if (isPast(launchTimer) && loader.isEmpty()) {
                     // No more balls
                     loader.stopBelt();
                     launchSequenceState = LaunchSequenceState.COMPLETE;
-                }
+                }*/
                 break;
 
             case COMPLETE:
@@ -303,8 +305,8 @@ public class Robot implements TelemetryProvider {
                 articulate(Articulation.MANUAL);
                 break;
 
-            default:
-                launchSequenceState = LaunchSequenceState.IDLE;
+            /*default:
+                launchSequenceState = LaunchSequenceState.IDLE;*/
         }
     }
 
@@ -344,6 +346,7 @@ public class Robot implements TelemetryProvider {
     public double getVoltage() {
         return voltage;
     }
+
 
     /**
      * Stop all subsystems.

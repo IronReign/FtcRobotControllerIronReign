@@ -157,7 +157,6 @@ public class Launcher implements Subsystem {
             }
         }
     }
-
     private void handleFiringState() {
         // Keep flywheel spinning and paddle up
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
