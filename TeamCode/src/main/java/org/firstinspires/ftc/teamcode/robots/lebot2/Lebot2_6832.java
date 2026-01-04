@@ -4,9 +4,11 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.TankDrive;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.TelemetryProvider;
 
 import java.util.Map;
@@ -221,6 +223,10 @@ public class Lebot2_6832 extends OpMode {
         telemetry.addData("Loop Time", String.format("%.1f ms (%.0f Hz)",
                 averageLoopTime, 1000 / averageLoopTime));
         telemetry.addLine();
+        telemetry.addData("Forward/Backward", -gamepad1.left_stick_y);
+        telemetry.addData("Left/Right", -gamepad1.right_stick_x);
+        telemetry.addData("Launch All States", robot.getArticulation());
+        telemetry.addData("Articulation", robot.launchSequenceState);
 
         // Robot telemetry
         handleTelemetry(robot.getTelemetry(debugTelemetryEnabled),

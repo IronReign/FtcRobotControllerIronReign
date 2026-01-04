@@ -73,7 +73,7 @@ public class Loader implements Subsystem {
 
     @Override
     public void update(Canvas fieldOverlay) {
-        // READ: Get sensor values
+        /*// READ: Get sensor values
         frontDistance = frontSensor.getDistance(DistanceUnit.CM);
         backDistance = backSensor.getDistance(DistanceUnit.CM);
 
@@ -94,7 +94,7 @@ public class Loader implements Subsystem {
             state = LoaderState.FULL;
         } else {
             state = LoaderState.HAS_BALLS;
-        }
+        }*/
 
         // WRITE: Apply belt power
         beltMotor.setPower(beltPower);
