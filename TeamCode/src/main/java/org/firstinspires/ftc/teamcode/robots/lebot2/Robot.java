@@ -81,7 +81,7 @@ public class Robot implements TelemetryProvider {
     }
     public LaunchSequenceState launchSequenceState = LaunchSequenceState.IDLE;
     private long launchTimer = 0;
-    public static double FEED_DELAY_SECONDS = 0.3;
+    public static double FEED_DELAY_SECONDS = 4;
 
     public Robot(HardwareMap hardwareMap, boolean simulated) {
         // Initialize subsystems
@@ -162,6 +162,7 @@ public class Robot implements TelemetryProvider {
             intake.off();
             loader.stopBelt();
             articulate(Articulation.MANUAL);
+            shotsRemaining = 3;
         }
     }
 
@@ -246,6 +247,8 @@ public class Robot implements TelemetryProvider {
         }
     }
 
+    private int shotsRemaining = 3;
+
     public void handleLaunchAllArticulation() {
         // Launch all balls in sequence
         switch (launchSequenceState) {
@@ -277,21 +280,22 @@ public class Robot implements TelemetryProvider {
             case FIRING:
                 launcher.fire();
                 if (launcher.getState() == Launcher.LaunchState.COOLDOWN) {
-                    /*if (loader.isEmpty()) {
+                    shotsRemaining--;
+                    if (shotsRemaining <= 0 || loader.isEmpty()) {
                         launchSequenceState = LaunchSequenceState.COMPLETE;
-                    } else {*/
-                        launchSequenceState = LaunchSequenceState.FEEDING_NEXT;
+                    } else {
                         loader.feedBall();
                         launchTimer = futureTime(FEED_DELAY_SECONDS);
-                    //}
+                        launchSequenceState = LaunchSequenceState.FEEDING_NEXT;
+                    }
                 }
                 break;
 
             case FEEDING_NEXT:
-                //if (isPast(launchTimer) && loader.isBallAtBack()) {
+                if (isPast(launchTimer) && loader.isBallAtBack()) {
                     loader.stopBelt();
                     launchSequenceState = LaunchSequenceState.FIRING;
-                /*} else if (isPast(launchTimer) && loader.isEmpty()) {
+                }/* else if (isPast(launchTimer) && loader.isEmpty()) {
                     // No more balls
                     loader.stopBelt();
                     launchSequenceState = LaunchSequenceState.COMPLETE;
