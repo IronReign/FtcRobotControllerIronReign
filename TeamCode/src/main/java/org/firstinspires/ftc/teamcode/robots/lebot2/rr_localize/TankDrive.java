@@ -40,34 +40,55 @@ import com.acmerobotics.roadrunner.ftc.LynxFirmware;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
-import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.DriveTrainBase;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.DriveCommandMessage;
-import org.firstinspires.ftc.teamcode.rrQuickStart.messages.MecanumCommandMessage;
-import org.firstinspires.ftc.teamcode.rrQuickStart.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.PoseMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.TankCommandMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.TankLocalizerInputsMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.Drawing;
+import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
-@Config
-public final class TankDrive {
+/**
+ * TankDrive using drive wheel encoders for localization, implementing DriveTrainBase.
+ *
+ * This is the FALLBACK drivetrain when Pinpoint odometry is unavailable.
+ * Uses drive motor encoders for position tracking (less accurate than Pinpoint
+ * due to wheel slip).
+ *
+ * THREE-PHASE UPDATE:
+ * - readSensors(): Read IMU heading (I2C)
+ * - calc(): Update pose estimate from encoders, run turn PID if active
+ * - act(): No-op (RoadRunner Actions write motors directly)
+ *
+ * TUNING COMPATIBILITY:
+ * Public fields (leftMotors, rightMotors, localizer, lazyImu, PARAMS) are
+ * preserved for TuningOpModes compatibility.
+ */
+@Config(value = "Lebot2_TankDriveEncoder")
+public final class TankDrive implements DriveTrainBase {
+
+    // ==================== ROADRUNNER PARAMS (for tuning compatibility) ====================
+
     public static class Params {
         // IMU orientation
-        // TODO: fill in these values based on
-        //   see https://ftc-docs.firstinspires.org/en/latest/programming_resources/imu/imu.html?highlight=imu#physical-hub-mounting
         public RevHubOrientationOnRobot.LogoFacingDirection logoFacingDirection =
                 RevHubOrientationOnRobot.LogoFacingDirection.UP;
         public RevHubOrientationOnRobot.UsbFacingDirection usbFacingDirection =
@@ -102,6 +123,13 @@ public final class TankDrive {
 
     public static Params PARAMS = new Params();
 
+    // ==================== TURN PID PARAMS ====================
+
+    public static PIDCoefficients HEADING_PID = new PIDCoefficients(0.03, 0.04, 0.0);
+    public static double HEADING_TOLERANCE = 2.0; // degrees
+
+    // ==================== ROADRUNNER INFRASTRUCTURE ====================
+
     public final TankKinematics kinematics = new TankKinematics(PARAMS.inPerTick * PARAMS.trackWidthTicks);
 
     public final TurnConstraints defaultTurnConstraints = new TurnConstraints(
@@ -114,20 +142,40 @@ public final class TankDrive {
     public final AccelConstraint defaultAccelConstraint =
             new ProfileAccelConstraint(PARAMS.minProfileAccel, PARAMS.maxProfileAccel);
 
+    // Public for TuningOpModes compatibility
     public final List<DcMotorEx> leftMotors, rightMotors;
-
     public final LazyImu lazyImu;
-
     public final VoltageSensor voltageSensor;
-
     public final Localizer localizer;
+
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
     private final DownsampledWriter estimatedPoseWriter = new DownsampledWriter("ESTIMATED_POSE", 50_000_000);
     private final DownsampledWriter targetPoseWriter = new DownsampledWriter("TARGET_POSE", 50_000_000);
     private final DownsampledWriter driveCommandWriter = new DownsampledWriter("DRIVE_COMMAND", 50_000_000);
-
     private final DownsampledWriter tankCommandWriter = new DownsampledWriter("TANK_COMMAND", 50_000_000);
+
+    // ==================== SUBSYSTEM STATE ====================
+
+    // Turn state machine
+    public enum TurnState {
+        IDLE,
+        TURNING_TO_HEADING,
+        TURNING_TO_TARGET
+    }
+    private TurnState turnState = TurnState.IDLE;
+    private double turnTarget = 0;
+    private double turnMaxSpeed = 1.0;
+
+    // PID controller for turns
+    private final PIDController headingPID;
+
+    // Cached values from readSensors()
+    private double cachedHeading = 0;
+    private Pose2d cachedPose = new Pose2d(0, 0, 0);
+    private IMU imu = null;
+
+    // ==================== DRIVE LOCALIZER (uses drive wheel encoders) ====================
 
     public class DriveLocalizer implements Localizer {
         public final List<Encoder> leftEncs, rightEncs;
@@ -155,9 +203,6 @@ public final class TankDrive {
                 this.rightEncs = Collections.unmodifiableList(rightEncs);
             }
 
-            // TODO: reverse encoder directions if needed
-            //   leftEncs.get(0).setDirection(DcMotorSimple.Direction.REVERSE);
-
             this.pose = pose;
         }
 
@@ -173,8 +218,6 @@ public final class TankDrive {
 
         @Override
         public PoseVelocity2d update() {
-            Twist2dDual<Time> delta;
-
             List<PositionVelocityPair> leftReadings = new ArrayList<>(), rightReadings = new ArrayList<>();
             double meanLeftPos = 0.0, meanLeftVel = 0.0;
             for (Encoder e : leftEncs) {
@@ -206,7 +249,6 @@ public final class TankDrive {
                 lastRightPos = meanRightPos;
 
                 return new PoseVelocity2d(new Vector2d(0.0, 0.0), 0.0);
-
             }
 
             Twist2dDual<Time> twist = kinematics.forward(new TankKinematics.WheelIncrements<>(
@@ -229,12 +271,13 @@ public final class TankDrive {
         }
     }
 
+    // ==================== CONSTRUCTOR ====================
+
     public TankDrive(HardwareMap hardwareMap, Pose2d pose) {
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
-        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-        }
+        // NOTE: Bulk caching mode is NOT set here - Robot.java handles it
+        // This allows TuningOpModes to set their own mode if needed
 
         // Lebot2 motor configuration - differential drive with rear-mounted motors
         leftMotors = Arrays.asList(hardwareMap.get(DcMotorEx.class, "leftRear"));
@@ -250,16 +293,165 @@ public final class TankDrive {
         // Lebot2: left motor reversed so positive power = forward
         leftMotors.get(0).setDirection(DcMotorSimple.Direction.REVERSE);
 
-        // TODO: make sure your config has an IMU with this name (can be BNO or BHI)
-        //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         lazyImu = new LazyHardwareMapImu(hardwareMap, "imu", new RevHubOrientationOnRobot(
                 PARAMS.logoFacingDirection, PARAMS.usbFacingDirection));
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
+        // Use drive wheel encoders for localization
         localizer = new DriveLocalizer(pose);
 
+        // Initialize heading PID for turns
+        headingPID = new PIDController(HEADING_PID);
+        headingPID.setInputRange(-180, 180);
+        headingPID.setOutputRange(-1, 1);
+        headingPID.setIntegralCutIn(4);
+        headingPID.setContinuous(true);
+        headingPID.setTolerance(HEADING_TOLERANCE);
+        headingPID.enable();
+
+        cachedPose = pose;
+        cachedHeading = Math.toDegrees(pose.heading.toDouble());
+
         FlightRecorder.write("TANK_PARAMS", PARAMS);
+    }
+
+    // ==================== THREE-PHASE SUBSYSTEM METHODS ====================
+
+    @Override
+    public void readSensors() {
+        // PHASE 1: Read IMU heading (I2C read)
+        // Initialize IMU lazily on first read
+        if (imu == null) {
+            imu = lazyImu.get();
+        }
+        cachedHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+    }
+
+    @Override
+    public void calc(Canvas fieldOverlay) {
+        // PHASE 2: Update pose estimate and run turn state machine
+
+        // Get pose from localizer (uses encoder data from bulk cache)
+        PoseVelocity2d vel = localizer.update();
+        cachedPose = localizer.getPose();
+
+        // Update pose history for visualization
+        poseHistory.add(cachedPose);
+        while (poseHistory.size() > 100) {
+            poseHistory.removeFirst();
+        }
+        estimatedPoseWriter.write(new PoseMessage(cachedPose));
+
+        // Run turn state machine
+        switch (turnState) {
+            case IDLE:
+                // Nothing to do
+                break;
+
+            case TURNING_TO_HEADING:
+                executeTurnToHeading();
+                break;
+
+            case TURNING_TO_TARGET:
+                executeTurnToTarget();
+                break;
+        }
+
+        // Draw robot on field overlay if provided
+        if (fieldOverlay != null) {
+            drawPoseHistory(fieldOverlay);
+            fieldOverlay.setStroke("#3F51B5");
+            Drawing.drawRobot(fieldOverlay, cachedPose);
+        }
+    }
+
+    @Override
+    public void act() {
+        // PHASE 3: No-op for drive motors
+        // RoadRunner Actions write motors directly during trajectory following
+        // Turn PID writes motors in calc() for immediate response
+    }
+
+    // ==================== TURN METHODS ====================
+
+    private void executeTurnToHeading() {
+        headingPID.setInput(cachedHeading);
+        headingPID.setSetpoint(turnTarget);
+        headingPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
+        headingPID.setPID(HEADING_PID);
+
+        double correction = headingPID.performPID();
+
+        if (headingPID.onTarget()) {
+            setMotorPowers(0, 0);
+            turnState = TurnState.IDLE;
+        } else {
+            setMotorPowers(correction, -correction);
+        }
+    }
+
+    private void executeTurnToTarget() {
+        headingPID.setInput(0);
+        headingPID.setSetpoint(turnTarget);
+        headingPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
+        headingPID.setPID(HEADING_PID);
+
+        double correction = headingPID.performPID();
+
+        if (headingPID.onTarget()) {
+            setMotorPowers(0, 0);
+            turnState = TurnState.IDLE;
+        } else {
+            setMotorPowers(correction, -correction);
+        }
+    }
+
+    @Override
+    public void turnToHeading(double headingDegrees, double maxSpeed) {
+        turnTarget = headingDegrees;
+        turnMaxSpeed = maxSpeed;
+        turnState = TurnState.TURNING_TO_HEADING;
+        headingPID.enable();
+    }
+
+    @Override
+    public void turnToTarget(double tx, double maxSpeed) {
+        turnTarget = tx;
+        turnMaxSpeed = maxSpeed;
+        turnState = TurnState.TURNING_TO_TARGET;
+        headingPID.enable();
+    }
+
+    @Override
+    public boolean isTurnComplete() {
+        return turnState == TurnState.IDLE;
+    }
+
+    @Override
+    public void cancelTurn() {
+        turnState = TurnState.IDLE;
+        setMotorPowers(0, 0);
+    }
+
+    // ==================== TELEOP DRIVING ====================
+
+    @Override
+    public void drive(double throttle, double strafe, double turn) {
+        if (turnState != TurnState.IDLE) {
+            return;
+        }
+
+        double leftPower = throttle + turn;
+        double rightPower = throttle - turn;
+
+        double maxPower = Math.max(Math.abs(leftPower), Math.abs(rightPower));
+        if (maxPower > 1.0) {
+            leftPower /= maxPower;
+            rightPower /= maxPower;
+        }
+
+        setMotorPowers(leftPower, rightPower);
     }
 
     public void setDrivePowers(PoseVelocity2d powers) {
@@ -278,6 +470,74 @@ public final class TankDrive {
             m.setPower(wheelVels.right.get(0) / maxPowerMag);
         }
     }
+
+    private void setMotorPowers(double left, double right) {
+        for (DcMotorEx m : leftMotors) {
+            m.setPower(left);
+        }
+        for (DcMotorEx m : rightMotors) {
+            m.setPower(right);
+        }
+    }
+
+    // ==================== POSE METHODS ====================
+
+    @Override
+    public Pose2d getPose() {
+        return cachedPose;
+    }
+
+    @Override
+    public void setPose(Pose2d pose) {
+        localizer.setPose(pose);
+        cachedPose = pose;
+        cachedHeading = Math.toDegrees(pose.heading.toDouble());
+    }
+
+    @Override
+    public void setPose(Object position) {
+        // TODO: Convert position constant to Pose2d and set
+    }
+
+    @Override
+    public double getHeadingDegrees() {
+        return cachedHeading;
+    }
+
+    @Override
+    public int getLeftTicks() {
+        return leftMotors.get(0).getCurrentPosition();
+    }
+
+    @Override
+    public void resetEncoders() {
+        for (DcMotorEx m : leftMotors) {
+            m.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            m.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
+        for (DcMotorEx m : rightMotors) {
+            m.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            m.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
+    }
+
+    // ==================== ROADRUNNER POSE ESTIMATE ====================
+
+    public PoseVelocity2d updatePoseEstimate() {
+        PoseVelocity2d vel = localizer.update();
+        cachedPose = localizer.getPose();
+
+        poseHistory.add(cachedPose);
+        while (poseHistory.size() > 100) {
+            poseHistory.removeFirst();
+        }
+
+        estimatedPoseWriter.write(new PoseMessage(cachedPose));
+
+        return vel;
+    }
+
+    // ==================== ROADRUNNER ACTIONS ====================
 
     public final class FollowTrajectoryAction implements Action {
         public final TimeTrajectory timeTrajectory;
@@ -311,13 +571,7 @@ public final class TankDrive {
             }
 
             if (t >= timeTrajectory.duration) {
-                for (DcMotorEx m : leftMotors) {
-                    m.setPower(0);
-                }
-                for (DcMotorEx m : rightMotors) {
-                    m.setPower(0);
-                }
-
+                setMotorPowers(0, 0);
                 return false;
             }
 
@@ -340,12 +594,7 @@ public final class TankDrive {
             double rightPower = feedforward.compute(wheelVels.right) / voltage;
             tankCommandWriter.write(new TankCommandMessage(voltage, leftPower, rightPower));
 
-            for (DcMotorEx m : leftMotors) {
-                m.setPower(leftPower);
-            }
-            for (DcMotorEx m : rightMotors) {
-                m.setPower(rightPower);
-            }
+            setMotorPowers(leftPower, rightPower);
 
             p.put("x", localizer.getPose().position.x);
             p.put("y", localizer.getPose().position.y);
@@ -356,7 +605,6 @@ public final class TankDrive {
             p.put("yError", error.position.y);
             p.put("headingError (deg)", Math.toDegrees(error.heading.toDouble()));
 
-            // only draw when active; only one drive action should be active at a time
             Canvas c = p.fieldOverlay();
             drawPoseHistory(c);
 
@@ -401,13 +649,7 @@ public final class TankDrive {
             }
 
             if (t >= turn.duration) {
-                for (DcMotorEx m : leftMotors) {
-                    m.setPower(0);
-                }
-                for (DcMotorEx m : rightMotors) {
-                    m.setPower(0);
-                }
-
+                setMotorPowers(0, 0);
                 return false;
             }
 
@@ -433,12 +675,7 @@ public final class TankDrive {
             double rightPower = feedforward.compute(wheelVels.right) / voltage;
             tankCommandWriter.write(new TankCommandMessage(voltage, leftPower, rightPower));
 
-            for (DcMotorEx m : leftMotors) {
-                m.setPower(leftPower);
-            }
-            for (DcMotorEx m : rightMotors) {
-                m.setPower(rightPower);
-            }
+            setMotorPowers(leftPower, rightPower);
 
             Canvas c = p.fieldOverlay();
             drawPoseHistory(c);
@@ -462,20 +699,6 @@ public final class TankDrive {
         }
     }
 
-    public PoseVelocity2d updatePoseEstimate() {
-        PoseVelocity2d vel = localizer.update();
-        poseHistory.add(localizer.getPose());
-
-        while (poseHistory.size() > 100) {
-            poseHistory.removeFirst();
-        }
-
-        estimatedPoseWriter.write(new PoseMessage(localizer.getPose()));
-
-
-        return vel;
-    }
-
     private void drawPoseHistory(Canvas c) {
         double[] xPoints = new double[poseHistory.size()];
         double[] yPoints = new double[poseHistory.size()];
@@ -484,7 +707,6 @@ public final class TankDrive {
         for (Pose2d t : poseHistory) {
             xPoints[i] = t.position.x;
             yPoints[i] = t.position.y;
-
             i++;
         }
 
@@ -507,5 +729,43 @@ public final class TankDrive {
                 defaultTurnConstraints,
                 defaultVelConstraint, defaultAccelConstraint
         );
+    }
+
+    // ==================== SUBSYSTEM LIFECYCLE ====================
+
+    @Override
+    public void stop() {
+        setMotorPowers(0, 0);
+        turnState = TurnState.IDLE;
+    }
+
+    @Override
+    public void resetStates() {
+        turnState = TurnState.IDLE;
+    }
+
+    // ==================== TELEMETRY ====================
+
+    @Override
+    public String getTelemetryName() {
+        return "TankDrive (Encoder)";
+    }
+
+    @Override
+    public Map<String, Object> getTelemetry(boolean debug) {
+        Map<String, Object> telemetry = new LinkedHashMap<>();
+
+        telemetry.put("Turn State", turnState);
+        telemetry.put("Heading (deg)", String.format("%.1f", cachedHeading));
+        telemetry.put("Pose", String.format("(%.1f, %.1f)", cachedPose.position.x, cachedPose.position.y));
+
+        if (debug) {
+            telemetry.put("Turn Target", turnTarget);
+            telemetry.put("PID Error", headingPID.getError());
+            telemetry.put("Left Power", leftMotors.get(0).getPower());
+            telemetry.put("Right Power", rightMotors.get(0).getPower());
+        }
+
+        return telemetry;
     }
 }
