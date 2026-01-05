@@ -158,7 +158,8 @@ public class DriverControls implements TelemetryProvider {
         if (stickyGamepad1.dpad_right) {
             robot.intake.eject();
             // For eject, we use setBeltPower which claims as launcher priority
-            robot.loader.setBeltPower(-0.5);
+            // Positive = eject forward
+            robot.loader.setBeltPower(0.5);
         }
 
         // Guide button: Reset encoders and ball count

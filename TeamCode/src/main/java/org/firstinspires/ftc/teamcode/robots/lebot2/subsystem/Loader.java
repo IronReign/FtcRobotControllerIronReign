@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.lebot2.subsystem;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -45,8 +46,9 @@ public class Loader implements Subsystem {
     private final CachedDistanceSensor backSensor;
 
     // Configuration
-    public static double BELT_POWER = 1.0;
-    public static double FEED_POWER = 0.8; // Slower for controlled feeding
+    // Negative = move balls toward rear (intake/feed), Positive = eject forward
+    public static double BELT_POWER = -1.0;
+    public static double FEED_POWER = -0.8; // Slower for controlled feeding
     public static double BALL_DETECT_THRESHOLD_CM = 10.0; // Distance indicating ball present
     public static int MAX_BALLS = 3;
 
@@ -81,6 +83,7 @@ public class Loader implements Subsystem {
 
     public Loader(HardwareMap hardwareMap) {
         beltMotor = new LazyMotor(hardwareMap, "conveyor");
+        beltMotor.setDirection(DcMotorSimple.Direction.REVERSE); // So negative = toward rear
         beltMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         beltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
@@ -223,7 +226,7 @@ public class Loader implements Subsystem {
     /**
      * Set belt to a specific power (bypasses ownership - use for manual control only).
      *
-     * @param power Belt power (-1 to 1). Positive = toward rear (normal).
+     * @param power Belt power (-1 to 1). Negative = toward rear, Positive = eject forward.
      */
     public void setBeltPower(double power) {
         // For manual override, claim as launcher (highest priority) if power is non-zero
