@@ -14,6 +14,17 @@ import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit
 
 import java.util.Objects;
 
+/**
+ * Pinpoint localizer with three-phase update support.
+ *
+ * This localizer supports the three-phase update pattern:
+ * - Phase 1: Call refresh() to perform the I2C bulk read
+ * - Phase 2: Call update() - uses cached data if refresh() was called
+ *
+ * The Pinpoint performs a single 40-byte I2C bulk read to get all odometry data.
+ * This is already efficient, but we cache it to avoid double reads if both
+ * Robot.update() and RoadRunner call update() in the same cycle.
+ */
 @Config
 public final class PinpointLocalizer implements Localizer {
     public static class Params {
@@ -31,6 +42,10 @@ public final class PinpointLocalizer implements Localizer {
 
     private Pose2d txWorldPinpoint;
     private Pose2d txPinpointRobot = new Pose2d(0, 0, 0);
+
+    // Three-phase support: track if refresh() was called this cycle
+    private boolean refreshedThisCycle = false;
+    private PoseVelocity2d cachedVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
 
     public PinpointLocalizer(HardwareMap hardwareMap, double inPerTick, Pose2d initialPose) {
         // TODO: make sure your config has a Pinpoint device with this name
@@ -62,16 +77,45 @@ public final class PinpointLocalizer implements Localizer {
         return txWorldPinpoint.times(txPinpointRobot);
     }
 
-    @Override
-    public PoseVelocity2d update() {
+    /**
+     * PHASE 1: Refresh sensor data via I2C bulk read.
+     * Call this once per cycle before any update() calls.
+     *
+     * This performs the actual I2C communication with the Pinpoint device.
+     */
+    public void refresh() {
         driver.update();
         if (Objects.requireNonNull(driver.getDeviceStatus()) == GoBildaPinpointDriver.DeviceStatus.READY) {
-            txPinpointRobot = new Pose2d(driver.getPosX(DistanceUnit.INCH), driver.getPosY(DistanceUnit.INCH), driver.getHeading(UnnormalizedAngleUnit.RADIANS));
-            Vector2d worldVelocity = new Vector2d(driver.getVelX(DistanceUnit.INCH), driver.getVelY(DistanceUnit.INCH));
+            txPinpointRobot = new Pose2d(
+                    driver.getPosX(DistanceUnit.INCH),
+                    driver.getPosY(DistanceUnit.INCH),
+                    driver.getHeading(UnnormalizedAngleUnit.RADIANS)
+            );
+            Vector2d worldVelocity = new Vector2d(
+                    driver.getVelX(DistanceUnit.INCH),
+                    driver.getVelY(DistanceUnit.INCH)
+            );
             Vector2d robotVelocity = Rotation2d.fromDouble(-txPinpointRobot.heading.log()).times(worldVelocity);
-
-            return new PoseVelocity2d(robotVelocity, driver.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS));
+            cachedVelocity = new PoseVelocity2d(robotVelocity, driver.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS));
         }
-        return new PoseVelocity2d(new Vector2d(0, 0), 0);
+        refreshedThisCycle = true;
+    }
+
+    /**
+     * Mark end of cycle. Call this at the end of Robot.update().
+     * Resets the refresh flag so next cycle will do a fresh read.
+     */
+    public void markCycleComplete() {
+        refreshedThisCycle = false;
+    }
+
+    @Override
+    public PoseVelocity2d update() {
+        // If refresh() wasn't called this cycle, do the I2C read now
+        // This provides backwards compatibility with code that calls update() directly
+        if (!refreshedThisCycle) {
+            refresh();
+        }
+        return cachedVelocity;
     }
 }

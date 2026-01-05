@@ -5,9 +5,9 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.robots.lebot2.util.LazyServo;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,13 +31,21 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
  *
  * Launch Sequence State Machine:
  * IDLE → SPINNING_UP → READY → FIRING → COOLDOWN → IDLE
+ *
+ * THREE-PHASE UPDATE:
+ * - readSensors(): Nothing needed (motor velocity is SDK bulk-cached)
+ * - calc(): State machine logic, queue paddle position
+ * - act(): Flush servo command
+ *
+ * Note: Flywheel uses setVelocity() which is handled by SDK - not wrapped in LazyMotor.
+ * Paddle servo is wrapped in LazyServo to defer writes.
  */
 @Config(value = "Lebot2_Launcher")
 public class Launcher implements Subsystem {
 
     // Hardware
-    private final DcMotorEx flywheel;
-    private final Servo paddle;
+    private final DcMotorEx flywheel;  // Not wrapped - SDK handles velocity control
+    private final LazyServo paddle;    // Wrapped for three-phase pattern
 
     // Paddle positions (servo units 0-1, converted from pulse widths)
     public static double PADDLE_DOWN = 0.167;  // ~1000µs - gate closed
@@ -84,8 +92,9 @@ public class Launcher implements Subsystem {
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        paddle = hardwareMap.get(Servo.class, "paddle");
+        paddle = new LazyServo(hardwareMap, "paddle");
         paddle.setPosition(PADDLE_DOWN);
+        paddle.flush();  // Apply initial position immediately
     }
 
     /**
@@ -96,12 +105,22 @@ public class Launcher implements Subsystem {
         this.loader = loader;
     }
 
+    // ==================== THREE-PHASE METHODS ====================
+
     @Override
-    public void update(Canvas fieldOverlay) {
-        // READ: Get flywheel speed
+    public void readSensors() {
+        // PHASE 1: Motor velocity is SDK bulk-cached, no I2C read needed
+        // We read currentSpeed in calc() from the bulk cache
+    }
+
+    @Override
+    public void calc(Canvas fieldOverlay) {
+        // PHASE 2: Read cached velocity and run state machine
+
+        // Get flywheel speed (bulk-cached by SDK)
         currentSpeed = flywheel.getVelocity(AngleUnit.DEGREES);
 
-        // PROCESS: State machine
+        // Run state machine
         switch (state) {
             case IDLE:
                 handleIdleState();
@@ -123,8 +142,12 @@ public class Launcher implements Subsystem {
                 handleCooldownState();
                 break;
         }
+    }
 
-        // WRITE: Outputs are set in state handlers
+    @Override
+    public void act() {
+        // PHASE 3: Flush paddle servo command
+        paddle.flush();
     }
 
     private void handleIdleState() {
@@ -181,7 +204,7 @@ public class Launcher implements Subsystem {
     }
 
     private void setPaddlePosition(double position) {
-        paddle.setPosition(position);
+        paddle.setPosition(position);  // Queues position, flushed in act()
     }
 
     /**
@@ -318,7 +341,8 @@ public class Launcher implements Subsystem {
         state = LaunchState.IDLE;
         fireRequested = false;
         flywheel.setVelocity(0);
-        setPaddlePosition(PADDLE_DOWN);
+        paddle.setPosition(PADDLE_DOWN);
+        paddle.flush();  // Immediate write for emergency stop
     }
 
     @Override
@@ -342,7 +366,7 @@ public class Launcher implements Subsystem {
         telemetry.put("At Speed", isFlywheelAtSpeed() ? "YES" : "no");
 
         if (debug) {
-            telemetry.put("Paddle Pos", paddle.getPosition());
+            telemetry.put("Paddle Pos", paddle.getPendingPosition());
             telemetry.put("Pass-Through", passThroughMode ? "ON" : "off");
             telemetry.put("Fire Requested", fireRequested);
         }

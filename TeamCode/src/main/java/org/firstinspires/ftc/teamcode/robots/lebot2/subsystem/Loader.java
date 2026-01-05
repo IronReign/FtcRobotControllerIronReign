@@ -2,12 +2,12 @@ package org.firstinspires.ftc.teamcode.robots.lebot2.subsystem;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.robots.lebot2.util.CachedDistanceSensor;
+import org.firstinspires.ftc.teamcode.robots.lebot2.util.LazyMotor;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -28,14 +28,19 @@ import java.util.Map;
  * - Front sensor detects new balls entering
  * - Back sensor detects balls at the launch position
  * - Count is decremented when Launcher fires a ball
+ *
+ * THREE-PHASE UPDATE:
+ * - readSensors(): Refresh distance sensors (I2C)
+ * - calc(): Ball counting logic, set belt power
+ * - act(): Flush motor command
  */
 @Config(value = "Lebot2_Loader")
 public class Loader implements Subsystem {
 
-    // Hardware
-    private final DcMotorEx beltMotor;
-    private final Rev2mDistanceSensor frontSensor;
-    private final Rev2mDistanceSensor backSensor;
+    // Hardware (wrapped for three-phase pattern)
+    private final LazyMotor beltMotor;
+    private final CachedDistanceSensor frontSensor;
+    private final CachedDistanceSensor backSensor;
 
     // Configuration
     public static double BELT_POWER = 1.0;
@@ -63,21 +68,32 @@ public class Loader implements Subsystem {
     private double beltPower = 0;
 
     public Loader(HardwareMap hardwareMap) {
-        beltMotor = hardwareMap.get(DcMotorEx.class, "conveyor");
+        beltMotor = new LazyMotor(hardwareMap, "conveyor");
         beltMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         beltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        frontSensor = hardwareMap.get(Rev2mDistanceSensor.class, "frontDist");
-        backSensor = hardwareMap.get(Rev2mDistanceSensor.class, "backDist");
+        frontSensor = new CachedDistanceSensor(hardwareMap, "frontDist", DistanceUnit.CM);
+        backSensor = new CachedDistanceSensor(hardwareMap, "backDist", DistanceUnit.CM);
+    }
+
+    // ==================== THREE-PHASE METHODS ====================
+
+    @Override
+    public void readSensors() {
+        // PHASE 1: Refresh I2C sensors
+        frontSensor.refresh();
+        backSensor.refresh();
     }
 
     @Override
-    public void update(Canvas fieldOverlay) {
-        // READ: Get sensor values
-        frontDistance = frontSensor.getDistance(DistanceUnit.CM);
-        backDistance = backSensor.getDistance(DistanceUnit.CM);
+    public void calc(Canvas fieldOverlay) {
+        // PHASE 2: Read cached values and process logic
 
-        // PROCESS: Determine ball positions
+        // Get cached sensor values
+        frontDistance = frontSensor.getDistance();
+        backDistance = backSensor.getDistance();
+
+        // Determine ball positions
         wasBallAtFront = ballAtFront;
         ballAtFront = frontDistance < BALL_DETECT_THRESHOLD_CM;
         ballAtBack = backDistance < BALL_DETECT_THRESHOLD_CM;
@@ -96,8 +112,14 @@ public class Loader implements Subsystem {
             state = LoaderState.HAS_BALLS;
         }
 
-        // WRITE: Apply belt power
+        // Queue belt power (will be flushed in act())
         beltMotor.setPower(beltPower);
+    }
+
+    @Override
+    public void act() {
+        // PHASE 3: Flush motor command
+        beltMotor.flush();
     }
 
     /**
@@ -214,7 +236,7 @@ public class Loader implements Subsystem {
     @Override
     public void stop() {
         beltPower = 0;
-        beltMotor.setPower(0);
+        beltMotor.stop();  // Immediate stop, bypasses lazy pattern
     }
 
     @Override

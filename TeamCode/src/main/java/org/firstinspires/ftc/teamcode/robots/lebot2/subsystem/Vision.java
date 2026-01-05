@@ -21,6 +21,11 @@ import java.util.Map;
  * - Optional: Bot pose via AprilTag localization
  *
  * Pipeline switching allows detecting different alliance colors.
+ *
+ * THREE-PHASE UPDATE:
+ * - readSensors(): Nothing needed (Limelight is USB, not I2C)
+ * - calc(): Read latest Limelight result, extract target data
+ * - act(): Nothing needed (read-only subsystem)
  */
 @Config(value = "Lebot2_Vision")
 public class Vision implements Subsystem {
@@ -53,12 +58,19 @@ public class Vision implements Subsystem {
         limelight.start();
     }
 
+    // ==================== THREE-PHASE METHODS ====================
+
     @Override
-    public void update(Canvas fieldOverlay) {
-        // READ: Get latest Limelight result
+    public void readSensors() {
+        // PHASE 1: Nothing needed - Limelight is USB, not I2C
+        // It processes frames asynchronously and we just read the latest result
+    }
+
+    @Override
+    public void calc(Canvas fieldOverlay) {
+        // PHASE 2: Get latest Limelight result and extract data
         LLResult result = limelight.getLatestResult();
 
-        // PROCESS: Extract data from result
         if (result != null && result.isValid()) {
             hasValidTarget = true;
             tx = result.getTx();
@@ -76,6 +88,11 @@ public class Vision implements Subsystem {
             botPose = null;
             distanceToTarget = 0;
         }
+    }
+
+    @Override
+    public void act() {
+        // PHASE 3: Nothing needed - Vision is read-only
     }
 
     /**

@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.robots.lebot2;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
@@ -12,7 +12,9 @@ import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Loader;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Vision;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.DriveTrainBase;
-import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.TankDrive;
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
+
+import com.acmerobotics.roadrunner.Pose2d;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.TelemetryProvider;
 
 import java.util.ArrayList;
@@ -29,8 +31,17 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
  * This class:
  * - Owns all subsystems
  * - Coordinates multi-subsystem behaviors (Articulations)
- * - Handles the main update loop
+ * - Handles the main update loop with THREE-PHASE PATTERN
  * - Provides consolidated telemetry
+ *
+ * THREE-PHASE UPDATE CYCLE:
+ * Every loop, Robot.update() executes:
+ *   Phase 1: readSensors() - All I2C reads, bulk cache clear
+ *   Phase 2: calc()        - State machines, articulations
+ *   Phase 3: act()         - Flush motor/servo commands
+ *
+ * This pattern ensures all sensor reads happen before any calculations,
+ * preventing stale data bugs and optimizing I2C bandwidth.
  *
  * The Robot does NOT handle gamepad input directly - that's DriverControls' job.
  * The Robot provides articulations that DriverControls (or Autonomous) can trigger.
@@ -48,6 +59,9 @@ public class Robot implements TelemetryProvider {
 
     // Subsystem list for bulk operations
     public final List<Subsystem> subsystems = new ArrayList<>();
+
+    // LynxModule hubs for bulk caching
+    private final List<LynxModule> hubs;
 
     // Voltage monitoring
     private final VoltageSensor voltageSensor;
@@ -84,8 +98,15 @@ public class Robot implements TelemetryProvider {
     public static double FEED_DELAY_SECONDS = 4;
 
     public Robot(HardwareMap hardwareMap, boolean simulated) {
+        // Setup MANUAL bulk caching for best performance
+        // This requires us to call clearBulkCache() at the start of each loop
+        hubs = hardwareMap.getAll(LynxModule.class);
+        for (LynxModule hub : hubs) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+        }
+
         // Initialize subsystems
-        driveTrain = new TankDrive(hardwareMap);
+        driveTrain = new TankDrivePinpoint(hardwareMap, new Pose2d(0, 0, 0));
         intake = new Intake(hardwareMap);
         loader = new Loader(hardwareMap);
         launcher = new Launcher(hardwareMap);
@@ -111,13 +132,31 @@ public class Robot implements TelemetryProvider {
     /**
      * Main update method - called every loop cycle.
      *
+     * Implements the THREE-PHASE UPDATE PATTERN:
+     *   Phase 1: Read all sensors (I2C, bulk cache refresh)
+     *   Phase 2: Run calculations (state machines, PID, articulations)
+     *   Phase 3: Write all outputs (flush lazy motors/servos)
+     *
      * @param fieldOverlay Canvas for drawing on FTC Dashboard
      */
     public void update(Canvas fieldOverlay) {
-        // Update voltage
+
+        // ===== PHASE 1: READ ALL SENSORS =====
+        // Clear bulk cache first - this refreshes all motor encoder/velocity data
+        for (LynxModule hub : hubs) {
+            hub.clearBulkCache();
+        }
+
+        // Read I2C sensors for all subsystems
+        for (Subsystem subsystem : subsystems) {
+            subsystem.readSensors();
+        }
+
+        // Update voltage (analog, not I2C, but read early)
         voltage = voltageSensor.getVoltage();
 
-        // Handle articulation state machine
+        // ===== PHASE 2: CALCULATIONS =====
+        // Handle articulation state machine (Robot-level behavior)
         switch (articulation) {
             case MANUAL:
                 // Subsystems controlled directly by DriverControls
@@ -144,9 +183,15 @@ public class Robot implements TelemetryProvider {
                 break;
         }
 
-        // Update all subsystems
+        // Run calculations for all subsystems
         for (Subsystem subsystem : subsystems) {
-            subsystem.update(fieldOverlay);
+            subsystem.calc(fieldOverlay);
+        }
+
+        // ===== PHASE 3: WRITE ALL OUTPUTS =====
+        // Flush pending motor/servo commands
+        for (Subsystem subsystem : subsystems) {
+            subsystem.act();
         }
     }
 

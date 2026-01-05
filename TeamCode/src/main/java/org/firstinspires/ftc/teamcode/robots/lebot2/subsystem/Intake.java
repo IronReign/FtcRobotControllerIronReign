@@ -6,6 +6,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.teamcode.robots.lebot2.util.LazyMotor;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -18,12 +20,17 @@ import java.util.Map;
  * This is a simple subsystem with no state machine - it's just on or off.
  * The Robot coordinator decides when to activate intake based on the
  * current operating mode.
+ *
+ * THREE-PHASE UPDATE:
+ * - readSensors(): Nothing to read (motor has no I2C sensors we need)
+ * - calc(): Set power via lazyMotor.setPower()
+ * - act(): Flush motor command
  */
 @Config(value = "Lebot2_Intake")
 public class Intake implements Subsystem {
 
-    // Hardware
-    private final DcMotorEx intakeMotor;
+    // Hardware (wrapped for three-phase pattern)
+    private final LazyMotor intakeMotor;
 
     // Configuration
     public static double INTAKE_POWER = 1.0;
@@ -34,15 +41,29 @@ public class Intake implements Subsystem {
     private boolean isRunning = false;
 
     public Intake(HardwareMap hardwareMap) {
-        intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
+        intakeMotor = new LazyMotor(hardwareMap, "intake");
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
+    // ==================== THREE-PHASE METHODS ====================
+
     @Override
-    public void update(Canvas fieldOverlay) {
-        // Intake is simple - just apply the current power setting
+    public void readSensors() {
+        // Intake has no I2C sensors to read
+        // (Motor current monitoring not needed for intake)
+    }
+
+    @Override
+    public void calc(Canvas fieldOverlay) {
+        // Apply the current power setting via lazy motor
         intakeMotor.setPower(currentPower);
+    }
+
+    @Override
+    public void act() {
+        // Flush motor command to hardware
+        intakeMotor.flush();
     }
 
     /**
@@ -92,7 +113,7 @@ public class Intake implements Subsystem {
     public void stop() {
         currentPower = 0;
         isRunning = false;
-        intakeMotor.setPower(0);
+        intakeMotor.stop();  // Immediate stop, bypasses lazy pattern
     }
 
     @Override

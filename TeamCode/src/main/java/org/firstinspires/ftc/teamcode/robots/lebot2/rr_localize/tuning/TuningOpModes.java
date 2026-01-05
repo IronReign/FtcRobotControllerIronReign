@@ -42,6 +42,7 @@ import org.firstinspires.ftc.robotcore.internal.opmode.OpModeMeta;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.OTOSLocalizer;
 import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.PinpointLocalizer;
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
 import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.rrQuickStart.MecanumDrive;
 import org.firstinspires.ftc.teamcode.rrQuickStart.TankDrive;
@@ -52,8 +53,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class TuningOpModes {
-    // TODO: change this to TankDrive.class if you're using tank
-    public static final Class<?> DRIVE_CLASS = PinpointLocalizer.class;
+    // Lebot2 uses TankDrivePinpoint (tank drive with Pinpoint odometry)
+    public static final Class<?> DRIVE_CLASS = TankDrivePinpoint.class;
 
     public static final String GROUP = "rr_quickstart_reign";
     public static final String PREFIX = "6832decode ";
@@ -281,6 +282,44 @@ public final class TuningOpModes {
                         () -> new MotorFeedforward(TankDrive.PARAMS.kS,
                                 TankDrive.PARAMS.kV / TankDrive.PARAMS.inPerTick,
                                 TankDrive.PARAMS.kA / TankDrive.PARAMS.inPerTick),
+                        0
+                );
+            };
+        } else if (DRIVE_CLASS.equals(TankDrivePinpoint.class)) {
+            // Lebot2's TankDrivePinpoint - tank drive with Pinpoint odometry
+            dvf = hardwareMap -> {
+                TankDrivePinpoint td = new TankDrivePinpoint(hardwareMap, new Pose2d(0, 0, 0));
+
+                // TankDrivePinpoint always uses PinpointLocalizer
+                PinpointView pv = makePinpointView((PinpointLocalizer) td.localizer);
+                List<EncoderGroup> encoderGroups = new ArrayList<>();
+                encoderGroups.add(new PinpointEncoderGroup(pv));
+
+                List<EncoderRef> parEncs = new ArrayList<>();
+                List<EncoderRef> perpEncs = new ArrayList<>();
+                parEncs.add(new EncoderRef(0, 0));
+                perpEncs.add(new EncoderRef(0, 1));
+
+                LazyImu lazyImu = new PinpointIMU(pv);
+
+                return new DriveView(
+                        DriveType.TANK,
+                        TankDrivePinpoint.PARAMS.inPerTick,
+                        TankDrivePinpoint.PARAMS.maxWheelVel,
+                        TankDrivePinpoint.PARAMS.minProfileAccel,
+                        TankDrivePinpoint.PARAMS.maxProfileAccel,
+                        encoderGroups,
+                        td.leftMotors,
+                        td.rightMotors,
+                        new ArrayList<>(),  // No drive wheel encoders used
+                        new ArrayList<>(),
+                        parEncs,
+                        perpEncs,
+                        lazyImu,
+                        td.voltageSensor,
+                        () -> new MotorFeedforward(TankDrivePinpoint.PARAMS.kS,
+                                TankDrivePinpoint.PARAMS.kV / TankDrivePinpoint.PARAMS.inPerTick,
+                                TankDrivePinpoint.PARAMS.kA / TankDrivePinpoint.PARAMS.inPerTick),
                         0
                 );
             };
