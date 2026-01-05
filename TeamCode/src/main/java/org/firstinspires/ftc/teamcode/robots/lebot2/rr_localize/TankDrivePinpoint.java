@@ -132,7 +132,16 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     // ==================== SUBSYSTEM STATE ====================
 
-    // Turn state machine
+    // Drive behavior - what is currently controlling the drive motors
+    // Set implicitly by control methods (drive, runAction, turnToHeading)
+    public enum Behavior {
+        MANUAL,     // Joystick control (default)
+        TRAJECTORY, // RoadRunner trajectory following
+        PID_TURN    // PID-based turn to heading/target
+    }
+    private Behavior behavior = Behavior.MANUAL;
+
+    // Turn state machine (used when behavior == PID_TURN)
     public enum TurnState {
         IDLE,
         TURNING_TO_HEADING,
@@ -141,6 +150,9 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     private TurnState turnState = TurnState.IDLE;
     private double turnTarget = 0;
     private double turnMaxSpeed = 1.0;
+
+    // RoadRunner action tracking
+    private Action currentAction = null;
 
     // PID controller for turns
     private final PIDController headingPID;
@@ -272,6 +284,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         if (headingPID.onTarget()) {
             setMotorPowers(0, 0);
             turnState = TurnState.IDLE;
+            behavior = Behavior.MANUAL;
         } else {
             // Apply turn power (positive = clockwise)
             setMotorPowers(correction, -correction);
@@ -290,6 +303,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         if (headingPID.onTarget()) {
             setMotorPowers(0, 0);
             turnState = TurnState.IDLE;
+            behavior = Behavior.MANUAL;
         } else {
             setMotorPowers(correction, -correction);
         }
@@ -300,6 +314,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         turnTarget = headingDegrees;
         turnMaxSpeed = maxSpeed;
         turnState = TurnState.TURNING_TO_HEADING;
+        behavior = Behavior.PID_TURN;
         headingPID.enable();
     }
 
@@ -308,6 +323,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         turnTarget = tx; // tx is the offset, we want to drive it to 0
         turnMaxSpeed = maxSpeed;
         turnState = TurnState.TURNING_TO_TARGET;
+        behavior = Behavior.PID_TURN;
         headingPID.enable();
     }
 
@@ -319,6 +335,9 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     @Override
     public void cancelTurn() {
         turnState = TurnState.IDLE;
+        if (behavior == Behavior.PID_TURN) {
+            behavior = Behavior.MANUAL;
+        }
         setMotorPowers(0, 0);
     }
 
@@ -327,8 +346,23 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     @Override
     public void drive(double throttle, double strafe, double turn) {
         // Tank drive ignores strafe
-        if (turnState != TurnState.IDLE) {
-            // Don't override an active turn
+
+        // Check if joystick input should interrupt current mode
+        boolean hasInput = Math.abs(throttle) > 0.1 || Math.abs(turn) > 0.1;
+
+        if (hasInput) {
+            // Joystick input interrupts RR_ACTION and PID_TURN
+            if (behavior == Behavior.TRAJECTORY) {
+                cancelAction();
+            }
+            if (behavior == Behavior.PID_TURN) {
+                cancelTurn();
+            }
+            behavior = Behavior.MANUAL;
+        }
+
+        // Only apply joystick input in MANUAL mode
+        if (behavior != Behavior.MANUAL) {
             return;
         }
 
@@ -343,6 +377,70 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         }
 
         setMotorPowers(leftPower, rightPower);
+    }
+
+    // ==================== BEHAVIOR MANAGEMENT ====================
+
+    /**
+     * Get current drive behavior.
+     */
+    public Behavior getBehavior() {
+        return behavior;
+    }
+
+    /**
+     * Check if drive is in manual mode.
+     */
+    public boolean isManualMode() {
+        return behavior == Behavior.MANUAL;
+    }
+
+    /**
+     * Check if a RoadRunner action is currently running.
+     */
+    public boolean isActionRunning() {
+        return behavior == Behavior.TRAJECTORY && currentAction != null;
+    }
+
+    /**
+     * Run a RoadRunner action. Sets behavior to TRAJECTORY.
+     *
+     * @param action The action to run
+     */
+    public void runAction(Action action) {
+        currentAction = action;
+        behavior = Behavior.TRAJECTORY;
+    }
+
+    /**
+     * Cancel any running RoadRunner action.
+     */
+    public void cancelAction() {
+        currentAction = null;
+        if (behavior == Behavior.TRAJECTORY) {
+            behavior = Behavior.MANUAL;
+            setMotorPowers(0, 0);
+        }
+    }
+
+    /**
+     * Update the current RoadRunner action.
+     * Call this in the main loop when an action is running.
+     *
+     * @param packet TelemetryPacket for logging
+     * @return true if action is still running, false if complete
+     */
+    public boolean updateAction(TelemetryPacket packet) {
+        if (currentAction == null) {
+            return false;
+        }
+
+        boolean running = currentAction.run(packet);
+        if (!running) {
+            currentAction = null;
+            behavior = Behavior.MANUAL;
+        }
+        return running;
     }
 
     /**
@@ -641,11 +739,15 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public void stop() {
         setMotorPowers(0, 0);
         turnState = TurnState.IDLE;
+        currentAction = null;
+        behavior = Behavior.MANUAL;
     }
 
     @Override
     public void resetStates() {
         turnState = TurnState.IDLE;
+        currentAction = null;
+        behavior = Behavior.MANUAL;
     }
 
     // ==================== TELEMETRY ====================
@@ -659,15 +761,17 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
-        telemetry.put("Turn State", turnState);
+        telemetry.put("Drive Mode", behavior);
         telemetry.put("Heading (deg)", String.format("%.1f", cachedHeading));
         telemetry.put("Pose", String.format("(%.1f, %.1f)", cachedPose.position.x, cachedPose.position.y));
 
         if (debug) {
+            telemetry.put("Turn State", turnState);
             telemetry.put("Turn Target", turnTarget);
             telemetry.put("PID Error", headingPID.getError());
             telemetry.put("Left Power", leftMotors.get(0).getPower());
             telemetry.put("Right Power", rightMotors.get(0).getPower());
+            telemetry.put("Action Running", currentAction != null);
         }
 
         return telemetry;

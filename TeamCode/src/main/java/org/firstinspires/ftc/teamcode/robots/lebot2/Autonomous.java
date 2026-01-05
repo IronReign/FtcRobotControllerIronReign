@@ -70,9 +70,10 @@ public class Autonomous implements TelemetryProvider{
 
     public void execute(){
 
-        // Alliance correction
-        if(robot.isRedAlliance){
-            robot.headingDegrees *= -1; // will this pose an error?
+        // Alliance correction for target heading
+        int targetHeading = Robot.targetHeadingDegrees;
+        if(Robot.isRedAlliance){
+            targetHeading *= -1;
         }
 
         switch(autonSequence){
@@ -91,31 +92,28 @@ public class Autonomous implements TelemetryProvider{
                     robot.driveTrain.drive(0, 0, 0);
                     autonSequence(AutonSequence.TARGETING_GOAL);
                 }
-
-                /*
-                // Limelight Distance Check
-                if(robot.vision.calculateDistanceFromTy(robot.vision.getTy())>1){ //TODO: Adjust meters
-                    robot.driveTrain.drive(0, 0, 0);
-                    autonSequence(AutonSequence.TARGETING_GOAL);
-                }
-                */
-
                 break;
 
             case TARGETING_GOAL:
-                // Adjust to face the goal
-                robot.handleTargetingArticulation();
+                // Trigger targeting behavior (handles IMU + vision turn)
+                if (robot.getBehavior() != Robot.Behavior.TARGETING) {
+                    robot.setBehavior(Robot.Behavior.TARGETING);
+                }
 
-                if(robot.getArticulation() == Robot.Articulation.MANUAL){
+                // Wait for targeting to complete (returns to MANUAL)
+                if(robot.getBehavior() == Robot.Behavior.MANUAL){
                     autonSequence(AutonSequence.LAUNCH_ALL);
                 }
                 break;
 
             case LAUNCH_ALL:
-                // Launch all loaded balls
-                robot.handleLaunchAllArticulation();
+                // Trigger launch all behavior
+                if (robot.getBehavior() != Robot.Behavior.LAUNCH_ALL) {
+                    robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
+                }
 
-                if (robot.getArticulation() == Robot.Articulation.MANUAL){
+                // Wait for launch to complete (returns to MANUAL)
+                if (robot.getBehavior() == Robot.Behavior.MANUAL){
                     robot.driveTrain.resetEncoders();
                     autonSequence(AutonSequence.INTAKE_POSITION);
                 }
@@ -123,29 +121,19 @@ public class Autonomous implements TelemetryProvider{
 
             case INTAKE_POSITION:
                 // Move backwards to position near three balls
-
                 robot.driveTrain.drive(-0.6, 0, 0);
 
                 int leftTicksR2 = Math.abs(robot.driveTrain.getLeftTicks());
 
-                if(leftTicksR2 >= 800){ //TODO: Measure ticks between two rows
+                if(leftTicksR2 >= 800){
                     robot.driveTrain.drive(0, 0, 0);
                     autonSequence(AutonSequence.TARGETING_BALLS);
                 }
-
-                /*
-                // Limelight Distance Check
-                if(robot.vision.calculateDistanceFromTy(robot.vision.getTy())>1.3){ //TODO: Adjust meters + row value
-                    robot.driveTrain.drive(0, 0, 0);
-                    autonSequence(AutonSequence.TARGETING_GOAL);
-                }
-                */
-
                 break;
 
             case TARGETING_BALLS:
-                // Turn towards three balls on floor (90 degrees?)
-                robot.driveTrain.turnToHeading(90, 0.6); //TODO: Change headingDegrees
+                // Turn towards three balls on floor
+                robot.driveTrain.turnToHeading(90, 0.6);
 
                 if (robot.driveTrain.isTurnComplete()){
                     autonSequence(AutonSequence.INTAKE);
@@ -153,14 +141,20 @@ public class Autonomous implements TelemetryProvider{
                 break;
 
             case INTAKE:
-                // Intake the three balls
-                robot.handleIntakeArticulation();
+                // Start intake if not already running
+                if (!robot.intake.isActive()) {
+                    robot.intake.loadAll();
+                    robot.loader.requestBeltForIntake();
+                }
+
+                // Drive slowly forward while intaking
                 robot.driveTrain.drive(0.1, 0, 0);
 
-                if (robot.getArticulation() == Robot.Articulation.MANUAL){
+                // Check if loader is full (intake auto-completes)
+                if (robot.loader.isFull()){
                     robot.driveTrain.drive(0,0,0);
                     rows++;
-                    if (rows<=1){ //adjust later if works
+                    if (rows <= 1){
                         autonSequence(AutonSequence.TARGETING_GOAL);
                     } else {
                         autonSequence(AutonSequence.END);

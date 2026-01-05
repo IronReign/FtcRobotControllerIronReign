@@ -28,23 +28,27 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 /**
  * Robot coordinator class for Lebot2.
  *
- * This class:
- * - Owns all subsystems
- * - Coordinates multi-subsystem behaviors (Articulations)
- * - Handles the main update loop with THREE-PHASE PATTERN
- * - Provides consolidated telemetry
+ * ARCHITECTURE:
+ * - Each subsystem manages its own behaviors (state machines)
+ * - Robot only coordinates multi-subsystem sequences
+ * - Drive is ALWAYS available (never blocked by intake/launcher)
+ *
+ * SUBSYSTEM BEHAVIORS:
+ * - Intake: OFF, INTAKE, LOAD_ALL, EJECT (auto-completes when full)
+ * - Loader: Manages belt ownership (INTAKE vs LAUNCHER priority)
+ * - Launcher: IDLE, SPIN_UP, READY, FIRING, COOLDOWN (claims belt when firing)
+ * - DriveTrain: MANUAL, RR_ACTION, PID_TURN (interrupted by joystick)
+ *
+ * ROBOT ARTICULATIONS (multi-subsystem only):
+ * - MANUAL: All subsystems controlled directly by DriverControls
+ * - TARGETING: Turn to target using IMU then vision
+ * - LAUNCH_ALL: Fire all balls in sequence (coordinates launcher + loader)
  *
  * THREE-PHASE UPDATE CYCLE:
  * Every loop, Robot.update() executes:
  *   Phase 1: readSensors() - All I2C reads, bulk cache clear
- *   Phase 2: calc()        - State machines, articulations
+ *   Phase 2: calc()        - Subsystem state machines
  *   Phase 3: act()         - Flush motor/servo commands
- *
- * This pattern ensures all sensor reads happen before any calculations,
- * preventing stale data bugs and optimizing I2C bandwidth.
- *
- * The Robot does NOT handle gamepad input directly - that's DriverControls' job.
- * The Robot provides articulations that DriverControls (or Autonomous) can trigger.
  */
 
 @Config(value = "Lebot2_Robot")
@@ -70,32 +74,35 @@ public class Robot implements TelemetryProvider {
     // Configuration
     public static boolean isRedAlliance = true;
 
-    // High-level robot states (Articulations)
-    public enum Articulation {
-        MANUAL,         // Driver has full control
-        INTAKE,         // Actively gathering balls
-        TRANSIT,        // Driving to launch position
-        TARGETING,      // Aligning with target
-        LAUNCHING,      // Firing balls
-        LAUNCH_ALL,      // Fire all balls in sequence
-        RELEASE          // Release balls from classifier - navigation TBD
+    // Robot-level behaviors (multi-subsystem coordination only)
+    // Note: Most behaviors are now handled by individual subsystems
+    public enum Behavior {
+        MANUAL,         // Subsystems controlled directly by DriverControls
+        TARGETING,      // Two-phase targeting: IMU then vision
+        LAUNCH_ALL      // Fire all balls in sequence
     }
-    private Articulation articulation = Articulation.MANUAL;
-    private Articulation previousArticulation = Articulation.MANUAL;
+    private Behavior behavior = Behavior.MANUAL;
 
-    // Launch sequence state (for LAUNCHING and LAUNCH_ALL)
-    public enum LaunchSequenceState {
+    // Targeting sequence state
+    public enum TargetingState {
+        IDLE,
+        TURNING_IMU,
+        TURNING_VISION
+    }
+    private TargetingState targetingState = TargetingState.IDLE;
+
+    // Launch-all sequence state
+    public enum LaunchAllState {
         IDLE,
         SPINNING_UP,
-        TARGETING_IMU,
-        TARGETING_VISION,
         FIRING,
         FEEDING_NEXT,
         COMPLETE
     }
-    public LaunchSequenceState launchSequenceState = LaunchSequenceState.IDLE;
+    private LaunchAllState launchAllState = LaunchAllState.IDLE;
     private long launchTimer = 0;
     public static double FEED_DELAY_SECONDS = 4;
+    private int shotsRemaining = 3;
 
     public Robot(HardwareMap hardwareMap, boolean simulated) {
         // Setup MANUAL bulk caching for best performance
@@ -113,7 +120,10 @@ public class Robot implements TelemetryProvider {
         vision = new Vision(hardwareMap);
 
         // Connect subsystems that need references to each other
-        launcher.setLoader(loader);
+        intake.setLoader(loader);       // For LOAD_ALL completion check
+        launcher.setLoader(loader);     // For belt claiming and ball counting
+        launcher.setIntake(intake);     // For intake suppression during firing
+        launcher.setVision(vision);     // For distance-based speed calculation
 
         // Add to subsystems list for bulk operations
         subsystems.add((Subsystem) driveTrain);
@@ -156,30 +166,19 @@ public class Robot implements TelemetryProvider {
         voltage = voltageSensor.getVoltage();
 
         // ===== PHASE 2: CALCULATIONS =====
-        // Handle articulation state machine (Robot-level behavior)
-        switch (articulation) {
+        // Handle Robot-level behaviors (multi-subsystem coordination)
+        switch (behavior) {
             case MANUAL:
                 // Subsystems controlled directly by DriverControls
-                break;
-
-            case INTAKE:
-                handleIntakeArticulation();
-                break;
-
-            case TRANSIT:
-                handleTransitArticulation();
+                // Nothing to coordinate at Robot level
                 break;
 
             case TARGETING:
-                handleTargetingArticulation();
-                break;
-
-            case LAUNCHING:
-                handleLaunchingArticulation();
+                handleTargetingBehavior();
                 break;
 
             case LAUNCH_ALL:
-                handleLaunchAllArticulation();
+                handleLaunchAllBehavior();
                 break;
         }
 
@@ -195,131 +194,65 @@ public class Robot implements TelemetryProvider {
         }
     }
 
-    // ==================== ARTICULATION HANDLERS ====================
+    // ==================== BEHAVIOR HANDLERS ====================
 
-    public void handleIntakeArticulation() {
-        // Run intake and loader belt together
-        intake.on();
-        loader.runBelt();
+    public static int targetHeadingDegrees = 45;
 
-        // Auto-stop when full
-        if (loader.isFull()) {
-            intake.off();
-            loader.stopBelt();
-            articulate(Articulation.MANUAL);
-            shotsRemaining = 3;
-        }
-    }
-
-    private void handleTransitArticulation() {
-        // Everything off, just driving
-        intake.off();
-        loader.stopBelt();
-    }
-
-    public int headingDegrees = 45;
-
-    public void handleTargetingArticulation() {
+    private void handleTargetingBehavior() {
         // Two-phase targeting: IMU rough turn, then vision fine tune
-        switch (launchSequenceState) {
+        switch (targetingState) {
             case IDLE:
                 // Start with IMU turn toward target area
-                // TODO: Get target heading from field position
-                driveTrain.turnToHeading(headingDegrees, 0.7);
-                launchSequenceState = LaunchSequenceState.TARGETING_IMU;
+                driveTrain.turnToHeading(targetHeadingDegrees, 0.7);
+                targetingState = TargetingState.TURNING_IMU;
                 break;
 
-            case TARGETING_IMU:
+            case TURNING_IMU:
                 if (driveTrain.isTurnComplete()) {
-                    launchSequenceState = LaunchSequenceState.TARGETING_VISION;
+                    // IMU turn complete, start vision targeting
+                    if (vision.hasTarget()) {
+                        driveTrain.turnToTarget(vision.getTx(), 0.5);
+                        targetingState = TargetingState.TURNING_VISION;
+                    } else {
+                        // No target visible, complete
+                        targetingState = TargetingState.IDLE;
+                        behavior = Behavior.MANUAL;
+                    }
                 }
                 break;
 
-            case TARGETING_VISION:
+            case TURNING_VISION:
+                // Keep updating target while turning
                 if (vision.hasTarget()) {
                     driveTrain.turnToTarget(vision.getTx(), 0.5);
-                    if (driveTrain.isTurnComplete()) {
-                        launchSequenceState = LaunchSequenceState.IDLE;
-                        articulate(Articulation.MANUAL);
-                    }
-                } else {
-                    // No target visible, give up
-                    launchSequenceState = LaunchSequenceState.IDLE;
-                    articulate(Articulation.MANUAL);
+                }
+                if (driveTrain.isTurnComplete()) {
+                    targetingState = TargetingState.IDLE;
+                    behavior = Behavior.MANUAL;
                 }
                 break;
-
-            default:
-                launchSequenceState = LaunchSequenceState.IDLE;
         }
     }
 
-    private void handleLaunchingArticulation() {
-        // Single ball launch sequence
-        switch (launchSequenceState) {
-            case IDLE:
-                if (vision.hasTarget()) {
-                    launcher.prepareToLaunch(vision.getDistanceToTarget());
-                    launchSequenceState = LaunchSequenceState.SPINNING_UP;
-                } else {
-                    // No target, use default speed
-                    launcher.prepareToLaunchAtSpeed(Launcher.MIN_LAUNCH_SPEED);
-                    launchSequenceState = LaunchSequenceState.SPINNING_UP;
-                }
-                break;
-
-            case SPINNING_UP:
-                if (true) {
-                    launchSequenceState = LaunchSequenceState.FIRING;
-                }
-                break;
-
-            case FIRING:
-                launcher.fire();
-                if (launcher.getState() == Launcher.LaunchState.COOLDOWN) {
-                    launchSequenceState = LaunchSequenceState.COMPLETE;
-                }
-                break;
-
-            case COMPLETE:
-                //launcher.abort();
-                launchSequenceState = LaunchSequenceState.IDLE;
-                articulate(Articulation.MANUAL);
-                break;
-
-            default:
-                launchSequenceState = LaunchSequenceState.IDLE;
-        }
-    }
-
-    private int shotsRemaining = 3;
-
-    public void handleLaunchAllArticulation() {
+    private void handleLaunchAllBehavior() {
         // Launch all balls in sequence
-        switch (launchSequenceState) {
+        // Note: Launcher claims belt and suppresses intake automatically
+        switch (launchAllState) {
             case IDLE:
                 if (loader.isEmpty()) {
-                    // No balls to launch
-                    articulate(Articulation.MANUAL);
+                    behavior = Behavior.MANUAL;
                     return;
                 }
-                if (vision.hasTarget()) {
-                    launcher.prepareToLaunch(vision.getDistanceToTarget());
-                } else {
-                    launcher.prepareToLaunchAtSpeed(Launcher.MIN_LAUNCH_SPEED);
-                }
-                launchSequenceState = LaunchSequenceState.SPINNING_UP;
+                // Start spinning up - launcher pulls distance from Vision
+                launcher.setBehavior(Launcher.Behavior.SPINNING);
+                shotsRemaining = loader.getBallCount();
+                launchAllState = LaunchAllState.SPINNING_UP;
                 break;
 
             case SPINNING_UP:
-                if (launcher.isReady()) { //&& loader.isBallAtBack()
-                    launchSequenceState = LaunchSequenceState.FIRING;
-                }/* else if (launcher.isReady()) {
-                    // Need to feed a ball first
-                    loader.feedBall();
-                    launchSequenceState = LaunchSequenceState.FEEDING_NEXT;
-                    launchTimer = futureTime(1.0);
-                }*/
+                if (launcher.isReady()) {
+                    launchAllState = LaunchAllState.FIRING;
+                }
                 break;
 
             case FIRING:
@@ -327,58 +260,57 @@ public class Robot implements TelemetryProvider {
                 if (launcher.getState() == Launcher.LaunchState.COOLDOWN) {
                     shotsRemaining--;
                     if (shotsRemaining <= 0 || loader.isEmpty()) {
-                        launchSequenceState = LaunchSequenceState.COMPLETE;
+                        launchAllState = LaunchAllState.COMPLETE;
                     } else {
-                        loader.feedBall();
+                        // Belt is already claimed by launcher, just wait for next ball
                         launchTimer = futureTime(FEED_DELAY_SECONDS);
-                        launchSequenceState = LaunchSequenceState.FEEDING_NEXT;
+                        launchAllState = LaunchAllState.FEEDING_NEXT;
                     }
                 }
                 break;
 
             case FEEDING_NEXT:
                 if (isPast(launchTimer) && loader.isBallAtBack()) {
-                    loader.stopBelt();
-                    launchSequenceState = LaunchSequenceState.FIRING;
-                }/* else if (isPast(launchTimer) && loader.isEmpty()) {
-                    // No more balls
-                    loader.stopBelt();
-                    launchSequenceState = LaunchSequenceState.COMPLETE;
-                }*/
+                    launchAllState = LaunchAllState.FIRING;
+                }
                 break;
 
             case COMPLETE:
-                launcher.abort();
-                loader.stopBelt();
-                launchSequenceState = LaunchSequenceState.IDLE;
-                articulate(Articulation.MANUAL);
+                launcher.setBehavior(Launcher.Behavior.IDLE);
+                launchAllState = LaunchAllState.IDLE;
+                behavior = Behavior.MANUAL;
                 break;
-
-            /*default:
-                launchSequenceState = LaunchSequenceState.IDLE;*/
         }
     }
 
     // ==================== PUBLIC METHODS ====================
 
     /**
-     * Request a new articulation (high-level robot behavior).
+     * Set the robot-level behavior (multi-subsystem coordination).
      *
-     * @param newArticulation The desired articulation
+     * @param newBehavior The desired behavior
      */
-    public void articulate(Articulation newArticulation) {
-        if (articulation != newArticulation) {
-            previousArticulation = articulation;
-            articulation = newArticulation;
-            launchSequenceState = LaunchSequenceState.IDLE;
+    public void setBehavior(Behavior newBehavior) {
+        if (behavior != newBehavior) {
+            // Reset state machines when switching
+            targetingState = TargetingState.IDLE;
+            launchAllState = LaunchAllState.IDLE;
+            behavior = newBehavior;
         }
     }
 
     /**
-     * Get current articulation.
+     * Get current robot-level behavior.
      */
-    public Articulation getArticulation() {
-        return articulation;
+    public Behavior getBehavior() {
+        return behavior;
+    }
+
+    /**
+     * Check if robot is in manual mode (subsystems controlled directly).
+     */
+    public boolean isManualMode() {
+        return behavior == Behavior.MANUAL;
     }
 
     /**
@@ -410,8 +342,9 @@ public class Robot implements TelemetryProvider {
      * Reset all subsystem states.
      */
     public void resetStates() {
-        articulation = Articulation.MANUAL;
-        launchSequenceState = LaunchSequenceState.IDLE;
+        behavior = Behavior.MANUAL;
+        targetingState = TargetingState.IDLE;
+        launchAllState = LaunchAllState.IDLE;
         for (Subsystem subsystem : subsystems) {
             subsystem.resetStates();
         }
@@ -426,12 +359,18 @@ public class Robot implements TelemetryProvider {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
-        telemetry.put("Articulation", articulation);
+        telemetry.put("Behavior", behavior);
         telemetry.put("Alliance", isRedAlliance ? "RED" : "BLUE");
         telemetry.put("Balls", loader.getBallCount() + "/" + Loader.MAX_BALLS);
 
         if (debug) {
-            telemetry.put("Launch Seq State", launchSequenceState);
+            if (behavior == Behavior.TARGETING) {
+                telemetry.put("Targeting State", targetingState);
+            }
+            if (behavior == Behavior.LAUNCH_ALL) {
+                telemetry.put("Launch State", launchAllState);
+                telemetry.put("Shots Remaining", shotsRemaining);
+            }
             telemetry.put("Voltage", String.format("%.1f V", voltage));
         }
 

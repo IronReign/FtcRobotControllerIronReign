@@ -142,7 +142,7 @@ public class Lebot2_6832 extends OpMode {
 
         // If starting in TeleOp, ensure manual control
         if (!gameState.isAutonomous()) {
-            robot.articulate(Robot.Articulation.MANUAL);
+            robot.setBehavior(Robot.Behavior.MANUAL);
         }
     }
 
@@ -225,8 +225,7 @@ public class Lebot2_6832 extends OpMode {
         telemetry.addLine();
         telemetry.addData("Forward/Backward", -gamepad1.left_stick_y);
         telemetry.addData("Left/Right", -gamepad1.right_stick_x);
-        telemetry.addData("Launch All States", robot.getArticulation());
-        telemetry.addData("Articulation", robot.launchSequenceState);
+        telemetry.addData("Behavior", robot.getBehavior());
 
         // Robot telemetry
         handleTelemetry(robot.getTelemetry(debugTelemetryEnabled),

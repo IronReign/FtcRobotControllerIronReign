@@ -20,9 +20,11 @@ import java.util.Map;
  * - Front distance sensor: detects balls entering the chamber
  * - Back distance sensor: detects balls ready to launch
  *
- * The side belt has dual roles:
- * 1. During INTAKE: runs to pull balls deeper, making room for more
- * 2. During LAUNCH: runs to feed the next ball to the paddle
+ * BELT OWNERSHIP:
+ * The belt is a shared resource between Intake and Launcher.
+ * - INTAKE: Runs belt to pull balls deeper (requested by Intake)
+ * - LAUNCHER: Runs belt to feed balls to paddle (claimed by Launcher)
+ * Priority: LAUNCHER > INTAKE > NONE
  *
  * Ball counting logic:
  * - Front sensor detects new balls entering
@@ -31,7 +33,7 @@ import java.util.Map;
  *
  * THREE-PHASE UPDATE:
  * - readSensors(): Refresh distance sensors (I2C)
- * - calc(): Ball counting logic, set belt power
+ * - calc(): Ball counting logic, belt ownership resolution
  * - act(): Flush motor command
  */
 @Config(value = "Lebot2_Loader")
@@ -47,6 +49,16 @@ public class Loader implements Subsystem {
     public static double FEED_POWER = 0.8; // Slower for controlled feeding
     public static double BALL_DETECT_THRESHOLD_CM = 10.0; // Distance indicating ball present
     public static int MAX_BALLS = 3;
+
+    // Belt ownership - priority: LAUNCHER > INTAKE > NONE
+    public enum BeltOwner {
+        NONE,       // Belt stopped
+        INTAKE,     // Intake is using belt to pull balls in
+        LAUNCHER    // Launcher is using belt to feed balls (highest priority)
+    }
+    private BeltOwner beltOwner = BeltOwner.NONE;
+    private boolean intakeRequestsBelt = false;
+    private boolean launcherClaimsBelt = false;
 
     // State
     public enum LoaderState {
@@ -64,7 +76,7 @@ public class Loader implements Subsystem {
     private boolean ballAtBack = false;
     private boolean wasBallAtFront = false; // For edge detection
 
-    // Belt control
+    // Belt power (resolved from ownership)
     private double beltPower = 0;
 
     public Loader(HardwareMap hardwareMap) {
@@ -112,6 +124,18 @@ public class Loader implements Subsystem {
             state = LoaderState.HAS_BALLS;
         }
 
+        // Resolve belt ownership (priority: LAUNCHER > INTAKE > NONE)
+        if (launcherClaimsBelt) {
+            beltOwner = BeltOwner.LAUNCHER;
+            beltPower = FEED_POWER;
+        } else if (intakeRequestsBelt) {
+            beltOwner = BeltOwner.INTAKE;
+            beltPower = BELT_POWER;
+        } else {
+            beltOwner = BeltOwner.NONE;
+            beltPower = 0;
+        }
+
         // Queue belt power (will be flushed in act())
         beltMotor.setPower(beltPower);
     }
@@ -122,34 +146,92 @@ public class Loader implements Subsystem {
         beltMotor.flush();
     }
 
+    // ==================== BELT OWNERSHIP ====================
+
+    /**
+     * Request belt for intake operations.
+     * Belt will run unless Launcher has claimed it.
+     */
+    public void requestBeltForIntake() {
+        intakeRequestsBelt = true;
+    }
+
+    /**
+     * Release intake's belt request.
+     */
+    public void releaseBeltFromIntake() {
+        intakeRequestsBelt = false;
+    }
+
+    /**
+     * Claim belt for launcher operations (highest priority).
+     * This will override intake's request.
+     */
+    public void claimBeltForLauncher() {
+        launcherClaimsBelt = true;
+    }
+
+    /**
+     * Release launcher's belt claim.
+     * Belt will return to intake if intake still requests it.
+     */
+    public void releaseBeltFromLauncher() {
+        launcherClaimsBelt = false;
+    }
+
+    /**
+     * Get current belt owner.
+     */
+    public BeltOwner getBeltOwner() {
+        return beltOwner;
+    }
+
+    /**
+     * Check if launcher currently owns the belt.
+     */
+    public boolean isLauncherUsingBelt() {
+        return beltOwner == BeltOwner.LAUNCHER;
+    }
+
+    // ==================== LEGACY METHODS (for compatibility) ====================
+
     /**
      * Run belt to pull balls toward rear (used during intake).
+     * @deprecated Use requestBeltForIntake() instead
      */
     public void runBelt() {
-        beltPower = BELT_POWER;
+        intakeRequestsBelt = true;
     }
 
     /**
      * Run belt slowly to feed next ball (used during launch sequence).
+     * @deprecated Use claimBeltForLauncher() instead
      */
     public void feedBall() {
-        beltPower = FEED_POWER;
+        launcherClaimsBelt = true;
     }
 
     /**
      * Stop the belt.
+     * @deprecated Use releaseBeltFromIntake() or releaseBeltFromLauncher() instead
      */
     public void stopBelt() {
-        beltPower = 0;
+        intakeRequestsBelt = false;
+        launcherClaimsBelt = false;
     }
 
     /**
-     * Set belt to a specific power.
+     * Set belt to a specific power (bypasses ownership - use for manual control only).
      *
      * @param power Belt power (-1 to 1). Positive = toward rear (normal).
      */
     public void setBeltPower(double power) {
-        beltPower = power;
+        // For manual override, claim as launcher (highest priority) if power is non-zero
+        if (power != 0) {
+            launcherClaimsBelt = true;
+        } else {
+            launcherClaimsBelt = false;
+        }
     }
 
     /**
@@ -235,13 +317,18 @@ public class Loader implements Subsystem {
 
     @Override
     public void stop() {
+        intakeRequestsBelt = false;
+        launcherClaimsBelt = false;
+        beltOwner = BeltOwner.NONE;
         beltPower = 0;
         beltMotor.stop();  // Immediate stop, bypasses lazy pattern
     }
 
     @Override
     public void resetStates() {
-        stopBelt();
+        intakeRequestsBelt = false;
+        launcherClaimsBelt = false;
+        beltOwner = BeltOwner.NONE;
         // Don't reset ball count - that persists
     }
 
@@ -256,13 +343,16 @@ public class Loader implements Subsystem {
 
         telemetry.put("State", state);
         telemetry.put("Ball Count", ballCount + "/" + MAX_BALLS);
-        telemetry.put("Ball at Back", ballAtBack ? "YES" : "no");
+        telemetry.put("Belt Owner", beltOwner);
 
         if (debug) {
             telemetry.put("Ball at Front", ballAtFront ? "YES" : "no");
+            telemetry.put("Ball at Back", ballAtBack ? "YES" : "no");
             telemetry.put("Front Dist (cm)", String.format("%.1f", frontDistance));
             telemetry.put("Back Dist (cm)", String.format("%.1f", backDistance));
             telemetry.put("Belt Power", String.format("%.2f", beltPower));
+            telemetry.put("Intake Requests", intakeRequestsBelt);
+            telemetry.put("Launcher Claims", launcherClaimsBelt);
         }
 
         return telemetry;
