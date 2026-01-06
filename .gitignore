@@ -81,3 +81,4 @@ lint/tmp/
 # lint/reports/
 
 TeamCode/build.gradle
+.claude/settings.local.json
