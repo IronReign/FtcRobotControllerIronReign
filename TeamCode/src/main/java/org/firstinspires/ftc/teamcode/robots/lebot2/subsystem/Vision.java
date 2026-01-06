@@ -12,19 +12,24 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Vision subsystem - wraps the Limelight for target detection.
+ * Vision subsystem - wraps the Limelight for target detection and field localization.
  *
  * The Limelight is used for:
- * - Detecting AprilTags (alliance-specific targets)
- * - Providing tx (horizontal offset) for fine targeting
- * - Providing ty (vertical offset) for distance calculation
- * - Optional: Bot pose via AprilTag localization
+ * - Detecting AprilTags on goals (Blue=Tag20, Red=Tag24)
+ * - Providing tx (horizontal offset) for fine targeting/aiming
+ * - Providing botpose for field localization and distance calculation
  *
- * Pipeline switching allows detecting different alliance colors.
+ * Distance Calculation Strategy:
+ * Uses botpose (robot's field position from AprilTag localization) combined with
+ * known goal positions to calculate distance. This is more robust than ty-based
+ * trigonometry because it:
+ * - Works regardless of camera pitch angle
+ * - Handles oblique viewing angles automatically
+ * - Allows camera servo to point anywhere (ball detection, goal tracking)
  *
  * THREE-PHASE UPDATE:
  * - readSensors(): Nothing needed (Limelight is USB, not I2C)
- * - calc(): Read latest Limelight result, extract target data
+ * - calc(): Read latest Limelight result, compute distance from botpose
  * - act(): Nothing needed (read-only subsystem)
  */
 @Config(value = "Lebot2_Vision")
@@ -37,20 +42,25 @@ public class Vision implements Subsystem {
     public static int PIPELINE_BLUE = 0;
     public static int PIPELINE_RED = 1;
 
-    // Limelight mounting parameters (for distance calculation)
-    public static double MOUNT_ANGLE_DEGREES = 29.5;  // Angle from horizontal
-    public static double MOUNT_HEIGHT_METERS = 0.3048; // 12 inches
-    public static double TARGET_HEIGHT_METERS = 0.757; // ~29.8 inches
+    // DECODE Field Goal Positions (meters, from field center)
+    // Source: https://downloads.limelightvision.io/models/ftc2025DECODE.fmap
+    public static final double BLUE_GOAL_X = -1.4827;  // Tag 20
+    public static final double BLUE_GOAL_Y = -1.4133;
+    public static final double RED_GOAL_X = -1.4827;   // Tag 24
+    public static final double RED_GOAL_Y = 1.4133;
 
     // State
     private boolean isRedAlliance = true;
     private int currentPipeline = PIPELINE_RED;
     private boolean hasValidTarget = false;
-    private double tx = 0;  // Horizontal offset (degrees)
+    private boolean hasBotPose = false;
+    private double tx = 0;  // Horizontal offset (degrees) - for aiming
     private double ty = 0;  // Vertical offset (degrees)
     private double ta = 0;  // Target area (0-100% of image)
     private Pose3D botPose = null;
-    private double distanceToTarget = 0; // Calculated from ty
+    private double distanceToGoal = 0;  // Calculated from botpose + known goal position
+    private double robotX = 0;  // Robot field position (meters)
+    private double robotY = 0;
 
     public Vision(HardwareMap hardwareMap) {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -78,15 +88,30 @@ public class Vision implements Subsystem {
             ta = result.getTa();
             botPose = result.getBotpose_MT2();
 
-            // Calculate distance from ty using trigonometry
-            distanceToTarget = calculateDistanceFromTy(ty);
+            // Calculate distance using botpose (field localization)
+            if (botPose != null) {
+                hasBotPose = true;
+                robotX = botPose.getPosition().x;
+                robotY = botPose.getPosition().y;
+
+                // Get the appropriate goal position based on alliance
+                double goalX = isRedAlliance ? RED_GOAL_X : BLUE_GOAL_X;
+                double goalY = isRedAlliance ? RED_GOAL_Y : BLUE_GOAL_Y;
+
+                // Euclidean distance from robot to goal
+                distanceToGoal = Math.hypot(goalX - robotX, goalY - robotY);
+            } else {
+                hasBotPose = false;
+                distanceToGoal = 0;
+            }
         } else {
             hasValidTarget = false;
+            hasBotPose = false;
             tx = 0;
             ty = 0;
             ta = 0;
             botPose = null;
-            distanceToTarget = 0;
+            distanceToGoal = 0;
         }
     }
 
@@ -96,30 +121,18 @@ public class Vision implements Subsystem {
     }
 
     /**
-     * Calculate horizontal distance to target using vertical angle.
-     *
-     * Uses the formula:
-     * distance = (targetHeight - lensHeight) / tan(mountAngle + ty)
-     *
-     * @param ty Vertical offset from Limelight (degrees)
-     * @return Distance in meters
-     */
-    public double calculateDistanceFromTy(double ty) {
-        double angleToTarget = Math.toRadians(MOUNT_ANGLE_DEGREES + ty);
-        double heightDiff = TARGET_HEIGHT_METERS - MOUNT_HEIGHT_METERS;
-
-        if (Math.tan(angleToTarget) <= 0) {
-            return 0; // Invalid angle
-        }
-
-        return heightDiff / Math.tan(angleToTarget);
-    }
-
-    /**
      * Check if Limelight has a valid target in view.
      */
     public boolean hasTarget() {
         return hasValidTarget;
+    }
+
+    /**
+     * Check if we have a valid botpose for field localization.
+     * Distance calculations require botpose.
+     */
+    public boolean hasBotPose() {
+        return hasBotPose;
     }
 
     /**
@@ -150,12 +163,29 @@ public class Vision implements Subsystem {
     }
 
     /**
-     * Get calculated distance to target.
+     * Get calculated distance to goal.
+     * Uses botpose field localization + known goal positions.
      *
-     * @return Distance in meters
+     * @return Distance in meters (0 if no valid botpose)
      */
-    public double getDistanceToTarget() {
-        return distanceToTarget;
+    public double getDistanceToGoal() {
+        return distanceToGoal;
+    }
+
+    /**
+     * Get robot's X position on field (from botpose).
+     * @return X in meters from field center
+     */
+    public double getRobotX() {
+        return robotX;
+    }
+
+    /**
+     * Get robot's Y position on field (from botpose).
+     * @return Y in meters from field center
+     */
+    public double getRobotY() {
+        return robotY;
     }
 
     /**
@@ -221,20 +251,25 @@ public class Vision implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
-        telemetry.put("Has Target", hasValidTarget ? "YES" : "no");
         telemetry.put("Alliance", isRedAlliance ? "RED" : "BLUE");
+        telemetry.put("Has Target", hasValidTarget ? "YES" : "no");
+        telemetry.put("Has BotPose", hasBotPose ? "YES" : "no");
+
+        if (hasBotPose) {
+            telemetry.put("Distance to Goal", String.format("%.2f m (%.1f in)", distanceToGoal, distanceToGoal * 39.37));
+            telemetry.put("Robot Pos", String.format("(%.2f, %.2f) m", robotX, robotY));
+        }
 
         if (hasValidTarget) {
-            telemetry.put("tx (horiz)", String.format("%.1f°", tx));
-            telemetry.put("Distance", String.format("%.2f m", distanceToTarget));
+            telemetry.put("tx (aim)", String.format("%.1f°", tx));
         }
 
         if (debug) {
             telemetry.put("Pipeline", currentPipeline);
-            telemetry.put("ty (vert)", String.format("%.1f°", ty));
+            telemetry.put("ty", String.format("%.1f°", ty));
             telemetry.put("ta (area)", String.format("%.1f%%", ta));
             if (botPose != null) {
-                telemetry.put("Bot Pose", botPose.toString());
+                telemetry.put("Full BotPose", botPose.toString());
             }
         }
 

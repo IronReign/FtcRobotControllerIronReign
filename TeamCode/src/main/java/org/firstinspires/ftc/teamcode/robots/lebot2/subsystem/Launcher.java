@@ -228,8 +228,8 @@ public class Launcher implements Subsystem {
         // Update target speed from Vision when spinning
         // This allows continuous speed adjustment as robot moves
         if (behavior == Behavior.SPINNING) {
-            if (vision != null && vision.hasTarget()) {
-                targetSpeed = calculateLaunchSpeed(vision.getDistanceToTarget());
+            if (vision != null && vision.hasBotPose()) {
+                targetSpeed = calculateLaunchSpeed(vision.getDistanceToGoal());
             } else {
                 targetSpeed = MIN_LAUNCH_SPEED;
             }
