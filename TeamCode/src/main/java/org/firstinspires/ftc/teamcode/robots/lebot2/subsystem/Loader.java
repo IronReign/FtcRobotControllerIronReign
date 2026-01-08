@@ -51,6 +51,7 @@ public class Loader implements Subsystem {
     public static double FEED_POWER = -0.8; // Slower for controlled feeding
     public static double BALL_DETECT_THRESHOLD_CM = 10.0; // Distance indicating ball present
     public static int MAX_BALLS = 3;
+    public static long FULL_CONFIRM_MS = 100; // Debounce time for isFull virtual sensor
 
     // Belt ownership - priority: LAUNCHER > INTAKE > NONE
     public enum BeltOwner {
@@ -77,6 +78,10 @@ public class Loader implements Subsystem {
     private boolean ballAtFront = false;
     private boolean ballAtBack = false;
     private boolean wasBallAtFront = false; // For edge detection
+
+    // Virtual sensor state (time-confirmed)
+    private boolean isFullConfirmed = false;  // Debounced isFull virtual sensor
+    private long fullConditionStartMs = 0;    // When raw full condition started
 
     // Belt power (resolved from ownership)
     private double beltPower = 0;
@@ -125,6 +130,23 @@ public class Loader implements Subsystem {
             state = LoaderState.FULL;
         } else {
             state = LoaderState.HAS_BALLS;
+        }
+
+        // Compute time-confirmed isFull virtual sensor (debouncing)
+        // Raw condition: state is FULL and back sensor confirms ball present
+        boolean rawFull = (state == LoaderState.FULL) && ballAtBack;
+
+        if (rawFull) {
+            if (fullConditionStartMs == 0) {
+                // Rising edge - start timing
+                fullConditionStartMs = System.currentTimeMillis();
+            }
+            // Confirm after debounce period
+            isFullConfirmed = (System.currentTimeMillis() - fullConditionStartMs) >= FULL_CONFIRM_MS;
+        } else {
+            // Condition not met - reset timer and clear confirmed state
+            fullConditionStartMs = 0;
+            isFullConfirmed = false;
         }
 
         // Resolve belt ownership (priority: LAUNCHER > INTAKE > NONE)
@@ -265,11 +287,23 @@ public class Loader implements Subsystem {
     }
 
     /**
-     * Check if chamber is full.
+     * Check if chamber is full (time-confirmed virtual sensor).
+     * Returns true only after the full condition has been stable for FULL_CONFIRM_MS.
+     * This prevents flickering when balls are at sensor thresholds.
      *
-     * @return true if ballCount == MAX_BALLS
+     * @return true if confirmed full (debounced)
      */
     public boolean isFull() {
+        return isFullConfirmed;
+    }
+
+    /**
+     * Check if chamber is full (raw, unconfirmed).
+     * Use for debugging or when immediate response is needed.
+     *
+     * @return true if ballCount >= MAX_BALLS (no debounce)
+     */
+    public boolean isFullRaw() {
         return state == LoaderState.FULL;
     }
 
@@ -332,7 +366,9 @@ public class Loader implements Subsystem {
         intakeRequestsBelt = false;
         launcherClaimsBelt = false;
         beltOwner = BeltOwner.NONE;
-        // Don't reset ball count - that persists
+        // Reset virtual sensor timing (but not ball count - that persists)
+        fullConditionStartMs = 0;
+        isFullConfirmed = false;
     }
 
     @Override
@@ -346,11 +382,13 @@ public class Loader implements Subsystem {
 
         telemetry.put("State", state);
         telemetry.put("Ball Count", ballCount + "/" + MAX_BALLS);
+        telemetry.put("isFull", isFullConfirmed ? "YES" : "no");
         telemetry.put("Belt Owner", beltOwner);
 
         if (debug) {
             telemetry.put("Ball at Front", ballAtFront ? "YES" : "no");
             telemetry.put("Ball at Back", ballAtBack ? "YES" : "no");
+            telemetry.put("isFullRaw", (state == LoaderState.FULL) ? "YES" : "no");
             telemetry.put("Front Dist (cm)", String.format("%.1f", frontDistance));
             telemetry.put("Back Dist (cm)", String.format("%.1f", backDistance));
             telemetry.put("Belt Power", String.format("%.2f", beltPower));
