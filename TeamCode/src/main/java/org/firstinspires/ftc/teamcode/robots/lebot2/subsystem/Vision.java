@@ -80,7 +80,7 @@ public class Vision implements Subsystem {
         limelight.pipelineSwitch(currentPipeline);
         limelight.start();
 
-        tilt = hardwareMap.get(LazyServo.class, "tilt");
+        tilt = new LazyServo(hardwareMap, "tilt");
         tilt.setPosition(servoNormalize(tiltTicks));
 
     }
