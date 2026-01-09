@@ -28,6 +28,14 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.wrapA
  * at the front. It cannot strafe, so the strafe parameter is ignored.
  *
  * Uses the Pinpoint localizer for accurate odometry instead of motor encoders.
+ *
+ * THREE-PHASE UPDATE:
+ * - readSensors(): Cache IMU heading (I2C read)
+ * - calc(): PID turns using cached heading
+ * - act(): Nothing - drive motors are NOT wrapped (owned by RoadRunner)
+ *
+ * Note: Drive motors are controlled directly because RoadRunner needs
+ * immediate motor access during trajectory following.
  */
 @Config(value = "Lebot2_TankDrive")
 public class TankDrive implements DriveTrainBase {
@@ -38,6 +46,9 @@ public class TankDrive implements DriveTrainBase {
     private final BNO055IMU imu;
     // TODO: Add Pinpoint localizer when hardware is ready
     // private final PinpointLocalizer localizer;
+
+    // Cached sensor values (refreshed in readSensors)
+    private double cachedHeading = 0;
 
     // PID for heading control
     private final PIDController headingPID;
@@ -91,13 +102,22 @@ public class TankDrive implements DriveTrainBase {
         // localizer = new PinpointLocalizer(hardwareMap, IN_PER_TICK, pose);
     }
 
+    // ==================== THREE-PHASE METHODS ====================
+
     @Override
-    public void update(Canvas fieldOverlay) {
-        // Update localizer
-        // TODO: localizer.update();
+    public void readSensors() {
+        // PHASE 1: Cache IMU heading (I2C read)
+        cachedHeading = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+    }
+
+    @Override
+    public void calc(Canvas fieldOverlay) {
+        // PHASE 2: Handle turning state machine using cached heading
+
+        // TODO: Update localizer
+        // localizer.update();
         // pose = localizer.getPose();
 
-        // Handle turning state machine
         switch (turnState) {
             case IDLE:
                 // Nothing to do
@@ -111,6 +131,12 @@ public class TankDrive implements DriveTrainBase {
                 executeTurnToTarget();
                 break;
         }
+    }
+
+    @Override
+    public void act() {
+        // PHASE 3: Nothing - drive motors are not wrapped
+        // Motor writes happen directly in calc() because RoadRunner needs immediate access
     }
 
     private void executeTurnToHeading() {
@@ -224,7 +250,8 @@ public class TankDrive implements DriveTrainBase {
 
     @Override
     public double getHeadingDegrees() {
-        return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+        // Return cached heading from readSensors() - no I2C call here
+        return cachedHeading;
     }
 
     @Override

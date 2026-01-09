@@ -2,12 +2,13 @@ package org.firstinspires.ftc.teamcode.robots.lebot2.subsystem;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.robots.lebot2.util.CachedDistanceSensor;
+import org.firstinspires.ftc.teamcode.robots.lebot2.util.LazyMotor;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -20,28 +21,47 @@ import java.util.Map;
  * - Front distance sensor: detects balls entering the chamber
  * - Back distance sensor: detects balls ready to launch
  *
- * The side belt has dual roles:
- * 1. During INTAKE: runs to pull balls deeper, making room for more
- * 2. During LAUNCH: runs to feed the next ball to the paddle
+ * BELT OWNERSHIP:
+ * The belt is a shared resource between Intake and Launcher.
+ * - INTAKE: Runs belt to pull balls deeper (requested by Intake)
+ * - LAUNCHER: Runs belt to feed balls to paddle (claimed by Launcher)
+ * Priority: LAUNCHER > INTAKE > NONE
  *
  * Ball counting logic:
  * - Front sensor detects new balls entering
  * - Back sensor detects balls at the launch position
  * - Count is decremented when Launcher fires a ball
+ *
+ * THREE-PHASE UPDATE:
+ * - readSensors(): Refresh distance sensors (I2C)
+ * - calc(): Ball counting logic, belt ownership resolution
+ * - act(): Flush motor command
  */
 @Config(value = "Lebot2_Loader")
 public class Loader implements Subsystem {
 
-    // Hardware
-    private final DcMotorEx beltMotor;
-    private final Rev2mDistanceSensor frontSensor;
-    private final Rev2mDistanceSensor backSensor;
+    // Hardware (wrapped for three-phase pattern)
+    private final LazyMotor beltMotor;
+    private final CachedDistanceSensor frontSensor;
+    private final CachedDistanceSensor backSensor;
 
     // Configuration
-    public static double BELT_POWER = 1.0;
-    public static double FEED_POWER = 0.8; // Slower for controlled feeding
+    // Negative = move balls toward rear (intake/feed), Positive = eject forward
+    public static double BELT_POWER = -1.0;
+    public static double FEED_POWER = -0.8; // Slower for controlled feeding
     public static double BALL_DETECT_THRESHOLD_CM = 10.0; // Distance indicating ball present
     public static int MAX_BALLS = 3;
+    public static long FULL_CONFIRM_MS = 100; // Debounce time for isFull virtual sensor
+
+    // Belt ownership - priority: LAUNCHER > INTAKE > NONE
+    public enum BeltOwner {
+        NONE,       // Belt stopped
+        INTAKE,     // Intake is using belt to pull balls in
+        LAUNCHER    // Launcher is using belt to feed balls (highest priority)
+    }
+    private BeltOwner beltOwner = BeltOwner.NONE;
+    private boolean intakeRequestsBelt = false;
+    private boolean launcherClaimsBelt = false;
 
     // State
     public enum LoaderState {
@@ -59,25 +79,41 @@ public class Loader implements Subsystem {
     private boolean ballAtBack = false;
     private boolean wasBallAtFront = false; // For edge detection
 
-    // Belt control
+    // Virtual sensor state (time-confirmed)
+    private boolean isFullConfirmed = false;  // Debounced isFull virtual sensor
+    private long fullConditionStartMs = 0;    // When raw full condition started
+
+    // Belt power (resolved from ownership)
     private double beltPower = 0;
 
     public Loader(HardwareMap hardwareMap) {
-        beltMotor = hardwareMap.get(DcMotorEx.class, "conveyor");
+        beltMotor = new LazyMotor(hardwareMap, "conveyor");
+        beltMotor.setDirection(DcMotorSimple.Direction.REVERSE); // So negative = toward rear
         beltMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         beltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        frontSensor = hardwareMap.get(Rev2mDistanceSensor.class, "frontDist");
-        backSensor = hardwareMap.get(Rev2mDistanceSensor.class, "backDist");
+        frontSensor = new CachedDistanceSensor(hardwareMap, "frontDist", DistanceUnit.CM);
+        backSensor = new CachedDistanceSensor(hardwareMap, "backDist", DistanceUnit.CM);
+    }
+
+    // ==================== THREE-PHASE METHODS ====================
+
+    @Override
+    public void readSensors() {
+        // PHASE 1: Refresh I2C sensors
+        frontSensor.refresh();
+        backSensor.refresh();
     }
 
     @Override
-    public void update(Canvas fieldOverlay) {
-        // READ: Get sensor values
-        frontDistance = frontSensor.getDistance(DistanceUnit.CM);
-        backDistance = backSensor.getDistance(DistanceUnit.CM);
+    public void calc(Canvas fieldOverlay) {
+        // PHASE 2: Read cached values and process logic
 
-        // PROCESS: Determine ball positions
+        // Get cached sensor values
+        frontDistance = frontSensor.getDistance();
+        backDistance = backSensor.getDistance();
+
+        // Determine ball positions
         wasBallAtFront = ballAtFront;
         ballAtFront = frontDistance < BALL_DETECT_THRESHOLD_CM;
         ballAtBack = backDistance < BALL_DETECT_THRESHOLD_CM;
@@ -96,38 +132,131 @@ public class Loader implements Subsystem {
             state = LoaderState.HAS_BALLS;
         }
 
-        // WRITE: Apply belt power
+        // Compute time-confirmed isFull virtual sensor (debouncing)
+        // Raw condition: state is FULL and back sensor confirms ball present
+        boolean rawFull = (state == LoaderState.FULL) && ballAtBack;
+
+        if (rawFull) {
+            if (fullConditionStartMs == 0) {
+                // Rising edge - start timing
+                fullConditionStartMs = System.currentTimeMillis();
+            }
+            // Confirm after debounce period
+            isFullConfirmed = (System.currentTimeMillis() - fullConditionStartMs) >= FULL_CONFIRM_MS;
+        } else {
+            // Condition not met - reset timer and clear confirmed state
+            fullConditionStartMs = 0;
+            isFullConfirmed = false;
+        }
+
+        // Resolve belt ownership (priority: LAUNCHER > INTAKE > NONE)
+        if (launcherClaimsBelt) {
+            beltOwner = BeltOwner.LAUNCHER;
+            beltPower = FEED_POWER;
+        } else if (intakeRequestsBelt) {
+            beltOwner = BeltOwner.INTAKE;
+            beltPower = BELT_POWER;
+        } else {
+            beltOwner = BeltOwner.NONE;
+            beltPower = 0;
+        }
+
+        // Queue belt power (will be flushed in act())
         beltMotor.setPower(beltPower);
     }
 
+    @Override
+    public void act() {
+        // PHASE 3: Flush motor command
+        beltMotor.flush();
+    }
+
+    // ==================== BELT OWNERSHIP ====================
+
+    /**
+     * Request belt for intake operations.
+     * Belt will run unless Launcher has claimed it.
+     */
+    public void requestBeltForIntake() {
+        intakeRequestsBelt = true;
+    }
+
+    /**
+     * Release intake's belt request.
+     */
+    public void releaseBeltFromIntake() {
+        intakeRequestsBelt = false;
+    }
+
+    /**
+     * Claim belt for launcher operations (highest priority).
+     * This will override intake's request.
+     */
+    public void claimBeltForLauncher() {
+        launcherClaimsBelt = true;
+    }
+
+    /**
+     * Release launcher's belt claim.
+     * Belt will return to intake if intake still requests it.
+     */
+    public void releaseBeltFromLauncher() {
+        launcherClaimsBelt = false;
+    }
+
+    /**
+     * Get current belt owner.
+     */
+    public BeltOwner getBeltOwner() {
+        return beltOwner;
+    }
+
+    /**
+     * Check if launcher currently owns the belt.
+     */
+    public boolean isLauncherUsingBelt() {
+        return beltOwner == BeltOwner.LAUNCHER;
+    }
+
+    // ==================== LEGACY METHODS (for compatibility) ====================
+
     /**
      * Run belt to pull balls toward rear (used during intake).
+     * @deprecated Use requestBeltForIntake() instead
      */
     public void runBelt() {
-        beltPower = BELT_POWER;
+        intakeRequestsBelt = true;
     }
 
     /**
      * Run belt slowly to feed next ball (used during launch sequence).
+     * @deprecated Use claimBeltForLauncher() instead
      */
     public void feedBall() {
-        beltPower = FEED_POWER;
+        launcherClaimsBelt = true;
     }
 
     /**
      * Stop the belt.
+     * @deprecated Use releaseBeltFromIntake() or releaseBeltFromLauncher() instead
      */
     public void stopBelt() {
-        beltPower = 0;
+        intakeRequestsBelt = false;
+        launcherClaimsBelt = false;
     }
 
     /**
-     * Set belt to a specific power.
+     * Set belt to a specific power (bypasses ownership - use for manual control only).
      *
-     * @param power Belt power (-1 to 1). Positive = toward rear (normal).
+     * @param power Belt power (-1 to 1). Negative = toward rear, Positive = eject forward.
      */
     public void setBeltPower(double power) {
-        beltPower = power;
+        // For manual override, claim as launcher (highest priority) if power is non-zero
+        if (power != 0) {
+            launcherClaimsBelt = true;
+        } else {
+            launcherClaimsBelt = false;
+        }
     }
 
     /**
@@ -158,11 +287,23 @@ public class Loader implements Subsystem {
     }
 
     /**
-     * Check if chamber is full.
+     * Check if chamber is full (time-confirmed virtual sensor).
+     * Returns true only after the full condition has been stable for FULL_CONFIRM_MS.
+     * This prevents flickering when balls are at sensor thresholds.
      *
-     * @return true if ballCount == MAX_BALLS
+     * @return true if confirmed full (debounced)
      */
     public boolean isFull() {
+        return isFullConfirmed;
+    }
+
+    /**
+     * Check if chamber is full (raw, unconfirmed).
+     * Use for debugging or when immediate response is needed.
+     *
+     * @return true if ballCount >= MAX_BALLS (no debounce)
+     */
+    public boolean isFullRaw() {
         return state == LoaderState.FULL;
     }
 
@@ -213,14 +354,21 @@ public class Loader implements Subsystem {
 
     @Override
     public void stop() {
+        intakeRequestsBelt = false;
+        launcherClaimsBelt = false;
+        beltOwner = BeltOwner.NONE;
         beltPower = 0;
-        beltMotor.setPower(0);
+        beltMotor.stop();  // Immediate stop, bypasses lazy pattern
     }
 
     @Override
     public void resetStates() {
-        stopBelt();
-        // Don't reset ball count - that persists
+        intakeRequestsBelt = false;
+        launcherClaimsBelt = false;
+        beltOwner = BeltOwner.NONE;
+        // Reset virtual sensor timing (but not ball count - that persists)
+        fullConditionStartMs = 0;
+        isFullConfirmed = false;
     }
 
     @Override
@@ -234,13 +382,18 @@ public class Loader implements Subsystem {
 
         telemetry.put("State", state);
         telemetry.put("Ball Count", ballCount + "/" + MAX_BALLS);
-        telemetry.put("Ball at Back", ballAtBack ? "YES" : "no");
+        telemetry.put("isFull", isFullConfirmed ? "YES" : "no");
+        telemetry.put("Belt Owner", beltOwner);
 
         if (debug) {
             telemetry.put("Ball at Front", ballAtFront ? "YES" : "no");
+            telemetry.put("Ball at Back", ballAtBack ? "YES" : "no");
+            telemetry.put("isFullRaw", (state == LoaderState.FULL) ? "YES" : "no");
             telemetry.put("Front Dist (cm)", String.format("%.1f", frontDistance));
             telemetry.put("Back Dist (cm)", String.format("%.1f", backDistance));
             telemetry.put("Belt Power", String.format("%.2f", beltPower));
+            telemetry.put("Intake Requests", intakeRequestsBelt);
+            telemetry.put("Launcher Claims", launcherClaimsBelt);
         }
 
         return telemetry;

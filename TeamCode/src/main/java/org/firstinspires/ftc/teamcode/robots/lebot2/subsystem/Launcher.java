@@ -5,9 +5,9 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.robots.lebot2.util.LazyServo;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -22,22 +22,31 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
  * - Flywheel motor: spins up to calculated speed based on target distance
  * - Paddle servo: lifts balls into contact with the flywheel
  *
- * The paddle has dual roles:
- * - DOWN position: acts as a gate/stop for balls in the loader
- * - UP position: lifts ball into flywheel for launch
+ * BEHAVIOR PATTERN:
+ * User sets behavior via setBehavior():
+ * - IDLE: Flywheel off, paddle down (default)
+ * - SPINNING: Flywheel at speed, ready to fire. Speed auto-calculated from Vision.
  *
- * CRITICAL: The flywheel MUST be at target speed before the paddle lifts,
- * otherwise the ball will jam the flywheel.
+ * Call fire() when behavior is SPINNING and isReady() returns true.
  *
- * Launch Sequence State Machine:
- * IDLE → SPINNING_UP → READY → FIRING → COOLDOWN → IDLE
+ * INTERNAL STATE MACHINE (LaunchState):
+ * IDLE → SPINNING_UP → READY → FIRING → COOLDOWN → (back to READY or IDLE)
+ *
+ * The internal state handles the complexity of spin-up timing, firing sequence,
+ * and cooldown. Users only interact with Behavior and fire().
+ *
+ * THREE-PHASE UPDATE:
+ * - readSensors(): Nothing needed (motor velocity is SDK bulk-cached)
+ * - calc(): Update target speed from Vision, run state machine
+ * - act(): Flush servo command
  */
 @Config(value = "Lebot2_Launcher")
 public class Launcher implements Subsystem {
 
     // Hardware
-    private final DcMotorEx flywheel;
-    private final Servo paddle;
+    private final DcMotorEx flywheel;  // Not wrapped - SDK handles velocity control
+    private final DcMotorEx flywheelHelp;
+    private final LazyServo paddle;    // Wrapped for three-phase pattern
 
     // Paddle positions (servo units 0-1, converted from pulse widths)
     public static double PADDLE_DOWN = 0.167;  // ~1000µs - gate closed
@@ -58,7 +67,24 @@ public class Launcher implements Subsystem {
     public static double LAUNCH_ANGLE = 60;         // degrees
     public static double TARGET_HEIGHT = 0.711;     // meters
 
-    // State machine
+    // ==================== BEHAVIOR (user-facing) ====================
+
+    /**
+     * User-selectable launcher behaviors.
+     * Set via setBehavior(), query via getBehavior().
+     */
+    public enum Behavior {
+        IDLE,       // Flywheel off, paddle down (default)
+        SPINNING    // Flywheel at speed, ready to fire
+    }
+    private Behavior behavior = Behavior.IDLE;
+
+    // ==================== INTERNAL STATE MACHINE ====================
+
+    /**
+     * Internal state for launch sequence execution.
+     * Users don't set this directly - it's managed by the behavior.
+     */
     public enum LaunchState {
         IDLE,           // Flywheel off, paddle down
         SPINNING_UP,    // Flywheel ramping to speed
@@ -75,8 +101,13 @@ public class Launcher implements Subsystem {
     private boolean fireRequested = false;
     private boolean passThroughMode = false;
 
-    // Reference to Loader for coordinated feeding
+    // References to other subsystems for coordination
     private Loader loader = null;
+    private Intake intake = null;
+    private Vision vision = null;
+
+    // Track if we've claimed resources this firing cycle
+    private boolean resourcesClaimed = false;
 
     public Launcher(HardwareMap hardwareMap) {
         flywheel = hardwareMap.get(DcMotorEx.class, "shooter");
@@ -84,24 +115,142 @@ public class Launcher implements Subsystem {
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        paddle = hardwareMap.get(Servo.class, "paddle");
+        flywheelHelp = hardwareMap.get(DcMotorEx.class, "shooter helper");
+        flywheelHelp.setDirection(DcMotorEx.Direction.REVERSE);         //check if reversed or not
+        flywheelHelp.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flywheelHelp.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        paddle = new LazyServo(hardwareMap, "paddle");
         paddle.setPosition(PADDLE_DOWN);
+        paddle.flush();  // Apply initial position immediately
     }
 
     /**
      * Set reference to Loader for coordinated operations.
-     * Call this after both subsystems are created.
+     * Call this after all subsystems are created.
      */
     public void setLoader(Loader loader) {
         this.loader = loader;
     }
 
+    /**
+     * Set reference to Intake for suppression during firing.
+     * Call this after all subsystems are created.
+     */
+    public void setIntake(Intake intake) {
+        this.intake = intake;
+    }
+
+    /**
+     * Set reference to Vision for distance-based speed calculation.
+     * Call this after all subsystems are created.
+     */
+    public void setVision(Vision vision) {
+        this.vision = vision;
+    }
+
+    // ==================== BEHAVIOR CONTROL ====================
+
+    /**
+     * Set the launcher behavior.
+     *
+     * @param newBehavior IDLE or SPINNING
+     */
+    public void setBehavior(Behavior newBehavior) {
+        if (behavior != newBehavior) {
+            behavior = newBehavior;
+
+            // Handle behavior transitions
+            if (newBehavior == Behavior.IDLE) {
+                // Abort any ongoing launch sequence
+                releaseResources();
+                state = LaunchState.IDLE;
+                fireRequested = false;
+            } else if (newBehavior == Behavior.SPINNING) {
+                // Start spinning up
+                if (state == LaunchState.IDLE) {
+                    state = LaunchState.SPINNING_UP;
+                }
+            }
+        }
+    }
+
+    /**
+     * Get the current behavior.
+     */
+    public Behavior getBehavior() {
+        return behavior;
+    }
+
+    // ==================== RESOURCE MANAGEMENT ====================
+
+    /**
+     * Claim shared resources (belt and intake suppression).
+     * Called when entering a firing state.
+     */
+    private void claimResources() {
+        if (!resourcesClaimed) {
+            if (loader != null) {
+                loader.claimBeltForLauncher();
+            }
+            if (intake != null) {
+                intake.suppress();
+            }
+            resourcesClaimed = true;
+        }
+    }
+
+    /**
+     * Release shared resources (belt and intake suppression).
+     * Called when exiting firing states.
+     */
+    private void releaseResources() {
+        if (resourcesClaimed) {
+            if (loader != null) {
+                loader.releaseBeltFromLauncher();
+            }
+            if (intake != null) {
+                intake.unsuppress();
+            }
+            resourcesClaimed = false;
+        }
+    }
+
+    // ==================== THREE-PHASE METHODS ====================
+
     @Override
-    public void update(Canvas fieldOverlay) {
-        // READ: Get flywheel speed
+    public void readSensors() {
+        // PHASE 1: Motor velocity is SDK bulk-cached, no I2C read needed
+        // We read currentSpeed in calc() from the bulk cache
+    }
+
+    @Override
+    public void calc(Canvas fieldOverlay) {
+        // PHASE 2: Read cached velocity and run state machine
+
+        // Get flywheel speed (bulk-cached by SDK)
         currentSpeed = flywheel.getVelocity(AngleUnit.DEGREES);
 
-        // PROCESS: State machine
+        // Update target speed from Vision when spinning
+        // This allows continuous speed adjustment as robot moves
+        if (behavior == Behavior.SPINNING) {
+            if (vision != null && vision.hasBotPose()) {
+                targetSpeed = calculateLaunchSpeed(vision.getDistanceToGoal());
+            } else {
+                targetSpeed = MIN_LAUNCH_SPEED;
+            }
+        }
+
+        // Sync behavior to state (if behavior changed externally)
+        if (behavior == Behavior.IDLE && state != LaunchState.IDLE) {
+            // Force back to idle
+            state = LaunchState.IDLE;
+        } else if (behavior == Behavior.SPINNING && state == LaunchState.IDLE) {
+            // Start spinning
+            state = LaunchState.SPINNING_UP;
+        }
+
+        // Run state machine
         switch (state) {
             case IDLE:
                 handleIdleState();
@@ -123,18 +272,25 @@ public class Launcher implements Subsystem {
                 handleCooldownState();
                 break;
         }
+    }
 
-        // WRITE: Outputs are set in state handlers
+    @Override
+    public void act() {
+        // PHASE 3: Flush paddle servo command
+        paddle.flush();
     }
 
     private void handleIdleState() {
+        // Ensure resources are released when idle
+        releaseResources();
         flywheel.setVelocity(0);
+        flywheelHelp.setVelocity(0);
         setPaddlePosition(passThroughMode ? PADDLE_PASS : PADDLE_DOWN);
     }
 
     private void handleSpinningUpState() {
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-
+        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         if (isFlywheelAtSpeed()) {
             state = LaunchState.READY;
         }
@@ -143,10 +299,15 @@ public class Launcher implements Subsystem {
     private void handleReadyState() {
         // Maintain flywheel speed
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         setPaddlePosition(PADDLE_DOWN);
 
         if (fireRequested) {
             fireRequested = false;
+
+            // Claim belt and suppress intake before firing
+            claimResources();
+
             state = LaunchState.FIRING;
             stateTimer = futureTime(PADDLE_LIFT_TIME);
             setPaddlePosition(PADDLE_UP);
@@ -160,6 +321,7 @@ public class Launcher implements Subsystem {
     private void handleFiringState() {
         // Keep flywheel spinning and paddle up
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         setPaddlePosition(PADDLE_UP);
 
         if (isPast(stateTimer)) {
@@ -172,6 +334,7 @@ public class Launcher implements Subsystem {
     private void handleCooldownState() {
         // Keep flywheel spinning for next shot
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         setPaddlePosition(PADDLE_DOWN);
 
         if (isPast(stateTimer)) {
@@ -181,7 +344,7 @@ public class Launcher implements Subsystem {
     }
 
     private void setPaddlePosition(double position) {
-        paddle.setPosition(position);
+        paddle.setPosition(position);  // Queues position, flushed in act()
     }
 
     /**
@@ -193,31 +356,27 @@ public class Launcher implements Subsystem {
 
     /**
      * Prepare launcher for firing at a given distance.
-     * Starts the flywheel spinning up to calculated speed.
-     *
-     * @param distanceMeters Distance to target in meters
+     * @deprecated Use setBehavior(Behavior.SPINNING) instead. Distance is auto-pulled from Vision.
      */
+    @Deprecated
     public void prepareToLaunch(double distanceMeters) {
         targetSpeed = calculateLaunchSpeed(distanceMeters);
-        if (state == LaunchState.IDLE) {
-            state = LaunchState.SPINNING_UP;
-        }
+        setBehavior(Behavior.SPINNING);
     }
 
     /**
      * Prepare launcher with a specific speed (for manual testing).
-     *
-     * @param speed Flywheel speed in degrees/sec
+     * @deprecated Use setBehavior(Behavior.SPINNING) instead. Set MIN_LAUNCH_SPEED if needed.
      */
+    @Deprecated
     public void prepareToLaunchAtSpeed(double speed) {
         targetSpeed = speed;
-        if (state == LaunchState.IDLE) {
-            state = LaunchState.SPINNING_UP;
-        }
+        setBehavior(Behavior.SPINNING);
     }
 
     /**
      * Fire the ball (only works when in READY state).
+     * Behavior must be SPINNING and isReady() must return true.
      */
     public void fire() {
         if (state == LaunchState.READY) {
@@ -227,10 +386,10 @@ public class Launcher implements Subsystem {
 
     /**
      * Abort launch and return to idle.
+     * Equivalent to setBehavior(Behavior.IDLE).
      */
     public void abort() {
-        state = LaunchState.IDLE;
-        fireRequested = false;
+        setBehavior(Behavior.IDLE);
     }
 
     /**
@@ -315,14 +474,19 @@ public class Launcher implements Subsystem {
 
     @Override
     public void stop() {
+        behavior = Behavior.IDLE;
+        releaseResources();
         state = LaunchState.IDLE;
         fireRequested = false;
         flywheel.setVelocity(0);
-        setPaddlePosition(PADDLE_DOWN);
+        paddle.setPosition(PADDLE_DOWN);
+        paddle.flush();  // Immediate write for emergency stop
     }
 
     @Override
     public void resetStates() {
+        behavior = Behavior.IDLE;
+        releaseResources();
         state = LaunchState.IDLE;
         fireRequested = false;
         passThroughMode = false;
@@ -337,12 +501,14 @@ public class Launcher implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
-        telemetry.put("State", state);
+        telemetry.put("Behavior", behavior);
         telemetry.put("Flywheel Speed", String.format("%.0f / %.0f", currentSpeed, targetSpeed));
-        telemetry.put("At Speed", isFlywheelAtSpeed() ? "YES" : "no");
+        telemetry.put("Ready", isReady() ? "YES" : "no");
 
         if (debug) {
-            telemetry.put("Paddle Pos", paddle.getPosition());
+            telemetry.put("Internal State", state);
+            telemetry.put("At Speed", isFlywheelAtSpeed() ? "YES" : "no");
+            telemetry.put("Paddle Pos", paddle.getPendingPosition());
             telemetry.put("Pass-Through", passThroughMode ? "ON" : "off");
             telemetry.put("Fire Requested", fireRequested);
         }

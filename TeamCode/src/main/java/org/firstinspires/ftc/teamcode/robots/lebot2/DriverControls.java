@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Launcher;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Loader;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.TelemetryProvider;
 
@@ -20,6 +21,12 @@ import java.util.Map;
  *
  * Maps gamepad inputs to robot actions. Separating this from the Robot class
  * keeps the control logic clean and makes it easy to modify button mappings.
+ *
+ * ARCHITECTURE:
+ * - Drive is ALWAYS called (never blocked by other subsystems)
+ * - Drive input automatically interrupts RR trajectories and PID turns
+ * - Intake, loader, launcher operate independently via their own behaviors
+ * - Robot articulations only used for multi-subsystem coordination
  *
  * Uses StickyGamepad for edge detection (button press vs button held).
  */
@@ -36,6 +43,7 @@ public class DriverControls implements TelemetryProvider {
     private final Gamepad gamepad2;
     private final StickyGamepad stickyGamepad1;
     private final StickyGamepad stickyGamepad2;
+    private int tiltIndex=0;
 
     public DriverControls(Gamepad pad1, Gamepad pad2) {
         this.gamepad1 = pad1;
@@ -65,14 +73,6 @@ public class DriverControls implements TelemetryProvider {
      * Handle main driving controls during teleop.
      */
     public void joystickDrive() {
-        // Cancel any articulation if driver moves stick
-        if (hasSignificantInput()) {
-            if (robot.getArticulation() != Robot.Articulation.MANUAL &&
-                robot.getArticulation() != Robot.Articulation.INTAKE) {
-                robot.articulate(Robot.Articulation.MANUAL);
-            }
-        }
-
         // Get drive inputs
         double throttle = -gamepad1.left_stick_y;
         double turn = -gamepad1.right_stick_x;
@@ -81,56 +81,50 @@ public class DriverControls implements TelemetryProvider {
         double dampener = slowMode ? SLOW_MODE_DAMPENER : DRIVE_DAMPENER;
         turn *= dampener;
 
-        // Drive (only if in manual or transit mode)
-        if (robot.getArticulation() == Robot.Articulation.MANUAL ||
-            robot.getArticulation() == Robot.Articulation.TRANSIT) {
-            robot.driveTrain.drive(throttle, 0, turn);
-        }
-
-        if (turning()){
-            robot.driveTrain.drive(0,0, turn);
-        }
+        // ALWAYS call drive - the drivetrain handles mode switching internally
+        // If joystick input is significant, it will automatically interrupt
+        // any running RR trajectory or PID turn
+        robot.driveTrain.drive(throttle, 0, turn);
 
         // Handle button inputs
         handleButtons();
     }
 
-    private boolean turning(){
-        return (Math.abs(gamepad1.right_stick_x) > 0.3);
-    }
-
-    private boolean hasSignificantInput() {
-        return Math.abs(gamepad1.left_stick_y) > 0.3 ||
-               Math.abs(gamepad1.right_stick_x) > 0.3 ||
-               Math.abs(gamepad1.left_stick_x) > 0.3;
-    }
-
     private void handleButtons() {
-        // A button: Start/stop intake
+        // A button: Toggle intake LOAD_ALL behavior
+        // Intake runs until loader is full, then auto-stops
         if (stickyGamepad1.a) {
-            if (robot.getArticulation() == Robot.Articulation.INTAKE) {
-                robot.articulate(Robot.Articulation.MANUAL);
+            if (robot.intake.isActive()) {
                 robot.intake.off();
-                robot.loader.stopBelt();
+                robot.loader.releaseBeltFromIntake();
             } else {
-                robot.articulate(Robot.Articulation.INTAKE);
+                robot.intake.loadAll();
+                robot.loader.requestBeltForIntake();
             }
         }
 
-        // B button: Cancel/stop everything
+        // B button: Cancel/stop all subsystem behaviors
         if (stickyGamepad1.b) {
-            robot.articulate(Robot.Articulation.MANUAL);
-            robot.launcher.abort();
+            robot.setBehavior(Robot.Behavior.MANUAL);
+            robot.launcher.setBehavior(Launcher.Behavior.IDLE);
             robot.intake.off();
             robot.loader.stopBelt();
         }
 
-        // X button: Launch single ball
+        // X button: Spin up launcher / fire
+        // Launcher will claim belt when actually firing
         if (stickyGamepad1.x) {
-            robot.articulate(Robot.Articulation.LAUNCHING);
+            if (robot.launcher.isReady()) {
+                // If already ready, fire one ball
+                robot.launcher.fire();
+            } else if (robot.launcher.getBehavior() == Launcher.Behavior.IDLE) {
+                // Start spinning up - launcher pulls distance from Vision automatically
+                robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
+            }
         }
 
-        // Y button: Targeting mode (turn to target)
+        // Y button: Turn to vision target
+        // Driver can override with joystick if vision glares
         if (stickyGamepad1.y) {
             if (robot.vision.hasTarget()) {
                 robot.driveTrain.turnToTarget(robot.vision.getTx(), 0.5);
@@ -142,9 +136,9 @@ public class DriverControls implements TelemetryProvider {
             slowMode = !slowMode;
         }
 
-        // Right bumper: Launch all balls
+        // Right bumper: Launch all balls in sequence
         if (stickyGamepad1.right_bumper) {
-            robot.articulate(Robot.Articulation.LAUNCH_ALL);
+            robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
         }
 
         // D-pad up/down: Manual paddle control
@@ -155,24 +149,47 @@ public class DriverControls implements TelemetryProvider {
             robot.launcher.setPassThroughMode(false);
         }
 
-        // D-pad left: Manual intake on
+        // D-pad left: Simple intake on (not LOAD_ALL)
         if (stickyGamepad1.dpad_left) {
             robot.intake.on();
-            robot.loader.runBelt();
+            robot.loader.requestBeltForIntake();
         }
 
         // D-pad right: Eject balls
         if (stickyGamepad1.dpad_right) {
             robot.intake.eject();
-            robot.loader.setBeltPower(-0.5);
+            // For eject, we use setBeltPower which claims as launcher priority
+            // Positive = eject forward
+            robot.loader.setBeltPower(0.5);
         }
 
-        // Guide button: Reset encoders/IMU
+        // Guide button: Reset encoders and ball count
         if (stickyGamepad1.guide) {
             robot.driveTrain.resetEncoders();
             robot.loader.resetBallCount();
         }
+
+        //Start button: change tilt index which correspond to servo tilt of limelight
+        if(stickyGamepad1.start){
+            if(tiltIndex!=3){
+                tiltIndex++;
+            }
+            else{
+                tiltIndex=0;
+            }
+        }
+        if(tiltIndex==0){
+            robot.vision.setTiltDown();
+        } else if (tiltIndex==1) {
+            robot.vision.setTiltStraight();
+        } else if (tiltIndex==2) {
+            robot.vision.setTiltUpMin();
+        }else{
+            robot.vision.setTiltUpMax();
+        }
     }
+
+    public int getTiltIndex(){return tiltIndex;}
 
     /**
      * Handle game state switching during init.
