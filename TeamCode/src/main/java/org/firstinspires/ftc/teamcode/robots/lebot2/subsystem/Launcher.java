@@ -45,6 +45,7 @@ public class Launcher implements Subsystem {
 
     // Hardware
     private final DcMotorEx flywheel;  // Not wrapped - SDK handles velocity control
+    private final DcMotorEx flywheelHelp;
     private final LazyServo paddle;    // Wrapped for three-phase pattern
 
     // Paddle positions (servo units 0-1, converted from pulse widths)
@@ -113,6 +114,11 @@ public class Launcher implements Subsystem {
         flywheel.setDirection(DcMotorEx.Direction.REVERSE);
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        flywheelHelp = hardwareMap.get(DcMotorEx.class, "shooter helper");
+        flywheelHelp.setDirection(DcMotorEx.Direction.REVERSE);         //check if reversed or not
+        flywheelHelp.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flywheelHelp.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         paddle = new LazyServo(hardwareMap, "paddle");
         paddle.setPosition(PADDLE_DOWN);
@@ -278,12 +284,13 @@ public class Launcher implements Subsystem {
         // Ensure resources are released when idle
         releaseResources();
         flywheel.setVelocity(0);
+        flywheelHelp.setVelocity(0);
         setPaddlePosition(passThroughMode ? PADDLE_PASS : PADDLE_DOWN);
     }
 
     private void handleSpinningUpState() {
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-
+        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         if (isFlywheelAtSpeed()) {
             state = LaunchState.READY;
         }
@@ -292,6 +299,7 @@ public class Launcher implements Subsystem {
     private void handleReadyState() {
         // Maintain flywheel speed
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         setPaddlePosition(PADDLE_DOWN);
 
         if (fireRequested) {
@@ -313,6 +321,7 @@ public class Launcher implements Subsystem {
     private void handleFiringState() {
         // Keep flywheel spinning and paddle up
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         setPaddlePosition(PADDLE_UP);
 
         if (isPast(stateTimer)) {
@@ -325,6 +334,7 @@ public class Launcher implements Subsystem {
     private void handleCooldownState() {
         // Keep flywheel spinning for next shot
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         setPaddlePosition(PADDLE_DOWN);
 
         if (isPast(stateTimer)) {

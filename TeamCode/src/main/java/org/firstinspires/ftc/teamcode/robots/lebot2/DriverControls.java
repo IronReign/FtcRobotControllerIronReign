@@ -43,6 +43,7 @@ public class DriverControls implements TelemetryProvider {
     private final Gamepad gamepad2;
     private final StickyGamepad stickyGamepad1;
     private final StickyGamepad stickyGamepad2;
+    private int tiltIndex=0;
 
     public DriverControls(Gamepad pad1, Gamepad pad2) {
         this.gamepad1 = pad1;
@@ -167,7 +168,28 @@ public class DriverControls implements TelemetryProvider {
             robot.driveTrain.resetEncoders();
             robot.loader.resetBallCount();
         }
+
+        //Start button: change tilt index which correspond to servo tilt of limelight
+        if(stickyGamepad1.start){
+            if(tiltIndex!=3){
+                tiltIndex++;
+            }
+            else{
+                tiltIndex=0;
+            }
+        }
+        if(tiltIndex==0){
+            robot.vision.setTiltDown();
+        } else if (tiltIndex==1) {
+            robot.vision.setTiltStraight();
+        } else if (tiltIndex==2) {
+            robot.vision.setTiltUpMin();
+        }else{
+            robot.vision.setTiltUpMax();
+        }
     }
+
+    public int getTiltIndex(){return tiltIndex;}
 
     /**
      * Handle game state switching during init.

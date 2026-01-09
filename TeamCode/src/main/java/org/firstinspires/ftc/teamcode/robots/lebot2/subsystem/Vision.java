@@ -5,8 +5,10 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.teamcode.robots.lebot2.util.LazyServo;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -37,6 +39,17 @@ public class Vision implements Subsystem {
 
     // Hardware
     private final Limelight3A limelight;
+    private final LazyServo tilt;
+
+    public enum Angle {
+        DOWN,       //looking at balls (1615)
+        STRAIGHT,   //straight forward (1365)
+        UPMIN,      //default for long distance shooting (1240)
+        UPMAX       //default for short distance shooting (1200)
+    }
+    private int tiltTicks=1200;
+
+    private Angle angle = Angle.UPMAX;
 
     // Configuration
     public static int PIPELINE_BLUE = 0;
@@ -66,6 +79,10 @@ public class Vision implements Subsystem {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.pipelineSwitch(currentPipeline);
         limelight.start();
+
+        tilt = hardwareMap.get(LazyServo.class, "tilt");
+        tilt.setPosition(servoNormalize(tiltTicks));
+
     }
 
     // ==================== THREE-PHASE METHODS ====================
@@ -232,6 +249,41 @@ public class Vision implements Subsystem {
         return currentPipeline;
     }
 
+    public void setTiltPosition(){
+        if(angle == Angle.DOWN){
+            tiltTicks=1615;
+        }else if(angle == Angle.STRAIGHT){
+            tiltTicks=1365;
+        }else if(angle == Angle.UPMAX){
+            tiltTicks=1200;
+        }else{
+            tiltTicks=1240;
+        }
+    }
+
+    public void setTiltDown(){
+        tilt.setPosition(servoNormalize(1615));
+        angle = Angle.DOWN;
+    }
+    public void setTiltStraight(){
+        tilt.setPosition(servoNormalize(1365));
+        angle = Angle.STRAIGHT;
+    }
+    public void setTiltUpMin(){
+        tilt.setPosition(servoNormalize(1240));
+        angle = Angle.UPMIN;
+    }
+    public void setTiltUpMax(){
+        tilt.setPosition(servoNormalize(1200));
+        angle = Angle.UPMAX;
+    }
+
+
+    public static double servoNormalize(int pulse) {
+        double normalized = (double) pulse;
+        return (normalized - 750.0) / 1500.0; //convert mr servo controller pulse width to double on _0 - 1 scale
+    }
+
     @Override
     public void stop() {
         // Limelight doesn't need explicit stop
@@ -250,6 +302,8 @@ public class Vision implements Subsystem {
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetry = new LinkedHashMap<>();
+
+        telemetry.put("Tilt State: ", angle);
 
         telemetry.put("Alliance", isRedAlliance ? "RED" : "BLUE");
         telemetry.put("Has Target", hasValidTarget ? "YES" : "no");
