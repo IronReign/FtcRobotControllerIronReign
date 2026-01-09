@@ -357,16 +357,16 @@ public class Lebot2Diagnostics extends OpMode {
         // === LEVEL 4: MISSIONS ===
         testLaunchPreloads = new DiagnosticTest(
             "LaunchPreloads", TestLevel.LEVEL_4_MISSION, MotionRequirement.NONE,
-            "Mission: Fire any preloaded balls. Robot will spin up, target, and fire. KEEP CLEAR. Press A when ready.",
-            "shooter velocity", "paddle actuation", "ball count decrement");
+            "Mission: Fire preloaded balls via robot.missions. Robot will spin up and fire. KEEP CLEAR. Press A when ready.",
+            "mission state", "launcher behavior", "ball count decrement");
         testBALLGroup = new DiagnosticTest(
-            "BALLGroup(1)", TestLevel.LEVEL_4_MISSION, MotionRequirement.GROUND_MEDIUM,
-            "Mission: Collect 1 ball. Robot will drive to ball location, intake, and return. Clear field. Press A when ready.",
-            "intake behavior", "loader ball count", "drive path");
+            "BALLGroup", TestLevel.LEVEL_4_MISSION, MotionRequirement.GROUND_MEDIUM,
+            "Mission: Navigate to ball group and intake. Robot will drive via RoadRunner. REQUIRES FIELD SPACE. Press A when ready.",
+            "mission state", "trajectory following", "intake activation");
         testOpenSesame = new DiagnosticTest(
             "OpenSesame", TestLevel.LEVEL_4_MISSION, MotionRequirement.GROUND_MEDIUM,
-            "Mission: Full autonomous. LaunchPreloads + BALLGroup + Launch. REQUIRES FULL FIELD. Press A when ready.",
-            "all subsystems", "full mission sequence");
+            "Mission: Navigate to classifier and release. Robot will drive then back into lever. REQUIRES FIELD. Press A when ready.",
+            "mission state", "trajectory following", "press sequence");
 
         // Register all tests
         allTests.add(testLeftRearExists);
@@ -1155,105 +1155,122 @@ public class Lebot2Diagnostics extends OpMode {
         }
     }
 
+    private static final double MISSION_TIMEOUT_SEC = 30.0;
+
     /**
      * LaunchPreloads mission test
-     * Tests: Shooter spin-up → Fire sequence via subsystem behaviors
-     * Full mission would use Mission class (not yet implemented)
+     * Uses robot.missions.startLaunchPreloads() to fire preloaded balls
      */
     private void runLaunchPreloadsTest() {
-        // Initialize Robot for mission test
         if (!initRobotIfNeeded()) {
             currentTest.fail("Robot init failed: " + robotInitError);
             return;
         }
 
         switch (testPhase) {
-            case 0:  // Start launcher via behavior
-                robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
-                testPhase = 1;
-                break;
-
-            case 1:  // Wait for READY state
-                robot.update(null);
-                Launcher.LaunchState state = robot.launcher.getState();
-
-                if (state == Launcher.LaunchState.READY) {
-                    // Fire!
-                    robot.launcher.fire();
-                    testTimer.reset();
-                    testPhase = 2;
-                } else if (testTimer.seconds() > SHOOTER_SPINUP_TIMEOUT_SEC) {
-                    robot.launcher.setBehavior(Launcher.Behavior.IDLE);
-                    robot.update(null);
-                    currentTest.fail("LaunchPreloads: Spinup timeout - state: " + state);
-                }
-                break;
-
-            case 2:  // Wait for fire sequence
-                robot.update(null);
-                if (testTimer.seconds() > 1.0) {
-                    robot.launcher.setBehavior(Launcher.Behavior.IDLE);
-                    robot.update(null);
-                    currentTest.pass("LaunchPreloads: Spinup + Fire via subsystem complete");
-                }
-                break;
-        }
-    }
-
-    /**
-     * BALLGroup mission test - simplified version
-     * Tests intake + loader behavior coordination
-     * Full mission requires path following + Mission class (not yet implemented)
-     */
-    private void runBALLGroupTest() {
-        // Initialize Robot for mission test
-        if (!initRobotIfNeeded()) {
-            currentTest.fail("Robot init failed: " + robotInitError);
-            return;
-        }
-
-        switch (testPhase) {
-            case 0:  // Start intake via behavior (auto-requests belt)
-                robot.intake.setBehavior(Intake.Behavior.LOAD_ALL);
-                testPhase = 1;
-                break;
-
-            case 1:  // Run intake cycle via subsystem
-                if (!runRobotUpdateLoop(1.5)) {
-                    stopRobot();
-                    currentTest.abort();
+            case 0:  // Start mission
+                if (robot.loader.isEmpty()) {
+                    currentTest.skip("No balls loaded - cannot test LaunchPreloads");
                     return;
                 }
-                testPhase = 2;
+                robot.missions.startLaunchPreloads();
+                testTimer.reset();
+                testPhase = 1;
                 break;
 
-            case 2:  // Check loader state via virtual sensors
-                robot.intake.setBehavior(Intake.Behavior.OFF);
+            case 1:  // Wait for mission completion
                 robot.update(null);
 
-                int ballCount = robot.loader.getBallCount();
-                boolean ballAtFront = robot.loader.isBallAtFront();
-                boolean ballAtBack = robot.loader.isBallAtBack();
-
-                String status = String.format("Balls:%d Front:%s Back:%s",
-                    ballCount,
-                    ballAtFront ? "YES" : "no",
-                    ballAtBack ? "YES" : "no");
-
-                currentTest.pass("BALLGroup intake via subsystem: " + status +
-                    " (Full mission requires path following + Mission class)");
+                if (robot.missions.isComplete()) {
+                    currentTest.pass("LaunchPreloads mission complete");
+                    return;
+                }
+                if (robot.missions.isFailed()) {
+                    currentTest.fail("LaunchPreloads mission failed");
+                    return;
+                }
+                if (testTimer.seconds() > MISSION_TIMEOUT_SEC) {
+                    robot.missions.abort();
+                    currentTest.fail("LaunchPreloads timeout after " + MISSION_TIMEOUT_SEC + "s");
+                }
                 break;
         }
     }
 
     /**
-     * OpenSesame full mission test
-     * This mission chains: LaunchPreloads → BALLGroup → Target → Launch
-     * Requires Mission class (not yet implemented)
+     * BALLGroup mission test
+     * Uses robot.missions.startBallGroup() to navigate and collect balls
+     * Note: Requires field space and correct ball group positions configured
+     */
+    private void runBALLGroupTest() {
+        if (!initRobotIfNeeded()) {
+            currentTest.fail("Robot init failed: " + robotInitError);
+            return;
+        }
+
+        switch (testPhase) {
+            case 0:  // Start mission
+                int startBallCount = robot.loader.getBallCount();
+                robot.missions.startBallGroup(0);  // Test with group 0
+                testTimer.reset();
+                testPhase = 1;
+                break;
+
+            case 1:  // Wait for mission completion
+                robot.update(null);
+
+                if (robot.missions.isComplete()) {
+                    int ballCount = robot.loader.getBallCount();
+                    currentTest.pass("BALLGroup mission complete - balls: " + ballCount);
+                    return;
+                }
+                if (robot.missions.isFailed()) {
+                    currentTest.fail("BALLGroup mission failed");
+                    return;
+                }
+                if (testTimer.seconds() > MISSION_TIMEOUT_SEC) {
+                    robot.missions.abort();
+                    currentTest.fail("BALLGroup timeout after " + MISSION_TIMEOUT_SEC + "s");
+                }
+                break;
+        }
+    }
+
+    /**
+     * OpenSesame mission test
+     * Uses robot.missions.startOpenSesame() to navigate to classifier and release
+     * Note: Requires field space and correct release pose configured
      */
     private void runOpenSesameTest() {
-        // Mission class doesn't exist yet - skip with explanation
-        currentTest.skip("OpenSesame requires Mission class (not implemented) - run as Autonomous OpMode");
+        if (!initRobotIfNeeded()) {
+            currentTest.fail("Robot init failed: " + robotInitError);
+            return;
+        }
+
+        switch (testPhase) {
+            case 0:  // Start mission
+                robot.missions.startOpenSesame();
+                testTimer.reset();
+                testPhase = 1;
+                break;
+
+            case 1:  // Wait for mission completion
+                robot.update(null);
+
+                if (robot.missions.isComplete()) {
+                    currentTest.pass("OpenSesame mission complete - classifier released");
+                    return;
+                }
+                if (robot.missions.isFailed()) {
+                    currentTest.fail("OpenSesame mission failed");
+                    return;
+                }
+                if (testTimer.seconds() > MISSION_TIMEOUT_SEC) {
+                    robot.missions.abort();
+                    currentTest.fail("OpenSesame timeout after " + MISSION_TIMEOUT_SEC + "s");
+                }
+                break;
+        }
     }
 
     //=== UTILITY METHODS ===

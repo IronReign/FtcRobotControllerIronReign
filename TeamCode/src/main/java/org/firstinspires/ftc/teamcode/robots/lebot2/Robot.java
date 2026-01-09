@@ -61,6 +61,9 @@ public class Robot implements TelemetryProvider {
     public final Launcher launcher;
     public final Vision vision;
 
+    // Missions coordinator (Layer 4 - above Robot behaviors)
+    public final Missions missions;
+
     // Subsystem list for bulk operations
     public final List<Subsystem> subsystems = new ArrayList<>();
 
@@ -137,6 +140,9 @@ public class Robot implements TelemetryProvider {
 
         // Set alliance
         vision.setAlliance(isRedAlliance);
+
+        // Initialize missions coordinator (needs reference to this robot)
+        missions = new Missions(this);
     }
 
     /**
@@ -180,6 +186,11 @@ public class Robot implements TelemetryProvider {
             case LAUNCH_ALL:
                 handleLaunchAllBehavior();
                 break;
+        }
+
+        // Update missions if active (conserves compute when idle)
+        if (missions.isActive()) {
+            missions.calc(fieldOverlay);
         }
 
         // Run calculations for all subsystems
@@ -330,9 +341,14 @@ public class Robot implements TelemetryProvider {
 
 
     /**
-     * Stop all subsystems.
+     * Stop all subsystems and abort any running mission.
      */
     public void stop() {
+        // Abort any running mission first
+        if (missions.isActive()) {
+            missions.abort();
+        }
+
         for (Subsystem subsystem : subsystems) {
             subsystem.stop();
         }
