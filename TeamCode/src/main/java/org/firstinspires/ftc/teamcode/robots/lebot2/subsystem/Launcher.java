@@ -55,7 +55,7 @@ public class Launcher implements Subsystem {
 
     // Flywheel configuration
     public static double MIN_LAUNCH_SPEED = 935;   // degrees/sec
-    public static double SPEED_TOLERANCE = 15;      // degrees/sec margin
+    public static double SPEED_TOLERANCE = 15;      // degrees/sec margin for "at speed" check
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
 
     // Launch timing
@@ -102,6 +102,10 @@ public class Launcher implements Subsystem {
     private long stateTimer = 0;
     private boolean fireRequested = false;
     private boolean passThroughMode = false;
+
+    // Debug: track speed when firing was allowed
+    private double speedAtFireApproval = 0;
+    private int shotNumber = 0;
 
     // References to other subsystems for coordination
     private Loader loader = null;
@@ -172,6 +176,7 @@ public class Launcher implements Subsystem {
                 // Start spinning up
                 if (state == LaunchState.IDLE) {
                     state = LaunchState.SPINNING_UP;
+                    shotNumber = 0;  // Reset shot counter for new sequence
                 }
             }
         }
@@ -233,14 +238,15 @@ public class Launcher implements Subsystem {
         // Get flywheel speed (bulk-cached by SDK)
         currentSpeed = flywheel.getVelocity(AngleUnit.DEGREES);
 
-        // Update target speed from Vision when spinning
-        // This allows continuous speed adjustment as robot moves
-        if (behavior == Behavior.SPINNING) {
+        // Update target speed from Vision during SPINNING_UP and READY states only
+        // Once firing starts (BELT_REVERSING/FIRING/COOLDOWN), lock the speed
+        // This prevents vision dropouts during firing from slowing the flywheel
+        if (behavior == Behavior.SPINNING &&
+            (state == LaunchState.SPINNING_UP || state == LaunchState.READY)) {
             if (vision != null && vision.hasBotPose()) {
                 targetSpeed = calculateLaunchSpeed(vision.getDistanceToGoal());
-            } else {
-                targetSpeed = MIN_LAUNCH_SPEED;
             }
+            // Note: Don't fall back to MIN_LAUNCH_SPEED if vision lost - keep last good speed
         }
 
         // Sync behavior to state (if behavior changed externally)
@@ -307,12 +313,21 @@ public class Launcher implements Subsystem {
     }
 
     private void handleReadyState() {
-        // Maintain flywheel speed
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         setPaddlePosition(PADDLE_DOWN);
 
         if (fireRequested) {
+            // Don't fire until flywheel has recovered to target speed
+            if (!isFlywheelAtSpeed()) {
+                // DEBUG: This should be blocking - if we're still firing at low speed,
+                // something is bypassing this check
+                return;  // Keep fireRequested true, wait for speed recovery
+            }
+
+            // Speed check passed - record for debugging
+            shotNumber++;
+            speedAtFireApproval = currentSpeed;
             fireRequested = false;
 
             // Release belt ownership and start reverse pulse to relieve fin pressure
@@ -328,7 +343,6 @@ public class Launcher implements Subsystem {
     }
 
     private void handleBeltReversingState() {
-        // Keep flywheel spinning, paddle still down, belt reversing
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         setPaddlePosition(PADDLE_DOWN);
@@ -347,7 +361,6 @@ public class Launcher implements Subsystem {
     }
 
     private void handleFiringState() {
-        // Keep flywheel spinning and paddle up
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         setPaddlePosition(PADDLE_UP);
@@ -360,7 +373,6 @@ public class Launcher implements Subsystem {
     }
 
     private void handleCooldownState() {
-        // Keep flywheel spinning for next shot
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         setPaddlePosition(PADDLE_DOWN);
@@ -539,6 +551,9 @@ public class Launcher implements Subsystem {
         if (debug) {
             telemetry.put("Internal State", state);
             telemetry.put("At Speed", isFlywheelAtSpeed() ? "YES" : "no");
+            telemetry.put("Speed Deficit", String.format("%.0f", targetSpeed - currentSpeed));
+            telemetry.put("Shot #", shotNumber);
+            telemetry.put("Speed@Approval", String.format("%.0f", speedAtFireApproval));
             telemetry.put("Resources Claimed", resourcesClaimed);
             telemetry.put("Paddle Pos", paddle.getPendingPosition());
             telemetry.put("Pass-Through", passThroughMode ? "ON" : "off");

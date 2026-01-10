@@ -315,9 +315,15 @@ public class Robot implements TelemetryProvider {
                 break;
 
             case COMPLETE:
-                launcher.setBehavior(Launcher.Behavior.IDLE);
-                launchAllState = LaunchAllState.IDLE;
-                behavior = Behavior.MANUAL;
+                // Wait for launcher to finish COOLDOWN before killing flywheel
+                // This ensures the last ball has cleared the flywheel
+                if (launcher.getState() == Launcher.LaunchState.READY ||
+                    launcher.getState() == Launcher.LaunchState.IDLE) {
+                    launcher.setBehavior(Launcher.Behavior.IDLE);
+                    launchAllState = LaunchAllState.IDLE;
+                    behavior = Behavior.MANUAL;
+                }
+                // else: stay in COMPLETE, flywheel keeps spinning until COOLDOWN ends
                 break;
         }
     }
