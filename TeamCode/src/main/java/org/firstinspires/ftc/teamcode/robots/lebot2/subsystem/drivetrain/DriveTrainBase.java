@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Vision;
 
 /**
  * Interface for swappable drivetrain implementations.
@@ -39,11 +40,32 @@ public interface DriveTrainBase extends Subsystem {
      * Turn to center on a target using vision (tx from Limelight).
      *
      * This is a non-blocking call. Check isTurnComplete() to know when done.
+     * NOTE: This uses a single tx value. For continuous tracking, use centerOnTarget().
      *
      * @param tx       Target's horizontal offset from center (degrees)
      * @param maxSpeed Maximum turn speed (0 to 1)
      */
     void turnToTarget(double tx, double maxSpeed);
+
+    /**
+     * Center on target using Vision with continuous tx updates.
+     *
+     * This is a non-blocking call that queries Vision directly each loop
+     * for fresh tx values. Runs to completion (tx near 0) unless:
+     * - Joystick input interrupts
+     * - Target is lost
+     * - cancelTurn() is called
+     *
+     * Requires setVision() to be called first.
+     */
+    void centerOnTarget();
+
+    /**
+     * Set the Vision reference for continuous target tracking.
+     *
+     * @param vision Vision subsystem reference
+     */
+    void setVision(Vision vision);
 
     /**
      * Check if the current turn operation is complete.

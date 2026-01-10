@@ -49,6 +49,7 @@ public class Loader implements Subsystem {
     // Negative = move balls toward rear (intake/feed), Positive = eject forward
     public static double BELT_POWER = -1.0;
     public static double FEED_POWER = -0.8; // Slower for controlled feeding
+    public static double BELT_REVERSE_POWER = 0.5; // Positive = toward front, relieves fin pressure
     public static double BALL_DETECT_THRESHOLD_CM = 10.0; // Distance indicating ball present
     public static int MAX_BALLS = 3;
     public static long FULL_CONFIRM_MS = 100; // Debounce time for isFull virtual sensor
@@ -216,6 +217,24 @@ public class Loader implements Subsystem {
      */
     public boolean isLauncherUsingBelt() {
         return beltOwner == BeltOwner.LAUNCHER;
+    }
+
+    // ==================== FIRING SUPPORT (bypasses ownership) ====================
+
+    /**
+     * Reverse belt briefly to relieve fin pressure before paddle lift.
+     * Bypasses ownership model - only use during launch sequence after releasing belt.
+     */
+    public void reverseBeltForFiring() {
+        beltMotor.setPower(BELT_REVERSE_POWER);
+    }
+
+    /**
+     * Stop belt after reverse pulse.
+     * Bypasses ownership model - only use during launch sequence.
+     */
+    public void stopBeltForFiring() {
+        beltMotor.setPower(0);
     }
 
     // ==================== LEGACY METHODS (for compatibility) ====================
