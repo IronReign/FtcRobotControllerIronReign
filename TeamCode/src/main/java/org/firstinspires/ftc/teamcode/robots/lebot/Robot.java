@@ -69,6 +69,7 @@ public class Robot implements Subsystem {
     //public DcMotorEx leftOdo, rightOdo;
     public DcMotorEx leftFront, rightFront;
     public DcMotorEx intake, conveyor, shooter;
+    public DcMotorEx flywheelHelp;  // Second flywheel motor for more launch power
 
 
     public Servo paddle;
@@ -153,6 +154,10 @@ public class Robot implements Subsystem {
         shooter.setDirection(DcMotorSimple.Direction.REVERSE);
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        flywheelHelp = hardwareMap.get(DcMotorEx.class, "shooter helper");
+        flywheelHelp.setDirection(DcMotorSimple.Direction.REVERSE);
+        flywheelHelp.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         paddle = hardwareMap.get(Servo.class, "paddle");
         //tilt = hardwareMap.get(Servo.class, "tilt");
  //       adjustor = hardwareMap.get(Servo.class, "adjustor");
@@ -185,6 +190,7 @@ public class Robot implements Subsystem {
         intake.setPower(0);
         conveyor.setPower(0);
         shooter.setVelocity(0);
+        flywheelHelp.setVelocity(0);
         resetDrive();
         //tilt.setPosition(servoUp);
 
@@ -262,14 +268,20 @@ public class Robot implements Subsystem {
     public boolean getShootAll(){return shootingAll;}
 
     public void shoot(boolean x) {
-        if (x)
-            shooter.setVelocity(minShooterSpeed,AngleUnit.DEGREES);
-        else
+        if (x) {
+            shooter.setVelocity(minShooterSpeed, AngleUnit.DEGREES);
+            flywheelHelp.setVelocity(minShooterSpeed, AngleUnit.DEGREES);
+        } else {
             shooter.setVelocity(0);
+            flywheelHelp.setVelocity(0);
+        }
     }
     public double getMinShooterSpeed(){return minShooterSpeed;}
 
-    public void setShoot(double x){shooter.setVelocity(x,AngleUnit.DEGREES);}
+    public void setShoot(double x){
+        shooter.setVelocity(x, AngleUnit.DEGREES);
+        flywheelHelp.setVelocity(x, AngleUnit.DEGREES);
+    }
     public void resetShootIndex(){index=0;}
 
     double llmountAngleDegrees = 29.5;
@@ -474,7 +486,8 @@ public class Robot implements Subsystem {
                 case 1:     //start flywheel and start intake
                     //if(drivetrain.gettxTurnDone()){
                     minShooterSpeed=getShootingSpeed()-50;      //-60
-                    shooter.setVelocity(minShooterSpeed,AngleUnit.DEGREES);
+                    shooter.setVelocity(minShooterSpeed, AngleUnit.DEGREES);
+                    flywheelHelp.setVelocity(minShooterSpeed, AngleUnit.DEGREES);
 
                     //shooter.setVelocity(getShootingSpeed(),AngleUnit.DEGREES);
                     //suck=true;

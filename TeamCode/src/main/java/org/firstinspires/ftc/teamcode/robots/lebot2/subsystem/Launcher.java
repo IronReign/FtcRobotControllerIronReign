@@ -9,8 +9,11 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.LazyServo;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.firstinspires.ftc.teamcode.util.CsvLogKeeper;
 
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
@@ -50,17 +53,17 @@ public class Launcher implements Subsystem {
 
     // Paddle positions (servo units 0-1, converted from pulse widths)
     public static double PADDLE_DOWN = 0.167;  // ~1000µs - gate closed
-    public static double PADDLE_UP = 0.447;    // ~1420µs - launch position
-    public static double PADDLE_PASS = 0.447;  // ~1420µs - pass-through mode
+    public static double PADDLE_UP = 0.53;     // Confirmed working launch position
+    public static double PADDLE_PASS = 0.53;   // Pass-through mode (same as launch)
 
     // Flywheel configuration
-    public static double MIN_LAUNCH_SPEED = 935;   // degrees/sec
+    public static double MIN_LAUNCH_SPEED = 720;   // degrees/sec - hardcoded working speed from known position
     public static double SPEED_TOLERANCE = 15;      // degrees/sec margin for "at speed" check
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
 
     // Launch timing
     public static double BELT_REVERSE_TIME = 0.05;  // seconds to reverse belt before paddle lift
-    public static double PADDLE_LIFT_TIME = 0.35;   // seconds to hold paddle up
+    public static double PADDLE_LIFT_TIME = 0.5;    // seconds to hold paddle up
     public static double COOLDOWN_TIME = 0.25;      // seconds after paddle down
 
     // Speed calculation constants (from physics model)
@@ -114,6 +117,11 @@ public class Launcher implements Subsystem {
 
     // Track if we've claimed resources this firing cycle
     private boolean resourcesClaimed = false;
+
+    // CSV logging for flywheel debugging
+    public static boolean LOGGING_ENABLED = false;  // Dashboard tunable
+    private CsvLogKeeper flywheelLog = null;
+    private long logStartTime = 0;
 
     public Launcher(HardwareMap hardwareMap) {
         flywheel = hardwareMap.get(DcMotorEx.class, "shooter");
@@ -238,16 +246,36 @@ public class Launcher implements Subsystem {
         // Get flywheel speed (bulk-cached by SDK)
         currentSpeed = flywheel.getVelocity(AngleUnit.DEGREES);
 
-        // Update target speed from Vision during SPINNING_UP and READY states only
-        // Once firing starts (BELT_REVERSING/FIRING/COOLDOWN), lock the speed
-        // This prevents vision dropouts during firing from slowing the flywheel
-        if (behavior == Behavior.SPINNING &&
-            (state == LaunchState.SPINNING_UP || state == LaunchState.READY)) {
-            if (vision != null && vision.hasBotPose()) {
-                targetSpeed = calculateLaunchSpeed(vision.getDistanceToGoal());
+        // CSV logging for debugging flywheel behavior
+        if (LOGGING_ENABLED) {
+            if (behavior == Behavior.SPINNING && logStartTime == 0) {
+                // Start new log session
+                flywheelLog = new CsvLogKeeper("flywheel_log", 6,
+                    "elapsedMs,state,currentSpeed,targetSpeed,fireRequested,isAtSpeed");
+                logStartTime = System.currentTimeMillis();
             }
-            // Note: Don't fall back to MIN_LAUNCH_SPEED if vision lost - keep last good speed
+            if (logStartTime > 0 && behavior == Behavior.SPINNING) {
+                // Log this cycle
+                ArrayList<Object> row = new ArrayList<>();
+                row.add(System.currentTimeMillis() - logStartTime);
+                row.add(state.name());
+                row.add(String.format("%.1f", currentSpeed));
+                row.add(String.format("%.1f", targetSpeed));
+                row.add(fireRequested);
+                row.add(isFlywheelAtSpeed());
+                flywheelLog.UpdateLog(row);
+            }
+            if (behavior == Behavior.IDLE && logStartTime > 0) {
+                // End log session
+                flywheelLog.CloseLog();
+                logStartTime = 0;
+                flywheelLog = null;
+            }
         }
+
+        // Hardcode target speed until botpose/distance calculation is calibrated
+        // TODO: Re-enable vision-based speed calculation once Limelight is working
+        targetSpeed = MIN_LAUNCH_SPEED;
 
         // Sync behavior to state (if behavior changed externally)
         if (behavior == Behavior.IDLE && state != LaunchState.IDLE) {
@@ -318,14 +346,7 @@ public class Launcher implements Subsystem {
         setPaddlePosition(PADDLE_DOWN);
 
         if (fireRequested) {
-            // Don't fire until flywheel has recovered to target speed
-            if (!isFlywheelAtSpeed()) {
-                // DEBUG: This should be blocking - if we're still firing at low speed,
-                // something is bypassing this check
-                return;  // Keep fireRequested true, wait for speed recovery
-            }
-
-            // Speed check passed - record for debugging
+            // Record speed at firing for debugging (removed speed check - relying on inter-shot delay)
             shotNumber++;
             speedAtFireApproval = currentSpeed;
             fireRequested = false;

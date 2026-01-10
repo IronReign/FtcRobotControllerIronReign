@@ -113,15 +113,15 @@ public class Robot implements TelemetryProvider {
         IDLE,
         SPINNING_UP,
         FIRING,
-        FEEDING_NEXT,
+        WAITING_SHOT_COMPLETE,
+        INTER_SHOT_DELAY,
+        ADVANCE_BELT,
         COMPLETE
     }
     private LaunchAllState launchAllState = LaunchAllState.IDLE;
     private long launchTimer = 0;
-    public static double FEED_DELAY_SECONDS = 0.5;  // Wait before checking for next ball
-    public static double FEED_TIMEOUT_SECONDS = 3.0; // Max time to wait for ball to reach back
-    private long feedTimeoutTimer = 0;
-    private int shotsRemaining = 3;
+    public static double INTER_SHOT_DELAY_SECONDS = 1.5;  // Delay for flywheel recovery between shots
+    public static double BELT_ADVANCE_TIMEOUT_SECONDS = 0.5; // Max time to wait for next ball
 
     public Robot(HardwareMap hardwareMap, boolean simulated) {
         // Setup MANUAL bulk caching for best performance
@@ -263,8 +263,9 @@ public class Robot implements TelemetryProvider {
     }
 
     private void handleLaunchAllBehavior() {
-        // Launch all balls in sequence
-        // Note: Launcher claims belt and suppresses intake automatically
+        // Launch all balls in sequence until empty
+        // Simplified: no ball counting, just fire until sensors show empty
+        // Uses inter-shot delay for flywheel recovery
         switch (launchAllState) {
             case IDLE:
                 if (loader.isEmpty()) {
@@ -274,11 +275,11 @@ public class Robot implements TelemetryProvider {
                 // Force-reset launcher to clean state before starting
                 launcher.setBehavior(Launcher.Behavior.IDLE);
                 launcher.setBehavior(Launcher.Behavior.SPINNING);
-                shotsRemaining = loader.getBallCount();
                 launchAllState = LaunchAllState.SPINNING_UP;
                 break;
 
             case SPINNING_UP:
+                // Wait for flywheel to reach speed (this check works reliably)
                 if (launcher.isReady()) {
                     launchAllState = LaunchAllState.FIRING;
                 }
@@ -287,43 +288,58 @@ public class Robot implements TelemetryProvider {
             case FIRING:
                 launcher.fire();
                 if (launcher.getState() == Launcher.LaunchState.COOLDOWN) {
-                    shotsRemaining--;
-                    if (shotsRemaining <= 0 || loader.isEmpty()) {
+                    // Shot initiated, wait for it to complete
+                    launchAllState = LaunchAllState.WAITING_SHOT_COMPLETE;
+                }
+                break;
+
+            case WAITING_SHOT_COMPLETE:
+                // Wait for launcher to return to READY (shot finished)
+                if (launcher.getState() == Launcher.LaunchState.READY) {
+                    // Start inter-shot delay for flywheel recovery
+                    launchTimer = futureTime(INTER_SHOT_DELAY_SECONDS);
+                    launchAllState = LaunchAllState.INTER_SHOT_DELAY;
+                }
+                break;
+
+            case INTER_SHOT_DELAY:
+                // Wait for flywheel to recover
+                if (isPast(launchTimer)) {
+                    // Check if there might be more balls
+                    if (loader.isEmpty()) {
                         launchAllState = LaunchAllState.COMPLETE;
                     } else {
-                        // Wait for next ball - belt resumes after Launcher's COOLDOWN ends
-                        launchTimer = futureTime(FEED_DELAY_SECONDS);
-                        feedTimeoutTimer = futureTime(FEED_TIMEOUT_SECONDS);
-                        launchAllState = LaunchAllState.FEEDING_NEXT;
+                        // Advance belt to bring next ball to back
+                        launchTimer = futureTime(BELT_ADVANCE_TIMEOUT_SECONDS);
+                        launchAllState = LaunchAllState.ADVANCE_BELT;
                     }
                 }
                 break;
 
-            case FEEDING_NEXT:
-                // Wait for ball to reach back sensor, or timeout
-                if (isPast(launchTimer) && loader.isBallAtBack()) {
+            case ADVANCE_BELT:
+                // Belt should be running (launcher claims belt during SPINNING)
+                // Wait for ball at back sensor or timeout
+                if (loader.isBallAtBack()) {
                     launchAllState = LaunchAllState.FIRING;
-                } else if (isPast(feedTimeoutTimer)) {
-                    // Timeout - assume ball is ready or skip to next
-                    // Try firing anyway if there might still be balls
-                    if (!loader.isEmpty()) {
-                        launchAllState = LaunchAllState.FIRING;
-                    } else {
+                } else if (isPast(launchTimer)) {
+                    // Timeout - check if truly empty
+                    if (loader.isEmpty()) {
                         launchAllState = LaunchAllState.COMPLETE;
+                    } else {
+                        // Still has balls somewhere, try firing anyway
+                        launchAllState = LaunchAllState.FIRING;
                     }
                 }
                 break;
 
             case COMPLETE:
-                // Wait for launcher to finish COOLDOWN before killing flywheel
-                // This ensures the last ball has cleared the flywheel
+                // Wait for launcher to finish any ongoing COOLDOWN
                 if (launcher.getState() == Launcher.LaunchState.READY ||
                     launcher.getState() == Launcher.LaunchState.IDLE) {
                     launcher.setBehavior(Launcher.Behavior.IDLE);
                     launchAllState = LaunchAllState.IDLE;
                     behavior = Behavior.MANUAL;
                 }
-                // else: stay in COMPLETE, flywheel keeps spinning until COOLDOWN ends
                 break;
         }
     }
@@ -461,7 +477,6 @@ public class Robot implements TelemetryProvider {
             }
             if (behavior == Behavior.LAUNCH_ALL) {
                 telemetry.put("Launch State", launchAllState);
-                telemetry.put("Shots Remaining", shotsRemaining);
             }
             telemetry.put("Voltage", String.format("%.1f V", voltage));
             telemetry.put("Robot Size", String.format("%.1f x %.1f in", getRobotLength(), getRobotWidth()));
