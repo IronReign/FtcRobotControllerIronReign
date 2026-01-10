@@ -7,13 +7,15 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 
 import java.util.Map;
+@Disabled
 @Autonomous(name = "auton lebot")
-@Config(value = "auton lebot")
+//@Config(value = "auton lebot")
 public class lebotAUTON extends OpMode{
 //
 //

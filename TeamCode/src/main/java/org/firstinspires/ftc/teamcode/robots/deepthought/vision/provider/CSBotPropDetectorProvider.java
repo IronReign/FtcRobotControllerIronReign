@@ -34,7 +34,7 @@ import java.util.Map;
  * @author Iron Reign Coding Team
  */
 
-@Config  (value = "AA_CSBotPropDetectorProvider")
+//@Config  (value = "AA_CSBotPropDetectorProvider")
 public class CSBotPropDetectorProvider extends VisionProvider {
     private Bitmap noCameraBitmap;
     private OpenCvCamera camera;

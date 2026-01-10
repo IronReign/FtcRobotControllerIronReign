@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Config(value = "CSAUTONAV")
+//@Config(value = "CSAUTONAV")
 public class AutoNav implements TelemetryProvider {
     Robot robot;
     Field field;

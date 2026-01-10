@@ -3,11 +3,13 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-@Config(value = "pixelSensorTest")
+//@Config(value = "pixelSensorTest")
+@Disabled
 @TeleOp(name = "Test Pixel Sensor", group = "Test")
 public class TestPixelSensor extends LinearOpMode {
     public double rightPixelSensorValue, leftPixelSensorValue;

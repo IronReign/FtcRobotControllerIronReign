@@ -17,7 +17,7 @@ import org.firstinspires.ftc.teamcode.util.PIDController;
 import java.util.HashMap;
 import java.util.Map;
 
-@Config(value = "ri2dSwerve")
+//@Config(value = "ri2dSwerve")
 public class Swerve implements Subsystem {
     HardwareMap hardwareMap;
     DcMotorEx go;

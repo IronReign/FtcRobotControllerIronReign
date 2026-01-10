@@ -44,7 +44,8 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 
-@Config(value = "00 This is a test")
+//@Config(value = "00 This is a test")
+@Disabled
 @TeleOp(name="Basic: Iterative OpMode", group="Iterative Opmode")
 public class TestStuff extends OpMode
 {

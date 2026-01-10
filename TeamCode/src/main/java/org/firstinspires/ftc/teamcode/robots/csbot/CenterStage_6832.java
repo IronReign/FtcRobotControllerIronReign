@@ -21,7 +21,7 @@ import java.util.Map;
 
 @Disabled
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "0 CenterStage_6832", group = "Challenge")
-@Config(value = "CS_6832")
+//@Config(value = "CS_6832")
 public class CenterStage_6832 extends OpMode {
 
     private static final double LOW_BATTERY_VOLTAGE = 12;

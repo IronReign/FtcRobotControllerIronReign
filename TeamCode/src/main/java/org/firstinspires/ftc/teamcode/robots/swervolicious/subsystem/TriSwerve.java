@@ -32,7 +32,7 @@ import java.util.List;
  * Left-stick X/Y → field-oriented translation (vx,vy)<br>
  * Right-stick X  → yaw-rate command ω  (left = CCW = +)
  */
-@Config(value = "IsoSwerve")
+//@Config(value = "IsoSwerve")
 public class TriSwerve implements Subsystem {
 
     /* ---------------- constants & config ---------------- */

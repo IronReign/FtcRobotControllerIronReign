@@ -15,7 +15,7 @@ import org.firstinspires.ftc.teamcode.util.Vector2;
 import java.lang.Math;
 import java.util.*;
 
-@Config(value = "ITD_FIELD")
+//@Config(value = "ITD_FIELD")
 public class Field {
 
     public static final double FIELD_INCHES_PER_GRID = 23.5;

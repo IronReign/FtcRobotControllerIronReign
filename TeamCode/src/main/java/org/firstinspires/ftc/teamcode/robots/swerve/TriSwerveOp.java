@@ -3,11 +3,13 @@ package org.firstinspires.ftc.teamcode.robots.swerve;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.swervolicious.subsystem.SwerveModule;
 
-@Config
+//@Config
+@Disabled
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "TriSwerveOp", group = "Challenge")
 public class TriSwerveOp extends OpMode {
     public static boolean quickTripEnabled = false;

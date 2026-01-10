@@ -31,10 +31,12 @@ package org.firstinspires.ftc.teamcode.vision;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 /**
  * Demonstrates empty OpMode
  */
+@Disabled
 @TeleOp(name = "VisionProvider Test", group = "Linear Opmode")
 public class VisionProviderTest extends LinearOpMode {
 

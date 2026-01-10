@@ -17,7 +17,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Config(value = "CS_OUTTAKE")
+//@Config(value = "CS_OUTTAKE")
 public class Outtake implements Subsystem {
 
     public static double TRAVEL_FROM_BACKDROP_TIMER = 1.2;

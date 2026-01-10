@@ -33,7 +33,7 @@ import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.Map;
 
-@Config(value = "TriSwerve")
+//@Config(value = "TriSwerve")
 public class TriSwerve implements Subsystem {
     public static int quickTripDistance = 215;
     public static int fourCornersDistance = 40;

@@ -24,7 +24,7 @@ import java.util.List;
  * @author Mahesh Natamai
  */
 
-@Config
+//@Config
 public class OpenCVPipeline extends OpenCvPipeline {
     private Mat cropOutput = new Mat();
     private Mat normalizeInput = new Mat();

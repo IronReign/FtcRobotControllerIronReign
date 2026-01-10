@@ -3,10 +3,12 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-@Config
+//@Config
+@Disabled
 @TeleOp()
 public class SkyhookBrokeOpMode extends OpMode {
     public static int skyhookRightTicks, skyhookLeftTicks;

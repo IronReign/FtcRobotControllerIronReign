@@ -28,7 +28,7 @@ import java.util.Map;
  * @author Mahesh Natamai
  */
 
-@Config(value = "AprilTagProvider")
+//@Config(value = "AprilTagProvider")
 public class AprilTagProvider extends VisionProvider {
     private Bitmap noCameraBitmap;
     private OpenCvCamera camera;

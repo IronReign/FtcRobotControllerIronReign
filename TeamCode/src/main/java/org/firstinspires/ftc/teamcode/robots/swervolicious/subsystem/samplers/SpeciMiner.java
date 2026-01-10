@@ -26,7 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@Config(value = "00_ITD_SPECIMINER")
+//@Config(value = "00_ITD_SPECIMINER")
 public class SpeciMiner extends Arm {
     public CRServo CRSOne;
     public CRServo CRSTwo;

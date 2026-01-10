@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Config(value = "00_ITD_SAMPLER")
+//@Config(value = "00_ITD_SAMPLER")
 public class Sampler extends Arm {
     public static double TUNABLE_COEFFICIENT = 100;
     CRServo beater = null;

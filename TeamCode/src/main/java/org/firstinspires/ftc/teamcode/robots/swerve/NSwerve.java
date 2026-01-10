@@ -20,7 +20,7 @@ import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.Map;
 
-@Config(value = "NSwerve")
+//@Config(value = "NSwerve")
 public class NSwerve implements Subsystem {
 
     HardwareMap hardwareMap;

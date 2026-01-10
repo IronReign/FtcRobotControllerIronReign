@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Config(value = "00_ITD_TRIDENT")
+//@Config(value = "00_ITD_TRIDENT")
 public class Trident implements Subsystem {
     HardwareMap hardwareMap;
     Robot robot;

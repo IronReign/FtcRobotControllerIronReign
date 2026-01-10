@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigu
 
 import androidx.annotation.NonNull;
 
-@Config
+//@Config
 public class DcMotorImplExSquared extends DcMotorImplEx implements DcMotorExSquared {
 
     private int offset;

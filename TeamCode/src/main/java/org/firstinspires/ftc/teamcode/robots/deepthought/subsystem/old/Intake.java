@@ -21,7 +21,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Config(value = "AA_ITD_INTAKE")
+//@Config(value = "AA_ITD_INTAKE")
 public class Intake implements Subsystem {
     public static int RIGHT_DIVERTER_OPEN = 1850;
     public static int LEFT_DIVERTER_OPEN = 1050;

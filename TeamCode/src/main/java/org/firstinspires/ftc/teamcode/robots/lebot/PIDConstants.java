@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.robots.lebot;
 
 import com.acmerobotics.dashboard.config.Config;
 
-@Config
+//@Config
 public class PIDConstants {
     public static double Kp = .017;         //.018        //2.38 from mecanum drive
     public static double Ki = 0.0;

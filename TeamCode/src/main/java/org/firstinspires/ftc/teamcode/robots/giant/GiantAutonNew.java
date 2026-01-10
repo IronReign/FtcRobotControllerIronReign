@@ -9,6 +9,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
@@ -17,8 +18,11 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 import java.util.Map;
 
 
+@Disabled
+
+
 @Autonomous(name = "auton NEW SPECIMEN")
-@Config(value = "auton NEW SPECIMEN")
+//@Config(value = "auton NEW SPECIMEN")
 public class GiantAutonNew extends OpMode {
 
 

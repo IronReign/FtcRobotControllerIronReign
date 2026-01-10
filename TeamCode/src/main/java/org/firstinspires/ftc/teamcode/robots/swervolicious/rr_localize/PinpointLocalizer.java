@@ -27,7 +27,7 @@ import java.util.Objects;
  * Using the published scale of {@code 19.89436789 ticks/mm} for the goBILDA 4‑Bar pod
  * yields the tick constants below.
  */
-@Config
+//@Config
 public final class PinpointLocalizer implements Localizer {
 
     public static class Params {

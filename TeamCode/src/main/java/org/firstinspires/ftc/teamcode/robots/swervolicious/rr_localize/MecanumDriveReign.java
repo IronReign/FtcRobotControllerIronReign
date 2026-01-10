@@ -62,7 +62,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-@Config
+//@Config
 public class MecanumDriveReign {
     public static class Params {
         // IMU orientation

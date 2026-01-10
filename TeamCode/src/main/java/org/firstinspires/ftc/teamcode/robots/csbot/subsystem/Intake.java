@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Config(value = "CS_INTAKE")
+//@Config(value = "CS_INTAKE")
 public class Intake implements Subsystem {
     public static int RIGHT_DIVERTER_OPEN = 1850;
     public static int LEFT_DIVERTER_OPEN = 1050;

@@ -12,7 +12,7 @@ import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 
 import java.util.Map;
 
-@Config(value = "Spine")
+//@Config(value = "Spine")
 public class Spine implements Subsystem {
 
     HardwareMap hardwareMap;

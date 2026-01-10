@@ -31,7 +31,7 @@ import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-@Config(value = "CORE_ROBOT")
+//@Config(value = "CORE_ROBOT")
 public class Robot implements Subsystem {
     HardwareMap hardwareMap;
     DcMotorEx leftFront, leftBack, rightFront, rightBack;

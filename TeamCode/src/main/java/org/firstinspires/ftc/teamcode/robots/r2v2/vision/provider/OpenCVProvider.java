@@ -27,7 +27,7 @@ import java.util.Map;
  * @author Mahesh Natamai
  */
 
-@Config
+//@Config
 public class OpenCVProvider extends VisionProvider {
     private Bitmap noCameraBitmap;
     private OpenCvCamera camera;

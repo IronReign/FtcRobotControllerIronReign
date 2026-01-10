@@ -26,7 +26,7 @@ import java.util.List;
  * @author Mahesh Natamai
  */
 
-@Config(value = "NEW OPENCV")
+//@Config(value = "NEW OPENCV")
 public class OpenCVPipeline extends OpenCvPipeline {
     static FtcDashboard dashboard = FtcDashboard.getInstance();
 

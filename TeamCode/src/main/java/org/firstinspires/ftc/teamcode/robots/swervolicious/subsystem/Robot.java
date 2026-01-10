@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Config(value = "0_ITD_SWERVE")
+//@Config(value = "0_ITD_SWERVE")
 public class Robot implements Subsystem {
 
     public static double LED_POWER = .1;

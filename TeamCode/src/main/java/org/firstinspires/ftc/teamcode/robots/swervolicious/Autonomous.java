@@ -22,7 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 
-@Config(value = "AA_ITD_Auto_Basket")
+//@Config(value = "AA_ITD_Auto_Basket")
 public class Autonomous implements TelemetryProvider {
     public static double AUTON_OUTTAKE_WAIT_TIMER = 1.75;
     public static int numCycles = 4;
