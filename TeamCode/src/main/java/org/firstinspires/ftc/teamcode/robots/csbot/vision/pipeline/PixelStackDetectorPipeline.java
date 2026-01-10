@@ -28,7 +28,7 @@ import java.util.List;
  * @author Iron Reign Coding Team
  */
 
-@Config(value = "AA_CSBot_PixelStackDetectorPipeline")
+//@Config(value = "AA_CSBot_PixelStackDetectorPipeline")
 public class PixelStackDetectorPipeline extends TimestampedOpenCvPipeline {
     private Mat cropOutput = new Mat();
     private Mat normalizeInput = new Mat();

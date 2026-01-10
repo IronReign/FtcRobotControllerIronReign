@@ -26,7 +26,7 @@ import org.firstinspires.ftc.teamcode.util.PIDController;
  * @since 2018-11-02
  */
 
-@Config
+//@Config
 public class PoseBigWheel
 {
 

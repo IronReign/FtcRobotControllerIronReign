@@ -11,7 +11,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.ExponentialSmoother;
 
-@Config
+//@Config
 public class DcMotorExSim implements DcMotorEx {
 
     private double velocity;

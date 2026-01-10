@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.field.Field;
@@ -17,8 +18,10 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.vision.Demos;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Disabled
+
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "0 Roborama", group = "Challenge")
-@Config(value = "0 - Roborama")
+//@Config(value = "0 - Roborama")
 public class Roborama extends OpMode {
 
     public static long totalRunTime;

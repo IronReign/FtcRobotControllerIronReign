@@ -17,6 +17,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 //import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 //import com.qualcomm.robotcore.hardware.CRServo;
 //import com.qualcomm.robotcore.hardware.CRServoImplEx;
@@ -25,6 +26,8 @@ import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.tel
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
 import java.util.ArrayList;
+
+@Disabled
 
 @TeleOp
 public class testLeg extends OpMode{

@@ -28,7 +28,7 @@ import java.util.List;
  * @author Iron Reign Coding Team
  */
 
-@Config(value = "AA_R2V2_ConeVisionPipeline")
+//@Config(value = "AA_R2V2_ConeVisionPipeline")
 public class R2V2ConeDetectorPipeline extends TimestampedOpenCvPipeline {
     private Mat cropOutput = new Mat();
     private Mat normalizeInput = new Mat();

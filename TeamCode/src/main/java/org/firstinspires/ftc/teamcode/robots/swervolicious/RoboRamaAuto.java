@@ -2,6 +2,7 @@
 //
 //import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 //import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 //
 //@Autonomous(name = "ROBORAMAAUTO")
 //public class RoboRamaAuto extends OpMode {

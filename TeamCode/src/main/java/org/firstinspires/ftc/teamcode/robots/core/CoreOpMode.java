@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 
@@ -12,6 +13,8 @@ import java.util.Map;
 
 
 import com.acmerobotics.dashboard.FtcDashboard;
+
+@Disabled
 
 @TeleOp(name = "CORE")
 public class CoreOpMode extends OpMode {

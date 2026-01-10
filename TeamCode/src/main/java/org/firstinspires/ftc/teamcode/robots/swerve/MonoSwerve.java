@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.util.PIDController;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils;
 import java.util.Map;
 
-@Config(value = "Swerve")
+//@Config(value = "Swerve")
 public class MonoSwerve implements Subsystem {
 
     HardwareMap hardwareMap;

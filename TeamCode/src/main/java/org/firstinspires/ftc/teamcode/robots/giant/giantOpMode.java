@@ -7,6 +7,7 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
@@ -14,6 +15,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+@Disabled
 @TeleOp(name="giant mode", group="game")
 public class giantOpMode extends OpMode {
     Robot robot;

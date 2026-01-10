@@ -72,13 +72,11 @@ public class Loader implements Subsystem {
     }
     private LoaderState state = LoaderState.EMPTY;
 
-    // Ball tracking
-    private int ballCount = 0;
+    // Ball tracking (sensor-based, no counting)
     private double frontDistance = 100; // cm, starts high (no ball)
     private double backDistance = 100;  // cm, starts high (no ball)
     private boolean ballAtFront = false;
     private boolean ballAtBack = false;
-    private boolean wasBallAtFront = false; // For edge detection
 
     // Virtual sensor state (time-confirmed)
     private boolean isFullConfirmed = false;  // Debounced isFull virtual sensor
@@ -114,23 +112,17 @@ public class Loader implements Subsystem {
         frontDistance = frontSensor.getDistance();
         backDistance = backSensor.getDistance();
 
-        // Determine ball positions
-        wasBallAtFront = ballAtFront;
+        // Determine ball positions from sensors
         ballAtFront = frontDistance < BALL_DETECT_THRESHOLD_CM;
         ballAtBack = backDistance < BALL_DETECT_THRESHOLD_CM;
 
-        // Detect new ball entering (rising edge on front sensor)
-        if (ballAtFront && !wasBallAtFront && ballCount < MAX_BALLS) {
-            ballCount++;
-        }
-
-        // Update state based on ball count
-        if (ballCount == 0) {
-            state = LoaderState.EMPTY;
-        } else if (ballCount >= MAX_BALLS) {
+        // Update state based on sensor readings (no counting - unreliable)
+        if (ballAtBack && ballAtFront) {
             state = LoaderState.FULL;
-        } else {
+        } else if (ballAtBack || ballAtFront) {
             state = LoaderState.HAS_BALLS;
+        } else {
+            state = LoaderState.EMPTY;
         }
 
         // Compute time-confirmed isFull virtual sensor (debouncing)
@@ -297,12 +289,15 @@ public class Loader implements Subsystem {
     }
 
     /**
-     * Get the current ball count.
-     *
-     * @return Number of balls (0 to MAX_BALLS)
+     * Get estimated ball count based on sensors.
+     * @deprecated Ball counting is unreliable. Use isEmpty()/isFull() instead.
+     * @return Estimated count: 0 if empty, 2 if full, 1 otherwise
      */
+    @Deprecated
     public int getBallCount() {
-        return ballCount;
+        if (state == LoaderState.EMPTY) return 0;
+        if (state == LoaderState.FULL) return 2;
+        return 1;
     }
 
     /**
@@ -320,7 +315,7 @@ public class Loader implements Subsystem {
      * Check if chamber is full (raw, unconfirmed).
      * Use for debugging or when immediate response is needed.
      *
-     * @return true if ballCount >= MAX_BALLS (no debounce)
+     * @return true if both sensors detect balls
      */
     public boolean isFullRaw() {
         return state == LoaderState.FULL;
@@ -329,7 +324,7 @@ public class Loader implements Subsystem {
     /**
      * Check if chamber is empty.
      *
-     * @return true if ballCount == 0
+     * @return true if no sensors detect balls
      */
     public boolean isEmpty() {
         return state == LoaderState.EMPTY;
@@ -337,20 +332,20 @@ public class Loader implements Subsystem {
 
     /**
      * Called by Launcher when a ball is fired.
-     * Decrements the ball count.
+     * @deprecated No-op - ball counting removed. State is sensor-based now.
      */
+    @Deprecated
     public void ballFired() {
-        if (ballCount > 0) {
-            ballCount--;
-        }
+        // No-op - ball counting removed, state is purely sensor-based
     }
 
     /**
-     * Reset ball count (e.g., at start of match).
+     * Reset loader state (e.g., at start of match).
+     * @deprecated State is sensor-based - this does nothing meaningful.
      */
+    @Deprecated
     public void resetBallCount() {
-        ballCount = 0;
-        state = LoaderState.EMPTY;
+        // State will update from sensors on next calc() cycle
     }
 
     /**
@@ -400,16 +395,14 @@ public class Loader implements Subsystem {
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
         telemetry.put("State", state);
-        telemetry.put("Ball Count", ballCount + "/" + MAX_BALLS);
-        telemetry.put("isFull", isFullConfirmed ? "YES" : "no");
+        telemetry.put("Ball at Front", ballAtFront ? "YES" : "no");
+        telemetry.put("Ball at Back", ballAtBack ? "YES" : "no");
+        telemetry.put("Front Dist", String.format("%.1f", frontDistance));
+        telemetry.put("Back Dist", String.format("%.1f", backDistance));
         telemetry.put("Belt Owner", beltOwner);
 
         if (debug) {
-            telemetry.put("Ball at Front", ballAtFront ? "YES" : "no");
-            telemetry.put("Ball at Back", ballAtBack ? "YES" : "no");
-            telemetry.put("isFullRaw", (state == LoaderState.FULL) ? "YES" : "no");
-            telemetry.put("Front Dist (cm)", String.format("%.1f", frontDistance));
-            telemetry.put("Back Dist (cm)", String.format("%.1f", backDistance));
+            telemetry.put("isFull (confirmed)", isFullConfirmed ? "YES" : "no");
             telemetry.put("Belt Power", String.format("%.2f", beltPower));
             telemetry.put("Intake Requests", intakeRequestsBelt);
             telemetry.put("Launcher Claims", launcherClaimsBelt);

@@ -34,7 +34,7 @@ import java.util.Map;
  * @author Iron Reign Coding Team
  */
 
-@Config  (value = "AA_CSBotPixelStackDetectorProvider")
+//@Config  (value = "AA_CSBotPixelStackDetectorProvider")
 public class PixelStackDetectorProvider extends VisionProvider {
     private Bitmap noCameraBitmap;
     private OpenCvCamera camera;

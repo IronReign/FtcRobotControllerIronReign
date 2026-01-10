@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Config(value = "0_ITD_Robot")
+//@Config(value = "0_ITD_Robot")
 public class Robot implements Subsystem {
 
     public static double LED_POWER = .1;

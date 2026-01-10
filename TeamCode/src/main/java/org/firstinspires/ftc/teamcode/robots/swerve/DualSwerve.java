@@ -28,7 +28,7 @@ import org.firstinspires.ftc.teamcode.util.utilMethods;
 
 import java.util.Map;
 
-@Config(value = "swerve")
+//@Config(value = "swerve")
 public class DualSwerve implements Subsystem {
 
     HardwareMap hardwareMap;

@@ -140,8 +140,11 @@ public class Lebot2_6832 extends OpMode {
         // Reset robot for match start
         robot.resetStates();
 
-        // If starting in TeleOp, ensure manual control
-        if (!gameState.isAutonomous()) {
+        // Initialize autonomous if starting in autonomous mode
+        if (gameState.isAutonomous()) {
+            autonomous.init();
+        } else {
+            // If starting in TeleOp, ensure manual control
             robot.setBehavior(Robot.Behavior.MANUAL);
         }
     }
@@ -230,6 +233,15 @@ public class Lebot2_6832 extends OpMode {
         // Robot telemetry
         handleTelemetry(robot.getTelemetry(debugTelemetryEnabled),
                 robot.getTelemetryName(), packet);
+
+        // Autonomous telemetry (when in autonomous mode)
+        if (gameState == GameState.AUTONOMOUS) {
+            handleTelemetry(autonomous.getTelemetry(debugTelemetryEnabled),
+                    autonomous.getTelemetryName(), packet);
+            // Also show Missions telemetry since autonomous uses it
+            handleTelemetry(robot.missions.getTelemetry(debugTelemetryEnabled),
+                    robot.missions.getTelemetryName(), packet);
+        }
 
         // Subsystem telemetry
         if (debugTelemetryEnabled) {

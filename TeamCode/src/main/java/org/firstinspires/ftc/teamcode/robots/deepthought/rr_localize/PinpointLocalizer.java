@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.rrQuickStart.Localizer;
 
 import java.util.Objects;
 
-@Config
+//@Config
 public final class PinpointLocalizer implements Localizer {
     public static class Params {
         public double parYTicks = 2155.20134371; // y position of the parallel encoder (in tick units)

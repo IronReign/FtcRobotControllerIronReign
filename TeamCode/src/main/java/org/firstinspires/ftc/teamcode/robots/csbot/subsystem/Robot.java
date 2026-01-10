@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Config(value = "CSRobot")
+//@Config(value = "CSRobot")
 public class Robot implements Subsystem {
 
     //components and subsystems

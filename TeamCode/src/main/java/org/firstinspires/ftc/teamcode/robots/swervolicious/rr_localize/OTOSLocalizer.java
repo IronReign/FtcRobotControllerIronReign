@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.rrQuickStart.Localizer;
 
-@Config
+//@Config
 public class OTOSLocalizer implements Localizer {
     public static class Params {
         public double angularScalar = 0.0;

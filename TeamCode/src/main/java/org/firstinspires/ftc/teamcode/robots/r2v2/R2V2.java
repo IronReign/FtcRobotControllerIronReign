@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.r2v2.vision.VisionProvider;
@@ -24,7 +25,8 @@ import java.util.List;
 import java.util.Map;
 //comment test
 
-@Config("R2V2")
+//@Config("R2V2")
+@Disabled
 @TeleOp(name = "R2V2", group = "Challenge")
 public class R2V2 extends OpMode {
     //motors

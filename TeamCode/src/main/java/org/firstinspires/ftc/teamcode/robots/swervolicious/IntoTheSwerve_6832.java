@@ -4,6 +4,7 @@
 //import com.acmerobotics.dashboard.config.Config;
 //import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 //import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 //
 //import org.firstinspires.ftc.robotcore.internal.system.Misc;
 //import org.firstinspires.ftc.teamcode.robots.deepthought.field.Field;

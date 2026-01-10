@@ -9,6 +9,7 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -20,6 +21,8 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.lebot.Robot;
 
 import java.util.Map;
+
+@Disabled
 
 @TeleOp (name = "test")
 public class opMode extends OpMode {

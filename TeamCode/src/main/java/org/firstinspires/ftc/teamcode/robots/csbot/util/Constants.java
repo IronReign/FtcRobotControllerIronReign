@@ -5,7 +5,7 @@ import static org.firstinspires.ftc.teamcode.robots.deepthought.util.Utils.P2D;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 
-@Config(value = "CSConstants")
+//@Config(value = "CSConstants")
 public class Constants {
 
 

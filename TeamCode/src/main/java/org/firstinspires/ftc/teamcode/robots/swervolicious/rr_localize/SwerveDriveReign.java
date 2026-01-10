@@ -27,7 +27,7 @@ import java.util.Arrays;
 /**
  * SwerveDriveReign — Road Runner drive class for the three‑module “isosceles‑triangle” swerve.
  */
-@Config
+//@Config
 public class SwerveDriveReign {
 
     /* ============================ PARAMETERS ============================ */

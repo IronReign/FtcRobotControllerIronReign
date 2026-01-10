@@ -28,7 +28,7 @@ import java.util.List;
  * @author Iron Reign Coding Team
  */
 
-@Config(value = "AA_CSBot_PropDetectorPipeline")
+//@Config(value = "AA_CSBot_PropDetectorPipeline")
 public class CSBotPropDetectorPipeline extends TimestampedOpenCvPipeline {
     private Mat cropOutput = new Mat();
     private Mat normalizeInput = new Mat();

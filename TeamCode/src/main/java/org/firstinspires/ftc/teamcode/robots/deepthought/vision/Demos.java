@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Config(value = "00_ITD_DEMOS")
+//@Config(value = "00_ITD_DEMOS")
 public class Demos implements TelemetryProvider {
     Robot robot;
 

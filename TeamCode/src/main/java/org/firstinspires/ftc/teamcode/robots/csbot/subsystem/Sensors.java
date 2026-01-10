@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.robots.r2v2.util.Utils;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Config(value = "CS_SENSORS")
+//@Config(value = "CS_SENSORS")
 public class Sensors implements Subsystem {
     Robot robot;
     public int skyhookRightTicks;

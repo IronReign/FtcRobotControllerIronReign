@@ -18,7 +18,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
-@Config
+//@Config
 @Disabled
 @TeleOp(name="Mechavator", group="AAA")
 

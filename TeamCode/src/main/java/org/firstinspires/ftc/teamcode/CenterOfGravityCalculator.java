@@ -4,7 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 
-@Config
+//@Config
 public class CenterOfGravityCalculator {
 
     public static boolean drawRobotDiagram = false;

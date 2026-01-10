@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Config
+//@Config
 public abstract class VisionProvider implements TelemetryProvider {
 
     public static int MAX_POSITIONS = 50;

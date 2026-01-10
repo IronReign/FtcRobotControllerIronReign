@@ -27,7 +27,7 @@ import org.firstinspires.ftc.teamcode.util.PIDController;
 import java.util.HashMap;
 import java.util.Map;
 
-@Config(value = "0_Swerve_Drive_Train")
+//@Config(value = "0_Swerve_Drive_Train")
 public class DriveTrain extends SwerveDriveReign implements Subsystem {
     public Robot robot;
     public boolean trajectoryIsActive;

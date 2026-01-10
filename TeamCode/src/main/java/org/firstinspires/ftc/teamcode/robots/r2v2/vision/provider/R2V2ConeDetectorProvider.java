@@ -34,7 +34,7 @@ import java.util.Map;
  * @author Iron Reign Coding Team
  */
 
-@Config  (value = "AA_R2V2_CONE_VISION_PROVIDER")
+//@Config  (value = "AA_R2V2_CONE_VISION_PROVIDER")
 public class R2V2ConeDetectorProvider extends VisionProvider {
     private Bitmap noCameraBitmap;
     private OpenCvCamera camera;

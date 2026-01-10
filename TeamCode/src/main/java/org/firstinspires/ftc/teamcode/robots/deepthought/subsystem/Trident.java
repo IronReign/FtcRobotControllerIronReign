@@ -24,7 +24,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.Joint;
 import java.util.*;
 
 
-@Config(value = "00_ITD_TRIDENT")
+//@Config(value = "00_ITD_TRIDENT")
 public class Trident implements Subsystem {
     HardwareMap hardwareMap;
     Robot robot;

@@ -2,7 +2,10 @@ package org.firstinspires.ftc.teamcode.robots.spine;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import org.firstinspires.ftc.teamcode.robots.deepthought.util.StickyGamepad;
+
+@Disabled
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Spine", group = "Challenge")
 public class SpineOp extends  OpMode {

@@ -24,7 +24,7 @@ import org.firstinspires.ftc.teamcode.robots.deepthought.util.TelemetryProvider;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Config(value = "AA_ITD_Auto_Spec")
+//@Config(value = "AA_ITD_Auto_Spec")
 public class AutoSpecimens implements TelemetryProvider {
     public static double AUTON_WAIT_TIMER = 1;
     public static int numCycles = 4;
