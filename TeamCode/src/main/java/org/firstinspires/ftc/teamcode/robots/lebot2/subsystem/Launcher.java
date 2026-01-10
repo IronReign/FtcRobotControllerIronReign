@@ -65,6 +65,7 @@ public class Launcher implements Subsystem {
     public static double BELT_REVERSE_TIME = 0.05;  // seconds to reverse belt before paddle lift
     public static double PADDLE_LIFT_TIME = 0.5;    // seconds to hold paddle up
     public static double COOLDOWN_TIME = 0.25;      // seconds after paddle down
+    public static double AT_SPEED_HOLD_TIME = 0.25; // seconds to allow flywheel energy to build up
 
     // Speed calculation constants (from physics model)
     public static double LIMELIGHT_OFFSET = 0.23;   // meters from launch point
@@ -103,6 +104,7 @@ public class Launcher implements Subsystem {
     private double targetSpeed = MIN_LAUNCH_SPEED;
     private double currentSpeed = 0;
     private long stateTimer = 0;
+    private long atSpeedTimer = 0;
     private boolean fireRequested = false;
     private boolean passThroughMode = false;
 
@@ -398,8 +400,19 @@ public class Launcher implements Subsystem {
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         setPaddlePosition(PADDLE_DOWN);
 
+        if (!isFlywheelAtSpeed()){
+            stateTimer = 0;
+            return;
+        }
+
+        if(stateTimer == 0){
+            stateTimer = futureTime(AT_SPEED_HOLD_TIME);
+            return;
+        }
+
         if (isPast(stateTimer)) {
             // Resume belt to feed next ball
+            stateTimer = 0;
             if (loader != null) {
                 loader.claimBeltForLauncher();
             }
