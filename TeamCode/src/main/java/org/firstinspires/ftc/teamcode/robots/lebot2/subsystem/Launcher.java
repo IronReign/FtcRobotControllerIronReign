@@ -245,7 +245,8 @@ public class Launcher implements Subsystem {
 
         // Sync behavior to state (if behavior changed externally)
         if (behavior == Behavior.IDLE && state != LaunchState.IDLE) {
-            // Force back to idle
+            // Force back to idle and release resources
+            releaseResources();
             state = LaunchState.IDLE;
         } else if (behavior == Behavior.SPINNING && state == LaunchState.IDLE) {
             // Start spinning
@@ -538,6 +539,7 @@ public class Launcher implements Subsystem {
         if (debug) {
             telemetry.put("Internal State", state);
             telemetry.put("At Speed", isFlywheelAtSpeed() ? "YES" : "no");
+            telemetry.put("Resources Claimed", resourcesClaimed);
             telemetry.put("Paddle Pos", paddle.getPendingPosition());
             telemetry.put("Pass-Through", passThroughMode ? "ON" : "off");
             telemetry.put("Fire Requested", fireRequested);

@@ -324,7 +324,13 @@ public class Vision implements Subsystem {
             telemetry.put("ty", String.format("%.1f°", ty));
             telemetry.put("ta (area)", String.format("%.1f%%", ta));
             if (botPose != null) {
-                telemetry.put("Full BotPose", botPose.toString());
+                telemetry.put("BotPose X (m)", String.format("%.3f", botPose.getPosition().x));
+                telemetry.put("BotPose Y (m)", String.format("%.3f", botPose.getPosition().y));
+                telemetry.put("BotPose Z (m)", String.format("%.3f", botPose.getPosition().z));
+                telemetry.put("BotPose Yaw (deg)", String.format("%.1f", botPose.getOrientation().getYaw()));
+                telemetry.put("Goal Pos Used", String.format("(%.2f, %.2f)",
+                    isRedAlliance ? RED_GOAL_X : BLUE_GOAL_X,
+                    isRedAlliance ? RED_GOAL_Y : BLUE_GOAL_Y));
             }
         }
 

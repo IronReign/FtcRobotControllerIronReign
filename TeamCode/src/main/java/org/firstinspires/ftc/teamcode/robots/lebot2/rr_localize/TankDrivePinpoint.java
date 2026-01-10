@@ -302,9 +302,10 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     }
 
     private void executeTurnToTarget() {
-        // For vision-based turning, tx IS the error (0 = centered)
-        headingPID.setInput(0); // We want tx to be 0
-        headingPID.setSetpoint(turnTarget); // turnTarget holds the tx value
+        // For vision-based turning, we want tx (turnTarget) to reach 0
+        // Input = current offset, Setpoint = desired offset (0)
+        headingPID.setInput(turnTarget);
+        headingPID.setSetpoint(0);
         headingPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
         headingPID.setPID(HEADING_PID);
 
@@ -386,8 +387,9 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         double tx = vision.getTx();
 
         // PID: we want tx to be 0 (target centered)
-        headingPID.setInput(0);
-        headingPID.setSetpoint(tx);
+        // Input = current offset, Setpoint = desired offset (0)
+        headingPID.setInput(tx);
+        headingPID.setSetpoint(0);
         headingPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
         headingPID.setPID(HEADING_PID);
 

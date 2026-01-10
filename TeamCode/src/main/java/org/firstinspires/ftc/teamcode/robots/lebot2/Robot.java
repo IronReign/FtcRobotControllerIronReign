@@ -271,7 +271,8 @@ public class Robot implements TelemetryProvider {
                     behavior = Behavior.MANUAL;
                     return;
                 }
-                // Start spinning up - launcher pulls distance from Vision
+                // Force-reset launcher to clean state before starting
+                launcher.setBehavior(Launcher.Behavior.IDLE);
                 launcher.setBehavior(Launcher.Behavior.SPINNING);
                 shotsRemaining = loader.getBallCount();
                 launchAllState = LaunchAllState.SPINNING_UP;
