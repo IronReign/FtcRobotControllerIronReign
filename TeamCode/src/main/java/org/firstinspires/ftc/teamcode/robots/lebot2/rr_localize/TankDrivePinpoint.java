@@ -41,6 +41,7 @@ import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.DriveTrainBase;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Vision;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.PoseMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.TankCommandMessage;
@@ -145,11 +146,16 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public enum TurnState {
         IDLE,
         TURNING_TO_HEADING,
-        TURNING_TO_TARGET
+        TURNING_TO_TARGET,      // Single tx value (legacy)
+        CENTERING_ON_TARGET     // Continuous tx from Vision (preferred)
     }
     private TurnState turnState = TurnState.IDLE;
     private double turnTarget = 0;
     private double turnMaxSpeed = 1.0;
+
+    // Vision reference for continuous target tracking
+    private Vision vision = null;
+    public static double CENTERING_MAX_SPEED = 0.5; // Default max speed for centering
 
     // RoadRunner action tracking
     private Action currentAction = null;
@@ -254,6 +260,10 @@ public final class TankDrivePinpoint implements DriveTrainBase {
             case TURNING_TO_TARGET:
                 executeTurnToTarget();
                 break;
+
+            case CENTERING_ON_TARGET:
+                executeCenteringOnTarget();
+                break;
         }
 
         // Draw robot on field overlay if provided
@@ -339,6 +349,57 @@ public final class TankDrivePinpoint implements DriveTrainBase {
             behavior = Behavior.MANUAL;
         }
         setMotorPowers(0, 0);
+    }
+
+    @Override
+    public void setVision(Vision vision) {
+        this.vision = vision;
+    }
+
+    @Override
+    public void centerOnTarget() {
+        // Only start if we have Vision reference and target is visible
+        if (vision == null) {
+            return; // No vision reference - can't center
+        }
+        if (!vision.hasTarget()) {
+            return; // No target visible - do nothing
+        }
+
+        // Start centering - will query Vision each loop for fresh tx
+        turnMaxSpeed = CENTERING_MAX_SPEED;
+        turnState = TurnState.CENTERING_ON_TARGET;
+        behavior = Behavior.PID_TURN;
+        headingPID.enable();
+    }
+
+    private void executeCenteringOnTarget() {
+        // Query Vision for fresh tx each loop
+        if (vision == null || !vision.hasTarget()) {
+            // Lost target or no vision - stop and return to manual
+            setMotorPowers(0, 0);
+            turnState = TurnState.IDLE;
+            behavior = Behavior.MANUAL;
+            return;
+        }
+
+        double tx = vision.getTx();
+
+        // PID: we want tx to be 0 (target centered)
+        headingPID.setInput(0);
+        headingPID.setSetpoint(tx);
+        headingPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
+        headingPID.setPID(HEADING_PID);
+
+        double correction = headingPID.performPID();
+
+        if (headingPID.onTarget()) {
+            setMotorPowers(0, 0);
+            turnState = TurnState.IDLE;
+            behavior = Behavior.MANUAL;
+        } else {
+            setMotorPowers(correction, -correction);
+        }
     }
 
     // ==================== TELEOP DRIVING ====================

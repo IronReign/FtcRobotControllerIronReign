@@ -77,6 +77,20 @@ public class Robot implements TelemetryProvider {
     // Configuration
     public static boolean isRedAlliance = true;
 
+    // Robot Dimensions (inches, relative to center of rotation)
+    // Center of rotation = midpoint between drive wheels (on the axle line)
+    // Since wheels are mounted near the back, FRONT_EXTENT > BACK_EXTENT
+    public static double FRONT_EXTENT = 9.0;   // Center of rotation to front bumper
+    public static double BACK_EXTENT = 5.0;    // Center of rotation to back bumper
+    public static double SIDE_EXTENT = 7.0;    // Center to side (half robot width)
+    public static double TRACK_WIDTH = 11.5;   // Distance between wheel centers (should match TankDrivePinpoint.PARAMS.trackWidthTicks)
+
+    // Camera offset from center of rotation (for Limelight configuration reference)
+    // These values should be entered in Limelight web interface, stored here for documentation
+    public static double CAMERA_FORWARD_OFFSET = 6.0;  // Positive = camera in front of center of rotation
+    public static double CAMERA_SIDE_OFFSET = 0.0;     // Positive = camera to the right
+    public static double CAMERA_HEIGHT = 12.0;         // Height above ground
+
     // Robot-level behaviors (multi-subsystem coordination only)
     // Note: Most behaviors are now handled by individual subsystems
     public enum Behavior {
@@ -104,7 +118,9 @@ public class Robot implements TelemetryProvider {
     }
     private LaunchAllState launchAllState = LaunchAllState.IDLE;
     private long launchTimer = 0;
-    public static double FEED_DELAY_SECONDS = 4;
+    public static double FEED_DELAY_SECONDS = 0.5;  // Wait before checking for next ball
+    public static double FEED_TIMEOUT_SECONDS = 3.0; // Max time to wait for ball to reach back
+    private long feedTimeoutTimer = 0;
     private int shotsRemaining = 3;
 
     public Robot(HardwareMap hardwareMap, boolean simulated) {
@@ -127,6 +143,7 @@ public class Robot implements TelemetryProvider {
         launcher.setLoader(loader);     // For belt claiming and ball counting
         launcher.setIntake(intake);     // For intake suppression during firing
         launcher.setVision(vision);     // For distance-based speed calculation
+        driveTrain.setVision(vision);   // For continuous vision-based centering
 
         // Add to subsystems list for bulk operations
         subsystems.add((Subsystem) driveTrain);
@@ -273,16 +290,26 @@ public class Robot implements TelemetryProvider {
                     if (shotsRemaining <= 0 || loader.isEmpty()) {
                         launchAllState = LaunchAllState.COMPLETE;
                     } else {
-                        // Belt is already claimed by launcher, just wait for next ball
+                        // Wait for next ball - belt resumes after Launcher's COOLDOWN ends
                         launchTimer = futureTime(FEED_DELAY_SECONDS);
+                        feedTimeoutTimer = futureTime(FEED_TIMEOUT_SECONDS);
                         launchAllState = LaunchAllState.FEEDING_NEXT;
                     }
                 }
                 break;
 
             case FEEDING_NEXT:
+                // Wait for ball to reach back sensor, or timeout
                 if (isPast(launchTimer) && loader.isBallAtBack()) {
                     launchAllState = LaunchAllState.FIRING;
+                } else if (isPast(feedTimeoutTimer)) {
+                    // Timeout - assume ball is ready or skip to next
+                    // Try firing anyway if there might still be balls
+                    if (!loader.isEmpty()) {
+                        launchAllState = LaunchAllState.FIRING;
+                    } else {
+                        launchAllState = LaunchAllState.COMPLETE;
+                    }
                 }
                 break;
 
@@ -366,6 +393,48 @@ public class Robot implements TelemetryProvider {
         }
     }
 
+    // ==================== ROBOT GEOMETRY HELPERS ====================
+
+    /**
+     * Get total robot length (front to back).
+     * @return Length in inches
+     */
+    public static double getRobotLength() {
+        return FRONT_EXTENT + BACK_EXTENT;
+    }
+
+    /**
+     * Get total robot width (side to side).
+     * @return Width in inches
+     */
+    public static double getRobotWidth() {
+        return SIDE_EXTENT * 2;
+    }
+
+    /**
+     * Check if a field point is within the robot's footprint given current pose.
+     * Useful for collision detection.
+     *
+     * @param pose Robot's current pose (center of rotation)
+     * @param pointX Field X coordinate to check
+     * @param pointY Field Y coordinate to check
+     * @return true if point is inside robot bounds
+     */
+    public static boolean isPointInsideRobot(Pose2d pose, double pointX, double pointY) {
+        // Transform point to robot-local coordinates
+        double dx = pointX - pose.position.x;
+        double dy = pointY - pose.position.y;
+        double heading = pose.heading.toDouble();
+
+        // Rotate to robot frame
+        double localX = dx * Math.cos(-heading) - dy * Math.sin(-heading);
+        double localY = dx * Math.sin(-heading) + dy * Math.cos(-heading);
+
+        // Check bounds (localX positive = forward, localY positive = left)
+        return localX >= -BACK_EXTENT && localX <= FRONT_EXTENT
+                && Math.abs(localY) <= SIDE_EXTENT;
+    }
+
     @Override
     public String getTelemetryName() {
         return "Robot";
@@ -388,6 +457,8 @@ public class Robot implements TelemetryProvider {
                 telemetry.put("Shots Remaining", shotsRemaining);
             }
             telemetry.put("Voltage", String.format("%.1f V", voltage));
+            telemetry.put("Robot Size", String.format("%.1f x %.1f in", getRobotLength(), getRobotWidth()));
+            telemetry.put("Extents (F/B/S)", String.format("%.1f / %.1f / %.1f in", FRONT_EXTENT, BACK_EXTENT, SIDE_EXTENT));
         }
 
         return telemetry;

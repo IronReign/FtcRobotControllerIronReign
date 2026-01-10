@@ -103,7 +103,8 @@ public class Vision implements Subsystem {
             tx = result.getTx();
             ty = result.getTy();
             ta = result.getTa();
-            botPose = result.getBotpose_MT2();
+            // Using MT1 (no IMU heading required) - switch to MT2 once RR heading is calibrated
+            botPose = result.getBotpose();
 
             // Calculate distance using botpose (field localization)
             if (botPose != null) {

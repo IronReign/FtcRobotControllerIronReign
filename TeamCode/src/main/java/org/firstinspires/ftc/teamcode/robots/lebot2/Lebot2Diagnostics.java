@@ -564,10 +564,12 @@ public class Lebot2Diagnostics extends OpMode {
                 currentTest.pass("Found");
             } else if (currentTest == testIntakeExists) {
                 intake = hardwareMap.get(DcMotorEx.class, "intake");
+                intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);  // Ensure direct power control
                 // Intake uses default FORWARD direction
                 currentTest.pass("Found");
             } else if (currentTest == testConveyorExists) {
                 conveyor = hardwareMap.get(DcMotorEx.class, "conveyor");
+                conveyor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);  // Ensure direct power control
                 conveyor.setDirection(DcMotorSimple.Direction.REVERSE);  // Match Loader
                 currentTest.pass("Found");
             } else if (currentTest == testFrontDistExists) {
@@ -674,11 +676,17 @@ public class Lebot2Diagnostics extends OpMode {
         }
 
         if (testPhase == 0) {
+            // Debug: Show which motor port we're commanding
+            telemetry.addData("Testing Motor", name);
+            telemetry.addData("Motor Port", motor.getPortNumber());
+            telemetry.addData("Motor Controller", motor.getController().getDeviceName());
+            telemetry.update();
+
             motor.setPower(MOTOR_TEST_POWER);
             testPhase = 1;
         } else if (testTimer.seconds() > MOTOR_TEST_DURATION_SEC) {
             motor.setPower(0);
-            currentTest.pass("Motor ran (visual confirm)");
+            currentTest.pass(String.format("%s ran on port %d", name, motor.getPortNumber()));
         }
     }
 

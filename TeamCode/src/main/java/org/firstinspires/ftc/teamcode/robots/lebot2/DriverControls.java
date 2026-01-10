@@ -123,12 +123,11 @@ public class DriverControls implements TelemetryProvider {
             }
         }
 
-        // Y button: Turn to vision target
-        // Driver can override with joystick if vision glares
+        // Y button: Center on vision target (runs to completion)
+        // DriveTrain queries Vision directly for continuous tx updates
+        // Driver can override with joystick if needed
         if (stickyGamepad1.y) {
-            if (robot.vision.hasTarget()) {
-                robot.driveTrain.turnToTarget(robot.vision.getTx(), 0.5);
-            }
+            robot.driveTrain.centerOnTarget();
         }
 
         // Left bumper: Toggle slow mode

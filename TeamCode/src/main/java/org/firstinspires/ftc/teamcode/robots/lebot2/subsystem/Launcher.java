@@ -59,6 +59,7 @@ public class Launcher implements Subsystem {
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
 
     // Launch timing
+    public static double BELT_REVERSE_TIME = 0.05;  // seconds to reverse belt before paddle lift
     public static double PADDLE_LIFT_TIME = 0.35;   // seconds to hold paddle up
     public static double COOLDOWN_TIME = 0.25;      // seconds after paddle down
 
@@ -89,6 +90,7 @@ public class Launcher implements Subsystem {
         IDLE,           // Flywheel off, paddle down
         SPINNING_UP,    // Flywheel ramping to speed
         READY,          // Flywheel at speed, waiting for fire command
+        BELT_REVERSING, // Brief reverse pulse to relieve fin pressure
         FIRING,         // Paddle lifting ball into flywheel
         COOLDOWN        // Paddle returning, preparing for next
     }
@@ -264,6 +266,10 @@ public class Launcher implements Subsystem {
                 handleReadyState();
                 break;
 
+            case BELT_REVERSING:
+                handleBeltReversingState();
+                break;
+
             case FIRING:
                 handleFiringState();
                 break;
@@ -289,6 +295,9 @@ public class Launcher implements Subsystem {
     }
 
     private void handleSpinningUpState() {
+        // Claim belt during spin-up so balls feed to the back before we fire
+        claimResources();
+
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         if (isFlywheelAtSpeed()) {
@@ -305,19 +314,37 @@ public class Launcher implements Subsystem {
         if (fireRequested) {
             fireRequested = false;
 
-            // Claim belt and suppress intake before firing
-            claimResources();
+            // Release belt ownership and start reverse pulse to relieve fin pressure
+            // (Intake stays suppressed via claimResources() from spin-up)
+            if (loader != null) {
+                loader.releaseBeltFromLauncher();
+                loader.reverseBeltForFiring();
+            }
+
+            state = LaunchState.BELT_REVERSING;
+            stateTimer = futureTime(BELT_REVERSE_TIME);
+        }
+    }
+
+    private void handleBeltReversingState() {
+        // Keep flywheel spinning, paddle still down, belt reversing
+        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        setPaddlePosition(PADDLE_DOWN);
+
+        if (isPast(stateTimer)) {
+            // Stop reverse, now lift paddle
+            if (loader != null) {
+                loader.stopBeltForFiring();
+                loader.ballFired();
+            }
 
             state = LaunchState.FIRING;
             stateTimer = futureTime(PADDLE_LIFT_TIME);
             setPaddlePosition(PADDLE_UP);
-
-            // Tell loader a ball was fired
-            if (loader != null) {
-                loader.ballFired();
-            }
         }
     }
+
     private void handleFiringState() {
         // Keep flywheel spinning and paddle up
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
@@ -338,7 +365,10 @@ public class Launcher implements Subsystem {
         setPaddlePosition(PADDLE_DOWN);
 
         if (isPast(stateTimer)) {
-            // Stay in READY if we might fire again, else go to IDLE
+            // Resume belt to feed next ball
+            if (loader != null) {
+                loader.claimBeltForLauncher();
+            }
             state = LaunchState.READY;
         }
     }

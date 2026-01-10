@@ -226,6 +226,16 @@ public class TankDrive implements DriveTrainBase {
         setMotorPowers(0, 0);
     }
 
+    @Override
+    public void setVision(org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Vision vision) {
+        // Not implemented in this drive - use TankDrivePinpoint for vision centering
+    }
+
+    @Override
+    public void centerOnTarget() {
+        // Not implemented in this drive - use TankDrivePinpoint for vision centering
+    }
+
     public int getLeftTicks(){
         return leftMotor.getCurrentPosition();
     }
