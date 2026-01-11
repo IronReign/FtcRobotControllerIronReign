@@ -192,6 +192,7 @@ public class Robot implements TelemetryProvider {
         // Handle Robot-level behaviors (multi-subsystem coordination)
         switch (behavior) {
             case MANUAL:
+                //handleManualBehavior();
                 // Subsystems controlled directly by DriverControls
                 // Nothing to coordinate at Robot level
                 break;
@@ -343,6 +344,10 @@ public class Robot implements TelemetryProvider {
                 break;
         }
     }
+
+//    public void handleManualBehavior(){
+//        launcher.setBehavior(Launcher.Behavior.SPINNING);
+//    }
 
     // ==================== PUBLIC METHODS ====================
 

@@ -5,6 +5,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.LazyServo;
@@ -46,10 +47,20 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 @Config(value = "Lebot2_Launcher")
 public class Launcher implements Subsystem {
 
+    public static double NEW_P = 15;
+    public static double NEW_I = 0;
+    public static double NEW_D = 0;
+    public static double NEW_F = 17;
+
+
     // Hardware
     private final DcMotorEx flywheel;  // Not wrapped - SDK handles velocity control
     private final DcMotorEx flywheelHelp;
     private final LazyServo paddle;    // Wrapped for three-phase pattern
+
+    PIDFCoefficients pidfOrig;
+    PIDFCoefficients pidNew;
+    PIDFCoefficients pidfModified;
 
     // Paddle positions (servo units 0-1, converted from pulse widths)
     public static double PADDLE_DOWN = 0.167;  // ~1000µs - gate closed
@@ -57,7 +68,7 @@ public class Launcher implements Subsystem {
     public static double PADDLE_PASS = 0.53;   // Pass-through mode (same as launch)
 
     // Flywheel configuration
-    public static double MIN_LAUNCH_SPEED = 720;   // degrees/sec - hardcoded working speed from known position
+    public static double MIN_LAUNCH_SPEED = 10;   //720 <--old     // degrees/sec - hardcoded working speed from known position
     public static double SPEED_TOLERANCE = 15;      // degrees/sec margin for "at speed" check
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
 
@@ -95,13 +106,16 @@ public class Launcher implements Subsystem {
         READY,          // Flywheel at speed, waiting for fire command
         BELT_REVERSING, // Brief reverse pulse to relieve fin pressure
         FIRING,         // Paddle lifting ball into flywheel
-        COOLDOWN        // Paddle returning, preparing for next
+        COOLDOWN,        // Paddle returning, preparing for next
+        MANUAL
     }
     private LaunchState state = LaunchState.IDLE;
 
     // State data
     private double targetSpeed = MIN_LAUNCH_SPEED;
-    private double currentSpeed = 0;
+    private double currentSpeed = 0;            //primary flywheel velocity
+    private double helperSpeed = 0;             //helper flywheel velocity
+
     private long stateTimer = 0;
     private boolean fireRequested = false;
     private boolean passThroughMode = false;
@@ -128,6 +142,8 @@ public class Launcher implements Subsystem {
         flywheel.setDirection(DcMotorEx.Direction.REVERSE);
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        pidfOrig = flywheel.getPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        //pidfOrig = flywheel.get
 
         flywheelHelp = hardwareMap.get(DcMotorEx.class, "shooter helper");
         flywheelHelp.setDirection(DcMotorEx.Direction.REVERSE);         //check if reversed or not
@@ -243,15 +259,24 @@ public class Launcher implements Subsystem {
     public void calc(Canvas fieldOverlay) {
         // PHASE 2: Read cached velocity and run state machine
 
+
+        pidNew = new PIDFCoefficients(NEW_P,NEW_I,NEW_D,NEW_F);
+        flywheel.setVelocityPIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F);
+        flywheelHelp.setVelocityPIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F);
+//        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidNew);
+//        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidNew);
+        pidfModified = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+
         // Get flywheel speed (bulk-cached by SDK)
         currentSpeed = flywheel.getVelocity(AngleUnit.DEGREES);
+        helperSpeed = flywheelHelp.getVelocity(AngleUnit.DEGREES);
 
         // CSV logging for debugging flywheel behavior
         if (LOGGING_ENABLED) {
             if (behavior == Behavior.SPINNING && logStartTime == 0) {
                 // Start new log session
                 flywheelLog = new CsvLogKeeper("flywheel_log", 6,
-                    "elapsedMs,state,currentSpeed,targetSpeed,fireRequested,isAtSpeed");
+                    "elapsedMs,state,primarySpeed,helperSpeed,targetSpeed,speedDiff,fireRequested,isAtSpeed");
                 logStartTime = System.currentTimeMillis();
             }
             if (logStartTime > 0 && behavior == Behavior.SPINNING) {
@@ -260,7 +285,9 @@ public class Launcher implements Subsystem {
                 row.add(System.currentTimeMillis() - logStartTime);
                 row.add(state.name());
                 row.add(String.format("%.1f", currentSpeed));
+                row.add(String.format("%.1f", helperSpeed));
                 row.add(String.format("%.1f", targetSpeed));
+                row.add(String.format("%.1f", targetSpeed - helperSpeed));      //difference between motors
                 row.add(fireRequested);
                 row.add(isFlywheelAtSpeed());
                 flywheelLog.UpdateLog(row);
@@ -279,13 +306,19 @@ public class Launcher implements Subsystem {
 
         // Sync behavior to state (if behavior changed externally)
         if (behavior == Behavior.IDLE && state != LaunchState.IDLE) {
-            // Force back to idle and release resources
-            releaseResources();
-            state = LaunchState.IDLE;
+
+                // Force back to idle and release resources
+                releaseResources();
+                state = LaunchState.IDLE;
+
+
         } else if (behavior == Behavior.SPINNING && state == LaunchState.IDLE) {
             // Start spinning
             state = LaunchState.SPINNING_UP;
         }
+//        else if(behavior == Behavior.SPINNING && state == LaunchState.MANUAL){
+//            state = LaunchState.MANUAL;
+//        }
 
         // Run state machine
         switch (state) {
@@ -312,6 +345,9 @@ public class Launcher implements Subsystem {
             case COOLDOWN:
                 handleCooldownState();
                 break;
+//            case MANUAL:
+//                handleManualFlyWheel();
+//                break;
         }
     }
 
@@ -406,6 +442,13 @@ public class Launcher implements Subsystem {
             state = LaunchState.READY;
         }
     }
+
+//    private void handleManualFlyWheel(){
+//        flywheel.setVelocity(targetSpeed,AngleUnit.DEGREES);
+//        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
+//    }
+    public void manualFire(){state = LaunchState.MANUAL;}
+
 
     private void setPaddlePosition(double position) {
         paddle.setPosition(position);  // Queues position, flushed in act()
@@ -569,10 +612,19 @@ public class Launcher implements Subsystem {
         telemetry.put("Flywheel Speed", String.format("%.0f / %.0f", currentSpeed, targetSpeed));
         telemetry.put("Ready", isReady() ? "YES" : "no");
 
+        telemetry.put("P, I, D, F (orig)", String.format("%.04f, %.04f, %.04f, %.04f", pidfOrig.p, pidfOrig.i, pidfOrig.d, pidfOrig.f));
+        telemetry.put("algorithm", pidfOrig.algorithm);
+        if(pidfModified!=null){
+            telemetry.put("P, I, D, F (modified)", String.format("%.04f, %.04f, %.04f, %.04f", pidfModified.p, pidfModified.i, pidfModified.d, pidfModified.f));
+        }
+
+
         if (debug) {
             telemetry.put("Internal State", state);
+            telemetry.put("Primary Speed", String.format("%.0f",currentSpeed));
+            telemetry.put("Helper Speed", String.format("%.0f",currentSpeed));
+            telemetry.put("Motor Diff", String.format("%.0f",currentSpeed-helperSpeed));
             telemetry.put("At Speed", isFlywheelAtSpeed() ? "YES" : "no");
-            telemetry.put("Speed Deficit", String.format("%.0f", targetSpeed - currentSpeed));
             telemetry.put("Shot #", shotNumber);
             telemetry.put("Speed@Approval", String.format("%.0f", speedAtFireApproval));
             telemetry.put("Resources Claimed", resourcesClaimed);
