@@ -156,10 +156,11 @@ public class DriverControls implements TelemetryProvider {
 
         // D-pad right: Eject balls
         if (stickyGamepad1.dpad_right) {
-            robot.intake.eject();
+            //robot.launcher.manualFire();
+            robot.intake.eject();         //bring back after manual test
             // For eject, we use setBeltPower which claims as launcher priority
             // Positive = eject forward
-            robot.loader.setBeltPower(0.5);
+            robot.loader.setBeltPower(0.5);       //bring back after manual test
         }
 
         // Guide button: Reset encoders and ball count
