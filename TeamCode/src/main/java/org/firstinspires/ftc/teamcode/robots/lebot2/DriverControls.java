@@ -111,17 +111,22 @@ public class DriverControls implements TelemetryProvider {
             robot.loader.stopBelt();
         }
 
-        // X button: Spin up launcher / fire
-        // Launcher will claim belt when actually firing
-        if (stickyGamepad1.x) {
-            if (robot.launcher.isReady()) {
-                // If already ready, fire one ball
-                robot.launcher.fire();
-            } else if (robot.launcher.getBehavior() == Launcher.Behavior.IDLE) {
-                // Start spinning up - launcher pulls distance from Vision automatically
-                robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
-            }
+        if(stickyGamepad1.x){
+            robot.launcher.request();
+            robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
         }
+
+//        // X button: Spin up launcher / fire
+//        // Launcher will claim belt when actually firing
+//        if (stickyGamepad1.x) {
+//            if (robot.launcher.isReady()) {
+//                // If already ready, fire one ball
+//                robot.launcher.fire();
+//            } else if (robot.launcher.getBehavior() == Launcher.Behavior.IDLE) {
+//                // Start spinning up - launcher pulls distance from Vision automatically
+//                robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
+//            }
+//        }
 
         // Y button: Center on vision target (runs to completion)
         // DriveTrain queries Vision directly for continuous tx updates
@@ -142,9 +147,11 @@ public class DriverControls implements TelemetryProvider {
 
         // D-pad up/down: Manual paddle control
         if (stickyGamepad1.dpad_up) {
+            robot.launcher.paddleUp();
             robot.launcher.setPassThroughMode(true);
         }
         if (stickyGamepad1.dpad_down) {
+            robot.launcher.paddleDown();
             robot.launcher.setPassThroughMode(false);
         }
 
