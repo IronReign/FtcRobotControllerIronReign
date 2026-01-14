@@ -108,9 +108,21 @@ public class Robot implements TelemetryProvider {
     }
     private TargetingState targetingState = TargetingState.IDLE;
 
-    // Launch-all sequence state
-    public enum LaunchAllState {
+    // Launch-all sequence state for paddle design
+//    public enum LaunchAllState {
+//        IDLE,
+//        SPINNING_UP,
+//        FIRING,
+//        WAITING_SHOT_COMPLETE,
+//        INTER_SHOT_DELAY,
+//        ADVANCE_BELT,
+//        COMPLETE
+//    }
+    //launch-all sequence state for ramp design
+        public enum LaunchAllState {
         IDLE,
+        REQUESTED,
+        REVERSING,
         SPINNING_UP,
         FIRING,
         WAITING_SHOT_COMPLETE,
@@ -118,6 +130,9 @@ public class Robot implements TelemetryProvider {
         ADVANCE_BELT,
         COMPLETE
     }
+
+
+
     private LaunchAllState launchAllState = LaunchAllState.IDLE;
     private long launchTimer = 0;
     public static double INTER_SHOT_DELAY_SECONDS = 1.5;  // Delay for flywheel recovery between shots
@@ -202,7 +217,8 @@ public class Robot implements TelemetryProvider {
                 break;
 
             case LAUNCH_ALL:
-                handleLaunchAllBehavior();
+                handleLaunchAllBehavior2();
+                //handleLaunchAllBehavior();
                 break;
         }
 
@@ -263,6 +279,29 @@ public class Robot implements TelemetryProvider {
         }
     }
 
+    //for ramp design
+    private void handleLaunchAllBehavior2(){
+        if (loader.isEmpty()) {
+            behavior = Behavior.MANUAL;
+            return;
+        }
+        // Force-reset launcher to clean state before starting
+        launcher.setBehavior(Launcher.Behavior.IDLE);
+        launcher.setBehavior(Launcher.Behavior.SPINNING);
+        launcher.request();
+//        switch(launchAllState){
+//            case IDLE:
+//                if (loader.isEmpty()) {
+//                    behavior = Behavior.MANUAL;
+//                    return;
+//                }
+//                // Force-reset launcher to clean state before starting
+//                launcher.setBehavior(Launcher.Behavior.IDLE);
+//                launcher.setBehavior(Launcher.Behavior.SPINNING);
+//                launcher.request();
+//        }
+    }
+    //for paddle design
     private void handleLaunchAllBehavior() {
         // Launch all balls in sequence until empty
         // Simplified: no ball counting, just fire until sensors show empty
