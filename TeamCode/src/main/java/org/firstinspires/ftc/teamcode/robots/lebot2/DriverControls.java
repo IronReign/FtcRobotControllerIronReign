@@ -112,7 +112,7 @@ public class DriverControls implements TelemetryProvider {
         }
 
         if(stickyGamepad1.x){
-            robot.launcher.request();
+            robot.launcher.requestManual();
             robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
         }
 

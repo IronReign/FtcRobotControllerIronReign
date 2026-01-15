@@ -122,17 +122,11 @@ public class Launcher implements Subsystem {
         //LAUNCH STATES FOR RAMP DESIGN
     public enum LaunchState {
         IDLE,           // Flywheel off, paddle down
-        REQUESTED,      //timer for belt to reverse for launch all 3 balls ramp design
         SPINNING_UP,    // Flywheel ramping to speed
         READY,          // Flywheel at speed, waiting for fire command
-        BELT_REVERSING2, // Brief reverse pulse to relieve fin pressure
         FIRING,         // Paddle lifting ball into flywheel
         COOLDOWN,        // Paddle returning, preparing for next
-        MANUAL,
-        FIRST,
-        NEXT,
-        BUFFER,
-        COMPLETE
+        MANUAL
     }
     private LaunchState state = LaunchState.IDLE;
 
@@ -398,15 +392,6 @@ public class Launcher implements Subsystem {
             case MANUAL:
                 handleManual();
                 break;
-            case FIRST:
-                handleFirst();
-                break;
-            case NEXT:
-                handleNext();
-                break;
-            case BUFFER:
-                handleBuffer();
-                break;
         }
     }
 
@@ -428,40 +413,6 @@ public class Launcher implements Subsystem {
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
     }
 
-    private void handleFirst(){
-        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_DOWN);
-        if(isFlywheelAtSpeed()){
-            state = LaunchState.BUFFER;
-            //stateTimer = futureTime(BELT_REVERSE_TIME2);
-        }
-    }
-
-    private void handleBuffer(){
-        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_UP);
-        state = LaunchState.NEXT;
-        stateTimer = futureTime(BELT_REVERSE_TIME2);
-
-    }
-
-    private void handleNext(){
-        if(isPast(stateTimer)){
-            claimResources();
-            state = LaunchState.COMPLETE;
-        }
-
-    }
-
-    private void handleComplete(){
-        if(isPast(stateTimer)){
-            releaseResources();
-            state = LaunchState.IDLE;
-        }
-    }
-
     private void handleIdleState() {
         // Ensure resources are released when idle
         releaseResources();
@@ -477,25 +428,12 @@ public class Launcher implements Subsystem {
         setPaddlePosition(passThroughMode ? PADDLE_PASS : PADDLE_DOWN);
         //setPaddlePosition(PADDLE_DOWN);
     }
-    public void request(){
+    public void requestManual(){
         state = LaunchState.MANUAL;
     }
 
-    private void handleResquestState(){
-        //claimResources();
-        loader.reverseBeltForFiring();
-        state = LaunchState.BELT_REVERSING2;
-        stateTimer=futureTime(BELT_REVERSE_TIME2);
-    }
-
-    private void handleBeltReversingState2(){
-        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_DOWN);
-        if(isPast(stateTimer)){
-            loader.stopBeltForFiring();
-            state = LaunchState.SPINNING_UP;
-        }
+    public void request(){
+        state = LaunchState.SPINNING_UP;
     }
 
     private void handleSpinningUpState() {
@@ -546,7 +484,8 @@ public class Launcher implements Subsystem {
     private void handleReadyState2(){
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_UP);
+        claimResources();
+        //setPaddlePosition(PADDLE_UP);
         //claimResources();
         state = LaunchState.FIRING;
         stateTimer = futureTime(BELT_REVERSE_TIME2);
@@ -554,8 +493,11 @@ public class Launcher implements Subsystem {
     }
 
     private void handleFiringState2(){
+        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         if(isPast(stateTimer)){
-            claimResources();
+            //claimResources();
+            setPaddlePosition(PADDLE_UP);
             state=LaunchState.COOLDOWN;
             stateTimer = futureTime(RAMP_FIRING_TIME);
         }
