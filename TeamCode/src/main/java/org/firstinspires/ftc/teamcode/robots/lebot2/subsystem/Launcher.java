@@ -62,11 +62,13 @@ public class Launcher implements Subsystem {
     PIDFCoefficients pidNew;
     PIDFCoefficients pidfModified;
 
-    // Paddle positions (servo units 0-1, converted from pulse widths)
-    //.3 is normal ramp
-    public static double PADDLE_DOWN = .3;      //.1 bent ramp
-    public static double PADDLE_PASS = .4133;      //.4 clear
-    public static double PADDLE_UP = .4133;
+    // Paddle positions (servo units 0-1)
+    // CUP: C-shape that traps balls during intake
+    // RAMP: Straightened ramp, conveyor pushes balls through
+    // LIFT: Raised position to push last ball into flywheel
+    public static double PADDLE_CUP = 0.3;
+    public static double PADDLE_RAMP = 0.4133;
+    public static double PADDLE_LIFT = 0.4133;  // May need tuning if different from RAMP
     //PADDLE CODE
 //    public static double PADDLE_DOWN = 0.167;  // ~1000µs - gate closed
 //    public static double PADDLE_UP = 0.53;     // Confirmed working launch position
@@ -77,13 +79,12 @@ public class Launcher implements Subsystem {
     public static double SPEED_TOLERANCE = 15;      // degrees/sec margin for "at speed" check
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
 
-    // Launch timing
-    public static double BELT_REVERSE_TIME = 0.05;  // seconds to reverse belt before paddle lift
-    public static double PADDLE_LIFT_TIME = 0.5;    // seconds to hold paddle up
-    public static double COOLDOWN_TIME = 0.25;      // seconds after paddle down
+    // Launch timing for TPU ramp design
+    public static double FIRING_TIME = 2.0;         // seconds to allow all 3 balls through at conveyor speed
+    public static double LIFT_TIME = 0.3;           // seconds to hold LIFT position for last ball
 
-    public static double BELT_REVERSE_TIME2 =.5;    //seconds to reverse belt before firing all balls for ramp design
-    public static double RAMP_FIRING_TIME = 6;
+    // Post-fire behavior
+    public static boolean STAY_SPINNING_AFTER_FIRE = false;  // Keep flywheel spinning for faster follow-up
 
     // Speed calculation constants (from physics model)
     public static double LIMELIGHT_OFFSET = 0.23;   // meters from launch point
@@ -119,20 +120,15 @@ public class Launcher implements Subsystem {
 //        MANUAL
 //    }
 
-        //LAUNCH STATES FOR RAMP DESIGN
+    // Simplified states for TPU ramp design
     public enum LaunchState {
-        IDLE,           // Flywheel off, paddle down
-        REQUESTED,      //timer for belt to reverse for launch all 3 balls ramp design
-        SPINNING_UP,    // Flywheel ramping to speed
-        READY,          // Flywheel at speed, waiting for fire command
-        BELT_REVERSING2, // Brief reverse pulse to relieve fin pressure
-        FIRING,         // Paddle lifting ball into flywheel
-        COOLDOWN,        // Paddle returning, preparing for next
-        MANUAL,
-        FIRST,
-        NEXT,
-        BUFFER,
-        COMPLETE
+        IDLE,           // Flywheel off, paddle in CUP
+        SPINNING_UP,    // Flywheel ramping to speed, paddle in CUP
+        READY,          // Flywheel at speed, waiting for fire command, paddle in CUP
+        FIRING,         // Paddle at RAMP, conveyor pushing balls through
+        LIFTING,        // Paddle at LIFT to push last ball into flywheel
+        COMPLETE,       // Firing done, transitioning based on STAY_SPINNING_AFTER_FIRE
+        MANUAL          // Manual control for testing
     }
     private LaunchState state = LaunchState.IDLE;
 
@@ -176,7 +172,7 @@ public class Launcher implements Subsystem {
         flywheelHelp.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         paddle = new LazyServo(hardwareMap, "paddle");
-        paddle.setPosition(PADDLE_DOWN);
+        paddle.setPosition(PADDLE_CUP);
         paddle.flush();  // Apply initial position immediately
     }
 
@@ -379,33 +375,28 @@ public class Launcher implements Subsystem {
 //                handleManualFlyWheel();
 //                break;
 //        }
-        switch(state){
+        // Run simplified state machine for TPU ramp design
+        switch(state) {
             case IDLE:
-                handleIdleState2();
+                handleIdleState();
                 break;
             case SPINNING_UP:
-                handleSpinningUpState2();
+                handleSpinningUpState();
                 break;
             case READY:
-                handleReadyState2();
+                handleReadyState();
                 break;
             case FIRING:
-                handleFiringState2();
+                handleFiringState();
                 break;
-            case COOLDOWN:
-                handleCooldownState2();
+            case LIFTING:
+                handleLiftingState();
+                break;
+            case COMPLETE:
+                handleCompleteState();
                 break;
             case MANUAL:
-                handleManual();
-                break;
-            case FIRST:
-                handleFirst();
-                break;
-            case NEXT:
-                handleNext();
-                break;
-            case BUFFER:
-                handleBuffer();
+                handleManualState();
                 break;
         }
     }
@@ -416,208 +407,132 @@ public class Launcher implements Subsystem {
         paddle.flush();
     }
 
-    public void paddleUp(){
-        setPaddlePosition(PADDLE_UP);
-    }
-    public void paddleDown(){
-        setPaddlePosition(PADDLE_DOWN);
-    }
+    // ==================== PADDLE HELPERS ====================
 
-    private void handleManual(){
-        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
+    public void paddleCup() {
+        setPaddlePosition(PADDLE_CUP);
     }
 
-    private void handleFirst(){
-        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_DOWN);
-        if(isFlywheelAtSpeed()){
-            state = LaunchState.BUFFER;
-            //stateTimer = futureTime(BELT_REVERSE_TIME2);
-        }
+    public void paddleRamp() {
+        setPaddlePosition(PADDLE_RAMP);
     }
 
-    private void handleBuffer(){
-        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_UP);
-        state = LaunchState.NEXT;
-        stateTimer = futureTime(BELT_REVERSE_TIME2);
-
+    public void paddleLift() {
+        setPaddlePosition(PADDLE_LIFT);
     }
 
-    private void handleNext(){
-        if(isPast(stateTimer)){
-            claimResources();
-            state = LaunchState.COMPLETE;
-        }
-
-    }
-
-    private void handleComplete(){
-        if(isPast(stateTimer)){
-            releaseResources();
-            state = LaunchState.IDLE;
-        }
-    }
-
-    private void handleIdleState() {
-        // Ensure resources are released when idle
-        releaseResources();
-        flywheel.setVelocity(0);
-        flywheelHelp.setVelocity(0);
-        setPaddlePosition(passThroughMode ? PADDLE_PASS : PADDLE_DOWN);
-    }
-
-    private void handleIdleState2(){
-        releaseResources();
-        flywheel.setVelocity(0);
-        flywheelHelp.setVelocity(0);
-        setPaddlePosition(passThroughMode ? PADDLE_PASS : PADDLE_DOWN);
-        //setPaddlePosition(PADDLE_DOWN);
-    }
-    public void request(){
+    /**
+     * Enter manual mode for testing paddle and flywheel.
+     */
+    public void request() {
         state = LaunchState.MANUAL;
     }
 
-    private void handleResquestState(){
-        //claimResources();
-        loader.reverseBeltForFiring();
-        state = LaunchState.BELT_REVERSING2;
-        stateTimer=futureTime(BELT_REVERSE_TIME2);
+    // ==================== STATE HANDLERS ====================
+
+    /**
+     * IDLE: Flywheel off, paddle in CUP position.
+     */
+    private void handleIdleState() {
+        releaseResources();
+        flywheel.setVelocity(0);
+        flywheelHelp.setVelocity(0);
+        setPaddlePosition(passThroughMode ? PADDLE_RAMP : PADDLE_CUP);
     }
 
-    private void handleBeltReversingState2(){
-        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_DOWN);
-        if(isPast(stateTimer)){
-            loader.stopBeltForFiring();
-            state = LaunchState.SPINNING_UP;
-        }
-    }
-
+    /**
+     * SPINNING_UP: Flywheel ramping to target speed, paddle stays in CUP.
+     */
     private void handleSpinningUpState() {
-        // Claim belt during spin-up so balls feed to the back before we fire
-        claimResources();
-
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        setPaddlePosition(PADDLE_CUP);
+
         if (isFlywheelAtSpeed()) {
             state = LaunchState.READY;
         }
     }
 
-
-    private void handleSpinningUpState2(){
-        //claimResources();
+    /**
+     * READY: Flywheel at speed, paddle in CUP, waiting for fire() command.
+     */
+    private void handleReadyState() {
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_DOWN);
-        if (isFlywheelAtSpeed()) {
-            state = LaunchState.READY;
-        }
-    }
+        setPaddlePosition(PADDLE_CUP);
 
-//    private void handleReadyState() {
-//        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-//        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-//        setPaddlePosition(PADDLE_DOWN);
-//
-//        if (fireRequested) {
-//            // Record speed at firing for debugging (removed speed check - relying on inter-shot delay)
-//            shotNumber++;
-//            speedAtFireApproval = currentSpeed;
-//            fireRequested = false;
-//
-//            // Release belt ownership and start reverse pulse to relieve fin pressure
-//            // (Intake stays suppressed via claimResources() from spin-up)
-//            if (loader != null) {
-//                loader.releaseBeltFromLauncher();
-//                loader.reverseBeltForFiring();
-//            }
-//
-//            state = LaunchState.BELT_REVERSING;
-//            stateTimer = futureTime(BELT_REVERSE_TIME);
-//        }
-//    }
+        if (fireRequested) {
+            shotNumber++;
+            speedAtFireApproval = currentSpeed;
+            fireRequested = false;
 
-    private void handleReadyState2(){
-        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_UP);
-        //claimResources();
-        state = LaunchState.FIRING;
-        stateTimer = futureTime(BELT_REVERSE_TIME2);
-        //stateTimer = futureTime(RAMP_FIRING_TIME);
-    }
-
-    private void handleFiringState2(){
-        if(isPast(stateTimer)){
+            // Claim resources and start firing
             claimResources();
-            state=LaunchState.COOLDOWN;
-            stateTimer = futureTime(RAMP_FIRING_TIME);
+            state = LaunchState.FIRING;
+            stateTimer = futureTime(FIRING_TIME);
         }
-
     }
 
-    private void handleCooldownState2(){
-        if(isPast(stateTimer)){
-            releaseResources();
+    /**
+     * FIRING: Paddle at RAMP position, conveyor pushing balls through flywheel.
+     * Transitions to LIFTING when timeout expires OR sensor shows balls remain.
+     */
+    private void handleFiringState() {
+        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        setPaddlePosition(PADDLE_RAMP);
+
+        // Check both timeout and sensor conditions
+        boolean timeoutExpired = isPast(stateTimer);
+        boolean ballsRemain = (loader != null && !loader.isEmpty());
+
+        // Transition to LIFTING when timeout OR (past initial window and balls remain)
+        if (timeoutExpired) {
+            state = LaunchState.LIFTING;
+            stateTimer = futureTime(LIFT_TIME);
+        }
+    }
+
+    /**
+     * LIFTING: Paddle at LIFT position to push last ball into flywheel contact.
+     */
+    private void handleLiftingState() {
+        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        setPaddlePosition(PADDLE_LIFT);
+
+        if (isPast(stateTimer)) {
+            state = LaunchState.COMPLETE;
+        }
+    }
+
+    /**
+     * COMPLETE: Firing sequence done. Transition based on STAY_SPINNING_AFTER_FIRE.
+     */
+    private void handleCompleteState() {
+        releaseResources();
+        setPaddlePosition(PADDLE_CUP);
+
+        if (STAY_SPINNING_AFTER_FIRE) {
+            // Keep flywheel spinning, go back to READY
+            flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
+            flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
+            state = LaunchState.READY;
+        } else {
+            // Spin down and return to IDLE
+            behavior = Behavior.IDLE;
             state = LaunchState.IDLE;
         }
     }
 
-    private void handleBeltReversingState() {
+    /**
+     * MANUAL: For testing - flywheel at target speed, paddle controlled externally.
+     */
+    private void handleManualState() {
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_DOWN);
-
-        if (isPast(stateTimer)) {
-            // Stop reverse, now lift paddle
-            if (loader != null) {
-                loader.stopBeltForFiring();
-                loader.ballFired();
-            }
-
-            state = LaunchState.FIRING;
-            stateTimer = futureTime(PADDLE_LIFT_TIME);
-            setPaddlePosition(PADDLE_UP);
-        }
+        // Paddle position controlled via paddleCup()/paddleRamp()/paddleLift()
     }
-
-    private void handleFiringState() {
-        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_UP);
-
-        if (isPast(stateTimer)) {
-            state = LaunchState.COOLDOWN;
-            stateTimer = futureTime(COOLDOWN_TIME);
-            setPaddlePosition(PADDLE_DOWN);
-        }
-    }
-
-    private void handleCooldownState() {
-        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_DOWN);
-
-        if (isPast(stateTimer)) {
-            // Resume belt to feed next ball
-            if (loader != null) {
-                loader.claimBeltForLauncher();
-            }
-            state = LaunchState.READY;
-        }
-    }
-
-//    private void handleManualFlyWheel(){
-//        flywheel.setVelocity(targetSpeed,AngleUnit.DEGREES);
-//        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-//    }
-    public void manualFire(){state = LaunchState.MANUAL;}
 
 
     private void setPaddlePosition(double position) {
@@ -684,13 +599,13 @@ public class Launcher implements Subsystem {
     }
 
     /**
-     * Enable pass-through mode (paddle stays up).
+     * Enable pass-through mode (paddle at RAMP position).
      * Used for passing balls to partner robot.
      */
     public void setPassThroughMode(boolean enabled) {
         passThroughMode = enabled;
         if (enabled && state == LaunchState.IDLE) {
-            setPaddlePosition(PADDLE_PASS);
+            setPaddlePosition(PADDLE_RAMP);
         }
     }
 
@@ -756,7 +671,8 @@ public class Launcher implements Subsystem {
         state = LaunchState.IDLE;
         fireRequested = false;
         flywheel.setVelocity(0);
-        paddle.setPosition(PADDLE_DOWN);
+        flywheelHelp.setVelocity(0);
+        paddle.setPosition(PADDLE_CUP);
         paddle.flush();  // Immediate write for emergency stop
     }
 
