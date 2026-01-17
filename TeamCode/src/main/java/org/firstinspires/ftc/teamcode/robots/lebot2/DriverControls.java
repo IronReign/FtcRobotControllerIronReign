@@ -111,17 +111,22 @@ public class DriverControls implements TelemetryProvider {
             robot.loader.stopBelt();
         }
 
-        // X button: Spin up launcher / fire
-        // Launcher will claim belt when actually firing
-        if (stickyGamepad1.x) {
-            if (robot.launcher.isReady()) {
-                // If already ready, fire one ball
-                robot.launcher.fire();
-            } else if (robot.launcher.getBehavior() == Launcher.Behavior.IDLE) {
-                // Start spinning up - launcher pulls distance from Vision automatically
-                robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
-            }
+        if(stickyGamepad1.x){
+            robot.launcher.request();
+            robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
         }
+
+//        // X button: Spin up launcher / fire
+//        // Launcher will claim belt when actually firing
+//        if (stickyGamepad1.x) {
+//            if (robot.launcher.isReady()) {
+//                // If already ready, fire one ball
+//                robot.launcher.fire();
+//            } else if (robot.launcher.getBehavior() == Launcher.Behavior.IDLE) {
+//                // Start spinning up - launcher pulls distance from Vision automatically
+//                robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
+//            }
+//        }
 
         // Y button: Center on vision target (runs to completion)
         // DriveTrain queries Vision directly for continuous tx updates
@@ -140,11 +145,13 @@ public class DriverControls implements TelemetryProvider {
             robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
         }
 
-        // D-pad up/down: Manual paddle control
+        // D-pad up/down: Manual paddle control (CUP/RAMP positions)
         if (stickyGamepad1.dpad_up) {
+            robot.launcher.paddleRamp();
             robot.launcher.setPassThroughMode(true);
         }
         if (stickyGamepad1.dpad_down) {
+            robot.launcher.paddleCup();
             robot.launcher.setPassThroughMode(false);
         }
 
@@ -156,10 +163,11 @@ public class DriverControls implements TelemetryProvider {
 
         // D-pad right: Eject balls
         if (stickyGamepad1.dpad_right) {
-            robot.intake.eject();
+            //robot.launcher.manualFire();
+            robot.intake.eject();         //bring back after manual test
             // For eject, we use setBeltPower which claims as launcher priority
             // Positive = eject forward
-            robot.loader.setBeltPower(0.5);
+            robot.loader.setBeltPower(0.5);       //bring back after manual test
         }
 
         // Guide button: Reset encoders and ball count

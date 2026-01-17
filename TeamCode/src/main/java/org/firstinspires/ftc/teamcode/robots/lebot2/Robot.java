@@ -108,16 +108,27 @@ public class Robot implements TelemetryProvider {
     }
     private TargetingState targetingState = TargetingState.IDLE;
 
-    // Launch-all sequence state
+    // Launch-all sequence state for paddle design
+//    public enum LaunchAllState {
+//        IDLE,
+//        SPINNING_UP,
+//        FIRING,
+//        WAITING_SHOT_COMPLETE,
+//        INTER_SHOT_DELAY,
+//        ADVANCE_BELT,
+//        COMPLETE
+//    }
+    // Launch-all sequence state for TPU ramp design (simplified)
     public enum LaunchAllState {
         IDLE,
         SPINNING_UP,
+        WAITING_READY,
         FIRING,
-        WAITING_SHOT_COMPLETE,
-        INTER_SHOT_DELAY,
-        ADVANCE_BELT,
         COMPLETE
     }
+
+
+
     private LaunchAllState launchAllState = LaunchAllState.IDLE;
     private long launchTimer = 0;
     public static double INTER_SHOT_DELAY_SECONDS = 1.5;  // Delay for flywheel recovery between shots
@@ -192,6 +203,7 @@ public class Robot implements TelemetryProvider {
         // Handle Robot-level behaviors (multi-subsystem coordination)
         switch (behavior) {
             case MANUAL:
+                //handleManualBehavior();
                 // Subsystems controlled directly by DriverControls
                 // Nothing to coordinate at Robot level
                 break;
@@ -201,7 +213,8 @@ public class Robot implements TelemetryProvider {
                 break;
 
             case LAUNCH_ALL:
-                handleLaunchAllBehavior();
+                handleLaunchAllBehavior2();
+                //handleLaunchAllBehavior();
                 break;
         }
 
@@ -262,87 +275,138 @@ public class Robot implements TelemetryProvider {
         }
     }
 
-    private void handleLaunchAllBehavior() {
-        // Launch all balls in sequence until empty
-        // Simplified: no ball counting, just fire until sensors show empty
-        // Uses inter-shot delay for flywheel recovery
+    /**
+     * LAUNCH_ALL for TPU ramp design.
+     * Simplified: spin up flywheel, fire once, conveyor pushes all balls through.
+     * Launcher handles FIRING → LIFTING → COMPLETE sequence internally.
+     */
+    private void handleLaunchAllBehavior2() {
         switch (launchAllState) {
             case IDLE:
                 if (loader.isEmpty()) {
                     behavior = Behavior.MANUAL;
                     return;
                 }
-                // Force-reset launcher to clean state before starting
-                launcher.setBehavior(Launcher.Behavior.IDLE);
+                // Start flywheel spinning
                 launcher.setBehavior(Launcher.Behavior.SPINNING);
                 launchAllState = LaunchAllState.SPINNING_UP;
                 break;
 
             case SPINNING_UP:
-                // Wait for flywheel to reach speed (this check works reliably)
+                // Wait for flywheel to reach speed
                 if (launcher.isReady()) {
-                    launchAllState = LaunchAllState.FIRING;
+                    launchAllState = LaunchAllState.WAITING_READY;
                 }
+                break;
+
+            case WAITING_READY:
+                // Fire! Launcher handles the full sequence internally
+                launcher.fire();
+                launchAllState = LaunchAllState.FIRING;
                 break;
 
             case FIRING:
-                launcher.fire();
-                if (launcher.getState() == Launcher.LaunchState.COOLDOWN) {
-                    // Shot initiated, wait for it to complete
-                    launchAllState = LaunchAllState.WAITING_SHOT_COMPLETE;
-                }
-                break;
-
-            case WAITING_SHOT_COMPLETE:
-                // Wait for launcher to return to READY (shot finished)
-                if (launcher.getState() == Launcher.LaunchState.READY) {
-                    // Start inter-shot delay for flywheel recovery
-                    launchTimer = futureTime(INTER_SHOT_DELAY_SECONDS);
-                    launchAllState = LaunchAllState.INTER_SHOT_DELAY;
-                }
-                break;
-
-            case INTER_SHOT_DELAY:
-                // Wait for flywheel to recover
-                if (isPast(launchTimer)) {
-                    // Check if there might be more balls
-                    if (loader.isEmpty()) {
-                        launchAllState = LaunchAllState.COMPLETE;
-                    } else {
-                        // Advance belt to bring next ball to back
-                        launchTimer = futureTime(BELT_ADVANCE_TIMEOUT_SECONDS);
-                        launchAllState = LaunchAllState.ADVANCE_BELT;
-                    }
-                }
-                break;
-
-            case ADVANCE_BELT:
-                // Belt should be running (launcher claims belt during SPINNING)
-                // Wait for ball at back sensor or timeout
-                if (loader.isBallAtBack()) {
-                    launchAllState = LaunchAllState.FIRING;
-                } else if (isPast(launchTimer)) {
-                    // Timeout - check if truly empty
-                    if (loader.isEmpty()) {
-                        launchAllState = LaunchAllState.COMPLETE;
-                    } else {
-                        // Still has balls somewhere, try firing anyway
-                        launchAllState = LaunchAllState.FIRING;
-                    }
+                // Wait for launcher to complete the sequence
+                Launcher.LaunchState launcherState = launcher.getState();
+                if (launcherState == Launcher.LaunchState.IDLE ||
+                    launcherState == Launcher.LaunchState.READY) {
+                    launchAllState = LaunchAllState.COMPLETE;
                 }
                 break;
 
             case COMPLETE:
-                // Wait for launcher to finish any ongoing COOLDOWN
-                if (launcher.getState() == Launcher.LaunchState.READY ||
-                    launcher.getState() == Launcher.LaunchState.IDLE) {
-                    launcher.setBehavior(Launcher.Behavior.IDLE);
-                    launchAllState = LaunchAllState.IDLE;
-                    behavior = Behavior.MANUAL;
-                }
+                // All done, return to manual
+                launchAllState = LaunchAllState.IDLE;
+                behavior = Behavior.MANUAL;
                 break;
         }
     }
+    // Old paddle design method - commented out for reference
+//    private void handleLaunchAllBehavior() {
+//        // Launch all balls in sequence until empty
+//        // Simplified: no ball counting, just fire until sensors show empty
+//        // Uses inter-shot delay for flywheel recovery
+//        switch (launchAllState) {
+//            case IDLE:
+//                if (loader.isEmpty()) {
+//                    behavior = Behavior.MANUAL;
+//                    return;
+//                }
+//                // Force-reset launcher to clean state before starting
+//                launcher.setBehavior(Launcher.Behavior.IDLE);
+//                launcher.setBehavior(Launcher.Behavior.SPINNING);
+//                launchAllState = LaunchAllState.SPINNING_UP;
+//                break;
+//
+//            case SPINNING_UP:
+//                // Wait for flywheel to reach speed (this check works reliably)
+//                if (launcher.isReady()) {
+//                    launchAllState = LaunchAllState.FIRING;
+//                }
+//                break;
+//
+//            case FIRING:
+//                launcher.fire();
+//                if (launcher.getState() == Launcher.LaunchState.COOLDOWN) {
+//                    // Shot initiated, wait for it to complete
+//                    launchAllState = LaunchAllState.WAITING_SHOT_COMPLETE;
+//                }
+//                break;
+//
+//            case WAITING_SHOT_COMPLETE:
+//                // Wait for launcher to return to READY (shot finished)
+//                if (launcher.getState() == Launcher.LaunchState.READY) {
+//                    // Start inter-shot delay for flywheel recovery
+//                    launchTimer = futureTime(INTER_SHOT_DELAY_SECONDS);
+//                    launchAllState = LaunchAllState.INTER_SHOT_DELAY;
+//                }
+//                break;
+//
+//            case INTER_SHOT_DELAY:
+//                // Wait for flywheel to recover
+//                if (isPast(launchTimer)) {
+//                    // Check if there might be more balls
+//                    if (loader.isEmpty()) {
+//                        launchAllState = LaunchAllState.COMPLETE;
+//                    } else {
+//                        // Advance belt to bring next ball to back
+//                        launchTimer = futureTime(BELT_ADVANCE_TIMEOUT_SECONDS);
+//                        launchAllState = LaunchAllState.ADVANCE_BELT;
+//                    }
+//                }
+//                break;
+//
+//            case ADVANCE_BELT:
+//                // Belt should be running (launcher claims belt during SPINNING)
+//                // Wait for ball at back sensor or timeout
+//                if (loader.isBallAtBack()) {
+//                    launchAllState = LaunchAllState.FIRING;
+//                } else if (isPast(launchTimer)) {
+//                    // Timeout - check if truly empty
+//                    if (loader.isEmpty()) {
+//                        launchAllState = LaunchAllState.COMPLETE;
+//                    } else {
+//                        // Still has balls somewhere, try firing anyway
+//                        launchAllState = LaunchAllState.FIRING;
+//                    }
+//                }
+//                break;
+//
+//            case COMPLETE:
+//                // Wait for launcher to finish any ongoing COOLDOWN
+//                if (launcher.getState() == Launcher.LaunchState.READY ||
+//                    launcher.getState() == Launcher.LaunchState.IDLE) {
+//                    launcher.setBehavior(Launcher.Behavior.IDLE);
+//                    launchAllState = LaunchAllState.IDLE;
+//                    behavior = Behavior.MANUAL;
+//                }
+//                break;
+//        }
+//    }
+
+//    public void handleManualBehavior(){
+//        launcher.setBehavior(Launcher.Behavior.SPINNING);
+//    }
 
     // ==================== PUBLIC METHODS ====================
 
