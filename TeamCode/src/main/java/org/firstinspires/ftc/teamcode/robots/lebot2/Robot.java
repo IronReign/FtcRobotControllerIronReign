@@ -99,7 +99,7 @@ public class Robot implements TelemetryProvider {
         LAUNCH_ALL      // Fire all balls in sequence
     }
     private Behavior behavior = Behavior.MANUAL;
-
+    private boolean requestSpinUp = false;
     // Targeting sequence state
     public enum TargetingState {
         IDLE,
@@ -287,6 +287,7 @@ public class Robot implements TelemetryProvider {
                     behavior = Behavior.MANUAL;
                     return;
                 }
+
                 // Start flywheel spinning
                 launcher.setBehavior(Launcher.Behavior.SPINNING);
                 launchAllState = LaunchAllState.SPINNING_UP;

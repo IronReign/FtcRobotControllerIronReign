@@ -78,12 +78,12 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     public static class Params {
         // drive model parameters
-        public double inPerTick = 1.0; // Pinpoint reports in inches, so 1:1 mapping
+        public double inPerTick = 504.125; // Pinpoint reports in inches, so 1:1 mapping
         public double trackWidthTicks = 11.5; // Track width in inches for kinematics
 
         // feedforward parameters (in tick units)
-        public double kS = 0;
-        public double kV = 0;
+        public double kS = 1.2717225852423337;
+        public double kV = 0.0003549728170123318;
         public double kA = 0;
 
         // path profile parameters (in inches)

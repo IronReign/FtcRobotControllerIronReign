@@ -226,6 +226,7 @@ public class Lebot2_6832 extends OpMode {
         telemetry.addData("Loop Time", String.format("%.1f ms (%.0f Hz)",
                 averageLoopTime, 1000 / averageLoopTime));
         telemetry.addLine();
+        telemetry.addData("Ticks", robot.driveTrain.getLeftTicks());
         telemetry.addData("Forward/Backward", -gamepad1.left_stick_y);
         telemetry.addData("Left/Right", -gamepad1.right_stick_x);
         telemetry.addData("Behavior", robot.getBehavior());
