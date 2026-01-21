@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize;
 
+//import static org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.PinpointLocalizer.goBILDA_4_BAR_POD;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -78,12 +80,12 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     public static class Params {
         // drive model parameters
-        public double inPerTick = 1.0; // Pinpoint reports in inches, so 1:1 mapping
-        public double trackWidthTicks = 11.5; // Track width in inches for kinematics
+        public double inPerTick = 19.89436789f * 25.4;  //23.75/11995; // Pinpoint reports in inches, so 1:1 mapping
+        public double trackWidthTicks = 4777.861530266601; // Track width in inches for kinematics         //14
 
         // feedforward parameters (in tick units)
-        public double kS = 0;
-        public double kV = 0;
+        public double kS = 1.164863007541458;
+        public double kV = 0.0003462964757510799;
         public double kA = 0;
 
         // path profile parameters (in inches)
@@ -176,8 +178,8 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         // This allows TuningOpModes to set their own mode if needed
 
         // Initialize kinematics with track width
-        kinematics = new TankKinematics(PARAMS.inPerTick * PARAMS.trackWidthTicks);
-
+        //kinematics = new TankKinematics(PARAMS.inPerTick * PARAMS.trackWidthTicks);
+        kinematics = new TankKinematics(14);        //track width of robot is 14 inches from center to center of wheels
         // Initialize constraints
         defaultTurnConstraints = new TurnConstraints(
                 PARAMS.maxAngVel, -PARAMS.maxAngAccel, PARAMS.maxAngAccel);
@@ -199,7 +201,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         }
 
         // Lebot2: left motor reversed so positive power = forward
-        leftMotors.get(0).setDirection(DcMotorSimple.Direction.REVERSE);
+        rightMotors.get(0).setDirection(DcMotorSimple.Direction.REVERSE);
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
@@ -408,38 +410,45 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     @Override
     public void drive(double throttle, double strafe, double turn) {
-        // Tank drive ignores strafe
-
-        // Check if joystick input should interrupt current mode
-        boolean hasInput = Math.abs(throttle) > 0.1 || Math.abs(turn) > 0.1;
-
-        if (hasInput) {
-            // Joystick input interrupts RR_ACTION and PID_TURN
-            if (behavior == Behavior.TRAJECTORY) {
-                cancelAction();
-            }
-            if (behavior == Behavior.PID_TURN) {
-                cancelTurn();
-            }
-            behavior = Behavior.MANUAL;
-        }
-
-        // Only apply joystick input in MANUAL mode
-        if (behavior != Behavior.MANUAL) {
+        boolean seperate = false;
+        if(seperate){
+            setMotorPowers(throttle, strafe);
             return;
+        }else {
+
+            // Tank drive ignores strafe
+
+            // Check if joystick input should interrupt current mode
+            boolean hasInput = Math.abs(throttle) > 0.1 || Math.abs(turn) > 0.1;
+
+            if (hasInput) {
+                // Joystick input interrupts RR_ACTION and PID_TURN
+                if (behavior == Behavior.TRAJECTORY) {
+                    cancelAction();
+                }
+                if (behavior == Behavior.PID_TURN) {
+                    cancelTurn();
+                }
+                behavior = Behavior.MANUAL;
+            }
+
+            // Only apply joystick input in MANUAL mode
+            if (behavior != Behavior.MANUAL) {
+                return;
+            }
+
+            double leftPower = throttle + turn;
+            double rightPower = throttle - turn;
+
+            // Normalize if over 1.0
+            double maxPower = Math.max(Math.abs(leftPower), Math.abs(rightPower));
+            if (maxPower > 1.0) {
+                leftPower /= maxPower;
+                rightPower /= maxPower;
+            }
+
+            setMotorPowers(leftPower, rightPower);
         }
-
-        double leftPower = throttle + turn;
-        double rightPower = throttle - turn;
-
-        // Normalize if over 1.0
-        double maxPower = Math.max(Math.abs(leftPower), Math.abs(rightPower));
-        if (maxPower > 1.0) {
-            leftPower /= maxPower;
-            rightPower /= maxPower;
-        }
-
-        setMotorPowers(leftPower, rightPower);
     }
 
     // ==================== BEHAVIOR MANAGEMENT ====================

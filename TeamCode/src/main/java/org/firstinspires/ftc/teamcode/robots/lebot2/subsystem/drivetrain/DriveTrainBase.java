@@ -26,6 +26,8 @@ public interface DriveTrainBase extends Subsystem {
      */
     void drive(double throttle, double strafe, double turn);
 
+    //void setMotorPowers(double left, double right);
+
     /**
      * Turn to a specific heading using the IMU.
      *
