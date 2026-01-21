@@ -424,7 +424,7 @@ public class Launcher implements Subsystem {
     /**
      * Enter manual mode for testing paddle and flywheel.
      */
-    public void request() {
+    public void requestManual() {
         state = LaunchState.MANUAL;
     }
 

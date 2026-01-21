@@ -28,8 +28,8 @@ import java.util.Objects;
 @Config
 public final class PinpointLocalizer implements Localizer {
     public static class Params {
-        public double parYTicks = 0.0; // y position of the parallel encoder (in tick units)
-        public double perpXTicks = 0.0; // x position of the perpendicular encoder (in tick units)
+        public double parYTicks = 1407; // y position of the parallel encoder (in tick units)
+        public double perpXTicks = 3844; // x position of the perpendicular encoder (in tick units)
     }
     // Encoder scales (ticks per millimetre) for reference.
     private static final float goBILDA_SWINGARM_POD = 13.26291192f;
@@ -53,9 +53,9 @@ public final class PinpointLocalizer implements Localizer {
         driver = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
         double mmPerTick = inPerTick * 25.4;
-        driver.setEncoderResolution(1 / mmPerTick, DistanceUnit.MM);
-        driver.setOffsets(mmPerTick * PARAMS.parYTicks, mmPerTick * PARAMS.perpXTicks, DistanceUnit.MM);
-
+        driver.setEncoderResolution(goBILDA_4_BAR_POD, DistanceUnit.MM);
+        //driver.setOffsets(mmPerTick * PARAMS.parYTicks, mmPerTick * PARAMS.perpXTicks, DistanceUnit.MM);
+        driver.setOffsets(-180.5, 131.9, DistanceUnit.MM);
         // TODO: reverse encoder directions if needed
         initialParDirection = GoBildaPinpointDriver.EncoderDirection.FORWARD;
         initialPerpDirection = GoBildaPinpointDriver.EncoderDirection.FORWARD;
@@ -99,6 +99,9 @@ public final class PinpointLocalizer implements Localizer {
             cachedVelocity = new PoseVelocity2d(robotVelocity, driver.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS));
         }
         refreshedThisCycle = true;
+    }
+    public int getPar(){
+        return driver.getEncoderX();
     }
 
     /**

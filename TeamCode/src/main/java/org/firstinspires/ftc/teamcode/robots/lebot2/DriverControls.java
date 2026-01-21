@@ -73,22 +73,35 @@ public class DriverControls implements TelemetryProvider {
      * Handle main driving controls during teleop.
      */
     public void joystickDrive() {
-        // Get drive inputs
-        double throttle = -gamepad1.left_stick_y;
-        double turn = -gamepad1.right_stick_x;
+        boolean sepereate = false;
+        if(sepereate){
+            double left= gamepad1.left_stick_y;
+            double right = gamepad1.right_stick_y;
+            robot.driveTrain.drive(left,right,0);
+        }else {
 
-        // Apply dampening
-        double dampener = slowMode ? SLOW_MODE_DAMPENER : DRIVE_DAMPENER;
-        turn *= dampener;
+            // Get drive inputs
+            double throttle = -gamepad1.left_stick_y;
+            double turn = -gamepad1.right_stick_x;
 
-        // ALWAYS call drive - the drivetrain handles mode switching internally
-        // If joystick input is significant, it will automatically interrupt
-        // any running RR trajectory or PID turn
-        robot.driveTrain.drive(throttle, 0, turn);
+            // Apply dampening
+            double dampener = slowMode ? SLOW_MODE_DAMPENER : DRIVE_DAMPENER;
+            turn *= dampener;
 
-        // Handle button inputs
-        handleButtons();
+            // ALWAYS call drive - the drivetrain handles mode switching internally
+            // If joystick input is significant, it will automatically interrupt
+            // any running RR trajectory or PID turn
+            robot.driveTrain.drive(throttle, 0, turn);
+
+            // Handle button inputs
+            handleButtons();
+        }
     }
+//    public void driveWheelsSeperate(){
+//        double left=gamepad1.left_stick_y;
+//        double right = gamepad1.right_stick_y;
+//        robot.driveTrain.setMotorPowers();
+//    }
 
     private void handleButtons() {
         // A button: Toggle intake LOAD_ALL behavior
