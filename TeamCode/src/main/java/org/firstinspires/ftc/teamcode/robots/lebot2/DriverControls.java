@@ -73,8 +73,8 @@ public class DriverControls implements TelemetryProvider {
      * Handle main driving controls during teleop.
      */
     public void joystickDrive() {
-        boolean sepereate = false;
-        if(sepereate){
+        boolean separate = false;
+        if(separate){
             double left= gamepad1.left_stick_y;
             double right = gamepad1.right_stick_y;
             robot.driveTrain.drive(left,right,0);
@@ -82,7 +82,7 @@ public class DriverControls implements TelemetryProvider {
 
             // Get drive inputs
             double throttle = -gamepad1.left_stick_y;
-            double turn = -gamepad1.right_stick_x;
+            double turn = gamepad1.right_stick_x;
 
             // Apply dampening
             double dampener = slowMode ? SLOW_MODE_DAMPENER : DRIVE_DAMPENER;

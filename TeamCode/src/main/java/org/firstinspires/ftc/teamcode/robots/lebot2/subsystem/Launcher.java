@@ -47,10 +47,10 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 @Config(value = "Lebot2_Launcher")
 public class Launcher implements Subsystem {
 
-    public static double NEW_P = 15;
+    public static double NEW_P = 200;
     public static double NEW_I = 0;
     public static double NEW_D = 0;
-    public static double NEW_F = 17;
+    public static double NEW_F = 0;
 
 
     // Hardware
@@ -66,17 +66,17 @@ public class Launcher implements Subsystem {
     // CUP: C-shape that traps balls during intake
     // RAMP: Straightened ramp, conveyor pushes balls through
     // LIFT: Raised position to push last ball into flywheel
-    public static double PADDLE_CUP = 0.3;
-    public static double PADDLE_RAMP = 0.4133;
-    public static double PADDLE_LIFT = 0.4133;  // May need tuning if different from RAMP
+    public static double PADDLE_CUP = 0.4;
+    public static double PADDLE_RAMP = 0.64;
+    public static double PADDLE_LIFT = 0.7;  // May need tuning if different from RAMP
     //PADDLE CODE
 //    public static double PADDLE_DOWN = 0.167;  // ~1000µs - gate closed
 //    public static double PADDLE_UP = 0.53;     // Confirmed working launch position
 //    public static double PADDLE_PASS = 0.53;   // Pass-through mode (same as launch)
 
     // Flywheel configuration
-    public static double MIN_LAUNCH_SPEED = 1500;   //720 <--old     // degrees/sec - hardcoded working speed from known position
-    public static double SPEED_TOLERANCE = 15;      // degrees/sec margin for "at speed" check
+    public static double MIN_LAUNCH_SPEED = 900;   //720 <--old     // degrees/sec - hardcoded working speed from known position
+    public static double SPEED_TOLERANCE = 30;      // degrees/sec margin for "at speed" check
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
 
     // Launch timing for TPU ramp design

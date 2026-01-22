@@ -48,7 +48,7 @@ import org.firstinspires.ftc.teamcode.rrQuickStart.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.PoseMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.TankCommandMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.Drawing;
-import org.firstinspires.ftc.teamcode.rrQuickStart.Localizer;
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.Localizer;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.Arrays;
@@ -80,13 +80,13 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     public static class Params {
         // drive model parameters
-        public double inPerTick = 19.89436789f * 25.4;  //23.75/11995; // Pinpoint reports in inches, so 1:1 mapping
+        public double inPerTick = 1/(19.89436789f * 25.4);  //23.75/11995; // Pinpoint reports in inches, so 1:1 mapping
         public double trackWidthTicks = 4777.861530266601; // Track width in inches for kinematics         //14
 
         // feedforward parameters (in tick units)
         public double kS = 1.164863007541458;
         public double kV = 0.0003462964757510799;
-        public double kA = 0;
+        public double kA = .0001;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 50;
@@ -594,6 +594,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     /**
      * Update pose estimate from localizer.
      * Called by RoadRunner Actions during trajectory following.
+     * Also called by standalone tuning opmodes like LocalizationTest.
      */
     public PoseVelocity2d updatePoseEstimate() {
         PoseVelocity2d vel = localizer.update();

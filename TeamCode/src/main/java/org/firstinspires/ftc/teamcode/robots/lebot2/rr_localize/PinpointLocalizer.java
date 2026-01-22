@@ -6,7 +6,7 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
-import org.firstinspires.ftc.teamcode.rrQuickStart.Localizer;
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.Localizer;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
