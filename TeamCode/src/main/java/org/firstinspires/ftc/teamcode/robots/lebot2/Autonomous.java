@@ -1,7 +1,11 @@
 package org.firstinspires.ftc.teamcode.robots.lebot2;
 
 import com.acmerobotics.dashboard.config.Config;
+//import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.Pose2d;
 
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.TelemetryProvider;
 
 import java.util.LinkedHashMap;
@@ -29,6 +33,7 @@ import java.util.Map;
 public class Autonomous implements TelemetryProvider {
 
     private final Robot robot;
+    TankDrivePinpoint driveTrain;
 
     // Strategic configuration (set during match setup)
     public static boolean START_AT_AUDIENCE_WALL = true;  // vs goal wall
@@ -51,8 +56,19 @@ public class Autonomous implements TelemetryProvider {
         END                     // Autonomous complete
     }
 
+    public enum AutonState{
+        INIT,
+        MOVEBACK_TO_SHOOT,
+        START_FIRST_INTAKE,
+
+    }
+
     private AutonPhase phase = AutonPhase.INIT;
     private AutonPhase previousPhase = AutonPhase.INIT;
+
+    private AutonState state = AutonState.INIT;
+    private AutonState previousState = AutonState.INIT;
+
 
     // Progress tracking
     private int ballGroupsCompleted = 0;
@@ -82,6 +98,39 @@ public class Autonomous implements TelemetryProvider {
         launchCycles = 0;
         targetingStarted = false;
         phase = AutonPhase.INIT;
+        driveTrain = (TankDrivePinpoint) robot.driveTrain;
+    }
+
+    Pose2d startGoal = FieldMap.getPose(FieldMap.START_GOAL, Robot.isRedAlliance);
+    Pose2d fire1 = FieldMap.getPose(FieldMap.FIRE_1, Robot.isRedAlliance);
+    Pose2d startRow1 = FieldMap.getPose(FieldMap.BALL_ROW_1_START, Robot.isRedAlliance);
+    Pose2d endRow1 = FieldMap.getPose(FieldMap.BALL_ROW_1_END, Robot.isRedAlliance);
+    Pose2d startRow2 = FieldMap.getPose(FieldMap.BALL_ROW_2_START, Robot.isRedAlliance);
+    Pose2d endRow2 = FieldMap.getPose(FieldMap.BALL_ROW_2_END, Robot.isRedAlliance);
+    Pose2d startRow3 = FieldMap.getPose(FieldMap.BALL_ROW_3_START, Robot.isRedAlliance);
+    Pose2d endRow3 = FieldMap.getPose(FieldMap.BALL_ROW_3_END, Robot.isRedAlliance);
+
+    public void execute2(){
+        switch(state){
+            case INIT:
+                state = AutonState.MOVEBACK_TO_SHOOT;
+                break;
+            case MOVEBACK_TO_SHOOT:
+                Pose2d startGoal = FieldMap.getPose(FieldMap.START_GOAL, Robot.isRedAlliance);
+                Pose2d fire1 = FieldMap.getPose(FieldMap.FIRE_1, Robot.isRedAlliance);
+                Action sequence = driveTrain.actionBuilder(startGoal)
+                        .setReversed(true)
+                        .lineToX(fire1.position.x)
+                        .lineToY(fire1.position.y)
+                        .turnTo(fire1.heading)
+                        //.splineToLinearHeading(fire1, fire1.heading)
+                        .build();
+                driveTrain.runAction(sequence);
+                break;
+
+
+
+        }
     }
 
     /**
@@ -229,6 +278,13 @@ public class Autonomous implements TelemetryProvider {
         }
     }
 
+    private void setState(AutonState newState){
+        if(state != newState){
+            previousState = state;
+            state = newState;
+        }
+    }
+
     /**
      * Get current autonomous phase.
      */
@@ -246,6 +302,7 @@ public class Autonomous implements TelemetryProvider {
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
         telemetry.put("Phase", phase);
+        telemetry.put("State", state);
         telemetry.put("Ball Groups Done", ballGroupsCompleted);
         telemetry.put("Launch Cycles", launchCycles);
 
