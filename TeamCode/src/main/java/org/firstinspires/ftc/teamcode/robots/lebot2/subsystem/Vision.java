@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.lebot2.subsystem;
 
+import android.graphics.Bitmap;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.limelightvision.LLResult;
@@ -9,6 +11,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.LazyServo;
+import org.firstinspires.ftc.teamcode.robots.lebot2.util.LimelightStream;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -70,10 +73,27 @@ public class Vision implements Subsystem {
     private double tx = 0;  // Horizontal offset (degrees) - for aiming
     private double ty = 0;  // Vertical offset (degrees)
     private double ta = 0;  // Target area (0-100% of image)
-    private Pose3D botPose = null;
+    private Pose3D botPose = null;       // Currently selected pose (MT2 or MT1)
     private double distanceToGoal = 0;  // Calculated from botpose + known goal position
-    private double robotX = 0;  // Robot field position (meters)
+    private double robotX = 0;  // Robot field position (meters) - from selected pose
     private double robotY = 0;
+    private double robotHeading = 0;  // Robot heading from botpose (radians)
+    private boolean usingMT2 = false;  // True if MT2 localization is active
+    private boolean forceMT1 = false;  // Force MT1 mode (when initial position unknown)
+
+    // Both MT1 and MT2 poses for comparison (calibration/debugging)
+    private Pose3D mt1Pose = null;
+    private Pose3D mt2Pose = null;
+    private boolean hasMT1Pose = false;
+    private boolean hasMT2Pose = false;
+    private double mt1X = 0, mt1Y = 0, mt1Heading = 0;  // MT1 extracted values
+    private double mt2X = 0, mt2Y = 0, mt2Heading = 0;  // MT2 extracted values
+
+    // Dashboard streaming - fetches frames from Limelight's MJPEG stream
+    private LimelightStream limelightStream = null;
+    public static boolean ENABLE_DASHBOARD_STREAM = false;  // Toggle via dashboard config
+    public static int STREAM_FPS = 5;  // Target FPS for dashboard streaming (keep low to reduce lag)
+    public static double STREAM_SCALE = 0.5;  // Scale factor for dashboard image (0.25-1.0)
 
     public Vision(HardwareMap hardwareMap) {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -93,6 +113,16 @@ public class Vision implements Subsystem {
         // It processes frames asynchronously and we just read the latest result
     }
 
+    /**
+     * Update the Limelight with current robot orientation for MegaTag2 localization.
+     * Call this before calc() with the current Pinpoint heading.
+     *
+     * @param yawDegrees Robot heading in degrees (from Pinpoint IMU)
+     */
+    public void updateRobotOrientation(double yawDegrees) {
+        limelight.updateRobotOrientation(yawDegrees);
+    }
+
     @Override
     public void calc(Canvas fieldOverlay) {
         // PHASE 2: Get latest Limelight result and extract data
@@ -103,14 +133,49 @@ public class Vision implements Subsystem {
             tx = result.getTx();
             ty = result.getTy();
             ta = result.getTa();
-            // Using MT1 (no IMU heading required) - switch to MT2 once RR heading is calibrated
-            botPose = result.getBotpose();
 
-            // Calculate distance using botpose (field localization)
+            // Always capture both MT1 and MT2 for comparison
+            mt1Pose = result.getBotpose();
+            mt2Pose = result.getBotpose_MT2();
+
+            // Extract MT1 pose data
+            if (mt1Pose != null) {
+                hasMT1Pose = true;
+                mt1X = mt1Pose.getPosition().x;
+                mt1Y = mt1Pose.getPosition().y;
+                mt1Heading = Math.toRadians(mt1Pose.getOrientation().getYaw());
+            } else {
+                hasMT1Pose = false;
+                mt1X = mt1Y = mt1Heading = 0;
+            }
+
+            // Extract MT2 pose data
+            if (mt2Pose != null) {
+                hasMT2Pose = true;
+                mt2X = mt2Pose.getPosition().x;
+                mt2Y = mt2Pose.getPosition().y;
+                mt2Heading = Math.toRadians(mt2Pose.getOrientation().getYaw());
+            } else {
+                hasMT2Pose = false;
+                mt2X = mt2Y = mt2Heading = 0;
+            }
+
+            // Select which pose to use based on forceMT1 flag
+            if (!forceMT1 && mt2Pose != null) {
+                usingMT2 = true;
+                botPose = mt2Pose;
+            } else {
+                // Force MT1 mode or MT2 unavailable
+                usingMT2 = false;
+                botPose = mt1Pose;
+            }
+
+            // Extract selected pose data for main API
             if (botPose != null) {
                 hasBotPose = true;
                 robotX = botPose.getPosition().x;
                 robotY = botPose.getPosition().y;
+                robotHeading = Math.toRadians(botPose.getOrientation().getYaw());
 
                 // Get the appropriate goal position based on alliance
                 double goalX = isRedAlliance ? RED_GOAL_X : BLUE_GOAL_X;
@@ -121,15 +186,24 @@ public class Vision implements Subsystem {
             } else {
                 hasBotPose = false;
                 distanceToGoal = 0;
+                robotHeading = 0;
             }
         } else {
             hasValidTarget = false;
             hasBotPose = false;
+            hasMT1Pose = false;
+            hasMT2Pose = false;
+            usingMT2 = false;
             tx = 0;
             ty = 0;
             ta = 0;
             botPose = null;
+            mt1Pose = null;
+            mt2Pose = null;
+            mt1X = mt1Y = mt1Heading = 0;
+            mt2X = mt2Y = mt2Heading = 0;
             distanceToGoal = 0;
+            robotHeading = 0;
         }
     }
 
@@ -207,12 +281,122 @@ public class Vision implements Subsystem {
     }
 
     /**
+     * Get robot's heading from botpose.
+     * @return Heading in radians
+     */
+    public double getRobotHeading() {
+        return robotHeading;
+    }
+
+    /**
+     * Check if currently using MegaTag2 localization.
+     * MT2 uses IMU heading for better single-tag accuracy.
+     * Falls back to MT1 when heading is unavailable.
+     */
+    public boolean isUsingMT2() {
+        return usingMT2;
+    }
+
+    /**
+     * Force MT1 mode (skip MT2 even if heading is available).
+     * Use when initial robot position is unknown and Pinpoint heading may be wrong.
+     *
+     * @param force true to force MT1 mode, false to allow MT2
+     */
+    public void setForceMT1(boolean force) {
+        this.forceMT1 = force;
+    }
+
+    /**
+     * Check if MT1 mode is being forced.
+     */
+    public boolean isForcingMT1() {
+        return forceMT1;
+    }
+
+    /**
      * Get bot pose from AprilTag localization.
      *
      * @return Pose3D or null if not available
      */
     public Pose3D getBotPose() {
         return botPose;
+    }
+
+    // ==================== DASHBOARD STREAMING ====================
+
+    /**
+     * Start streaming frames to FTC Dashboard.
+     * Fetches frames from Limelight's MJPEG stream on a background thread.
+     */
+    public void startDashboardStream() {
+        if (limelightStream == null) {
+            limelightStream = new LimelightStream();
+        }
+        limelightStream.setTargetFps(STREAM_FPS);
+        limelightStream.start();
+    }
+
+    /**
+     * Stop streaming frames to FTC Dashboard.
+     */
+    public void stopDashboardStream() {
+        if (limelightStream != null) {
+            limelightStream.stop();
+        }
+    }
+
+    /**
+     * Get a new frame for dashboard display, scaled down to reduce bandwidth.
+     * Returns null if streaming is not active, no frame available, or no new frame since last call.
+     * Only returns each frame once to avoid redundant dashboard updates.
+     *
+     * @return Scaled Bitmap frame or null
+     */
+    public Bitmap getDashboardFrame() {
+        if (limelightStream == null) return null;
+
+        Bitmap frame = limelightStream.getNewFrame();
+        if (frame == null) return null;
+
+        // Scale down to reduce bandwidth and CPU load
+        double scale = Math.max(0.1, Math.min(1.0, STREAM_SCALE));
+        if (scale < 1.0) {
+            int newWidth = (int) (frame.getWidth() * scale);
+            int newHeight = (int) (frame.getHeight() * scale);
+            if (newWidth > 0 && newHeight > 0) {
+                try {
+                    Bitmap scaled = Bitmap.createScaledBitmap(frame, newWidth, newHeight, true);
+                    return scaled;
+                } catch (Exception e) {
+                    // If scaling fails, return original
+                    return frame;
+                }
+            }
+        }
+        return frame;
+    }
+
+    /**
+     * Check if there's a new frame available (not yet sent to dashboard).
+     */
+    public boolean hasNewDashboardFrame() {
+        return limelightStream != null && limelightStream.hasNewFrame();
+    }
+
+    /**
+     * Check if dashboard streaming is currently active.
+     */
+    public boolean isDashboardStreamActive() {
+        return limelightStream != null && limelightStream.isRunning();
+    }
+
+    /**
+     * Get dashboard stream status for telemetry.
+     */
+    public String getDashboardStreamStatus() {
+        if (limelightStream == null) return "Not initialized";
+        return limelightStream.getStatus();
     }
 
     /**
@@ -287,7 +471,8 @@ public class Vision implements Subsystem {
 
     @Override
     public void stop() {
-        // Limelight doesn't need explicit stop
+        // Stop dashboard stream if running
+        stopDashboardStream();
     }
 
     @Override
@@ -311,12 +496,37 @@ public class Vision implements Subsystem {
         telemetry.put("Has BotPose", hasBotPose ? "YES" : "no");
 
         if (hasBotPose) {
+            telemetry.put("MT Mode", usingMT2 ? "MT2 (active)" : "MT1 (active)");
             telemetry.put("Distance to Goal", String.format("%.2f m (%.1f in)", distanceToGoal, distanceToGoal * 39.37));
-            telemetry.put("Robot Pos", String.format("(%.2f, %.2f) m", robotX, robotY));
+        }
+
+        // Always show both MT1 and MT2 poses for comparison when available
+        if (hasMT1Pose) {
+            telemetry.put("MT1 Pos", String.format("(%.2f, %.2f) m", mt1X, mt1Y));
+            telemetry.put("MT1 Heading", String.format("%.1f°", Math.toDegrees(mt1Heading)));
+        }
+        if (hasMT2Pose) {
+            telemetry.put("MT2 Pos", String.format("(%.2f, %.2f) m", mt2X, mt2Y));
+            telemetry.put("MT2 Heading", String.format("%.1f°", Math.toDegrees(mt2Heading)));
+        }
+
+        // Show difference between MT1 and MT2 when both are available
+        if (hasMT1Pose && hasMT2Pose) {
+            double posDiff = Math.hypot(mt2X - mt1X, mt2Y - mt1Y);
+            double headingDiff = Math.toDegrees(mt2Heading - mt1Heading);
+            // Normalize heading difference to -180 to 180
+            while (headingDiff > 180) headingDiff -= 360;
+            while (headingDiff < -180) headingDiff += 360;
+            telemetry.put("MT Diff", String.format("%.3f m, %.1f°", posDiff, headingDiff));
         }
 
         if (hasValidTarget) {
             telemetry.put("tx (aim)", String.format("%.1f°", tx));
+        }
+
+        // Dashboard stream status
+        if (limelightStream != null) {
+            telemetry.put("Stream", getDashboardStreamStatus());
         }
 
         if (debug) {

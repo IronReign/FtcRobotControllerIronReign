@@ -113,6 +113,8 @@ public class Autonomous implements TelemetryProvider {
             case WAITING_PRELOADS:
                 if (robot.missions.isComplete()) {
                     launchCycles++;
+                    // Good time for vision correction - robot is stationary, facing goal
+                    robot.applyVisionPoseCorrection();
                     setPhase(AutonPhase.BALL_GROUP);
                 } else if (robot.missions.isFailed()) {
                     // Mission failed, try to continue
@@ -173,6 +175,8 @@ public class Autonomous implements TelemetryProvider {
             case WAITING_LAUNCH:
                 if (robot.missions.isComplete()) {
                     launchCycles++;
+                    // Good time for vision correction - robot is stationary, facing goal
+                    robot.applyVisionPoseCorrection();
                     // Continue to next ball group
                     setPhase(AutonPhase.BALL_GROUP);
                 } else if (robot.missions.isFailed()) {

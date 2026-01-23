@@ -67,13 +67,15 @@ public class DriverControls implements TelemetryProvider {
         updateStickyGamepads();
         handleGameStateSwitch();
         handleAllianceSelection();
+        handleStartingPositionSelection();
     }
 
     /**
      * Handle main driving controls during teleop.
      */
     public void joystickDrive() {
-        boolean separate = false;
+        boolean separate = false; // set true to drive motors independently for true tank drive
+
         if(separate){
             double left= gamepad1.left_stick_y;
             double right = gamepad1.right_stick_y;
@@ -97,11 +99,6 @@ public class DriverControls implements TelemetryProvider {
             handleButtons();
         }
     }
-//    public void driveWheelsSeperate(){
-//        double left=gamepad1.left_stick_y;
-//        double right = gamepad1.right_stick_y;
-//        robot.driveTrain.setMotorPowers();
-//    }
 
     private void handleButtons() {
         // A button: Toggle intake LOAD_ALL behavior
@@ -189,6 +186,16 @@ public class DriverControls implements TelemetryProvider {
             robot.loader.resetBallCount();
         }
 
+        // Back button: Apply vision pose correction to Pinpoint
+        // Only works when vision has a valid botpose (facing AprilTag)
+        if (stickyGamepad1.back && robot.canApplyVisionCorrection()) {
+            boolean applied = robot.applyVisionPoseCorrection();
+            if (applied) {
+                // Brief rumble feedback to confirm correction was applied
+                gamepad1.rumble(100);
+            }
+        }
+
         //Start button: change tilt index which correspond to servo tilt of limelight
         if(stickyGamepad1.start){
             if(tiltIndex!=3){
@@ -238,6 +245,40 @@ public class DriverControls implements TelemetryProvider {
         if (stickyGamepad1.b) {
             Robot.isRedAlliance = true;
             robot.setAlliance(true);
+        }
+    }
+
+    /**
+     * Handle starting position selection during init.
+     *
+     * Starting positions determine initial Pinpoint pose:
+     * - AUDIENCE: Touching audience wall, can see goal AprilTag (long range)
+     * - GOAL: Touching goal wall, too close for vision initially
+     * - UNKNOWN: For teleop testing, position unknown until first vision fix
+     * - CALIBRATION: Field center, facing red goal - for MT1/MT2 comparison
+     *
+     * Blue positions are reflections of Red positions across field X axis.
+     */
+    private void handleStartingPositionSelection() {
+        // A button: Audience wall position
+        if (stickyGamepad1.a) {
+            robot.setStartingPosition(Robot.StartingPosition.AUDIENCE);
+        }
+
+        // Y button: Goal wall position
+        if (stickyGamepad1.y) {
+            robot.setStartingPosition(Robot.StartingPosition.GOAL);
+        }
+
+        // Back button: Unknown position (teleop testing mode)
+        if (stickyGamepad1.back) {
+            robot.setStartingPosition(Robot.StartingPosition.UNKNOWN);
+        }
+
+        // Guide button: Calibration position (field center, facing red goal)
+        // Used for MT1/MT2 pose comparison testing
+        if (stickyGamepad1.guide) {
+            robot.setStartingPosition(Robot.StartingPosition.CALIBRATION);
         }
     }
 
