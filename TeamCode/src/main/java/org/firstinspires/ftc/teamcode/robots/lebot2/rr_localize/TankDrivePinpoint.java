@@ -834,16 +834,23 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
+        // Position in inches and meters for easy comparison with Vision
+        double xIn = cachedPose.position.x;
+        double yIn = cachedPose.position.y;
+        double xM = xIn / 39.3701;
+        double yM = yIn / 39.3701;
+
+        telemetry.put("Pose (in)", String.format("(%.1f, %.1f)", xIn, yIn));
+        telemetry.put("Pose (m)", String.format("(%.2f, %.2f)", xM, yM));
+        telemetry.put("Heading", String.format("%.1f°", cachedHeading));
         telemetry.put("Drive Mode", behavior);
-        telemetry.put("Heading (deg)", String.format("%.1f", cachedHeading));
-        telemetry.put("Pose", String.format("(%.1f, %.1f)", cachedPose.position.x, cachedPose.position.y));
 
         if (debug) {
             telemetry.put("Turn State", turnState);
-            telemetry.put("Turn Target", turnTarget);
-            telemetry.put("PID Error", headingPID.getError());
-            telemetry.put("Left Power", leftMotors.get(0).getPower());
-            telemetry.put("Right Power", rightMotors.get(0).getPower());
+            telemetry.put("Turn Target", String.format("%.1f", turnTarget));
+            telemetry.put("PID Error", String.format("%.2f", headingPID.getError()));
+            telemetry.put("Left Power", String.format("%.2f", leftMotors.get(0).getPower()));
+            telemetry.put("Right Power", String.format("%.2f", rightMotors.get(0).getPower()));
             telemetry.put("Action Running", currentAction != null);
         }
 

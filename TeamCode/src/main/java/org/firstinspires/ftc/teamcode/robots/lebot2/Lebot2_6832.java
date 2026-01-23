@@ -280,6 +280,7 @@ public class Lebot2_6832 extends OpMode {
             }
         } else {
             // In non-debug mode, still show key subsystem info
+            handleTelemetry(robot.driveTrain.getTelemetry(false), "Chassis", packet);
             handleTelemetry(robot.launcher.getTelemetry(false), "Launcher", packet);
             handleTelemetry(robot.loader.getTelemetry(false), "Loader", packet);
             handleTelemetry(robot.vision.getTelemetry(false), "Vision", packet);
