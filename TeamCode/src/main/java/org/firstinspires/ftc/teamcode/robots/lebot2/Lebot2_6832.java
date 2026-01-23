@@ -225,7 +225,8 @@ public class Lebot2_6832 extends OpMode {
     private void handleAutonomous(TelemetryPacket packet) {
         // TODO: Implement autonomous routines
         // For now, just run a simple test sequence
-        autonomous.execute();
+        //autonomous.execute();
+        autonomous.execute2();
 
         // Auto-transition to TeleOp after 30 seconds
         long elapsed = System.currentTimeMillis() - startTime;
