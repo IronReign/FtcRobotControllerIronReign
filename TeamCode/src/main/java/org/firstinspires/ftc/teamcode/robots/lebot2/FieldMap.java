@@ -21,10 +21,10 @@ import java.util.Set;
  */
 public class FieldMap {
 
-    //=====================INTAKE ASYMMETRY OFFSET================
-    //ball row waypoints need X offset when reflected for blue alliance
-    //due to asymmetric intake design )shifts 6" in positive x direction)
-    public static final double BALL_ROW_BLUE_X_OFFSET = 6.0; //inches
+    // ==================== INTAKE ASYMMETRY OFFSET ====================
+    // Ball row waypoints need X offset when reflected for blue alliance
+    // due to asymmetric intake design (shifts 6" in positive X direction)
+    public static final double BALL_ROW_BLUE_X_OFFSET = 6.0;  // inches
 
     // ==================== WAYPOINT CLASS ====================
 
@@ -54,10 +54,12 @@ public class FieldMap {
             return new Waypoint(x, -y, -heading);
         }
 
-        //Reflect across X axis with an additional X offset
-        //used for asymmetric mechanisms like intake
-        public Waypoint reflectedWithXOffset(double xOffset){
-            return new Waypoint(x + xOffset, -y,-heading);
+        /**
+         * Reflect across X axis with an additional X offset.
+         * Used for asymmetric mechanisms like intake.
+         */
+        public Waypoint reflectedWithXOffset(double xOffset) {
+            return new Waypoint(x + xOffset, -y, -heading);
         }
 
         @Override
@@ -77,26 +79,26 @@ public class FieldMap {
         // AUDIENCE: Near audience, facing goal
         RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(0, 0, 0));  // TODO: measure
         // GOAL: Near goal, facing goal
-        RED_WAYPOINTS.put("START_GOAL", new Waypoint(-46.4566, 47.244, 135));      // TODO: measure
+        RED_WAYPOINTS.put("START_GOAL", new Waypoint(-46.4566, 47.244, 135));
 
         // ----- Firing Positions -----
         // Positions where robot stops to launch balls at goal
-        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-17.12595, 15.748, 135));  // TODO: measure
+        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-17.12595, 15.748, 135));
         RED_WAYPOINTS.put("FIRE_2", new Waypoint(0, 0, 0));  // TODO: measure
         RED_WAYPOINTS.put("FIRE_3", new Waypoint(0, 0, 0));  // TODO: measure
         RED_WAYPOINTS.put("FIRE_4", new Waypoint(0, 0, 0));  // TODO: measure
 
         // ----- Ball Pickup Waypoints -----
         // Starting points for each of the 3 ball rows
-        RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732, 25.9842, 90));  // TODO: measure
-        RED_WAYPOINTS.put("BALL_ROW_2_START", new Waypoint(10.2362, 25.9842, 90));  // TODO: measure
-        RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456, 25.9842, 90));  // TODO: measure
+        RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732, 25.9842, 90));
+        RED_WAYPOINTS.put("BALL_ROW_2_START", new Waypoint(10.2362, 25.9842, 90));
+        RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456, 25.9842, 90));
 
         // ----- Ball Row Endpoints -----
         // Ending points after driving through ball rows
-        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503, 90));  // TODO: measure
-        RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362, 46.8503, 90));  // TODO: measure
-        RED_WAYPOINTS.put("BALL_ROW_3_END", new Waypoint(34.6456, 46.8503, 90));  // TODO: measure
+        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503, 90));
+        RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362, 46.8503, 90));
+        RED_WAYPOINTS.put("BALL_ROW_3_END", new Waypoint(34.6456, 46.8503, 90));
 
         // ----- Gate -----
         // Position to release previously scored balls
@@ -110,8 +112,9 @@ public class FieldMap {
 
     /**
      * Get a waypoint by name, automatically reflected for blue alliance.
-     *Ball row waypoints get an additional X offset for blue alliance
-     * to compensate for asymmetric intake design
+     * Ball row waypoints get an additional X offset for blue alliance
+     * to compensate for asymmetric intake design.
+     *
      * @param name Waypoint name (e.g., "FIRE_1", "BALL_ROW_2_START")
      * @param isRedAlliance true for red, false for blue
      * @return The waypoint, reflected if blue alliance
@@ -122,12 +125,13 @@ public class FieldMap {
         if (redWaypoint == null) {
             throw new IllegalArgumentException("Unknown waypoint: " + name);
         }
-        if(isRedAlliance){
+
+        if (isRedAlliance) {
             return redWaypoint;
         }
 
-        //Ball row waypoints need X offset for blue due to intake asymmetry
-        if(name.startsWith("BALL_ROW")){
+        // Ball row waypoints need X offset for blue due to intake asymmetry
+        if (name.startsWith("BALL_ROW")) {
             return redWaypoint.reflectedWithXOffset(BALL_ROW_BLUE_X_OFFSET);
         }
 
@@ -143,6 +147,20 @@ public class FieldMap {
      */
     public static Pose2d getPose(String name, boolean isRedAlliance) {
         return get(name, isRedAlliance).toPose2d();
+    }
+
+    /**
+     * Calculate bearing from current position to target position.
+     * Use this to turn toward a target before driving with lineToX/lineToY.
+     *
+     * @param from Current pose
+     * @param to Target pose
+     * @return Bearing in radians (ready for turnTo())
+     */
+    public static double bearingTo(Pose2d from, Pose2d to) {
+        double dx = to.position.x - from.position.x;
+        double dy = to.position.y - from.position.y;
+        return Math.atan2(dy, dx);
     }
 
     /**

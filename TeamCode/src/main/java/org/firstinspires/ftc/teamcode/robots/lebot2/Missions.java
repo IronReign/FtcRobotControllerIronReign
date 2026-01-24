@@ -49,9 +49,10 @@ public class Missions implements TelemetryProvider {
 
     public enum Mission {
         NONE,               // No mission active
+        NAVIGATE_TO_FIRE,   // Navigate to fire position (can be reversed)
         LAUNCH_PRELOADS,    // Fire preloaded balls
-        BALL_GROUP,         // Navigate to ball group, intake n balls
-        OPEN_SESAME,        // Navigate to classifier release pose
+        BALL_GROUP,         // Navigate to ball row, intake through row
+        OPEN_SESAME,        // Navigate to gate, back into release lever
         GO_BALL_CLUSTER     // (future) Vision/statistical ball pickup
     }
 
@@ -59,26 +60,22 @@ public class Missions implements TelemetryProvider {
         IDLE,       // No mission or mission not started
         RUNNING,    // Mission in progress
         COMPLETE,   // Mission finished successfully
-        FAILED      // Mission encountered an error
+        FAILED,     // Mission encountered an error (timeout, etc.)
+        ABORTED     // Mission was manually aborted
     }
 
     // Current mission tracking
     private Mission currentMission = Mission.NONE;
     private MissionState missionState = MissionState.IDLE;
 
-    // ==================== FIELD POSITIONS (placeholder coordinates) ====================
+    // ==================== TIMEOUT CONFIGURATION ====================
 
-    // Ball group poses - 3 groups of 3 balls each, aligned on short straight lines
-    // These need real field measurements
-    public static Pose2d BALL_GROUP_0_POSE = new Pose2d(24, 24, Math.toRadians(0));
-    public static Pose2d BALL_GROUP_1_POSE = new Pose2d(48, 24, Math.toRadians(0));
-    public static Pose2d BALL_GROUP_2_POSE = new Pose2d(72, 24, Math.toRadians(0));
+    public static double NAVIGATION_TIMEOUT_SECONDS = 10.0;
+    public static double INTAKE_TIMEOUT_SECONDS = 5.0;
+    public static double LAUNCH_TIMEOUT_SECONDS = 8.0;
+    public static double PRESS_TIMEOUT_SECONDS = 2.0;
 
-    // Classifier release pose - where to back into the release lever
-    public static Pose2d CLASSIFIER_RELEASE_POSE = new Pose2d(0, 48, Math.toRadians(180));
-
-    // Post-release cluster pose - where balls tend to accumulate after release
-    public static Pose2d POST_RELEASE_CLUSTER_POSE = new Pose2d(12, 60, Math.toRadians(45));
+    private ElapsedTime missionTimer = new ElapsedTime();
 
     // ==================== BALL GROUP CONFIGURATION ====================
 
@@ -112,12 +109,22 @@ public class Missions implements TelemetryProvider {
     // BallGroup state
     private enum BallGroupState {
         IDLE,
-        NAVIGATING_TO_GROUP,
-        INTAKING,
+        NAVIGATING_TO_ROW_START,
+        INTAKING_THROUGH_ROW,
         COMPLETE
     }
     private BallGroupState ballGroupState = BallGroupState.IDLE;
     private int ballCountAtStart = 0;
+    private Pose2d targetRowEnd = null;  // End of current ball row
+
+    // NavigateToFire state
+    private enum NavigateToFireState {
+        IDLE,
+        NAVIGATING
+    }
+    private NavigateToFireState navToFireState = NavigateToFireState.IDLE;
+    private boolean navReversed = false;  // Whether to drive in reverse
+    private int targetFirePosition = 1;   // Which fire position (1-4)
 
     // RoadRunner action tracking
     private Action currentAction = null;
@@ -132,6 +139,73 @@ public class Missions implements TelemetryProvider {
     // ==================== MISSION CONTROL ====================
 
     /**
+     * Start the NavigateToFire mission with auto-direction.
+     * Calculates whether forward or reverse requires less turning and uses that.
+     * Also spins up the launcher during navigation.
+     *
+     * @param firePosition Which fire position (1-4)
+     */
+    public void startNavigateToFire(int firePosition) {
+        if (missionState == MissionState.RUNNING) {
+            return;
+        }
+
+        // Calculate optimal direction based on current heading
+        Pose2d currentPose = robot.driveTrain.getPose();
+        Pose2d firePose = getFirePose(Math.max(1, Math.min(4, firePosition)));
+        boolean useReverse = shouldDriveReversed(currentPose, firePose);
+
+        startNavigateToFire(firePosition, useReverse);
+    }
+
+    /**
+     * Start the NavigateToFire mission with explicit direction.
+     * Navigates to a fire position, optionally in reverse (for backing up from gate).
+     * Also spins up the launcher during navigation.
+     *
+     * @param firePosition Which fire position (1-4)
+     * @param reversed Whether to drive in reverse (true = back up, false = drive forward)
+     */
+    public void startNavigateToFire(int firePosition, boolean reversed) {
+        if (missionState == MissionState.RUNNING) {
+            return;
+        }
+        targetFirePosition = Math.max(1, Math.min(4, firePosition));
+        navReversed = reversed;
+        currentMission = Mission.NAVIGATE_TO_FIRE;
+        missionState = MissionState.RUNNING;
+        navToFireState = NavigateToFireState.IDLE;
+        missionTimer.reset();
+    }
+
+    /**
+     * Calculate whether driving in reverse would require less turning.
+     * Compares angular distance to face target vs face away from target.
+     */
+    private boolean shouldDriveReversed(Pose2d currentPose, Pose2d targetPose) {
+        double bearingToTarget = FieldMap.bearingTo(currentPose, targetPose);
+        double currentHeading = currentPose.heading.toDouble();
+
+        // Angular distance to face target (for forward driving)
+        double forwardTurn = Math.abs(normalizeAngle(bearingToTarget - currentHeading));
+
+        // Angular distance to face away from target (for reverse driving)
+        double reverseBearing = normalizeAngle(bearingToTarget + Math.PI);
+        double reverseTurn = Math.abs(normalizeAngle(reverseBearing - currentHeading));
+
+        return reverseTurn < forwardTurn;
+    }
+
+    /**
+     * Normalize angle to [-PI, PI] range.
+     */
+    private double normalizeAngle(double angle) {
+        while (angle > Math.PI) angle -= 2 * Math.PI;
+        while (angle < -Math.PI) angle += 2 * Math.PI;
+        return angle;
+    }
+
+    /**
      * Start the LaunchPreloads mission.
      * Fires any balls that were preloaded at match start.
      */
@@ -142,6 +216,7 @@ public class Missions implements TelemetryProvider {
         currentMission = Mission.LAUNCH_PRELOADS;
         missionState = MissionState.RUNNING;
         launchPreloadsState = LaunchPreloadsState.IDLE;
+        missionTimer.reset();
     }
 
     /**
@@ -159,6 +234,7 @@ public class Missions implements TelemetryProvider {
         missionState = MissionState.RUNNING;
         ballGroupState = BallGroupState.IDLE;
         ballCountAtStart = robot.loader.getBallCount();
+        missionTimer.reset();
     }
 
     /**
@@ -172,10 +248,18 @@ public class Missions implements TelemetryProvider {
         currentMission = Mission.OPEN_SESAME;
         missionState = MissionState.RUNNING;
         openSesameState = OpenSesameState.IDLE;
+        missionTimer.reset();
     }
 
     /**
      * Abort the current mission immediately.
+     * After aborting, the same mission can be restarted from the current position.
+     *
+     * Usage pattern for collision avoidance:
+     *   robot.missions.abort();           // Stop immediately
+     *   // ... handle obstacle ...
+     *   robot.missions.clearState();      // Clear ABORTED state
+     *   robot.missions.startNavigateToFire(1, false);  // Restart from current position
      */
     public void abort() {
         // Cancel any running trajectory
@@ -184,13 +268,15 @@ public class Missions implements TelemetryProvider {
         }
         robot.driveTrain.drive(0, 0, 0);
 
+        // Stop launcher if it was spinning up
+        robot.launcher.stop();
+
         // Reset to manual control
         robot.setBehavior(Robot.Behavior.MANUAL);
         robot.intake.off();
 
-        // Clear mission state
-        currentMission = Mission.NONE;
-        missionState = MissionState.IDLE;
+        // Set aborted state (distinguishable from IDLE and FAILED)
+        missionState = MissionState.ABORTED;
         resetMissionStates();
     }
 
@@ -252,10 +338,27 @@ public class Missions implements TelemetryProvider {
     }
 
     /**
-     * Check if the current mission failed.
+     * Check if the current mission failed (timeout or error).
      */
     public boolean isFailed() {
         return missionState == MissionState.FAILED;
+    }
+
+    /**
+     * Check if the current mission was manually aborted.
+     */
+    public boolean isAborted() {
+        return missionState == MissionState.ABORTED;
+    }
+
+    /**
+     * Check if mission ended (complete, failed, or aborted).
+     * Useful for simple "is it done?" checks.
+     */
+    public boolean isDone() {
+        return missionState == MissionState.COMPLETE
+            || missionState == MissionState.FAILED
+            || missionState == MissionState.ABORTED;
     }
 
     /**
@@ -273,10 +376,13 @@ public class Missions implements TelemetryProvider {
     }
 
     /**
-     * Clear completion/failure state (call before starting next mission).
+     * Clear terminal state (complete/failed/aborted) so a new mission can start.
+     * Call before checking status each loop, or before restarting after abort.
      */
     public void clearState() {
-        if (missionState == MissionState.COMPLETE || missionState == MissionState.FAILED) {
+        if (missionState == MissionState.COMPLETE
+            || missionState == MissionState.FAILED
+            || missionState == MissionState.ABORTED) {
             missionState = MissionState.IDLE;
             currentMission = Mission.NONE;
         }
@@ -296,6 +402,10 @@ public class Missions implements TelemetryProvider {
         }
 
         switch (currentMission) {
+            case NAVIGATE_TO_FIRE:
+                updateNavigateToFireMission();
+                break;
+
             case LAUNCH_PRELOADS:
                 updateLaunchPreloadsMission();
                 break;
@@ -322,7 +432,75 @@ public class Missions implements TelemetryProvider {
 
     // ==================== MISSION IMPLEMENTATIONS ====================
 
+    private void updateNavigateToFireMission() {
+        TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
+
+        // Check for timeout
+        if (missionTimer.seconds() > NAVIGATION_TIMEOUT_SECONDS) {
+            robot.driveTrain.drive(0, 0, 0);
+            robot.launcher.stop();
+            missionState = MissionState.FAILED;
+            navToFireState = NavigateToFireState.IDLE;
+            return;
+        }
+
+        switch (navToFireState) {
+            case IDLE:
+                // Start spinning up launcher during navigation
+                robot.launcher.spinUp();
+
+                // Get target fire position from FieldMap
+                Pose2d firePose = getFirePose(targetFirePosition);
+                Pose2d currentPose = robot.driveTrain.getPose();
+
+                // Build trajectory - use setReversed for backing up
+                Action trajectory;
+                if (navReversed) {
+                    trajectory = driveTrain.actionBuilder(currentPose)
+                            .setReversed(true)
+                            .splineTo(firePose.position, firePose.heading)
+                            .build();
+                } else {
+                    trajectory = driveTrain.actionBuilder(currentPose)
+                            .turnTo(FieldMap.bearingTo(currentPose, firePose))
+                            .splineTo(firePose.position, firePose.heading)
+                            .build();
+                }
+                driveTrain.runAction(trajectory);
+                navToFireState = NavigateToFireState.NAVIGATING;
+                break;
+
+            case NAVIGATING:
+                // Update trajectory action
+                actionPacket = new TelemetryPacket();
+                if (!driveTrain.updateAction(actionPacket)) {
+                    // Arrived at fire position
+                    missionState = MissionState.COMPLETE;
+                    navToFireState = NavigateToFireState.IDLE;
+                }
+                break;
+        }
+    }
+
+    private Pose2d getFirePose(int firePosition) {
+        switch (firePosition) {
+            case 1: return FieldMap.getPose(FieldMap.FIRE_1, Robot.isRedAlliance);
+            case 2: return FieldMap.getPose(FieldMap.FIRE_2, Robot.isRedAlliance);
+            case 3: return FieldMap.getPose(FieldMap.FIRE_3, Robot.isRedAlliance);
+            case 4: return FieldMap.getPose(FieldMap.FIRE_4, Robot.isRedAlliance);
+            default: return FieldMap.getPose(FieldMap.FIRE_1, Robot.isRedAlliance);
+        }
+    }
+
     private void updateLaunchPreloadsMission() {
+        // Check for timeout
+        if (missionTimer.seconds() > LAUNCH_TIMEOUT_SECONDS) {
+            robot.setBehavior(Robot.Behavior.MANUAL);
+            missionState = MissionState.FAILED;
+            launchPreloadsState = LaunchPreloadsState.IDLE;
+            return;
+        }
+
         switch (launchPreloadsState) {
             case IDLE:
                 // Check if we have balls to launch
@@ -349,12 +527,24 @@ public class Missions implements TelemetryProvider {
     private void updateOpenSesameMission() {
         TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
 
+        // Check for timeout
+        if (missionTimer.seconds() > NAVIGATION_TIMEOUT_SECONDS + PRESS_TIMEOUT_SECONDS) {
+            robot.driveTrain.drive(0, 0, 0);
+            missionState = MissionState.FAILED;
+            openSesameState = OpenSesameState.IDLE;
+            return;
+        }
+
         switch (openSesameState) {
             case IDLE:
-                // Build trajectory to classifier release pose
+                // Get gate pose from FieldMap
+                Pose2d gatePose = FieldMap.getPose(FieldMap.GATE, Robot.isRedAlliance);
                 Pose2d currentPose = robot.driveTrain.getPose();
+
+                // Build tank-compatible trajectory: turn toward target, drive, turn to final heading
                 Action trajectory = driveTrain.actionBuilder(currentPose)
-                        .splineToLinearHeading(CLASSIFIER_RELEASE_POSE, CLASSIFIER_RELEASE_POSE.heading.toDouble())
+                        .turnTo(FieldMap.bearingTo(currentPose, gatePose))
+                        .splineTo(gatePose.position, gatePose.heading)
                         .build();
                 driveTrain.runAction(trajectory);
                 openSesameState = OpenSesameState.NAVIGATING;
@@ -385,38 +575,58 @@ public class Missions implements TelemetryProvider {
     private void updateBallGroupMission() {
         TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
 
+        // Check for timeout
+        if (missionTimer.seconds() > NAVIGATION_TIMEOUT_SECONDS + INTAKE_TIMEOUT_SECONDS) {
+            robot.driveTrain.drive(0, 0, 0);
+            robot.intake.off();
+            robot.loader.releaseBeltFromIntake();
+            missionState = MissionState.FAILED;
+            ballGroupState = BallGroupState.IDLE;
+            return;
+        }
+
         switch (ballGroupState) {
             case IDLE:
-                // Get target pose for the specified group
-                Pose2d targetPose = getBallGroupPose(targetGroupIndex);
+                // Get row start and end poses from FieldMap
+                Pose2d rowStart = getRowStartPose(targetGroupIndex);
+                targetRowEnd = getRowEndPose(targetGroupIndex);
 
-                // Build trajectory to ball group
+                // Build trajectory to row start
                 Pose2d currentPose = robot.driveTrain.getPose();
                 Action trajectory = driveTrain.actionBuilder(currentPose)
-                        .splineToLinearHeading(targetPose, targetPose.heading.toDouble())
+                        .turnTo(FieldMap.bearingTo(currentPose, rowStart))
+                        .splineTo(rowStart.position, rowStart.heading)
                         .build();
                 driveTrain.runAction(trajectory);
-                ballGroupState = BallGroupState.NAVIGATING_TO_GROUP;
+                ballGroupState = BallGroupState.NAVIGATING_TO_ROW_START;
                 break;
 
-            case NAVIGATING_TO_GROUP:
+            case NAVIGATING_TO_ROW_START:
                 // Update trajectory action
                 actionPacket = new TelemetryPacket();
                 if (!driveTrain.updateAction(actionPacket)) {
-                    // Arrived at ball group, start intake
+                    // Arrived at row start, begin intake run through row
                     robot.intake.loadAll();
                     robot.loader.requestBeltForIntake();
-                    ballGroupState = BallGroupState.INTAKING;
+
+                    // Build trajectory to drive through row
+                    Pose2d nowPose = robot.driveTrain.getPose();
+                    Action intakeTrajectory = driveTrain.actionBuilder(nowPose)
+                            .lineToY(targetRowEnd.position.y)
+                            .build();
+                    driveTrain.runAction(intakeTrajectory);
+                    ballGroupState = BallGroupState.INTAKING_THROUGH_ROW;
                 }
                 break;
 
-            case INTAKING:
-                // Drive slowly forward while intaking
-                robot.driveTrain.drive(0.15, 0, 0);
+            case INTAKING_THROUGH_ROW:
+                // Update trajectory while intaking
+                actionPacket = new TelemetryPacket();
+                boolean trajectoryComplete = !driveTrain.updateAction(actionPacket);
 
-                // Check if we've collected enough balls
+                // Check if we've collected enough balls or reached end of row
                 int ballsCollected = robot.loader.getBallCount() - ballCountAtStart;
-                if (ballsCollected >= BALLS_PER_GROUP || robot.loader.isFull()) {
+                if (trajectoryComplete || ballsCollected >= BALLS_PER_GROUP || robot.loader.isFull()) {
                     robot.driveTrain.drive(0, 0, 0);
                     robot.intake.off();
                     robot.loader.releaseBeltFromIntake();
@@ -431,16 +641,26 @@ public class Missions implements TelemetryProvider {
         }
     }
 
-    private Pose2d getBallGroupPose(int groupIndex) {
-        switch (groupIndex) {
-            case 0: return BALL_GROUP_0_POSE;
-            case 1: return BALL_GROUP_1_POSE;
-            case 2: return BALL_GROUP_2_POSE;
-            default: return BALL_GROUP_0_POSE;
+    private Pose2d getRowStartPose(int rowIndex) {
+        switch (rowIndex) {
+            case 0: return FieldMap.getPose(FieldMap.BALL_ROW_1_START, Robot.isRedAlliance);
+            case 1: return FieldMap.getPose(FieldMap.BALL_ROW_2_START, Robot.isRedAlliance);
+            case 2: return FieldMap.getPose(FieldMap.BALL_ROW_3_START, Robot.isRedAlliance);
+            default: return FieldMap.getPose(FieldMap.BALL_ROW_1_START, Robot.isRedAlliance);
+        }
+    }
+
+    private Pose2d getRowEndPose(int rowIndex) {
+        switch (rowIndex) {
+            case 0: return FieldMap.getPose(FieldMap.BALL_ROW_1_END, Robot.isRedAlliance);
+            case 1: return FieldMap.getPose(FieldMap.BALL_ROW_2_END, Robot.isRedAlliance);
+            case 2: return FieldMap.getPose(FieldMap.BALL_ROW_3_END, Robot.isRedAlliance);
+            default: return FieldMap.getPose(FieldMap.BALL_ROW_1_END, Robot.isRedAlliance);
         }
     }
 
     private void resetMissionStates() {
+        navToFireState = NavigateToFireState.IDLE;
         launchPreloadsState = LaunchPreloadsState.IDLE;
         openSesameState = OpenSesameState.IDLE;
         ballGroupState = BallGroupState.IDLE;
@@ -461,10 +681,19 @@ public class Missions implements TelemetryProvider {
         telemetry.put("Mission", currentMission);
         telemetry.put("State", missionState);
 
+        if (missionState == MissionState.RUNNING) {
+            telemetry.put("Time", String.format("%.1fs", missionTimer.seconds()));
+        }
+
         if (debug) {
             telemetry.put("Group Order", java.util.Arrays.toString(ballGroupOrder));
             telemetry.put("Current Group Index", currentGroupIndex);
 
+            if (currentMission == Mission.NAVIGATE_TO_FIRE) {
+                telemetry.put("NavToFire State", navToFireState);
+                telemetry.put("Fire Position", targetFirePosition);
+                telemetry.put("Reversed", navReversed);
+            }
             if (currentMission == Mission.BALL_GROUP) {
                 telemetry.put("Target Group", targetGroupIndex);
                 telemetry.put("BallGroup State", ballGroupState);
