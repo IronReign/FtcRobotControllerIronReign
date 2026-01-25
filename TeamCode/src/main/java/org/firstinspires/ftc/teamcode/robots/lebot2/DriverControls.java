@@ -68,15 +68,16 @@ public class DriverControls implements TelemetryProvider {
         handleGameStateSwitch();
         handleAllianceSelection();
         handleStartingPositionSelection();
+        joystickDrive();
     }
 
     /**
      * Handle main driving controls during teleop.
      */
-    public void joystickDrive() {
-        boolean separate = false; // set true to drive motors independently for true tank drive
+    void joystickDrive() {
+        boolean tank = false; // set true to drive motors independently for true tank drive
 
-        if(separate){
+        if(tank){
             double left= gamepad1.left_stick_y;
             double right = gamepad1.right_stick_y;
             robot.driveTrain.drive(left,right,0);
@@ -85,6 +86,11 @@ public class DriverControls implements TelemetryProvider {
             // Get drive inputs
             double throttle = -gamepad1.left_stick_y;
             double turn = gamepad1.right_stick_x;
+
+            // Abort any running mission if driver provides significant input
+            if (robot.missions.isActive() && (Math.abs(throttle) > 0.1 || Math.abs(turn) > 0.1)) {
+                robot.missions.abort();
+            }
 
             // Apply dampening
             double dampener = slowMode ? SLOW_MODE_DAMPENER : DRIVE_DAMPENER;
@@ -95,12 +101,10 @@ public class DriverControls implements TelemetryProvider {
             // any running RR trajectory or PID turn
             robot.driveTrain.drive(throttle, 0, turn);
 
-            // Handle button inputs
-            handleButtons();
         }
     }
 
-    private void handleButtons() {
+    public void handleButtons() {
         // A button: Toggle intake LOAD_ALL behavior
         // Intake runs until loader is full, then auto-stops
         if (stickyGamepad1.a) {
@@ -118,7 +122,7 @@ public class DriverControls implements TelemetryProvider {
             robot.setBehavior(Robot.Behavior.MANUAL);
             robot.launcher.setBehavior(Launcher.Behavior.IDLE);
             robot.intake.off();
-            robot.loader.stopBelt();
+            robot.loader.releaseBelt();
         }
 
         if(stickyGamepad1.x){
@@ -270,7 +274,7 @@ public class DriverControls implements TelemetryProvider {
             robot.setStartingPosition(Robot.StartingPosition.GOAL);
         }
 
-        // Back button: Unknown position (teleop testing mode)
+        // Back button: Unknown position (teleop and relocalization testing)
         if (stickyGamepad1.back) {
             robot.setStartingPosition(Robot.StartingPosition.UNKNOWN);
         }

@@ -15,12 +15,13 @@ import java.util.ArrayList;
 
 public class CsvLogKeeper {
 
-    private static String variableName;
-    private static FileWriter logKeeper;
-    private static String fileName;
-    private static boolean alreadyExists;
-    private static File logFile;
-    private static int dataLength;
+    // Changed from static to instance variables to allow multiple loggers
+    private String variableName;
+    private FileWriter logKeeper;
+    private String fileName;
+    private boolean alreadyExists;
+    private File logFile;
+    private int dataLength;
     private Utility util;
     private String filesdir = Environment.getExternalStorageDirectory() + "/FIRST/";
 

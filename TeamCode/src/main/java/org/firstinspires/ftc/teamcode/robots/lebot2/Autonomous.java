@@ -1,11 +1,17 @@
 package org.firstinspires.ftc.teamcode.robots.lebot2;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.TelemetryProvider;
+import org.firstinspires.ftc.teamcode.util.CsvLogKeeper;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -80,6 +86,12 @@ public class Autonomous implements TelemetryProvider {
     private int launchCycles = 0;
     private boolean gateReleased = false;
 
+    // ==================== LOGGING ====================
+
+    public static boolean LOGGING_ENABLED = true;  // Dashboard tunable
+    private CsvLogKeeper autonLog = null;
+    private long logStartTime = 0;
+
     // ==================== CONSTRUCTOR ====================
 
     public Autonomous(Robot robot) {
@@ -103,8 +115,29 @@ public class Autonomous implements TelemetryProvider {
         launchCycles = 0;
         gateReleased = false;
 
+        // Set robot starting pose based on configured start position
+        Pose2d startPose;
+        if (START_AT_GOAL_WALL) {
+            startPose = FieldMap.getPose(FieldMap.START_GOAL, Robot.isRedAlliance);
+        } else {
+            startPose = FieldMap.getPose(FieldMap.START_AUDIENCE, Robot.isRedAlliance);
+        }
+        robot.driveTrain.setPose(startPose);
+
         // Timer will be reset when execute() first runs
         autonTimer.reset();
+
+        // Initialize logging with timestamped filename
+        if (LOGGING_ENABLED) {
+            String timestamp = new SimpleDateFormat("yyMMddHHmm", Locale.US).format(new Date());
+            autonLog = new CsvLogKeeper("auton_" + timestamp, 12,
+                "elapsedMs,state,prevState,missionState,missionSubState,row,launches,timeRemain,poseX,poseY,heading,event");
+            logStartTime = System.currentTimeMillis();
+            log("INIT", null);
+
+            // Initialize mission logging with same timestamp
+            robot.missions.initLogging();
+        }
     }
 
     // ==================== MAIN EXECUTE ====================
@@ -113,9 +146,6 @@ public class Autonomous implements TelemetryProvider {
      * Execute autonomous - call every loop cycle.
      */
     public void execute() {
-        // Clear any completed/failed/aborted mission state
-        robot.missions.clearState();
-
         // Time remaining for branching decisions
         double timeRemaining = AUTON_DURATION_SECONDS - autonTimer.seconds();
 
@@ -134,9 +164,11 @@ public class Autonomous implements TelemetryProvider {
 
             case WAITING_BACKUP:
                 if (robot.missions.isComplete()) {
+                    log("BACKUP_COMPLETE", null);
                     setState(AutonState.START_TARGETING);
                 } else if (robot.missions.isFailed()) {
                     // Timeout - try to launch anyway from current position
+                    log("BACKUP_FAILED", "timeout");
                     setState(AutonState.START_LAUNCH);
                 }
                 break;
@@ -150,6 +182,7 @@ public class Autonomous implements TelemetryProvider {
             case WAITING_TARGET:
                 if (robot.getBehavior() == Robot.Behavior.MANUAL) {
                     // Targeting complete, apply vision correction
+                    log("TARGETING_COMPLETE", null);
                     robot.applyVisionPoseCorrection();
                     setState(AutonState.START_LAUNCH);
                 }
@@ -157,18 +190,25 @@ public class Autonomous implements TelemetryProvider {
 
             case START_LAUNCH:
                 if (!robot.loader.isEmpty()) {
+                    log("LAUNCH_START", "balls=" + robot.loader.getBallCount());
                     robot.missions.startLaunchPreloads();
                     setState(AutonState.WAITING_LAUNCH);
                 } else {
                     // Nothing to launch, proceed to ball collection
+                    log("LAUNCH_SKIP", "loader_empty");
                     setState(AutonState.START_BALL_ROW);
                 }
                 break;
 
             case WAITING_LAUNCH:
-                if (robot.missions.isComplete() || robot.missions.isFailed()) {
+                if (robot.missions.isComplete()) {
+                    log("LAUNCH_COMPLETE", null);
                     launchCycles++;
-                    // Apply vision correction while stationary at fire position
+                    robot.applyVisionPoseCorrection();
+                    setState(AutonState.START_BALL_ROW);
+                } else if (robot.missions.isFailed()) {
+                    log("LAUNCH_FAILED", "timeout");
+                    launchCycles++;
                     robot.applyVisionPoseCorrection();
                     setState(AutonState.START_BALL_ROW);
                 }
@@ -178,29 +218,38 @@ public class Autonomous implements TelemetryProvider {
             case START_BALL_ROW:
                 // Check if all rows done
                 if (currentRow >= 3) {
+                    log("ALL_ROWS_DONE", null);
                     setState(AutonState.COMPLETE);
                     break;
                 }
 
                 // After rows 1 & 2, do gate release before row 3
                 if (currentRow == 2 && DO_OPEN_SESAME && !gateReleased) {
+                    log("GATE_BEFORE_ROW3", null);
                     setState(AutonState.START_GATE);
                     break;
                 }
 
                 // Check if enough time for another row cycle
                 if (timeRemaining < MIN_TIME_FOR_ROW) {
+                    log("TIME_SKIP_ROW", "remaining=" + String.format("%.1f", timeRemaining));
                     setState(AutonState.COMPLETE);
                     break;
                 }
 
                 // Start collecting from current row
+                log("BALL_ROW_START", "row=" + currentRow);
                 robot.missions.startBallGroup(currentRow);
                 setState(AutonState.WAITING_BALL_ROW);
                 break;
 
             case WAITING_BALL_ROW:
-                if (robot.missions.isComplete() || robot.missions.isFailed()) {
+                if (robot.missions.isComplete()) {
+                    log("BALL_ROW_COMPLETE", "row=" + currentRow);
+                    currentRow++;
+                    setState(AutonState.START_RETURN_TO_FIRE);
+                } else if (robot.missions.isFailed()) {
+                    log("BALL_ROW_FAILED", "row=" + currentRow);
                     currentRow++;
                     setState(AutonState.START_RETURN_TO_FIRE);
                 }
@@ -213,8 +262,11 @@ public class Autonomous implements TelemetryProvider {
                 break;
 
             case WAITING_RETURN:
-                if (robot.missions.isComplete() || robot.missions.isFailed()) {
-                    // Target and launch the collected balls
+                if (robot.missions.isComplete()) {
+                    log("RETURN_COMPLETE", null);
+                    setState(AutonState.START_TARGETING);
+                } else if (robot.missions.isFailed()) {
+                    log("RETURN_FAILED", "timeout");
                     setState(AutonState.START_TARGETING);
                 }
                 break;
@@ -226,9 +278,13 @@ public class Autonomous implements TelemetryProvider {
                 break;
 
             case WAITING_GATE:
-                if (robot.missions.isComplete() || robot.missions.isFailed()) {
+                if (robot.missions.isComplete()) {
+                    log("GATE_COMPLETE", null);
                     gateReleased = true;
-                    // Now continue with row 3
+                    setState(AutonState.START_BALL_ROW);
+                } else if (robot.missions.isFailed()) {
+                    log("GATE_FAILED", "timeout");
+                    gateReleased = true;
                     setState(AutonState.START_BALL_ROW);
                 }
                 break;
@@ -236,6 +292,10 @@ public class Autonomous implements TelemetryProvider {
             // ========== COMPLETE ==========
             case COMPLETE:
                 // Autonomous done - robot will transition to teleop
+                // Close logs on first entry to COMPLETE
+                if (previousState != AutonState.COMPLETE) {
+                    closeLog();
+                }
                 break;
         }
     }
@@ -246,7 +306,54 @@ public class Autonomous implements TelemetryProvider {
         if (state != newState) {
             previousState = state;
             state = newState;
+            log("STATE_CHANGE", previousState + "->" + newState);
         }
+    }
+
+    /**
+     * Log an event to the CSV file.
+     */
+    private void log(String event, String detail) {
+        if (!LOGGING_ENABLED || autonLog == null) {
+            return;
+        }
+
+        Pose2d pose = robot.driveTrain.getPose();
+        String missionSubState = getMissionSubState();
+
+        ArrayList<Object> row = new ArrayList<>();
+        row.add(System.currentTimeMillis() - logStartTime);
+        row.add(state.name());
+        row.add(previousState.name());
+        row.add(robot.missions.getMissionState().name());
+        row.add(missionSubState);
+        row.add(currentRow);
+        row.add(launchCycles);
+        row.add(String.format("%.1f", getTimeRemaining()));
+        row.add(String.format("%.1f", pose.position.x));
+        row.add(String.format("%.1f", pose.position.y));
+        row.add(String.format("%.1f", Math.toDegrees(pose.heading.toDouble())));
+        row.add(event + (detail != null ? ":" + detail : ""));
+        autonLog.UpdateLog(row);
+    }
+
+    /**
+     * Get the current mission's sub-state for logging.
+     */
+    private String getMissionSubState() {
+        return robot.missions.getSubStateForLogging();
+    }
+
+    /**
+     * Close the log files. Call when autonomous ends.
+     */
+    public void closeLog() {
+        if (autonLog != null) {
+            log("AUTON_END", null);
+            autonLog.CloseLog();
+            autonLog = null;
+        }
+        robot.missions.closeLogging();
     }
 
     /**

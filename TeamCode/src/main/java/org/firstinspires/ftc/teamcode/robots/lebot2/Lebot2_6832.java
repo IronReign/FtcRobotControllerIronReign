@@ -118,6 +118,7 @@ public class Lebot2_6832 extends OpMode {
 
         // Handle pre-match controls
         driverControls.initLoop();
+        driverControls.joystickDrive();
 
         // Update robot (for any calibration routines)
         robot.update(packet.fieldOverlay());
@@ -225,8 +226,7 @@ public class Lebot2_6832 extends OpMode {
     private void handleAutonomous(TelemetryPacket packet) {
         // TODO: Implement autonomous routines
         // For now, just run a simple test sequence
-        //autonomous.execute();
-        autonomous.execute2();
+        autonomous.execute();
 
         // Auto-transition to TeleOp after 30 seconds
         long elapsed = System.currentTimeMillis() - startTime;
@@ -237,6 +237,8 @@ public class Lebot2_6832 extends OpMode {
 
     private void handleTeleOp(TelemetryPacket packet) {
         driverControls.joystickDrive();
+        // Handle button inputs
+        driverControls.handleButtons();
     }
 
     private void handleTest(TelemetryPacket packet) {
