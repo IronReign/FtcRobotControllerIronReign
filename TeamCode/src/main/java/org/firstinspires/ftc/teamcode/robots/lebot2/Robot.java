@@ -273,13 +273,15 @@ public class Robot implements TelemetryProvider {
 
     // ==================== BEHAVIOR HANDLERS ====================
 
-    public static int targetHeadingDegrees = 45;
-
     private void handleTargetingBehavior() {
         // Two-phase targeting: IMU rough turn, then vision fine tune
         switch (targetingState) {
             case IDLE:
-                // Start with IMU turn toward target area
+                // Calculate bearing from current position to goal (alliance-aware)
+                Pose2d currentPose = driveTrain.getPose();
+                Pose2d goalPose = FieldMap.getPose(FieldMap.GOAL, isRedAlliance);
+                double targetHeadingRadians = FieldMap.bearingTo(currentPose, goalPose);
+                int targetHeadingDegrees = (int) Math.toDegrees(targetHeadingRadians);
                 driveTrain.turnToHeading(targetHeadingDegrees, 0.7);
                 targetingState = TargetingState.TURNING_IMU;
                 break;
@@ -299,13 +301,14 @@ public class Robot implements TelemetryProvider {
                 break;
 
             case TURNING_VISION:
-                // Keep updating target while turning
-                if (vision.hasTarget()) {
-                    driveTrain.turnToTarget(vision.getTx(), 0.5);
-                }
+                // Check completion FIRST, before updating target
+                // (turnToTarget resets turnState, so must check before calling it)
                 if (driveTrain.isTurnComplete()) {
                     targetingState = TargetingState.IDLE;
                     behavior = Behavior.MANUAL;
+                } else if (vision.hasTarget()) {
+                    // Keep updating target while turning
+                    driveTrain.turnToTarget(vision.getTx(), 0.5);
                 }
                 break;
         }

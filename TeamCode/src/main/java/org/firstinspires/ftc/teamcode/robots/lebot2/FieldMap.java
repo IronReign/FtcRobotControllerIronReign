@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.lebot2;
 
+import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 
 import java.util.LinkedHashMap;
@@ -19,7 +21,12 @@ import java.util.Set;
  *   Pose2d pose = FieldMap.getPose("FIRE_1", Robot.isRedAlliance);
  *   Waypoint wp = FieldMap.get("BALL_ROW_1_START", Robot.isRedAlliance);
  */
+@Config(value = "Lebot2_FieldMap")
 public class FieldMap {
+
+    // ==================== VISUALIZATION CONFIG ====================
+    public static boolean DRAW_WAYPOINTS = true;  // Toggle waypoint visualization
+    public static double WAYPOINT_RADIUS = 4.0;   // 8" diameter = 4" radius
 
     // ==================== INTAKE ASYMMETRY OFFSET ====================
     // Ball row waypoints need X offset when reflected for blue alliance
@@ -106,6 +113,11 @@ public class FieldMap {
 
         // ----- Homebase -----
         RED_WAYPOINTS.put("HOMEBASE", new Waypoint(0, 0, 0));  // TODO: measure
+
+        // ----- Goal Target -----
+        // Center of goal opening - used for aiming calculations
+        // From official DECODE field coordinates
+        RED_WAYPOINTS.put("GOAL", new Waypoint(-58.3727, 55.6425, 135));
     }
 
     // ==================== WAYPOINT ACCESS ====================
@@ -206,4 +218,42 @@ public class FieldMap {
 
     public static final String GATE = "GATE";
     public static final String HOMEBASE = "HOMEBASE";
+    public static final String GOAL = "GOAL";
+
+    // ==================== VISUALIZATION ====================
+
+    /**
+     * Draw all waypoints on the field overlay.
+     * Red alliance waypoints drawn in red, blue alliance in blue.
+     * Each waypoint is drawn as an 8" diameter circle.
+     *
+     * @param canvas The FTC Dashboard field overlay canvas
+     */
+    public static void drawWaypoints(Canvas canvas) {
+        if (!DRAW_WAYPOINTS || canvas == null) {
+            return;
+        }
+
+        canvas.setStrokeWidth(1);
+
+        for (String name : getWaypointNames()) {
+            Waypoint wp = RED_WAYPOINTS.get(name);
+
+            // Skip waypoints that haven't been measured yet (at origin)
+            if (wp.x == 0 && wp.y == 0 && wp.heading == 0) {
+                continue;
+            }
+
+            // Draw red alliance waypoint
+            canvas.setStroke("#FF0000");  // Red
+            canvas.strokeCircle(wp.x, wp.y, WAYPOINT_RADIUS);
+
+            // Draw blue alliance waypoint (reflected)
+            Waypoint blueWp = name.startsWith("BALL_ROW")
+                    ? wp.reflectedWithXOffset(BALL_ROW_BLUE_X_OFFSET)
+                    : wp.reflected();
+            canvas.setStroke("#0000FF");  // Blue
+            canvas.strokeCircle(blueWp.x, blueWp.y, WAYPOINT_RADIUS);
+        }
+    }
 }

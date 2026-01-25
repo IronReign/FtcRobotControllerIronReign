@@ -98,9 +98,16 @@ public class Missions implements TelemetryProvider {
     // LaunchPreloads state
     private enum LaunchPreloadsState {
         IDLE,
-        WAITING_FOR_LAUNCH
+        WAITING_FOR_LAUNCH,
+        WAITING_DUMMY      // For dummy mode timing
     }
     private LaunchPreloadsState launchPreloadsState = LaunchPreloadsState.IDLE;
+    private ElapsedTime launchDummyTimer = new ElapsedTime();
+
+    // TODO: Set DUMMY_LAUNCH_MODE to false once the real launch behavior is fixed
+    // (paddle/firing mechanism needs physical fixes before real launch works)
+    public static boolean DUMMY_LAUNCH_MODE = true;
+    public static double DUMMY_LAUNCH_DURATION = 2.0;  // seconds to wait in dummy mode
 
     // OpenSesame state
     private enum OpenSesameState {
@@ -559,16 +566,17 @@ public class Missions implements TelemetryProvider {
                 log("NAV_START", "reversed=" + navReversed + ",fire=" + targetFirePosition, firePose);
 
                 // Build trajectory - use setReversed for backing up
-                // For reversed: back up to position, then turn to final heading
-                // For forward: turn toward target, drive, turn to final heading
+                // For reversed: back up to position with correct heading
+                // For forward: turn toward target, drive to position with final heading
                 Action trajectory;
                 if (navReversed) {
-                    // Calculate the bearing FROM target TO current (reverse direction)
-                    double reverseBearing = FieldMap.bearingTo(firePose, currentPose);
+                    // In reversed mode: robot heading = travel tangent + 180°
+                    // To end with heading = firePose.heading, we need:
+                    // tangent = firePose.heading - 180°
+                    double endTangent = firePose.heading.toDouble() - Math.PI;
                     trajectory = driveTrain.actionBuilder(currentPose)
                             .setReversed(true)
-                            .splineTo(firePose.position, reverseBearing)
-                            .turnTo(firePose.heading)  // Turn to face goal after backing up
+                            .splineTo(firePose.position, endTangent)
                             .build();
                 } else {
                     trajectory = driveTrain.actionBuilder(currentPose)
@@ -622,14 +630,31 @@ public class Missions implements TelemetryProvider {
                     missionState = MissionState.COMPLETE;
                     return;
                 }
-                // Start the LAUNCH_ALL robot behavior
-                log("LAUNCH_START", "balls=" + robot.loader.getBallCount(), null);
-                robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
-                launchPreloadsState = LaunchPreloadsState.WAITING_FOR_LAUNCH;
+
+                if (DUMMY_LAUNCH_MODE) {
+                    // Dummy mode: just wait and pretend to launch
+                    log("LAUNCH_START_DUMMY", "balls=" + robot.loader.getBallCount(), null);
+                    launchDummyTimer.reset();
+                    launchPreloadsState = LaunchPreloadsState.WAITING_DUMMY;
+                } else {
+                    // Real mode: Start the LAUNCH_ALL robot behavior
+                    log("LAUNCH_START", "balls=" + robot.loader.getBallCount(), null);
+                    robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
+                    launchPreloadsState = LaunchPreloadsState.WAITING_FOR_LAUNCH;
+                }
+                break;
+
+            case WAITING_DUMMY:
+                // Dummy mode: wait for configured duration then complete
+                if (launchDummyTimer.seconds() >= DUMMY_LAUNCH_DURATION) {
+                    log("LAUNCH_DONE_DUMMY", null, null);
+                    missionState = MissionState.COMPLETE;
+                    launchPreloadsState = LaunchPreloadsState.IDLE;
+                }
                 break;
 
             case WAITING_FOR_LAUNCH:
-                // Wait for Robot.Behavior.LAUNCH_ALL to complete
+                // Real mode: Wait for Robot.Behavior.LAUNCH_ALL to complete
                 // Robot returns to MANUAL when launch sequence is done
                 if (robot.getBehavior() == Robot.Behavior.MANUAL) {
                     log("LAUNCH_DONE", null, null);

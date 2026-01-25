@@ -42,6 +42,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import org.firstinspires.ftc.teamcode.robots.lebot2.FieldMap;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.DriveTrainBase;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Vision;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.DriveCommandMessage;
@@ -109,9 +110,12 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public static Params PARAMS = new Params();
 
     // ==================== TURN PID PARAMS ====================
+    // TODO: These PID constants need tuning for vision-based targeting.
+    // Current P is too weak for small errors - needs higher P or proper I term.
+    // The I=0.04 exists but may need adjustment for steady-state error.
 
     public static PIDCoefficients HEADING_PID = new PIDCoefficients(0.03, 0.04, 0.0);
-    public static double HEADING_TOLERANCE = 2.0; // degrees
+    public static double HEADING_TOLERANCE = 3.0; // degrees - TODO - tighten up - increased to allow completion with weak PID
 
     // ==================== ROADRUNNER INFRASTRUCTURE ====================
 
@@ -161,6 +165,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     // RoadRunner action tracking
     private Action currentAction = null;
+    private Vector2d currentActionTarget = null;  // Cached target for visualization
 
     // PID controller for turns
     private final PIDController headingPID;
@@ -249,7 +254,13 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         }
         estimatedPoseWriter.write(new PoseMessage(cachedPose));
 
-        // Run turn state machine
+        // Service RoadRunner actions (for turnToHeading and other trajectory-based turns)
+        if (behavior == Behavior.TRAJECTORY && currentAction != null) {
+            TelemetryPacket packet = new TelemetryPacket();
+            updateAction(packet);
+        }
+
+        // Run turn state machine (for legacy PID turns and vision centering)
         switch (turnState) {
             case IDLE:
                 // Nothing to do
@@ -268,8 +279,20 @@ public final class TankDrivePinpoint implements DriveTrainBase {
                 break;
         }
 
-        // Draw robot on field overlay if provided
+        // Draw robot and field elements on overlay if provided
         if (fieldOverlay != null) {
+            // Draw field waypoints (optional, controlled by FieldMap.DRAW_WAYPOINTS)
+            FieldMap.drawWaypoints(fieldOverlay);
+
+            // Draw current trajectory target in green (filled for visibility)
+            if (currentActionTarget != null) {
+                fieldOverlay.setFill("#00FF0080");  // Green with 50% alpha
+                fieldOverlay.setStroke("#00FF00");  // Green outline
+                fieldOverlay.setStrokeWidth(2);
+                fieldOverlay.fillCircle(currentActionTarget.x, currentActionTarget.y, FieldMap.WAYPOINT_RADIUS);
+                fieldOverlay.strokeCircle(currentActionTarget.x, currentActionTarget.y, FieldMap.WAYPOINT_RADIUS);
+            }
+
             drawPoseHistory(fieldOverlay);
             fieldOverlay.setStroke("#3F51B5");
             Drawing.drawRobot(fieldOverlay, cachedPose);
@@ -324,6 +347,18 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     @Override
     public void turnToHeading(double headingDegrees, double maxSpeed) {
+        // Use RoadRunner's turnTo action for accurate, well-tuned turns
+        Action turnAction = actionBuilder(cachedPose)
+                .turnTo(Math.toRadians(headingDegrees))
+                .build();
+        runAction(turnAction);
+    }
+
+    /**
+     * Legacy PID-based turn to heading. Kept for reference/testing.
+     * Note: PID constants are poorly tuned - prefer turnToHeading() which uses RoadRunner.
+     */
+    public void turnToHeadingPID(double headingDegrees, double maxSpeed) {
         turnTarget = headingDegrees;
         turnMaxSpeed = maxSpeed;
         turnState = TurnState.TURNING_TO_HEADING;
@@ -342,7 +377,9 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     @Override
     public boolean isTurnComplete() {
-        return turnState == TurnState.IDLE;
+        // For PID turns: check turnState
+        // For RoadRunner turns: check if action completed (behavior back to MANUAL)
+        return turnState == TurnState.IDLE && behavior != Behavior.TRAJECTORY;
     }
 
     @Override
@@ -482,6 +519,41 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public void runAction(Action action) {
         currentAction = action;
         behavior = Behavior.TRAJECTORY;
+
+        // Cache the target position for visualization
+        currentActionTarget = extractTargetFromAction(action);
+    }
+
+    /**
+     * Extract the end position from a RoadRunner action for visualization.
+     * Handles FollowTrajectoryAction, TurnAction, and SequentialAction (recursively).
+     */
+    private Vector2d extractTargetFromAction(Action action) {
+        if (action instanceof FollowTrajectoryAction) {
+            FollowTrajectoryAction followAction = (FollowTrajectoryAction) action;
+            double pathLength = followAction.timeTrajectory.path.length();
+            Pose2d endPose = followAction.timeTrajectory.path.get(pathLength, 1).value();
+            return endPose.position;
+        }
+        if (action instanceof TurnAction) {
+            TurnAction turnAction = (TurnAction) action;
+            return turnAction.turn.beginPose.position;
+        }
+        // Handle SequentialAction - find the last trajectory/turn action
+        if (action instanceof com.acmerobotics.roadrunner.SequentialAction) {
+            com.acmerobotics.roadrunner.SequentialAction seqAction =
+                    (com.acmerobotics.roadrunner.SequentialAction) action;
+            // SequentialAction has a public 'actions' field (List<Action>)
+            java.util.List<Action> actions = seqAction.getInitialActions();
+            // Find the last action that has a position target
+            for (int i = actions.size() - 1; i >= 0; i--) {
+                Vector2d target = extractTargetFromAction(actions.get(i));
+                if (target != null) {
+                    return target;
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -489,6 +561,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
      */
     public void cancelAction() {
         currentAction = null;
+        currentActionTarget = null;
         if (behavior == Behavior.TRAJECTORY) {
             behavior = Behavior.MANUAL;
             setMotorPowers(0, 0);
@@ -510,6 +583,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         boolean running = currentAction.run(packet);
         if (!running) {
             currentAction = null;
+            currentActionTarget = null;
             behavior = Behavior.MANUAL;
         }
         return running;
