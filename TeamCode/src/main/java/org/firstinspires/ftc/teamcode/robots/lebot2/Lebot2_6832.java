@@ -245,6 +245,7 @@ public class Lebot2_6832 extends OpMode {
         // In test mode, enable debug telemetry and allow all controls
         debugTelemetryEnabled = true;
         driverControls.joystickDrive();
+        driverControls.handleTuningControls();
     }
 
     // ==================== TELEMETRY ====================

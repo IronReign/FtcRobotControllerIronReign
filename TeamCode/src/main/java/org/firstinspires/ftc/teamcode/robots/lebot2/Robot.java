@@ -87,15 +87,8 @@ public class Robot implements TelemetryProvider {
     private StartingPosition startingPosition = StartingPosition.UNKNOWN;
     private boolean initialPositionSet = false;  // True once we've set or corrected initial pose
 
-    // Starting poses (inches, RoadRunner coordinates)
-    // Red alliance poses - robot touching wall, facing field center
-    // TODO: Measure and calibrate these values for actual field setup
-    public static final Pose2d RED_AUDIENCE_POSE = new Pose2d(-36, -60, Math.toRadians(90));   // Audience wall, facing toward goal
-    public static final Pose2d RED_GOAL_POSE = new Pose2d(-36, 60, Math.toRadians(-90));       // Goal wall, facing away from goal
-
-    // Blue poses are reflections across X axis (negate Y and heading)
-    public static final Pose2d BLUE_AUDIENCE_POSE = new Pose2d(-36, 60, Math.toRadians(-90));
-    public static final Pose2d BLUE_GOAL_POSE = new Pose2d(-36, -60, Math.toRadians(90));
+    // Starting poses are now defined in FieldMap (START_AUDIENCE, START_GOAL)
+    // Use FieldMap.getPose(name, isRedAlliance) to get alliance-aware poses
 
     // Calibration pose - field center, facing red goal
     // In DECODE coordinates: X+ toward audience, so facing red goal ≈ 135°
@@ -109,7 +102,7 @@ public class Robot implements TelemetryProvider {
     public static double FRONT_EXTENT = 9.0;   // Center of rotation to front bumper
     public static double BACK_EXTENT = 5.0;    // Center of rotation to back bumper
     public static double SIDE_EXTENT = 7.0;    // Center to side (half robot width)
-    public static double TRACK_WIDTH = 11.5;   // Distance between wheel centers (should match TankDrivePinpoint.PARAMS.trackWidthTicks)
+    public static double TRACK_WIDTH = 14.0;   // NOT USED - actual track width is hardcoded in TankDrivePinpoint.java:187
 
     // Camera offset from center of rotation (used to transform Limelight pose to robot center)
     // Limelight reports camera position - we need to offset to get robot center of rotation
@@ -509,6 +502,7 @@ public class Robot implements TelemetryProvider {
 
     /**
      * Get the starting pose for a given position based on current alliance.
+     * Uses FieldMap waypoints which handle alliance reflection automatically.
      */
     public Pose2d getStartingPose(StartingPosition position) {
         // Calibration pose is alliance-independent (field center)
@@ -516,11 +510,11 @@ public class Robot implements TelemetryProvider {
             return CALIBRATION_POSE;
         }
 
-        if (isRedAlliance) {
-            return position == StartingPosition.AUDIENCE ? RED_AUDIENCE_POSE : RED_GOAL_POSE;
-        } else {
-            return position == StartingPosition.AUDIENCE ? BLUE_AUDIENCE_POSE : BLUE_GOAL_POSE;
-        }
+        // Get pose from FieldMap - handles alliance reflection automatically
+        String waypointName = (position == StartingPosition.AUDIENCE)
+                ? FieldMap.START_AUDIENCE
+                : FieldMap.START_GOAL;
+        return FieldMap.getPose(waypointName, isRedAlliance);
     }
 
     /**

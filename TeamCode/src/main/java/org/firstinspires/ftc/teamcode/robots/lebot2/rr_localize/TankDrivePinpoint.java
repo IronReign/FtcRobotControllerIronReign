@@ -82,7 +82,8 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public static class Params {
         // drive model parameters
         public double inPerTick = 1/(19.89436789f * 25.4);  //23.75/11995; // Pinpoint reports in inches, so 1:1 mapping
-        public double trackWidthTicks = 4777.861530266601; // Track width in inches for kinematics         //14
+        public double trackWidthTicks = 4777.861530266601; // (unused legacy)
+        public double trackWidthInches = 14.0; // Track width for TankKinematics - tune via Dashboard
 
         // feedforward parameters (in tick units)
         public double kS = 1.164863007541458;
@@ -119,7 +120,8 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     // ==================== ROADRUNNER INFRASTRUCTURE ====================
 
-    public final TankKinematics kinematics;
+    public TankKinematics kinematics;  // Non-final to allow Dashboard tuning of trackWidthInches
+    private double lastTrackWidth = 0;  // Track changes to PARAMS.trackWidthInches
 
     public final TurnConstraints defaultTurnConstraints;
     public final VelConstraint defaultVelConstraint;
@@ -183,8 +185,9 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         // This allows TuningOpModes to set their own mode if needed
 
         // Initialize kinematics with track width
-        //kinematics = new TankKinematics(PARAMS.inPerTick * PARAMS.trackWidthTicks);
-        kinematics = new TankKinematics(14);        //track width of robot is 14 inches from center to center of wheels
+        // Track width tunable via Dashboard (PARAMS.trackWidthInches)
+        kinematics = new TankKinematics(PARAMS.trackWidthInches);
+        lastTrackWidth = PARAMS.trackWidthInches;
         // Initialize constraints
         defaultTurnConstraints = new TurnConstraints(
                 PARAMS.maxAngVel, -PARAMS.maxAngAccel, PARAMS.maxAngAccel);
@@ -235,6 +238,12 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         // PHASE 1: Refresh Pinpoint localizer (triggers I2C bulk read)
         if (localizer instanceof PinpointLocalizer) {
             ((PinpointLocalizer) localizer).refresh();
+        }
+
+        // Check if trackWidthInches changed via Dashboard - rebuild kinematics if so
+        if (PARAMS.trackWidthInches != lastTrackWidth) {
+            kinematics = new TankKinematics(PARAMS.trackWidthInches);
+            lastTrackWidth = PARAMS.trackWidthInches;
         }
     }
 

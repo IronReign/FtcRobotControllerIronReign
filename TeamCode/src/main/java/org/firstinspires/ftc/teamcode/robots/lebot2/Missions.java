@@ -59,7 +59,12 @@ public class Missions implements TelemetryProvider {
         LAUNCH_PRELOADS,    // Fire preloaded balls
         BALL_GROUP,         // Navigate to ball row, intake through row
         OPEN_SESAME,        // Navigate to gate, back into release lever
-        GO_BALL_CLUSTER     // (future) Vision/statistical ball pickup
+        GO_BALL_CLUSTER,    // (future) Vision/statistical ball pickup
+        // Tuning missions (for TEST mode)
+        TUNING_ROTATION,    // Turn 90° CW 4x, CCW 4x, report heading error
+        TUNING_SQUARE,      // Drive 24", turn 90° CW, repeat 4x, report position error
+        TUNING_STRAIGHT,    // Drive 48" forward, back, report error
+        TUNING_TURN         // Single turns at various angles
     }
 
     public enum MissionState {
@@ -143,6 +148,60 @@ public class Missions implements TelemetryProvider {
     private Action currentAction = null;
     private TelemetryPacket actionPacket = new TelemetryPacket();
 
+    // ==================== TUNING MISSION STATE MACHINES ====================
+
+    // Tuning configuration (Dashboard tunable)
+    public static double TUNING_DRIVE_DISTANCE = 24.0;      // inches
+    public static double TUNING_PAUSE_SECONDS = 1.0;        // pause between moves
+    public static double TUNING_STRAIGHT_DISTANCE = 48.0;   // inches for straight test
+    public static int TUNING_ROTATION_REPS = 4;             // repetitions per direction
+
+    // TuningRotation state - turns 90° CW 4x, then CCW 4x
+    private enum TuningRotationState {
+        IDLE,
+        TURNING_CW,
+        PAUSE_CW,
+        TURNING_CCW,
+        PAUSE_CCW,
+        COMPLETE
+    }
+    private TuningRotationState tuningRotationState = TuningRotationState.IDLE;
+    private int tuningRotationCount = 0;
+    private Pose2d tuningStartPose = null;
+    private ElapsedTime tuningPauseTimer = new ElapsedTime();
+
+    // TuningSquare state - drive 24", turn 90° CW, repeat 4x
+    private enum TuningSquareState {
+        IDLE,
+        DRIVING,
+        TURNING,
+        PAUSE,
+        COMPLETE
+    }
+    private TuningSquareState tuningSquareState = TuningSquareState.IDLE;
+    private int tuningSquareCount = 0;
+
+    // TuningStraight state - drive forward, then back
+    private enum TuningStraightState {
+        IDLE,
+        DRIVING_FORWARD,
+        PAUSE_FORWARD,
+        DRIVING_BACK,
+        COMPLETE
+    }
+    private TuningStraightState tuningStraightState = TuningStraightState.IDLE;
+
+    // TuningTurn state - single turns at various angles
+    private enum TuningTurnState {
+        IDLE,
+        TURNING,
+        PAUSE,
+        COMPLETE
+    }
+    private TuningTurnState tuningTurnState = TuningTurnState.IDLE;
+    private double[] tuningTurnAngles = {45, 90, 180, -90, -45};
+    private int tuningTurnIndex = 0;
+
     // ==================== LOGGING ====================
 
     public static boolean LOGGING_ENABLED = true;  // Dashboard tunable
@@ -216,6 +275,10 @@ public class Missions implements TelemetryProvider {
             case LAUNCH_PRELOADS: return launchPreloadsState.name();
             case BALL_GROUP: return ballGroupState.name();
             case OPEN_SESAME: return openSesameState.name();
+            case TUNING_ROTATION: return tuningRotationState.name();
+            case TUNING_SQUARE: return tuningSquareState.name();
+            case TUNING_STRAIGHT: return tuningStraightState.name();
+            case TUNING_TURN: return tuningTurnState.name();
             default: return "NONE";
         }
     }
@@ -358,6 +421,79 @@ public class Missions implements TelemetryProvider {
         missionState = MissionState.RUNNING;
         openSesameState = OpenSesameState.IDLE;
         missionTimer.reset();
+    }
+
+    // ==================== TUNING MISSION START METHODS ====================
+
+    /**
+     * Start the TuningRotation mission.
+     * Turns 90° CW 4x, then 90° CCW 4x, with pauses between.
+     * Reports accumulated heading error at completion.
+     */
+    public void startTuningRotation() {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        currentMission = Mission.TUNING_ROTATION;
+        missionState = MissionState.RUNNING;
+        tuningRotationState = TuningRotationState.IDLE;
+        tuningRotationCount = 0;
+        tuningStartPose = robot.driveTrain.getPose();
+        missionTimer.reset();
+        log("TUNING_ROTATION_START", null, tuningStartPose);
+    }
+
+    /**
+     * Start the TuningSquare mission.
+     * Drives 24" forward, turns 90° CW, repeats 4x to complete a square.
+     * Reports position error from start at completion.
+     */
+    public void startTuningSquare() {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        currentMission = Mission.TUNING_SQUARE;
+        missionState = MissionState.RUNNING;
+        tuningSquareState = TuningSquareState.IDLE;
+        tuningSquareCount = 0;
+        tuningStartPose = robot.driveTrain.getPose();
+        missionTimer.reset();
+        log("TUNING_SQUARE_START", null, tuningStartPose);
+    }
+
+    /**
+     * Start the TuningStraight mission.
+     * Drives 48" forward, pauses, drives 48" back to start.
+     * Reports position error from start at completion.
+     */
+    public void startTuningStraight() {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        currentMission = Mission.TUNING_STRAIGHT;
+        missionState = MissionState.RUNNING;
+        tuningStraightState = TuningStraightState.IDLE;
+        tuningStartPose = robot.driveTrain.getPose();
+        missionTimer.reset();
+        log("TUNING_STRAIGHT_START", null, tuningStartPose);
+    }
+
+    /**
+     * Start the TuningTurn mission.
+     * Executes single turns at 45°, 90°, 180°, -90°, -45° with pauses.
+     * Reports error for each turn.
+     */
+    public void startTuningTurn() {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        currentMission = Mission.TUNING_TURN;
+        missionState = MissionState.RUNNING;
+        tuningTurnState = TuningTurnState.IDLE;
+        tuningTurnIndex = 0;
+        tuningStartPose = robot.driveTrain.getPose();
+        missionTimer.reset();
+        log("TUNING_TURN_START", null, tuningStartPose);
     }
 
     /**
@@ -530,6 +666,23 @@ public class Missions implements TelemetryProvider {
             case GO_BALL_CLUSTER:
                 // Future implementation
                 missionState = MissionState.COMPLETE;
+                break;
+
+            // Tuning missions
+            case TUNING_ROTATION:
+                updateTuningRotationMission();
+                break;
+
+            case TUNING_SQUARE:
+                updateTuningSquareMission();
+                break;
+
+            case TUNING_STRAIGHT:
+                updateTuningStraightMission();
+                break;
+
+            case TUNING_TURN:
+                updateTuningTurnMission();
                 break;
 
             case NONE:
@@ -814,7 +967,276 @@ public class Missions implements TelemetryProvider {
         launchPreloadsState = LaunchPreloadsState.IDLE;
         openSesameState = OpenSesameState.IDLE;
         ballGroupState = BallGroupState.IDLE;
+        tuningRotationState = TuningRotationState.IDLE;
+        tuningSquareState = TuningSquareState.IDLE;
+        tuningStraightState = TuningStraightState.IDLE;
+        tuningTurnState = TuningTurnState.IDLE;
         currentAction = null;
+    }
+
+    // ==================== TUNING MISSION IMPLEMENTATIONS ====================
+
+    private void updateTuningRotationMission() {
+        TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
+
+        switch (tuningRotationState) {
+            case IDLE:
+                // Start first CW turn
+                double currentHeading = Math.toDegrees(driveTrain.getPose().heading.toDouble());
+                double targetHeading = currentHeading + 90;
+                driveTrain.turnToHeading(targetHeading, 0.7);
+                tuningRotationState = TuningRotationState.TURNING_CW;
+                tuningRotationCount = 0;
+                log("ROTATION_CW_START", "count=" + tuningRotationCount, null);
+                break;
+
+            case TURNING_CW:
+                if (driveTrain.isTurnComplete()) {
+                    tuningRotationCount++;
+                    Pose2d pose = driveTrain.getPose();
+                    log("ROTATION_CW_DONE", "count=" + tuningRotationCount, pose);
+
+                    if (tuningRotationCount >= TUNING_ROTATION_REPS) {
+                        // Done with CW, switch to CCW
+                        tuningRotationCount = 0;
+                        tuningPauseTimer.reset();
+                        tuningRotationState = TuningRotationState.PAUSE_CW;
+                    } else {
+                        // More CW turns
+                        double heading = Math.toDegrees(pose.heading.toDouble());
+                        driveTrain.turnToHeading(heading + 90, 0.7);
+                    }
+                }
+                break;
+
+            case PAUSE_CW:
+                if (tuningPauseTimer.seconds() > TUNING_PAUSE_SECONDS) {
+                    // Start CCW turns
+                    double heading = Math.toDegrees(driveTrain.getPose().heading.toDouble());
+                    driveTrain.turnToHeading(heading - 90, 0.7);
+                    tuningRotationState = TuningRotationState.TURNING_CCW;
+                    log("ROTATION_CCW_START", "count=" + tuningRotationCount, null);
+                }
+                break;
+
+            case TURNING_CCW:
+                if (driveTrain.isTurnComplete()) {
+                    tuningRotationCount++;
+                    Pose2d pose = driveTrain.getPose();
+                    log("ROTATION_CCW_DONE", "count=" + tuningRotationCount, pose);
+
+                    if (tuningRotationCount >= TUNING_ROTATION_REPS) {
+                        // Done with all rotations
+                        tuningPauseTimer.reset();
+                        tuningRotationState = TuningRotationState.PAUSE_CCW;
+                    } else {
+                        // More CCW turns
+                        double heading = Math.toDegrees(pose.heading.toDouble());
+                        driveTrain.turnToHeading(heading - 90, 0.7);
+                    }
+                }
+                break;
+
+            case PAUSE_CCW:
+                if (tuningPauseTimer.seconds() > TUNING_PAUSE_SECONDS) {
+                    tuningRotationState = TuningRotationState.COMPLETE;
+                }
+                break;
+
+            case COMPLETE:
+                // Report final error
+                Pose2d finalPose = driveTrain.getPose();
+                double headingError = Math.toDegrees(finalPose.heading.toDouble()) -
+                                     Math.toDegrees(tuningStartPose.heading.toDouble());
+                log("ROTATION_COMPLETE", String.format("headingError=%.2f°", headingError), finalPose);
+                missionState = MissionState.COMPLETE;
+                break;
+        }
+    }
+
+    private void updateTuningSquareMission() {
+        TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
+
+        switch (tuningSquareState) {
+            case IDLE:
+                // Start first drive segment
+                Pose2d startPose = driveTrain.getPose();
+                double heading = startPose.heading.toDouble();
+                Vector2d target = new Vector2d(
+                    startPose.position.x + TUNING_DRIVE_DISTANCE * Math.cos(heading),
+                    startPose.position.y + TUNING_DRIVE_DISTANCE * Math.sin(heading)
+                );
+                Action driveAction = driveTrain.actionBuilder(startPose)
+                    .lineToX(target.x)
+                    .build();
+                driveTrain.runAction(driveAction);
+                tuningSquareState = TuningSquareState.DRIVING;
+                tuningSquareCount = 0;
+                log("SQUARE_DRIVE_START", "count=" + tuningSquareCount, null);
+                break;
+
+            case DRIVING:
+                if (!driveTrain.isActionRunning()) {
+                    Pose2d pose = driveTrain.getPose();
+                    log("SQUARE_DRIVE_DONE", "count=" + tuningSquareCount, pose);
+                    // Turn 90° CW
+                    double currentHeading = Math.toDegrees(pose.heading.toDouble());
+                    driveTrain.turnToHeading(currentHeading - 90, 0.7);
+                    tuningSquareState = TuningSquareState.TURNING;
+                }
+                break;
+
+            case TURNING:
+                if (driveTrain.isTurnComplete()) {
+                    tuningSquareCount++;
+                    Pose2d pose = driveTrain.getPose();
+                    log("SQUARE_TURN_DONE", "count=" + tuningSquareCount, pose);
+
+                    if (tuningSquareCount >= 4) {
+                        // Completed square
+                        tuningSquareState = TuningSquareState.COMPLETE;
+                    } else {
+                        // Pause before next drive
+                        tuningPauseTimer.reset();
+                        tuningSquareState = TuningSquareState.PAUSE;
+                    }
+                }
+                break;
+
+            case PAUSE:
+                if (tuningPauseTimer.seconds() > TUNING_PAUSE_SECONDS) {
+                    // Start next drive segment
+                    Pose2d pose = driveTrain.getPose();
+                    double hdg = pose.heading.toDouble();
+                    Vector2d tgt = new Vector2d(
+                        pose.position.x + TUNING_DRIVE_DISTANCE * Math.cos(hdg),
+                        pose.position.y + TUNING_DRIVE_DISTANCE * Math.sin(hdg)
+                    );
+                    Action action = driveTrain.actionBuilder(pose)
+                        .lineToX(tgt.x)
+                        .build();
+                    driveTrain.runAction(action);
+                    tuningSquareState = TuningSquareState.DRIVING;
+                    log("SQUARE_DRIVE_START", "count=" + tuningSquareCount, null);
+                }
+                break;
+
+            case COMPLETE:
+                // Report position error from start
+                Pose2d finalPose = driveTrain.getPose();
+                double xErr = finalPose.position.x - tuningStartPose.position.x;
+                double yErr = finalPose.position.y - tuningStartPose.position.y;
+                double posErr = Math.sqrt(xErr*xErr + yErr*yErr);
+                double hdgErr = Math.toDegrees(finalPose.heading.toDouble()) -
+                               Math.toDegrees(tuningStartPose.heading.toDouble());
+                log("SQUARE_COMPLETE", String.format("posErr=%.2f\" hdgErr=%.2f°", posErr, hdgErr), finalPose);
+                missionState = MissionState.COMPLETE;
+                break;
+        }
+    }
+
+    private void updateTuningStraightMission() {
+        TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
+
+        switch (tuningStraightState) {
+            case IDLE:
+                // Drive forward
+                Pose2d startPose = driveTrain.getPose();
+                double heading = startPose.heading.toDouble();
+                Vector2d target = new Vector2d(
+                    startPose.position.x + TUNING_STRAIGHT_DISTANCE * Math.cos(heading),
+                    startPose.position.y + TUNING_STRAIGHT_DISTANCE * Math.sin(heading)
+                );
+                Action driveAction = driveTrain.actionBuilder(startPose)
+                    .lineToX(target.x)
+                    .build();
+                driveTrain.runAction(driveAction);
+                tuningStraightState = TuningStraightState.DRIVING_FORWARD;
+                log("STRAIGHT_FORWARD_START", null, null);
+                break;
+
+            case DRIVING_FORWARD:
+                if (!driveTrain.isActionRunning()) {
+                    Pose2d pose = driveTrain.getPose();
+                    log("STRAIGHT_FORWARD_DONE", null, pose);
+                    tuningPauseTimer.reset();
+                    tuningStraightState = TuningStraightState.PAUSE_FORWARD;
+                }
+                break;
+
+            case PAUSE_FORWARD:
+                if (tuningPauseTimer.seconds() > TUNING_PAUSE_SECONDS) {
+                    // Drive back
+                    Pose2d pose = driveTrain.getPose();
+                    Action backAction = driveTrain.actionBuilder(pose)
+                        .lineToX(tuningStartPose.position.x)
+                        .build();
+                    driveTrain.runAction(backAction);
+                    tuningStraightState = TuningStraightState.DRIVING_BACK;
+                    log("STRAIGHT_BACK_START", null, null);
+                }
+                break;
+
+            case DRIVING_BACK:
+                if (!driveTrain.isActionRunning()) {
+                    tuningStraightState = TuningStraightState.COMPLETE;
+                }
+                break;
+
+            case COMPLETE:
+                // Report position error from start
+                Pose2d finalPose = driveTrain.getPose();
+                double xErr = finalPose.position.x - tuningStartPose.position.x;
+                double yErr = finalPose.position.y - tuningStartPose.position.y;
+                double posErr = Math.sqrt(xErr*xErr + yErr*yErr);
+                double hdgErr = Math.toDegrees(finalPose.heading.toDouble()) -
+                               Math.toDegrees(tuningStartPose.heading.toDouble());
+                log("STRAIGHT_COMPLETE", String.format("posErr=%.2f\" hdgErr=%.2f°", posErr, hdgErr), finalPose);
+                missionState = MissionState.COMPLETE;
+                break;
+        }
+    }
+
+    private void updateTuningTurnMission() {
+        TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
+
+        switch (tuningTurnState) {
+            case IDLE:
+                if (tuningTurnIndex >= tuningTurnAngles.length) {
+                    tuningTurnState = TuningTurnState.COMPLETE;
+                    break;
+                }
+                // Start turn to next angle
+                double currentHeading = Math.toDegrees(driveTrain.getPose().heading.toDouble());
+                double targetAngle = tuningTurnAngles[tuningTurnIndex];
+                double targetHeading = currentHeading + targetAngle;
+                driveTrain.turnToHeading(targetHeading, 0.7);
+                tuningTurnState = TuningTurnState.TURNING;
+                log("TURN_START", String.format("target=%.0f°", targetAngle), null);
+                break;
+
+            case TURNING:
+                if (driveTrain.isTurnComplete()) {
+                    Pose2d pose = driveTrain.getPose();
+                    log("TURN_DONE", String.format("angle=%.0f°", tuningTurnAngles[tuningTurnIndex]), pose);
+                    tuningTurnIndex++;
+                    tuningPauseTimer.reset();
+                    tuningTurnState = TuningTurnState.PAUSE;
+                }
+                break;
+
+            case PAUSE:
+                if (tuningPauseTimer.seconds() > TUNING_PAUSE_SECONDS) {
+                    tuningTurnState = TuningTurnState.IDLE;  // Will check for more turns
+                }
+                break;
+
+            case COMPLETE:
+                Pose2d finalPose = driveTrain.getPose();
+                log("TURN_SEQUENCE_COMPLETE", null, finalPose);
+                missionState = MissionState.COMPLETE;
+                break;
+        }
     }
 
     // ==================== TELEMETRY ====================
@@ -853,6 +1275,22 @@ public class Missions implements TelemetryProvider {
             }
             if (currentMission == Mission.LAUNCH_PRELOADS) {
                 telemetry.put("LaunchPreloads State", launchPreloadsState);
+            }
+            // Tuning mission telemetry
+            if (currentMission == Mission.TUNING_ROTATION) {
+                telemetry.put("TuningRotation State", tuningRotationState);
+                telemetry.put("Rotation Count", tuningRotationCount);
+            }
+            if (currentMission == Mission.TUNING_SQUARE) {
+                telemetry.put("TuningSquare State", tuningSquareState);
+                telemetry.put("Square Count", tuningSquareCount);
+            }
+            if (currentMission == Mission.TUNING_STRAIGHT) {
+                telemetry.put("TuningStraight State", tuningStraightState);
+            }
+            if (currentMission == Mission.TUNING_TURN) {
+                telemetry.put("TuningTurn State", tuningTurnState);
+                telemetry.put("Turn Index", tuningTurnIndex + "/" + tuningTurnAngles.length);
             }
         }
 

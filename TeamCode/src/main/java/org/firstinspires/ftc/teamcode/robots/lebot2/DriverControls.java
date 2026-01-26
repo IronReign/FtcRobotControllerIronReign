@@ -218,6 +218,46 @@ public class DriverControls implements TelemetryProvider {
         }else{
             robot.vision.setTiltUpMax();
         }
+
+    }
+
+    /**
+     * Handle tuning mission controls in TEST mode.
+     * Uses gamepad1 - safe because handleButtons() is NOT called in TEST mode.
+     * Called from Lebot2_6832.handleTest().
+     *
+     * Gamepad1 buttons (TEST mode only):
+     *   A = Start Rotation Test (90° turns CW/CCW)
+     *   B = Start Square Test (drive 24", turn 90°, repeat 4x)
+     *   X = Start Straight Line Test (48" forward and back)
+     *   Y = Start Turn Accuracy Test (45°, 90°, 180° turns)
+     *   Back = Abort current tuning mission
+     */
+    public void handleTuningControls() {
+        // Only allow starting new missions if none running
+        if (!robot.missions.isActive()) {
+            if (stickyGamepad1.a) {
+                robot.missions.initLogging();  // Ensure logging is on
+                robot.missions.startTuningRotation();
+            }
+            if (stickyGamepad1.b) {
+                robot.missions.initLogging();
+                robot.missions.startTuningSquare();
+            }
+            if (stickyGamepad1.x) {
+                robot.missions.initLogging();
+                robot.missions.startTuningStraight();
+            }
+            if (stickyGamepad1.y) {
+                robot.missions.initLogging();
+                robot.missions.startTuningTurn();
+            }
+        }
+
+        // Back button aborts current mission
+        if (stickyGamepad1.back && robot.missions.isActive()) {
+            robot.missions.abort();
+        }
     }
 
     public int getTiltIndex(){return tiltIndex;}
