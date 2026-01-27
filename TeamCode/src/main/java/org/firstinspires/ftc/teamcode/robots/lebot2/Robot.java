@@ -94,7 +94,7 @@ public class Robot implements TelemetryProvider {
     // In DECODE coordinates: X+ toward audience, so facing red goal ≈ 135°
     // (Red goal is in the back-left quadrant from audience perspective)
     // Used for MT1/MT2 comparison testing - provides known heading to seed MT2
-    public static final Pose2d CALIBRATION_POSE = new Pose2d(0, 0, Math.toRadians(135));
+    public static final Pose2d CALIBRATION_POSE = new Pose2d(0, 0, 0);
 
     // Robot Dimensions (inches, relative to center of rotation)
     // Center of rotation = midpoint between drive wheels (on the axle line)

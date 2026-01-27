@@ -22,6 +22,7 @@ import com.acmerobotics.roadrunner.PoseVelocity2dDual;
 import com.acmerobotics.roadrunner.ProfileAccelConstraint;
 import com.acmerobotics.roadrunner.ProfileParams;
 import com.acmerobotics.roadrunner.RamseteController;
+import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.TankKinematics;
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.TimeTrajectory;
@@ -104,8 +105,16 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         public double ramseteBBar = 2.0; // positive
 
         // turn controller gains
-        public double turnGain = 0.0;
-        public double turnVelGain = 0.0;
+        public double turnGain = 25.0;
+        public double turnVelGain = 3.0;
+        public double turnIGain = 0.0;           // Integral gain for steady-state accuracy
+        public double turnICutIn = 5.0;         // Only integrate when error < this (degrees)
+        public double turnFeedforwardScale = 1.0; // Scale feedforward (0=pure feedback, 1=full feedforward)
+
+        // turn completion (position-based after profile ends)
+        public double turnCompleteTolerance = 2.0;      // Heading error tolerance (degrees)
+        public double turnCompleteVelTolerance = 0.1;   // Angular velocity tolerance (rad/s)
+        public double turnCompleteTimeout = 2.0;        // Max seconds to settle after profile (safety)
     }
 
     public static Params PARAMS = new Params();
@@ -791,6 +800,10 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         private final TimeTurn turn;
 
         private double beginTs = -1;
+        private double lastTs = -1;
+        private double turnIntegral = 0.0;  // Accumulated heading error for I term
+        private double settlingStartTs = -1;  // When settling phase started
+        private Rotation2d finalTargetHeading = null;  // Target heading after profile ends
 
         public TurnAction(TimeTurn turn) {
             this.turn = turn;
@@ -798,30 +811,85 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
         @Override
         public boolean run(@NonNull TelemetryPacket p) {
+            double now = Actions.now();
             double t;
+            double dt;
             if (beginTs < 0) {
-                beginTs = Actions.now();
+                beginTs = now;
+                lastTs = now;
                 t = 0;
+                dt = 0;
+                turnIntegral = 0;  // Reset integral at start of turn
             } else {
-                t = Actions.now() - beginTs;
+                t = now - beginTs;
+                dt = now - lastTs;
+                lastTs = now;
             }
-
-            if (t >= turn.duration) {
-                setMotorPowers(0, 0);
-                return false;
-            }
-
-            Pose2dDual<Time> txWorldTarget = turn.get(t);
-            targetPoseWriter.write(new PoseMessage(txWorldTarget.value()));
 
             PoseVelocity2d robotVelRobot = updatePoseEstimate();
+            Rotation2d currentHeading = localizer.getPose().heading;
+
+            // Determine target heading and feedforward velocity
+            Rotation2d targetHeading;
+            double ffVel;
+            Pose2d targetPose;  // For visualization
+            boolean inSettlingPhase = (t >= turn.duration);
+
+            if (inSettlingPhase) {
+                // Settling phase: profile done, hold final target
+                if (finalTargetHeading == null) {
+                    // Capture final target heading from end of profile
+                    finalTargetHeading = turn.get(turn.duration).heading.value();
+                    settlingStartTs = now;
+                }
+                targetHeading = finalTargetHeading;
+                ffVel = 0;  // No feedforward during settling
+                targetPose = new Pose2d(turn.beginPose.position, targetHeading);
+
+                // Check completion conditions
+                double headingErrorDeg = Math.toDegrees(targetHeading.minus(currentHeading));
+                double settlingTime = now - settlingStartTs;
+
+                boolean positionSettled = Math.abs(headingErrorDeg) < PARAMS.turnCompleteTolerance;
+                boolean velocitySettled = Math.abs(robotVelRobot.angVel) < PARAMS.turnCompleteVelTolerance;
+                boolean timedOut = settlingTime > PARAMS.turnCompleteTimeout;
+
+                if ((positionSettled && velocitySettled) || timedOut) {
+                    setMotorPowers(0, 0);
+                    return false;
+                }
+            } else {
+                // Profile phase: follow moving target
+                Pose2dDual<Time> txWorldTarget = turn.get(t);
+                targetPose = txWorldTarget.value();
+                targetPoseWriter.write(new PoseMessage(targetPose));
+                targetHeading = txWorldTarget.heading.value();
+                ffVel = txWorldTarget.heading.velocity().value();
+            }
+
+            // Calculate heading error (radians)
+            double headingError = targetHeading.minus(currentHeading);
+            double headingErrorDeg = Math.toDegrees(headingError);
+
+            // Accumulate integral only when error is below cut-in threshold
+            if (Math.abs(headingErrorDeg) < PARAMS.turnICutIn) {
+                turnIntegral += headingError * dt;
+            } else {
+                turnIntegral = 0;  // Reset if error grows beyond cut-in (anti-windup)
+            }
+
+            // Velocity error (target is 0 during settling)
+            double velError = (inSettlingPhase ? 0 : ffVel) - robotVelRobot.angVel;
+
+            // Scaled feedforward + PID feedback
+            double ffTerm = ffVel * PARAMS.turnFeedforwardScale;
+            double pTerm = PARAMS.turnGain * headingError;
+            double iTerm = PARAMS.turnIGain * turnIntegral;
+            double dTerm = PARAMS.turnVelGain * velError;
 
             PoseVelocity2dDual<Time> command = new PoseVelocity2dDual<>(
                     Vector2dDual.constant(new Vector2d(0, 0), 3),
-                    txWorldTarget.heading.velocity().plus(
-                            PARAMS.turnGain * localizer.getPose().heading.minus(txWorldTarget.heading.value()) +
-                                    PARAMS.turnVelGain * (robotVelRobot.angVel - txWorldTarget.heading.velocity().value())
-                    )
+                    DualNum.constant(ffTerm + pTerm + iTerm + dTerm, 3)
             );
             driveCommandWriter.write(new DriveCommandMessage(command));
 
@@ -839,7 +907,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
             drawPoseHistory(c);
 
             c.setStroke("#4CAF50");
-            Drawing.drawRobot(c, txWorldTarget.value());
+            Drawing.drawRobot(c, targetPose);
 
             c.setStroke("#3F51B5");
             Drawing.drawRobot(c, localizer.getPose());

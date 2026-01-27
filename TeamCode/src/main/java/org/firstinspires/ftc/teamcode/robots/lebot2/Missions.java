@@ -64,7 +64,8 @@ public class Missions implements TelemetryProvider {
         TUNING_ROTATION,    // Turn 90° CW 4x, CCW 4x, report heading error
         TUNING_SQUARE,      // Drive 24", turn 90° CW, repeat 4x, report position error
         TUNING_STRAIGHT,    // Drive 48" forward, back, report error
-        TUNING_TURN         // Single turns at various angles
+        TUNING_TURN,        // Single turns at various angles
+        TUNING_RAMSETE      // Trajectory following with deliberate heading disturbance
     }
 
     public enum MissionState {
@@ -202,6 +203,26 @@ public class Missions implements TelemetryProvider {
     private double[] tuningTurnAngles = {45, 90, 180, -90, -45};
     private int tuningTurnIndex = 0;
 
+    // TuningRamsete state - trajectory following with deliberate heading disturbance
+    private enum TuningRamseteState {
+        IDLE,
+        TURNING_TO_DISTURB,     // Deliberately turn off-heading
+        PAUSE_BEFORE_DRIVE,     // Brief pause to stabilize
+        DRIVING_TRAJECTORY,     // Run trajectory, observe Ramsete correction
+        PAUSE_AFTER_DRIVE,      // Pause before return
+        RETURNING_TO_START,     // Drive back to starting position
+        COMPLETE
+    }
+    private TuningRamseteState tuningRamseteState = TuningRamseteState.IDLE;
+    private int tuningRamseteRep = 0;
+    private Pose2d tuningRamseteStartPose = null;
+    private double tuningRamseteTargetHeading = 0;  // Where trajectory wants to go
+
+    // Ramsete tuning parameters (Dashboard tunable)
+    public static double RAMSETE_DISTURBANCE_ANGLE = 15.0;   // Degrees to turn off-heading
+    public static double RAMSETE_DRIVE_DISTANCE = 48.0;      // Trajectory distance (inches)
+    public static int RAMSETE_REPS = 3;                      // Number of repetitions
+
     // ==================== LOGGING ====================
 
     public static boolean LOGGING_ENABLED = true;  // Dashboard tunable
@@ -279,6 +300,7 @@ public class Missions implements TelemetryProvider {
             case TUNING_SQUARE: return tuningSquareState.name();
             case TUNING_STRAIGHT: return tuningStraightState.name();
             case TUNING_TURN: return tuningTurnState.name();
+            case TUNING_RAMSETE: return tuningRamseteState.name();
             default: return "NONE";
         }
     }
@@ -496,6 +518,21 @@ public class Missions implements TelemetryProvider {
         log("TUNING_TURN_START", null, tuningStartPose);
     }
 
+    public void startTuningRamsete() {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        currentMission = Mission.TUNING_RAMSETE;
+        missionState = MissionState.RUNNING;
+        tuningRamseteState = TuningRamseteState.IDLE;
+        tuningRamseteRep = 0;
+        tuningRamseteStartPose = robot.driveTrain.getPose();
+        tuningRamseteTargetHeading = Math.toDegrees(tuningRamseteStartPose.heading.toDouble());
+        missionTimer.reset();
+        log("TUNING_RAMSETE_START", String.format("disturbance=%.1f° distance=%.1f\"",
+                RAMSETE_DISTURBANCE_ANGLE, RAMSETE_DRIVE_DISTANCE), tuningRamseteStartPose);
+    }
+
     /**
      * Abort the current mission immediately.
      * After aborting, the same mission can be restarted from the current position.
@@ -683,6 +720,10 @@ public class Missions implements TelemetryProvider {
 
             case TUNING_TURN:
                 updateTuningTurnMission();
+                break;
+
+            case TUNING_RAMSETE:
+                updateTuningRamseteMission();
                 break;
 
             case NONE:
@@ -983,7 +1024,7 @@ public class Missions implements TelemetryProvider {
             case IDLE:
                 // Start first CW turn
                 double currentHeading = Math.toDegrees(driveTrain.getPose().heading.toDouble());
-                double targetHeading = currentHeading + 90;
+                double targetHeading = currentHeading - 90;
                 driveTrain.turnToHeading(targetHeading, 0.7);
                 tuningRotationState = TuningRotationState.TURNING_CW;
                 tuningRotationCount = 0;
@@ -1004,7 +1045,7 @@ public class Missions implements TelemetryProvider {
                     } else {
                         // More CW turns
                         double heading = Math.toDegrees(pose.heading.toDouble());
-                        driveTrain.turnToHeading(heading + 90, 0.7);
+                        driveTrain.turnToHeading(heading - 90, 0.7);
                     }
                 }
                 break;
@@ -1013,7 +1054,7 @@ public class Missions implements TelemetryProvider {
                 if (tuningPauseTimer.seconds() > TUNING_PAUSE_SECONDS) {
                     // Start CCW turns
                     double heading = Math.toDegrees(driveTrain.getPose().heading.toDouble());
-                    driveTrain.turnToHeading(heading - 90, 0.7);
+                    driveTrain.turnToHeading(heading + 90, 0.7);
                     tuningRotationState = TuningRotationState.TURNING_CCW;
                     log("ROTATION_CCW_START", "count=" + tuningRotationCount, null);
                 }
@@ -1032,7 +1073,7 @@ public class Missions implements TelemetryProvider {
                     } else {
                         // More CCW turns
                         double heading = Math.toDegrees(pose.heading.toDouble());
-                        driveTrain.turnToHeading(heading - 90, 0.7);
+                        driveTrain.turnToHeading(heading + 90, 0.7);
                     }
                 }
                 break;
@@ -1239,6 +1280,130 @@ public class Missions implements TelemetryProvider {
         }
     }
 
+    private void updateTuningRamseteMission() {
+        TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
+
+        switch (tuningRamseteState) {
+            case IDLE:
+                if (tuningRamseteRep >= RAMSETE_REPS) {
+                    tuningRamseteState = TuningRamseteState.COMPLETE;
+                    break;
+                }
+                // Record current pose as start of this rep
+                tuningRamseteStartPose = driveTrain.getPose();
+                tuningRamseteTargetHeading = Math.toDegrees(tuningRamseteStartPose.heading.toDouble());
+
+                // Deliberately turn off-heading to create disturbance
+                // Alternate CW/CCW each rep
+                double disturbance = (tuningRamseteRep % 2 == 0) ? RAMSETE_DISTURBANCE_ANGLE : -RAMSETE_DISTURBANCE_ANGLE;
+                double disturbedHeading = tuningRamseteTargetHeading + disturbance;
+                driveTrain.turnToHeading(disturbedHeading, 0.7);
+                tuningRamseteState = TuningRamseteState.TURNING_TO_DISTURB;
+                log("RAMSETE_DISTURB_START", String.format("rep=%d disturbance=%.1f°", tuningRamseteRep, disturbance), null);
+                break;
+
+            case TURNING_TO_DISTURB:
+                if (driveTrain.isTurnComplete()) {
+                    Pose2d pose = driveTrain.getPose();
+                    double actualDisturbance = Math.toDegrees(pose.heading.toDouble()) - tuningRamseteTargetHeading;
+                    log("RAMSETE_DISTURB_DONE", String.format("actualDisturbance=%.1f°", actualDisturbance), pose);
+                    tuningPauseTimer.reset();
+                    tuningRamseteState = TuningRamseteState.PAUSE_BEFORE_DRIVE;
+                }
+                break;
+
+            case PAUSE_BEFORE_DRIVE:
+                if (tuningPauseTimer.seconds() > 0.5) {  // Brief pause to stabilize
+                    // Build trajectory from ORIGINAL pose (correct heading), not current pose
+                    // This creates immediate heading error that Ramsete must correct
+                    Pose2d currentPose = driveTrain.getPose();
+                    double targetHeadingRad = Math.toRadians(tuningRamseteTargetHeading);
+                    Vector2d targetPos = new Vector2d(
+                            tuningRamseteStartPose.position.x + RAMSETE_DRIVE_DISTANCE * Math.cos(targetHeadingRad),
+                            tuningRamseteStartPose.position.y + RAMSETE_DRIVE_DISTANCE * Math.sin(targetHeadingRad)
+                    );
+
+                    // Key: use tuningRamseteStartPose (original heading) not currentPose (disturbed)
+                    // Path tangent = original heading, but robot facing disturbed heading
+                    // Ramsete sees the error and must correct
+                    Action trajectory = driveTrain.actionBuilder(tuningRamseteStartPose)
+                            .splineTo(targetPos, targetHeadingRad)
+                            .build();
+                    driveTrain.runAction(trajectory);
+
+                    double headingError = Math.toDegrees(currentPose.heading.toDouble()) - tuningRamseteTargetHeading;
+                    log("RAMSETE_DRIVE_START", String.format("headingError=%.1f° target=(%.1f,%.1f)",
+                            headingError, targetPos.x, targetPos.y), currentPose);
+                    tuningRamseteState = TuningRamseteState.DRIVING_TRAJECTORY;
+                }
+                break;
+
+            case DRIVING_TRAJECTORY:
+                // Log heading error periodically during trajectory
+                if (!driveTrain.isActionRunning()) {
+                    Pose2d pose = driveTrain.getPose();
+                    double finalHeadingError = Math.toDegrees(pose.heading.toDouble()) - tuningRamseteTargetHeading;
+                    double xError = pose.position.x - (tuningRamseteStartPose.position.x + RAMSETE_DRIVE_DISTANCE * Math.cos(Math.toRadians(tuningRamseteTargetHeading)));
+                    double yError = pose.position.y - (tuningRamseteStartPose.position.y + RAMSETE_DRIVE_DISTANCE * Math.sin(Math.toRadians(tuningRamseteTargetHeading)));
+                    double posError = Math.sqrt(xError * xError + yError * yError);
+                    log("RAMSETE_DRIVE_DONE", String.format("rep=%d hdgErr=%.1f° posErr=%.1f\"", tuningRamseteRep, finalHeadingError, posError), pose);
+                    tuningRamseteRep++;
+                    tuningPauseTimer.reset();
+                    tuningRamseteState = TuningRamseteState.PAUSE_AFTER_DRIVE;
+                }
+                break;
+
+            case PAUSE_AFTER_DRIVE:
+                if (tuningPauseTimer.seconds() > TUNING_PAUSE_SECONDS) {
+                    // Return to start position
+                    // Build from INTENDED end pose (target position + original heading)
+                    // This creates heading error that Ramsete must correct on return
+                    Pose2d currentPose = driveTrain.getPose();
+                    double targetHeadingRad = Math.toRadians(tuningRamseteTargetHeading);
+                    Vector2d targetPos = new Vector2d(
+                            tuningRamseteStartPose.position.x + RAMSETE_DRIVE_DISTANCE * Math.cos(targetHeadingRad),
+                            tuningRamseteStartPose.position.y + RAMSETE_DRIVE_DISTANCE * Math.sin(targetHeadingRad)
+                    );
+                    // Intended pose at end of forward drive
+                    Pose2d intendedEndPose = new Pose2d(targetPos, targetHeadingRad);
+
+                    // For reversed spline, end tangent points opposite to travel direction
+                    double returnTangent = targetHeadingRad + Math.PI;
+                    Action returnTrajectory = driveTrain.actionBuilder(intendedEndPose)
+                            .setReversed(true)  // Drive backwards
+                            .splineTo(tuningRamseteStartPose.position, returnTangent)
+                            .build();
+                    driveTrain.runAction(returnTrajectory);
+                    double headingError = Math.toDegrees(currentPose.heading.toDouble()) - tuningRamseteTargetHeading;
+                    log("RAMSETE_RETURN_START", String.format("rep=%d/%d hdgErr=%.1f°",
+                            tuningRamseteRep, RAMSETE_REPS, headingError), currentPose);
+                    tuningRamseteState = TuningRamseteState.RETURNING_TO_START;
+                }
+                break;
+
+            case RETURNING_TO_START:
+                if (!driveTrain.isActionRunning()) {
+                    Pose2d pose = driveTrain.getPose();
+                    log("RAMSETE_RETURN_DONE", null, pose);
+
+                    // Check if all reps complete AFTER returning
+                    if (tuningRamseteRep >= RAMSETE_REPS) {
+                        tuningRamseteState = TuningRamseteState.COMPLETE;
+                    } else {
+                        tuningPauseTimer.reset();
+                        tuningRamseteState = TuningRamseteState.IDLE;  // Ready for next rep
+                    }
+                }
+                break;
+
+            case COMPLETE:
+                Pose2d completePose = driveTrain.getPose();
+                log("RAMSETE_COMPLETE", String.format("totalReps=%d", tuningRamseteRep), completePose);
+                missionState = MissionState.COMPLETE;
+                break;
+        }
+    }
+
     // ==================== TELEMETRY ====================
 
     @Override
@@ -1291,6 +1456,12 @@ public class Missions implements TelemetryProvider {
             if (currentMission == Mission.TUNING_TURN) {
                 telemetry.put("TuningTurn State", tuningTurnState);
                 telemetry.put("Turn Index", tuningTurnIndex + "/" + tuningTurnAngles.length);
+            }
+            if (currentMission == Mission.TUNING_RAMSETE) {
+                telemetry.put("TuningRamsete State", tuningRamseteState);
+                telemetry.put("Ramsete Rep", tuningRamseteRep + "/" + RAMSETE_REPS);
+                double currentHeading = Math.toDegrees(robot.driveTrain.getPose().heading.toDouble());
+                telemetry.put("Heading Error", String.format("%.1f°", currentHeading - tuningRamseteTargetHeading));
             }
         }
 

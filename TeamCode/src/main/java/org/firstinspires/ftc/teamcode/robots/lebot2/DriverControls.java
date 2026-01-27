@@ -231,6 +231,7 @@ public class DriverControls implements TelemetryProvider {
      *   B = Start Square Test (drive 24", turn 90°, repeat 4x)
      *   X = Start Straight Line Test (48" forward and back)
      *   Y = Start Turn Accuracy Test (45°, 90°, 180° turns)
+     *   RB = Start Ramsete Test (trajectory with heading disturbance)
      *   Back = Abort current tuning mission
      */
     public void handleTuningControls() {
@@ -251,6 +252,10 @@ public class DriverControls implements TelemetryProvider {
             if (stickyGamepad1.y) {
                 robot.missions.initLogging();
                 robot.missions.startTuningTurn();
+            }
+            if (stickyGamepad1.right_bumper) {
+                robot.missions.initLogging();
+                robot.missions.startTuningRamsete();
             }
         }
 
