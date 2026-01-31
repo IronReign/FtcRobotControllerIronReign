@@ -59,6 +59,9 @@ public class TankDriveActions {
     public static double DECEL_SLEW_RATE_FORWARD = 0.08;   // max power decrease per tick (forward)
     public static double DECEL_SLEW_RATE_REVERSE = 0.04;   // gentler decel in reverse (anti-wheelie)
 
+    // Settling timeout — safety net if PID oscillates and never converges
+    public static double SETTLING_TIMEOUT_MS = 500;
+
     private final TankDrivePinpoint driveTrain;
 
     // The final target position from the last driveTo/driveThrough/driveToReversed call.
@@ -216,6 +219,7 @@ public class TankDriveActions {
         private boolean initialized = false;
         private double previousDrivePower = 0.0;
         private double lockedHeading = 0.0;  // Fixed heading reference, set at init
+        private long settlingStartTime = -1;  // Timestamp when robot first crosses finish line
 
         PositionDriveAction(Vector2d target, boolean reversed, double maxPower) {
             this.target = target;
@@ -225,9 +229,8 @@ public class TankDriveActions {
 
         private void initialize() {
             distancePID = new PIDController(DISTANCE_PID);
-            distancePID.setInputRange(0, 200);  // 0-200 inches range
-            distancePID.setOutputRange(-1.0, 1.0);  // full range so it can correct overshoot
-            // Input will be 0, setpoint will be distance — so error = distance (positive)
+            distancePID.setInputRange(-50, 50);  // Saturates well before 50"; allows negative for overshoot
+            distancePID.setOutputRange(-1.0, 1.0);
             distancePID.setInput(0);
             distancePID.enable();
 
@@ -253,6 +256,7 @@ public class TankDriveActions {
             lockedHeading = reversed ? normalizeAngle(bearing + Math.PI) : bearing;
 
             previousDrivePower = 0.0;
+            settlingStartTime = -1;
             initialized = true;
         }
 
@@ -274,30 +278,40 @@ public class TankDriveActions {
             double dy = target.y - currentPose.position.y;
             double distance = Math.sqrt(dx * dx + dy * dy);
 
-            // Finish line test: project robot-to-target vector onto the drive direction.
-            // When this goes to zero or negative, the robot has reached or crossed the
-            // perpendicular line through the target — the "finish line."
-            // This prevents overshoot at speed and handles paths that don't pass
-            // exactly through the target center.
+            // Along-track distance: projection of robot-to-target vector onto drive direction.
+            // Positive = target is ahead, negative = robot has overshot past the target.
             double driveDirection = reversed ? normalizeAngle(lockedHeading + Math.PI) : lockedHeading;
             double alongTrack = dx * Math.cos(driveDirection) + dy * Math.sin(driveDirection);
 
-            if (alongTrack <= 0 || distance < POSITION_TOLERANCE) {
+            // Distance PID: setpoint is along-track distance, input stays 0.
+            // error = alongTrack. Positive → drive forward, negative → reverse to correct overshoot.
+            distancePID.setSetpoint(alongTrack);
+            double rawDrivePower = distancePID.performPID();
+
+            // Primary termination: along-track error within tolerance
+            if (Math.abs(alongTrack) < POSITION_TOLERANCE) {
                 driveTrain.setMotorPowers(0, 0);
-                setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);  // restore for teleop
+                setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                previousDrivePower = 0.0;
+                return false;
+            }
+
+            // Start settling timer when robot first crosses the finish line (overshoot).
+            // This is the safety net — if the PID oscillates and never converges,
+            // the timeout will terminate the action.
+            if (alongTrack <= 0 && settlingStartTime < 0) {
+                settlingStartTime = System.currentTimeMillis();
+            }
+            if (settlingStartTime > 0 &&
+                    System.currentTimeMillis() - settlingStartTime > SETTLING_TIMEOUT_MS) {
+                driveTrain.setMotorPowers(0, 0);
+                setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
                 previousDrivePower = 0.0;
                 return false;
             }
 
             // Heading error relative to locked heading (set at init from initial bearing)
-            // We don't chase the live bearing — it swings rapidly near the target and
-            // causes orbiting. The initial turn already aligned us.
             double headingError = normalizeAngle(lockedHeading - currentHeading);
-
-            // Distance PID: setpoint is along-track distance to finish line, input stays 0
-            // error = setpoint - input = alongTrack - 0 = positive → positive output
-            distancePID.setSetpoint(alongTrack);
-            double rawDrivePower = distancePID.performPID();
 
             // Scale by cos(headingError) — no forward drive when heading is way off
             double drivePower = rawDrivePower * Math.cos(headingError);
@@ -310,8 +324,10 @@ public class TankDriveActions {
             // Cap drive power
             drivePower = Math.max(-maxPower, Math.min(maxPower, drivePower));
 
-            // Slew rate limiter
-            drivePower = applySlewRate(drivePower, previousDrivePower);
+            // Slew rate limiter — bypassed entirely when correcting overshoot
+            if (alongTrack > 0) {
+                drivePower = applySlewRate(drivePower, previousDrivePower);
+            }
             previousDrivePower = drivePower;
 
             // Heading PID: input is heading error in degrees, setpoint is 0
@@ -339,12 +355,15 @@ public class TankDriveActions {
             packet.put("posDrive_steer", steerPower);
             packet.put("posDrive_left", leftPower);
             packet.put("posDrive_right", rightPower);
+            packet.put("posDrive_settling", settlingStartTime > 0);
 
             return true;
         }
 
         /**
          * Apply slew rate limiting to drive power for smooth accel/decel.
+         * Forward deceleration is unslewed — the PID has full authority to stop.
+         * Only acceleration and reverse deceleration are slew-limited (wheelie prevention).
          */
         private double applySlewRate(double desired, double previous) {
             double delta = desired - previous;
@@ -354,13 +373,13 @@ public class TankDriveActions {
                 if (Math.abs(delta) > ACCEL_SLEW_RATE) {
                     return previous + Math.signum(delta) * ACCEL_SLEW_RATE;
                 }
-            } else {
-                // Decelerating — use direction-appropriate slew rate
-                double decelRate = reversed ? DECEL_SLEW_RATE_REVERSE : DECEL_SLEW_RATE_FORWARD;
-                if (Math.abs(delta) > decelRate) {
-                    return previous + Math.signum(delta) * decelRate;
+            } else if (reversed) {
+                // Decelerating in reverse — slew to prevent wheelies on hard stops
+                if (Math.abs(delta) > DECEL_SLEW_RATE_REVERSE) {
+                    return previous + Math.signum(delta) * DECEL_SLEW_RATE_REVERSE;
                 }
             }
+            // Forward deceleration: no slew — PID has full authority
             return desired;
         }
 
