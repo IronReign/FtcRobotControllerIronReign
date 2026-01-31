@@ -228,11 +228,12 @@ public class DriverControls implements TelemetryProvider {
      *
      * Gamepad1 buttons (TEST mode only):
      *   A = Start Rotation Test (90° turns CW/CCW)
-     *   B = Start Square Test (drive 24", turn 90°, repeat 4x)
-     *   X = Start Straight Line Test (48" forward and back)
+     *   B = Start Square Test (position-based; Home+B = old RR version)
+     *   X = Start Straight Line Test (position-based; Home+X = old RR version)
      *   Y = Start Turn Accuracy Test (45°, 90°, 180° turns)
      *   RB = Start Ramsete Test (trajectory with heading disturbance)
      *   Back = Abort current tuning mission
+     *   Home (Guide) = Hold as shift key for B/X to use old RR trajectory versions
      */
     public void handleTuningControls() {
         // Only allow starting new missions if none running
@@ -243,11 +244,19 @@ public class DriverControls implements TelemetryProvider {
             }
             if (stickyGamepad1.b) {
                 robot.missions.initLogging();
-                robot.missions.startTuningSquare();
+                if (gamepad1.guide) {
+                    robot.missions.startTuningSquare();       // Home+B = old RR square
+                } else {
+                    robot.missions.startTuningSquarePos();    // B = position-based square
+                }
             }
             if (stickyGamepad1.x) {
                 robot.missions.initLogging();
-                robot.missions.startTuningStraight();
+                if (gamepad1.guide) {
+                    robot.missions.startTuningStraight();     // Home+X = old RR straight
+                } else {
+                    robot.missions.startTuningStraightPos();  // X = position-based straight
+                }
             }
             if (stickyGamepad1.y) {
                 robot.missions.initLogging();

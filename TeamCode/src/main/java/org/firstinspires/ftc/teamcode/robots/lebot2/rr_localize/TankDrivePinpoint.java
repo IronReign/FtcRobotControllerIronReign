@@ -643,7 +643,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         }
     }
 
-    private void setMotorPowers(double left, double right) {
+    void setMotorPowers(double left, double right) {
         for (DcMotorEx m : leftMotors) {
             m.setPower(left);
         }

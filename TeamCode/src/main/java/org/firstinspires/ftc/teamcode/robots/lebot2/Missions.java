@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.robots.lebot2;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -69,7 +68,9 @@ public class Missions implements TelemetryProvider {
         TUNING_SQUARE,      // Drive 24", turn 90° CW, repeat 4x, report position error
         TUNING_STRAIGHT,    // Drive 48" forward, back, report error
         TUNING_TURN,        // Single turns at various angles
-        TUNING_RAMSETE      // Trajectory following with deliberate heading disturbance
+        TUNING_RAMSETE,         // Trajectory following with deliberate heading disturbance
+        TUNING_STRAIGHT_POS,    // Drive 48" forward, back using PositionDriveAction
+        TUNING_SQUARE_POS       // Drive 24", turn 90° CW, repeat 4x using PositionDriveAction
     }
 
     public enum MissionState {
@@ -151,7 +152,6 @@ public class Missions implements TelemetryProvider {
 
     // RoadRunner action tracking
     private Action currentAction = null;
-    private TelemetryPacket actionPacket = new TelemetryPacket();
 
     // ==================== TUNING MISSION STATE MACHINES ====================
 
@@ -226,6 +226,26 @@ public class Missions implements TelemetryProvider {
     public static double RAMSETE_DISTURBANCE_ANGLE = 15.0;   // Degrees to turn off-heading
     public static double RAMSETE_DRIVE_DISTANCE = 48.0;      // Trajectory distance (inches)
     public static int RAMSETE_REPS = 3;                      // Number of repetitions
+
+    // TuningStraightPos state - position-based straight drive test
+    private enum TuningStraightPosState {
+        IDLE,
+        DRIVING_FORWARD,
+        PAUSE_FORWARD,
+        DRIVING_BACK,
+        COMPLETE
+    }
+    private TuningStraightPosState tuningStraightPosState = TuningStraightPosState.IDLE;
+
+    // TuningSquarePos state - position-based square drive test
+    private enum TuningSquarePosState {
+        IDLE,
+        DRIVING,
+        PAUSE,
+        COMPLETE
+    }
+    private TuningSquarePosState tuningSquarePosState = TuningSquarePosState.IDLE;
+    private int tuningSquarePosCount = 0;
 
     // ==================== LOGGING ====================
 
@@ -309,6 +329,8 @@ public class Missions implements TelemetryProvider {
             case TUNING_STRAIGHT: return tuningStraightState.name();
             case TUNING_TURN: return tuningTurnState.name();
             case TUNING_RAMSETE: return tuningRamseteState.name();
+            case TUNING_STRAIGHT_POS: return tuningStraightPosState.name();
+            case TUNING_SQUARE_POS: return tuningSquarePosState.name();
             default: return "NONE";
         }
     }
@@ -542,6 +564,40 @@ public class Missions implements TelemetryProvider {
     }
 
     /**
+     * Start the TuningStraightPos mission (position-based).
+     * Same as TuningStraight but uses PositionDriveAction instead of RoadRunner trajectories.
+     */
+    public void startTuningStraightPos() {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        currentMission = Mission.TUNING_STRAIGHT_POS;
+        missionState = MissionState.RUNNING;
+        tuningStraightPosState = TuningStraightPosState.IDLE;
+        tuningStartPose = robot.driveTrain.getPose();
+        missionTimer.reset();
+        log("TUNING_STRAIGHT_POS_START", null, tuningStartPose);
+    }
+
+    /**
+     * Start the TuningSquarePos mission (position-based).
+     * Same as TuningSquare but uses PositionDriveAction instead of RoadRunner trajectories.
+     * Drive segments use actions.driveTo(), turns use LazyTurnAction (via the final heading).
+     */
+    public void startTuningSquarePos() {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        currentMission = Mission.TUNING_SQUARE_POS;
+        missionState = MissionState.RUNNING;
+        tuningSquarePosState = TuningSquarePosState.IDLE;
+        tuningSquarePosCount = 0;
+        tuningStartPose = robot.driveTrain.getPose();
+        missionTimer.reset();
+        log("TUNING_SQUARE_POS_START", null, tuningStartPose);
+    }
+
+    /**
      * Abort the current mission immediately.
      * After aborting, the same mission can be restarted from the current position.
      *
@@ -734,6 +790,14 @@ public class Missions implements TelemetryProvider {
                 updateTuningRamseteMission();
                 break;
 
+            case TUNING_STRAIGHT_POS:
+                updateTuningStraightPosMission();
+                break;
+
+            case TUNING_SQUARE_POS:
+                updateTuningSquarePosMission();
+                break;
+
             case NONE:
             default:
                 missionState = MissionState.IDLE;
@@ -780,9 +844,7 @@ public class Missions implements TelemetryProvider {
                 break;
 
             case NAVIGATING:
-                // Update trajectory action
-                actionPacket = new TelemetryPacket();
-                if (!driveTrain.updateAction(actionPacket)) {
+                if (!driveTrain.isActionRunning()) {
                     // Arrived at fire position
                     log("NAV_COMPLETE", null, null);
                     missionState = MissionState.COMPLETE;
@@ -878,9 +940,7 @@ public class Missions implements TelemetryProvider {
                 break;
 
             case NAVIGATING:
-                // Update trajectory action
-                actionPacket = new TelemetryPacket();
-                if (!driveTrain.updateAction(actionPacket)) {
+                if (!driveTrain.isActionRunning()) {
                     // Arrived at release pose
                     openSesameState = OpenSesameState.PRESSING;
                     pressTimer.reset();
@@ -928,9 +988,7 @@ public class Missions implements TelemetryProvider {
                 break;
 
             case NAVIGATING_TO_ROW_START:
-                // Update trajectory action
-                actionPacket = new TelemetryPacket();
-                if (!driveTrain.updateAction(actionPacket)) {
+                if (!driveTrain.isActionRunning()) {
                     // Arrived at row start, begin intake run through row
                     log("BALLGROUP_AT_ROW_START", null, null);
                     robot.intake.loadAll();
@@ -945,9 +1003,7 @@ public class Missions implements TelemetryProvider {
                 break;
 
             case INTAKING_THROUGH_ROW:
-                // Update trajectory while intaking
-                actionPacket = new TelemetryPacket();
-                boolean trajectoryComplete = !driveTrain.updateAction(actionPacket);
+                boolean trajectoryComplete = !driveTrain.isActionRunning();
 
                 // Check if we've collected enough balls or reached end of row
                 int ballsCollected = robot.loader.getBallCount() - ballCountAtStart;
@@ -1389,6 +1445,125 @@ public class Missions implements TelemetryProvider {
         }
     }
 
+    // ==================== POSITION-BASED TUNING MISSIONS ====================
+
+    private void updateTuningStraightPosMission() {
+        TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
+
+        switch (tuningStraightPosState) {
+            case IDLE:
+                // Drive forward using PositionDriveAction
+                Pose2d startPose = driveTrain.getPose();
+                double heading = startPose.heading.toDouble();
+                Vector2d target = new Vector2d(
+                    startPose.position.x + TUNING_STRAIGHT_DISTANCE * Math.cos(heading),
+                    startPose.position.y + TUNING_STRAIGHT_DISTANCE * Math.sin(heading)
+                );
+                // Build a Pose2d with same heading so LazyTurnAction skips (no heading change)
+                Pose2d targetPose = new Pose2d(target, heading);
+                Action driveAction = actions.driveTo(targetPose);
+                driveTrain.runAction(driveAction, actions.getLastTargetPosition());
+                tuningStraightPosState = TuningStraightPosState.DRIVING_FORWARD;
+                log("STRAIGHT_POS_FORWARD_START", null, null);
+                break;
+
+            case DRIVING_FORWARD:
+                if (!driveTrain.isActionRunning()) {
+                    Pose2d pose = driveTrain.getPose();
+                    log("STRAIGHT_POS_FORWARD_DONE", null, pose);
+                    tuningPauseTimer.reset();
+                    tuningStraightPosState = TuningStraightPosState.PAUSE_FORWARD;
+                }
+                break;
+
+            case PAUSE_FORWARD:
+                if (tuningPauseTimer.seconds() > TUNING_PAUSE_SECONDS) {
+                    // Drive back using reversed PositionDriveAction
+                    Pose2d pose = driveTrain.getPose();
+                    double hdg = pose.heading.toDouble();
+                    Pose2d backTarget = new Pose2d(tuningStartPose.position, hdg);
+                    Action backAction = actions.driveToReversed(backTarget);
+                    driveTrain.runAction(backAction, actions.getLastTargetPosition());
+                    tuningStraightPosState = TuningStraightPosState.DRIVING_BACK;
+                    log("STRAIGHT_POS_BACK_START", null, null);
+                }
+                break;
+
+            case DRIVING_BACK:
+                if (!driveTrain.isActionRunning()) {
+                    tuningStraightPosState = TuningStraightPosState.COMPLETE;
+                }
+                break;
+
+            case COMPLETE:
+                Pose2d finalPose = driveTrain.getPose();
+                double xErr = finalPose.position.x - tuningStartPose.position.x;
+                double yErr = finalPose.position.y - tuningStartPose.position.y;
+                double posErr = Math.sqrt(xErr*xErr + yErr*yErr);
+                double hdgErr = Math.toDegrees(finalPose.heading.toDouble()) -
+                               Math.toDegrees(tuningStartPose.heading.toDouble());
+                log("STRAIGHT_POS_COMPLETE", String.format("posErr=%.2f\" hdgErr=%.2f°", posErr, hdgErr), finalPose);
+                missionState = MissionState.COMPLETE;
+                break;
+        }
+    }
+
+    private void updateTuningSquarePosMission() {
+        TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
+
+        switch (tuningSquarePosState) {
+            case IDLE:
+                // Drive to next square corner using PositionDriveAction
+                Pose2d startPose = driveTrain.getPose();
+                double heading = startPose.heading.toDouble();
+                Vector2d target = new Vector2d(
+                    startPose.position.x + TUNING_DRIVE_DISTANCE * Math.cos(heading),
+                    startPose.position.y + TUNING_DRIVE_DISTANCE * Math.sin(heading)
+                );
+                // Target heading is 90° CW from current (for the turn after arrival)
+                double nextHeading = heading - Math.toRadians(90);
+                Pose2d targetPose = new Pose2d(target, nextHeading);
+                // driveTo will: PositionDriveAction to position, then LazyTurnAction to nextHeading
+                Action driveAction = actions.driveTo(targetPose);
+                driveTrain.runAction(driveAction, actions.getLastTargetPosition());
+                tuningSquarePosState = TuningSquarePosState.DRIVING;
+                log("SQUARE_POS_DRIVE_START", "count=" + tuningSquarePosCount, null);
+                break;
+
+            case DRIVING:
+                if (!driveTrain.isActionRunning()) {
+                    tuningSquarePosCount++;
+                    Pose2d pose = driveTrain.getPose();
+                    log("SQUARE_POS_SEGMENT_DONE", "count=" + tuningSquarePosCount, pose);
+
+                    if (tuningSquarePosCount >= 4) {
+                        tuningSquarePosState = TuningSquarePosState.COMPLETE;
+                    } else {
+                        tuningPauseTimer.reset();
+                        tuningSquarePosState = TuningSquarePosState.PAUSE;
+                    }
+                }
+                break;
+
+            case PAUSE:
+                if (tuningPauseTimer.seconds() > TUNING_PAUSE_SECONDS) {
+                    tuningSquarePosState = TuningSquarePosState.IDLE;  // Will start next segment
+                }
+                break;
+
+            case COMPLETE:
+                Pose2d finalPose = driveTrain.getPose();
+                double xErr = finalPose.position.x - tuningStartPose.position.x;
+                double yErr = finalPose.position.y - tuningStartPose.position.y;
+                double posErr = Math.sqrt(xErr*xErr + yErr*yErr);
+                double hdgErr = Math.toDegrees(finalPose.heading.toDouble()) -
+                               Math.toDegrees(tuningStartPose.heading.toDouble());
+                log("SQUARE_POS_COMPLETE", String.format("posErr=%.2f\" hdgErr=%.2f°", posErr, hdgErr), finalPose);
+                missionState = MissionState.COMPLETE;
+                break;
+        }
+    }
+
     // ==================== TELEMETRY ====================
 
     @Override
@@ -1447,6 +1622,13 @@ public class Missions implements TelemetryProvider {
                 telemetry.put("Ramsete Rep", tuningRamseteRep + "/" + RAMSETE_REPS);
                 double currentHeading = Math.toDegrees(robot.driveTrain.getPose().heading.toDouble());
                 telemetry.put("Heading Error", String.format("%.1f°", currentHeading - tuningRamseteTargetHeading));
+            }
+            if (currentMission == Mission.TUNING_STRAIGHT_POS) {
+                telemetry.put("TuningStraightPos State", tuningStraightPosState);
+            }
+            if (currentMission == Mission.TUNING_SQUARE_POS) {
+                telemetry.put("TuningSquarePos State", tuningSquarePosState);
+                telemetry.put("Square Count", tuningSquarePosCount);
             }
         }
 
