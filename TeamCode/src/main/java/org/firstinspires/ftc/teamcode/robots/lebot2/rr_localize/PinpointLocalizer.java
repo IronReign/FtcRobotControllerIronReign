@@ -6,7 +6,7 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
-import org.firstinspires.ftc.teamcode.rrQuickStart.Localizer;
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.Localizer;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -28,8 +28,8 @@ import java.util.Objects;
 @Config
 public final class PinpointLocalizer implements Localizer {
     public static class Params {
-        public double parYTicks = 0.0; // y position of the parallel encoder (in tick units)
-        public double perpXTicks = 0.0; // x position of the perpendicular encoder (in tick units)
+        public double parYTicks = 1407; // y position of the parallel encoder (in tick units)
+        public double perpXTicks = 3844; // x position of the perpendicular encoder (in tick units)
     }
     // Encoder scales (ticks per millimetre) for reference.
     private static final float goBILDA_SWINGARM_POD = 13.26291192f;
@@ -53,12 +53,12 @@ public final class PinpointLocalizer implements Localizer {
         driver = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
         double mmPerTick = inPerTick * 25.4;
-        driver.setEncoderResolution(1 / mmPerTick, DistanceUnit.MM);
-        driver.setOffsets(2.56527/inPerTick, 7.282795/inPerTick, DistanceUnit.MM);
-
+        driver.setEncoderResolution(goBILDA_4_BAR_POD, DistanceUnit.MM);
+        //driver.setOffsets(mmPerTick * PARAMS.parYTicks, mmPerTick * PARAMS.perpXTicks, DistanceUnit.MM);
+        driver.setOffsets(-180.5, 131.9, DistanceUnit.MM);
         // TODO: reverse encoder directions if needed
         initialParDirection = GoBildaPinpointDriver.EncoderDirection.FORWARD;
-        initialPerpDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
+        initialPerpDirection = GoBildaPinpointDriver.EncoderDirection.FORWARD;
 
         driver.setEncoderDirections(initialParDirection, initialPerpDirection);
 
@@ -99,6 +99,9 @@ public final class PinpointLocalizer implements Localizer {
             cachedVelocity = new PoseVelocity2d(robotVelocity, driver.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS));
         }
         refreshedThisCycle = true;
+    }
+    public int getPar(){
+        return driver.getEncoderX();
     }
 
     /**
