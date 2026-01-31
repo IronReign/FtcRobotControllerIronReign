@@ -774,7 +774,7 @@ public class Missions implements TelemetryProvider {
                 } else {
                     trajectory = actions.driveTo(firePose);
                 }
-                driveTrain.runAction(trajectory);
+                driveTrain.runAction(trajectory, actions.getLastTargetPosition());
                 navToFireState = NavigateToFireState.NAVIGATING;
                 log("NAV_TRAJECTORY_BUILT", null, firePose);
                 break;
@@ -873,7 +873,7 @@ public class Missions implements TelemetryProvider {
 
                 // Build Turn-Spline-Turn trajectory using TankDriveActions
                 Action trajectory = actions.driveTo(gatePose);
-                driveTrain.runAction(trajectory);
+                driveTrain.runAction(trajectory, actions.getLastTargetPosition());
                 openSesameState = OpenSesameState.NAVIGATING;
                 break;
 
@@ -923,7 +923,7 @@ public class Missions implements TelemetryProvider {
 
                 // Build Turn-Spline-Turn trajectory to row start using TankDriveActions
                 Action trajectory = actions.driveTo(rowStart);
-                driveTrain.runAction(trajectory);
+                driveTrain.runAction(trajectory, actions.getLastTargetPosition());
                 ballGroupState = BallGroupState.NAVIGATING_TO_ROW_START;
                 break;
 
@@ -936,13 +936,10 @@ public class Missions implements TelemetryProvider {
                     robot.intake.loadAll();
                     robot.loader.requestBeltForIntake();
 
-                    // Build trajectory to drive through row
-                    Pose2d nowPose = robot.driveTrain.getPose();
+                    // Drive through row to row end using Turn-Spline-Turn
                     log("BALLGROUP_INTAKE_START", null, targetRowEnd);
-                    Action intakeTrajectory = driveTrain.actionBuilder(nowPose)
-                            .lineToY(targetRowEnd.position.y)
-                            .build();
-                    driveTrain.runAction(intakeTrajectory);
+                    Action intakeTrajectory = actions.driveTo(targetRowEnd);
+                    driveTrain.runAction(intakeTrajectory, actions.getLastTargetPosition());
                     ballGroupState = BallGroupState.INTAKING_THROUGH_ROW;
                 }
                 break;

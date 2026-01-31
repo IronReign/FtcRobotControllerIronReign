@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize;
 
+import androidx.annotation.NonNull;
+
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.AccelConstraint;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.InstantAction;
@@ -49,6 +52,10 @@ public class TankDriveActions {
 
     private final TankDrivePinpoint driveTrain;
 
+    // The final target position from the last driveTo/driveThrough/driveToReversed call.
+    // Use getLastTargetPosition() to retrieve this for visualization.
+    private Vector2d lastTargetPosition = null;
+
     /**
      * Create a TankDriveActions utility for the given drivetrain.
      *
@@ -56,6 +63,16 @@ public class TankDriveActions {
      */
     public TankDriveActions(TankDrivePinpoint driveTrain) {
         this.driveTrain = driveTrain;
+    }
+
+    /**
+     * Get the final target position from the last driveTo/driveThrough/driveToReversed call.
+     * This is the actual FieldMap waypoint position, not extracted from the RoadRunner action tree.
+     *
+     * @return The target position, or null if no action has been built yet
+     */
+    public Vector2d getLastTargetPosition() {
+        return lastTargetPosition;
     }
 
     // ==================== driveTo ====================
@@ -75,8 +92,12 @@ public class TankDriveActions {
      *
      * Executes:
      * 1. Turn to face target position (if needed)
-     * 2. Spline to target position with arrival tangent = target heading
-     * 3. Turn to final heading (if different from arrival tangent)
+     * 2. Spline to target position arriving straight (end tangent = bearing to target)
+     * 3. Turn to final heading (if different from arrival heading)
+     *
+     * The spline does NOT try to match the final heading -- it arrives "straight" at the
+     * target position. This avoids aggressive end-of-spline corrections that cause overshoot
+     * on tank drives. The explicit final turn handles heading accurately.
      *
      * @param target Target pose (position + heading)
      * @param velConstraint Velocity constraint override for spline segment, or null for default
@@ -84,46 +105,35 @@ public class TankDriveActions {
      * @return Action sequence: turnTo(bearing) -> spline -> turnTo(finalHeading)
      */
     public Action driveTo(Pose2d target, VelConstraint velConstraint, AccelConstraint accelConstraint) {
+        lastTargetPosition = target.position;
         Pose2d current = driveTrain.getPose();
 
         // Calculate bearing from current position to target position
         double bearingToTarget = bearingTo(current.position, target.position);
 
-        // Check if initial turn is needed
-        double bearingError = Math.toDegrees(Math.abs(normalizeAngle(bearingToTarget - current.heading.toDouble())));
-        boolean needsInitialTurn = bearingError > INITIAL_TURN_SKIP_TOLERANCE;
-
-        // Build intended start pose (current position, facing target)
+        // Best estimate of heading after initial turn (used for spline builder start pose)
         Pose2d intendedStartPose = new Pose2d(current.position, bearingToTarget);
 
-        // For forward driving, robot heading = path tangent at end of spline
-        // splineTo end tangent = target.heading, so robot ends at target.heading
-        double splineEndTangent = target.heading.toDouble();
-        double arrivalError = Math.toDegrees(Math.abs(normalizeAngle(target.heading.toDouble() - splineEndTangent)));
-        boolean needsFinalTurn = arrivalError > FINAL_TURN_SKIP_TOLERANCE;
+        // Spline arrives "straight" -- end tangent = bearing to target, not target.heading.
+        // This prevents aggressive end-of-spline heading corrections.
+        double splineEndTangent = bearingToTarget;
 
-        // Build the action sequence
-        Action initialTurn = needsInitialTurn
-                ? driveTrain.actionBuilder(current).turnTo(bearingToTarget).build()
-                : new InstantAction(() -> {});
-
+        // Build spline segment
         TrajectoryActionBuilder splineBuilder = driveTrain.actionBuilder(intendedStartPose);
         Action splineDrive;
         if (velConstraint != null || accelConstraint != null) {
             splineDrive = splineBuilder
-                    .splineTo(target.position, target.heading.toDouble(), velConstraint, accelConstraint)
+                    .splineTo(target.position, splineEndTangent, velConstraint, accelConstraint)
                     .build();
         } else {
             splineDrive = splineBuilder
-                    .splineTo(target.position, target.heading.toDouble())
+                    .splineTo(target.position, splineEndTangent)
                     .build();
         }
 
-        Action finalTurn = needsFinalTurn
-                ? driveTrain.actionBuilder(new Pose2d(target.position, target.heading))
-                        .turnTo(target.heading.toDouble())
-                        .build()
-                : new InstantAction(() -> {});
+        // Reactive turns -- built from actual pose at runtime, not pre-computed
+        Action initialTurn = new LazyTurnAction(bearingToTarget, INITIAL_TURN_SKIP_TOLERANCE);
+        Action finalTurn = new LazyTurnAction(target.heading.toDouble(), FINAL_TURN_SKIP_TOLERANCE);
 
         return new SequentialAction(initialTurn, splineDrive, finalTurn);
     }
@@ -145,8 +155,11 @@ public class TankDriveActions {
      *
      * Executes:
      * 1. Turn to face first waypoint (if needed)
-     * 2. Spline through all waypoints (tangent at each = bearing to next, last = its heading)
-     * 3. Turn to final heading (if different from last spline tangent)
+     * 2. Spline through all waypoints (tangent at each = bearing to next, last = bearing from prev)
+     * 3. Turn to final heading (if different from arrival heading)
+     *
+     * All spline tangents are set to the direction of travel between waypoints.
+     * The spline never tries to match a desired heading -- that's the final turn's job.
      *
      * @param velConstraint Velocity constraint override for spline segments, or null for default
      * @param accelConstraint Acceleration constraint override for spline segments, or null for default
@@ -154,6 +167,9 @@ public class TankDriveActions {
      * @return Action sequence: turnTo(first) -> spline(all) -> turnTo(lastHeading)
      */
     public Action driveThrough(VelConstraint velConstraint, AccelConstraint accelConstraint, Pose2d... waypoints) {
+        if (waypoints.length > 0) {
+            lastTargetPosition = waypoints[waypoints.length - 1].position;
+        }
         if (waypoints.length == 0) {
             return new InstantAction(() -> {});
         }
@@ -168,24 +184,21 @@ public class TankDriveActions {
         // Bearing to first waypoint
         double bearingToFirst = bearingTo(current.position, first.position);
 
-        // Check if initial turn is needed
-        double bearingError = Math.toDegrees(Math.abs(normalizeAngle(bearingToFirst - current.heading.toDouble())));
-        boolean needsInitialTurn = bearingError > INITIAL_TURN_SKIP_TOLERANCE;
-
-        // Intended start pose (current position, facing first waypoint)
+        // Best estimate of heading after initial turn (used for spline builder start pose)
         Pose2d intendedStartPose = new Pose2d(current.position, bearingToFirst);
 
-        // Build spline through all waypoints
+        // Build spline through all waypoints.
+        // All tangents = direction of travel (bearing to next, or bearing from prev for last).
         TrajectoryActionBuilder builder = driveTrain.actionBuilder(intendedStartPose);
         for (int i = 0; i < waypoints.length; i++) {
             Pose2d wp = waypoints[i];
             double tangent;
             if (i < waypoints.length - 1) {
-                // Tangent points toward next waypoint
                 tangent = bearingTo(wp.position, waypoints[i + 1].position);
             } else {
-                // Last waypoint: tangent = its heading
-                tangent = wp.heading.toDouble();
+                tangent = (i > 0)
+                        ? bearingTo(waypoints[i - 1].position, wp.position)
+                        : bearingToFirst;
             }
             if (velConstraint != null || accelConstraint != null) {
                 builder = builder.splineTo(wp.position, tangent, velConstraint, accelConstraint);
@@ -194,23 +207,11 @@ public class TankDriveActions {
             }
         }
 
-        // For forward driving, robot heading = path tangent = last waypoint heading
-        double splineEndTangent = last.heading.toDouble();
-        double arrivalError = Math.toDegrees(Math.abs(normalizeAngle(last.heading.toDouble() - splineEndTangent)));
-        boolean needsFinalTurn = arrivalError > FINAL_TURN_SKIP_TOLERANCE;
-
-        // Build the action sequence
-        Action initialTurn = needsInitialTurn
-                ? driveTrain.actionBuilder(current).turnTo(bearingToFirst).build()
-                : new InstantAction(() -> {});
-
         Action splineDrive = builder.build();
 
-        Action finalTurn = needsFinalTurn
-                ? driveTrain.actionBuilder(new Pose2d(last.position, last.heading))
-                        .turnTo(last.heading.toDouble())
-                        .build()
-                : new InstantAction(() -> {});
+        // Reactive turns -- built from actual pose at runtime, not pre-computed
+        Action initialTurn = new LazyTurnAction(bearingToFirst, INITIAL_TURN_SKIP_TOLERANCE);
+        Action finalTurn = new LazyTurnAction(last.heading.toDouble(), FINAL_TURN_SKIP_TOLERANCE);
 
         return new SequentialAction(initialTurn, splineDrive, finalTurn);
     }
@@ -231,10 +232,12 @@ public class TankDriveActions {
      * Drive to a target pose in reverse using Turn-Spline-Turn pattern with custom constraints.
      *
      * For reverse trajectories, the robot faces AWAY from the target and drives backwards.
+     * The spline arrives "straight" (end tangent = bearing to target) without trying to
+     * match the desired final heading. The explicit final turn handles heading.
      *
      * Executes:
      * 1. Turn to face away from target (if needed)
-     * 2. Reversed spline to target position
+     * 2. Reversed spline to target position (arriving straight)
      * 3. Turn to final heading (if needed)
      *
      * @param target Target pose (position + heading)
@@ -243,6 +246,7 @@ public class TankDriveActions {
      * @return Action sequence: turnTo(bearing+180) -> reversed spline -> turnTo(finalHeading)
      */
     public Action driveToReversed(Pose2d target, VelConstraint velConstraint, AccelConstraint accelConstraint) {
+        lastTargetPosition = target.position;
         Pose2d current = driveTrain.getPose();
 
         // Calculate bearing from current position to target position
@@ -251,31 +255,14 @@ public class TankDriveActions {
         // Face AWAY from target (will drive backwards)
         double bearingAwayFromTarget = normalizeAngle(bearingToTarget + Math.PI);
 
-        // Check if initial turn is needed
-        double bearingError = Math.toDegrees(Math.abs(normalizeAngle(bearingAwayFromTarget - current.heading.toDouble())));
-        boolean needsInitialTurn = bearingError > INITIAL_TURN_SKIP_TOLERANCE;
-
-        // Intended start pose (current position, facing away from target)
+        // Best estimate of heading after initial turn (used for spline builder start pose)
         Pose2d intendedStartPose = new Pose2d(current.position, bearingAwayFromTarget);
 
-        // For reversed spline: splineTo tangent is the PATH tangent direction.
+        // Spline arrives "straight" -- end path tangent = bearing to target.
         // With setReversed(true), robot heading = path tangent + PI.
-        // To end with robot heading = target.heading, path tangent must = target.heading - PI.
-        double endTangent = normalizeAngle(target.heading.toDouble() - Math.PI);
+        double endTangent = bearingToTarget;
 
-        // After reversed spline, robot heading = endTangent + PI = target.heading
-        double robotHeadingAtEnd = normalizeAngle(endTangent + Math.PI);
-        Pose2d intendedEndPose = new Pose2d(target.position, robotHeadingAtEnd);
-
-        // Check if final turn is needed (compare target heading to actual robot heading after spline)
-        double arrivalError = Math.toDegrees(Math.abs(normalizeAngle(target.heading.toDouble() - robotHeadingAtEnd)));
-        boolean needsFinalTurn = arrivalError > FINAL_TURN_SKIP_TOLERANCE;
-
-        // Build the action sequence
-        Action initialTurn = needsInitialTurn
-                ? driveTrain.actionBuilder(current).turnTo(bearingAwayFromTarget).build()
-                : new InstantAction(() -> {});
-
+        // Build reversed spline segment
         TrajectoryActionBuilder splineBuilder = driveTrain.actionBuilder(intendedStartPose)
                 .setReversed(true);
         Action splineDrive;
@@ -289,13 +276,59 @@ public class TankDriveActions {
                     .build();
         }
 
-        Action finalTurn = needsFinalTurn
-                ? driveTrain.actionBuilder(intendedEndPose)
-                        .turnTo(target.heading.toDouble())
-                        .build()
-                : new InstantAction(() -> {});
+        // Reactive turns -- built from actual pose at runtime, not pre-computed
+        Action initialTurn = new LazyTurnAction(bearingAwayFromTarget, INITIAL_TURN_SKIP_TOLERANCE);
+        Action finalTurn = new LazyTurnAction(target.heading.toDouble(), FINAL_TURN_SKIP_TOLERANCE);
 
         return new SequentialAction(initialTurn, splineDrive, finalTurn);
+    }
+
+    // ==================== LazyTurnAction ====================
+
+    /**
+     * An Action that defers building the RoadRunner turnTo until its first run() call.
+     *
+     * RoadRunner's turnTo pre-computes a motion profile at build() time, baking in the
+     * expected start heading. If the robot's actual heading differs (due to spline tracking
+     * error, overshoot, etc.), the pre-computed turn executes the wrong correction.
+     *
+     * LazyTurnAction solves this by waiting until it actually runs (after the previous action
+     * in a SequentialAction completes) to read the robot's real pose and build an accurate turn.
+     */
+    private class LazyTurnAction implements Action {
+        private final double targetHeadingRad;
+        private final double skipToleranceDeg;
+        private Action innerAction = null;
+        private boolean complete = false;
+
+        LazyTurnAction(double targetHeadingRad, double skipToleranceDeg) {
+            this.targetHeadingRad = targetHeadingRad;
+            this.skipToleranceDeg = skipToleranceDeg;
+        }
+
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            if (complete) return false;
+
+            if (innerAction == null) {
+                // First call -- build from actual current pose
+                Pose2d currentPose = driveTrain.getPose();
+                double headingError = Math.toDegrees(Math.abs(
+                        normalizeAngle(targetHeadingRad - currentPose.heading.toDouble())));
+
+                if (headingError <= skipToleranceDeg) {
+                    complete = true;
+                    return false;  // Within tolerance, skip
+                }
+
+                // Build real RoadRunner turnTo from actual pose
+                innerAction = driveTrain.actionBuilder(currentPose)
+                        .turnTo(targetHeadingRad)
+                        .build();
+            }
+
+            return innerAction.run(packet);
+        }
     }
 
     // ==================== HELPER METHODS ====================

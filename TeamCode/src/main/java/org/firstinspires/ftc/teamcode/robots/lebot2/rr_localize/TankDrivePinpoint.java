@@ -543,6 +543,21 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     }
 
     /**
+     * Run a RoadRunner action with an explicit target position for visualization.
+     * Use this instead of runAction(Action) when you know the target position
+     * (e.g., from TankDriveActions.getLastTargetPosition()) to avoid relying on
+     * extraction from the action tree.
+     *
+     * @param action The action to run
+     * @param targetPosition The target position for the green disk visualization
+     */
+    public void runAction(Action action, Vector2d targetPosition) {
+        currentAction = action;
+        behavior = Behavior.TRAJECTORY;
+        currentActionTarget = targetPosition;
+    }
+
+    /**
      * Extract the end position from a RoadRunner action for visualization.
      * Handles FollowTrajectoryAction, TurnAction, and SequentialAction (recursively).
      */
