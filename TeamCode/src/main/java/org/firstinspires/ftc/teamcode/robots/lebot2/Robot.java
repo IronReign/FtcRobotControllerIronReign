@@ -77,19 +77,38 @@ public class Robot implements TelemetryProvider {
     // Configuration
     public static boolean isRedAlliance = true;
 
+    // Starting position configuration
+    public enum StartingPosition {
+        UNKNOWN,      // Position unknown (teleop testing) - use MT1 for initial fix
+        AUDIENCE,     // Touching audience wall - can see goal AprilTag (long range)
+        GOAL,         // Touching goal wall - too close for vision, must back up first
+        CALIBRATION   // Field center, facing red goal - for MT1/MT2 comparison testing
+    }
+    private StartingPosition startingPosition = StartingPosition.UNKNOWN;
+    private boolean initialPositionSet = false;  // True once we've set or corrected initial pose
+
+    // Starting poses are now defined in FieldMap (START_AUDIENCE, START_GOAL)
+    // Use FieldMap.getPose(name, isRedAlliance) to get alliance-aware poses
+
+    // Calibration pose - field center, facing red goal
+    // In DECODE coordinates: X+ toward audience, so facing red goal ≈ 135°
+    // (Red goal is in the back-left quadrant from audience perspective)
+    // Used for MT1/MT2 comparison testing - provides known heading to seed MT2
+    public static final Pose2d CALIBRATION_POSE = new Pose2d(0, 0, 0);
+
     // Robot Dimensions (inches, relative to center of rotation)
     // Center of rotation = midpoint between drive wheels (on the axle line)
     // Since wheels are mounted near the back, FRONT_EXTENT > BACK_EXTENT
     public static double FRONT_EXTENT = 9.0;   // Center of rotation to front bumper
     public static double BACK_EXTENT = 5.0;    // Center of rotation to back bumper
     public static double SIDE_EXTENT = 7.0;    // Center to side (half robot width)
-    public static double TRACK_WIDTH = 11.5;   // Distance between wheel centers (should match TankDrivePinpoint.PARAMS.trackWidthTicks)
+    public static double TRACK_WIDTH = 14.0;   // NOT USED - actual track width is hardcoded in TankDrivePinpoint.java:187
 
-    // Camera offset from center of rotation (for Limelight configuration reference)
-    // These values should be entered in Limelight web interface, stored here for documentation
-    public static double CAMERA_FORWARD_OFFSET = 6.0;  // Positive = camera in front of center of rotation
-    public static double CAMERA_SIDE_OFFSET = 0.0;     // Positive = camera to the right
-    public static double CAMERA_HEIGHT = 12.0;         // Height above ground
+    // Camera offset from center of rotation (used to transform Limelight pose to robot center)
+    // Limelight reports camera position - we need to offset to get robot center of rotation
+    public static double CAMERA_FORWARD_OFFSET_M = 0.33;  // 33cm forward of center of rotation
+    public static double CAMERA_SIDE_OFFSET_M = 0.0;      // Lateral offset (positive = right)
+    public static double CAMERA_HEIGHT_M = 0.30;          // Height above ground (~12 inches)
 
     // Robot-level behaviors (multi-subsystem coordination only)
     // Note: Most behaviors are now handled by individual subsystems
@@ -191,6 +210,16 @@ public class Robot implements TelemetryProvider {
             hub.clearBulkCache();
         }
 
+        // Configure Vision MT1/MT2 mode based on whether initial position is known
+        // When position is unknown, force MT1 since Pinpoint heading may be wrong
+        vision.setForceMT1(!initialPositionSet);
+
+        // Feed current heading to Vision for MegaTag2 localization
+        // Only useful when initialPositionSet is true (otherwise MT1 is forced)
+        if (initialPositionSet) {
+            vision.updateRobotOrientation(driveTrain.getHeadingDegrees());
+        }
+
         // Read I2C sensors for all subsystems
         for (Subsystem subsystem : subsystems) {
             subsystem.readSensors();
@@ -237,13 +266,15 @@ public class Robot implements TelemetryProvider {
 
     // ==================== BEHAVIOR HANDLERS ====================
 
-    public static int targetHeadingDegrees = 45;
-
     private void handleTargetingBehavior() {
         // Two-phase targeting: IMU rough turn, then vision fine tune
         switch (targetingState) {
             case IDLE:
-                // Start with IMU turn toward target area
+                // Calculate bearing from current position to goal (alliance-aware)
+                Pose2d currentPose = driveTrain.getPose();
+                Pose2d goalPose = FieldMap.getPose(FieldMap.GOAL, isRedAlliance);
+                double targetHeadingRadians = FieldMap.bearingTo(currentPose, goalPose);
+                int targetHeadingDegrees = (int) Math.toDegrees(targetHeadingRadians);
                 driveTrain.turnToHeading(targetHeadingDegrees, 0.7);
                 targetingState = TargetingState.TURNING_IMU;
                 break;
@@ -263,13 +294,14 @@ public class Robot implements TelemetryProvider {
                 break;
 
             case TURNING_VISION:
-                // Keep updating target while turning
-                if (vision.hasTarget()) {
-                    driveTrain.turnToTarget(vision.getTx(), 0.5);
-                }
+                // Check completion FIRST, before updating target
+                // (turnToTarget resets turnState, so must check before calling it)
                 if (driveTrain.isTurnComplete()) {
                     targetingState = TargetingState.IDLE;
                     behavior = Behavior.MANUAL;
+                } else if (vision.hasTarget()) {
+                    // Keep updating target while turning
+                    driveTrain.turnToTarget(vision.getTx(), 0.5);
                 }
                 break;
         }
@@ -447,6 +479,130 @@ public class Robot implements TelemetryProvider {
         vision.setAlliance(isRed);
     }
 
+    // ==================== STARTING POSITION ====================
+
+    /**
+     * Set starting position and initialize drivetrain pose.
+     * Call during init_loop based on driver selection.
+     *
+     * @param position The starting position (AUDIENCE, GOAL, or UNKNOWN)
+     */
+    public void setStartingPosition(StartingPosition position) {
+        this.startingPosition = position;
+
+        if (position == StartingPosition.UNKNOWN) {
+            // Unknown position - don't set pose, wait for vision fix
+            initialPositionSet = false;
+        } else {
+            // Get the appropriate pose based on alliance and position
+            Pose2d pose = getStartingPose(position);
+            driveTrain.setPose(pose);
+            initialPositionSet = true;
+        }
+    }
+
+    /**
+     * Get the starting pose for a given position based on current alliance.
+     * Uses FieldMap waypoints which handle alliance reflection automatically.
+     */
+    public Pose2d getStartingPose(StartingPosition position) {
+        // Calibration pose is alliance-independent (field center)
+        if (position == StartingPosition.CALIBRATION) {
+            return CALIBRATION_POSE;
+        }
+
+        // Get pose from FieldMap - handles alliance reflection automatically
+        String waypointName = (position == StartingPosition.AUDIENCE)
+                ? FieldMap.START_AUDIENCE
+                : FieldMap.START_GOAL;
+        return FieldMap.getPose(waypointName, isRedAlliance);
+    }
+
+    /**
+     * Get current starting position selection.
+     */
+    public StartingPosition getStartingPosition() {
+        return startingPosition;
+    }
+
+    /**
+     * Check if initial position has been set (either via selection or vision fix).
+     * When false, Vision should prefer MT1 to get full pose including heading.
+     */
+    public boolean isInitialPositionSet() {
+        return initialPositionSet;
+    }
+
+    /**
+     * Mark initial position as set (called after successful vision correction when UNKNOWN).
+     */
+    public void markInitialPositionSet() {
+        initialPositionSet = true;
+    }
+
+    // ==================== VISION POSE CORRECTION ====================
+
+    /**
+     * Apply vision-based pose correction to Pinpoint localizer.
+     * Uses MegaTag2 when available (better single-tag accuracy with IMU fusion),
+     * falls back to MegaTag1 when heading is unknown (robot restart scenario).
+     *
+     * The Limelight reports camera position, so we transform to robot center
+     * using the camera offset constants.
+     *
+     * Call this when:
+     * - Driver triggers correction (Back button during teleop)
+     * - At autonomous checkpoints (after reaching launch position)
+     *
+     * @return true if correction was applied, false if no valid vision pose
+     */
+    public boolean applyVisionPoseCorrection() {
+        if (!vision.hasBotPose()) {
+            return false;
+        }
+
+        // Get vision pose - this is the CAMERA position (Limelight uses meters)
+        double camX = vision.getRobotX();
+        double camY = vision.getRobotY();
+        double headingRad = vision.getRobotHeading();
+
+        // Transform from camera position to robot center of rotation
+        // Camera is forward of center, so robot center is BEHIND camera
+        // robot_center = camera_pos - offset_in_robot_frame (rotated to field frame)
+        double cosH = Math.cos(headingRad);
+        double sinH = Math.sin(headingRad);
+
+        // Forward offset: subtract because robot center is behind camera
+        // Side offset: positive = camera right of center, so subtract for robot center
+        double robotX = camX - CAMERA_FORWARD_OFFSET_M * cosH + CAMERA_SIDE_OFFSET_M * sinH;
+        double robotY = camY - CAMERA_FORWARD_OFFSET_M * sinH - CAMERA_SIDE_OFFSET_M * cosH;
+
+        // Convert to inches for RoadRunner
+        double xInches = robotX * 39.3701;
+        double yInches = robotY * 39.3701;
+
+        Pose2d visionPose = new Pose2d(xInches, yInches, headingRad);
+
+        driveTrain.setPose(visionPose);
+
+        // Mark initial position as set (important for UNKNOWN starting position)
+        if (!initialPositionSet) {
+            initialPositionSet = true;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if vision pose correction is available.
+     * Use this to enable/disable the correction button or provide feedback.
+     *
+     * @return true if vision has a valid botpose that could be applied
+     */
+    public boolean canApplyVisionCorrection() {
+        return vision.hasBotPose();
+    }
+
     /**
      * Get current battery voltage.
      */
@@ -534,6 +690,7 @@ public class Robot implements TelemetryProvider {
 
         telemetry.put("Behavior", behavior);
         telemetry.put("Alliance", isRedAlliance ? "RED" : "BLUE");
+        telemetry.put("Start Pos", startingPosition + (initialPositionSet ? "" : " (unset)"));
         telemetry.put("Balls", loader.getBallCount() + "/" + Loader.MAX_BALLS);
 
         if (debug) {

@@ -69,6 +69,17 @@ public final class PinpointLocalizer implements Localizer {
 
     @Override
     public void setPose(Pose2d pose) {
+        // Get fresh reading from Pinpoint before computing transform
+        // This ensures the transform uses the current encoder values,
+        // preventing drift if there's been any motion or noise since last refresh
+        driver.update();
+        if (Objects.requireNonNull(driver.getDeviceStatus()) == GoBildaPinpointDriver.DeviceStatus.READY) {
+            txPinpointRobot = new Pose2d(
+                    driver.getPosX(DistanceUnit.INCH),
+                    driver.getPosY(DistanceUnit.INCH),
+                    driver.getHeading(UnnormalizedAngleUnit.RADIANS)
+            );
+        }
         txWorldPinpoint = pose.times(txPinpointRobot.inverse());
     }
 

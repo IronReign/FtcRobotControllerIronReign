@@ -248,12 +248,14 @@ public class Loader implements Subsystem {
     }
 
     /**
-     * Stop the belt.
+     * Release the belt even if we don't know who owns it.
      * @deprecated Use releaseBeltFromIntake() or releaseBeltFromLauncher() instead
      */
-    public void stopBelt() {
-        intakeRequestsBelt = false;
-        launcherClaimsBelt = false;
+    public void releaseBelt() {
+//        intakeRequestsBelt = false;
+//        launcherClaimsBelt = false;
+        releaseBeltFromIntake();
+        releaseBeltFromLauncher();
     }
 
     /**

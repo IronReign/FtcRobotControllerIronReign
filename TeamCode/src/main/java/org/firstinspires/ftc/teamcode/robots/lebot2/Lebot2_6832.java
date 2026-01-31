@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.lebot2;
 
+import android.graphics.Bitmap;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -8,6 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Vision;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.TankDrive;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.TelemetryProvider;
 
@@ -115,6 +118,7 @@ public class Lebot2_6832 extends OpMode {
 
         // Handle pre-match controls
         driverControls.initLoop();
+        driverControls.joystickDrive();
 
         // Update robot (for any calibration routines)
         robot.update(packet.fieldOverlay());
@@ -139,6 +143,9 @@ public class Lebot2_6832 extends OpMode {
 
         // Reset robot for match start
         robot.resetStates();
+
+        // Limelight dashboard stream is now handled dynamically in loop()
+        // based on Vision.ENABLE_DASHBOARD_STREAM config toggle
 
         // Initialize autonomous if starting in autonomous mode
         if (gameState.isAutonomous()) {
@@ -186,6 +193,26 @@ public class Lebot2_6832 extends OpMode {
 
         telemetry.update();
         dashboard.sendTelemetryPacket(packet);
+
+        // Handle Limelight dashboard streaming - can be toggled via dashboard config
+        if (Vision.ENABLE_DASHBOARD_STREAM) {
+            // Start stream if not already running
+            if (!robot.vision.isDashboardStreamActive()) {
+                robot.vision.startDashboardStream();
+            }
+            // Send new frames to dashboard
+            if (robot.vision.hasNewDashboardFrame()) {
+                Bitmap frame = robot.vision.getDashboardFrame();
+                if (frame != null) {
+                    dashboard.sendImage(frame);
+                }
+            }
+        } else {
+            // Stop stream if running but disabled
+            if (robot.vision.isDashboardStreamActive()) {
+                robot.vision.stopDashboardStream();
+            }
+        }
     }
 
     @Override
@@ -210,12 +237,15 @@ public class Lebot2_6832 extends OpMode {
 
     private void handleTeleOp(TelemetryPacket packet) {
         driverControls.joystickDrive();
+        // Handle button inputs
+        driverControls.handleButtons();
     }
 
     private void handleTest(TelemetryPacket packet) {
         // In test mode, enable debug telemetry and allow all controls
         debugTelemetryEnabled = true;
         driverControls.joystickDrive();
+        driverControls.handleTuningControls();
     }
 
     // ==================== TELEMETRY ====================
@@ -255,6 +285,7 @@ public class Lebot2_6832 extends OpMode {
             }
         } else {
             // In non-debug mode, still show key subsystem info
+            handleTelemetry(robot.driveTrain.getTelemetry(false), "Chassis", packet);
             handleTelemetry(robot.launcher.getTelemetry(false), "Launcher", packet);
             handleTelemetry(robot.loader.getTelemetry(false), "Loader", packet);
             handleTelemetry(robot.vision.getTelemetry(false), "Vision", packet);

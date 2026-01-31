@@ -1,236 +1,376 @@
 package org.firstinspires.ftc.teamcode.robots.lebot2;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.TelemetryProvider;
+import org.firstinspires.ftc.teamcode.util.CsvLogKeeper;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
- * Autonomous strategy coordinator for Lebot2.
+ * Autonomous strategy coordinator for Lebot2 - Goal Wall Start.
+ *
+ * STRATEGY OVERVIEW:
+ * 1. Back up from gate to fire position (while spinning up launcher)
+ * 2. Target goal with vision, launch preloaded balls
+ * 3. Collect ball row 1, return to fire, target, launch
+ * 4. Collect ball row 2, return to fire, target, launch
+ * 5. Navigate to gate, release scored balls (Open Sesame)
+ * 6. Collect ball row 3 (includes released balls), return to fire, launch
  *
  * ARCHITECTURE:
  * - Autonomous handles STRATEGIC decisions (which missions, in what order)
- * - Missions handles TACTICAL execution (how to execute each mission)
- * - This separation allows match-specific strategy adjustments based on:
- *   - Starting position (audience vs goal wall)
- *   - Partner capabilities (which ball groups they handle)
- *   - Opponent analysis
+ * - Missions handles TACTICAL execution (trajectories, timeouts, subsystem coordination)
+ * - Time-based branching skips phases if running low on time
  *
- * AUTONOMOUS PHASES:
- * 1. Launch preloaded balls (LaunchPreloads mission)
- * 2. Collect ball groups (BallGroup missions, order configurable)
- * 3. Release classifier (OpenSesame mission) after 9 balls scored
- * 4. Collect released ball cluster
- * 5. Repeat targeting/launching as time permits
+ * See docs/AutonomousStrategy.md for detailed documentation.
  */
 @Config(value = "Lebot2_Autonomous")
 public class Autonomous implements TelemetryProvider {
 
     private final Robot robot;
 
-    // Strategic configuration (set during match setup)
-    public static boolean START_AT_AUDIENCE_WALL = true;  // vs goal wall
-    public static int[] BALL_GROUP_ORDER = {0, 1, 2};     // Which groups, in order
-    public static boolean DO_OPEN_SESAME = true;          // Release classifier?
+    // ==================== CONFIGURATION ====================
 
-    // Autonomous sequence states
-    public enum AutonPhase {
-        INIT,                   // Initialize, configure missions
-        LAUNCH_PRELOADS,        // Fire any preloaded balls
-        WAITING_PRELOADS,       // Wait for launch to complete
-        BALL_GROUP,             // Collect from next ball group
-        WAITING_BALL_GROUP,     // Wait for ball group collection
-        TARGET_AND_LAUNCH,      // Target goal and launch collected balls
-        WAITING_LAUNCH,         // Wait for launch to complete
-        OPEN_SESAME,            // Navigate to classifier release
-        WAITING_OPEN_SESAME,    // Wait for release to complete
-        POST_RELEASE_COLLECT,   // Collect balls from release cluster
-        WAITING_POST_COLLECT,   // Wait for collection
-        END                     // Autonomous complete
+    // Strategic configuration (tunable via FTC Dashboard)
+    public static boolean START_AT_GOAL_WALL = true;  // true = goal wall, false = audience wall
+    public static boolean DO_OPEN_SESAME = true;      // Release gate after rows 1 & 2?
+    public static double MIN_TIME_FOR_ROW = 12.0;     // Minimum seconds needed for a ball row cycle
+
+    // Autonomous time limit
+    public static final double AUTON_DURATION_SECONDS = 30.0;
+
+    // ==================== STATE MACHINE ====================
+
+    public enum AutonState {
+        INIT,
+
+        // Phase 1: Backup to fire position
+        START_BACKUP_TO_FIRE,
+        WAITING_BACKUP,
+
+        // Phase 2-3: Target and launch
+        START_TARGETING,
+        WAITING_TARGET,
+        START_LAUNCH,
+        WAITING_LAUNCH,
+
+        // Ball collection cycle
+        START_BALL_ROW,
+        WAITING_BALL_ROW,
+        START_RETURN_TO_FIRE,
+        WAITING_RETURN,
+
+        // Gate release (after rows 1 & 2)
+        START_GATE,
+        WAITING_GATE,
+
+        // End
+        COMPLETE
     }
 
-    private AutonPhase phase = AutonPhase.INIT;
-    private AutonPhase previousPhase = AutonPhase.INIT;
+    private AutonState state = AutonState.INIT;
+    private AutonState previousState = AutonState.INIT;
 
-    // Progress tracking
-    private int ballGroupsCompleted = 0;
+    // ==================== PROGRESS TRACKING ====================
+
+    private ElapsedTime autonTimer = new ElapsedTime();
+    private int currentRow = 0;      // 0, 1, 2 for rows 1, 2, 3
     private int launchCycles = 0;
-    private boolean targetingStarted = false;  // For TARGET_AND_LAUNCH phase
+    private boolean gateReleased = false;
+
+    // ==================== LOGGING ====================
+
+    public static boolean LOGGING_ENABLED = true;  // Dashboard tunable
+    private CsvLogKeeper autonLog = null;
+    private long logStartTime = 0;
+
+    // ==================== CONSTRUCTOR ====================
 
     public Autonomous(Robot robot) {
         this.robot = robot;
     }
 
+    // ==================== INITIALIZATION ====================
+
     /**
-     * Initialize autonomous with current configuration.
-     * Call this during init phase before starting.
+     * Initialize autonomous. Call during init phase before starting.
      */
     public void init() {
-        // Configure missions based on starting position
-        if (START_AT_AUDIENCE_WALL) {
-            robot.missions.setBallGroupOrder(BALL_GROUP_ORDER);
-        } else {
-            // Reverse order for goal wall start
-            int[] reversed = {BALL_GROUP_ORDER[2], BALL_GROUP_ORDER[1], BALL_GROUP_ORDER[0]};
-            robot.missions.setBallGroupOrder(reversed);
-        }
+        // Reset mission progress
         robot.missions.resetGroupProgress();
-
-        ballGroupsCompleted = 0;
-        launchCycles = 0;
-        targetingStarted = false;
-        phase = AutonPhase.INIT;
-    }
-
-    /**
-     * Execute autonomous - call this every loop cycle.
-     */
-    public void execute() {
-        // Clear any completed mission state before checking
         robot.missions.clearState();
 
-        switch (phase) {
+        // Reset state
+        state = AutonState.INIT;
+        previousState = AutonState.INIT;
+        currentRow = 0;
+        launchCycles = 0;
+        gateReleased = false;
+
+        // Set robot starting pose based on configured start position
+        Pose2d startPose;
+        if (START_AT_GOAL_WALL) {
+            startPose = FieldMap.getPose(FieldMap.START_GOAL, Robot.isRedAlliance);
+        } else {
+            startPose = FieldMap.getPose(FieldMap.START_AUDIENCE, Robot.isRedAlliance);
+        }
+        robot.driveTrain.setPose(startPose);
+
+        // Timer will be reset when execute() first runs
+        autonTimer.reset();
+
+        // Initialize logging with timestamped filename
+        if (LOGGING_ENABLED) {
+            String timestamp = new SimpleDateFormat("yyMMddHHmm", Locale.US).format(new Date());
+            autonLog = new CsvLogKeeper("auton_" + timestamp, 12,
+                "elapsedMs,state,prevState,missionState,missionSubState,row,launches,timeRemain,poseX,poseY,heading,event");
+            logStartTime = System.currentTimeMillis();
+            log("INIT", null);
+
+            // Initialize mission logging with same timestamp
+            robot.missions.initLogging();
+        }
+    }
+
+    // ==================== MAIN EXECUTE ====================
+
+    /**
+     * Execute autonomous - call every loop cycle.
+     */
+    public void execute() {
+        // Time remaining for branching decisions
+        double timeRemaining = AUTON_DURATION_SECONDS - autonTimer.seconds();
+
+        switch (state) {
             case INIT:
-                // Start by launching any preloaded balls
-                setPhase(AutonPhase.LAUNCH_PRELOADS);
+                autonTimer.reset();
+                setState(AutonState.START_BACKUP_TO_FIRE);
                 break;
 
-            case LAUNCH_PRELOADS:
-                // Start the launch preloads mission
-                if (!robot.missions.isActive()) {
-                    if (!robot.loader.isEmpty()) {
-                        robot.missions.startLaunchPreloads();
-                        setPhase(AutonPhase.WAITING_PRELOADS);
-                    } else {
-                        // No preloads, skip to ball group collection
-                        setPhase(AutonPhase.BALL_GROUP);
-                    }
-                }
+            // ========== PHASE 1: Backup to Fire ==========
+            case START_BACKUP_TO_FIRE:
+                // Back up from gate to FIRE_1, spins up launcher during navigation
+                robot.missions.startNavigateToFire(1, true);
+                setState(AutonState.WAITING_BACKUP);
                 break;
 
-            case WAITING_PRELOADS:
+            case WAITING_BACKUP:
                 if (robot.missions.isComplete()) {
-                    launchCycles++;
-                    setPhase(AutonPhase.BALL_GROUP);
+                    log("BACKUP_COMPLETE", null);
+                    setState(AutonState.START_TARGETING);
                 } else if (robot.missions.isFailed()) {
-                    // Mission failed, try to continue
-                    setPhase(AutonPhase.BALL_GROUP);
+                    // Timeout - try to launch anyway from current position
+                    log("BACKUP_FAILED", "timeout");
+                    setState(AutonState.START_LAUNCH);
                 }
                 break;
 
-            case BALL_GROUP:
-                // Get next ball group to collect
-                int nextGroup = robot.missions.getNextBallGroup();
-                if (nextGroup >= 0) {
-                    robot.missions.startBallGroup(nextGroup);
-                    setPhase(AutonPhase.WAITING_BALL_GROUP);
-                } else {
-                    // All groups collected, check if we should release classifier
-                    if (DO_OPEN_SESAME && ballGroupsCompleted >= 3) {
-                        setPhase(AutonPhase.OPEN_SESAME);
-                    } else {
-                        setPhase(AutonPhase.END);
-                    }
+            // ========== PHASE 2-3: Target and Launch ==========
+            case START_TARGETING:
+                robot.setBehavior(Robot.Behavior.TARGETING);
+                setState(AutonState.WAITING_TARGET);
+                break;
+
+            case WAITING_TARGET:
+                if (robot.getBehavior() == Robot.Behavior.MANUAL) {
+                    // Targeting complete, apply vision correction
+                    log("TARGETING_COMPLETE", null);
+                    robot.applyVisionPoseCorrection();
+                    setState(AutonState.START_LAUNCH);
                 }
                 break;
 
-            case WAITING_BALL_GROUP:
-                if (robot.missions.isComplete()) {
-                    robot.missions.advanceToNextGroup();
-                    ballGroupsCompleted++;
-                    // After collecting, launch the balls
-                    setPhase(AutonPhase.TARGET_AND_LAUNCH);
-                } else if (robot.missions.isFailed()) {
-                    // Skip this group, try next
-                    robot.missions.advanceToNextGroup();
-                    setPhase(AutonPhase.BALL_GROUP);
-                }
-                break;
-
-            case TARGET_AND_LAUNCH:
-                // Target and launch collected balls
+            case START_LAUNCH:
                 if (!robot.loader.isEmpty()) {
-                    if (!targetingStarted) {
-                        // Start targeting
-                        robot.setBehavior(Robot.Behavior.TARGETING);
-                        targetingStarted = true;
-                    } else if (robot.getBehavior() == Robot.Behavior.MANUAL) {
-                        // Targeting complete (returned to MANUAL), now launch
-                        targetingStarted = false;
-                        robot.missions.startLaunchPreloads();
-                        setPhase(AutonPhase.WAITING_LAUNCH);
-                    }
-                    // else: still targeting, wait
+                    log("LAUNCH_START", "balls=" + robot.loader.getBallCount());
+                    robot.missions.startLaunchPreloads();
+                    setState(AutonState.WAITING_LAUNCH);
                 } else {
-                    // Nothing to launch, continue to next group
-                    targetingStarted = false;
-                    setPhase(AutonPhase.BALL_GROUP);
+                    // Nothing to launch, proceed to ball collection
+                    log("LAUNCH_SKIP", "loader_empty");
+                    setState(AutonState.START_BALL_ROW);
                 }
                 break;
 
             case WAITING_LAUNCH:
                 if (robot.missions.isComplete()) {
+                    log("LAUNCH_COMPLETE", null);
                     launchCycles++;
-                    // Continue to next ball group
-                    setPhase(AutonPhase.BALL_GROUP);
+                    robot.applyVisionPoseCorrection();
+                    setState(AutonState.START_BALL_ROW);
                 } else if (robot.missions.isFailed()) {
-                    setPhase(AutonPhase.BALL_GROUP);
+                    log("LAUNCH_FAILED", "timeout");
+                    launchCycles++;
+                    robot.applyVisionPoseCorrection();
+                    setState(AutonState.START_BALL_ROW);
                 }
                 break;
 
-            case OPEN_SESAME:
-                // Navigate to classifier and release balls
-                robot.missions.startOpenSesame();
-                setPhase(AutonPhase.WAITING_OPEN_SESAME);
+            // ========== BALL ROW COLLECTION CYCLE ==========
+            case START_BALL_ROW:
+                // Check if all rows done
+                if (currentRow >= 3) {
+                    log("ALL_ROWS_DONE", null);
+                    setState(AutonState.COMPLETE);
+                    break;
+                }
+
+                // After rows 1 & 2, do gate release before row 3
+                if (currentRow == 2 && DO_OPEN_SESAME && !gateReleased) {
+                    log("GATE_BEFORE_ROW3", null);
+                    setState(AutonState.START_GATE);
+                    break;
+                }
+
+                // Check if enough time for another row cycle
+                if (timeRemaining < MIN_TIME_FOR_ROW) {
+                    log("TIME_SKIP_ROW", "remaining=" + String.format("%.1f", timeRemaining));
+                    setState(AutonState.COMPLETE);
+                    break;
+                }
+
+                // Start collecting from current row
+                log("BALL_ROW_START", "row=" + currentRow);
+                robot.missions.startBallGroup(currentRow);
+                setState(AutonState.WAITING_BALL_ROW);
                 break;
 
-            case WAITING_OPEN_SESAME:
+            case WAITING_BALL_ROW:
                 if (robot.missions.isComplete()) {
-                    // After release, collect from cluster
-                    setPhase(AutonPhase.POST_RELEASE_COLLECT);
+                    log("BALL_ROW_COMPLETE", "row=" + currentRow);
+                    currentRow++;
+                    setState(AutonState.START_RETURN_TO_FIRE);
                 } else if (robot.missions.isFailed()) {
-                    setPhase(AutonPhase.END);
+                    log("BALL_ROW_FAILED", "row=" + currentRow);
+                    currentRow++;
+                    setState(AutonState.START_RETURN_TO_FIRE);
                 }
                 break;
 
-            case POST_RELEASE_COLLECT:
-                // TODO: Implement ball cluster collection (vision-based or statistical)
-                // For now, just end
-                setPhase(AutonPhase.END);
+            case START_RETURN_TO_FIRE:
+                // Navigate back to fire position (auto-direction)
+                robot.missions.startNavigateToFire(1);
+                setState(AutonState.WAITING_RETURN);
                 break;
 
-            case WAITING_POST_COLLECT:
-                if (robot.missions.isComplete() || robot.missions.isFailed()) {
-                    // Final launch if we collected anything
-                    if (!robot.loader.isEmpty()) {
-                        robot.missions.startLaunchPreloads();
-                        // Then end
-                    }
-                    setPhase(AutonPhase.END);
+            case WAITING_RETURN:
+                if (robot.missions.isComplete()) {
+                    log("RETURN_COMPLETE", null);
+                    setState(AutonState.START_TARGETING);
+                } else if (robot.missions.isFailed()) {
+                    log("RETURN_FAILED", "timeout");
+                    setState(AutonState.START_TARGETING);
                 }
                 break;
 
-            case END:
-                // Autonomous complete - wait for teleop
+            // ========== GATE RELEASE ==========
+            case START_GATE:
+                robot.missions.startOpenSesame();
+                setState(AutonState.WAITING_GATE);
+                break;
+
+            case WAITING_GATE:
+                if (robot.missions.isComplete()) {
+                    log("GATE_COMPLETE", null);
+                    gateReleased = true;
+                    setState(AutonState.START_BALL_ROW);
+                } else if (robot.missions.isFailed()) {
+                    log("GATE_FAILED", "timeout");
+                    gateReleased = true;
+                    setState(AutonState.START_BALL_ROW);
+                }
+                break;
+
+            // ========== COMPLETE ==========
+            case COMPLETE:
+                // Autonomous done - robot will transition to teleop
+                // Close logs on first entry to COMPLETE
+                if (previousState != AutonState.COMPLETE) {
+                    closeLog();
+                }
                 break;
         }
     }
 
-    private void setPhase(AutonPhase newPhase) {
-        if (phase != newPhase) {
-            previousPhase = phase;
-            phase = newPhase;
+    // ==================== HELPERS ====================
+
+    private void setState(AutonState newState) {
+        if (state != newState) {
+            previousState = state;
+            state = newState;
+            log("STATE_CHANGE", previousState + "->" + newState);
         }
     }
 
     /**
-     * Get current autonomous phase.
+     * Log an event to the CSV file.
      */
-    public AutonPhase getPhase() {
-        return phase;
+    private void log(String event, String detail) {
+        if (!LOGGING_ENABLED || autonLog == null) {
+            return;
+        }
+
+        Pose2d pose = robot.driveTrain.getPose();
+        String missionSubState = getMissionSubState();
+
+        ArrayList<Object> row = new ArrayList<>();
+        row.add(System.currentTimeMillis() - logStartTime);
+        row.add(state.name());
+        row.add(previousState.name());
+        row.add(robot.missions.getMissionState().name());
+        row.add(missionSubState);
+        row.add(currentRow);
+        row.add(launchCycles);
+        row.add(String.format("%.1f", getTimeRemaining()));
+        row.add(String.format("%.1f", pose.position.x));
+        row.add(String.format("%.1f", pose.position.y));
+        row.add(String.format("%.1f", Math.toDegrees(pose.heading.toDouble())));
+        row.add(event + (detail != null ? ":" + detail : ""));
+        autonLog.UpdateLog(row);
     }
+
+    /**
+     * Get the current mission's sub-state for logging.
+     */
+    private String getMissionSubState() {
+        return robot.missions.getSubStateForLogging();
+    }
+
+    /**
+     * Close the log files. Call when autonomous ends.
+     */
+    public void closeLog() {
+        if (autonLog != null) {
+            log("AUTON_END", null);
+            autonLog.CloseLog();
+            autonLog = null;
+        }
+        robot.missions.closeLogging();
+    }
+
+    /**
+     * Get current autonomous state.
+     */
+    public AutonState getState() {
+        return state;
+    }
+
+    /**
+     * Get time remaining in autonomous period.
+     */
+    public double getTimeRemaining() {
+        return Math.max(0, AUTON_DURATION_SECONDS - autonTimer.seconds());
+    }
+
+    // ==================== TELEMETRY ====================
 
     @Override
     public String getTelemetryName() {
@@ -241,15 +381,17 @@ public class Autonomous implements TelemetryProvider {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
-        telemetry.put("Phase", phase);
-        telemetry.put("Ball Groups Done", ballGroupsCompleted);
+        telemetry.put("State", state);
+        telemetry.put("Time Remaining", String.format("%.1fs", getTimeRemaining()));
+        telemetry.put("Current Row", currentRow + 1);  // Display as 1-indexed
         telemetry.put("Launch Cycles", launchCycles);
 
         if (debug) {
-            telemetry.put("Previous Phase", previousPhase);
+            telemetry.put("Previous State", previousState);
+            telemetry.put("Gate Released", gateReleased);
             telemetry.put("Mission Active", robot.missions.isActive());
             telemetry.put("Mission State", robot.missions.getMissionState());
-            telemetry.put("Start Position", START_AT_AUDIENCE_WALL ? "Audience" : "Goal");
+            telemetry.put("Start Position", START_AT_GOAL_WALL ? "Goal Wall" : "Audience");
         }
 
         return telemetry;

@@ -67,14 +67,17 @@ public class DriverControls implements TelemetryProvider {
         updateStickyGamepads();
         handleGameStateSwitch();
         handleAllianceSelection();
+        handleStartingPositionSelection();
+        joystickDrive();
     }
 
     /**
      * Handle main driving controls during teleop.
      */
-    public void joystickDrive() {
-        boolean separate = false;
-        if(separate){
+    void joystickDrive() {
+        boolean tank = false; // set true to drive motors independently for true tank drive
+
+        if(tank){
             double left= gamepad1.left_stick_y;
             double right = gamepad1.right_stick_y;
             robot.driveTrain.drive(left,right,0);
@@ -83,6 +86,11 @@ public class DriverControls implements TelemetryProvider {
             // Get drive inputs
             double throttle = -gamepad1.left_stick_y;
             double turn = gamepad1.right_stick_x;
+
+            // Abort any running mission if driver provides significant input
+            if (robot.missions.isActive() && (Math.abs(throttle) > 0.1 || Math.abs(turn) > 0.1)) {
+                robot.missions.abort();
+            }
 
             // Apply dampening
             double dampener = slowMode ? SLOW_MODE_DAMPENER : DRIVE_DAMPENER;
@@ -93,17 +101,10 @@ public class DriverControls implements TelemetryProvider {
             // any running RR trajectory or PID turn
             robot.driveTrain.drive(throttle, 0, turn);
 
-            // Handle button inputs
-            handleButtons();
         }
     }
-//    public void driveWheelsSeperate(){
-//        double left=gamepad1.left_stick_y;
-//        double right = gamepad1.right_stick_y;
-//        robot.driveTrain.setMotorPowers();
-//    }
 
-    private void handleButtons() {
+    public void handleButtons() {
         // A button: Toggle intake LOAD_ALL behavior
         // Intake runs until loader is full, then auto-stops
         if (stickyGamepad1.a) {
@@ -121,7 +122,7 @@ public class DriverControls implements TelemetryProvider {
             robot.setBehavior(Robot.Behavior.MANUAL);
             robot.launcher.setBehavior(Launcher.Behavior.IDLE);
             robot.intake.off();
-            robot.loader.stopBelt();
+            robot.loader.releaseBelt();
         }
 
         if(stickyGamepad1.x){
@@ -189,6 +190,16 @@ public class DriverControls implements TelemetryProvider {
             robot.loader.resetBallCount();
         }
 
+        // Back button: Apply vision pose correction to Pinpoint
+        // Only works when vision has a valid botpose (facing AprilTag)
+        if (stickyGamepad1.back && robot.canApplyVisionCorrection()) {
+            boolean applied = robot.applyVisionPoseCorrection();
+            if (applied) {
+                // Brief rumble feedback to confirm correction was applied
+                gamepad1.rumble(100);
+            }
+        }
+
         //Start button: change tilt index which correspond to servo tilt of limelight
         if(stickyGamepad1.start){
             if(tiltIndex!=3){
@@ -206,6 +217,51 @@ public class DriverControls implements TelemetryProvider {
             robot.vision.setTiltUpMin();
         }else{
             robot.vision.setTiltUpMax();
+        }
+
+    }
+
+    /**
+     * Handle tuning mission controls in TEST mode.
+     * Uses gamepad1 - safe because handleButtons() is NOT called in TEST mode.
+     * Called from Lebot2_6832.handleTest().
+     *
+     * Gamepad1 buttons (TEST mode only):
+     *   A = Start Rotation Test (90° turns CW/CCW)
+     *   B = Start Square Test (drive 24", turn 90°, repeat 4x)
+     *   X = Start Straight Line Test (48" forward and back)
+     *   Y = Start Turn Accuracy Test (45°, 90°, 180° turns)
+     *   RB = Start Ramsete Test (trajectory with heading disturbance)
+     *   Back = Abort current tuning mission
+     */
+    public void handleTuningControls() {
+        // Only allow starting new missions if none running
+        if (!robot.missions.isActive()) {
+            if (stickyGamepad1.a) {
+                robot.missions.initLogging();  // Ensure logging is on
+                robot.missions.startTuningRotation();
+            }
+            if (stickyGamepad1.b) {
+                robot.missions.initLogging();
+                robot.missions.startTuningSquare();
+            }
+            if (stickyGamepad1.x) {
+                robot.missions.initLogging();
+                robot.missions.startTuningStraight();
+            }
+            if (stickyGamepad1.y) {
+                robot.missions.initLogging();
+                robot.missions.startTuningTurn();
+            }
+            if (stickyGamepad1.right_bumper) {
+                robot.missions.initLogging();
+                robot.missions.startTuningRamsete();
+            }
+        }
+
+        // Back button aborts current mission
+        if (stickyGamepad1.back && robot.missions.isActive()) {
+            robot.missions.abort();
         }
     }
 
@@ -238,6 +294,40 @@ public class DriverControls implements TelemetryProvider {
         if (stickyGamepad1.b) {
             Robot.isRedAlliance = true;
             robot.setAlliance(true);
+        }
+    }
+
+    /**
+     * Handle starting position selection during init.
+     *
+     * Starting positions determine initial Pinpoint pose:
+     * - AUDIENCE: Touching audience wall, can see goal AprilTag (long range)
+     * - GOAL: Touching goal wall, too close for vision initially
+     * - UNKNOWN: For teleop testing, position unknown until first vision fix
+     * - CALIBRATION: Field center, facing red goal - for MT1/MT2 comparison
+     *
+     * Blue positions are reflections of Red positions across field X axis.
+     */
+    private void handleStartingPositionSelection() {
+        // A button: Audience wall position
+        if (stickyGamepad1.a) {
+            robot.setStartingPosition(Robot.StartingPosition.AUDIENCE);
+        }
+
+        // Y button: Goal wall position
+        if (stickyGamepad1.y) {
+            robot.setStartingPosition(Robot.StartingPosition.GOAL);
+        }
+
+        // Back button: Unknown position (teleop and relocalization testing)
+        if (stickyGamepad1.back) {
+            robot.setStartingPosition(Robot.StartingPosition.UNKNOWN);
+        }
+
+        // Guide button: Calibration position (field center, facing red goal)
+        // Used for MT1/MT2 pose comparison testing
+        if (stickyGamepad1.guide) {
+            robot.setStartingPosition(Robot.StartingPosition.CALIBRATION);
         }
     }
 
