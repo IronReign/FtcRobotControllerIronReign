@@ -775,7 +775,7 @@ If the robot is already facing close to the correct direction, the initial/final
 ### Important Notes
 
 - **Build just-in-time:** `driveTo()` reads the current pose when called. Build the action right before you run it, not in advance. See [Define vs Evaluate](#define-vs-evaluate).
-- **Reactive turns:** Both the initial and final turns are **built at runtime** (not pre-computed at build time). Each turn reads the robot's actual pose when it starts executing, so it corrects from the real heading -- not the expected heading. This means spline tracking errors don't corrupt the final turn correction.
+- **Fully reactive:** All three segments (initial turn, spline, final turn) are **built at runtime** from the robot's actual pose -- not pre-computed at `driveTo()` call time. This prevents positional drift during the initial turn from corrupting the spline start position, and prevents spline tracking errors from corrupting the final turn correction.
 - **Constraints only apply to the spline segment.** Turns always use the drivetrain's default turn behavior.
 - **driveToReversed tangent math:** The spline end tangent is `bearingToTarget` (not `targetHeading`). With `setReversed(true)`, the robot heading = path tangent + PI. The wrapper handles this for you.
 - **Missions use this internally.** NavigateToFire, BallGroup, and OpenSesame all use TankDriveActions. You don't need to build raw trajectories for mission code.

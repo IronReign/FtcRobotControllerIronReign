@@ -107,32 +107,11 @@ public class TankDriveActions {
     public Action driveTo(Pose2d target, VelConstraint velConstraint, AccelConstraint accelConstraint) {
         lastTargetPosition = target.position;
         Pose2d current = driveTrain.getPose();
-
-        // Calculate bearing from current position to target position
         double bearingToTarget = bearingTo(current.position, target.position);
 
-        // Best estimate of heading after initial turn (used for spline builder start pose)
-        Pose2d intendedStartPose = new Pose2d(current.position, bearingToTarget);
-
-        // Spline arrives "straight" -- end tangent = bearing to target, not target.heading.
-        // This prevents aggressive end-of-spline heading corrections.
-        double splineEndTangent = bearingToTarget;
-
-        // Build spline segment
-        TrajectoryActionBuilder splineBuilder = driveTrain.actionBuilder(intendedStartPose);
-        Action splineDrive;
-        if (velConstraint != null || accelConstraint != null) {
-            splineDrive = splineBuilder
-                    .splineTo(target.position, splineEndTangent, velConstraint, accelConstraint)
-                    .build();
-        } else {
-            splineDrive = splineBuilder
-                    .splineTo(target.position, splineEndTangent)
-                    .build();
-        }
-
-        // Reactive turns -- built from actual pose at runtime, not pre-computed
+        // All three segments are lazy -- built from actual pose at runtime
         Action initialTurn = new LazyTurnAction(bearingToTarget, INITIAL_TURN_SKIP_TOLERANCE);
+        Action splineDrive = new LazySplineAction(target.position, false, velConstraint, accelConstraint);
         Action finalTurn = new LazyTurnAction(target.heading.toDouble(), FINAL_TURN_SKIP_TOLERANCE);
 
         return new SequentialAction(initialTurn, splineDrive, finalTurn);
@@ -178,39 +157,18 @@ public class TankDriveActions {
         }
 
         Pose2d current = driveTrain.getPose();
-        Pose2d first = waypoints[0];
         Pose2d last = waypoints[waypoints.length - 1];
+        double bearingToFirst = bearingTo(current.position, waypoints[0].position);
 
-        // Bearing to first waypoint
-        double bearingToFirst = bearingTo(current.position, first.position);
-
-        // Best estimate of heading after initial turn (used for spline builder start pose)
-        Pose2d intendedStartPose = new Pose2d(current.position, bearingToFirst);
-
-        // Build spline through all waypoints.
-        // All tangents = direction of travel (bearing to next, or bearing from prev for last).
-        TrajectoryActionBuilder builder = driveTrain.actionBuilder(intendedStartPose);
+        // Extract positions for lazy spline builder
+        Vector2d[] positions = new Vector2d[waypoints.length];
         for (int i = 0; i < waypoints.length; i++) {
-            Pose2d wp = waypoints[i];
-            double tangent;
-            if (i < waypoints.length - 1) {
-                tangent = bearingTo(wp.position, waypoints[i + 1].position);
-            } else {
-                tangent = (i > 0)
-                        ? bearingTo(waypoints[i - 1].position, wp.position)
-                        : bearingToFirst;
-            }
-            if (velConstraint != null || accelConstraint != null) {
-                builder = builder.splineTo(wp.position, tangent, velConstraint, accelConstraint);
-            } else {
-                builder = builder.splineTo(wp.position, tangent);
-            }
+            positions[i] = waypoints[i].position;
         }
 
-        Action splineDrive = builder.build();
-
-        // Reactive turns -- built from actual pose at runtime, not pre-computed
+        // All three segments are lazy -- built from actual pose at runtime
         Action initialTurn = new LazyTurnAction(bearingToFirst, INITIAL_TURN_SKIP_TOLERANCE);
+        Action splineDrive = new LazySplineAction(positions, velConstraint, accelConstraint);
         Action finalTurn = new LazyTurnAction(last.heading.toDouble(), FINAL_TURN_SKIP_TOLERANCE);
 
         return new SequentialAction(initialTurn, splineDrive, finalTurn);
@@ -248,36 +206,12 @@ public class TankDriveActions {
     public Action driveToReversed(Pose2d target, VelConstraint velConstraint, AccelConstraint accelConstraint) {
         lastTargetPosition = target.position;
         Pose2d current = driveTrain.getPose();
-
-        // Calculate bearing from current position to target position
         double bearingToTarget = bearingTo(current.position, target.position);
-
-        // Face AWAY from target (will drive backwards)
         double bearingAwayFromTarget = normalizeAngle(bearingToTarget + Math.PI);
 
-        // Best estimate of heading after initial turn (used for spline builder start pose)
-        Pose2d intendedStartPose = new Pose2d(current.position, bearingAwayFromTarget);
-
-        // Spline arrives "straight" -- end path tangent = bearing to target.
-        // With setReversed(true), robot heading = path tangent + PI.
-        double endTangent = bearingToTarget;
-
-        // Build reversed spline segment
-        TrajectoryActionBuilder splineBuilder = driveTrain.actionBuilder(intendedStartPose)
-                .setReversed(true);
-        Action splineDrive;
-        if (velConstraint != null || accelConstraint != null) {
-            splineDrive = splineBuilder
-                    .splineTo(target.position, endTangent, velConstraint, accelConstraint)
-                    .build();
-        } else {
-            splineDrive = splineBuilder
-                    .splineTo(target.position, endTangent)
-                    .build();
-        }
-
-        // Reactive turns -- built from actual pose at runtime, not pre-computed
+        // All three segments are lazy -- built from actual pose at runtime
         Action initialTurn = new LazyTurnAction(bearingAwayFromTarget, INITIAL_TURN_SKIP_TOLERANCE);
+        Action splineDrive = new LazySplineAction(target.position, true, velConstraint, accelConstraint);
         Action finalTurn = new LazyTurnAction(target.heading.toDouble(), FINAL_TURN_SKIP_TOLERANCE);
 
         return new SequentialAction(initialTurn, splineDrive, finalTurn);
@@ -328,6 +262,102 @@ public class TankDriveActions {
             }
 
             return innerAction.run(packet);
+        }
+    }
+
+    // ==================== LazySplineAction ====================
+
+    /**
+     * An Action that defers building the RoadRunner spline until its first run() call.
+     *
+     * The spline start position is baked in at build() time. If the robot drifts during the
+     * preceding turn (especially large turns like 90°+), the pre-built spline starts from the
+     * wrong position, causing Ramsete to fight a position error that compounds into overshoot.
+     *
+     * LazySplineAction waits until it actually runs (after the initial turn completes) to read
+     * the robot's real pose and build a spline from the correct start position.
+     *
+     * Supports single-target (driveTo/driveToReversed) and multi-target (driveThrough) modes.
+     */
+    private class LazySplineAction implements Action {
+        private final Vector2d[] targets;
+        private final boolean reversed;
+        private final VelConstraint velConstraint;
+        private final AccelConstraint accelConstraint;
+        private Action innerAction = null;
+
+        /** Single target (forward or reversed). */
+        LazySplineAction(Vector2d target, boolean reversed,
+                         VelConstraint velConstraint, AccelConstraint accelConstraint) {
+            this.targets = new Vector2d[]{target};
+            this.reversed = reversed;
+            this.velConstraint = velConstraint;
+            this.accelConstraint = accelConstraint;
+        }
+
+        /** Multiple waypoints (forward only). */
+        LazySplineAction(Vector2d[] targets,
+                         VelConstraint velConstraint, AccelConstraint accelConstraint) {
+            this.targets = targets;
+            this.reversed = false;
+            this.velConstraint = velConstraint;
+            this.accelConstraint = accelConstraint;
+        }
+
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            if (innerAction == null) {
+                // First call -- build from actual current pose (post-turn)
+                Pose2d currentPose = driveTrain.getPose();
+
+                if (targets.length == 1) {
+                    innerAction = buildSingleTarget(currentPose, targets[0]);
+                } else {
+                    innerAction = buildMultiTarget(currentPose, targets);
+                }
+            }
+            return innerAction.run(packet);
+        }
+
+        private Action buildSingleTarget(Pose2d currentPose, Vector2d target) {
+            double bearing = bearingTo(currentPose.position, target);
+
+            TrajectoryActionBuilder builder;
+            if (reversed) {
+                // Robot heading is facing away from target; path tangent is toward target
+                builder = driveTrain.actionBuilder(currentPose).setReversed(true);
+            } else {
+                builder = driveTrain.actionBuilder(currentPose);
+            }
+
+            // End tangent = bearing from actual position (arrive straight)
+            if (velConstraint != null || accelConstraint != null) {
+                return builder.splineTo(target, bearing, velConstraint, accelConstraint).build();
+            } else {
+                return builder.splineTo(target, bearing).build();
+            }
+        }
+
+        private Action buildMultiTarget(Pose2d currentPose, Vector2d[] waypoints) {
+            TrajectoryActionBuilder builder = driveTrain.actionBuilder(currentPose);
+            double bearingToFirst = bearingTo(currentPose.position, waypoints[0]);
+
+            for (int i = 0; i < waypoints.length; i++) {
+                double tangent;
+                if (i < waypoints.length - 1) {
+                    tangent = bearingTo(waypoints[i], waypoints[i + 1]);
+                } else {
+                    tangent = (i > 0)
+                            ? bearingTo(waypoints[i - 1], waypoints[i])
+                            : bearingToFirst;
+                }
+                if (velConstraint != null || accelConstraint != null) {
+                    builder = builder.splineTo(waypoints[i], tangent, velConstraint, accelConstraint);
+                } else {
+                    builder = builder.splineTo(waypoints[i], tangent);
+                }
+            }
+            return builder.build();
         }
     }
 
