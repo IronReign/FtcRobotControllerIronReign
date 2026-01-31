@@ -9,39 +9,35 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.InstantAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
-import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.VelConstraint;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
+
+import org.firstinspires.ftc.teamcode.util.PIDController;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Utility class for building Turn-Spline-Turn navigation actions for tank drives.
+ * Position-based drive controller for tank drives.
  *
- * Tank drives (differential drives) cannot independently control heading during motion -
- * the heading is always the tangent to the path. This leads to accumulated heading errors,
- * especially when starting with misaligned heading.
+ * Replaces RoadRunner spline trajectories with pure position-feedback driving:
+ * - Distance PID controls drive speed based on remaining distance to target
+ * - Heading PID steers the robot toward (or away from) the target
+ * - Drive power is scaled by cos(headingError): heading way off → only turn, aligned → full drive
+ * - Slew rate limiter smooths acceleration/deceleration to prevent wheelies
  *
- * SOLUTION: Bracket spline trajectories with explicit turn corrections:
- * 1. Initial Turn - Face toward target waypoint before driving
- * 2. Spline - Drive curved path to waypoint
- * 3. Final Turn - Correct to desired final heading
+ * Architecture (Turn-Drive-Turn):
+ *   SequentialAction [
+ *       LazyTurnAction(bearing to target),               // face toward target
+ *       PositionDriveAction(target.position, reversed),  // drive to position
+ *       LazyTurnAction(target.heading)                   // correct final heading
+ *   ]
  *
- * This pattern ensures accurate starting heading (which Ramsete can maintain)
- * and accurate final heading (explicit correction).
- *
- * USAGE:
- * <pre>
- *   TankDriveActions actions = new TankDriveActions(driveTrain);
- *
- *   // Default speed
- *   Action driveAction = actions.driveTo(new Pose2d(48, 24, Math.toRadians(90)));
- *
- *   // Slower speed for accuracy
- *   Action slowAction = actions.driveTo(target,
- *       new TranslationalVelConstraint(20.0),
- *       new ProfileAccelConstraint(-15.0, 20.0));
- *
- *   driveTrain.runAction(driveAction);
- * </pre>
+ * LazyTurnAction uses RR TurnAction (with feedforward + motion profiling) for accurate turns.
+ * PositionDriveAction uses pure PID feedback for accurate straight-line driving.
  */
 @Config(value = "Lebot2_TankDriveActions")
 public class TankDriveActions {
@@ -50,26 +46,30 @@ public class TankDriveActions {
     public static double INITIAL_TURN_SKIP_TOLERANCE = 2.0;  // Skip initial turn if within this
     public static double FINAL_TURN_SKIP_TOLERANCE = 1.0;    // Skip final turn if within this
 
+    // Position drive PID coefficients (Dashboard-tunable)
+    public static PIDCoefficients DISTANCE_PID = new PIDCoefficients(0.04, 0.0, 0.002);
+    public static PIDCoefficients HEADING_DRIVE_PID = new PIDCoefficients(0.03, 0.0, 0.001);
+
+    // Position drive thresholds
+    public static double POSITION_TOLERANCE = 1.5;  // inches — completion threshold
+    public static double MAX_DRIVE_POWER = 0.8;     // cap to prevent wheelies
+
+    // Slew rate limits (power change per tick, ~50ms loop)
+    public static double ACCEL_SLEW_RATE = 0.05;           // max power increase per tick
+    public static double DECEL_SLEW_RATE_FORWARD = 0.08;   // max power decrease per tick (forward)
+    public static double DECEL_SLEW_RATE_REVERSE = 0.04;   // gentler decel in reverse (anti-wheelie)
+
     private final TankDrivePinpoint driveTrain;
 
     // The final target position from the last driveTo/driveThrough/driveToReversed call.
-    // Use getLastTargetPosition() to retrieve this for visualization.
     private Vector2d lastTargetPosition = null;
 
-    /**
-     * Create a TankDriveActions utility for the given drivetrain.
-     *
-     * @param driveTrain The TankDrivePinpoint instance to build actions for
-     */
     public TankDriveActions(TankDrivePinpoint driveTrain) {
         this.driveTrain = driveTrain;
     }
 
     /**
      * Get the final target position from the last driveTo/driveThrough/driveToReversed call.
-     * This is the actual FieldMap waypoint position, not extracted from the RoadRunner action tree.
-     *
-     * @return The target position, or null if no action has been built yet
      */
     public Vector2d getLastTargetPosition() {
         return lastTargetPosition;
@@ -78,72 +78,52 @@ public class TankDriveActions {
     // ==================== driveTo ====================
 
     /**
-     * Drive to a target pose using Turn-Spline-Turn pattern with default constraints.
-     *
-     * @param target Target pose (position + heading)
-     * @return Action sequence: turnTo(bearing) -> spline -> turnTo(finalHeading)
+     * Drive to a target pose with default constraints.
      */
     public Action driveTo(Pose2d target) {
         return driveTo(target, null, null);
     }
 
     /**
-     * Drive to a target pose using Turn-Spline-Turn pattern with custom constraints.
+     * Drive to a target pose using Turn-Drive-Turn pattern.
      *
-     * Executes:
-     * 1. Turn to face target position (if needed)
-     * 2. Spline to target position arriving straight (end tangent = bearing to target)
-     * 3. Turn to final heading (if different from arrival heading)
-     *
-     * The spline does NOT try to match the final heading -- it arrives "straight" at the
-     * target position. This avoids aggressive end-of-spline corrections that cause overshoot
-     * on tank drives. The explicit final turn handles heading accurately.
+     * 1. Initial turn — face toward target (RR TurnAction via LazyTurnAction)
+     * 2. Drive — position-feedback to target (PositionDriveAction)
+     * 3. Final turn — correct to desired heading (RR TurnAction via LazyTurnAction)
      *
      * @param target Target pose (position + heading)
-     * @param velConstraint Velocity constraint override for spline segment, or null for default
-     * @param accelConstraint Acceleration constraint override for spline segment, or null for default
-     * @return Action sequence: turnTo(bearing) -> spline -> turnTo(finalHeading)
+     * @param velConstraint Accepted for API compatibility, currently unused
+     * @param accelConstraint Accepted for API compatibility, currently unused
+     * @return Action sequence: initialTurn -> PositionDriveAction -> finalTurn
      */
     public Action driveTo(Pose2d target, VelConstraint velConstraint, AccelConstraint accelConstraint) {
         lastTargetPosition = target.position;
-        Pose2d current = driveTrain.getPose();
-        double bearingToTarget = bearingTo(current.position, target.position);
 
-        // All three segments are lazy -- built from actual pose at runtime
-        Action initialTurn = new LazyTurnAction(bearingToTarget, INITIAL_TURN_SKIP_TOLERANCE);
-        Action splineDrive = new LazySplineAction(target.position, false, velConstraint, accelConstraint);
+        Action initialTurn = new LazyBearingTurnAction(target.position, false, INITIAL_TURN_SKIP_TOLERANCE);
+        Action drive = new PositionDriveAction(target.position, false, MAX_DRIVE_POWER);
         Action finalTurn = new LazyTurnAction(target.heading.toDouble(), FINAL_TURN_SKIP_TOLERANCE);
-
-        return new SequentialAction(initialTurn, splineDrive, finalTurn);
+        return new SequentialAction(initialTurn, drive, finalTurn);
     }
 
     // ==================== driveThrough ====================
 
     /**
-     * Drive through multiple waypoints using Turn-Spline-Turn pattern with default constraints.
-     *
-     * @param waypoints Sequence of poses to drive through
-     * @return Action sequence: turnTo(first) -> spline(all) -> turnTo(lastHeading)
+     * Drive through multiple waypoints with default constraints.
      */
     public Action driveThrough(Pose2d... waypoints) {
         return driveThrough(null, null, waypoints);
     }
 
     /**
-     * Drive through multiple waypoints using Turn-Spline-Turn pattern with custom constraints.
+     * Drive through multiple waypoints using Turn-Drive pattern per waypoint.
      *
-     * Executes:
-     * 1. Turn to face first waypoint (if needed)
-     * 2. Spline through all waypoints (tangent at each = bearing to next, last = bearing from prev)
-     * 3. Turn to final heading (if different from arrival heading)
+     * For each waypoint: turn to face it, then drive to it.
+     * Final LazyTurnAction corrects to the last waypoint's heading.
      *
-     * All spline tangents are set to the direction of travel between waypoints.
-     * The spline never tries to match a desired heading -- that's the final turn's job.
-     *
-     * @param velConstraint Velocity constraint override for spline segments, or null for default
-     * @param accelConstraint Acceleration constraint override for spline segments, or null for default
+     * @param velConstraint Accepted for API compatibility, currently unused
+     * @param accelConstraint Accepted for API compatibility, currently unused
      * @param waypoints Sequence of poses to drive through
-     * @return Action sequence: turnTo(first) -> spline(all) -> turnTo(lastHeading)
+     * @return Action sequence: [turn -> drive per waypoint] -> finalTurn
      */
     public Action driveThrough(VelConstraint velConstraint, AccelConstraint accelConstraint, Pose2d... waypoints) {
         if (waypoints.length > 0) {
@@ -156,65 +136,242 @@ public class TankDriveActions {
             return driveTo(waypoints[0], velConstraint, accelConstraint);
         }
 
-        Pose2d current = driveTrain.getPose();
-        Pose2d last = waypoints[waypoints.length - 1];
-        double bearingToFirst = bearingTo(current.position, waypoints[0].position);
+        List<Action> actions = new ArrayList<>();
 
-        // Extract positions for lazy spline builder
-        Vector2d[] positions = new Vector2d[waypoints.length];
+        // Initial turn toward first waypoint (computed lazily at runtime)
+        actions.add(new LazyBearingTurnAction(waypoints[0].position, false, INITIAL_TURN_SKIP_TOLERANCE));
+
         for (int i = 0; i < waypoints.length; i++) {
-            positions[i] = waypoints[i].position;
+            // Drive to this waypoint
+            actions.add(new PositionDriveAction(waypoints[i].position, false, MAX_DRIVE_POWER));
+
+            // Turn toward next waypoint (computed lazily from actual arrival position)
+            if (i < waypoints.length - 1) {
+                actions.add(new LazyBearingTurnAction(waypoints[i + 1].position, false, INITIAL_TURN_SKIP_TOLERANCE));
+            }
         }
 
-        // All three segments are lazy -- built from actual pose at runtime
-        Action initialTurn = new LazyTurnAction(bearingToFirst, INITIAL_TURN_SKIP_TOLERANCE);
-        Action splineDrive = new LazySplineAction(positions, velConstraint, accelConstraint);
-        Action finalTurn = new LazyTurnAction(last.heading.toDouble(), FINAL_TURN_SKIP_TOLERANCE);
+        // Final heading correction
+        Pose2d last = waypoints[waypoints.length - 1];
+        actions.add(new LazyTurnAction(last.heading.toDouble(), FINAL_TURN_SKIP_TOLERANCE));
 
-        return new SequentialAction(initialTurn, splineDrive, finalTurn);
+        return new SequentialAction(actions.toArray(new Action[0]));
     }
 
     // ==================== driveToReversed ====================
 
     /**
-     * Drive to a target pose in reverse using Turn-Spline-Turn pattern with default constraints.
-     *
-     * @param target Target pose (position + heading)
-     * @return Action sequence: turnTo(bearing+180) -> reversed spline -> turnTo(finalHeading)
+     * Drive to a target pose in reverse with default constraints.
      */
     public Action driveToReversed(Pose2d target) {
         return driveToReversed(target, null, null);
     }
 
     /**
-     * Drive to a target pose in reverse using Turn-Spline-Turn pattern with custom constraints.
+     * Drive to a target pose in reverse using Turn-Drive-Turn pattern.
      *
-     * For reverse trajectories, the robot faces AWAY from the target and drives backwards.
-     * The spline arrives "straight" (end tangent = bearing to target) without trying to
-     * match the desired final heading. The explicit final turn handles heading.
-     *
-     * Executes:
-     * 1. Turn to face away from target (if needed)
-     * 2. Reversed spline to target position (arriving straight)
-     * 3. Turn to final heading (if needed)
+     * 1. Initial turn — face away from target (RR TurnAction via LazyTurnAction)
+     * 2. Drive — reversed position-feedback to target (PositionDriveAction)
+     * 3. Final turn — correct to desired heading (RR TurnAction via LazyTurnAction)
      *
      * @param target Target pose (position + heading)
-     * @param velConstraint Velocity constraint override for spline segment, or null for default
-     * @param accelConstraint Acceleration constraint override for spline segment, or null for default
-     * @return Action sequence: turnTo(bearing+180) -> reversed spline -> turnTo(finalHeading)
+     * @param velConstraint Accepted for API compatibility, currently unused
+     * @param accelConstraint Accepted for API compatibility, currently unused
+     * @return Action sequence: initialTurn -> PositionDriveAction(reversed) -> finalTurn
      */
     public Action driveToReversed(Pose2d target, VelConstraint velConstraint, AccelConstraint accelConstraint) {
         lastTargetPosition = target.position;
-        Pose2d current = driveTrain.getPose();
-        double bearingToTarget = bearingTo(current.position, target.position);
-        double bearingAwayFromTarget = normalizeAngle(bearingToTarget + Math.PI);
 
-        // All three segments are lazy -- built from actual pose at runtime
-        Action initialTurn = new LazyTurnAction(bearingAwayFromTarget, INITIAL_TURN_SKIP_TOLERANCE);
-        Action splineDrive = new LazySplineAction(target.position, true, velConstraint, accelConstraint);
+        Action initialTurn = new LazyBearingTurnAction(target.position, true, INITIAL_TURN_SKIP_TOLERANCE);
+        Action drive = new PositionDriveAction(target.position, true, MAX_DRIVE_POWER);
         Action finalTurn = new LazyTurnAction(target.heading.toDouble(), FINAL_TURN_SKIP_TOLERANCE);
+        return new SequentialAction(initialTurn, drive, finalTurn);
+    }
 
-        return new SequentialAction(initialTurn, splineDrive, finalTurn);
+    // ==================== PositionDriveAction ====================
+
+    /**
+     * Pure position-feedback drive action using distance + heading PID.
+     *
+     * Drive power = distancePID(distance) * cos(headingError)
+     * Steer power = headingPID(headingError)
+     * Tank mixing: left = drive + steer, right = drive - steer
+     *
+     * The cos(headingError) scaling means:
+     * - 90° off target → cos=0 → robot only turns, no forward drive
+     * - Perfectly aligned → cos=1 → full forward drive
+     * This eliminates the need for a separate initial turn action.
+     *
+     * A slew rate limiter smooths drive power changes to prevent wheelies.
+     *
+     * For reversed driving: heading targets bearing + PI, drive power is negated.
+     */
+    private class PositionDriveAction implements Action {
+        private final Vector2d target;
+        private final boolean reversed;
+        private final double maxPower;
+
+        private PIDController distancePID;
+        private PIDController headingPID;
+        private boolean initialized = false;
+        private double previousDrivePower = 0.0;
+        private double lockedHeading = 0.0;  // Fixed heading reference, set at init
+
+        PositionDriveAction(Vector2d target, boolean reversed, double maxPower) {
+            this.target = target;
+            this.reversed = reversed;
+            this.maxPower = maxPower;
+        }
+
+        private void initialize() {
+            distancePID = new PIDController(DISTANCE_PID);
+            distancePID.setInputRange(0, 200);  // 0-200 inches range
+            distancePID.setOutputRange(-1.0, 1.0);  // full range so it can correct overshoot
+            // Input will be 0, setpoint will be distance — so error = distance (positive)
+            distancePID.setInput(0);
+            distancePID.enable();
+
+            headingPID = new PIDController(HEADING_DRIVE_PID);
+            headingPID.setInputRange(-180, 180);
+            headingPID.setOutputRange(-1.0, 1.0);
+            headingPID.setContinuous(true);
+            headingPID.setSetpoint(0);  // target is 0 heading error
+            headingPID.enable();
+
+            // Switch to FLOAT so PID has full authority over deceleration.
+            // BRAKE mode shorts the windings at near-zero power, causing abrupt stops
+            // that tip the robot (wheelie) — especially in reverse.
+            setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+            // Lock in heading reference from current pose.
+            // The initial LazyBearingTurnAction has already aligned the robot toward
+            // (or away from) the target. We hold this heading throughout the drive
+            // rather than chasing the live bearing, which swings rapidly near the
+            // target and causes orbiting.
+            Pose2d currentPose = driveTrain.getPose();
+            double bearing = bearingTo(currentPose.position, target);
+            lockedHeading = reversed ? normalizeAngle(bearing + Math.PI) : bearing;
+
+            previousDrivePower = 0.0;
+            initialized = true;
+        }
+
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            if (!initialized) {
+                initialize();
+            }
+
+            // Update PID coefficients from Dashboard each tick
+            distancePID.setPID(DISTANCE_PID);
+            headingPID.setPID(HEADING_DRIVE_PID);
+
+            Pose2d currentPose = driveTrain.getPose();
+            double currentHeading = currentPose.heading.toDouble();
+
+            // Compute vector from robot to target
+            double dx = target.x - currentPose.position.x;
+            double dy = target.y - currentPose.position.y;
+            double distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Finish line test: project robot-to-target vector onto the drive direction.
+            // When this goes to zero or negative, the robot has reached or crossed the
+            // perpendicular line through the target — the "finish line."
+            // This prevents overshoot at speed and handles paths that don't pass
+            // exactly through the target center.
+            double driveDirection = reversed ? normalizeAngle(lockedHeading + Math.PI) : lockedHeading;
+            double alongTrack = dx * Math.cos(driveDirection) + dy * Math.sin(driveDirection);
+
+            if (alongTrack <= 0 || distance < POSITION_TOLERANCE) {
+                driveTrain.setMotorPowers(0, 0);
+                setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);  // restore for teleop
+                previousDrivePower = 0.0;
+                return false;
+            }
+
+            // Heading error relative to locked heading (set at init from initial bearing)
+            // We don't chase the live bearing — it swings rapidly near the target and
+            // causes orbiting. The initial turn already aligned us.
+            double headingError = normalizeAngle(lockedHeading - currentHeading);
+
+            // Distance PID: setpoint is along-track distance to finish line, input stays 0
+            // error = setpoint - input = alongTrack - 0 = positive → positive output
+            distancePID.setSetpoint(alongTrack);
+            double rawDrivePower = distancePID.performPID();
+
+            // Scale by cos(headingError) — no forward drive when heading is way off
+            double drivePower = rawDrivePower * Math.cos(headingError);
+
+            // For reversed: negate drive power (motors run backward)
+            if (reversed) {
+                drivePower = -drivePower;
+            }
+
+            // Cap drive power
+            drivePower = Math.max(-maxPower, Math.min(maxPower, drivePower));
+
+            // Slew rate limiter
+            drivePower = applySlewRate(drivePower, previousDrivePower);
+            previousDrivePower = drivePower;
+
+            // Heading PID: input is heading error in degrees, setpoint is 0
+            headingPID.setInput(Math.toDegrees(headingError));
+            double steerPower = headingPID.performPID();
+
+            // Tank mixing
+            double leftPower = drivePower + steerPower;
+            double rightPower = drivePower - steerPower;
+
+            // Normalize if exceeding [-1, 1]
+            double maxMag = Math.max(Math.abs(leftPower), Math.abs(rightPower));
+            if (maxMag > 1.0) {
+                leftPower /= maxMag;
+                rightPower /= maxMag;
+            }
+
+            driveTrain.setMotorPowers(leftPower, rightPower);
+
+            // Telemetry for Dashboard
+            packet.put("posDrive_dist", distance);
+            packet.put("posDrive_along", alongTrack);
+            packet.put("posDrive_headErr", Math.toDegrees(headingError));
+            packet.put("posDrive_drive", drivePower);
+            packet.put("posDrive_steer", steerPower);
+            packet.put("posDrive_left", leftPower);
+            packet.put("posDrive_right", rightPower);
+
+            return true;
+        }
+
+        /**
+         * Apply slew rate limiting to drive power for smooth accel/decel.
+         */
+        private double applySlewRate(double desired, double previous) {
+            double delta = desired - previous;
+
+            if (Math.abs(desired) > Math.abs(previous)) {
+                // Accelerating — cap increase rate
+                if (Math.abs(delta) > ACCEL_SLEW_RATE) {
+                    return previous + Math.signum(delta) * ACCEL_SLEW_RATE;
+                }
+            } else {
+                // Decelerating — use direction-appropriate slew rate
+                double decelRate = reversed ? DECEL_SLEW_RATE_REVERSE : DECEL_SLEW_RATE_FORWARD;
+                if (Math.abs(delta) > decelRate) {
+                    return previous + Math.signum(delta) * decelRate;
+                }
+            }
+            return desired;
+        }
+
+        private void setZeroPowerBehavior(DcMotor.ZeroPowerBehavior behavior) {
+            for (DcMotorEx m : driveTrain.leftMotors) {
+                m.setZeroPowerBehavior(behavior);
+            }
+            for (DcMotorEx m : driveTrain.rightMotors) {
+                m.setZeroPowerBehavior(behavior);
+            }
+        }
     }
 
     // ==================== LazyTurnAction ====================
@@ -223,11 +380,8 @@ public class TankDriveActions {
      * An Action that defers building the RoadRunner turnTo until its first run() call.
      *
      * RoadRunner's turnTo pre-computes a motion profile at build() time, baking in the
-     * expected start heading. If the robot's actual heading differs (due to spline tracking
-     * error, overshoot, etc.), the pre-computed turn executes the wrong correction.
-     *
-     * LazyTurnAction solves this by waiting until it actually runs (after the previous action
-     * in a SequentialAction completes) to read the robot's real pose and build an accurate turn.
+     * expected start heading. LazyTurnAction waits until it actually runs to read the
+     * robot's real pose and build an accurate turn.
      */
     private class LazyTurnAction implements Action {
         private final double targetHeadingRad;
@@ -245,17 +399,15 @@ public class TankDriveActions {
             if (complete) return false;
 
             if (innerAction == null) {
-                // First call -- build from actual current pose
                 Pose2d currentPose = driveTrain.getPose();
                 double headingError = Math.toDegrees(Math.abs(
                         normalizeAngle(targetHeadingRad - currentPose.heading.toDouble())));
 
                 if (headingError <= skipToleranceDeg) {
                     complete = true;
-                    return false;  // Within tolerance, skip
+                    return false;
                 }
 
-                // Build real RoadRunner turnTo from actual pose
                 innerAction = driveTrain.actionBuilder(currentPose)
                         .turnTo(targetHeadingRad)
                         .build();
@@ -265,99 +417,55 @@ public class TankDriveActions {
         }
     }
 
-    // ==================== LazySplineAction ====================
+    // ==================== LazyBearingTurnAction ====================
 
     /**
-     * An Action that defers building the RoadRunner spline until its first run() call.
+     * An Action that computes the bearing to a target position at runtime, then
+     * builds and executes an RR turnTo to face that bearing.
      *
-     * The spline start position is baked in at build() time. If the robot drifts during the
-     * preceding turn (especially large turns like 90°+), the pre-built spline starts from the
-     * wrong position, causing Ramsete to fight a position error that compounds into overshoot.
+     * Unlike LazyTurnAction (which takes a fixed target heading), this computes
+     * the heading from the robot's actual position at execution time. This is
+     * critical because the robot may not be exactly where it was when the action
+     * sequence was built.
      *
-     * LazySplineAction waits until it actually runs (after the initial turn completes) to read
-     * the robot's real pose and build a spline from the correct start position.
-     *
-     * Supports single-target (driveTo/driveToReversed) and multi-target (driveThrough) modes.
+     * For reversed driving, the robot faces away from the target (bearing + PI).
      */
-    private class LazySplineAction implements Action {
-        private final Vector2d[] targets;
+    private class LazyBearingTurnAction implements Action {
+        private final Vector2d targetPosition;
         private final boolean reversed;
-        private final VelConstraint velConstraint;
-        private final AccelConstraint accelConstraint;
+        private final double skipToleranceDeg;
         private Action innerAction = null;
+        private boolean complete = false;
 
-        /** Single target (forward or reversed). */
-        LazySplineAction(Vector2d target, boolean reversed,
-                         VelConstraint velConstraint, AccelConstraint accelConstraint) {
-            this.targets = new Vector2d[]{target};
+        LazyBearingTurnAction(Vector2d targetPosition, boolean reversed, double skipToleranceDeg) {
+            this.targetPosition = targetPosition;
             this.reversed = reversed;
-            this.velConstraint = velConstraint;
-            this.accelConstraint = accelConstraint;
-        }
-
-        /** Multiple waypoints (forward only). */
-        LazySplineAction(Vector2d[] targets,
-                         VelConstraint velConstraint, AccelConstraint accelConstraint) {
-            this.targets = targets;
-            this.reversed = false;
-            this.velConstraint = velConstraint;
-            this.accelConstraint = accelConstraint;
+            this.skipToleranceDeg = skipToleranceDeg;
         }
 
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
+            if (complete) return false;
+
             if (innerAction == null) {
-                // First call -- build from actual current pose (post-turn)
                 Pose2d currentPose = driveTrain.getPose();
+                double bearing = bearingTo(currentPose.position, targetPosition);
+                double targetHeading = reversed ? normalizeAngle(bearing + Math.PI) : bearing;
 
-                if (targets.length == 1) {
-                    innerAction = buildSingleTarget(currentPose, targets[0]);
-                } else {
-                    innerAction = buildMultiTarget(currentPose, targets);
+                double headingError = Math.toDegrees(Math.abs(
+                        normalizeAngle(targetHeading - currentPose.heading.toDouble())));
+
+                if (headingError <= skipToleranceDeg) {
+                    complete = true;
+                    return false;
                 }
+
+                innerAction = driveTrain.actionBuilder(currentPose)
+                        .turnTo(targetHeading)
+                        .build();
             }
+
             return innerAction.run(packet);
-        }
-
-        private Action buildSingleTarget(Pose2d currentPose, Vector2d target) {
-            double bearing = bearingTo(currentPose.position, target);
-
-            TrajectoryActionBuilder builder;
-            if (reversed) {
-                // Robot heading is facing away from target; path tangent is toward target
-                builder = driveTrain.actionBuilder(currentPose).setReversed(true);
-            } else {
-                builder = driveTrain.actionBuilder(currentPose);
-            }
-
-            // End tangent = bearing from actual position (arrive straight)
-            if (velConstraint != null || accelConstraint != null) {
-                return builder.splineTo(target, bearing, velConstraint, accelConstraint).build();
-            } else {
-                return builder.splineTo(target, bearing).build();
-            }
-        }
-
-        private Action buildMultiTarget(Pose2d currentPose, Vector2d[] waypoints) {
-            TrajectoryActionBuilder builder = driveTrain.actionBuilder(currentPose);
-            double bearingToFirst = bearingTo(currentPose.position, waypoints[0]);
-
-            for (int i = 0; i < waypoints.length; i++) {
-                double tangent;
-                if (i < waypoints.length - 1) {
-                    tangent = bearingTo(waypoints[i], waypoints[i + 1]);
-                } else {
-                    tangent = (i > 0)
-                            ? bearingTo(waypoints[i - 1], waypoints[i])
-                            : bearingToFirst;
-                }
-                if (velConstraint != null || accelConstraint != null) {
-                    builder = builder.splineTo(waypoints[i], tangent, velConstraint, accelConstraint);
-                } else {
-                    builder = builder.splineTo(waypoints[i], tangent);
-                }
-            }
-            return builder.build();
         }
     }
 
@@ -365,10 +473,6 @@ public class TankDriveActions {
 
     /**
      * Calculate bearing (angle) from one position to another.
-     *
-     * @param from Starting position
-     * @param to Target position
-     * @return Bearing in radians (atan2 convention: 0 = +X, PI/2 = +Y)
      */
     private double bearingTo(Vector2d from, Vector2d to) {
         return Math.atan2(to.y - from.y, to.x - from.x);
@@ -376,9 +480,6 @@ public class TankDriveActions {
 
     /**
      * Normalize angle to [-PI, PI] range.
-     *
-     * @param angle Angle in radians
-     * @return Normalized angle in radians
      */
     private double normalizeAngle(double angle) {
         while (angle > Math.PI) angle -= 2 * Math.PI;

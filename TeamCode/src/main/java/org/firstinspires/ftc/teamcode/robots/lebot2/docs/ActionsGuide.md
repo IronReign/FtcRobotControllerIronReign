@@ -653,17 +653,29 @@ Action scoreAndRetreat = new SequentialAction(
 
 ---
 
-## TankDriveActions (Turn-Spline-Turn)
+## TankDriveActions (Turn-Drive-Turn)
 
-Tank drives cannot independently control heading during motion -- the heading is always the tangent to the path. This means starting a spline with misaligned heading leads to accumulated errors that Ramsete struggles to correct.
+Tank drives cannot independently control heading during motion. RoadRunner's feedforward-heavy spline trajectories consistently overshoot when the physical robot doesn't match the model (wheelies, motor imbalance, surface friction).
 
-**TankDriveActions** solves this by wrapping every spline trajectory with explicit turn corrections:
+**TankDriveActions** replaces spline trajectories with a position-feedback controller using a Turn-Drive-Turn pattern:
 
-1. **Initial Turn** -- Face toward target before driving (ensures Ramsete starts with correct heading)
-2. **Spline** -- Drive curved path to waypoint
-3. **Final Turn** -- Correct to desired final heading
+1. **Initial Turn** (`LazyBearingTurnAction`) -- Face toward target using RR TurnAction (with feedforward + motion profiling). Bearing is computed lazily at runtime from the robot's actual position.
+2. **Position Drive** (`PositionDriveAction`) -- Drive straight to target using dual PID (distance + heading). Locks heading at init and holds it — no time-based motion profile, no feedforward for driving.
+3. **Final Turn** (`LazyTurnAction`) -- Correct to desired final heading using RR TurnAction.
 
 All missions use TankDriveActions internally. You should use it for any new navigation code.
+
+### How PositionDriveAction Works
+
+Two PID controllers run each tick:
+- **Distance PID** controls drive speed based on along-track distance to a "finish line" (perpendicular to the drive direction through the target)
+- **Heading PID** steers the robot to hold the locked heading via differential power
+
+**Completion:** The action completes when the robot crosses the finish line (along-track distance <= 0) OR enters the tolerance circle around the target. This prevents both orbiting and overshoot.
+
+**Zero-power behavior:** Motors switch to FLOAT during the drive so the PID has full authority over deceleration. BRAKE is restored on completion for teleop responsiveness.
+
+**Slew rate limiter:** Drive power changes are rate-limited per tick to prevent wheelies. Reverse deceleration uses a gentler rate than forward.
 
 ### Setup
 
@@ -681,9 +693,9 @@ robot.driveTrain.runAction(driveAction);
 ```
 
 What happens internally:
-1. Turns to face (48, 24) from current position (~26.6 degrees via atan2)
-2. Splines to (48, 24) with end tangent = 90 degrees
-3. Final turn to 90 degrees (skipped if already within tolerance)
+1. `LazyBearingTurnAction`: computes bearing from actual position to (48, 24), turns to face it
+2. `PositionDriveAction`: locks heading, drives straight to (48, 24) using distance + heading PID
+3. `LazyTurnAction`: turns to 90 degrees (skipped if already within tolerance)
 
 ### driveThrough -- Multiple Waypoints
 
@@ -697,7 +709,7 @@ Action multiAction = actions.driveThrough(
 robot.driveTrain.runAction(multiAction);
 ```
 
-Intermediate waypoint headings set the spline tangent direction (pointing toward the next waypoint). Only the last waypoint's heading is used for the final turn.
+For each waypoint: bearing turn (computed lazily from actual arrival position) then position drive. Only the last waypoint's heading is used for the final turn.
 
 ### driveToReversed -- Driving Backwards
 
@@ -710,75 +722,53 @@ robot.driveTrain.runAction(reverseAction);
 ```
 
 What happens internally:
-1. Turns to face **away** from target (bearing + 180 degrees)
-2. Reversed spline to target (end tangent = target heading - 180 degrees, so robot arrives facing target heading)
-3. Final turn if needed
+1. `LazyBearingTurnAction(reversed)`: computes bearing, turns to face **away** from target
+2. `PositionDriveAction(reversed)`: locks heading, drives backward to target (negated motor power)
+3. `LazyTurnAction`: final heading correction if needed
 
 ### Velocity and Acceleration Constraints
 
-All three methods accept optional `VelConstraint` and `AccelConstraint` overrides to slow down (or speed up) the spline segment. Turns always use default speed.
+All three methods accept `VelConstraint` and `AccelConstraint` for API compatibility but these are **currently unused** by PositionDriveAction. Drive speed is controlled by the distance PID and `MAX_DRIVE_POWER`. Turns always use RR's default turn behavior.
 
-**Units:**
-- Velocity: **inches per second** (default maxWheelVel = 50 in/s)
-- Acceleration: **inches per second squared** (default range: -30 to +50 in/s^2)
-- Angular velocity: **radians per second** (default maxAngVel = PI rad/s)
+### Dashboard-Tunable Parameters
 
-```java
-import com.acmerobotics.roadrunner.TranslationalVelConstraint;
-import com.acmerobotics.roadrunner.ProfileAccelConstraint;
-import com.acmerobotics.roadrunner.MinVelConstraint;
-import com.acmerobotics.roadrunner.AngularVelConstraint;
-
-// Simple: limit translational speed only
-Action slowDrive = actions.driveTo(target,
-    new TranslationalVelConstraint(20.0),       // max 20 in/s (default is 50)
-    null                                         // use default accel
-);
-
-// Both velocity and acceleration limits
-Action precisionDrive = actions.driveTo(target,
-    new TranslationalVelConstraint(15.0),        // max 15 in/s
-    new ProfileAccelConstraint(-10.0, 15.0)      // gentler accel: -10 to +15 in/s^2
-);
-
-// Limit both translational and angular velocity
-Action extraSlow = actions.driveTo(target,
-    new MinVelConstraint(Arrays.asList(
-        new TranslationalVelConstraint(10.0),    // max 10 in/s
-        new AngularVelConstraint(Math.PI / 4)    // max PI/4 rad/s
-    )),
-    new ProfileAccelConstraint(-10.0, 10.0)
-);
-
-// Same works for driveThrough and driveToReversed
-Action slowMulti = actions.driveThrough(
-    new TranslationalVelConstraint(20.0),
-    new ProfileAccelConstraint(-15.0, 20.0),
-    waypoint1, waypoint2, waypoint3
-);
-
-Action slowReverse = actions.driveToReversed(target,
-    new TranslationalVelConstraint(15.0),
-    null
-);
-```
-
-### Turn Skip Thresholds
-
-If the robot is already facing close to the correct direction, the initial/final turns are skipped to save time. These thresholds are tunable via FTC Dashboard under `Lebot2_TankDriveActions`:
+All parameters are tunable via FTC Dashboard under `Lebot2_TankDriveActions`:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
+| `DISTANCE_PID` | P=0.04, I=0.0, D=0.002 | Distance-to-target PID coefficients |
+| `HEADING_DRIVE_PID` | P=0.03, I=0.0, D=0.001 | Heading-hold PID coefficients |
+| `POSITION_TOLERANCE` | 1.5 inches | Tolerance circle radius for completion |
+| `MAX_DRIVE_POWER` | 0.8 | Maximum motor power cap (prevents wheelies) |
+| `ACCEL_SLEW_RATE` | 0.05 | Max power increase per tick |
+| `DECEL_SLEW_RATE_FORWARD` | 0.08 | Max power decrease per tick (forward) |
+| `DECEL_SLEW_RATE_REVERSE` | 0.04 | Max power decrease per tick (reverse, gentler) |
 | `INITIAL_TURN_SKIP_TOLERANCE` | 2.0 degrees | Skip initial turn if heading error is within this |
 | `FINAL_TURN_SKIP_TOLERANCE` | 1.0 degrees | Skip final turn if heading error is within this |
 
+### Dashboard Telemetry
+
+During a position drive, the following are published to FTC Dashboard:
+
+| Key | Description |
+|-----|-------------|
+| `posDrive_dist` | Distance to target (inches) |
+| `posDrive_along` | Along-track distance to finish line (inches) |
+| `posDrive_headErr` | Heading error from locked heading (degrees) |
+| `posDrive_drive` | Drive power after slew limiting |
+| `posDrive_steer` | Steering power from heading PID |
+| `posDrive_left` | Left motor power (after mixing + normalization) |
+| `posDrive_right` | Right motor power (after mixing + normalization) |
+
 ### Important Notes
 
-- **Build just-in-time:** `driveTo()` reads the current pose when called. Build the action right before you run it, not in advance. See [Define vs Evaluate](#define-vs-evaluate).
-- **Fully reactive:** All three segments (initial turn, spline, final turn) are **built at runtime** from the robot's actual pose -- not pre-computed at `driveTo()` call time. This prevents positional drift during the initial turn from corrupting the spline start position, and prevents spline tracking errors from corrupting the final turn correction.
-- **Constraints only apply to the spline segment.** Turns always use the drivetrain's default turn behavior.
-- **driveToReversed tangent math:** The spline end tangent is `bearingToTarget` (not `targetHeading`). With `setReversed(true)`, the robot heading = path tangent + PI. The wrapper handles this for you.
+- **Build just-in-time:** `driveTo()` should be called right before running the action, not in advance. See [Define vs Evaluate](#define-vs-evaluate).
+- **Fully lazy:** All turns compute their target heading at runtime from the robot's actual pose -- not pre-computed at `driveTo()` call time. Initial bearing turns use `LazyBearingTurnAction` which computes the bearing from the actual arrival position of the previous action.
+- **Locked heading during drive:** `PositionDriveAction` locks the heading at initialization (from the actual bearing to target) and holds it. It does NOT chase the live bearing, which swings rapidly near the target and causes orbiting.
+- **Finish line completion:** The drive completes when the robot crosses a perpendicular line through the target, not just when it enters the tolerance circle. This prevents overshoot at speed.
+- **FLOAT during drive, BRAKE after:** Motors use FLOAT zero-power behavior during the drive so the PID controls deceleration smoothly. BRAKE is restored on completion for teleop.
 - **Missions use this internally.** NavigateToFire, BallGroup, and OpenSesame all use TankDriveActions. You don't need to build raw trajectories for mission code.
+- **Tuning missions available:** In TEST mode, press X for position-based straight test, B for position-based square test. Hold Home+X or Home+B for the old RR trajectory versions for comparison.
 
 ---
 
@@ -799,11 +789,11 @@ If the robot is already facing close to the correct direction, the initial/final
 | **Navigate to a pose (tank drive)** | **`TankDriveActions.driveTo()`** |
 | **Navigate through waypoints** | **`TankDriveActions.driveThrough()`** |
 | **Navigate backwards to a pose** | **`TankDriveActions.driveToReversed()`** |
-| **Slow down for accuracy** | **Pass `VelConstraint`/`AccelConstraint` to above** |
+| **Tune drive PID** | **Dashboard `Lebot2_TankDriveActions`** |
 
 ## Related Files
 
-- `TankDriveActions.java` - Turn-Spline-Turn wrapper for tank drive navigation
-- `TankDrivePinpoint.java` - Drive class with action builders
+- `TankDriveActions.java` - Turn-Drive-Turn position-feedback controller for tank drive navigation
+- `TankDrivePinpoint.java` - Drive class with action builders and motor control
 - `Robot.java` - Behavior state machine integration
 - `PinpointConfiguration.md` - Localizer setup for accurate pose tracking
