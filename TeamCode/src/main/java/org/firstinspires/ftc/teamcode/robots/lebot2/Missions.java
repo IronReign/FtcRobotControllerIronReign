@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDriveActions;
 import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Launcher;
@@ -50,6 +51,9 @@ public class Missions implements TelemetryProvider {
 
     // Reference to robot (for accessing subsystems and behaviors)
     private final Robot robot;
+
+    // Turn-Spline-Turn action builder for tank drive navigation
+    private TankDriveActions actions;
 
     // ==================== MISSION ENUMS ====================
 
@@ -233,6 +237,10 @@ public class Missions implements TelemetryProvider {
 
     public Missions(Robot robot) {
         this.robot = robot;
+        // Initialize Turn-Spline-Turn action builder
+        if (robot.driveTrain instanceof TankDrivePinpoint) {
+            this.actions = new TankDriveActions((TankDrivePinpoint) robot.driveTrain);
+        }
     }
 
     /**
@@ -755,28 +763,16 @@ public class Missions implements TelemetryProvider {
 
                 // Get target fire position from FieldMap
                 Pose2d firePose = getFirePose(targetFirePosition);
-                Pose2d currentPose = robot.driveTrain.getPose();
 
                 log("NAV_START", "reversed=" + navReversed + ",fire=" + targetFirePosition, firePose);
 
-                // Build trajectory - use setReversed for backing up
-                // For reversed: back up to position with correct heading
-                // For forward: turn toward target, drive to position with final heading
+                // Build Turn-Spline-Turn trajectory using TankDriveActions
+                // This ensures accurate heading at start and end of navigation
                 Action trajectory;
                 if (navReversed) {
-                    // In reversed mode: robot heading = travel tangent + 180°
-                    // To end with heading = firePose.heading, we need:
-                    // tangent = firePose.heading - 180°
-                    double endTangent = firePose.heading.toDouble() - Math.PI;
-                    trajectory = driveTrain.actionBuilder(currentPose)
-                            .setReversed(true)
-                            .splineTo(firePose.position, endTangent)
-                            .build();
+                    trajectory = actions.driveToReversed(firePose);
                 } else {
-                    trajectory = driveTrain.actionBuilder(currentPose)
-                            .turnTo(FieldMap.bearingTo(currentPose, firePose))
-                            .splineTo(firePose.position, firePose.heading)
-                            .build();
+                    trajectory = actions.driveTo(firePose);
                 }
                 driveTrain.runAction(trajectory);
                 navToFireState = NavigateToFireState.NAVIGATING;
@@ -874,13 +870,9 @@ public class Missions implements TelemetryProvider {
             case IDLE:
                 // Get gate pose from FieldMap
                 Pose2d gatePose = FieldMap.getPose(FieldMap.GATE, Robot.isRedAlliance);
-                Pose2d currentPose = robot.driveTrain.getPose();
 
-                // Build tank-compatible trajectory: turn toward target, drive, turn to final heading
-                Action trajectory = driveTrain.actionBuilder(currentPose)
-                        .turnTo(FieldMap.bearingTo(currentPose, gatePose))
-                        .splineTo(gatePose.position, gatePose.heading)
-                        .build();
+                // Build Turn-Spline-Turn trajectory using TankDriveActions
+                Action trajectory = actions.driveTo(gatePose);
                 driveTrain.runAction(trajectory);
                 openSesameState = OpenSesameState.NAVIGATING;
                 break;
@@ -929,12 +921,8 @@ public class Missions implements TelemetryProvider {
 
                 log("BALLGROUP_START", "row=" + targetGroupIndex, rowStart);
 
-                // Build trajectory to row start
-                Pose2d currentPose = robot.driveTrain.getPose();
-                Action trajectory = driveTrain.actionBuilder(currentPose)
-                        .turnTo(FieldMap.bearingTo(currentPose, rowStart))
-                        .splineTo(rowStart.position, rowStart.heading)
-                        .build();
+                // Build Turn-Spline-Turn trajectory to row start using TankDriveActions
+                Action trajectory = actions.driveTo(rowStart);
                 driveTrain.runAction(trajectory);
                 ballGroupState = BallGroupState.NAVIGATING_TO_ROW_START;
                 break;

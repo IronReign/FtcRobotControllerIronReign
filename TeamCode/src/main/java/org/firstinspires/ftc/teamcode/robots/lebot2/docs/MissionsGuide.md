@@ -27,6 +27,8 @@ Missions are high-level autonomous behaviors that coordinate robot subsystems, t
 
 **Key Principle:** Implement functionality at the lowest level where it can be accomplished. Only escalate to a higher level when coordination is required.
 
+**Navigation:** All missions use `TankDriveActions` for trajectory building (Turn-Spline-Turn pattern). This brackets every spline with explicit turns to ensure accurate heading for tank drives. See [ActionsGuide.md](ActionsGuide.md#tankdriveactions-turn-spline-turn) for details and how to use it in new code.
+
 ---
 
 ## Available Missions
