@@ -97,15 +97,15 @@ public class FieldMap {
 
         // ----- Ball Pickup Waypoints -----
         // Starting points for each of the 3 ball rows
-        RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732, 25.9842, 90));
-        RED_WAYPOINTS.put("BALL_ROW_2_START", new Waypoint(10.2362, 25.9842, 90));
-        RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456, 25.9842, 90));
+        RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732-4-6, 25.9842+3.5, 90));
+        RED_WAYPOINTS.put("BALL_ROW_2_START", new Waypoint(10.2362-8-4, 25.9842+3.5, 90));
+        RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456-8-3, 25.9842+3.5, 90));
 
         // ----- Ball Row Endpoints -----
         // Ending points after driving through ball rows
-        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503, 90));
-        RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362, 46.8503, 90));
-        RED_WAYPOINTS.put("BALL_ROW_3_END", new Waypoint(34.6456, 46.8503, 90));
+        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732-2-6, 46.8503+2.5, 90));
+        RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362-2-4, 46.8503+2.5, 90));
+        RED_WAYPOINTS.put("BALL_ROW_3_END", new Waypoint(34.6456-2-3, 46.8503+2.5, 90));
 
         // ----- Gate -----
         // Position to release previously scored balls

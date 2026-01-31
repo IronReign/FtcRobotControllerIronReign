@@ -45,7 +45,7 @@ public class Autonomous implements TelemetryProvider {
     public static double MIN_TIME_FOR_ROW = 5.0;     // Minimum seconds needed for a ball row cycle
 
     // Autonomous time limit
-    public static final double AUTON_DURATION_SECONDS = 30.0;
+    public static double AUTON_DURATION_SECONDS = 30.0;
 
     // ==================== STATE MACHINE ====================
 

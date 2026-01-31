@@ -128,6 +128,7 @@ public class Missions implements TelemetryProvider {
     }
     private OpenSesameState openSesameState = OpenSesameState.IDLE;
     private ElapsedTime pressTimer = new ElapsedTime();
+    private ElapsedTime navigationTimer = new ElapsedTime();
     public static double PRESS_DURATION_SECONDS = 0.5;
 
     // BallGroup state
@@ -980,6 +981,20 @@ public class Missions implements TelemetryProvider {
                 targetRowEnd = getRowEndPose(targetGroupIndex);
 
                 log("BALLGROUP_START", "row=" + targetGroupIndex, rowStart);
+//
+//                if(targetGroupIndex>0){
+//                    if(targetGroupIndex>=2){
+//                        Pose2d rowStart2 = getRowStartPose(2);
+//                        Action trajectory = actions.driveTo(rowStart2);
+//                        driveTrain.runAction(trajectory, actions.getLastTargetPosition());
+//                        ballGroupState = BallGroupState.IDLE;
+//                    }
+//                    if(targetGroupIndex==1){
+//                        Pose2d rowStart1 = getRowStartPose(1);
+//                        Action trajectory = actions.driveTo(rowStart1);
+//                        driveTrain.runAction(trajectory, actions.getLastTargetPosition());
+//                    }
+//                }
 
                 // Build Turn-Spline-Turn trajectory to row start using TankDriveActions
                 Action trajectory = actions.driveTo(rowStart);
