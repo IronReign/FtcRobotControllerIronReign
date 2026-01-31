@@ -42,7 +42,7 @@ public class Autonomous implements TelemetryProvider {
     // Strategic configuration (tunable via FTC Dashboard)
     public static boolean START_AT_GOAL_WALL = true;  // true = goal wall, false = audience wall
     public static boolean DO_OPEN_SESAME = true;      // Release gate after rows 1 & 2?
-    public static double MIN_TIME_FOR_ROW = 12.0;     // Minimum seconds needed for a ball row cycle
+    public static double MIN_TIME_FOR_ROW = 5.0;     // Minimum seconds needed for a ball row cycle
 
     // Autonomous time limit
     public static final double AUTON_DURATION_SECONDS = 30.0;
