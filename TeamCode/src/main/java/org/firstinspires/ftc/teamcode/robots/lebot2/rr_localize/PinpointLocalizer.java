@@ -55,7 +55,6 @@ public final class PinpointLocalizer implements Localizer {
         double mmPerTick = inPerTick * 25.4;
         driver.setEncoderResolution(goBILDA_4_BAR_POD, DistanceUnit.MM);
         //driver.setOffsets(mmPerTick * PARAMS.parYTicks, mmPerTick * PARAMS.perpXTicks, DistanceUnit.MM);
-        driver.setOffsets(-180.5, 131.9, DistanceUnit.MM);
         // TODO: reverse encoder directions if needed
         initialParDirection = GoBildaPinpointDriver.EncoderDirection.FORWARD;
         initialPerpDirection = GoBildaPinpointDriver.EncoderDirection.FORWARD;
@@ -63,6 +62,12 @@ public final class PinpointLocalizer implements Localizer {
         driver.setEncoderDirections(initialParDirection, initialPerpDirection);
 
         driver.resetPosAndIMU();
+
+        // Set offsets AFTER resetPosAndIMU in case reset clears them
+        driver.setOffsets(-180.5, 131.9, DistanceUnit.MM);
+
+        // Verify offsets were retained — check logcat for these values
+        System.out.println("Pinpoint offsets set: X=-180.5 mm, Y=131.9 mm (after resetPosAndIMU)");
 
         txWorldPinpoint = initialPose;
     }

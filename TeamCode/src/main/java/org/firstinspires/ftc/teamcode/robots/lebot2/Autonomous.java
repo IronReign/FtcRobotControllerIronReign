@@ -286,6 +286,7 @@ public class Autonomous implements TelemetryProvider {
                     log("GATE_FAILED", "timeout");
                     gateReleased = true;
                     setState(AutonState.START_BALL_ROW);
+
                 }
                 break;
 

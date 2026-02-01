@@ -47,7 +47,8 @@ public class TankDriveActions {
     public static double FINAL_TURN_SKIP_TOLERANCE = 1.0;    // Skip final turn if within this
 
     // Position drive PID coefficients (Dashboard-tunable)
-    public static PIDCoefficients DISTANCE_PID = new PIDCoefficients(0.04, 0.0, 0.002);
+    public static PIDCoefficients DISTANCE_PID = new PIDCoefficients(0.04, 0.0, 2.0);
+    public static double DIST_PID_I_CUTIN = 0.0;
     public static PIDCoefficients HEADING_DRIVE_PID = new PIDCoefficients(0.03, 0.0, 0.001);
 
     // Position drive thresholds
@@ -246,14 +247,28 @@ public class TankDriveActions {
             // that tip the robot (wheelie) — especially in reverse.
             setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-            // Lock in heading reference from current pose.
-            // The initial LazyBearingTurnAction has already aligned the robot toward
-            // (or away from) the target. We hold this heading throughout the drive
-            // rather than chasing the live bearing, which swings rapidly near the
-            // target and causes orbiting.
+            // Use the robot's current heading as the locked reference.
+            // The initial LazyBearingTurnAction already aligned the robot toward
+            // (or away from) the target using the pre-turn position. If the Pinpoint
+            // reports position drift during the turn, recomputing the bearing here
+            // would give a different (wrong) angle. Trusting the physical heading
+            // the robot is actually on avoids this ~12-15° systematic error.
             Pose2d currentPose = driveTrain.getPose();
+            lockedHeading = currentPose.heading.toDouble();
+
+            // Diagnostic: log init state — compare bearing vs actual heading
             double bearing = bearingTo(currentPose.position, target);
-            lockedHeading = reversed ? normalizeAngle(bearing + Math.PI) : bearing;
+            double expectedHeading = reversed ? normalizeAngle(bearing + Math.PI) : bearing;
+            double bearingDelta = Math.toDegrees(normalizeAngle(expectedHeading - lockedHeading));
+            System.out.println(String.format(
+                    "PosDrive INIT: pos=(%.1f,%.1f) hdg=%.1f° bearing=%.1f° bearingDelta=%.1f° dist=%.1f tgt=(%.1f,%.1f) rev=%b",
+                    currentPose.position.x, currentPose.position.y,
+                    Math.toDegrees(lockedHeading),
+                    Math.toDegrees(reversed ? normalizeAngle(bearing + Math.PI) : bearing),
+                    bearingDelta,
+                    Math.sqrt(Math.pow(target.x - currentPose.position.x, 2) + Math.pow(target.y - currentPose.position.y, 2)),
+                    target.x, target.y,
+                    reversed));
 
             previousDrivePower = 0.0;
             settlingStartTime = -1;
@@ -268,6 +283,7 @@ public class TankDriveActions {
 
             // Update PID coefficients from Dashboard each tick
             distancePID.setPID(DISTANCE_PID);
+            distancePID.setIntegralCutIn(DIST_PID_I_CUTIN);
             headingPID.setPID(HEADING_DRIVE_PID);
 
             Pose2d currentPose = driveTrain.getPose();
@@ -473,6 +489,17 @@ public class TankDriveActions {
 
                 double headingError = Math.toDegrees(Math.abs(
                         normalizeAngle(targetHeading - currentPose.heading.toDouble())));
+
+                System.out.println(String.format(
+                        "BearingTurn INIT: pos=(%.1f,%.1f) hdg=%.1f° bearing=%.1f° target=%.1f° err=%.1f° tgt=(%.1f,%.1f) rev=%b skip=%b",
+                        currentPose.position.x, currentPose.position.y,
+                        Math.toDegrees(currentPose.heading.toDouble()),
+                        Math.toDegrees(bearing),
+                        Math.toDegrees(targetHeading),
+                        headingError,
+                        targetPosition.x, targetPosition.y,
+                        reversed,
+                        headingError <= skipToleranceDeg));
 
                 if (headingError <= skipToleranceDeg) {
                     complete = true;

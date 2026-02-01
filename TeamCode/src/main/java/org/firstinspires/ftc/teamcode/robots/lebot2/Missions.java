@@ -70,7 +70,8 @@ public class Missions implements TelemetryProvider {
         TUNING_TURN,        // Single turns at various angles
         TUNING_RAMSETE,         // Trajectory following with deliberate heading disturbance
         TUNING_STRAIGHT_POS,    // Drive 48" forward, back using PositionDriveAction
-        TUNING_SQUARE_POS       // Drive 24", turn 90° CW, repeat 4x using PositionDriveAction
+        TUNING_SQUARE_POS,      // Drive 24", turn 90° CW, repeat 4x using PositionDriveAction
+        TUNING_DRIFT            // In-place turns to measure Pinpoint position drift
     }
 
     public enum MissionState {
@@ -247,6 +248,25 @@ public class Missions implements TelemetryProvider {
     private TuningSquarePosState tuningSquarePosState = TuningSquarePosState.IDLE;
     private int tuningSquarePosCount = 0;
 
+    // TuningDrift state - in-place turns to measure Pinpoint position drift
+    private enum TuningDriftState {
+        IDLE,
+        TURNING_CW,
+        PAUSE_CW,
+        TURNING_CCW,
+        PAUSE_CCW,
+        COMPLETE
+    }
+    private TuningDriftState tuningDriftState = TuningDriftState.IDLE;
+    private int tuningDriftCount = 0;
+    private Pose2d preTurnPose = null;          // Position just before each turn
+    private double cumulativeDriftX = 0.0;
+    private double cumulativeDriftY = 0.0;
+
+    // Drift tuning parameters (Dashboard tunable)
+    public static double DRIFT_TURN_ANGLE = 90.0;   // Degrees per turn
+    public static int DRIFT_REPS = 4;                // Turns per direction (4x90° = 360°)
+
     // ==================== LOGGING ====================
 
     public static boolean LOGGING_ENABLED = true;  // Dashboard tunable
@@ -331,6 +351,7 @@ public class Missions implements TelemetryProvider {
             case TUNING_RAMSETE: return tuningRamseteState.name();
             case TUNING_STRAIGHT_POS: return tuningStraightPosState.name();
             case TUNING_SQUARE_POS: return tuningSquarePosState.name();
+            case TUNING_DRIFT: return tuningDriftState.name();
             default: return "NONE";
         }
     }
@@ -597,6 +618,21 @@ public class Missions implements TelemetryProvider {
         log("TUNING_SQUARE_POS_START", null, tuningStartPose);
     }
 
+    public void startTuningDrift() {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        currentMission = Mission.TUNING_DRIFT;
+        missionState = MissionState.RUNNING;
+        tuningDriftState = TuningDriftState.IDLE;
+        tuningDriftCount = 0;
+        cumulativeDriftX = 0.0;
+        cumulativeDriftY = 0.0;
+        tuningStartPose = robot.driveTrain.getPose();
+        missionTimer.reset();
+        log("TUNING_DRIFT_START", String.format("angle=%.0f reps=%d", DRIFT_TURN_ANGLE, DRIFT_REPS), tuningStartPose);
+    }
+
     /**
      * Abort the current mission immediately.
      * After aborting, the same mission can be restarted from the current position.
@@ -796,6 +832,10 @@ public class Missions implements TelemetryProvider {
 
             case TUNING_SQUARE_POS:
                 updateTuningSquarePosMission();
+                break;
+
+            case TUNING_DRIFT:
+                updateTuningDriftMission();
                 break;
 
             case NONE:
@@ -1053,6 +1093,7 @@ public class Missions implements TelemetryProvider {
         tuningSquareState = TuningSquareState.IDLE;
         tuningStraightState = TuningStraightState.IDLE;
         tuningTurnState = TuningTurnState.IDLE;
+        tuningDriftState = TuningDriftState.IDLE;
         currentAction = null;
     }
 
@@ -1564,6 +1605,119 @@ public class Missions implements TelemetryProvider {
         }
     }
 
+    private void updateTuningDriftMission() {
+        TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
+
+        switch (tuningDriftState) {
+            case IDLE:
+                // Record pre-turn pose and start first CW turn
+                preTurnPose = driveTrain.getPose();
+                double currentHeading = Math.toDegrees(preTurnPose.heading.toDouble());
+                driveTrain.turnToHeading(currentHeading - DRIFT_TURN_ANGLE, 0.7);
+                tuningDriftState = TuningDriftState.TURNING_CW;
+                tuningDriftCount = 0;
+                log("DRIFT_CW_START", "count=0", null);
+                break;
+
+            case TURNING_CW:
+                if (driveTrain.isTurnComplete()) {
+                    tuningDriftCount++;
+                    Pose2d pose = driveTrain.getPose();
+
+                    // Per-turn drift
+                    double dx = pose.position.x - preTurnPose.position.x;
+                    double dy = pose.position.y - preTurnPose.position.y;
+                    double turnDrift = Math.sqrt(dx * dx + dy * dy);
+                    cumulativeDriftX += dx;
+                    cumulativeDriftY += dy;
+                    double totalDrift = Math.sqrt(cumulativeDriftX * cumulativeDriftX + cumulativeDriftY * cumulativeDriftY);
+
+                    log("DRIFT_CW_DONE", String.format(
+                            "count=%d dx=%.2f dy=%.2f drift=%.2f cumDx=%.2f cumDy=%.2f cumDrift=%.2f",
+                            tuningDriftCount, dx, dy, turnDrift,
+                            cumulativeDriftX, cumulativeDriftY, totalDrift), pose);
+
+                    if (tuningDriftCount >= DRIFT_REPS) {
+                        // Done with CW, pause before CCW
+                        tuningDriftCount = 0;
+                        tuningPauseTimer.reset();
+                        tuningDriftState = TuningDriftState.PAUSE_CW;
+                        log("DRIFT_CW_PHASE_DONE", String.format(
+                                "cumDx=%.2f cumDy=%.2f cumDrift=%.2f", cumulativeDriftX, cumulativeDriftY, totalDrift), null);
+                    } else {
+                        // More CW turns — record new pre-turn pose
+                        preTurnPose = pose;
+                        double hdg = Math.toDegrees(pose.heading.toDouble());
+                        driveTrain.turnToHeading(hdg - DRIFT_TURN_ANGLE, 0.7);
+                    }
+                }
+                break;
+
+            case PAUSE_CW:
+                if (tuningPauseTimer.seconds() > TUNING_PAUSE_SECONDS) {
+                    // Start CCW turns — record pre-turn pose
+                    preTurnPose = driveTrain.getPose();
+                    double hdg = Math.toDegrees(preTurnPose.heading.toDouble());
+                    driveTrain.turnToHeading(hdg + DRIFT_TURN_ANGLE, 0.7);
+                    tuningDriftState = TuningDriftState.TURNING_CCW;
+                    log("DRIFT_CCW_START", "count=0", null);
+                }
+                break;
+
+            case TURNING_CCW:
+                if (driveTrain.isTurnComplete()) {
+                    tuningDriftCount++;
+                    Pose2d pose = driveTrain.getPose();
+
+                    // Per-turn drift
+                    double dxCcw = pose.position.x - preTurnPose.position.x;
+                    double dyCcw = pose.position.y - preTurnPose.position.y;
+                    double turnDriftCcw = Math.sqrt(dxCcw * dxCcw + dyCcw * dyCcw);
+                    cumulativeDriftX += dxCcw;
+                    cumulativeDriftY += dyCcw;
+                    double totalDriftCcw = Math.sqrt(cumulativeDriftX * cumulativeDriftX + cumulativeDriftY * cumulativeDriftY);
+
+                    log("DRIFT_CCW_DONE", String.format(
+                            "count=%d dx=%.2f dy=%.2f drift=%.2f cumDx=%.2f cumDy=%.2f cumDrift=%.2f",
+                            tuningDriftCount, dxCcw, dyCcw, turnDriftCcw,
+                            cumulativeDriftX, cumulativeDriftY, totalDriftCcw), pose);
+
+                    if (tuningDriftCount >= DRIFT_REPS) {
+                        // Done with all turns
+                        tuningPauseTimer.reset();
+                        tuningDriftState = TuningDriftState.PAUSE_CCW;
+                        log("DRIFT_CCW_PHASE_DONE", String.format(
+                                "cumDx=%.2f cumDy=%.2f cumDrift=%.2f", cumulativeDriftX, cumulativeDriftY, totalDriftCcw), null);
+                    } else {
+                        // More CCW turns — record new pre-turn pose
+                        preTurnPose = pose;
+                        double hdgCcw = Math.toDegrees(pose.heading.toDouble());
+                        driveTrain.turnToHeading(hdgCcw + DRIFT_TURN_ANGLE, 0.7);
+                    }
+                }
+                break;
+
+            case PAUSE_CCW:
+                if (tuningPauseTimer.seconds() > TUNING_PAUSE_SECONDS) {
+                    tuningDriftState = TuningDriftState.COMPLETE;
+                }
+                break;
+
+            case COMPLETE:
+                Pose2d finalPose = driveTrain.getPose();
+                double totalX = finalPose.position.x - tuningStartPose.position.x;
+                double totalY = finalPose.position.y - tuningStartPose.position.y;
+                double totalPos = Math.sqrt(totalX * totalX + totalY * totalY);
+                double hdgErr = Math.toDegrees(finalPose.heading.toDouble()) -
+                               Math.toDegrees(tuningStartPose.heading.toDouble());
+                log("DRIFT_COMPLETE", String.format(
+                        "totalDx=%.2f totalDy=%.2f totalDrift=%.2f hdgErr=%.2f° cumDx=%.2f cumDy=%.2f",
+                        totalX, totalY, totalPos, hdgErr, cumulativeDriftX, cumulativeDriftY), finalPose);
+                missionState = MissionState.COMPLETE;
+                break;
+        }
+    }
+
     // ==================== TELEMETRY ====================
 
     @Override
@@ -1629,6 +1783,14 @@ public class Missions implements TelemetryProvider {
             if (currentMission == Mission.TUNING_SQUARE_POS) {
                 telemetry.put("TuningSquarePos State", tuningSquarePosState);
                 telemetry.put("Square Count", tuningSquarePosCount);
+            }
+            if (currentMission == Mission.TUNING_DRIFT) {
+                telemetry.put("Drift State", tuningDriftState);
+                telemetry.put("Turn Count", tuningDriftCount);
+                telemetry.put("Cumulative dX", String.format("%.2f\"", cumulativeDriftX));
+                telemetry.put("Cumulative dY", String.format("%.2f\"", cumulativeDriftY));
+                double cumDist = Math.sqrt(cumulativeDriftX * cumulativeDriftX + cumulativeDriftY * cumulativeDriftY);
+                telemetry.put("Cumulative Drift", String.format("%.2f\"", cumDist));
             }
         }
 
