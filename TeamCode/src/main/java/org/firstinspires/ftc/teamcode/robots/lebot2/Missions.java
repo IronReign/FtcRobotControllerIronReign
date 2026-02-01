@@ -117,7 +117,7 @@ public class Missions implements TelemetryProvider {
 
     // TODO: Set DUMMY_LAUNCH_MODE to false once the real launch behavior is fixed
     // (paddle/firing mechanism needs physical fixes before real launch works)
-    public static boolean DUMMY_LAUNCH_MODE = true;
+    public static boolean DUMMY_LAUNCH_MODE = false;
     public static double DUMMY_LAUNCH_DURATION = 2.0;  // seconds to wait in dummy mode
 
     // OpenSesame state

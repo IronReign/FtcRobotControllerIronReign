@@ -160,12 +160,23 @@ public class DriverControls implements TelemetryProvider {
         }
 
         // D-pad up/down: Manual paddle control (CUP/RAMP positions)
-        if (stickyGamepad1.dpad_up) {
+        /*if (stickyGamepad1.dpad_up) {
             robot.launcher.paddleRamp();
             robot.launcher.setPassThroughMode(true);
         }
         if (stickyGamepad1.dpad_down) {
             robot.launcher.paddleCup();
+            robot.launcher.setPassThroughMode(false);
+        }*/
+
+        if (stickyGamepad1.dpad_up) {
+            //robot.launcher.paddleRamp();
+            robot.launcher.starReverse();
+            robot.launcher.setPassThroughMode(true);
+        }
+        if (stickyGamepad1.dpad_down) {
+            //robot.launcher.paddleCup();
+            robot.launcher.starFeed();
             robot.launcher.setPassThroughMode(false);
         }
 

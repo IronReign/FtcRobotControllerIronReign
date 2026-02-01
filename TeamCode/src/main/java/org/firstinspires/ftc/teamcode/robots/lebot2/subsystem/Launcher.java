@@ -69,6 +69,12 @@ public class Launcher implements Subsystem {
     public static double PADDLE_CUP = 0.4;
     public static double PADDLE_RAMP = 0.64;
     public static double PADDLE_LIFT = 0.7;  // May need tuning if different from RAMP
+
+    //SUPERSTAR Positions
+    public static double STAR_STOP = 0.5;
+    public static double STAR_FEED = 1;
+    public static double STAR_REVERSE = 0;
+
     //PADDLE CODE
 //    public static double PADDLE_DOWN = 0.167;  // ~1000µs - gate closed
 //    public static double PADDLE_UP = 0.53;     // Confirmed working launch position
@@ -120,7 +126,7 @@ public class Launcher implements Subsystem {
 //        MANUAL
 //    }
 
-    // Simplified states for TPU ramp design
+ /*   // Simplified states for TPU ramp design
     public enum LaunchState {
         IDLE,           // Flywheel off, paddle in CUP
         SPINNING_UP,    // Flywheel ramping to speed, paddle in CUP
@@ -129,7 +135,17 @@ public class Launcher implements Subsystem {
         LIFTING,        // Paddle at LIFT to push last ball into flywheel
         COMPLETE,       // Firing done, transitioning based on STAY_SPINNING_AFTER_FIRE
         MANUAL          // Manual control for testing
+    }*/
+
+    public enum LaunchState {
+        IDLE,
+        SPINNING_UP,
+        READY,
+        FIRING,
+        COMPLETE,
+        MANUAL
     }
+
     private LaunchState state = LaunchState.IDLE;
 
     // State data
@@ -140,6 +156,7 @@ public class Launcher implements Subsystem {
     private long stateTimer = 0;
     private boolean fireRequested = false;
     private boolean passThroughMode = false;
+    private long shootAllTimer = 5; //TODO: Tune
 
     // Debug: track speed when firing was allowed
     private double speedAtFireApproval = 0;
@@ -375,7 +392,7 @@ public class Launcher implements Subsystem {
 //                handleManualFlyWheel();
 //                break;
 //        }
-        // Run simplified state machine for TPU ramp design
+ /*       // Run simplified state machine for TPU ramp design
         switch(state) {
             case IDLE:
                 handleIdleState();
@@ -391,6 +408,27 @@ public class Launcher implements Subsystem {
                 break;
             case LIFTING:
                 handleLiftingState();
+                break;
+            case COMPLETE:
+                handleCompleteState();
+                break;
+            case MANUAL:
+                handleManualState();
+                break;
+        }*/
+
+        switch(state) {
+            case IDLE:
+                handleIdleState();
+                break;
+            case SPINNING_UP:
+                handleSpinningUpState();
+                break;
+            case READY:
+                handleReadyState();
+                break;
+            case FIRING:
+                handleFiringState();
                 break;
             case COMPLETE:
                 handleCompleteState();
@@ -421,6 +459,19 @@ public class Launcher implements Subsystem {
         setPaddlePosition(PADDLE_LIFT);
     }
 
+    // ==================== SUPER STAR HELPERS ================
+    public void starStop(){
+        paddle.setPosition(STAR_STOP);
+    }
+
+    public void starFeed(){
+        paddle.setPosition(STAR_FEED);
+    }
+
+    public void starReverse(){
+        paddle.setPosition(STAR_REVERSE);
+    }
+
     /**
      * Enter manual mode for testing paddle and flywheel.
      */
@@ -437,7 +488,8 @@ public class Launcher implements Subsystem {
         releaseResources();
         flywheel.setVelocity(0);
         flywheelHelp.setVelocity(0);
-        setPaddlePosition(passThroughMode ? PADDLE_RAMP : PADDLE_CUP);
+        //setPaddlePosition(passThroughMode ? PADDLE_RAMP : PADDLE_CUP);
+        starStop();
     }
 
     /**
@@ -446,7 +498,8 @@ public class Launcher implements Subsystem {
     private void handleSpinningUpState() {
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_CUP);
+        //setPaddlePosition(PADDLE_CUP);
+        starStop();
 
         if (isFlywheelAtSpeed()) {
             state = LaunchState.READY;
@@ -459,17 +512,17 @@ public class Launcher implements Subsystem {
     private void handleReadyState() {
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_CUP);
+        //setPaddlePosition(PADDLE_CUP);
+        starStop();
 
         if (fireRequested) {
-            shotNumber++;
-            speedAtFireApproval = currentSpeed;
+            //shotNumber++;
+            //speedAtFireApproval = currentSpeed;
             fireRequested = false;
-
             // Claim resources and start firing
             claimResources();
             state = LaunchState.FIRING;
-            stateTimer = futureTime(FIRING_TIME);
+            shootAllTimer = futureTime(FIRING_TIME);
         }
     }
 
@@ -480,17 +533,22 @@ public class Launcher implements Subsystem {
     private void handleFiringState() {
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(PADDLE_RAMP);
+        //setPaddlePosition(PADDLE_RAMP);
+        starFeed();
+
+        if(isPast(shootAllTimer)){
+            state = LaunchState.COMPLETE;
+        }
 
         // Check both timeout and sensor conditions
-        boolean timeoutExpired = isPast(stateTimer);
-        boolean ballsRemain = (loader != null && !loader.isEmpty());
+        //boolean timeoutExpired = isPast(stateTimer);
+        //boolean ballsRemain = (loader != null && !loader.isEmpty());
 
         // Transition to LIFTING when timeout OR (past initial window and balls remain)
-        if (timeoutExpired) {
-            state = LaunchState.LIFTING;
-            stateTimer = futureTime(LIFT_TIME);
-        }
+        //if (timeoutExpired) {
+            //state = LaunchState.LIFTING;
+            //stateTimer = futureTime(LIFT_TIME);
+        //}
     }
 
     /**
@@ -511,7 +569,8 @@ public class Launcher implements Subsystem {
      */
     private void handleCompleteState() {
         releaseResources();
-        setPaddlePosition(PADDLE_CUP);
+        //setPaddlePosition(PADDLE_CUP);
+        starStop();
 
         if (STAY_SPINNING_AFTER_FIRE) {
             // Keep flywheel spinning, go back to READY

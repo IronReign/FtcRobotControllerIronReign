@@ -315,10 +315,10 @@ public class Robot implements TelemetryProvider {
     private void handleLaunchAllBehavior2() {
         switch (launchAllState) {
             case IDLE:
-                if (loader.isEmpty()) {
-                    behavior = Behavior.MANUAL;
-                    return;
-                }
+                //if (loader.isEmpty()) {
+                    //behavior = Behavior.MANUAL;
+                    //return;
+                //}
 
                 // Start flywheel spinning
                 launcher.setBehavior(Launcher.Behavior.SPINNING);

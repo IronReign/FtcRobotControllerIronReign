@@ -146,7 +146,7 @@ public class TankDrive implements DriveTrainBase {
         headingPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
         headingPID.setPID(HEADING_PID);
 
-        double correction = headingPID.performPID();
+        double correction = -headingPID.performPID();
 
         if (headingPID.onTarget()) {
             setMotorPowers(0, 0);
