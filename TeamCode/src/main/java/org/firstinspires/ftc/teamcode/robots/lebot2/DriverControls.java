@@ -270,6 +270,10 @@ public class DriverControls implements TelemetryProvider {
                 robot.missions.initLogging();
                 robot.missions.startTuningDrift();
             }
+            if (stickyGamepad1.left_bumper) {
+                robot.missions.initLogging();
+                robot.missions.startCheckHealth(gamepad1);
+            }
         }
 
         // Back button aborts current mission

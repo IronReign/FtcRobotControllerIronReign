@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.LazyServo;
 
 import java.util.ArrayList;
@@ -636,6 +637,28 @@ public class Launcher implements Subsystem {
         return state != LaunchState.IDLE && state != LaunchState.READY;
     }
 
+    // ==================== HEALTH CHECK ACCESSORS ====================
+
+    /** Get primary flywheel encoder position. */
+    public int getFlywheelEncoder() {
+        return flywheel.getCurrentPosition();
+    }
+
+    /** Get helper flywheel encoder position. */
+    public int getHelperEncoder() {
+        return flywheelHelp.getCurrentPosition();
+    }
+
+    /** Get primary flywheel current draw (amps). I2C call. */
+    public double getFlywheelCurrent() {
+        return flywheel.getCurrent(CurrentUnit.AMPS);
+    }
+
+    /** Get helper flywheel current draw (amps). I2C call. */
+    public double getHelperCurrent() {
+        return flywheelHelp.getCurrent(CurrentUnit.AMPS);
+    }
+
     /**
      * Enable pass-through mode (paddle at RAMP position).
      * Used for passing balls to partner robot.
@@ -735,6 +758,8 @@ public class Launcher implements Subsystem {
         telemetry.put("Trigger", TRIGGER_TYPE);
         telemetry.put("Behavior", behavior);
         telemetry.put("Flywheel Speed", String.format("%.0f / %.0f", currentSpeed, targetSpeed));
+        telemetry.put("flywheelCurrent", currentSpeed);
+        telemetry.put("flywheelTarget", targetSpeed);
         telemetry.put("Ready", isReady() ? "YES" : "no");
 
         telemetry.put("P, I, D, F (orig)", String.format("%.04f, %.04f, %.04f, %.04f", pidfOrig.p, pidfOrig.i, pidfOrig.d, pidfOrig.f));
@@ -747,8 +772,12 @@ public class Launcher implements Subsystem {
         if (debug) {
             telemetry.put("Internal State", state);
             telemetry.put("Primary Speed", String.format("%.0f",currentSpeed));
-            telemetry.put("Helper Speed", String.format("%.0f",currentSpeed));
+            telemetry.put("Helper Speed", String.format("%.0f",helperSpeed));
             telemetry.put("Motor Diff", String.format("%.0f",currentSpeed-helperSpeed));
+            telemetry.put("flywheelAmps", flywheel.getCurrent(CurrentUnit.AMPS));
+            telemetry.put("helperAmps", flywheelHelp.getCurrent(CurrentUnit.AMPS));
+            telemetry.put("flywheelEncoder", flywheel.getCurrentPosition());
+            telemetry.put("helperEncoder", flywheelHelp.getCurrentPosition());
             telemetry.put("At Speed", isFlywheelAtSpeed() ? "YES" : "no");
             telemetry.put("Shot #", shotNumber);
             telemetry.put("Speed@Approval", String.format("%.0f", speedAtFireApproval));

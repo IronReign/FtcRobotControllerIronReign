@@ -185,6 +185,23 @@ public class Intake implements Subsystem {
         return currentPower != 0;
     }
 
+    // ==================== CURRENT MONITORING (for health check) ====================
+
+    /**
+     * Enable/disable current monitoring on the intake motor.
+     * Only enable during health checks — adds I2C overhead.
+     */
+    public void enableCurrentRead(boolean enabled) {
+        intakeMotor.enableCurrentRead(enabled);
+    }
+
+    /**
+     * Get cached motor current (amps). Requires enableCurrentRead(true).
+     */
+    public double getMotorCurrent() {
+        return intakeMotor.getCurrent();
+    }
+
     // ==================== SUPPRESSION (called by Launcher) ====================
 
     /**

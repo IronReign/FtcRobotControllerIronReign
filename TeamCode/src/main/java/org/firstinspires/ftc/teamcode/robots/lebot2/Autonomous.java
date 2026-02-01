@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Launcher;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.TelemetryProvider;
 import org.firstinspires.ftc.teamcode.util.CsvLogKeeper;
 
@@ -194,8 +195,9 @@ public class Autonomous implements TelemetryProvider {
                     robot.missions.startLaunchPreloads();
                     setState(AutonState.WAITING_LAUNCH);
                 } else {
-                    // Nothing to launch, proceed to ball collection
+                    // Nothing to launch, power down flywheel and proceed to ball collection
                     log("LAUNCH_SKIP", "loader_empty");
+                    robot.launcher.setBehavior(Launcher.Behavior.IDLE);
                     setState(AutonState.START_BALL_ROW);
                 }
                 break;
@@ -205,11 +207,14 @@ public class Autonomous implements TelemetryProvider {
                     log("LAUNCH_COMPLETE", null);
                     launchCycles++;
                     robot.applyVisionPoseCorrection();
+                    // Power down flywheel during ball collection to conserve power
+                    robot.launcher.setBehavior(Launcher.Behavior.IDLE);
                     setState(AutonState.START_BALL_ROW);
                 } else if (robot.missions.isFailed()) {
                     log("LAUNCH_FAILED", "timeout");
                     launchCycles++;
                     robot.applyVisionPoseCorrection();
+                    robot.launcher.setBehavior(Launcher.Behavior.IDLE);
                     setState(AutonState.START_BALL_ROW);
                 }
                 break;
@@ -295,6 +300,7 @@ public class Autonomous implements TelemetryProvider {
                 // Autonomous done - robot will transition to teleop
                 // Close logs on first entry to COMPLETE
                 if (previousState != AutonState.COMPLETE) {
+                    robot.launcher.setBehavior(Launcher.Behavior.IDLE);
                     closeLog();
                 }
                 break;

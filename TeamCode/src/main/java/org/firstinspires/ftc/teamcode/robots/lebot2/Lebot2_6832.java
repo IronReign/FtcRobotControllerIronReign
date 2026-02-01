@@ -299,6 +299,11 @@ public class Lebot2_6832 extends OpMode {
             String line = Misc.formatInvariant("%s: %s", entry.getKey(), entry.getValue());
             telemetry.addLine(line);
             packet.addLine(line);
+
+            // Auto-register numeric values for Dashboard graphing
+            if (entry.getValue() instanceof Number) {
+                packet.put(name + "_" + entry.getKey(), ((Number) entry.getValue()).doubleValue());
+            }
         }
 
         telemetry.addLine();

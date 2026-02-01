@@ -229,6 +229,23 @@ public class Loader implements Subsystem {
         beltMotor.setPower(0);
     }
 
+    // ==================== CURRENT MONITORING (for health check) ====================
+
+    /**
+     * Enable/disable current monitoring on the belt motor.
+     * Only enable during health checks — adds I2C overhead.
+     */
+    public void enableBeltCurrentRead(boolean enabled) {
+        beltMotor.enableCurrentRead(enabled);
+    }
+
+    /**
+     * Get cached belt motor current (amps). Requires enableBeltCurrentRead(true).
+     */
+    public double getBeltCurrent() {
+        return beltMotor.getCurrent();
+    }
+
     // ==================== LEGACY METHODS (for compatibility) ====================
 
     /**

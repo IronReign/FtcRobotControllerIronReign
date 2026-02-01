@@ -5,8 +5,11 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.PinpointLocalizer;
 import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDriveActions;
 import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Intake;
@@ -71,7 +74,8 @@ public class Missions implements TelemetryProvider {
         TUNING_RAMSETE,         // Trajectory following with deliberate heading disturbance
         TUNING_STRAIGHT_POS,    // Drive 48" forward, back using PositionDriveAction
         TUNING_SQUARE_POS,      // Drive 24", turn 90° CW, repeat 4x using PositionDriveAction
-        TUNING_DRIFT            // In-place turns to measure Pinpoint position drift
+        TUNING_DRIFT,           // In-place turns to measure Pinpoint position drift
+        CHECK_HEALTH            // Pre-match health check
     }
 
     public enum MissionState {
@@ -267,6 +271,55 @@ public class Missions implements TelemetryProvider {
     public static double DRIFT_TURN_ANGLE = 90.0;   // Degrees per turn
     public static int DRIFT_REPS = 4;                // Turns per direction (4x90° = 360°)
 
+    // HealthCheck state - pre-match system verification
+    private enum HealthCheckState {
+        IDLE,
+        CHECK_BATTERY,
+        CHECK_PINPOINT,
+        START_TURNS,
+        WAITING_TURNS,
+        EVALUATE_TURNS,
+        START_FLYWHEEL,
+        WAITING_FLYWHEEL,
+        EVALUATE_FLYWHEEL,
+        START_LAUNCH,
+        WAITING_LAUNCH,
+        EVALUATE_LAUNCH,
+        WAITING_DRIVER_CONFIRM,
+        START_INTAKE,
+        WAITING_INTAKE,
+        EVALUATE_INTAKE,
+        CHECK_VISION,
+        SHOW_RESULTS,
+        COMPLETE
+    }
+    private HealthCheckState healthCheckState = HealthCheckState.IDLE;
+
+    // Health check configuration (Dashboard tunable)
+    public static double HEALTH_BATTERY_MIN = 12.8;
+    public static double HEALTH_HEADING_TOLERANCE = 5.0;       // degrees after 4x90° turns
+    public static double HEALTH_POSITION_TOLERANCE = 3.0;      // inches drift after turns
+    public static double HEALTH_FLYWHEEL_SPEED = 750;          // deg/s reduced target
+    public static double HEALTH_FLYWHEEL_AMP_DIFF = 0.5;       // max amp difference between motors
+    public static double HEALTH_FLYWHEEL_ENCODER_RATIO = 0.7;  // min ratio of slower/faster encoder
+    public static double HEALTH_INTAKE_MIN_AMPS = 0.1;         // minimum to confirm motor running
+    public static double HEALTH_CHECK_TIMEOUT = 5.0;           // seconds per phase timeout
+
+    // Health check result tracking
+    private LinkedHashMap<String, Boolean> healthResults = new LinkedHashMap<>();
+    private LinkedHashMap<String, String> healthDetails = new LinkedHashMap<>();
+    private Pose2d healthPreTurnPose = null;
+    private int healthTurnCount = 0;
+    private double healthSavedLaunchSpeed = 0;
+    private int healthFlywheelStartEncoder = 0;
+    private int healthHelperStartEncoder = 0;
+    private double healthFlywheelAmps = 0;
+    private double healthHelperAmps = 0;
+    private double healthBeltAmps = 0;
+    private double healthIntakeAmps = 0;
+    private ElapsedTime healthPhaseTimer = new ElapsedTime();
+    private Gamepad healthGamepad = null;
+
     // ==================== LOGGING ====================
 
     public static boolean LOGGING_ENABLED = true;  // Dashboard tunable
@@ -352,6 +405,7 @@ public class Missions implements TelemetryProvider {
             case TUNING_STRAIGHT_POS: return tuningStraightPosState.name();
             case TUNING_SQUARE_POS: return tuningSquarePosState.name();
             case TUNING_DRIFT: return tuningDriftState.name();
+            case CHECK_HEALTH: return healthCheckState.name();
             default: return "NONE";
         }
     }
@@ -634,6 +688,26 @@ public class Missions implements TelemetryProvider {
     }
 
     /**
+     * Start the pre-match health check mission.
+     * Sequences through battery, pinpoint, turns, flywheel, launch, intake, and vision checks.
+     * @param gamepad Gamepad for driver confirmation input during star direction check
+     */
+    public void startCheckHealth(Gamepad gamepad) {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        currentMission = Mission.CHECK_HEALTH;
+        missionState = MissionState.RUNNING;
+        healthCheckState = HealthCheckState.IDLE;
+        healthResults.clear();
+        healthDetails.clear();
+        healthGamepad = gamepad;
+        healthTurnCount = 0;
+        missionTimer.reset();
+        log("HEALTH_CHECK_START", null, null);
+    }
+
+    /**
      * Abort the current mission immediately.
      * After aborting, the same mission can be restarted from the current position.
      *
@@ -836,6 +910,10 @@ public class Missions implements TelemetryProvider {
 
             case TUNING_DRIFT:
                 updateTuningDriftMission();
+                break;
+
+            case CHECK_HEALTH:
+                updateCheckHealthMission();
                 break;
 
             case NONE:
@@ -1043,14 +1121,10 @@ public class Missions implements TelemetryProvider {
                 break;
 
             case INTAKING_THROUGH_ROW:
-                boolean trajectoryComplete = !driveTrain.isActionRunning();
-
-                // Check if we've collected enough balls or reached end of row
-                int ballsCollected = robot.loader.getBallCount() - ballCountAtStart;
-                if (trajectoryComplete || ballsCollected >= BALLS_PER_GROUP || robot.loader.isFull()) {
-                    String reason = trajectoryComplete ? "trajectory_done" :
-                                   (ballsCollected >= BALLS_PER_GROUP ? "balls_collected" : "loader_full");
-                    log("BALLGROUP_INTAKE_DONE", reason + ",balls=" + ballsCollected, null);
+                // Drive through the full row while intaking — stop only when trajectory completes
+                if (!driveTrain.isActionRunning()) {
+                    int ballsCollected = robot.loader.getBallCount() - ballCountAtStart;
+                    log("BALLGROUP_INTAKE_DONE", "trajectory_done,balls=" + ballsCollected, null);
                     robot.driveTrain.drive(0, 0, 0);
                     robot.intake.off();
                     robot.loader.releaseBeltFromIntake();
@@ -1094,6 +1168,7 @@ public class Missions implements TelemetryProvider {
         tuningStraightState = TuningStraightState.IDLE;
         tuningTurnState = TuningTurnState.IDLE;
         tuningDriftState = TuningDriftState.IDLE;
+        healthCheckState = HealthCheckState.IDLE;
         currentAction = null;
     }
 
@@ -1718,6 +1793,286 @@ public class Missions implements TelemetryProvider {
         }
     }
 
+    // ==================== HEALTH CHECK IMPLEMENTATION ====================
+
+    private void updateCheckHealthMission() {
+        TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
+
+        switch (healthCheckState) {
+            case IDLE:
+                healthCheckState = HealthCheckState.CHECK_BATTERY;
+                break;
+
+            // ---- Battery ----
+            case CHECK_BATTERY: {
+                double voltage = robot.getVoltage();
+                boolean pass = voltage >= HEALTH_BATTERY_MIN;
+                healthResults.put("Battery", pass);
+                healthDetails.put("Battery", String.format("%.1fV (min %.1f)", voltage, HEALTH_BATTERY_MIN));
+                log("HEALTH_BATTERY", (pass ? "PASS" : "FAIL") + " " + String.format("%.1fV", voltage), null);
+                healthCheckState = HealthCheckState.CHECK_PINPOINT;
+                break;
+            }
+
+            // ---- Pinpoint ----
+            case CHECK_PINPOINT: {
+                boolean pass = false;
+                String detail;
+                if (driveTrain.localizer instanceof PinpointLocalizer) {
+                    PinpointLocalizer pp = (PinpointLocalizer) driveTrain.localizer;
+                    GoBildaPinpointDriver.DeviceStatus status = pp.driver.getDeviceStatus();
+                    int parTicks = pp.getPar();
+                    pass = (status == GoBildaPinpointDriver.DeviceStatus.READY);
+                    detail = "status=" + status + " parTicks=" + parTicks;
+                } else {
+                    detail = "not PinpointLocalizer";
+                }
+                healthResults.put("Pinpoint", pass);
+                healthDetails.put("Pinpoint", detail);
+                log("HEALTH_PINPOINT", (pass ? "PASS" : "FAIL") + " " + detail, null);
+                healthCheckState = HealthCheckState.START_TURNS;
+                break;
+            }
+
+            // ---- Turns (4x 90° CW) ----
+            case START_TURNS: {
+                healthPreTurnPose = driveTrain.getPose();
+                healthTurnCount = 0;
+                double heading = Math.toDegrees(healthPreTurnPose.heading.toDouble());
+                driveTrain.turnToHeading(heading - 90, 0.7);
+                healthCheckState = HealthCheckState.WAITING_TURNS;
+                healthPhaseTimer.reset();
+                log("HEALTH_TURNS_START", null, healthPreTurnPose);
+                break;
+            }
+
+            case WAITING_TURNS:
+                if (driveTrain.isTurnComplete()) {
+                    healthTurnCount++;
+                    if (healthTurnCount >= 4) {
+                        healthCheckState = HealthCheckState.EVALUATE_TURNS;
+                    } else {
+                        double heading = Math.toDegrees(driveTrain.getPose().heading.toDouble());
+                        driveTrain.turnToHeading(heading - 90, 0.7);
+                    }
+                } else if (healthPhaseTimer.seconds() > HEALTH_CHECK_TIMEOUT * 4) {
+                    // Timeout on turns
+                    healthResults.put("Turns", false);
+                    healthDetails.put("Turns", "TIMEOUT after " + healthTurnCount + " turns");
+                    log("HEALTH_TURNS_TIMEOUT", "completed=" + healthTurnCount, null);
+                    healthCheckState = HealthCheckState.START_FLYWHEEL;
+                }
+                break;
+
+            case EVALUATE_TURNS: {
+                Pose2d postPose = driveTrain.getPose();
+                double headingError = Math.abs(Math.toDegrees(postPose.heading.toDouble()) -
+                        Math.toDegrees(healthPreTurnPose.heading.toDouble()));
+                double dx = postPose.position.x - healthPreTurnPose.position.x;
+                double dy = postPose.position.y - healthPreTurnPose.position.y;
+                double positionDrift = Math.sqrt(dx * dx + dy * dy);
+
+                boolean headingPass = headingError < HEALTH_HEADING_TOLERANCE;
+                boolean positionPass = positionDrift < HEALTH_POSITION_TOLERANCE;
+
+                healthResults.put("Turn Heading", headingPass);
+                healthDetails.put("Turn Heading", String.format("%.1f° err (max %.1f)", headingError, HEALTH_HEADING_TOLERANCE));
+                healthResults.put("Turn Position", positionPass);
+                healthDetails.put("Turn Position", String.format("%.1f\" drift (max %.1f)", positionDrift, HEALTH_POSITION_TOLERANCE));
+                log("HEALTH_TURNS_DONE", String.format("hdgErr=%.1f posDrift=%.1f", headingError, positionDrift), postPose);
+                healthCheckState = HealthCheckState.START_FLYWHEEL;
+                break;
+            }
+
+            // ---- Flywheel ----
+            case START_FLYWHEEL: {
+                // Save current speed and set reduced test speed
+                healthSavedLaunchSpeed = Launcher.MIN_LAUNCH_SPEED;
+                Launcher.MIN_LAUNCH_SPEED = HEALTH_FLYWHEEL_SPEED;
+                // Record starting encoder positions
+                healthFlywheelStartEncoder = robot.launcher.getFlywheelEncoder();
+                healthHelperStartEncoder = robot.launcher.getHelperEncoder();
+                robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
+                healthPhaseTimer.reset();
+                log("HEALTH_FLYWHEEL_START", "target=" + HEALTH_FLYWHEEL_SPEED, null);
+                healthCheckState = HealthCheckState.WAITING_FLYWHEEL;
+                break;
+            }
+
+            case WAITING_FLYWHEEL:
+                if (robot.launcher.isReady()) {
+                    healthCheckState = HealthCheckState.EVALUATE_FLYWHEEL;
+                } else if (healthPhaseTimer.seconds() > HEALTH_CHECK_TIMEOUT) {
+                    healthCheckState = HealthCheckState.EVALUATE_FLYWHEEL;
+                }
+                break;
+
+            case EVALUATE_FLYWHEEL: {
+                boolean reachedSpeed = robot.launcher.isReady();
+                // Read amps (flywheel motors are DcMotorEx, getCurrent available via debug telemetry)
+                healthFlywheelAmps = robot.launcher.getFlywheelCurrent();
+                healthHelperAmps = robot.launcher.getHelperCurrent();
+                double ampDiff = Math.abs(healthFlywheelAmps - healthHelperAmps);
+
+                int flywheelDelta = Math.abs(robot.launcher.getFlywheelEncoder() - healthFlywheelStartEncoder);
+                int helperDelta = Math.abs(robot.launcher.getHelperEncoder() - healthHelperStartEncoder);
+                double encoderRatio = (Math.max(flywheelDelta, helperDelta) > 0) ?
+                        (double) Math.min(flywheelDelta, helperDelta) / Math.max(flywheelDelta, helperDelta) : 0;
+
+                boolean ampPass = ampDiff < HEALTH_FLYWHEEL_AMP_DIFF && healthFlywheelAmps > 0.05 && healthHelperAmps > 0.05;
+                boolean encoderPass = encoderRatio >= HEALTH_FLYWHEEL_ENCODER_RATIO;
+
+                healthResults.put("Flywheel Speed", reachedSpeed);
+                healthDetails.put("Flywheel Speed", reachedSpeed ? "reached " + HEALTH_FLYWHEEL_SPEED + " deg/s" : "FAILED to reach speed");
+                healthResults.put("Flywheel Amps", ampPass);
+                healthDetails.put("Flywheel Amps", String.format("main=%.2fA helper=%.2fA diff=%.2f", healthFlywheelAmps, healthHelperAmps, ampDiff));
+                healthResults.put("Flywheel Encoders", encoderPass);
+                healthDetails.put("Flywheel Encoders", String.format("ratio=%.2f (main=%d helper=%d)", encoderRatio, flywheelDelta, helperDelta));
+
+                log("HEALTH_FLYWHEEL_DONE", String.format("speed=%s amps=%.2f/%.2f encRatio=%.2f",
+                        reachedSpeed, healthFlywheelAmps, healthHelperAmps, encoderRatio), null);
+                healthCheckState = HealthCheckState.START_LAUNCH;
+                break;
+            }
+
+            // ---- Launch (fire to test star + conveyor) ----
+            case START_LAUNCH: {
+                // Enable belt current monitoring
+                robot.loader.enableBeltCurrentRead(true);
+                robot.launcher.fire();
+                healthPhaseTimer.reset();
+                healthBeltAmps = 0;
+                log("HEALTH_LAUNCH_START", null, null);
+                healthCheckState = HealthCheckState.WAITING_LAUNCH;
+                break;
+            }
+
+            case WAITING_LAUNCH: {
+                // Sample belt current while launcher is firing
+                double currentBeltAmps = robot.loader.getBeltCurrent();
+                healthBeltAmps = Math.max(healthBeltAmps, currentBeltAmps);
+
+                Launcher.LaunchState launcherState = robot.launcher.getState();
+                boolean done = (launcherState == Launcher.LaunchState.IDLE ||
+                        launcherState == Launcher.LaunchState.READY);
+                if (done || healthPhaseTimer.seconds() > HEALTH_CHECK_TIMEOUT) {
+                    healthCheckState = HealthCheckState.EVALUATE_LAUNCH;
+                }
+                break;
+            }
+
+            case EVALUATE_LAUNCH: {
+                robot.loader.enableBeltCurrentRead(false);
+                boolean conveyorPass = healthBeltAmps > HEALTH_INTAKE_MIN_AMPS;
+                healthResults.put("Conveyor (launch)", conveyorPass);
+                healthDetails.put("Conveyor (launch)", String.format("peak=%.2fA (min %.2f)", healthBeltAmps, HEALTH_INTAKE_MIN_AMPS));
+
+                // Shut down flywheel, restore speed
+                robot.launcher.setBehavior(Launcher.Behavior.IDLE);
+                Launcher.MIN_LAUNCH_SPEED = healthSavedLaunchSpeed;
+
+                log("HEALTH_LAUNCH_DONE", String.format("beltAmps=%.2f", healthBeltAmps), null);
+                healthCheckState = HealthCheckState.WAITING_DRIVER_CONFIRM;
+                break;
+            }
+
+            // ---- Driver confirmation for star direction ----
+            case WAITING_DRIVER_CONFIRM:
+                // Telemetry will show prompt; driver presses A (pass) or B (fail)
+                if (healthGamepad != null) {
+                    if (healthGamepad.a) {
+                        healthResults.put("Star Direction", true);
+                        healthDetails.put("Star Direction", "driver confirmed OK");
+                        log("HEALTH_STAR", "PASS", null);
+                        healthCheckState = HealthCheckState.START_INTAKE;
+                    } else if (healthGamepad.b) {
+                        healthResults.put("Star Direction", false);
+                        healthDetails.put("Star Direction", "driver reported WRONG direction");
+                        log("HEALTH_STAR", "FAIL", null);
+                        healthCheckState = HealthCheckState.START_INTAKE;
+                    }
+                    // Otherwise keep waiting
+                } else {
+                    // No gamepad, skip
+                    healthResults.put("Star Direction", false);
+                    healthDetails.put("Star Direction", "no gamepad — skipped");
+                    healthCheckState = HealthCheckState.START_INTAKE;
+                }
+                break;
+
+            // ---- Intake + Conveyor ----
+            case START_INTAKE: {
+                robot.intake.enableCurrentRead(true);
+                robot.loader.enableBeltCurrentRead(true);
+                robot.intake.on();
+                robot.loader.requestBeltForIntake();
+                healthIntakeAmps = 0;
+                healthBeltAmps = 0;
+                healthPhaseTimer.reset();
+                log("HEALTH_INTAKE_START", null, null);
+                healthCheckState = HealthCheckState.WAITING_INTAKE;
+                break;
+            }
+
+            case WAITING_INTAKE:
+                // Sample peak current
+                healthIntakeAmps = Math.max(healthIntakeAmps, robot.intake.getMotorCurrent());
+                healthBeltAmps = Math.max(healthBeltAmps, robot.loader.getBeltCurrent());
+                if (healthPhaseTimer.seconds() > 1.0) {
+                    healthCheckState = HealthCheckState.EVALUATE_INTAKE;
+                }
+                break;
+
+            case EVALUATE_INTAKE: {
+                robot.intake.off();
+                robot.loader.releaseBeltFromIntake();
+                robot.intake.enableCurrentRead(false);
+                robot.loader.enableBeltCurrentRead(false);
+
+                boolean intakePass = healthIntakeAmps > HEALTH_INTAKE_MIN_AMPS;
+                boolean beltPass = healthBeltAmps > HEALTH_INTAKE_MIN_AMPS;
+                healthResults.put("Intake Motor", intakePass);
+                healthDetails.put("Intake Motor", String.format("peak=%.2fA (min %.2f)", healthIntakeAmps, HEALTH_INTAKE_MIN_AMPS));
+                healthResults.put("Conveyor (intake)", beltPass);
+                healthDetails.put("Conveyor (intake)", String.format("peak=%.2fA (min %.2f)", healthBeltAmps, HEALTH_INTAKE_MIN_AMPS));
+                log("HEALTH_INTAKE_DONE", String.format("intakeAmps=%.2f beltAmps=%.2f", healthIntakeAmps, healthBeltAmps), null);
+                healthCheckState = HealthCheckState.CHECK_VISION;
+                break;
+            }
+
+            // ---- Vision ----
+            case CHECK_VISION: {
+                boolean hasTarget = robot.vision.hasTarget();
+                boolean hasBotPose = robot.vision.hasBotPose();
+                // Informational only — not a pass/fail since we can't guarantee a target is visible
+                healthResults.put("Vision", true); // Always "pass" — info only
+                healthDetails.put("Vision", "target=" + (hasTarget ? "YES" : "no") +
+                        " botpose=" + (hasBotPose ? "YES" : "no"));
+                log("HEALTH_VISION", "target=" + hasTarget + " botpose=" + hasBotPose, null);
+                healthCheckState = HealthCheckState.SHOW_RESULTS;
+                break;
+            }
+
+            // ---- Results ----
+            case SHOW_RESULTS: {
+                // Count failures
+                int failures = 0;
+                for (Boolean pass : healthResults.values()) {
+                    if (!pass) failures++;
+                }
+                String summary = (failures == 0) ? "ALL CHECKS PASSED" : failures + " CHECK(S) FAILED";
+                log("HEALTH_COMPLETE", summary, null);
+                healthCheckState = HealthCheckState.COMPLETE;
+                break;
+            }
+
+            case COMPLETE:
+                // Stay in COMPLETE — results visible in telemetry until another mission starts
+                missionState = MissionState.COMPLETE;
+                break;
+        }
+    }
+
     // ==================== TELEMETRY ====================
 
     @Override
@@ -1791,6 +2146,23 @@ public class Missions implements TelemetryProvider {
                 telemetry.put("Cumulative dY", String.format("%.2f\"", cumulativeDriftY));
                 double cumDist = Math.sqrt(cumulativeDriftX * cumulativeDriftX + cumulativeDriftY * cumulativeDriftY);
                 telemetry.put("Cumulative Drift", String.format("%.2f\"", cumDist));
+            }
+            if (currentMission == Mission.CHECK_HEALTH) {
+                telemetry.put("HealthCheck State", healthCheckState);
+                if (healthCheckState == HealthCheckState.WAITING_DRIVER_CONFIRM) {
+                    telemetry.put(">>> CONFIRM", "Did star spin correctly? A=YES  B=NO");
+                }
+                for (Map.Entry<String, String> entry : healthDetails.entrySet()) {
+                    String prefix = healthResults.getOrDefault(entry.getKey(), false) ? "PASS" : "FAIL";
+                    telemetry.put(entry.getKey(), prefix + " — " + entry.getValue());
+                }
+                if (healthCheckState == HealthCheckState.COMPLETE || healthCheckState == HealthCheckState.SHOW_RESULTS) {
+                    int failures = 0;
+                    for (Boolean pass : healthResults.values()) {
+                        if (!pass) failures++;
+                    }
+                    telemetry.put("RESULT", (failures == 0) ? "ALL CHECKS PASSED" : failures + " CHECK(S) FAILED");
+                }
             }
         }
 
