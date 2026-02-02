@@ -44,13 +44,13 @@ public class TankDriveActions {
 
     // Dashboard-tunable turn skip thresholds (degrees)
     public static double INITIAL_TURN_SKIP_TOLERANCE = 2.0;  // Skip initial turn if within this
-    public static double FINAL_TURN_SKIP_TOLERANCE = 1.0;    // Skip final turn if within this
+    public static double FINAL_TURN_SKIP_TOLERANCE = 2.0;    // Skip final turn if within this
 
     // Position drive PID coefficients (Dashboard-tunable)
-    public static PIDCoefficients DISTANCE_PID = new PIDCoefficients(0.04, 0.0, 2.0);
-    public static double DIST_PID_I_CUTIN = 0.0;
-    public static PIDCoefficients HEADING_DRIVE_PID = new PIDCoefficients(0.03, 0.0, 0.001);
-
+    public static PIDCoefficients DISTANCE_PID = new PIDCoefficients(0.04, 0.04, 2.0);
+    public static double DIST_PID_I_CUTIN = 8.0;  // need to be within 8" for integration to enable
+    public static PIDCoefficients HEADING_DRIVE_PID = new PIDCoefficients(0.03, 0.03, 0.001);
+    public static double HEAD_PID_I_CUTIN = 5.0; // need to be withing 5 degrees for integration to go active
     // Position drive thresholds
     public static double POSITION_TOLERANCE = 1.5;  // inches — completion threshold
     public static double MAX_DRIVE_POWER = 0.8;     // cap to prevent wheelies
@@ -62,6 +62,7 @@ public class TankDriveActions {
 
     // Settling timeout — safety net if PID oscillates and never converges
     public static double SETTLING_TIMEOUT_MS = 500;
+
 
     private final TankDrivePinpoint driveTrain;
 
@@ -285,6 +286,7 @@ public class TankDriveActions {
             distancePID.setPID(DISTANCE_PID);
             distancePID.setIntegralCutIn(DIST_PID_I_CUTIN);
             headingPID.setPID(HEADING_DRIVE_PID);
+            headingPID.setIntegralCutIn(HEAD_PID_I_CUTIN);
 
             Pose2d currentPose = driveTrain.getPose();
             double currentHeading = currentPose.heading.toDouble();
@@ -325,6 +327,7 @@ public class TankDriveActions {
                 previousDrivePower = 0.0;
                 return false;
             }
+
 
             // Heading error relative to locked heading (set at init from initial bearing)
             double headingError = normalizeAngle(lockedHeading - currentHeading);

@@ -107,13 +107,13 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         // turn controller gains
         public double turnGain = 25.0;
         public double turnVelGain = 3.0;
-        public double turnIGain = 0.0;           // Integral gain for steady-state accuracy
+        public double turnIGain = 1.0;           // Integral gain for steady-state accuracy
         public double turnICutIn = 5.0;         // Only integrate when error < this (degrees)
-        public double turnFeedforwardScale = 1.0; // Scale feedforward (0=pure feedback, 1=full feedforward)
+        public double turnFeedforwardScale = 0.0; // Scale feedforward (0=pure feedback, 1=full feedforward)
 
         // turn completion (position-based after profile ends)
-        public double turnCompleteTolerance = 2.0;      // Heading error tolerance (degrees)
-        public double turnCompleteVelTolerance = 0.1;   // Angular velocity tolerance (rad/s)
+        public double turnCompleteTolerance = 1.5;      // Heading error tolerance (degrees)
+        public double turnCompleteVelTolerance = 0.2;   // Angular velocity tolerance (rad/s)
         public double turnCompleteTimeout = 2.0;        // Max seconds to settle after profile (safety)
     }
 
@@ -125,7 +125,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     // The I=0.04 exists but may need adjustment for steady-state error.
 
     public static PIDCoefficients HEADING_PID = new PIDCoefficients(0.03, 0.04, 0.0);
-    public static double HEADING_TOLERANCE = 3.0; // degrees - TODO - tighten up - increased to allow completion with weak PID
+    public static double HEADING_TOLERANCE = 1.5; // degrees
 
     // ==================== ROADRUNNER INFRASTRUCTURE ====================
 
