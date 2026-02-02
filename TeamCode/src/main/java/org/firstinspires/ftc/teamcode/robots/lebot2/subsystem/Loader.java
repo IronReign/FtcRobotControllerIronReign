@@ -172,6 +172,9 @@ public class Loader implements Subsystem {
      */
     public void requestBeltForIntake() {
         intakeRequestsBelt = true;
+        // Reset full confirmation so LOAD_ALL gets a fresh debounce window
+        fullConditionStartMs = 0;
+        isFullConfirmed = false;
     }
 
     /**

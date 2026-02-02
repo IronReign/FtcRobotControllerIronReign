@@ -48,10 +48,10 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 @Config(value = "Lebot2_Launcher")
 public class Launcher implements Subsystem {
 
-    public static double NEW_P = 200;
+    public static double NEW_P = 400;
     public static double NEW_I = 0;
     public static double NEW_D = 0;
-    public static double NEW_F = 0;
+    public static double NEW_F = 20;
 
 
     // Hardware
@@ -87,12 +87,12 @@ public class Launcher implements Subsystem {
     public static double PADDLE_PASS = 0.53;
 
     // Flywheel configuration
-    public static double MIN_LAUNCH_SPEED = 900;   //720 <--old     // degrees/sec - hardcoded working speed from known position
+    public static double MIN_LAUNCH_SPEED = 725;   //720 <--old     // degrees/sec - hardcoded working speed from known position
     public static double SPEED_TOLERANCE = 30;      // degrees/sec margin for "at speed" check
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
 
     // Launch timing for TPU ramp design
-    public static double FIRING_TIME = 2.0;         // seconds to allow all 3 balls through at conveyor speed
+    public static double FIRING_TIME = 3.2;         // seconds to allow all 3 balls through at conveyor speed
     public static double LIFT_TIME = 0.3;           // seconds to hold LIFT position for last ball
 
     // Post-fire behavior
@@ -258,14 +258,14 @@ public class Launcher implements Subsystem {
                 loader.claimBeltForLauncher();
             }
             if (intake != null) {
-                intake.suppress();
+                intake.startLaunchAssist();
             }
             resourcesClaimed = true;
         }
     }
 
     /**
-     * Release shared resources (belt and intake suppression).
+     * Release shared resources (belt and intake).
      * Called when exiting firing states.
      */
     private void releaseResources() {
@@ -274,7 +274,7 @@ public class Launcher implements Subsystem {
                 loader.releaseBeltFromLauncher();
             }
             if (intake != null) {
-                intake.unsuppress();
+                intake.stopLaunchAssist();
             }
             resourcesClaimed = false;
         }

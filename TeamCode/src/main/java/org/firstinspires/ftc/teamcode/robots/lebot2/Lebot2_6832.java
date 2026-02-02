@@ -268,10 +268,11 @@ public class Lebot2_6832 extends OpMode {
         if (gameState == GameState.AUTONOMOUS) {
             handleTelemetry(autonomous.getTelemetry(debugTelemetryEnabled),
                     autonomous.getTelemetryName(), packet);
-            // Also show Missions telemetry since autonomous uses it
-            handleTelemetry(robot.missions.getTelemetry(debugTelemetryEnabled),
-                    robot.missions.getTelemetryName(), packet);
         }
+
+        // Missions telemetry (always shown — minimal when idle)
+        handleTelemetry(robot.missions.getTelemetry(debugTelemetryEnabled),
+                robot.missions.getTelemetryName(), packet);
 
         // Subsystem telemetry
         if (debugTelemetryEnabled) {

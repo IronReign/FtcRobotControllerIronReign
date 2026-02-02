@@ -1937,13 +1937,26 @@ public class Missions implements TelemetryProvider {
 
             // ---- Launch (fire to test star + conveyor) ----
             case START_LAUNCH: {
-                // Enable belt current monitoring
-                robot.loader.enableBeltCurrentRead(true);
-                robot.launcher.fire();
-                healthPhaseTimer.reset();
-                healthBeltAmps = 0;
-                log("HEALTH_LAUNCH_START", null, null);
-                healthCheckState = HealthCheckState.WAITING_LAUNCH;
+                // Only attempt fire if launcher actually reached READY state
+                if (robot.launcher.getState() == Launcher.LaunchState.READY) {
+                    robot.loader.enableBeltCurrentRead(true);
+                    robot.launcher.fire();
+                    healthPhaseTimer.reset();
+                    healthBeltAmps = 0;
+                    log("HEALTH_LAUNCH_START", null, null);
+                    healthCheckState = HealthCheckState.WAITING_LAUNCH;
+                } else {
+                    // Flywheel never reached speed — skip launch test
+                    robot.launcher.setBehavior(Launcher.Behavior.IDLE);
+                    Launcher.MIN_LAUNCH_SPEED = healthSavedLaunchSpeed;
+                    healthResults.put("Launch", false);
+                    healthDetails.put("Launch", "SKIPPED — flywheel not ready");
+                    healthResults.put("Conveyor (launch)", false);
+                    healthDetails.put("Conveyor (launch)", "SKIPPED — no fire attempted");
+                    log("HEALTH_LAUNCH_SKIPPED", "flywheel not ready", null);
+                    healthPhaseTimer.reset();
+                    healthCheckState = HealthCheckState.WAITING_DRIVER_CONFIRM;
+                }
                 break;
             }
 
@@ -1972,6 +1985,7 @@ public class Missions implements TelemetryProvider {
                 Launcher.MIN_LAUNCH_SPEED = healthSavedLaunchSpeed;
 
                 log("HEALTH_LAUNCH_DONE", String.format("beltAmps=%.2f", healthBeltAmps), null);
+                healthPhaseTimer.reset();
                 healthCheckState = HealthCheckState.WAITING_DRIVER_CONFIRM;
                 break;
             }
@@ -1989,6 +2003,12 @@ public class Missions implements TelemetryProvider {
                         healthResults.put("Star Direction", false);
                         healthDetails.put("Star Direction", "driver reported WRONG direction");
                         log("HEALTH_STAR", "FAIL", null);
+                        healthCheckState = HealthCheckState.START_INTAKE;
+                    } else if (healthPhaseTimer.seconds() > HEALTH_CHECK_TIMEOUT * 2) {
+                        // Timeout — driver didn't respond
+                        healthResults.put("Star Direction", false);
+                        healthDetails.put("Star Direction", "TIMEOUT — no driver response");
+                        log("HEALTH_STAR", "TIMEOUT", null);
                         healthCheckState = HealthCheckState.START_INTAKE;
                     }
                     // Otherwise keep waiting
@@ -2149,20 +2169,24 @@ public class Missions implements TelemetryProvider {
             }
             if (currentMission == Mission.CHECK_HEALTH) {
                 telemetry.put("HealthCheck State", healthCheckState);
-                if (healthCheckState == HealthCheckState.WAITING_DRIVER_CONFIRM) {
-                    telemetry.put(">>> CONFIRM", "Did star spin correctly? A=YES  B=NO");
+            }
+        }
+
+        // Health check results always shown (not gated by debug) so driver can see report
+        if (currentMission == Mission.CHECK_HEALTH) {
+            if (healthCheckState == HealthCheckState.WAITING_DRIVER_CONFIRM) {
+                telemetry.put(">>> CONFIRM", "Did star spin correctly? A=YES  B=NO");
+            }
+            for (Map.Entry<String, String> entry : healthDetails.entrySet()) {
+                String prefix = healthResults.getOrDefault(entry.getKey(), false) ? "PASS" : "FAIL";
+                telemetry.put(entry.getKey(), prefix + " — " + entry.getValue());
+            }
+            if (healthCheckState == HealthCheckState.COMPLETE || healthCheckState == HealthCheckState.SHOW_RESULTS) {
+                int failures = 0;
+                for (Boolean pass : healthResults.values()) {
+                    if (!pass) failures++;
                 }
-                for (Map.Entry<String, String> entry : healthDetails.entrySet()) {
-                    String prefix = healthResults.getOrDefault(entry.getKey(), false) ? "PASS" : "FAIL";
-                    telemetry.put(entry.getKey(), prefix + " — " + entry.getValue());
-                }
-                if (healthCheckState == HealthCheckState.COMPLETE || healthCheckState == HealthCheckState.SHOW_RESULTS) {
-                    int failures = 0;
-                    for (Boolean pass : healthResults.values()) {
-                        if (!pass) failures++;
-                    }
-                    telemetry.put("RESULT", (failures == 0) ? "ALL CHECKS PASSED" : failures + " CHECK(S) FAILED");
-                }
+                telemetry.put("RESULT", (failures == 0) ? "ALL CHECKS PASSED" : failures + " CHECK(S) FAILED");
             }
         }
 
