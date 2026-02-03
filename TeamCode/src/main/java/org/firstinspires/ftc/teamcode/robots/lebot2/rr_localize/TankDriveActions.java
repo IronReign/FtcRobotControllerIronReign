@@ -53,7 +53,7 @@ public class TankDriveActions {
     public static double HEAD_PID_I_CUTIN = 5.0; // need to be withing 5 degrees for integration to go active
     // Position drive thresholds
     public static double POSITION_TOLERANCE = 1.5;  // inches — completion threshold
-    public static double MAX_DRIVE_POWER = 0.8;     // cap to prevent wheelies
+    public static double MAX_DRIVE_POWER = 1;     // cap to prevent wheelies      //.8 <--ORIGINAL
 
     // Slew rate limits (power change per tick, ~50ms loop)
     public static double ACCEL_SLEW_RATE = 0.05;           // max power increase per tick
