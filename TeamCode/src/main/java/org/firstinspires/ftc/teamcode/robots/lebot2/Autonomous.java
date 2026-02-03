@@ -45,6 +45,14 @@ public class Autonomous implements TelemetryProvider {
     public static boolean DO_OPEN_SESAME = true;      // Release gate after rows 1 & 2?
     public static double MIN_TIME_FOR_ROW = 5.0;     // Minimum seconds needed for a ball row cycle
 
+    // Derived strategy parameters (set by init() based on START_AT_GOAL_WALL, also Dashboard-tunable)
+    public static int FIRE_POSITION = 1;              // Which fire position to use (1-4)
+    public static int ROW_START = 0;                  // First ball row index
+    public static int ROW_END = 2;                    // Last ball row index
+    public static int ROW_DIRECTION = 1;              // +1 = forward (0→2), -1 = reverse (2→0)
+    public static int GATE_BEFORE_ROW = 2;            // Do gate release before this row index
+    public static boolean SKIP_INITIAL_BACKUP = false; // Skip backup if already at fire position
+
     // Autonomous time limit
     public static final double AUTON_DURATION_SECONDS = 30.0;
 
@@ -109,10 +117,27 @@ public class Autonomous implements TelemetryProvider {
         robot.missions.resetGroupProgress();
         robot.missions.clearState();
 
+        // Set strategy parameters based on starting position
+        if (START_AT_GOAL_WALL) {
+            FIRE_POSITION = 1;
+            ROW_START = 0;
+            ROW_END = 2;
+            ROW_DIRECTION = 1;
+            GATE_BEFORE_ROW = 2;
+            SKIP_INITIAL_BACKUP = false;
+        } else {
+            FIRE_POSITION = 2;
+            ROW_START = 2;
+            ROW_END = 0;
+            ROW_DIRECTION = -1;
+            GATE_BEFORE_ROW = 0;
+            SKIP_INITIAL_BACKUP = true;
+        }
+
         // Reset state
         state = AutonState.INIT;
         previousState = AutonState.INIT;
-        currentRow = 0;
+        currentRow = ROW_START;
         launchCycles = 0;
         gateReleased = false;
 
@@ -150,6 +175,14 @@ public class Autonomous implements TelemetryProvider {
         // Time remaining for branching decisions
         double timeRemaining = AUTON_DURATION_SECONDS - autonTimer.seconds();
 
+        // Hard stop — kill everything when auton time expires
+        if (timeRemaining <= 0 && state != AutonState.COMPLETE) {
+            log("AUTON_TIMEOUT", null);
+            robot.stop();
+            setState(AutonState.COMPLETE);
+            return;
+        }
+
         switch (state) {
             case INIT:
                 autonTimer.reset();
@@ -158,9 +191,15 @@ public class Autonomous implements TelemetryProvider {
 
             // ========== PHASE 1: Backup to Fire ==========
             case START_BACKUP_TO_FIRE:
-                // Back up from gate to FIRE_1, spins up launcher during navigation
-                robot.missions.startNavigateToFire(1, true);
-                setState(AutonState.WAITING_BACKUP);
+                if (SKIP_INITIAL_BACKUP) {
+                    // Already at fire position — just spin up launcher
+                    robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
+                    setState(AutonState.START_TARGETING);
+                } else {
+                    // Back up from gate to fire position, spins up launcher during navigation
+                    robot.missions.startNavigateToFire(FIRE_POSITION, true);
+                    setState(AutonState.WAITING_BACKUP);
+                }
                 break;
 
             case WAITING_BACKUP:
@@ -221,16 +260,16 @@ public class Autonomous implements TelemetryProvider {
 
             // ========== BALL ROW COLLECTION CYCLE ==========
             case START_BALL_ROW:
-                // Check if all rows done
-                if (currentRow >= 3) {
+                // Check if past last row (works for both directions)
+                if (ROW_DIRECTION > 0 ? currentRow > ROW_END : currentRow < ROW_END) {
                     log("ALL_ROWS_DONE", null);
                     setState(AutonState.COMPLETE);
                     break;
                 }
 
-                // After rows 1 & 2, do gate release before row 3
-                if (currentRow == 2 && DO_OPEN_SESAME && !gateReleased) {
-                    log("GATE_BEFORE_ROW3", null);
+                // Gate release before designated row
+                if (currentRow == GATE_BEFORE_ROW && DO_OPEN_SESAME && !gateReleased) {
+                    log("GATE_BEFORE_ROW", "row=" + currentRow);
                     setState(AutonState.START_GATE);
                     break;
                 }
@@ -251,18 +290,18 @@ public class Autonomous implements TelemetryProvider {
             case WAITING_BALL_ROW:
                 if (robot.missions.isComplete()) {
                     log("BALL_ROW_COMPLETE", "row=" + currentRow);
-                    currentRow++;
+                    currentRow += ROW_DIRECTION;
                     setState(AutonState.START_RETURN_TO_FIRE);
                 } else if (robot.missions.isFailed()) {
                     log("BALL_ROW_FAILED", "row=" + currentRow);
-                    currentRow++;
+                    currentRow += ROW_DIRECTION;
                     setState(AutonState.START_RETURN_TO_FIRE);
                 }
                 break;
 
             case START_RETURN_TO_FIRE:
                 // Navigate back to fire position (auto-direction)
-                robot.missions.startNavigateToFire(1);
+                robot.missions.startNavigateToFire(FIRE_POSITION);
                 setState(AutonState.WAITING_RETURN);
                 break;
 
