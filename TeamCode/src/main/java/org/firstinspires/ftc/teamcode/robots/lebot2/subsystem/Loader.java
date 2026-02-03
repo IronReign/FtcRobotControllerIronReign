@@ -52,7 +52,7 @@ public class Loader implements Subsystem {
     public static double BELT_REVERSE_POWER = 0.5; // Positive = toward front, relieves fin pressure
     public static double BALL_DETECT_THRESHOLD_CM = 10.0; // Distance indicating ball present
     public static int MAX_BALLS = 3;
-    public static long FULL_CONFIRM_MS = 100; // Debounce time for isFull virtual sensor
+    public static long FULL_CONFIRM_MS = 300; // Debounce time for isFull virtual sensor
 
     // Belt ownership - priority: LAUNCHER > INTAKE > NONE
     public enum BeltOwner {

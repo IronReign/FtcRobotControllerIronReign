@@ -281,27 +281,16 @@ public class Robot implements TelemetryProvider {
 
             case TURNING_IMU:
                 if (driveTrain.isTurnComplete()) {
-                    // IMU turn complete, start vision targeting
-                    if (vision.hasTarget()) {
-                        driveTrain.turnToTarget(vision.getTx(), 0.5);
-                        targetingState = TargetingState.TURNING_VISION;
-                    } else {
-                        // No target visible, complete
-                        targetingState = TargetingState.IDLE;
-                        behavior = Behavior.MANUAL;
-                    }
+                    // IMU turn complete, start vision centering
+                    driveTrain.centerOnTarget();
+                    targetingState = TargetingState.TURNING_VISION;
                 }
                 break;
 
             case TURNING_VISION:
-                // Check completion FIRST, before updating target
-                // (turnToTarget resets turnState, so must check before calling it)
                 if (driveTrain.isTurnComplete()) {
                     targetingState = TargetingState.IDLE;
                     behavior = Behavior.MANUAL;
-                } else if (vision.hasTarget()) {
-                    // Keep updating target while turning
-                    driveTrain.turnToTarget(vision.getTx(), 0.5);
                 }
                 break;
         }

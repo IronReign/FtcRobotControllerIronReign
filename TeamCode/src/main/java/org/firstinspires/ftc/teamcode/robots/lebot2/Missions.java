@@ -75,6 +75,7 @@ public class Missions implements TelemetryProvider {
         TUNING_STRAIGHT_POS,    // Drive 48" forward, back using PositionDriveAction
         TUNING_SQUARE_POS,      // Drive 24", turn 90° CW, repeat 4x using PositionDriveAction
         TUNING_DRIFT,           // In-place turns to measure Pinpoint position drift
+        TUNING_VISION,          // Continuous vision centering (never self-terminates)
         CHECK_HEALTH            // Pre-match health check
     }
 
@@ -405,6 +406,7 @@ public class Missions implements TelemetryProvider {
             case TUNING_STRAIGHT_POS: return tuningStraightPosState.name();
             case TUNING_SQUARE_POS: return tuningSquarePosState.name();
             case TUNING_DRIFT: return tuningDriftState.name();
+            case TUNING_VISION: return "CENTERING";
             case CHECK_HEALTH: return healthCheckState.name();
             default: return "NONE";
         }
@@ -688,6 +690,22 @@ public class Missions implements TelemetryProvider {
     }
 
     /**
+     * Start the vision centering tuning mission.
+     * Runs centerOnTarget() continuously — never self-terminates.
+     * Use Back button to stop. Tune VISION_PID gains on Dashboard while running.
+     */
+    public void startTuningVision() {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        currentMission = Mission.TUNING_VISION;
+        missionState = MissionState.RUNNING;
+        missionTimer.reset();
+        robot.driveTrain.centerOnTarget();
+        log("TUNING_VISION_START", null, robot.driveTrain.getPose());
+    }
+
+    /**
      * Start the pre-match health check mission.
      * Sequences through battery, pinpoint, turns, flywheel, launch, intake, and vision checks.
      * @param gamepad Gamepad for driver confirmation input during star direction check
@@ -910,6 +928,10 @@ public class Missions implements TelemetryProvider {
 
             case TUNING_DRIFT:
                 updateTuningDriftMission();
+                break;
+
+            case TUNING_VISION:
+                updateTuningVisionMission();
                 break;
 
             case CHECK_HEALTH:
@@ -1680,6 +1702,14 @@ public class Missions implements TelemetryProvider {
         }
     }
 
+    private void updateTuningVisionMission() {
+        // If centering completed (on-target or lost target), restart it
+        if (robot.driveTrain.isTurnComplete()) {
+            robot.driveTrain.centerOnTarget();
+        }
+        // Never self-terminates — use Back button to stop
+    }
+
     private void updateTuningDriftMission() {
         TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
 
@@ -2166,6 +2196,10 @@ public class Missions implements TelemetryProvider {
                 telemetry.put("Cumulative dY", String.format("%.2f\"", cumulativeDriftY));
                 double cumDist = Math.sqrt(cumulativeDriftX * cumulativeDriftX + cumulativeDriftY * cumulativeDriftY);
                 telemetry.put("Cumulative Drift", String.format("%.2f\"", cumDist));
+            }
+            if (currentMission == Mission.TUNING_VISION) {
+                telemetry.put("Vision tx", String.format("%.1f°", robot.vision.getTx()));
+                telemetry.put("Elapsed", String.format("%.1fs", missionTimer.seconds()));
             }
             if (currentMission == Mission.CHECK_HEALTH) {
                 telemetry.put("HealthCheck State", healthCheckState);

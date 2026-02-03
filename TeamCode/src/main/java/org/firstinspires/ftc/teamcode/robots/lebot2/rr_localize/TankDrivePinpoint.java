@@ -127,6 +127,11 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public static PIDCoefficients HEADING_PID = new PIDCoefficients(0.03, 0.04, 0.0);
     public static double HEADING_TOLERANCE = 1.5; // degrees
 
+    // ==================== VISION PID PARAMS ====================
+    public static PIDCoefficients VISION_PID = new PIDCoefficients(0.03, 0.04, 0.0);
+    public static double VISION_TOLERANCE = 1.5; // degrees of tx
+    public static double VISION_INTEGRAL_CUTIN = 4.0; // degrees
+
     // ==================== ROADRUNNER INFRASTRUCTURE ====================
 
     public TankKinematics kinematics;  // Non-final to allow Dashboard tuning of trackWidthInches
@@ -163,8 +168,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public enum TurnState {
         IDLE,
         TURNING_TO_HEADING,
-        TURNING_TO_TARGET,      // Single tx value (legacy)
-        CENTERING_ON_TARGET     // Continuous tx from Vision (preferred)
+        CENTERING_ON_TARGET     // Continuous tx from Vision
     }
     private TurnState turnState = TurnState.IDLE;
     private double turnTarget = 0;
@@ -178,8 +182,9 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     private Action currentAction = null;
     private Vector2d currentActionTarget = null;  // Cached target for visualization
 
-    // PID controller for turns
+    // PID controllers for turns
     private final PIDController headingPID;
+    private final PIDController visionPID;
 
     // Cached values from readSensors()
     private double cachedHeading = 0;
@@ -233,6 +238,15 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         headingPID.setContinuous(true);
         headingPID.setTolerance(HEADING_TOLERANCE);
         headingPID.enable();
+
+        // Initialize vision PID for target centering
+        visionPID = new PIDController(VISION_PID);
+        visionPID.setInputRange(-20, 20);
+        visionPID.setOutputRange(-1, 1);
+        visionPID.setIntegralCutIn(VISION_INTEGRAL_CUTIN);
+        visionPID.setContinuous(false);
+        visionPID.setTolerance(VISION_TOLERANCE);
+        visionPID.enable();
 
         cachedPose = pose;
         cachedHeading = Math.toDegrees(pose.heading.toDouble());
@@ -288,10 +302,6 @@ public final class TankDrivePinpoint implements DriveTrainBase {
                 executeTurnToHeading();
                 break;
 
-            case TURNING_TO_TARGET:
-                executeTurnToTarget();
-                break;
-
             case CENTERING_ON_TARGET:
                 executeCenteringOnTarget();
                 break;
@@ -344,25 +354,6 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         }
     }
 
-    private void executeTurnToTarget() {
-        // For vision-based turning, we want tx (turnTarget) to reach 0
-        // Input = current offset, Setpoint = desired offset (0)
-        headingPID.setInput(turnTarget);
-        headingPID.setSetpoint(0);
-        headingPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
-        headingPID.setPID(HEADING_PID);
-
-        double correction = headingPID.performPID();
-
-        if (headingPID.onTarget()) {
-            setMotorPowers(0, 0);
-            turnState = TurnState.IDLE;
-            behavior = Behavior.MANUAL;
-        } else {
-            setMotorPowers(correction, -correction);
-        }
-    }
-
     @Override
     public void turnToHeading(double headingDegrees, double maxSpeed) {
         // Use RoadRunner's turnTo action for accurate, well-tuned turns
@@ -386,11 +377,8 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     @Override
     public void turnToTarget(double tx, double maxSpeed) {
-        turnTarget = tx; // tx is the offset, we want to drive it to 0
-        turnMaxSpeed = maxSpeed;
-        turnState = TurnState.TURNING_TO_TARGET;
-        behavior = Behavior.PID_TURN;
-        headingPID.enable();
+        // Deprecated — use centerOnTarget() for vision-based aiming
+        centerOnTarget();
     }
 
     @Override
@@ -428,7 +416,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         turnMaxSpeed = CENTERING_MAX_SPEED;
         turnState = TurnState.CENTERING_ON_TARGET;
         behavior = Behavior.PID_TURN;
-        headingPID.enable();
+        visionPID.enable();
     }
 
     private void executeCenteringOnTarget() {
@@ -443,16 +431,15 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
         double tx = vision.getTx();
 
-        // PID: we want tx to be 0 (target centered)
-        // Input = current offset, Setpoint = desired offset (0)
-        headingPID.setInput(tx);
-        headingPID.setSetpoint(0);
-        headingPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
-        headingPID.setPID(HEADING_PID);
+        // Negate tx so positive tx (target right) produces positive correction (turn right)
+        visionPID.setInput(-tx);
+        visionPID.setSetpoint(0);
+        visionPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
+        visionPID.setPID(VISION_PID);
 
-        double correction = headingPID.performPID();
+        double correction = visionPID.performPID();
 
-        if (headingPID.onTarget()) {
+        if (visionPID.onTarget()) {
             setMotorPowers(0, 0);
             turnState = TurnState.IDLE;
             behavior = Behavior.MANUAL;
@@ -1014,7 +1001,8 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         if (debug) {
             telemetry.put("Turn State", turnState);
             telemetry.put("Turn Target", String.format("%.1f", turnTarget));
-            telemetry.put("PID Error", String.format("%.2f", headingPID.getError()));
+            telemetry.put("Heading PID Error", String.format("%.2f", headingPID.getError()));
+            telemetry.put("Vision PID Error", String.format("%.2f", visionPID.getError()));
             telemetry.put("Left Power", String.format("%.2f", leftMotors.get(0).getPower()));
             telemetry.put("Right Power", String.format("%.2f", rightMotors.get(0).getPower()));
             telemetry.put("Action Running", currentAction != null);
