@@ -31,7 +31,8 @@ public class FieldMap {
     // ==================== INTAKE ASYMMETRY OFFSET ====================
     // Ball row waypoints need X offset when reflected for blue alliance
     // due to asymmetric intake design (shifts 6" in positive X direction)
-    public static final double BALL_ROW_BLUE_X_OFFSET = 6.0;  // inches
+    public static double BALL_ROW_BLUE_X_OFFSET = 0;  // inches
+    public static double ROW_X_OFFSET = -3.5;
 
     // ==================== WAYPOINT CLASS ====================
 
@@ -84,7 +85,9 @@ public class FieldMap {
     static {
         // ----- Starting Positions -----
         // AUDIENCE: Near audience, facing goal
-        RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(0, 0, 0));  // TODO: measure
+        //speed for audience start is 1100 and star feed .8
+        //65, 16.8
+        RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(64.5,16.8, 160));  // TODO: measure heading
         // GOAL: Near goal, facing goal
         RED_WAYPOINTS.put("START_GOAL", new Waypoint(-46.4566, 47.244, 135));
 
@@ -93,19 +96,19 @@ public class FieldMap {
         RED_WAYPOINTS.put("FIRE_1", new Waypoint(-17.12595, 15.748, 135));
         RED_WAYPOINTS.put("FIRE_2", new Waypoint(0, 0, 0));  // TODO: measure
         RED_WAYPOINTS.put("FIRE_3", new Waypoint(0, 0, 0));  // TODO: measure
-        RED_WAYPOINTS.put("FIRE_4", new Waypoint(0, 0, 0));  // TODO: measure
+        RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.5,16.8, 160));  // TODO: measure    //fire from back triangle
 
         // ----- Ball Pickup Waypoints -----
         // Starting points for each of the 3 ball rows
-        RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732, 25.9842, 90));
-        RED_WAYPOINTS.put("BALL_ROW_2_START", new Waypoint(10.2362, 25.9842, 90));
-        RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456, 25.9842, 90));
+        RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732-ROW_X_OFFSET, 25.9842, 90));
+        RED_WAYPOINTS.put("BALL_ROW_2_START", new Waypoint(10.2362-ROW_X_OFFSET, 25.9842, 90));
+        RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456-ROW_X_OFFSET, 25.9842, 90));
 
         // ----- Ball Row Endpoints -----
         // Ending points after driving through ball rows
-        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503, 90));
-        RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362, 46.8503, 90));
-        RED_WAYPOINTS.put("BALL_ROW_3_END", new Waypoint(34.6456, 46.8503, 90));
+        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732-ROW_X_OFFSET, 46.8503+4.5, 90));
+        RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362-ROW_X_OFFSET, 46.8503+4.5, 90));
+        RED_WAYPOINTS.put("BALL_ROW_3_END", new Waypoint(34.6456-ROW_X_OFFSET, 46.8503+4.5, 90));
 
         // ----- Gate -----
         // Position to release previously scored balls

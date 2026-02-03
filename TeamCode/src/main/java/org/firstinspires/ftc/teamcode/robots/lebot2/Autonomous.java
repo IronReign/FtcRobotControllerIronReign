@@ -118,15 +118,19 @@ public class Autonomous implements TelemetryProvider {
         robot.missions.clearState();
 
         // Set strategy parameters based on starting position
-        if (START_AT_GOAL_WALL) {
+        if (robot.getStartingPosition()!=Robot.StartingPosition.AUDIENCE) {
             FIRE_POSITION = 1;
+            Launcher.STAR_FEEDING=1;
+            Launcher.MIN_LAUNCH_SPEED=725;
             ROW_START = 0;
             ROW_END = 2;
             ROW_DIRECTION = 1;
             GATE_BEFORE_ROW = 2;
             SKIP_INITIAL_BACKUP = false;
         } else {
-            FIRE_POSITION = 2;
+            FIRE_POSITION = 4;
+            Launcher.STAR_FEEDING=.7;
+            Launcher.MIN_LAUNCH_SPEED=1100;
             ROW_START = 2;
             ROW_END = 0;
             ROW_DIRECTION = -1;
@@ -143,7 +147,7 @@ public class Autonomous implements TelemetryProvider {
 
         // Set robot starting pose based on configured start position
         Pose2d startPose;
-        if (START_AT_GOAL_WALL) {
+        if (robot.getStartingPosition()!=Robot.StartingPosition.AUDIENCE) {
             startPose = FieldMap.getPose(FieldMap.START_GOAL, Robot.isRedAlliance);
         } else {
             startPose = FieldMap.getPose(FieldMap.START_AUDIENCE, Robot.isRedAlliance);
@@ -229,16 +233,16 @@ public class Autonomous implements TelemetryProvider {
                 break;
 
             case START_LAUNCH:
-                if (!robot.loader.isEmpty()) {
+                //if (!robot.loader.isEmpty()) {
                     log("LAUNCH_START", "balls=" + robot.loader.getBallCount());
                     robot.missions.startLaunchPreloads();
                     setState(AutonState.WAITING_LAUNCH);
-                } else {
-                    // Nothing to launch, power down flywheel and proceed to ball collection
-                    log("LAUNCH_SKIP", "loader_empty");
-                    robot.launcher.setBehavior(Launcher.Behavior.IDLE);
-                    setState(AutonState.START_BALL_ROW);
-                }
+//                } else {
+//                    // Nothing to launch, power down flywheel and proceed to ball collection
+//                    log("LAUNCH_SKIP", "loader_empty");
+//                    robot.launcher.setBehavior(Launcher.Behavior.IDLE);
+//                    setState(AutonState.START_BALL_ROW);
+//                }
                 break;
 
             case WAITING_LAUNCH:

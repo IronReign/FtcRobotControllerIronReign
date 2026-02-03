@@ -3,8 +3,13 @@ package org.firstinspires.ftc.teamcode.robots.lebot2;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.CompositeVelConstraint;
+import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.ProfileAccelConstraint;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.VelConstraint;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -1017,11 +1022,11 @@ public class Missions implements TelemetryProvider {
         switch (launchPreloadsState) {
             case IDLE:
                 // Check if we have balls to launch
-                if (robot.loader.isEmpty()) {
-                    log("LAUNCH_EMPTY", null, null);
-                    missionState = MissionState.COMPLETE;
-                    return;
-                }
+//                if (robot.loader.isEmpty()) {
+//                    log("LAUNCH_EMPTY", null, null);
+//                    missionState = MissionState.COMPLETE;
+//                    return;
+//                }
 
                 if (DUMMY_LAUNCH_MODE) {
                     // Dummy mode: just wait and pretend to launch
@@ -1129,6 +1134,7 @@ public class Missions implements TelemetryProvider {
 
             case NAVIGATING_TO_ROW_START:
                 if (!driveTrain.isActionRunning()) {
+                    TankDriveActions.MAX_DRIVE_POWER = .2;
                     // Arrived at row start, begin intake run through row
                     log("BALLGROUP_AT_ROW_START", null, null);
                     robot.intake.loadAll();
@@ -1145,6 +1151,7 @@ public class Missions implements TelemetryProvider {
             case INTAKING_THROUGH_ROW:
                 // Drive through the full row while intaking — stop only when trajectory completes
                 if (!driveTrain.isActionRunning()) {
+                    TankDriveActions.MAX_DRIVE_POWER = 1;
                     int ballsCollected = robot.loader.getBallCount() - ballCountAtStart;
                     log("BALLGROUP_INTAKE_DONE", "trajectory_done,balls=" + ballsCollected, null);
                     robot.driveTrain.drive(0, 0, 0);
