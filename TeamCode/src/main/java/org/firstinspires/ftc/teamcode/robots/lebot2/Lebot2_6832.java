@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Vision;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.TankDrive;
@@ -177,6 +178,7 @@ public class Lebot2_6832 extends OpMode {
                 break;
 
             case TELE_OP:
+                TankDrivePinpoint.VISION_TOLERANCE = 2;
                 handleTeleOp(packet);
                 break;
 
