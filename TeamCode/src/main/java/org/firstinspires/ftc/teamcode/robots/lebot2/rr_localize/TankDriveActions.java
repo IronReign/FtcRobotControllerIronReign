@@ -86,7 +86,20 @@ public class TankDriveActions {
      * Drive to a target pose with default constraints.
      */
     public Action driveTo(Pose2d target) {
-        return driveTo(target, null, null);
+        return driveTo(target, MAX_DRIVE_POWER);
+    }
+
+    /**
+     * Drive to a target pose with a custom max power.
+     * Use lower values for slower driving (e.g., during intake).
+     */
+    public Action driveTo(Pose2d target, double maxPower) {
+        lastTargetPosition = target.position;
+
+        Action initialTurn = new LazyBearingTurnAction(target.position, false, INITIAL_TURN_SKIP_TOLERANCE);
+        Action drive = new PositionDriveAction(target.position, false, maxPower);
+        Action finalTurn = new LazyTurnAction(target.heading.toDouble(), FINAL_TURN_SKIP_TOLERANCE);
+        return new SequentialAction(initialTurn, drive, finalTurn);
     }
 
     /**

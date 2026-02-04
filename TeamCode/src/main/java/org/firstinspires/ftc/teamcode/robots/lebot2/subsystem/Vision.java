@@ -54,9 +54,17 @@ public class Vision implements Subsystem {
 
     private Angle angle = Angle.UPMAX;
 
-    // Configuration
-    public static int PIPELINE_BLUE = 0;
-    public static int PIPELINE_RED = 1;
+    // Pipeline configuration
+    public enum Pipeline {
+        BLUE(0),      // Only recognizes blue goal (Tag 20)
+        RED(1),       // Only recognizes red goal (Tag 24)
+        GOALS(2),     // Either goal recognized
+        OBELISK(3),   // Detects Tags 21-23 on the randomization obelisk
+        DECODE(4);    // All DECODE season AprilTags - for vision lock tuning
+
+        public final int id;
+        Pipeline(int id) { this.id = id; }
+    }
 
     // DECODE Field Goal Positions (meters, from field center)
     // Source: https://downloads.limelightvision.io/models/ftc2025DECODE.fmap
@@ -67,7 +75,7 @@ public class Vision implements Subsystem {
 
     // State
     private boolean isRedAlliance = true;
-    private int currentPipeline = PIPELINE_RED;
+    private Pipeline currentPipeline = Pipeline.RED;
     private boolean hasValidTarget = false;
     private boolean hasBotPose = false;
     private double tx = 0;  // Horizontal offset (degrees) - for aiming
@@ -97,7 +105,7 @@ public class Vision implements Subsystem {
 
     public Vision(HardwareMap hardwareMap) {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.pipelineSwitch(currentPipeline);
+        limelight.pipelineSwitch(currentPipeline.id);
         limelight.start();
 
         tilt = new LazyServo(hardwareMap, "tilt");
@@ -406,8 +414,8 @@ public class Vision implements Subsystem {
      */
     public void setAlliance(boolean isRed) {
         isRedAlliance = isRed;
-        currentPipeline = isRed ? PIPELINE_RED : PIPELINE_BLUE;
-        limelight.pipelineSwitch(currentPipeline);
+        currentPipeline = isRed ? Pipeline.RED : Pipeline.BLUE;
+        limelight.pipelineSwitch(currentPipeline.id);
     }
 
     /**
@@ -418,19 +426,19 @@ public class Vision implements Subsystem {
     }
 
     /**
-     * Manually switch to a specific pipeline.
+     * Switch to a specific pipeline.
      *
-     * @param pipeline Pipeline index (0-9)
+     * @param pipeline Pipeline enum value
      */
-    public void setPipeline(int pipeline) {
+    public void setPipeline(Pipeline pipeline) {
         currentPipeline = pipeline;
-        limelight.pipelineSwitch(pipeline);
+        limelight.pipelineSwitch(pipeline.id);
     }
 
     /**
      * Get current pipeline.
      */
-    public int getCurrentPipeline() {
+    public Pipeline getCurrentPipeline() {
         return currentPipeline;
     }
 

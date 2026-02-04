@@ -19,6 +19,7 @@ import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDriveActions
 import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Launcher;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Vision;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.TelemetryProvider;
 import org.firstinspires.ftc.teamcode.util.CsvLogKeeper;
 
@@ -102,6 +103,7 @@ public class Missions implements TelemetryProvider {
     public static double INTAKE_TIMEOUT_SECONDS = 5.0;
     public static double LAUNCH_TIMEOUT_SECONDS = 8.0;
     public static double PRESS_TIMEOUT_SECONDS = 2.0;
+    public static double INTAKE_DRIVE_POWER = 0.2;  // Max power while driving through ball rows
 
     private ElapsedTime missionTimer = new ElapsedTime();
 
@@ -706,6 +708,7 @@ public class Missions implements TelemetryProvider {
         currentMission = Mission.TUNING_VISION;
         missionState = MissionState.RUNNING;
         missionTimer.reset();
+        robot.vision.setPipeline(Vision.Pipeline.DECODE);
         robot.driveTrain.centerOnTarget();
         log("TUNING_VISION_START", null, robot.driveTrain.getPose());
     }
@@ -1134,15 +1137,15 @@ public class Missions implements TelemetryProvider {
 
             case NAVIGATING_TO_ROW_START:
                 if (!driveTrain.isActionRunning()) {
-                    TankDriveActions.MAX_DRIVE_POWER = .2;
+                    // TankDriveActions.MAX_DRIVE_POWER = .2;
                     // Arrived at row start, begin intake run through row
                     log("BALLGROUP_AT_ROW_START", null, null);
                     robot.intake.loadAll();
                     robot.loader.requestBeltForIntake();
 
-                    // Drive through row to row end using Turn-Spline-Turn
+                    // Drive through row to row end at reduced speed for intake
                     log("BALLGROUP_INTAKE_START", null, targetRowEnd);
-                    Action intakeTrajectory = actions.driveTo(targetRowEnd);
+                    Action intakeTrajectory = actions.driveTo(targetRowEnd, INTAKE_DRIVE_POWER);
                     driveTrain.runAction(intakeTrajectory, actions.getLastTargetPosition());
                     ballGroupState = BallGroupState.INTAKING_THROUGH_ROW;
                 }

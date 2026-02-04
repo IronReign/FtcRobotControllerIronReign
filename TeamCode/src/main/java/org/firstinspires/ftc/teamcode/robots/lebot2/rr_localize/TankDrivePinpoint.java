@@ -50,7 +50,6 @@ import org.firstinspires.ftc.teamcode.rrQuickStart.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.PoseMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.TankCommandMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.Drawing;
-import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.Localizer;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.Arrays;
@@ -128,9 +127,12 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public static double HEADING_TOLERANCE = 1.5; // degrees
 
     // ==================== VISION PID PARAMS ====================
-    public static PIDCoefficients VISION_PID = new PIDCoefficients(0.03, 0.04, 0.0);
+    public static PIDCoefficients VISION_PID = new PIDCoefficients(0.025, 0.04, 0.03);
+    public static double VISION_OFFSET = 2; // offset from center of target in LLResult x units
     public static double VISION_TOLERANCE = 1.5; // degrees of tx
     public static double VISION_INTEGRAL_CUTIN = 4.0; // degrees
+    public static double VISION_ALPHA = .5; // EMA alpha for vision PID
+
 
     // ==================== ROADRUNNER INFRASTRUCTURE ====================
 
@@ -245,7 +247,8 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         visionPID.setOutputRange(-1, 1);
         visionPID.setIntegralCutIn(VISION_INTEGRAL_CUTIN);
         visionPID.setContinuous(false);
-        visionPID.setTolerance(VISION_TOLERANCE);
+        visionPID.setTolerance(VISION_TOLERANCE/360*40); // degrees to percentage of input range
+        visionPID.setEmaAlpha(VISION_ALPHA);
         visionPID.enable();
 
         cachedPose = pose;
@@ -432,19 +435,19 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         double tx = vision.getTx();
 
         // Negate tx so positive tx (target right) produces positive correction (turn right)
-        visionPID.setInput(-tx);
-        visionPID.setSetpoint(0);
+        visionPID.setInput(tx);
+        visionPID.setSetpoint(VISION_OFFSET);
         visionPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
         visionPID.setPID(VISION_PID);
 
         double correction = visionPID.performPID();
 
-        if (visionPID.onTarget()) {
+        if (visionPID.lockedOnTarget()) {
             setMotorPowers(0, 0);
             turnState = TurnState.IDLE;
             behavior = Behavior.MANUAL;
         } else {
-            setMotorPowers(correction, -correction);
+            setMotorPowers(-correction, correction);
         }
     }
 
