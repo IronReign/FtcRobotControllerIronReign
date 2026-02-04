@@ -32,7 +32,8 @@ public class FieldMap {
     // Ball row waypoints need X offset when reflected for blue alliance
     // due to asymmetric intake design (shifts 6" in positive X direction)
     public static double BALL_ROW_BLUE_X_OFFSET = 0;  // inches
-    public static double ROW_X_OFFSET = -3.5;
+    public static double ROW_X_OFFSET = 2;
+    public static double ROW_Y_START_OFFSET = 1.5;
 
     // ==================== WAYPOINT CLASS ====================
 
@@ -100,9 +101,9 @@ public class FieldMap {
 
         // ----- Ball Pickup Waypoints -----
         // Starting points for each of the 3 ball rows
-        RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732-ROW_X_OFFSET, 25.9842, 90));
-        RED_WAYPOINTS.put("BALL_ROW_2_START", new Waypoint(10.2362-ROW_X_OFFSET, 25.9842, 90));
-        RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456-ROW_X_OFFSET, 25.9842, 90));
+        RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732-ROW_X_OFFSET+2, 25.9842+ROW_Y_START_OFFSET, 90));
+        RED_WAYPOINTS.put("BALL_ROW_2_START", new Waypoint(10.2362-ROW_X_OFFSET, 25.9842+ROW_Y_START_OFFSET, 90));
+        RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456-ROW_X_OFFSET, 25.9842+ROW_Y_START_OFFSET, 90));
 
         // ----- Ball Row Endpoints -----
         // Ending points after driving through ball rows

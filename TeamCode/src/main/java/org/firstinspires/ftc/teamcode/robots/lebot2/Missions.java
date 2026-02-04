@@ -103,7 +103,7 @@ public class Missions implements TelemetryProvider {
     public static double INTAKE_TIMEOUT_SECONDS = 5.0;
     public static double LAUNCH_TIMEOUT_SECONDS = 8.0;
     public static double PRESS_TIMEOUT_SECONDS = 2.0;
-    public static double INTAKE_DRIVE_POWER = 0.2;  // Max power while driving through ball rows
+    public static double INTAKE_DRIVE_POWER = 0.23;  // Max power while driving through ball rows
 
     private ElapsedTime missionTimer = new ElapsedTime();
 
@@ -970,6 +970,7 @@ public class Missions implements TelemetryProvider {
 
         switch (navToFireState) {
             case IDLE:
+                TankDriveActions.MAX_DRIVE_POWER = 1;
                 // Start spinning up launcher during navigation
                 robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
 
@@ -1137,7 +1138,7 @@ public class Missions implements TelemetryProvider {
 
             case NAVIGATING_TO_ROW_START:
                 if (!driveTrain.isActionRunning()) {
-                    // TankDriveActions.MAX_DRIVE_POWER = .2;
+                    TankDriveActions.MAX_DRIVE_POWER = .25;
                     // Arrived at row start, begin intake run through row
                     log("BALLGROUP_AT_ROW_START", null, null);
                     robot.intake.loadAll();
