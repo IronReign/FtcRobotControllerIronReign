@@ -335,7 +335,7 @@ public class Launcher implements Subsystem {
 
         // Hardcode target speed until botpose/distance calculation is calibrated
         // TODO: Re-enable vision-based speed calculation once Limelight is working
-        targetSpeed = MIN_LAUNCH_SPEED;
+        //targetSpeed = MIN_LAUNCH_SPEED;
 
         // Sync behavior to state (if behavior changed externally)
         if (behavior == Behavior.IDLE && state != LaunchState.IDLE) {
@@ -479,7 +479,11 @@ public class Launcher implements Subsystem {
     /**
      * SPINNING_UP: Flywheel ramping to target speed, paddle stays in CUP.
      */
+    public void updateTargetSpeed(){
+        targetSpeed = vision.getFlywheelSpeed();
+    }
     private void handleSpinningUpState() {
+
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         setPaddlePosition(getTriggerIdlePosition());
