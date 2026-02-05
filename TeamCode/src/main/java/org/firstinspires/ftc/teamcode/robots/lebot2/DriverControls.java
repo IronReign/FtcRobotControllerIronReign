@@ -156,6 +156,7 @@ public class DriverControls implements TelemetryProvider {
 
         // Right bumper: Launch all balls in sequence
         if (stickyGamepad1.right_bumper) {
+            robot.launcher.updateTargetSpeed();
             robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
         }
 

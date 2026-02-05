@@ -219,17 +219,17 @@ public class Autonomous implements TelemetryProvider {
 
             // ========== PHASE 2-3: Target and Launch ==========
             case START_TARGETING:
-                robot.setBehavior(Robot.Behavior.TARGETING);
+                //robot.setBehavior(Robot.Behavior.TARGETING);
                 setState(AutonState.WAITING_TARGET);
                 break;
 
             case WAITING_TARGET:
-                if (robot.getBehavior() == Robot.Behavior.MANUAL) {
+                //if (robot.getBehavior() == Robot.Behavior.MANUAL) {
                     // Targeting complete, apply vision correction
                     log("TARGETING_COMPLETE", null);
                     robot.applyVisionPoseCorrection();
                     setState(AutonState.START_LAUNCH);
-                }
+                //}
                 break;
 
             case START_LAUNCH:

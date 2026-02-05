@@ -131,6 +131,12 @@ public class Vision implements Subsystem {
         limelight.updateRobotOrientation(yawDegrees);
     }
 
+    public double getFlywheelSpeed(){
+        double speed = 31.58941*Math.pow(distanceToGoal,4) - 193.20612*Math.pow(distanceToGoal,3) + 422.84196*Math.pow(distanceToGoal,2) - 251.80393*distanceToGoal + 701.34893;
+        return speed;
+    }
+
+
     @Override
     public void calc(Canvas fieldOverlay) {
         // PHASE 2: Get latest Limelight result and extract data
