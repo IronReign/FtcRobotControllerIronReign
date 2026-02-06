@@ -4,6 +4,8 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDriveActions;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -31,7 +33,18 @@ public class FieldMap {
     // ==================== INTAKE ASYMMETRY OFFSET ====================
     // Ball row waypoints need X offset when reflected for blue alliance
     // due to asymmetric intake design (shifts 6" in positive X direction)
-    public static final double BALL_ROW_BLUE_X_OFFSET = 6.0;  // inches
+    public static double BALL_ROW_BLUE_X_OFFSET = -1;  // inches
+    public static double ROW_X_OFFSET = 0;
+    public static double ROW_Y_START_OFFSET = 4;
+
+    // ==================== SPLINE-SPECIFIC OFFSETS ====================
+    // Additional X offsets for row starts when using splines — helps create
+    // a more gradual curve that the intake can handle. Only applied when USE_SPLINES is true.
+    public static double ROW_1_SPLINE_X_OFFSET = -2;
+    public static double ROW_2_SPLINE_X_OFFSET = -4;  // inches, negative = shift left
+    public static double ROW_3_SPLINE_X_OFFSET = 0;   // inches
+
+    public static double FIRE_1_ANGLE_OFFSET = -2;
 
     // ==================== WAYPOINT CLASS ====================
 
@@ -84,28 +97,33 @@ public class FieldMap {
     static {
         // ----- Starting Positions -----
         // AUDIENCE: Near audience, facing goal
-        RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(0, 0, 0));  // TODO: measure
+        //speed for audience start is 1100 and star feed .8
+        //65, 16.8
+        RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(64.5,16.8, 160));  // TODO: measure heading
         // GOAL: Near goal, facing goal
         RED_WAYPOINTS.put("START_GOAL", new Waypoint(-46.4566, 47.244, 135));
 
         // ----- Firing Positions -----
         // Positions where robot stops to launch balls at goal
-        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-17.12595, 15.748, 135));
-        RED_WAYPOINTS.put("FIRE_2", new Waypoint(0, 0, 0));  // TODO: measure
+        // FIRE_1 X uses FIRE_1_BASE_X which can be offset via Dashboard
+        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-14.1732+2, 15.748, 135));  // Base position, offset applied in get()
+        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-31.7,16, 124.4));  // TODO: measure
         RED_WAYPOINTS.put("FIRE_3", new Waypoint(0, 0, 0));  // TODO: measure
-        RED_WAYPOINTS.put("FIRE_4", new Waypoint(0, 0, 0));  // TODO: measure
+        RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.5,16.8, 160));  // TODO: measure    //fire from back triangle
 
         // ----- Ball Pickup Waypoints -----
         // Starting points for each of the 3 ball rows
+        // Base coordinates only — ROW_X_OFFSET and ROW_Y_START_OFFSET applied dynamically in get()
         RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732, 25.9842, 90));
         RED_WAYPOINTS.put("BALL_ROW_2_START", new Waypoint(10.2362, 25.9842, 90));
         RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456, 25.9842, 90));
 
         // ----- Ball Row Endpoints -----
         // Ending points after driving through ball rows
-        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503, 90));
-        RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362, 46.8503, 90));
-        RED_WAYPOINTS.put("BALL_ROW_3_END", new Waypoint(34.6456, 46.8503, 90));
+        // Base coordinates only — ROW_X_OFFSET applied dynamically in get()
+        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503+4.5-3, 90));
+        RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362, 46.8503+4.5-5, 90));
+        RED_WAYPOINTS.put("BALL_ROW_3_END", new Waypoint(34.6456, 46.8503+4.5, 90));
 
         // ----- Gate -----
         // Position to release previously scored balls
@@ -124,26 +142,73 @@ public class FieldMap {
 
     /**
      * Get a waypoint by name, automatically reflected for blue alliance.
-     * Ball row waypoints get an additional X offset for blue alliance
-     * to compensate for asymmetric intake design.
+     * Ball row waypoints have dynamic offsets applied (ROW_X_OFFSET, ROW_Y_START_OFFSET)
+     * so Dashboard changes take effect immediately.
      *
      * @param name Waypoint name (e.g., "FIRE_1", "BALL_ROW_2_START")
      * @param isRedAlliance true for red, false for blue
-     * @return The waypoint, reflected if blue alliance
+     * @return The waypoint with offsets applied, reflected if blue alliance
      * @throws IllegalArgumentException if waypoint name not found
      */
     public static Waypoint get(String name, boolean isRedAlliance) {
-        Waypoint redWaypoint = RED_WAYPOINTS.get(name);
-        if (redWaypoint == null) {
+        Waypoint baseWaypoint = RED_WAYPOINTS.get(name);
+        if (baseWaypoint == null) {
             throw new IllegalArgumentException("Unknown waypoint: " + name);
+        }
+        Waypoint redWaypoint = baseWaypoint;
+        if(name.equals("FIRE_1")){
+            double angleOffset = FIRE_1_ANGLE_OFFSET;
+            //code for angle to be right just for blue (angleoffset = -2)
+            redWaypoint = new Waypoint(
+                    baseWaypoint.x,
+                    baseWaypoint.y,
+                    baseWaypoint.heading + angleOffset
+            );
+            //code for angle to be right for red and blue
+//            redWaypoint = new Waypoint(
+//                    baseWaypoint.x,
+//                    baseWaypoint.y,
+//                    baseWaypoint.heading - (isRedAlliance?angleOffset: -angleOffset)
+//            );
+        }
+
+        // Apply dynamic offsets to ball row waypoints
+        //Waypoint redWaypoint = baseWaypoint;
+        if (name.startsWith("BALL_ROW")) {
+            double xOffset = -ROW_X_OFFSET;  // Negative because original had subtraction
+            double yOffset = 0;
+            if (name.contains("_START")) {
+                yOffset = ROW_Y_START_OFFSET;
+
+                // Apply spline-specific X offsets when USE_SPLINES is enabled
+                // These help create more gradual curves that the intake can handle
+                if (TankDriveActions.USE_SPLINES) {
+                    if(name.equals("BALL_ROW_1_START")){
+                        xOffset +=ROW_1_SPLINE_X_OFFSET;
+                    }
+                    else if (name.equals("BALL_ROW_2_START")) {
+                        xOffset += ROW_2_SPLINE_X_OFFSET;
+                    } else if (name.equals("BALL_ROW_3_START")) {
+                        xOffset += ROW_3_SPLINE_X_OFFSET;
+                    }
+                }
+            }
+            redWaypoint = new Waypoint(
+                    baseWaypoint.x + xOffset,
+                    baseWaypoint.y + yOffset,
+                    baseWaypoint.heading
+            );
         }
 
         if (isRedAlliance) {
             return redWaypoint;
         }
 
-        // Ball row waypoints need X offset for blue due to intake asymmetry
+        // Ball row waypoints need additional X offset for blue due to intake asymmetry
         if (name.startsWith("BALL_ROW")) {
+            if(name.startsWith("BALL_ROW_1")){
+                return redWaypoint.reflectedWithXOffset(0);
+            }
             return redWaypoint.reflectedWithXOffset(BALL_ROW_BLUE_X_OFFSET);
         }
 
@@ -226,6 +291,8 @@ public class FieldMap {
      * Draw all waypoints on the field overlay.
      * Red alliance waypoints drawn in red, blue alliance in blue.
      * Each waypoint is drawn as an 8" diameter circle.
+     * Waypoints are drawn with all dynamic offsets applied (ROW_X_OFFSET,
+     * ROW_Y_START_OFFSET, spline-specific offsets when USE_SPLINES is true).
      *
      * @param canvas The FTC Dashboard field overlay canvas
      */
@@ -237,21 +304,21 @@ public class FieldMap {
         canvas.setStrokeWidth(1);
 
         for (String name : getWaypointNames()) {
-            Waypoint wp = RED_WAYPOINTS.get(name);
-
-            // Skip waypoints that haven't been measured yet (at origin)
-            if (wp.x == 0 && wp.y == 0 && wp.heading == 0) {
+            // Check base waypoint to skip unmeasured ones (at origin)
+            Waypoint baseWp = RED_WAYPOINTS.get(name);
+            if (baseWp.x == 0 && baseWp.y == 0 && baseWp.heading == 0) {
                 continue;
             }
 
+            // Get waypoints with all dynamic offsets applied
+            Waypoint redWp = get(name, true);   // Red alliance with offsets
+            Waypoint blueWp = get(name, false); // Blue alliance with offsets + reflection
+
             // Draw red alliance waypoint
             canvas.setStroke("#FF0000");  // Red
-            canvas.strokeCircle(wp.x, wp.y, WAYPOINT_RADIUS);
+            canvas.strokeCircle(redWp.x, redWp.y, WAYPOINT_RADIUS);
 
-            // Draw blue alliance waypoint (reflected)
-            Waypoint blueWp = name.startsWith("BALL_ROW")
-                    ? wp.reflectedWithXOffset(BALL_ROW_BLUE_X_OFFSET)
-                    : wp.reflected();
+            // Draw blue alliance waypoint
             canvas.setStroke("#0000FF");  // Blue
             canvas.strokeCircle(blueWp.x, blueWp.y, WAYPOINT_RADIUS);
         }

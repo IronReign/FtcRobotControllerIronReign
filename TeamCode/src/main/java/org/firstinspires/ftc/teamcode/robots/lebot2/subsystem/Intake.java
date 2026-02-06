@@ -40,19 +40,22 @@ public class Intake implements Subsystem {
 
     // Configuration
     public static double INTAKE_POWER = 1.0;
+    public static double LAUNCH_ASSIST_POWER = 1.0; // Reduced speed to help feed during launch
+    public static double LAUNCH_ASSIST_DURATION_MS = 1000; // How long to assist before auto-stopping
     public static double EJECT_POWER = -0.5; // Reverse to push balls out
 
     // Behavior state machine
     public enum Behavior {
-        OFF,        // Motor stopped (default)
-        INTAKE,     // Motor running until manually stopped
-        LOAD_ALL,   // Run until loader full, then auto-stop
-        EJECT       // Reverse motor
+        OFF,            // Motor stopped (default)
+        INTAKE,         // Motor running until manually stopped
+        LOAD_ALL,       // Run until loader full, then auto-stop
+        EJECT,          // Reverse motor
+        LAUNCH_ASSIST   // Reduced speed for timed duration during launch
     }
     private Behavior behavior = Behavior.OFF;
 
-    // Suppression state (set by Launcher when it claims belt)
-    private boolean suppressed = false;
+    // Launch-assist timing
+    private long launchAssistStartMs = 0;
 
     // Reference to Loader for LOAD_ALL completion check
     private Loader loader = null;
@@ -91,23 +94,31 @@ public class Intake implements Subsystem {
                 break;
 
             case INTAKE:
-                currentPower = suppressed ? 0 : INTAKE_POWER;
+                currentPower = INTAKE_POWER;
                 break;
 
             case LOAD_ALL:
-                if (suppressed) {
-                    currentPower = 0;
-                } else if (loader != null && loader.isFull()) {
+                if (loader != null && loader.isFull()) {
                     // Auto-complete: loader is full
                     behavior = Behavior.OFF;
                     currentPower = 0;
+                    loader.releaseBeltFromIntake();
                 } else {
                     currentPower = INTAKE_POWER;
                 }
                 break;
 
             case EJECT:
-                currentPower = suppressed ? 0 : EJECT_POWER;
+                currentPower = EJECT_POWER;
+                break;
+
+            case LAUNCH_ASSIST:
+                if (System.currentTimeMillis() - launchAssistStartMs >= LAUNCH_ASSIST_DURATION_MS) {
+                    behavior = Behavior.OFF;
+                    currentPower = 0;
+                } else {
+                    currentPower = LAUNCH_ASSIST_POWER;
+                }
                 break;
         }
 
@@ -185,29 +196,41 @@ public class Intake implements Subsystem {
         return currentPower != 0;
     }
 
-    // ==================== SUPPRESSION (called by Launcher) ====================
+    // ==================== CURRENT MONITORING (for health check) ====================
 
     /**
-     * Suppress the intake (called when Launcher claims belt).
-     * Motor stops but behavior is preserved for resume.
+     * Enable/disable current monitoring on the intake motor.
+     * Only enable during health checks — adds I2C overhead.
      */
-    public void suppress() {
-        suppressed = true;
+    public void enableCurrentRead(boolean enabled) {
+        intakeMotor.enableCurrentRead(enabled);
     }
 
     /**
-     * Release suppression (called when Launcher releases belt).
-     * Motor resumes if behavior is still active.
+     * Get cached motor current (amps). Requires enableCurrentRead(true).
      */
-    public void unsuppress() {
-        suppressed = false;
+    public double getMotorCurrent() {
+        return intakeMotor.getCurrent();
+    }
+
+    // ==================== LAUNCH ASSIST (called by Launcher) ====================
+
+    /**
+     * Start launch assist - run intake at reduced speed for a timed duration.
+     * Called by Launcher when it starts firing to help feed balls.
+     */
+    public void startLaunchAssist() {
+        behavior = Behavior.LAUNCH_ASSIST;
+        launchAssistStartMs = System.currentTimeMillis();
     }
 
     /**
-     * Check if intake is currently suppressed.
+     * Stop launch assist immediately (called if launch is aborted).
      */
-    public boolean isSuppressed() {
-        return suppressed;
+    public void stopLaunchAssist() {
+        if (behavior == Behavior.LAUNCH_ASSIST) {
+            behavior = Behavior.OFF;
+        }
     }
 
     // ==================== LIFECYCLE ====================
@@ -215,7 +238,6 @@ public class Intake implements Subsystem {
     @Override
     public void stop() {
         behavior = Behavior.OFF;
-        suppressed = false;
         currentPower = 0;
         intakeMotor.stop();  // Immediate stop, bypasses lazy pattern
     }
@@ -223,7 +245,6 @@ public class Intake implements Subsystem {
     @Override
     public void resetStates() {
         behavior = Behavior.OFF;
-        suppressed = false;
     }
 
     @Override
@@ -236,11 +257,10 @@ public class Intake implements Subsystem {
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
         telemetry.put("Behavior", behavior);
-        telemetry.put("Running", isRunning() ? "YES" : (suppressed ? "SUPPRESSED" : "no"));
+        telemetry.put("Running", isRunning() ? "YES" : "no");
 
         if (debug) {
             telemetry.put("Power", String.format("%.2f", currentPower));
-            telemetry.put("Suppressed", suppressed);
         }
 
         return telemetry;

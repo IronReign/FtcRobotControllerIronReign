@@ -50,11 +50,11 @@ import org.firstinspires.ftc.teamcode.rrQuickStart.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.PoseMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.TankCommandMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.Drawing;
-import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.Localizer;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -107,13 +107,13 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         // turn controller gains
         public double turnGain = 25.0;
         public double turnVelGain = 3.0;
-        public double turnIGain = 0.0;           // Integral gain for steady-state accuracy
+        public double turnIGain = 1.0;           // Integral gain for steady-state accuracy
         public double turnICutIn = 5.0;         // Only integrate when error < this (degrees)
-        public double turnFeedforwardScale = 1.0; // Scale feedforward (0=pure feedback, 1=full feedforward)
+        public double turnFeedforwardScale = 0.0; // Scale feedforward (0=pure feedback, 1=full feedforward)
 
         // turn completion (position-based after profile ends)
-        public double turnCompleteTolerance = 2.0;      // Heading error tolerance (degrees)
-        public double turnCompleteVelTolerance = 0.1;   // Angular velocity tolerance (rad/s)
+        public double turnCompleteTolerance = 1.5;      // Heading error tolerance (degrees)
+        public double turnCompleteVelTolerance = 0.2;   // Angular velocity tolerance (rad/s)
         public double turnCompleteTimeout = 2.0;        // Max seconds to settle after profile (safety)
     }
 
@@ -125,7 +125,15 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     // The I=0.04 exists but may need adjustment for steady-state error.
 
     public static PIDCoefficients HEADING_PID = new PIDCoefficients(0.03, 0.04, 0.0);
-    public static double HEADING_TOLERANCE = 3.0; // degrees - TODO - tighten up - increased to allow completion with weak PID
+    public static double HEADING_TOLERANCE = 1.5; // degrees
+
+    // ==================== VISION PID PARAMS ====================
+    public static PIDCoefficients VISION_PID = new PIDCoefficients(0.025, 0.04, 0.03);
+    public static double VISION_OFFSET = 2; // offset from center of target in LLResult x units
+    public static double VISION_TOLERANCE = 10; // degrees of tx
+    public static double VISION_INTEGRAL_CUTIN = 4.0; // degrees
+    public static double VISION_ALPHA = .5; // EMA alpha for vision PID
+
 
     // ==================== ROADRUNNER INFRASTRUCTURE ====================
 
@@ -163,8 +171,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public enum TurnState {
         IDLE,
         TURNING_TO_HEADING,
-        TURNING_TO_TARGET,      // Single tx value (legacy)
-        CENTERING_ON_TARGET     // Continuous tx from Vision (preferred)
+        CENTERING_ON_TARGET     // Continuous tx from Vision
     }
     private TurnState turnState = TurnState.IDLE;
     private double turnTarget = 0;
@@ -177,9 +184,11 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     // RoadRunner action tracking
     private Action currentAction = null;
     private Vector2d currentActionTarget = null;  // Cached target for visualization
+    private List<Vector2d> trajectoryWaypoints = new ArrayList<>();  // All waypoints for visualization
 
-    // PID controller for turns
+    // PID controllers for turns
     private final PIDController headingPID;
+    private final PIDController visionPID;
 
     // Cached values from readSensors()
     private double cachedHeading = 0;
@@ -233,6 +242,16 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         headingPID.setContinuous(true);
         headingPID.setTolerance(HEADING_TOLERANCE);
         headingPID.enable();
+
+        // Initialize vision PID for target centering
+        visionPID = new PIDController(VISION_PID);
+        visionPID.setInputRange(-20, 20);
+        visionPID.setOutputRange(-1, 1);
+        visionPID.setIntegralCutIn(VISION_INTEGRAL_CUTIN);
+        visionPID.setContinuous(false);
+        visionPID.setTolerance(VISION_TOLERANCE/360*40); // degrees to percentage of input range
+        visionPID.setEmaAlpha(VISION_ALPHA);
+        visionPID.enable();
 
         cachedPose = pose;
         cachedHeading = Math.toDegrees(pose.heading.toDouble());
@@ -288,10 +307,6 @@ public final class TankDrivePinpoint implements DriveTrainBase {
                 executeTurnToHeading();
                 break;
 
-            case TURNING_TO_TARGET:
-                executeTurnToTarget();
-                break;
-
             case CENTERING_ON_TARGET:
                 executeCenteringOnTarget();
                 break;
@@ -302,8 +317,26 @@ public final class TankDrivePinpoint implements DriveTrainBase {
             // Draw field waypoints (optional, controlled by FieldMap.DRAW_WAYPOINTS)
             FieldMap.drawWaypoints(fieldOverlay);
 
-            // Draw current trajectory target in green (filled for visibility)
-            if (currentActionTarget != null) {
+            // Draw trajectory waypoints for spline visualization
+            if (!trajectoryWaypoints.isEmpty()) {
+                // Draw intermediate waypoints in yellow
+                for (int i = 0; i < trajectoryWaypoints.size() - 1; i++) {
+                    Vector2d wp = trajectoryWaypoints.get(i);
+                    fieldOverlay.setFill("#FFFF0080");  // Yellow with 50% alpha
+                    fieldOverlay.setStroke("#FFFF00");  // Yellow outline
+                    fieldOverlay.setStrokeWidth(2);
+                    fieldOverlay.fillCircle(wp.x, wp.y, FieldMap.WAYPOINT_RADIUS * 0.75);
+                    fieldOverlay.strokeCircle(wp.x, wp.y, FieldMap.WAYPOINT_RADIUS * 0.75);
+                }
+                // Draw final target in green
+                Vector2d finalWp = trajectoryWaypoints.get(trajectoryWaypoints.size() - 1);
+                fieldOverlay.setFill("#00FF0080");  // Green with 50% alpha
+                fieldOverlay.setStroke("#00FF00");  // Green outline
+                fieldOverlay.setStrokeWidth(2);
+                fieldOverlay.fillCircle(finalWp.x, finalWp.y, FieldMap.WAYPOINT_RADIUS);
+                fieldOverlay.strokeCircle(finalWp.x, finalWp.y, FieldMap.WAYPOINT_RADIUS);
+            } else if (currentActionTarget != null) {
+                // Fallback: draw single target in green (for non-spline trajectories)
                 fieldOverlay.setFill("#00FF0080");  // Green with 50% alpha
                 fieldOverlay.setStroke("#00FF00");  // Green outline
                 fieldOverlay.setStrokeWidth(2);
@@ -344,25 +377,6 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         }
     }
 
-    private void executeTurnToTarget() {
-        // For vision-based turning, we want tx (turnTarget) to reach 0
-        // Input = current offset, Setpoint = desired offset (0)
-        headingPID.setInput(turnTarget);
-        headingPID.setSetpoint(0);
-        headingPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
-        headingPID.setPID(HEADING_PID);
-
-        double correction = headingPID.performPID();
-
-        if (headingPID.onTarget()) {
-            setMotorPowers(0, 0);
-            turnState = TurnState.IDLE;
-            behavior = Behavior.MANUAL;
-        } else {
-            setMotorPowers(correction, -correction);
-        }
-    }
-
     @Override
     public void turnToHeading(double headingDegrees, double maxSpeed) {
         // Use RoadRunner's turnTo action for accurate, well-tuned turns
@@ -386,11 +400,8 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     @Override
     public void turnToTarget(double tx, double maxSpeed) {
-        turnTarget = tx; // tx is the offset, we want to drive it to 0
-        turnMaxSpeed = maxSpeed;
-        turnState = TurnState.TURNING_TO_TARGET;
-        behavior = Behavior.PID_TURN;
-        headingPID.enable();
+        // Deprecated — use centerOnTarget() for vision-based aiming
+        centerOnTarget();
     }
 
     @Override
@@ -428,7 +439,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         turnMaxSpeed = CENTERING_MAX_SPEED;
         turnState = TurnState.CENTERING_ON_TARGET;
         behavior = Behavior.PID_TURN;
-        headingPID.enable();
+        visionPID.enable();
     }
 
     private void executeCenteringOnTarget() {
@@ -443,21 +454,20 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
         double tx = vision.getTx();
 
-        // PID: we want tx to be 0 (target centered)
-        // Input = current offset, Setpoint = desired offset (0)
-        headingPID.setInput(tx);
-        headingPID.setSetpoint(0);
-        headingPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
-        headingPID.setPID(HEADING_PID);
+        // Negate tx so positive tx (target right) produces positive correction (turn right)
+        visionPID.setInput(tx);
+        visionPID.setSetpoint(VISION_OFFSET);
+        visionPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
+        visionPID.setPID(VISION_PID);
 
-        double correction = headingPID.performPID();
+        double correction = visionPID.performPID();
 
-        if (headingPID.onTarget()) {
+        if (visionPID.lockedOnTarget()) {
             setMotorPowers(0, 0);
             turnState = TurnState.IDLE;
             behavior = Behavior.MANUAL;
         } else {
-            setMotorPowers(correction, -correction);
+            setMotorPowers(-correction, correction);
         }
     }
 
@@ -465,8 +475,8 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     @Override
     public void drive(double throttle, double strafe, double turn) {
-        boolean seperate = false;
-        if(seperate){
+        boolean separate = false;
+        if(separate){
             setMotorPowers(throttle, strafe);
             return;
         }else {
@@ -555,6 +565,25 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         currentAction = action;
         behavior = Behavior.TRAJECTORY;
         currentActionTarget = targetPosition;
+        trajectoryWaypoints.clear();
+    }
+
+    /**
+     * Run a RoadRunner action with multiple waypoints for visualization.
+     * Use this for spline trajectories where you want to see all intermediate targets.
+     *
+     * @param action The action to run
+     * @param waypoints All waypoints along the trajectory (intermediate, row start, row end)
+     */
+    public void runAction(Action action, List<Vector2d> waypoints) {
+        currentAction = action;
+        behavior = Behavior.TRAJECTORY;
+        trajectoryWaypoints.clear();
+        trajectoryWaypoints.addAll(waypoints);
+        // Set currentActionTarget to the final waypoint for backward compatibility
+        if (!waypoints.isEmpty()) {
+            currentActionTarget = waypoints.get(waypoints.size() - 1);
+        }
     }
 
     /**
@@ -595,6 +624,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public void cancelAction() {
         currentAction = null;
         currentActionTarget = null;
+        trajectoryWaypoints.clear();
         if (behavior == Behavior.TRAJECTORY) {
             behavior = Behavior.MANUAL;
             setMotorPowers(0, 0);
@@ -617,6 +647,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         if (!running) {
             currentAction = null;
             currentActionTarget = null;
+            trajectoryWaypoints.clear();
             behavior = Behavior.MANUAL;
         }
         return running;
@@ -1014,7 +1045,8 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         if (debug) {
             telemetry.put("Turn State", turnState);
             telemetry.put("Turn Target", String.format("%.1f", turnTarget));
-            telemetry.put("PID Error", String.format("%.2f", headingPID.getError()));
+            telemetry.put("Heading PID Error", String.format("%.2f", headingPID.getError()));
+            telemetry.put("Vision PID Error", String.format("%.2f", visionPID.getError()));
             telemetry.put("Left Power", String.format("%.2f", leftMotors.get(0).getPower()));
             telemetry.put("Right Power", String.format("%.2f", rightMotors.get(0).getPower()));
             telemetry.put("Action Running", currentAction != null);

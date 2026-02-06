@@ -10,6 +10,7 @@ import com.acmerobotics.roadrunner.InstantAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.VelConstraint;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -42,17 +43,24 @@ import java.util.List;
 @Config(value = "Lebot2_TankDriveActions")
 public class TankDriveActions {
 
+    // Spline mode toggle — when true, use RR spline trajectories instead of turn-drive-turn
+    public static boolean USE_SPLINES = true;  // Default to proven fallback
+
+    // Velocity for slow intake drive (inches/sec) — used by spline row trajectories
+    public static double INTAKE_VEL_INCHES_SEC = 10.0;  // ~20% of max (50 in/s)
+
     // Dashboard-tunable turn skip thresholds (degrees)
     public static double INITIAL_TURN_SKIP_TOLERANCE = 2.0;  // Skip initial turn if within this
-    public static double FINAL_TURN_SKIP_TOLERANCE = 1.0;    // Skip final turn if within this
+    public static double FINAL_TURN_SKIP_TOLERANCE = 2.0;    // Skip final turn if within this
 
     // Position drive PID coefficients (Dashboard-tunable)
-    public static PIDCoefficients DISTANCE_PID = new PIDCoefficients(0.04, 0.0, 0.002);
-    public static PIDCoefficients HEADING_DRIVE_PID = new PIDCoefficients(0.03, 0.0, 0.001);
-
+    public static PIDCoefficients DISTANCE_PID = new PIDCoefficients(0.04, 0.04, 2.0);
+    public static double DIST_PID_I_CUTIN = 8.0;  // need to be within 8" for integration to enable
+    public static PIDCoefficients HEADING_DRIVE_PID = new PIDCoefficients(0.03, 0.03, 0.001);
+    public static double HEAD_PID_I_CUTIN = 5.0; // need to be withing 5 degrees for integration to go active
     // Position drive thresholds
     public static double POSITION_TOLERANCE = 1.5;  // inches — completion threshold
-    public static double MAX_DRIVE_POWER = 0.8;     // cap to prevent wheelies
+    public static double MAX_DRIVE_POWER = 1;     // cap to prevent wheelies      //.8 <--ORIGINAL
 
     // Slew rate limits (power change per tick, ~50ms loop)
     public static double ACCEL_SLEW_RATE = 0.05;           // max power increase per tick
@@ -62,10 +70,14 @@ public class TankDriveActions {
     // Settling timeout — safety net if PID oscillates and never converges
     public static double SETTLING_TIMEOUT_MS = 500;
 
+
     private final TankDrivePinpoint driveTrain;
 
     // The final target position from the last driveTo/driveThrough/driveToReversed call.
     private Vector2d lastTargetPosition = null;
+
+    // All waypoints from the last trajectory (for visualization)
+    private List<Vector2d> lastTrajectoryWaypoints = new ArrayList<>();
 
     public TankDriveActions(TankDrivePinpoint driveTrain) {
         this.driveTrain = driveTrain;
@@ -78,13 +90,34 @@ public class TankDriveActions {
         return lastTargetPosition;
     }
 
+    /**
+     * Get all waypoints from the last trajectory (for visualization).
+     * For spline trajectories, this includes intermediate waypoints, row start, and row end.
+     */
+    public List<Vector2d> getLastTrajectoryWaypoints() {
+        return lastTrajectoryWaypoints;
+    }
+
     // ==================== driveTo ====================
 
     /**
      * Drive to a target pose with default constraints.
      */
     public Action driveTo(Pose2d target) {
-        return driveTo(target, null, null);
+        return driveTo(target, MAX_DRIVE_POWER);
+    }
+
+    /**
+     * Drive to a target pose with a custom max power.
+     * Use lower values for slower driving (e.g., during intake).
+     */
+    public Action driveTo(Pose2d target, double maxPower) {
+        lastTargetPosition = target.position;
+
+        Action initialTurn = new LazyBearingTurnAction(target.position, false, INITIAL_TURN_SKIP_TOLERANCE);
+        Action drive = new PositionDriveAction(target.position, false, maxPower);
+        Action finalTurn = new LazyTurnAction(target.heading.toDouble(), FINAL_TURN_SKIP_TOLERANCE);
+        return new SequentialAction(initialTurn, drive, finalTurn);
     }
 
     /**
@@ -191,6 +224,101 @@ public class TankDriveActions {
         return new SequentialAction(initialTurn, drive, finalTurn);
     }
 
+    // ==================== Spline Methods ====================
+
+    /**
+     * Drive to a target pose using RoadRunner spline trajectory.
+     *
+     * Unlike turn-drive-turn, this creates a smooth curved path from the current
+     * position to the target. The robot's heading follows the path tangent (natural
+     * for tank drive).
+     *
+     * Entry tangent is derived from current heading; exit tangent matches target heading.
+     *
+     * @param target Target pose (position + heading as exit tangent)
+     * @return RR trajectory action
+     */
+    public Action driveToSpline(Pose2d target) {
+        lastTargetPosition = target.position;
+        Pose2d currentPose = driveTrain.getPose();
+
+        return driveTrain.actionBuilder(currentPose)
+                .splineTo(target.position, target.heading.toDouble())
+                .build();
+    }
+
+    // Threshold for pre-turn: if heading differs from bearing by more than this, turn first
+    public static double SPLINE_PRETURN_THRESHOLD_DEG = 30.0;
+
+    /**
+     * Build a chained trajectory for ball row pickup: turn → intake → approach → drive through.
+     *
+     * Uses a hybrid approach:
+     * 1. If robot heading differs significantly from bearing to row start, turn first
+     * 2. Fire intake callback after the turn (before spline approach)
+     * 3. Spline to row start with entry tangent matching bearing, exit tangent at 90°
+     * 4. Drive straight through row at reduced velocity
+     *
+     * @param rowStart Start of ball row (position + heading as entry tangent)
+     * @param rowEnd End of ball row (position)
+     * @param intakeVelInchesPerSec Velocity through the row while intaking (inches/sec)
+     * @param onIntakeStart Action to fire after turn (e.g., start intake)
+     * @return RR trajectory action for entire row sequence
+     */
+    public Action buildRowTrajectory(Pose2d rowStart, Pose2d rowEnd,
+                                      double intakeVelInchesPerSec, Action onIntakeStart) {
+        lastTargetPosition = rowEnd.position;
+        lastTrajectoryWaypoints.clear();
+        Pose2d currentPose = driveTrain.getPose();
+
+        // Velocity constraint for the slow intake section
+        VelConstraint slowConstraint = new TranslationalVelConstraint(intakeVelInchesPerSec);
+
+        // Calculate bearing from current position to row start
+        double bearingToRowStart = bearingTo(currentPose.position, rowStart.position);
+        double currentHeading = currentPose.heading.toDouble();
+        double headingDiff = Math.abs(Math.toDegrees(normalizeAngle(bearingToRowStart - currentHeading)));
+
+        // Store waypoints for visualization
+        lastTrajectoryWaypoints.add(rowStart.position);
+        lastTrajectoryWaypoints.add(rowEnd.position);
+
+        if (headingDiff > SPLINE_PRETURN_THRESHOLD_DEG) {
+            // Large heading difference: turn to face the target first, then intake, then spline
+            System.out.println(String.format(
+                    "buildRowTrajectory: headingDiff=%.1f° > threshold, adding pre-turn to bearing=%.1f°",
+                    headingDiff, Math.toDegrees(bearingToRowStart)));
+
+            // Build: Turn → Intake → Spline → LineToY
+            Action turnAction = driveTrain.actionBuilder(currentPose)
+                    .turnTo(bearingToRowStart)
+                    .build();
+
+            // After turn, build spline from the turned pose
+            Pose2d postTurnPose = new Pose2d(currentPose.position, bearingToRowStart);
+
+            Action splineAction = driveTrain.actionBuilder(postTurnPose)
+                    .splineTo(rowStart.position, rowStart.heading.toDouble())
+                    .lineToY(rowEnd.position.y, slowConstraint, driveTrain.defaultAccelConstraint)
+                    .build();
+
+            // Intake starts after turn, before spline approach
+            return new SequentialAction(turnAction, onIntakeStart, splineAction);
+        } else {
+            // Small heading difference: start intake immediately, then direct spline
+            System.out.println(String.format(
+                    "buildRowTrajectory: headingDiff=%.1f° <= threshold, direct spline", headingDiff));
+
+            Action splineAction = driveTrain.actionBuilder(currentPose)
+                    .splineTo(rowStart.position, rowStart.heading.toDouble())
+                    .lineToY(rowEnd.position.y, slowConstraint, driveTrain.defaultAccelConstraint)
+                    .build();
+
+            // Intake starts before spline (no turn needed, already facing roughly right direction)
+            return new SequentialAction(onIntakeStart, splineAction);
+        }
+    }
+
     // ==================== PositionDriveAction ====================
 
     /**
@@ -246,14 +374,28 @@ public class TankDriveActions {
             // that tip the robot (wheelie) — especially in reverse.
             setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-            // Lock in heading reference from current pose.
-            // The initial LazyBearingTurnAction has already aligned the robot toward
-            // (or away from) the target. We hold this heading throughout the drive
-            // rather than chasing the live bearing, which swings rapidly near the
-            // target and causes orbiting.
+            // Use the robot's current heading as the locked reference.
+            // The initial LazyBearingTurnAction already aligned the robot toward
+            // (or away from) the target using the pre-turn position. If the Pinpoint
+            // reports position drift during the turn, recomputing the bearing here
+            // would give a different (wrong) angle. Trusting the physical heading
+            // the robot is actually on avoids this ~12-15° systematic error.
             Pose2d currentPose = driveTrain.getPose();
+            lockedHeading = currentPose.heading.toDouble();
+
+            // Diagnostic: log init state — compare bearing vs actual heading
             double bearing = bearingTo(currentPose.position, target);
-            lockedHeading = reversed ? normalizeAngle(bearing + Math.PI) : bearing;
+            double expectedHeading = reversed ? normalizeAngle(bearing + Math.PI) : bearing;
+            double bearingDelta = Math.toDegrees(normalizeAngle(expectedHeading - lockedHeading));
+            System.out.println(String.format(
+                    "PosDrive INIT: pos=(%.1f,%.1f) hdg=%.1f° bearing=%.1f° bearingDelta=%.1f° dist=%.1f tgt=(%.1f,%.1f) rev=%b",
+                    currentPose.position.x, currentPose.position.y,
+                    Math.toDegrees(lockedHeading),
+                    Math.toDegrees(reversed ? normalizeAngle(bearing + Math.PI) : bearing),
+                    bearingDelta,
+                    Math.sqrt(Math.pow(target.x - currentPose.position.x, 2) + Math.pow(target.y - currentPose.position.y, 2)),
+                    target.x, target.y,
+                    reversed));
 
             previousDrivePower = 0.0;
             settlingStartTime = -1;
@@ -268,7 +410,9 @@ public class TankDriveActions {
 
             // Update PID coefficients from Dashboard each tick
             distancePID.setPID(DISTANCE_PID);
+            distancePID.setIntegralCutIn(DIST_PID_I_CUTIN);
             headingPID.setPID(HEADING_DRIVE_PID);
+            headingPID.setIntegralCutIn(HEAD_PID_I_CUTIN);
 
             Pose2d currentPose = driveTrain.getPose();
             double currentHeading = currentPose.heading.toDouble();
@@ -309,6 +453,7 @@ public class TankDriveActions {
                 previousDrivePower = 0.0;
                 return false;
             }
+
 
             // Heading error relative to locked heading (set at init from initial bearing)
             double headingError = normalizeAngle(lockedHeading - currentHeading);
@@ -473,6 +618,17 @@ public class TankDriveActions {
 
                 double headingError = Math.toDegrees(Math.abs(
                         normalizeAngle(targetHeading - currentPose.heading.toDouble())));
+
+                System.out.println(String.format(
+                        "BearingTurn INIT: pos=(%.1f,%.1f) hdg=%.1f° bearing=%.1f° target=%.1f° err=%.1f° tgt=(%.1f,%.1f) rev=%b skip=%b",
+                        currentPose.position.x, currentPose.position.y,
+                        Math.toDegrees(currentPose.heading.toDouble()),
+                        Math.toDegrees(bearing),
+                        Math.toDegrees(targetHeading),
+                        headingError,
+                        targetPosition.x, targetPosition.y,
+                        reversed,
+                        headingError <= skipToleranceDeg));
 
                 if (headingError <= skipToleranceDeg) {
                     complete = true;

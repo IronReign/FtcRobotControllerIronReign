@@ -52,7 +52,7 @@ public class Loader implements Subsystem {
     public static double BELT_REVERSE_POWER = 0.5; // Positive = toward front, relieves fin pressure
     public static double BALL_DETECT_THRESHOLD_CM = 10.0; // Distance indicating ball present
     public static int MAX_BALLS = 3;
-    public static long FULL_CONFIRM_MS = 100; // Debounce time for isFull virtual sensor
+    public static long FULL_CONFIRM_MS = 300; // Debounce time for isFull virtual sensor
 
     // Belt ownership - priority: LAUNCHER > INTAKE > NONE
     public enum BeltOwner {
@@ -172,6 +172,9 @@ public class Loader implements Subsystem {
      */
     public void requestBeltForIntake() {
         intakeRequestsBelt = true;
+        // Reset full confirmation so LOAD_ALL gets a fresh debounce window
+        fullConditionStartMs = 0;
+        isFullConfirmed = false;
     }
 
     /**
@@ -227,6 +230,23 @@ public class Loader implements Subsystem {
      */
     public void stopBeltForFiring() {
         beltMotor.setPower(0);
+    }
+
+    // ==================== CURRENT MONITORING (for health check) ====================
+
+    /**
+     * Enable/disable current monitoring on the belt motor.
+     * Only enable during health checks — adds I2C overhead.
+     */
+    public void enableBeltCurrentRead(boolean enabled) {
+        beltMotor.enableCurrentRead(enabled);
+    }
+
+    /**
+     * Get cached belt motor current (amps). Requires enableBeltCurrentRead(true).
+     */
+    public double getBeltCurrent() {
+        return beltMotor.getCurrent();
     }
 
     // ==================== LEGACY METHODS (for compatibility) ====================

@@ -489,7 +489,7 @@ public class Robot implements Subsystem {
                 sampleAlignmentPID.enable();
                 if (sampleAlignmentPID.onTarget()) {
                     onTarget = true;
-                    sampleAlignmentPID.clearCache();
+                    sampleAlignmentPID.resetEMA();
                     driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                     return true;
 

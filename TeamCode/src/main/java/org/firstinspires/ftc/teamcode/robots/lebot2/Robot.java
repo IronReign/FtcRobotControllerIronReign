@@ -118,7 +118,7 @@ public class Robot implements TelemetryProvider {
         LAUNCH_ALL      // Fire all balls in sequence
     }
     private Behavior behavior = Behavior.MANUAL;
-    private boolean requestSpinUp = false;
+
     // Targeting sequence state
     public enum TargetingState {
         IDLE,
@@ -281,27 +281,16 @@ public class Robot implements TelemetryProvider {
 
             case TURNING_IMU:
                 if (driveTrain.isTurnComplete()) {
-                    // IMU turn complete, start vision targeting
-                    if (vision.hasTarget()) {
-                        driveTrain.turnToTarget(vision.getTx(), 0.5);
-                        targetingState = TargetingState.TURNING_VISION;
-                    } else {
-                        // No target visible, complete
-                        targetingState = TargetingState.IDLE;
-                        behavior = Behavior.MANUAL;
-                    }
+                    // IMU turn complete, start vision centering
+                    driveTrain.centerOnTarget();
+                    targetingState = TargetingState.TURNING_VISION;
                 }
                 break;
 
             case TURNING_VISION:
-                // Check completion FIRST, before updating target
-                // (turnToTarget resets turnState, so must check before calling it)
                 if (driveTrain.isTurnComplete()) {
                     targetingState = TargetingState.IDLE;
                     behavior = Behavior.MANUAL;
-                } else if (vision.hasTarget()) {
-                    // Keep updating target while turning
-                    driveTrain.turnToTarget(vision.getTx(), 0.5);
                 }
                 break;
         }
@@ -315,11 +304,10 @@ public class Robot implements TelemetryProvider {
     private void handleLaunchAllBehavior2() {
         switch (launchAllState) {
             case IDLE:
-                //if (loader.isEmpty()) {
-                    //behavior = Behavior.MANUAL;
-                    //return;
-                //}
-
+//                if (loader.isEmpty()) {
+//                    behavior = Behavior.MANUAL;
+//                    return;
+//                }
                 // Start flywheel spinning
                 launcher.setBehavior(Launcher.Behavior.SPINNING);
                 launchAllState = LaunchAllState.SPINNING_UP;

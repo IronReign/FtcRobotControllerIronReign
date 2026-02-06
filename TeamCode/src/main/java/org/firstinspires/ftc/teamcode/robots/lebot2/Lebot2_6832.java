@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Vision;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.TankDrive;
@@ -177,6 +178,7 @@ public class Lebot2_6832 extends OpMode {
                 break;
 
             case TELE_OP:
+                TankDrivePinpoint.VISION_TOLERANCE = 2;
                 handleTeleOp(packet);
                 break;
 
@@ -269,10 +271,11 @@ public class Lebot2_6832 extends OpMode {
         if (gameState == GameState.AUTONOMOUS) {
             handleTelemetry(autonomous.getTelemetry(debugTelemetryEnabled),
                     autonomous.getTelemetryName(), packet);
-            // Also show Missions telemetry since autonomous uses it
-            handleTelemetry(robot.missions.getTelemetry(debugTelemetryEnabled),
-                    robot.missions.getTelemetryName(), packet);
         }
+
+        // Missions telemetry (always shown — minimal when idle)
+        handleTelemetry(robot.missions.getTelemetry(debugTelemetryEnabled),
+                robot.missions.getTelemetryName(), packet);
 
         // Subsystem telemetry
         if (debugTelemetryEnabled) {
@@ -300,6 +303,11 @@ public class Lebot2_6832 extends OpMode {
             String line = Misc.formatInvariant("%s: %s", entry.getKey(), entry.getValue());
             telemetry.addLine(line);
             packet.addLine(line);
+
+            // Auto-register numeric values for Dashboard graphing
+            if (entry.getValue() instanceof Number) {
+                packet.put(name + "_" + entry.getKey(), ((Number) entry.getValue()).doubleValue());
+            }
         }
 
         telemetry.addLine();

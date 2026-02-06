@@ -156,6 +156,7 @@ public class DriverControls implements TelemetryProvider {
 
         // Right bumper: Launch all balls in sequence
         if (stickyGamepad1.right_bumper) {
+            robot.launcher.updateTargetSpeed();
             robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
         }
 
@@ -276,6 +277,18 @@ public class DriverControls implements TelemetryProvider {
             if (stickyGamepad1.right_bumper) {
                 robot.missions.initLogging();
                 robot.missions.startTuningRamsete();
+            }
+            if (stickyGamepad1.dpad_up) {
+                robot.missions.initLogging();
+                robot.missions.startTuningDrift();
+            }
+            if (stickyGamepad1.dpad_down) {
+                robot.missions.initLogging();
+                robot.missions.startTuningVision();
+            }
+            if (stickyGamepad1.left_bumper) {
+                robot.missions.initLogging();
+                robot.missions.startCheckHealth(gamepad1);
             }
         }
 
