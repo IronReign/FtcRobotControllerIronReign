@@ -33,15 +33,18 @@ public class FieldMap {
     // ==================== INTAKE ASYMMETRY OFFSET ====================
     // Ball row waypoints need X offset when reflected for blue alliance
     // due to asymmetric intake design (shifts 6" in positive X direction)
-    public static double BALL_ROW_BLUE_X_OFFSET = 0;  // inches
+    public static double BALL_ROW_BLUE_X_OFFSET = -1;  // inches
     public static double ROW_X_OFFSET = 0;
-    public static double ROW_Y_START_OFFSET = 7;
+    public static double ROW_Y_START_OFFSET = 4;
 
     // ==================== SPLINE-SPECIFIC OFFSETS ====================
     // Additional X offsets for row starts when using splines — helps create
     // a more gradual curve that the intake can handle. Only applied when USE_SPLINES is true.
+    public static double ROW_1_SPLINE_X_OFFSET = -2;
     public static double ROW_2_SPLINE_X_OFFSET = -4;  // inches, negative = shift left
     public static double ROW_3_SPLINE_X_OFFSET = 0;   // inches
+
+    public static double FIRE_1_ANGLE_OFFSET = -2;
 
     // ==================== WAYPOINT CLASS ====================
 
@@ -104,7 +107,7 @@ public class FieldMap {
         // Positions where robot stops to launch balls at goal
         // FIRE_1 X uses FIRE_1_BASE_X which can be offset via Dashboard
         RED_WAYPOINTS.put("FIRE_1", new Waypoint(-14.1732+2, 15.748, 135));  // Base position, offset applied in get()
-        RED_WAYPOINTS.put("FIRE_2", new Waypoint(0, 0, 0));  // TODO: measure
+        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-31.7,16, 124.4));  // TODO: measure
         RED_WAYPOINTS.put("FIRE_3", new Waypoint(0, 0, 0));  // TODO: measure
         RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.5,16.8, 160));  // TODO: measure    //fire from back triangle
 
@@ -118,8 +121,8 @@ public class FieldMap {
         // ----- Ball Row Endpoints -----
         // Ending points after driving through ball rows
         // Base coordinates only — ROW_X_OFFSET applied dynamically in get()
-        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503+4.5, 90));
-        RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362, 46.8503+4.5, 90));
+        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503+4.5-3, 90));
+        RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362, 46.8503+4.5-5, 90));
         RED_WAYPOINTS.put("BALL_ROW_3_END", new Waypoint(34.6456, 46.8503+4.5, 90));
 
         // ----- Gate -----
@@ -152,9 +155,25 @@ public class FieldMap {
         if (baseWaypoint == null) {
             throw new IllegalArgumentException("Unknown waypoint: " + name);
         }
+        Waypoint redWaypoint = baseWaypoint;
+        if(name.equals("FIRE_1")){
+            double angleOffset = FIRE_1_ANGLE_OFFSET;
+            //code for angle to be right just for blue (angleoffset = -2)
+            redWaypoint = new Waypoint(
+                    baseWaypoint.x,
+                    baseWaypoint.y,
+                    baseWaypoint.heading + angleOffset
+            );
+            //code for angle to be right for red and blue
+//            redWaypoint = new Waypoint(
+//                    baseWaypoint.x,
+//                    baseWaypoint.y,
+//                    baseWaypoint.heading - (isRedAlliance?angleOffset: -angleOffset)
+//            );
+        }
 
         // Apply dynamic offsets to ball row waypoints
-        Waypoint redWaypoint = baseWaypoint;
+        //Waypoint redWaypoint = baseWaypoint;
         if (name.startsWith("BALL_ROW")) {
             double xOffset = -ROW_X_OFFSET;  // Negative because original had subtraction
             double yOffset = 0;
@@ -164,7 +183,10 @@ public class FieldMap {
                 // Apply spline-specific X offsets when USE_SPLINES is enabled
                 // These help create more gradual curves that the intake can handle
                 if (TankDriveActions.USE_SPLINES) {
-                    if (name.equals("BALL_ROW_2_START")) {
+                    if(name.equals("BALL_ROW_1_START")){
+                        xOffset +=ROW_1_SPLINE_X_OFFSET;
+                    }
+                    else if (name.equals("BALL_ROW_2_START")) {
                         xOffset += ROW_2_SPLINE_X_OFFSET;
                     } else if (name.equals("BALL_ROW_3_START")) {
                         xOffset += ROW_3_SPLINE_X_OFFSET;
@@ -184,6 +206,9 @@ public class FieldMap {
 
         // Ball row waypoints need additional X offset for blue due to intake asymmetry
         if (name.startsWith("BALL_ROW")) {
+            if(name.startsWith("BALL_ROW_1")){
+                return redWaypoint.reflectedWithXOffset(0);
+            }
             return redWaypoint.reflectedWithXOffset(BALL_ROW_BLUE_X_OFFSET);
         }
 

@@ -72,6 +72,7 @@ public class Missions implements TelemetryProvider {
         LAUNCH_PRELOADS,    // Fire preloaded balls
         BALL_GROUP,         // Navigate to ball row, intake through row
         OPEN_SESAME,        // Navigate to gate, back into release lever
+
         GO_BALL_CLUSTER,    // (future) Vision/statistical ball pickup
         // Tuning missions (for TEST mode)
         TUNING_ROTATION,    // Turn 90° CW 4x, CCW 4x, report heading error
@@ -971,7 +972,7 @@ public class Missions implements TelemetryProvider {
 
         switch (navToFireState) {
             case IDLE:
-                TankDriveActions.MAX_DRIVE_POWER = 1;
+                TankDriveActions.MAX_DRIVE_POWER = .85;
                 // Start spinning up launcher during navigation
                 robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
 
@@ -1041,6 +1042,7 @@ public class Missions implements TelemetryProvider {
                 } else {
                     // Real mode: Start the LAUNCH_ALL robot behavior
                     log("LAUNCH_START", "balls=" + robot.loader.getBallCount(), null);
+                    robot.launcher.updateTargetSpeed();
                     robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
                     launchPreloadsState = LaunchPreloadsState.WAITING_FOR_LAUNCH;
                 }
@@ -1171,7 +1173,7 @@ public class Missions implements TelemetryProvider {
             case INTAKING_THROUGH_ROW:
                 // Drive through the full row while intaking — stop only when trajectory completes
                 if (!driveTrain.isActionRunning()) {
-                    TankDriveActions.MAX_DRIVE_POWER = 1;
+                    TankDriveActions.MAX_DRIVE_POWER = .85;
                     int ballsCollected = robot.loader.getBallCount() - ballCountAtStart;
                     log("BALLGROUP_INTAKE_DONE", "trajectory_done,balls=" + ballsCollected, null);
                     robot.driveTrain.drive(0, 0, 0);
