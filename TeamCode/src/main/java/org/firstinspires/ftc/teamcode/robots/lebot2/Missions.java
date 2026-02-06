@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.lebot2;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.InstantAction;
 import com.acmerobotics.roadrunner.CompositeVelConstraint;
 import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -1130,10 +1131,25 @@ public class Missions implements TelemetryProvider {
 
                 log("BALLGROUP_START", "row=" + targetGroupIndex, rowStart);
 
-                // Build Turn-Spline-Turn trajectory to row start using TankDriveActions
-                Action trajectory = actions.driveTo(rowStart);
-                driveTrain.runAction(trajectory, actions.getLastTargetPosition());
-                ballGroupState = BallGroupState.NAVIGATING_TO_ROW_START;
+                if (TankDriveActions.USE_SPLINES) {
+                    // Single chained trajectory: spline approach → intake trigger → slow drive through
+                    Action intakeAction = new InstantAction(() -> {
+                        robot.intake.loadAll();
+                        robot.loader.requestBeltForIntake();
+                        log("BALLGROUP_INTAKE_START_SPLINE", null, targetRowEnd);
+                    });
+                    Action trajectory = actions.buildRowTrajectory(
+                            rowStart, targetRowEnd, TankDriveActions.INTAKE_VEL_INCHES_SEC,
+                            intakeAction
+                    );
+                    driveTrain.runAction(trajectory, actions.getLastTrajectoryWaypoints());
+                    ballGroupState = BallGroupState.INTAKING_THROUGH_ROW;  // Skip to final phase
+                } else {
+                    // Existing turn-drive-turn approach
+                    Action trajectory = actions.driveTo(rowStart);
+                    driveTrain.runAction(trajectory, actions.getLastTargetPosition());
+                    ballGroupState = BallGroupState.NAVIGATING_TO_ROW_START;
+                }
                 break;
 
             case NAVIGATING_TO_ROW_START:

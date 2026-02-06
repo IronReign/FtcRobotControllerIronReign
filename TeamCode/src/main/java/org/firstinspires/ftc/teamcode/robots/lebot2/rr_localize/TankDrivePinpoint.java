@@ -54,6 +54,7 @@ import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -183,6 +184,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     // RoadRunner action tracking
     private Action currentAction = null;
     private Vector2d currentActionTarget = null;  // Cached target for visualization
+    private List<Vector2d> trajectoryWaypoints = new ArrayList<>();  // All waypoints for visualization
 
     // PID controllers for turns
     private final PIDController headingPID;
@@ -315,8 +317,26 @@ public final class TankDrivePinpoint implements DriveTrainBase {
             // Draw field waypoints (optional, controlled by FieldMap.DRAW_WAYPOINTS)
             FieldMap.drawWaypoints(fieldOverlay);
 
-            // Draw current trajectory target in green (filled for visibility)
-            if (currentActionTarget != null) {
+            // Draw trajectory waypoints for spline visualization
+            if (!trajectoryWaypoints.isEmpty()) {
+                // Draw intermediate waypoints in yellow
+                for (int i = 0; i < trajectoryWaypoints.size() - 1; i++) {
+                    Vector2d wp = trajectoryWaypoints.get(i);
+                    fieldOverlay.setFill("#FFFF0080");  // Yellow with 50% alpha
+                    fieldOverlay.setStroke("#FFFF00");  // Yellow outline
+                    fieldOverlay.setStrokeWidth(2);
+                    fieldOverlay.fillCircle(wp.x, wp.y, FieldMap.WAYPOINT_RADIUS * 0.75);
+                    fieldOverlay.strokeCircle(wp.x, wp.y, FieldMap.WAYPOINT_RADIUS * 0.75);
+                }
+                // Draw final target in green
+                Vector2d finalWp = trajectoryWaypoints.get(trajectoryWaypoints.size() - 1);
+                fieldOverlay.setFill("#00FF0080");  // Green with 50% alpha
+                fieldOverlay.setStroke("#00FF00");  // Green outline
+                fieldOverlay.setStrokeWidth(2);
+                fieldOverlay.fillCircle(finalWp.x, finalWp.y, FieldMap.WAYPOINT_RADIUS);
+                fieldOverlay.strokeCircle(finalWp.x, finalWp.y, FieldMap.WAYPOINT_RADIUS);
+            } else if (currentActionTarget != null) {
+                // Fallback: draw single target in green (for non-spline trajectories)
                 fieldOverlay.setFill("#00FF0080");  // Green with 50% alpha
                 fieldOverlay.setStroke("#00FF00");  // Green outline
                 fieldOverlay.setStrokeWidth(2);
@@ -455,8 +475,8 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     @Override
     public void drive(double throttle, double strafe, double turn) {
-        boolean seperate = false;
-        if(seperate){
+        boolean separate = false;
+        if(separate){
             setMotorPowers(throttle, strafe);
             return;
         }else {
@@ -545,6 +565,25 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         currentAction = action;
         behavior = Behavior.TRAJECTORY;
         currentActionTarget = targetPosition;
+        trajectoryWaypoints.clear();
+    }
+
+    /**
+     * Run a RoadRunner action with multiple waypoints for visualization.
+     * Use this for spline trajectories where you want to see all intermediate targets.
+     *
+     * @param action The action to run
+     * @param waypoints All waypoints along the trajectory (intermediate, row start, row end)
+     */
+    public void runAction(Action action, List<Vector2d> waypoints) {
+        currentAction = action;
+        behavior = Behavior.TRAJECTORY;
+        trajectoryWaypoints.clear();
+        trajectoryWaypoints.addAll(waypoints);
+        // Set currentActionTarget to the final waypoint for backward compatibility
+        if (!waypoints.isEmpty()) {
+            currentActionTarget = waypoints.get(waypoints.size() - 1);
+        }
     }
 
     /**
@@ -585,6 +624,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public void cancelAction() {
         currentAction = null;
         currentActionTarget = null;
+        trajectoryWaypoints.clear();
         if (behavior == Behavior.TRAJECTORY) {
             behavior = Behavior.MANUAL;
             setMotorPowers(0, 0);
@@ -607,6 +647,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         if (!running) {
             currentAction = null;
             currentActionTarget = null;
+            trajectoryWaypoints.clear();
             behavior = Behavior.MANUAL;
         }
         return running;
