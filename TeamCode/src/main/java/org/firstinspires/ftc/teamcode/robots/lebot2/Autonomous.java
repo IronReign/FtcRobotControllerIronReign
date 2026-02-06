@@ -120,8 +120,8 @@ public class Autonomous implements TelemetryProvider {
         // Set strategy parameters based on starting position
         if (robot.getStartingPosition()!=Robot.StartingPosition.AUDIENCE) {
             FIRE_POSITION = 1;
-            Launcher.STAR_FEEDING=1;
-            Launcher.MIN_LAUNCH_SPEED=725;
+            Launcher.STAR_FEEDING=.85;
+            //Launcher.MIN_LAUNCH_SPEED=725;
             ROW_START = 0;
             ROW_END = 2;
             ROW_DIRECTION = 1;
@@ -305,6 +305,9 @@ public class Autonomous implements TelemetryProvider {
 
             case START_RETURN_TO_FIRE:
                 // Navigate back to fire position (auto-direction)
+                if(currentRow == 2){
+                    FIRE_POSITION=2;
+                }
                 robot.missions.startNavigateToFire(FIRE_POSITION);
                 setState(AutonState.WAITING_RETURN);
                 break;
