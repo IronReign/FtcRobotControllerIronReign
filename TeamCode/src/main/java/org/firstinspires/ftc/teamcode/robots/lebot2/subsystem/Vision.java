@@ -50,7 +50,7 @@ public class Vision implements Subsystem {
         UPMIN,      //default for long distance shooting (1240)
         UPMAX       //default for short distance shooting (1200)
     }
-    private int tiltTicks=1200;
+    private int tiltTicks=1460;
 
     private Angle angle = Angle.UPMAX;
 

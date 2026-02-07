@@ -33,7 +33,7 @@ public class FieldMap {
     // ==================== INTAKE ASYMMETRY OFFSET ====================
     // Ball row waypoints need X offset when reflected for blue alliance
     // due to asymmetric intake design (shifts 6" in positive X direction)
-    public static double BALL_ROW_BLUE_X_OFFSET = 4;  // inches
+    public static double BALL_ROW_BLUE_X_OFFSET = 3;  // inches
     public static double ROW_X_OFFSET = 0;
     public static double ROW_Y_START_OFFSET = 4;
 
@@ -59,6 +59,7 @@ public class FieldMap {
     // Offset from goal center for firing positions (degrees)
     // Applied before reflection so red/blue aim at mirrored backboards
     public static double FIRE_1_ANGLE_OFFSET = -7;  // Goal start firing position
+    public static double FIRE_2_ANGLE_OFFSET = -10;
     public static double FIRE_4_ANGLE_OFFSET = 0;   // Audience start firing position
 
     // ==================== DEFAULT FLYWHEEL SPEEDS ====================
@@ -121,7 +122,7 @@ public class FieldMap {
         //65, 16.8
         RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(64.5,16.8, 160));  // TODO: measure heading
         // GOAL: Near goal, facing goal
-        RED_WAYPOINTS.put("START_GOAL", new Waypoint(-56.2, 48.9, 135));   //(-46.4566, 47.244, 135));
+        RED_WAYPOINTS.put("START_GOAL", new Waypoint(-46.4566-4, 47.244+4, 135));   //(-46.4566, 47.244, 135));
 
         // ----- Firing Positions -----
         // Positions where robot stops to launch balls at goal
@@ -185,6 +186,12 @@ public class FieldMap {
                     baseWaypoint.x,
                     baseWaypoint.y,
                     baseWaypoint.heading + FIRE_1_ANGLE_OFFSET
+            );
+        } else if (name.equals("FIRE_2")) {
+            redWaypoint = new Waypoint(
+                    baseWaypoint.x,
+                    baseWaypoint.y,
+                    baseWaypoint.heading + FIRE_2_ANGLE_OFFSET
             );
         } else if (name.equals("FIRE_4")) {
             redWaypoint = new Waypoint(
