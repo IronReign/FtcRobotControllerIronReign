@@ -88,7 +88,7 @@ public class Launcher implements Subsystem {
 
     // Flywheel configuration
     public static double MIN_LAUNCH_SPEED = 725;   //720 <--old     // degrees/sec - hardcoded working speed from known position
-    public static double SPEED_TOLERANCE = 30;      // degrees/sec margin for "at speed" check
+    public static double SPEED_TOLERANCE = 15;      // degrees/sec margin for "at speed" check
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
 
     // Launch timing for TPU ramp design

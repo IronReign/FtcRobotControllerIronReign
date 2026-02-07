@@ -120,7 +120,7 @@ public class Autonomous implements TelemetryProvider {
         // Set strategy parameters based on starting position
         if (robot.getStartingPosition() != Robot.StartingPosition.AUDIENCE) {
             FIRE_POSITION = 1;
-            Launcher.STAR_FEEDING = 0.85;
+            Launcher.STAR_FEEDING = 1;
             Launcher.MIN_LAUNCH_SPEED = FieldMap.FIRE_1_DEFAULT_DPS;
             ROW_START = 0;
             ROW_END = 2;
@@ -268,11 +268,11 @@ public class Autonomous implements TelemetryProvider {
                 }
 
                 // Gate release before designated row
-                if (currentRow == GATE_BEFORE_ROW && DO_OPEN_SESAME && !gateReleased) {
-                    log("GATE_BEFORE_ROW", "row=" + currentRow);
-                    setState(AutonState.START_GATE);
-                    break;
-                }
+//                if (currentRow == GATE_BEFORE_ROW && DO_OPEN_SESAME && !gateReleased) {
+//                    log("GATE_BEFORE_ROW", "row=" + currentRow);
+//                    setState(AutonState.START_GATE);
+//                    break;
+//                }
 
                 // Check if enough time for another row cycle
                 if (timeRemaining < MIN_TIME_FOR_ROW) {

@@ -92,7 +92,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         public double kA = .0001;
 
         // path profile parameters (in inches)
-        public double maxWheelVel = 50;
+        public double maxWheelVel = 25;
         public double minProfileAccel = -30;
         public double maxProfileAccel = 50;
 
@@ -128,10 +128,10 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public static double HEADING_TOLERANCE = 1.5; // degrees
 
     // ==================== VISION PID PARAMS ====================
-    public static PIDCoefficients VISION_PID = new PIDCoefficients(0.025, 0.04, 0.03);
+    public static PIDCoefficients VISION_PID = new PIDCoefficients(0.022, 0.01, 0.013);
     public static double VISION_OFFSET = 2; // offset from center of target in LLResult x units
     public static double VISION_TOLERANCE = 10; // degrees of tx
-    public static double VISION_INTEGRAL_CUTIN = 4.0; // degrees
+    public static double VISION_INTEGRAL_CUTIN = 3.0; // degrees
     public static double VISION_ALPHA = .5; // EMA alpha for vision PID
 
     // Distance tracking PID (for maintaining distance to target)
