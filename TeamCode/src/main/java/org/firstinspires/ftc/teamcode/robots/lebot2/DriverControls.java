@@ -107,7 +107,7 @@ public class DriverControls implements TelemetryProvider {
     public void handleButtons() {
         // A button: Toggle intake LOAD_ALL behavior
         // Intake runs until loader is full, then auto-stops
-        if (stickyGamepad1.a) {
+        if (stickyGamepad1.left_bumper) {
             if (robot.intake.isActive()) {
                 robot.intake.off();
                 robot.loader.releaseBeltFromIntake();
@@ -151,7 +151,7 @@ public class DriverControls implements TelemetryProvider {
         }
 
         // Left bumper: Toggle slow mode
-        if (stickyGamepad1.left_bumper) {
+        if (stickyGamepad1.a) {
             slowMode = !slowMode;
         }
 
