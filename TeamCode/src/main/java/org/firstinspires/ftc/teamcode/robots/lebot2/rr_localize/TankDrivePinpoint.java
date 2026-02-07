@@ -134,6 +134,12 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public static double VISION_INTEGRAL_CUTIN = 4.0; // degrees
     public static double VISION_ALPHA = .5; // EMA alpha for vision PID
 
+    // Distance tracking PID (for maintaining distance to target)
+    public static PIDCoefficients DISTANCE_PID = new PIDCoefficients(0.02, 0.0, 0.01);
+    public static double DISTANCE_TOLERANCE = 2.0; // inches
+    public static double TARGET_DISTANCE_INCHES = 30.0; // Target distance to maintain
+    public static double DISTANCE_MAX_SPEED = 0.4; // Max speed for distance control
+
 
     // ==================== ROADRUNNER INFRASTRUCTURE ====================
 
@@ -171,7 +177,8 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public enum TurnState {
         IDLE,
         TURNING_TO_HEADING,
-        CENTERING_ON_TARGET     // Continuous tx from Vision
+        CENTERING_ON_TARGET,    // Continuous tx from Vision (heading only)
+        TRACKING_TARGET         // Combined heading centering + distance control
     }
     private TurnState turnState = TurnState.IDLE;
     private double turnTarget = 0;
@@ -186,9 +193,10 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     private Vector2d currentActionTarget = null;  // Cached target for visualization
     private List<Vector2d> trajectoryWaypoints = new ArrayList<>();  // All waypoints for visualization
 
-    // PID controllers for turns
+    // PID controllers for turns and tracking
     private final PIDController headingPID;
     private final PIDController visionPID;
+    private final PIDController distancePID;
 
     // Cached values from readSensors()
     private double cachedHeading = 0;
@@ -253,6 +261,14 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         visionPID.setEmaAlpha(VISION_ALPHA);
         visionPID.enable();
 
+        // Initialize distance PID for target distance tracking
+        distancePID = new PIDController(DISTANCE_PID);
+        distancePID.setInputRange(0, 100);  // inches
+        distancePID.setOutputRange(-DISTANCE_MAX_SPEED, DISTANCE_MAX_SPEED);
+        distancePID.setContinuous(false);
+        distancePID.setTolerance(DISTANCE_TOLERANCE / 100.0);  // percentage of input range
+        distancePID.enable();
+
         cachedPose = pose;
         cachedHeading = Math.toDegrees(pose.heading.toDouble());
 
@@ -309,6 +325,10 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
             case CENTERING_ON_TARGET:
                 executeCenteringOnTarget();
+                break;
+
+            case TRACKING_TARGET:
+                executeTrackingTarget();
                 break;
         }
 
@@ -469,6 +489,80 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         } else {
             setMotorPowers(-correction, correction);
         }
+    }
+
+    /**
+     * Start combined target tracking - centers on target AND maintains distance.
+     * Uses vision tx for heading control and target area for distance estimation.
+     * Never self-terminates - use stopTracking() to end.
+     */
+    public void trackTarget() {
+        if (vision == null) {
+            return;
+        }
+
+        turnState = TurnState.TRACKING_TARGET;
+        behavior = Behavior.PID_TURN;
+        visionPID.enable();
+        distancePID.enable();
+    }
+
+    /**
+     * Stop target tracking and return to manual control.
+     */
+    public void stopTracking() {
+        if (turnState == TurnState.TRACKING_TARGET) {
+            setMotorPowers(0, 0);
+            turnState = TurnState.IDLE;
+            behavior = Behavior.MANUAL;
+        }
+    }
+
+    /**
+     * Check if currently tracking a target.
+     */
+    public boolean isTracking() {
+        return turnState == TurnState.TRACKING_TARGET;
+    }
+
+    private void executeTrackingTarget() {
+        // Check if we still have a target
+        if (vision == null || !vision.hasTarget()) {
+            // Lost target - stop motors but stay in tracking mode (will resume when target reappears)
+            setMotorPowers(0, 0);
+            return;
+        }
+
+        // --- Heading control (same as centerOnTarget) ---
+        double tx = vision.getTx();
+        visionPID.setInput(tx);
+        visionPID.setSetpoint(VISION_OFFSET);
+        visionPID.setOutputRange(-CENTERING_MAX_SPEED, CENTERING_MAX_SPEED);
+        visionPID.setPID(VISION_PID);
+        double turnCorrection = visionPID.performPID();
+
+        // --- Distance control ---
+        double currentDistance = vision.getTargetDistanceInches();
+        distancePID.setInput(currentDistance);
+        distancePID.setSetpoint(TARGET_DISTANCE_INCHES);
+        distancePID.setOutputRange(-DISTANCE_MAX_SPEED, DISTANCE_MAX_SPEED);
+        distancePID.setPID(DISTANCE_PID);
+        double driveCorrection = distancePID.performPID();
+
+        // Combine: driveCorrection for forward/back, turnCorrection for differential
+        // Positive driveCorrection = too far, need to drive forward
+        // Negative driveCorrection = too close, need to drive backward
+        double leftPower = driveCorrection - turnCorrection;
+        double rightPower = driveCorrection + turnCorrection;
+
+        // Clamp to [-1, 1]
+        double maxPower = Math.max(Math.abs(leftPower), Math.abs(rightPower));
+        if (maxPower > 1.0) {
+            leftPower /= maxPower;
+            rightPower /= maxPower;
+        }
+
+        setMotorPowers(leftPower, rightPower);
     }
 
     // ==================== TELEOP DRIVING ====================

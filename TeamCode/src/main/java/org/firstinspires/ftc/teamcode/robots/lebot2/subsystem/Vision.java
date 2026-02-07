@@ -268,6 +268,27 @@ public class Vision implements Subsystem {
         return ta;
     }
 
+    // ==================== TARGET DISTANCE ESTIMATION ====================
+    // For tracking a handheld AprilTag (not field-fixed goal)
+    // Distance estimated from target area using inverse square law: distance = k / sqrt(ta)
+    public static double TARGET_DISTANCE_K = 30.0;  // Calibration constant (tune with known distance)
+
+    /**
+     * Get estimated distance to the current target based on apparent size.
+     * Uses the inverse square law: distance ∝ 1/sqrt(area).
+     * Calibrate TARGET_DISTANCE_K by measuring actual distance when ta is known.
+     *
+     * @return Estimated distance in inches (0 if no valid target)
+     */
+    public double getTargetDistanceInches() {
+        if (!hasValidTarget || ta <= 0) {
+            return 0;
+        }
+        // Inverse square law: as distance doubles, area quarters
+        // So distance = k / sqrt(ta)
+        return TARGET_DISTANCE_K / Math.sqrt(ta);
+    }
+
     /**
      * Get calculated distance to goal.
      * Uses botpose field localization + known goal positions.

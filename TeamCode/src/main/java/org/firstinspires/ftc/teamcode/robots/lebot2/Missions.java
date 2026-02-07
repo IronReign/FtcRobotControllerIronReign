@@ -84,6 +84,7 @@ public class Missions implements TelemetryProvider {
         TUNING_SQUARE_POS,      // Drive 24", turn 90° CW, repeat 4x using PositionDriveAction
         TUNING_DRIFT,           // In-place turns to measure Pinpoint position drift
         TUNING_VISION,          // Continuous vision centering (never self-terminates)
+        TUNING_VISION_TRACK,    // Vision tracking with distance control (never self-terminates)
         CHECK_HEALTH            // Pre-match health check
     }
 
@@ -416,6 +417,7 @@ public class Missions implements TelemetryProvider {
             case TUNING_SQUARE_POS: return tuningSquarePosState.name();
             case TUNING_DRIFT: return tuningDriftState.name();
             case TUNING_VISION: return "CENTERING";
+            case TUNING_VISION_TRACK: return "TRACKING";
             case CHECK_HEALTH: return healthCheckState.name();
             default: return "NONE";
         }
@@ -716,6 +718,32 @@ public class Missions implements TelemetryProvider {
     }
 
     /**
+     * Start the vision tracking tuning mission with distance control.
+     * Tracks the closest visible AprilTag, maintaining both heading (centered on target)
+     * and distance (configurable, default 30"). Uses DECODE pipeline to see any AprilTag.
+     *
+     * Tune these on Dashboard while running:
+     * - TankDrivePinpoint: VISION_PID (heading), DISTANCE_PID (distance)
+     * - TankDrivePinpoint: TARGET_DISTANCE_INCHES (setpoint)
+     * - Vision: TARGET_DISTANCE_K (distance calibration)
+     *
+     * Never self-terminates — use Back button to stop.
+     */
+    public void startTuningVisionTrack() {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        currentMission = Mission.TUNING_VISION_TRACK;
+        missionState = MissionState.RUNNING;
+        missionTimer.reset();
+        robot.vision.setPipeline(Vision.Pipeline.DECODE);
+        ((TankDrivePinpoint) robot.driveTrain).trackTarget();
+        log("TUNING_VISION_TRACK_START",
+                String.format("targetDist=%.0f\"", TankDrivePinpoint.TARGET_DISTANCE_INCHES),
+                robot.driveTrain.getPose());
+    }
+
+    /**
      * Start the pre-match health check mission.
      * Sequences through battery, pinpoint, turns, flywheel, launch, intake, and vision checks.
      * @param gamepad Gamepad for driver confirmation input during star direction check
@@ -942,6 +970,10 @@ public class Missions implements TelemetryProvider {
 
             case TUNING_VISION:
                 updateTuningVisionMission();
+                break;
+
+            case TUNING_VISION_TRACK:
+                updateTuningVisionTrackMission();
                 break;
 
             case CHECK_HEALTH:
@@ -1739,6 +1771,15 @@ public class Missions implements TelemetryProvider {
         // Never self-terminates — use Back button to stop
     }
 
+    private void updateTuningVisionTrackMission() {
+        // Tracking is continuous - just make sure it's still running
+        TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
+        if (!driveTrain.isTracking()) {
+            driveTrain.trackTarget();
+        }
+        // Never self-terminates — use Back button to stop
+    }
+
     private void updateTuningDriftMission() {
         TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
 
@@ -2228,6 +2269,14 @@ public class Missions implements TelemetryProvider {
             }
             if (currentMission == Mission.TUNING_VISION) {
                 telemetry.put("Vision tx", String.format("%.1f°", robot.vision.getTx()));
+                telemetry.put("Elapsed", String.format("%.1fs", missionTimer.seconds()));
+            }
+            if (currentMission == Mission.TUNING_VISION_TRACK) {
+                telemetry.put("Vision tx", String.format("%.1f°", robot.vision.getTx()));
+                telemetry.put("Target ta", String.format("%.2f%%", robot.vision.getTa()));
+                telemetry.put("Est Distance", String.format("%.1f\"", robot.vision.getTargetDistanceInches()));
+                telemetry.put("Target Dist", String.format("%.1f\"", TankDrivePinpoint.TARGET_DISTANCE_INCHES));
+                telemetry.put("Has Target", robot.vision.hasTarget() ? "YES" : "no");
                 telemetry.put("Elapsed", String.format("%.1fs", missionTimer.seconds()));
             }
             if (currentMission == Mission.CHECK_HEALTH) {
