@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Launcher;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.LEDStatus;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Loader;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Subsystem;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Vision;
@@ -60,6 +61,7 @@ public class Robot implements TelemetryProvider {
     public final Loader loader;
     public final Launcher launcher;
     public final Vision vision;
+    public final LEDStatus ledStatus;
 
     // Missions coordinator (Layer 4 - above Robot behaviors)
     public final Missions missions;
@@ -167,6 +169,7 @@ public class Robot implements TelemetryProvider {
         loader = new Loader(hardwareMap);
         launcher = new Launcher(hardwareMap);
         vision = new Vision(hardwareMap);
+        ledStatus = new LEDStatus(hardwareMap);
 
         // Connect subsystems that need references to each other
         intake.setLoader(loader);       // For LOAD_ALL completion check
@@ -174,6 +177,8 @@ public class Robot implements TelemetryProvider {
         launcher.setIntake(intake);     // For intake suppression during firing
         launcher.setVision(vision);     // For distance-based speed calculation
         driveTrain.setVision(vision);   // For continuous vision-based centering
+        ledStatus.setLoader(loader);    // For ball detection
+        ledStatus.setLauncher(launcher); // For firing detection
 
         // Add to subsystems list for bulk operations
         subsystems.add((Subsystem) driveTrain);
@@ -181,6 +186,7 @@ public class Robot implements TelemetryProvider {
         subsystems.add(loader);
         subsystems.add(launcher);
         subsystems.add(vision);
+        subsystems.add(ledStatus);
 
         // Voltage sensor
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
@@ -477,6 +483,16 @@ public class Robot implements TelemetryProvider {
      */
     public void setStartingPosition(StartingPosition position) {
         this.startingPosition = position;
+
+        // Update FieldMap offset selection so Dashboard shows correct waypoints
+        FieldMap.IS_AUDIENCE_START = (position == StartingPosition.AUDIENCE);
+
+        // Set appropriate fallback launch speed for the start position
+        if (position == StartingPosition.AUDIENCE) {
+            Launcher.MIN_LAUNCH_SPEED = FieldMap.FIRE_4_DEFAULT_DPS;
+        } else {
+            Launcher.MIN_LAUNCH_SPEED = FieldMap.FIRE_1_DEFAULT_DPS;
+        }
 
         if (position == StartingPosition.UNKNOWN) {
             // Unknown position - don't set pose, wait for vision fix

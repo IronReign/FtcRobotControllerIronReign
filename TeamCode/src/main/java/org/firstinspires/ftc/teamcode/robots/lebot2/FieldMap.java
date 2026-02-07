@@ -33,18 +33,38 @@ public class FieldMap {
     // ==================== INTAKE ASYMMETRY OFFSET ====================
     // Ball row waypoints need X offset when reflected for blue alliance
     // due to asymmetric intake design (shifts 6" in positive X direction)
-    public static double BALL_ROW_BLUE_X_OFFSET = -1;  // inches
+    public static double BALL_ROW_BLUE_X_OFFSET = 4;  // inches
     public static double ROW_X_OFFSET = 0;
     public static double ROW_Y_START_OFFSET = 4;
 
-    // ==================== SPLINE-SPECIFIC OFFSETS ====================
-    // Additional X offsets for row starts when using splines — helps create
-    // a more gradual curve that the intake can handle. Only applied when USE_SPLINES is true.
-    public static double ROW_1_SPLINE_X_OFFSET = -2;
-    public static double ROW_2_SPLINE_X_OFFSET = -4;  // inches, negative = shift left
-    public static double ROW_3_SPLINE_X_OFFSET = 0;   // inches
+    // ==================== START POSITION MODE ====================
+    // Set by Autonomous at init to select which offset set to use
+    public static boolean IS_AUDIENCE_START = false;
 
-    public static double FIRE_1_ANGLE_OFFSET = -2;
+    // ==================== SPLINE-SPECIFIC OFFSETS (GOAL START) ====================
+    // X offsets for row starts when approaching from FIRE_1 (goal side).
+    // Negative = shift left (toward goal). Only applied when USE_SPLINES is true.
+    public static double GOAL_ROW_1_SPLINE_X_OFFSET = 0;
+    public static double GOAL_ROW_2_SPLINE_X_OFFSET = -6;  // inches
+    public static double GOAL_ROW_3_SPLINE_X_OFFSET = -7;  // inches
+
+    // ==================== SPLINE-SPECIFIC OFFSETS (AUDIENCE START) ====================
+    // X offsets for row starts when approaching from FIRE_4 (audience side).
+    // Positive = shift right (toward audience). Larger offsets for rows further from FIRE_4.
+    public static double AUD_ROW_1_SPLINE_X_OFFSET = 6;   // inches, furthest from FIRE_4
+    public static double AUD_ROW_2_SPLINE_X_OFFSET = 4;   // inches
+    public static double AUD_ROW_3_SPLINE_X_OFFSET = 0;   // inches, closest to FIRE_4
+
+    // ==================== FIRING ANGLE OFFSETS ====================
+    // Offset from goal center for firing positions (degrees)
+    // Applied before reflection so red/blue aim at mirrored backboards
+    public static double FIRE_1_ANGLE_OFFSET = -7;  // Goal start firing position
+    public static double FIRE_4_ANGLE_OFFSET = 0;   // Audience start firing position
+
+    // ==================== DEFAULT FLYWHEEL SPEEDS ====================
+    // Fallback speeds (deg/sec) when vision distance can't be solved
+    public static double FIRE_1_DEFAULT_DPS = 725;   // Goal start distance
+    public static double FIRE_4_DEFAULT_DPS = 1050;  // Audience start distance
 
     // ==================== WAYPOINT CLASS ====================
 
@@ -101,15 +121,15 @@ public class FieldMap {
         //65, 16.8
         RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(64.5,16.8, 160));  // TODO: measure heading
         // GOAL: Near goal, facing goal
-        RED_WAYPOINTS.put("START_GOAL", new Waypoint(-46.4566, 47.244, 135));
+        RED_WAYPOINTS.put("START_GOAL", new Waypoint(-56.2, 48.9, 135));   //(-46.4566, 47.244, 135));
 
         // ----- Firing Positions -----
         // Positions where robot stops to launch balls at goal
         // FIRE_1 X uses FIRE_1_BASE_X which can be offset via Dashboard
         RED_WAYPOINTS.put("FIRE_1", new Waypoint(-14.1732+2, 15.748, 135));  // Base position, offset applied in get()
-        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-31.7,16, 124.4));  // TODO: measure
+        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-31.7,16, 124.4));  // Fire from inside big triangle
         RED_WAYPOINTS.put("FIRE_3", new Waypoint(0, 0, 0));  // TODO: measure
-        RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.5,16.8, 160));  // TODO: measure    //fire from back triangle
+        RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.5,16.8, 160));  //fire from back triangle
 
         // ----- Ball Pickup Waypoints -----
         // Starting points for each of the 3 ball rows
@@ -155,25 +175,26 @@ public class FieldMap {
         if (baseWaypoint == null) {
             throw new IllegalArgumentException("Unknown waypoint: " + name);
         }
+
+        // Start with base waypoint, apply any position-specific offsets
         Waypoint redWaypoint = baseWaypoint;
-        if(name.equals("FIRE_1")){
-            double angleOffset = FIRE_1_ANGLE_OFFSET;
-            //code for angle to be right just for blue (angleoffset = -2)
+
+        // Apply firing angle offset (before reflection, so red/blue aim at mirrored backboards)
+        if (name.equals("FIRE_1")) {
             redWaypoint = new Waypoint(
                     baseWaypoint.x,
                     baseWaypoint.y,
-                    baseWaypoint.heading + angleOffset
+                    baseWaypoint.heading + FIRE_1_ANGLE_OFFSET
             );
-            //code for angle to be right for red and blue
-//            redWaypoint = new Waypoint(
-//                    baseWaypoint.x,
-//                    baseWaypoint.y,
-//                    baseWaypoint.heading - (isRedAlliance?angleOffset: -angleOffset)
-//            );
+        } else if (name.equals("FIRE_4")) {
+            redWaypoint = new Waypoint(
+                    baseWaypoint.x,
+                    baseWaypoint.y,
+                    baseWaypoint.heading + FIRE_4_ANGLE_OFFSET
+            );
         }
 
         // Apply dynamic offsets to ball row waypoints
-        //Waypoint redWaypoint = baseWaypoint;
         if (name.startsWith("BALL_ROW")) {
             double xOffset = -ROW_X_OFFSET;  // Negative because original had subtraction
             double yOffset = 0;
@@ -181,15 +202,26 @@ public class FieldMap {
                 yOffset = ROW_Y_START_OFFSET;
 
                 // Apply spline-specific X offsets when USE_SPLINES is enabled
-                // These help create more gradual curves that the intake can handle
+                // Select offset set based on starting position (approach direction matters)
                 if (TankDriveActions.USE_SPLINES) {
-                    if(name.equals("BALL_ROW_1_START")){
-                        xOffset +=ROW_1_SPLINE_X_OFFSET;
-                    }
-                    else if (name.equals("BALL_ROW_2_START")) {
-                        xOffset += ROW_2_SPLINE_X_OFFSET;
-                    } else if (name.equals("BALL_ROW_3_START")) {
-                        xOffset += ROW_3_SPLINE_X_OFFSET;
+                    if (IS_AUDIENCE_START) {
+                        // Approaching from FIRE_4 (positive X side)
+                        if (name.equals("BALL_ROW_1_START")) {
+                            xOffset += AUD_ROW_1_SPLINE_X_OFFSET;
+                        } else if (name.equals("BALL_ROW_2_START")) {
+                            xOffset += AUD_ROW_2_SPLINE_X_OFFSET;
+                        } else if (name.equals("BALL_ROW_3_START")) {
+                            xOffset += AUD_ROW_3_SPLINE_X_OFFSET;
+                        }
+                    } else {
+                        // Approaching from FIRE_1 (negative X side)
+                        if (name.equals("BALL_ROW_1_START")) {
+                            xOffset += GOAL_ROW_1_SPLINE_X_OFFSET;
+                        } else if (name.equals("BALL_ROW_2_START")) {
+                            xOffset += GOAL_ROW_2_SPLINE_X_OFFSET;
+                        } else if (name.equals("BALL_ROW_3_START")) {
+                            xOffset += GOAL_ROW_3_SPLINE_X_OFFSET;
+                        }
                     }
                 }
             }

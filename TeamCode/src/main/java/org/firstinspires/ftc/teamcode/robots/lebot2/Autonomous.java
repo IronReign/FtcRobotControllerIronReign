@@ -118,10 +118,10 @@ public class Autonomous implements TelemetryProvider {
         robot.missions.clearState();
 
         // Set strategy parameters based on starting position
-        if (robot.getStartingPosition()!=Robot.StartingPosition.AUDIENCE) {
+        if (robot.getStartingPosition() != Robot.StartingPosition.AUDIENCE) {
             FIRE_POSITION = 1;
-            Launcher.STAR_FEEDING=.85;
-            //Launcher.MIN_LAUNCH_SPEED=725;
+            Launcher.STAR_FEEDING = 0.85;
+            Launcher.MIN_LAUNCH_SPEED = FieldMap.FIRE_1_DEFAULT_DPS;
             ROW_START = 0;
             ROW_END = 2;
             ROW_DIRECTION = 1;
@@ -129,8 +129,8 @@ public class Autonomous implements TelemetryProvider {
             SKIP_INITIAL_BACKUP = false;
         } else {
             FIRE_POSITION = 4;
-            Launcher.STAR_FEEDING=.7;
-            Launcher.MIN_LAUNCH_SPEED=1100;
+            Launcher.STAR_FEEDING = 0.7;
+            Launcher.MIN_LAUNCH_SPEED = FieldMap.FIRE_4_DEFAULT_DPS;
             ROW_START = 2;
             ROW_END = 0;
             ROW_DIRECTION = -1;
@@ -146,12 +146,8 @@ public class Autonomous implements TelemetryProvider {
         gateReleased = false;
 
         // Set robot starting pose based on configured start position
-        Pose2d startPose;
-        if (robot.getStartingPosition()!=Robot.StartingPosition.AUDIENCE) {
-            startPose = FieldMap.getPose(FieldMap.START_GOAL, Robot.isRedAlliance);
-        } else {
-            startPose = FieldMap.getPose(FieldMap.START_AUDIENCE, Robot.isRedAlliance);
-        }
+        // (FieldMap.IS_AUDIENCE_START is already set by Robot.setStartingPosition during init_loop)
+        Pose2d startPose = robot.getStartingPose(robot.getStartingPosition());
         robot.driveTrain.setPose(startPose);
 
         // Timer will be reset when execute() first runs

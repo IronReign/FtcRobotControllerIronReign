@@ -127,6 +127,7 @@ public class DriverControls implements TelemetryProvider {
 
         if(stickyGamepad1.x){
             robot.launcher.requestManual();
+            robot.launcher.updateTargetSpeed();  // Get vision-based speed (or MIN if no vision)
             robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
         }
 

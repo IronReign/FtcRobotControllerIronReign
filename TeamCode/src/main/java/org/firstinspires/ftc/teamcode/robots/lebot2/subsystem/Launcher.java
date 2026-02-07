@@ -92,7 +92,7 @@ public class Launcher implements Subsystem {
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
 
     // Launch timing for TPU ramp design
-    public static double FIRING_TIME = 3.2;         // seconds to allow all 3 balls through at conveyor speed
+    public static double FIRING_TIME = 2.0;         // seconds to allow all 3 balls through at conveyor speed
     public static double LIFT_TIME = 0.3;           // seconds to hold LIFT position for last ball
 
     // Post-fire behavior
@@ -477,10 +477,16 @@ public class Launcher implements Subsystem {
     }
 
     /**
-     * SPINNING_UP: Flywheel ramping to target speed, paddle stays in CUP.
+     * Update target speed from vision distance calculation.
+     * Falls back to MIN_LAUNCH_SPEED if vision doesn't have a valid pose
+     * (e.g., sun washing out the camera).
      */
     public void updateTargetSpeed(){
-        targetSpeed = vision.getFlywheelSpeed();
+        if (vision != null && vision.hasBotPose()) {
+            targetSpeed = vision.getFlywheelSpeed();
+        } else {
+            targetSpeed = MIN_LAUNCH_SPEED;
+        }
     }
     private void handleSpinningUpState() {
 
@@ -762,7 +768,7 @@ public class Launcher implements Subsystem {
         telemetry.put("Trigger", TRIGGER_TYPE);
         telemetry.put("Behavior", behavior);
         telemetry.put("Flywheel Speed", String.format("%.0f / %.0f", currentSpeed, targetSpeed));
-        telemetry.put("flywheelCurrent", currentSpeed);
+        telemetry.put("flywheelSpeed", currentSpeed);
         telemetry.put("flywheelTarget", targetSpeed);
         telemetry.put("Ready", isReady() ? "YES" : "no");
 
