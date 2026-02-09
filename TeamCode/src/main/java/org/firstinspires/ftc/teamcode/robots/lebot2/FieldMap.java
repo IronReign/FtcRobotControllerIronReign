@@ -33,7 +33,7 @@ public class FieldMap {
     // ==================== INTAKE ASYMMETRY OFFSET ====================
     // Ball row waypoints need X offset when reflected for blue alliance
     // due to asymmetric intake design (shifts 6" in positive X direction)
-    public static double BALL_ROW_BLUE_X_OFFSET = 3;  // inches
+    public static double BALL_ROW_BLUE_X_OFFSET = 3.5;  // inches
     public static double ROW_X_OFFSET = 0;
     public static double ROW_Y_START_OFFSET = 4;
 
@@ -58,8 +58,8 @@ public class FieldMap {
     // ==================== FIRING ANGLE OFFSETS ====================
     // Offset from goal center for firing positions (degrees)
     // Applied before reflection so red/blue aim at mirrored backboards
-    public static double FIRE_1_ANGLE_OFFSET = -7;  // Goal start firing position
-    public static double FIRE_2_ANGLE_OFFSET = -10;
+    public static double FIRE_1_ANGLE_OFFSET = -6;  // Goal start firing position
+    public static double FIRE_2_ANGLE_OFFSET = -9;
     public static double FIRE_4_ANGLE_OFFSET = 0;   // Audience start firing position
 
     // ==================== DEFAULT FLYWHEEL SPEEDS ====================
@@ -120,29 +120,29 @@ public class FieldMap {
         // AUDIENCE: Near audience, facing goal
         //speed for audience start is 1100 and star feed .8
         //65, 16.8
-        RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(64.5,16.8, 160));  // TODO: measure heading
+        RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(66, 6.5, 180));  // TODO: measure heading        //64.5,16.8,
         // GOAL: Near goal, facing goal
         RED_WAYPOINTS.put("START_GOAL", new Waypoint(-46.4566-4, 47.244+4, 135));   //(-46.4566, 47.244, 135));
 
         // ----- Firing Positions -----
         // Positions where robot stops to launch balls at goal
         // FIRE_1 X uses FIRE_1_BASE_X which can be offset via Dashboard
-        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-14.1732+2, 15.748, 135));  // Base position, offset applied in get()
+        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-14.1732, 15.748, 135));  // Base position, offset applied in get()
         RED_WAYPOINTS.put("FIRE_2", new Waypoint(-31.7,16, 124.4));  // Fire from inside big triangle
-        RED_WAYPOINTS.put("FIRE_3", new Waypoint(0, 0, 0));  // TODO: measure
+        RED_WAYPOINTS.put("FIRE_3", new Waypoint(50, 6.5, 180));  // TODO: measure
         RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.5,16.8, 160));  //fire from back triangle
 
         // ----- Ball Pickup Waypoints -----
         // Starting points for each of the 3 ball rows
         // Base coordinates only — ROW_X_OFFSET and ROW_Y_START_OFFSET applied dynamically in get()
-        RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732, 25.9842, 90));
+        RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732+1, 25.9842-1.5, 90));
         RED_WAYPOINTS.put("BALL_ROW_2_START", new Waypoint(10.2362, 25.9842, 90));
         RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456, 25.9842, 90));
 
         // ----- Ball Row Endpoints -----
         // Ending points after driving through ball rows
         // Base coordinates only — ROW_X_OFFSET applied dynamically in get()
-        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503+4.5-3, 90));
+        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503+4.5-2.5+.5, 90));
         RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362, 46.8503+4.5-5, 90));
         RED_WAYPOINTS.put("BALL_ROW_3_END", new Waypoint(34.6456, 46.8503+4.5, 90));
 
@@ -245,9 +245,9 @@ public class FieldMap {
 
         // Ball row waypoints need additional X offset for blue due to intake asymmetry
         if (name.startsWith("BALL_ROW")) {
-            if(name.startsWith("BALL_ROW_1")){
-                return redWaypoint.reflectedWithXOffset(0);
-            }
+//            if(name.startsWith("BALL_ROW_1")){
+//                return redWaypoint.reflectedWithXOffset(0);
+//            }
             return redWaypoint.reflectedWithXOffset(BALL_ROW_BLUE_X_OFFSET);
         }
 
