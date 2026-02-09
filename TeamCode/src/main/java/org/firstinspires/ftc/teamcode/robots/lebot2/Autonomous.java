@@ -45,6 +45,8 @@ public class Autonomous implements TelemetryProvider {
     public static boolean DO_OPEN_SESAME = true;      // Release gate after rows 1 & 2?
     public static double MIN_TIME_FOR_ROW = 5.0;     // Minimum seconds needed for a ball row cycle
 
+    public static boolean SKIP_LAUNCH=true;
+
     // Derived strategy parameters (set by init() based on START_AT_GOAL_WALL, also Dashboard-tunable)
     public static int FIRE_POSITION = 1;              // Which fire position to use (1-4)
     public static int ROW_START = 0;                  // First ball row index
@@ -119,6 +121,7 @@ public class Autonomous implements TelemetryProvider {
 
         // Set strategy parameters based on starting position
         if (robot.getStartingPosition() != Robot.StartingPosition.AUDIENCE) {
+            SKIP_LAUNCH=false;
             FIRE_POSITION = 1;
             Launcher.STAR_FEEDING = 1;
             Launcher.MIN_LAUNCH_SPEED = FieldMap.FIRE_1_DEFAULT_DPS;
@@ -128,6 +131,7 @@ public class Autonomous implements TelemetryProvider {
             GATE_BEFORE_ROW = 2;
             SKIP_INITIAL_BACKUP = false;
         } else {
+            SKIP_LAUNCH=true;
             FIRE_POSITION = 4;
             Launcher.STAR_FEEDING = 0.7;
             Launcher.MIN_LAUNCH_SPEED = FieldMap.FIRE_4_DEFAULT_DPS;
@@ -191,13 +195,19 @@ public class Autonomous implements TelemetryProvider {
 
             // ========== PHASE 1: Backup to Fire ==========
             case START_BACKUP_TO_FIRE:
-                if (SKIP_INITIAL_BACKUP) {
-                    // Already at fire position — just spin up launcher
-                    robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
-                    setState(AutonState.START_TARGETING);
-                } else {
-                    // Back up from gate to fire position, spins up launcher during navigation
-                    robot.missions.startNavigateToFire(FIRE_POSITION, true);
+                if(!SKIP_LAUNCH) {
+
+                    if (SKIP_INITIAL_BACKUP) {
+                        // Already at fire position — just spin up launcher
+                        robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
+                        setState(AutonState.START_TARGETING);
+                    } else {
+                        // Back up from gate to fire position, spins up launcher during navigation
+                        robot.missions.startNavigateToFire(FIRE_POSITION, true);
+                        setState(AutonState.WAITING_BACKUP);
+                    }
+                }else{
+                    robot.missions.startNavigateToFire(3,false);
                     setState(AutonState.WAITING_BACKUP);
                 }
                 break;
@@ -205,7 +215,11 @@ public class Autonomous implements TelemetryProvider {
             case WAITING_BACKUP:
                 if (robot.missions.isComplete()) {
                     log("BACKUP_COMPLETE", null);
-                    setState(AutonState.START_TARGETING);
+                    if(!SKIP_LAUNCH){
+                        setState(AutonState.START_TARGETING);
+                    }else {
+                        setState(AutonState.COMPLETE);
+                    }
                 } else if (robot.missions.isFailed()) {
                     // Timeout - try to launch anyway from current position
                     log("BACKUP_FAILED", "timeout");

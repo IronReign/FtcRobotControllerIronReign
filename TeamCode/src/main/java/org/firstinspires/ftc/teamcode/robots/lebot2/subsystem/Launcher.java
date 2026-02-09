@@ -92,7 +92,7 @@ public class Launcher implements Subsystem {
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
 
     // Launch timing for TPU ramp design
-    public static double FIRING_TIME = 2.0;         // seconds to allow all 3 balls through at conveyor speed
+    public static double FIRING_TIME = 2.1;         // seconds to allow all 3 balls through at conveyor speed
     public static double LIFT_TIME = 0.3;           // seconds to hold LIFT position for last ball
 
     // Post-fire behavior

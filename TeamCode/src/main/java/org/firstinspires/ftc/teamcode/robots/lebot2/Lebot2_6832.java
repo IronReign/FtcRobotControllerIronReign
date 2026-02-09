@@ -179,6 +179,7 @@ public class Lebot2_6832 extends OpMode {
 
             case TELE_OP:
                 TankDrivePinpoint.VISION_TOLERANCE = 2;
+                Vision.FLYWHEEL_SPEED_MULTIPLIER= 1;
                 handleTeleOp(packet);
                 break;
 

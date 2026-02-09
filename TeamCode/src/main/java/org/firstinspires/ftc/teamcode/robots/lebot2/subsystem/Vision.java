@@ -103,6 +103,8 @@ public class Vision implements Subsystem {
     public static int STREAM_FPS = 5;  // Target FPS for dashboard streaming (keep low to reduce lag)
     public static double STREAM_SCALE = 0.5;  // Scale factor for dashboard image (0.25-1.0)
 
+    public static double FLYWHEEL_SPEED_MULTIPLIER =1;
+
     public Vision(HardwareMap hardwareMap) {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.pipelineSwitch(currentPipeline.id);
@@ -133,7 +135,7 @@ public class Vision implements Subsystem {
 
     public double getFlywheelSpeed(){
         double speed = 31.58941*Math.pow(distanceToGoal,4) - 193.20612*Math.pow(distanceToGoal,3) + 422.84196*Math.pow(distanceToGoal,2) - 251.80393*distanceToGoal + 701.34893;
-        return speed;
+        return speed*FLYWHEEL_SPEED_MULTIPLIER;
     }
 
 
