@@ -127,8 +127,10 @@ public class Lebot2_6832 extends OpMode {
         // Telemetry
         telemetry.addData("Game State", gameState.getName());
         telemetry.addData("Alliance", Robot.isRedAlliance ? "RED" : "BLUE");
+        telemetry.addData("Abort After", Autonomous.ABORT_AFTER_ROWS < 0 ? "ALL ROWS" :
+                Autonomous.ABORT_AFTER_ROWS + " row(s)");
         telemetry.addLine();
-        telemetry.addData("Controls", "X=Blue, B=Red, RT=Cycle Mode");
+        telemetry.addData("Controls", "X=Blue, B=Red, RT=Cycle Mode, D-Right=Abort");
 
         handleTelemetry(robot.getTelemetry(false), robot.getTelemetryName(), packet);
 

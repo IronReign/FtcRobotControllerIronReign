@@ -68,6 +68,7 @@ public class DriverControls implements TelemetryProvider {
         handleGameStateSwitch();
         handleAllianceSelection();
         handleStartingPositionSelection();
+        handleAbortSetting();
         joystickDrive();
     }
 
@@ -355,6 +356,26 @@ public class DriverControls implements TelemetryProvider {
         // Used for MT1/MT2 pose comparison testing
         if (stickyGamepad1.guide) {
             robot.setStartingPosition(Robot.StartingPosition.CALIBRATION);
+        }
+    }
+
+    /**
+     * Handle selective abort configuration during init.
+     * D-pad Right cycles: ALL → 0 → 1 → 2 → ALL
+     *
+     * This allows configuring how many ball rows to complete before
+     * aborting to an alternate position (for partner team coordination).
+     */
+    private void handleAbortSetting() {
+        if (stickyGamepad1.dpad_right) {
+            // Cycle: -1 (ALL) → 0 → 1 → 2 → -1 (ALL)
+            switch (Autonomous.ABORT_AFTER_ROWS) {
+                case -1: Autonomous.ABORT_AFTER_ROWS = 0; break;
+                case 0:  Autonomous.ABORT_AFTER_ROWS = 1; break;
+                case 1:  Autonomous.ABORT_AFTER_ROWS = 2; break;
+                case 2:  Autonomous.ABORT_AFTER_ROWS = -1; break;
+                default: Autonomous.ABORT_AFTER_ROWS = -1; break;
+            }
         }
     }
 

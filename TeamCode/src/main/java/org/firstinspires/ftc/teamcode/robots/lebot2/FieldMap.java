@@ -157,6 +157,14 @@ public class FieldMap {
         // Center of goal opening - used for aiming calculations
         // From official DECODE field coordinates
         RED_WAYPOINTS.put("GOAL", new Waypoint(-58.3727, 55.6425, 135));
+
+        // ----- Team Bases -----
+        // Safe parking spots for each alliance
+        RED_WAYPOINTS.put("BASE", new Waypoint(36.5, -33.25, 0));
+
+        // ----- Human Player Zones -----
+        // Audience wall corners where robots can be hand-fed balls
+        RED_WAYPOINTS.put("HUMAN_PLAYER", new Waypoint(41, -46, 45));
     }
 
     // ==================== WAYPOINT ACCESS ====================
@@ -323,6 +331,8 @@ public class FieldMap {
     public static final String GATE = "GATE";
     public static final String HOMEBASE = "HOMEBASE";
     public static final String GOAL = "GOAL";
+    public static final String BASE = "BASE";
+    public static final String HUMAN_PLAYER = "HUMAN_PLAYER";
 
     // ==================== VISUALIZATION ====================
 

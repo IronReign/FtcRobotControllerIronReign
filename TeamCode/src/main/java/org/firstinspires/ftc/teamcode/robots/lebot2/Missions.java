@@ -165,6 +165,8 @@ public class Missions implements TelemetryProvider {
     private NavigateToFireState navToFireState = NavigateToFireState.IDLE;
     private boolean navReversed = false;  // Whether to drive in reverse
     private int targetFirePosition = 1;   // Which fire position (1-4)
+    private String targetWaypointName = null;  // For generic waypoint navigation
+    private boolean targetWaypointAlliance = true;  // Alliance flag for waypoint lookup
 
     // RoadRunner action tracking
     private Action currentAction = null;
@@ -483,8 +485,37 @@ public class Missions implements TelemetryProvider {
             return;
         }
         targetFirePosition = Math.max(1, Math.min(4, firePosition));
+        targetWaypointName = null;  // Clear waypoint override
         navReversed = reversed;
         currentMission = Mission.NAVIGATE_TO_FIRE;
+        missionState = MissionState.RUNNING;
+        navToFireState = NavigateToFireState.IDLE;
+        missionTimer.reset();
+    }
+
+    /**
+     * Navigate to any named waypoint with explicit alliance control.
+     * Used for selective abort positions where we may need to go to the
+     * opposing alliance's waypoint (e.g., their BASE).
+     *
+     * @param waypointName The FieldMap waypoint name (e.g., FieldMap.BASE)
+     * @param useRedAlliance true for red side waypoint, false for blue side
+     *                       (pass !Robot.isRedAlliance to get opposing alliance's waypoint)
+     */
+    public void startNavigateTo(String waypointName, boolean useRedAlliance) {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        targetWaypointName = waypointName;
+        targetWaypointAlliance = useRedAlliance;
+        navReversed = false;  // Default to forward driving
+
+        // Calculate optimal direction based on current heading
+        Pose2d currentPose = robot.driveTrain.getPose();
+        Pose2d targetPose = FieldMap.getPose(waypointName, useRedAlliance);
+        navReversed = shouldDriveReversed(currentPose, targetPose);
+
+        currentMission = Mission.NAVIGATE_TO_FIRE;  // Reuse existing nav mission
         missionState = MissionState.RUNNING;
         navToFireState = NavigateToFireState.IDLE;
         missionTimer.reset();
@@ -1005,13 +1036,20 @@ public class Missions implements TelemetryProvider {
         switch (navToFireState) {
             case IDLE:
                 TankDriveActions.MAX_DRIVE_POWER = .85;
-                // Start spinning up launcher during navigation
-                robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
 
-                // Get target fire position from FieldMap
-                Pose2d firePose = getFirePose(targetFirePosition);
-
-                log("NAV_START", "reversed=" + navReversed + ",fire=" + targetFirePosition, firePose);
+                // Get target pose - either from waypoint name or fire position
+                Pose2d firePose;
+                if (targetWaypointName != null) {
+                    // Generic waypoint navigation (e.g., for selective abort)
+                    firePose = FieldMap.getPose(targetWaypointName, targetWaypointAlliance);
+                    log("NAV_START", "waypoint=" + targetWaypointName + ",reversed=" + navReversed, firePose);
+                    // Don't spin up launcher for non-fire positions
+                } else {
+                    // Fire position navigation - spin up launcher
+                    firePose = getFirePose(targetFirePosition);
+                    robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
+                    log("NAV_START", "reversed=" + navReversed + ",fire=" + targetFirePosition, firePose);
+                }
 
                 // Build Turn-Spline-Turn trajectory using TankDriveActions
                 // This ensures accurate heading at start and end of navigation
