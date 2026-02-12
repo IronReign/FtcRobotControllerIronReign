@@ -109,6 +109,7 @@ public class DriverControls implements TelemetryProvider {
         // A button: Toggle intake LOAD_ALL behavior
         // Intake runs until loader is full, then auto-stops
         if (stickyGamepad1.left_bumper) {
+            robot.launcher.STAR_FIRED = 3;      //set star to position that channel can fit all balls
             if (robot.intake.isActive()) {
                 robot.intake.off();
                 robot.loader.releaseBeltFromIntake();
@@ -163,9 +164,12 @@ public class DriverControls implements TelemetryProvider {
         }
 
         // D-pad up/down: Manual paddle control (CUP/RAMP positions)
-        if (stickyGamepad1.dpad_up) {
-            robot.launcher.paddleRamp();
-            robot.launcher.setPassThroughMode(true);
+//        if (stickyGamepad1.dpad_up) {
+//            robot.launcher.paddleRamp();
+//            robot.launcher.setPassThroughMode(true);
+//        }
+        if(stickyGamepad1.dpad_up){
+            robot.launcher.changeStar();
         }
         if (stickyGamepad1.dpad_down) {
             robot.launcher.paddleCup();
@@ -174,6 +178,7 @@ public class DriverControls implements TelemetryProvider {
 
         // D-pad left: Simple intake on (not LOAD_ALL)
         if (stickyGamepad1.dpad_left) {
+            robot.launcher.STAR_FIRED = 3;      //set star to position that channel can fit all balls
             robot.intake.on();
             robot.loader.requestBeltForIntake();
         }
