@@ -66,15 +66,22 @@ public class Launcher implements Subsystem {
     // Trigger type selection (Dashboard-tunable)
     public enum TriggerType {
         STAR,   // Continuous rotation star — just spins to feed balls
+        STAR_POSE,
         RAMP,   // TPU ramp with CUP/RAMP/LIFT positions
         PADDLE  // Original paddle with DOWN/UP positions
     }
-    public static TriggerType TRIGGER_TYPE = TriggerType.STAR;
+    public static TriggerType TRIGGER_TYPE = TriggerType.STAR_POSE;
 
     // Star trigger positions (continuous rotation servo)
     // 0.5 = stopped/idle, 1.0 = spinning to feed balls into flywheel
     public static double STAR_IDLE = 0.5;
     public static double STAR_FEEDING = 1.0;
+
+    public static int STAR_REST = 2000;
+    public static int STAR_LAUNCH_1 = 1680;
+    public static int STAR_LAUNCH_2 = 1300;
+    public static int STAR_LAUNCH_3 = 930;
+    public static int STAR_FIRED = 0; // 0=launch ball 1 position;   1=launch ball 2 position;    2=launch ball 2 position;  3=resting/idle position so 3 balls can fit during intake;
 
     // Ramp trigger positions (servo units 0-1)
     public static double PADDLE_CUP = 0.4;
@@ -427,10 +434,29 @@ public class Launcher implements Subsystem {
     private double getTriggerIdlePosition() {
         switch (TRIGGER_TYPE) {
             case STAR:   return STAR_IDLE;
+            case STAR_POSE:
+                switch (STAR_FIRED) {
+                    case 0:
+                        return servoNormalize(STAR_LAUNCH_1);
+                    case 1:
+                        return servoNormalize(STAR_LAUNCH_2);
+                    case 2:
+                        return servoNormalize(STAR_LAUNCH_3);
+                    case 3:
+                        return servoNormalize(STAR_REST);
+                }
             case PADDLE: return PADDLE_DOWN;
             case RAMP:
             default:     return PADDLE_CUP;
         }
+    }
+
+    public void changeStar(){
+        if(STAR_FIRED>=3){
+            STAR_FIRED=0;
+            return;
+        }
+        STAR_FIRED++;
     }
 
     /**
@@ -439,6 +465,7 @@ public class Launcher implements Subsystem {
     private double getTriggerFiringPosition() {
         switch (TRIGGER_TYPE) {
             case STAR:   return STAR_FEEDING;
+            case STAR_POSE: return servoNormalize(STAR_LAUNCH_3);
             case PADDLE: return PADDLE_UP;
             case RAMP:
             default:     return PADDLE_RAMP;
@@ -473,7 +500,8 @@ public class Launcher implements Subsystem {
         releaseResources();
         flywheel.setVelocity(0);
         flywheelHelp.setVelocity(0);
-        setPaddlePosition(passThroughMode ? getTriggerFiringPosition() : getTriggerIdlePosition());
+        //setPaddlePosition(passThroughMode ? getTriggerFiringPosition() : getTriggerIdlePosition());
+        setPaddlePosition(getTriggerIdlePosition());
     }
 
     /**
@@ -531,15 +559,16 @@ public class Launcher implements Subsystem {
         boolean timeoutExpired = isPast(stateTimer);
 
         if (timeoutExpired) {
-            if (TRIGGER_TYPE == TriggerType.STAR || TRIGGER_TYPE == TriggerType.PADDLE) {
+            if (TRIGGER_TYPE == TriggerType.STAR || TRIGGER_TYPE == TriggerType.PADDLE || TRIGGER_TYPE == TriggerType.STAR_POSE) {
                 // Star and paddle don't need a separate lift phase — go straight to complete
                 state = LaunchState.COMPLETE;
-            } else {
+            }else {
                 // Ramp needs LIFTING phase to push last ball into flywheel
                 state = LaunchState.LIFTING;
                 stateTimer = futureTime(LIFT_TIME);
             }
         }
+
     }
 
     /**
@@ -766,6 +795,7 @@ public class Launcher implements Subsystem {
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
         telemetry.put("Trigger", TRIGGER_TYPE);
+        telemetry.put("Star Fired", STAR_FIRED);
         telemetry.put("Behavior", behavior);
         telemetry.put("Flywheel Speed", String.format("%.0f / %.0f", currentSpeed, targetSpeed));
         telemetry.put("flywheelSpeed", currentSpeed);
@@ -798,5 +828,9 @@ public class Launcher implements Subsystem {
         }
 
         return telemetry;
+    }
+    public static double servoNormalize(int pulse) {
+        double normalized = (double) pulse;
+        return (normalized - 750.0) / 1500.0; //convert mr servo controller pulse width to double on _0 - 1 scale
     }
 }
