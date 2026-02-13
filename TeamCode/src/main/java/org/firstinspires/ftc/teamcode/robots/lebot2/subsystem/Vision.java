@@ -142,8 +142,7 @@ public class Vision implements Subsystem {
     @Override
     public void calc(Canvas fieldOverlay) {
         // PHASE 2: Get latest Limelight result and extract data
-
-//        tilt.setPosition(servoNormalize(tiltTicks));
+        tilt.setPosition(servoNormalize(tiltTicks));
         LLResult result = limelight.getLatestResult();
 
         if (result != null && result.isValid()) {

@@ -77,11 +77,13 @@ public class Launcher implements Subsystem {
     public static double STAR_IDLE = 0.5;
     public static double STAR_FEEDING = 1.0;
 
-    public static int STAR_REST = 2000;
-    public static int STAR_LAUNCH_1 = 1680;
-    public static int STAR_LAUNCH_2 = 1300;
-    public static int STAR_LAUNCH_3 = 930;
-    public static int STAR_FIRED = 0; // 0=launch ball 1 position;   1=launch ball 2 position;    2=launch ball 2 position;  3=resting/idle position so 3 balls can fit during intake;
+    // Star discrete position pulse widths (microseconds, converted via servoNormalize)
+    public static int STAR_REST = 2000;       // Position 0: intake/idle - all 3 sockets open
+    public static int STAR_LAUNCH_1 = 1680;   // Position 1: fires ball 1
+    public static int STAR_LAUNCH_2 = 1300;   // Position 2: fires ball 2
+    public static int STAR_LAUNCH_3 = 930;    // Position 3: fires ball 3
+    // Current star position: 0=REST/intake, 1-3=successive firing positions
+    public static int STAR_FIRED = 0;
 
     // Ramp trigger positions (servo units 0-1)
     public static double PADDLE_CUP = 0.4;
@@ -435,21 +437,11 @@ public class Launcher implements Subsystem {
      */
     private double getTriggerIdlePosition() {
         switch (TRIGGER_TYPE) {
-            case STAR:   return STAR_IDLE;
-            case STAR_POSE:
-                switch (STAR_FIRED) {
-                    case 0:
-                        return servoNormalize(STAR_LAUNCH_1);
-                    case 1:
-                        return servoNormalize(STAR_LAUNCH_2);
-                    case 2:
-                        return servoNormalize(STAR_LAUNCH_3);
-                    case 3:
-                        return servoNormalize(STAR_REST);
-                }
-            case PADDLE: return PADDLE_DOWN;
+            case STAR:      return STAR_IDLE;
+            case STAR_POSE: return servoNormalize(STAR_REST);
+            case PADDLE:    return PADDLE_DOWN;
             case RAMP:
-            default:     return PADDLE_CUP;
+            default:        return PADDLE_CUP;
         }
     }
 
@@ -469,14 +461,11 @@ public class Launcher implements Subsystem {
             case STAR:   return STAR_FEEDING;
             case STAR_POSE:
                 switch (STAR_FIRED) {
-                    case 0:
-                        return servoNormalize(STAR_LAUNCH_1);
-                    case 1:
-                        return servoNormalize(STAR_LAUNCH_2);
-                    case 2:
-                        return servoNormalize(STAR_LAUNCH_3);
-                    case 3:
-                        return servoNormalize(STAR_REST);
+                    case 0:  return servoNormalize(STAR_REST);
+                    case 1:  return servoNormalize(STAR_LAUNCH_1);
+                    case 2:  return servoNormalize(STAR_LAUNCH_2);
+                    case 3:  return servoNormalize(STAR_LAUNCH_3);
+                    default: return servoNormalize(STAR_REST);
                 }
             case PADDLE: return PADDLE_UP;
             case RAMP:
@@ -556,6 +545,9 @@ public class Launcher implements Subsystem {
             claimResources();
             state = LaunchState.FIRING;
             stateTimer = futureTime(FIRING_TIME);
+            if (TRIGGER_TYPE == TriggerType.STAR_POSE) {
+                STAR_FIRED = 0;  // Reset to REST before firing sequence
+            }
             launchSpacerTimer = futureTime(LAUNCH_SPACER_TIMER);
         }
     }
@@ -565,38 +557,35 @@ public class Launcher implements Subsystem {
      * Transitions to LIFTING when timeout expires OR sensor shows balls remain.
      */
     private void handleFiringState() {
-        if(STAR_FIRED == 3){
-            STAR_FIRED = 0;
-        }
-//        if(STAR_FIRED == 2){
-//            STAR_FIRED = 3;
-//            state = LaunchState.COMPLETE;
-//        }
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
 
-        if(isPast(launchSpacerTimer)){
-            STAR_FIRED++;
-            if(STAR_FIRED == 3){
-                state = LaunchState.COMPLETE;
+        // STAR_POSE: step through discrete positions on spacer timer, no overall timeout
+        if (TRIGGER_TYPE == TriggerType.STAR_POSE) {
+            if (isPast(launchSpacerTimer)) {
+                STAR_FIRED++;
+                if (STAR_FIRED > 3) {
+                    state = LaunchState.COMPLETE;
+                    return;
+                }
+                launchSpacerTimer = futureTime(LAUNCH_SPACER_TIMER);
             }
-            launchSpacerTimer = futureTime(LAUNCH_SPACER_TIMER);
+            setPaddlePosition(getTriggerFiringPosition());
+            return;
         }
+
+        // Other trigger types: timeout-based firing
         setPaddlePosition(getTriggerFiringPosition());
 
-        boolean timeoutExpired = isPast(stateTimer);
-
-        if (timeoutExpired) {
-            if (TRIGGER_TYPE == TriggerType.STAR || TRIGGER_TYPE == TriggerType.PADDLE || TRIGGER_TYPE == TriggerType.STAR_POSE) {
-                // Star and paddle don't need a separate lift phase — go straight to complete
+        if (isPast(stateTimer)) {
+            if (TRIGGER_TYPE == TriggerType.STAR || TRIGGER_TYPE == TriggerType.PADDLE) {
                 state = LaunchState.COMPLETE;
-            }else {
+            } else {
                 // Ramp needs LIFTING phase to push last ball into flywheel
                 state = LaunchState.LIFTING;
                 stateTimer = futureTime(LIFT_TIME);
             }
         }
-
     }
 
     /**
@@ -687,6 +676,7 @@ public class Launcher implements Subsystem {
      * Equivalent to setBehavior(Behavior.IDLE).
      */
     public void abort() {
+        STAR_FIRED = 0;  // Return star to REST/intake position
         setBehavior(Behavior.IDLE);
     }
 
@@ -798,6 +788,7 @@ public class Launcher implements Subsystem {
         releaseResources();
         state = LaunchState.IDLE;
         fireRequested = false;
+        STAR_FIRED = 0;  // Return star to REST/intake position
         flywheel.setVelocity(0);
         flywheelHelp.setVelocity(0);
         paddle.setPosition(getTriggerIdlePosition());
@@ -811,6 +802,7 @@ public class Launcher implements Subsystem {
         state = LaunchState.IDLE;
         fireRequested = false;
         passThroughMode = false;
+        STAR_FIRED = 0;  // Return star to REST/intake position
     }
 
     @Override

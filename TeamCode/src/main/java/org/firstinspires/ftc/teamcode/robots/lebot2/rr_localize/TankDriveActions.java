@@ -270,13 +270,6 @@ public class TankDriveActions {
         lastTargetPosition = rowEnd.position;
         lastTrajectoryWaypoints.clear();
         Pose2d currentPose = driveTrain.getPose();
-//        double turnCorrecter = 0;
-//
-//        if(redAlliance){
-//            turnCorrecter = Math.toRadians(90);
-//        }else{
-//            turnCorrecter = -Math.toRadians(90);
-//        }
 
         // Velocity constraint for the slow intake section
         VelConstraint slowConstraint = new TranslationalVelConstraint(intakeVelInchesPerSec);
@@ -305,8 +298,7 @@ public class TankDriveActions {
             Pose2d postTurnPose = new Pose2d(currentPose.position, bearingToRowStart);
 
             Action splineAction = driveTrain.actionBuilder(postTurnPose)
-                    //.splineTo(rowStart.position, Math.toRadians(rowStart.heading.toDouble())+turnCorrecter)
-                    .splineTo(rowStart.position, (rowStart.heading.toDouble()))      //<--- row.heading.toDouble() is in Degrees and splineTo takes radians, might be causing the weird end turn
+                    .splineTo(rowStart.position, rowStart.heading.toDouble())
                     .lineToY(rowEnd.position.y, slowConstraint, driveTrain.defaultAccelConstraint)
                     .build();
 
@@ -318,8 +310,7 @@ public class TankDriveActions {
                     "buildRowTrajectory: headingDiff=%.1f° <= threshold, direct spline", headingDiff));
 
             Action splineAction = driveTrain.actionBuilder(currentPose)
-                    //.splineTo(rowStart.position, Math.toRadians(rowStart.heading.toDouble())+turnCorrecter)
-                    .splineTo(rowStart.position, (rowStart.heading.toDouble()))
+                    .splineTo(rowStart.position, rowStart.heading.toDouble())
                     .lineToY(rowEnd.position.y, slowConstraint, driveTrain.defaultAccelConstraint)
                     .build();
 

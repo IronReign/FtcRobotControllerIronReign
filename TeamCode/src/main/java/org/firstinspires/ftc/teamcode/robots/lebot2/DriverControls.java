@@ -109,7 +109,7 @@ public class DriverControls implements TelemetryProvider {
         // A button: Toggle intake LOAD_ALL behavior
         // Intake runs until loader is full, then auto-stops
         if (stickyGamepad1.left_bumper) {
-            robot.launcher.STAR_FIRED = 3;      //set star to position that channel can fit all balls
+            robot.launcher.STAR_FIRED = 0;      // Set star to REST/intake position
             if (robot.intake.isActive()) {
                 robot.intake.off();
                 robot.loader.releaseBeltFromIntake();
@@ -178,7 +178,7 @@ public class DriverControls implements TelemetryProvider {
 
         // D-pad left: Simple intake on (not LOAD_ALL)
         if (stickyGamepad1.dpad_left) {
-            robot.launcher.STAR_FIRED = 3;      //set star to position that channel can fit all balls
+            robot.launcher.STAR_FIRED = 0;      // Set star to REST/intake position
             robot.intake.on();
             robot.loader.requestBeltForIntake();
         }
