@@ -78,10 +78,10 @@ public class Launcher implements Subsystem {
     public static double STAR_FEEDING = 1.0;
 
     // Star discrete position pulse widths (microseconds, converted via servoNormalize)
-    public static int STAR_REST = 2000;       // Position 0: intake/idle - all 3 sockets open
-    public static int STAR_LAUNCH_1 = 1680;   // Position 1: fires ball 1
-    public static int STAR_LAUNCH_2 = 1300;   // Position 2: fires ball 2
-    public static int STAR_LAUNCH_3 = 930;    // Position 3: fires ball 3
+    public static int STAR_REST = 1900;       // Position 0: intake/idle - all 3 sockets open
+    public static int STAR_LAUNCH_1 = 1470;   // Position 1: fires ball 1
+    public static int STAR_LAUNCH_2 = 1150;   // Position 2: fires ball 2
+    public static int STAR_LAUNCH_3 = 800;    // Position 3: fires ball 3
     // Current star position: 0=REST/intake, 1-3=successive firing positions
     public static int STAR_FIRED = 0;
 
@@ -96,6 +96,7 @@ public class Launcher implements Subsystem {
     public static double PADDLE_PASS = 0.53;
 
     // Flywheel configuration
+    public static double SPEED_MULTIPLIER = 1.04;    // Tunable fudge factor until speed formula is recalibrated
     public static double MIN_LAUNCH_SPEED = 725;   //720 <--old     // degrees/sec - hardcoded working speed from known position
     public static double SPEED_TOLERANCE = 15;      // degrees/sec margin for "at speed" check
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
@@ -161,6 +162,7 @@ public class Launcher implements Subsystem {
     private long stateTimer = 0;
     private long launchSpacerTimer = 0;
     public static double LAUNCH_SPACER_TIMER = .6;
+    public static double LAUNCH_SPACER_TIMER_LAST = 1.0;  // longer for last ball - no balls behind it pushing
     private boolean fireRequested = false;
     private boolean passThroughMode = false;
 
@@ -512,9 +514,9 @@ public class Launcher implements Subsystem {
      */
     public void updateTargetSpeed(){
         if (vision != null && vision.hasBotPose()) {
-            targetSpeed = vision.getFlywheelSpeed();
+            targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER;
         } else {
-            targetSpeed = MIN_LAUNCH_SPEED;
+            targetSpeed = MIN_LAUNCH_SPEED * SPEED_MULTIPLIER;
         }
     }
     private void handleSpinningUpState() {
@@ -560,15 +562,20 @@ public class Launcher implements Subsystem {
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
 
-        // STAR_POSE: step through discrete positions on spacer timer, no overall timeout
+        // STAR_POSE: step through discrete positions when spacer timer elapsed AND flywheel at speed
+        // Both conditions required: timer gives conveyor time to load, speed check ensures
+        // flywheel has recovered (compensates for low battery or lost belt on a motor)
         if (TRIGGER_TYPE == TriggerType.STAR_POSE) {
-            if (isPast(launchSpacerTimer)) {
+            if (isPast(launchSpacerTimer) && isFlywheelAtSpeed()) {
                 STAR_FIRED++;
                 if (STAR_FIRED > 3) {
                     state = LaunchState.COMPLETE;
                     return;
                 }
-                launchSpacerTimer = futureTime(LAUNCH_SPACER_TIMER);
+                // Use longer timer for last ball: loading (pos 2) and firing dwell (pos 3)
+                // Nothing pushing it from behind on conveyor, needs more time to seat and fire
+                double spacer = (STAR_FIRED >= 2) ? LAUNCH_SPACER_TIMER_LAST : LAUNCH_SPACER_TIMER;
+                launchSpacerTimer = futureTime(spacer);
             }
             setPaddlePosition(getTriggerFiringPosition());
             return;
