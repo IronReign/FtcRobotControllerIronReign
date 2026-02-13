@@ -50,7 +50,7 @@ public class Vision implements Subsystem {
         UPMIN,      //default for long distance shooting (1240)
         UPMAX       //default for short distance shooting (1200)
     }
-    private int tiltTicks=1460;
+    public static int tiltTicks=1460;
 
     private Angle angle = Angle.UPMAX;
 
@@ -142,6 +142,8 @@ public class Vision implements Subsystem {
     @Override
     public void calc(Canvas fieldOverlay) {
         // PHASE 2: Get latest Limelight result and extract data
+
+//        tilt.setPosition(servoNormalize(tiltTicks));
         LLResult result = limelight.getLatestResult();
 
         if (result != null && result.isValid()) {
