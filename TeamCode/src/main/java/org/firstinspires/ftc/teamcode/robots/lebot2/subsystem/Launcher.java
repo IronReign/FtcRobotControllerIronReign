@@ -99,7 +99,7 @@ public class Launcher implements Subsystem {
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
 
     // Launch timing for TPU ramp design
-    public static double FIRING_TIME = 2.1;         // seconds to allow all 3 balls through at conveyor speed
+    public static double FIRING_TIME = 2;         // seconds to allow all 3 balls through at conveyor speed
     public static double LIFT_TIME = 0.3;           // seconds to hold LIFT position for last ball
 
     // Post-fire behavior
@@ -157,6 +157,8 @@ public class Launcher implements Subsystem {
     private double helperSpeed = 0;             //helper flywheel velocity
 
     private long stateTimer = 0;
+    private long launchSpacerTimer = 0;
+    public static double LAUNCH_SPACER_TIMER = .6;
     private boolean fireRequested = false;
     private boolean passThroughMode = false;
 
@@ -179,7 +181,7 @@ public class Launcher implements Subsystem {
 
     public Launcher(HardwareMap hardwareMap) {
         flywheel = hardwareMap.get(DcMotorEx.class, "shooter");
-        flywheel.setDirection(DcMotorEx.Direction.REVERSE);
+//        flywheel.setDirection(DcMotorEx.Direction.REVERSE);
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         pidfOrig = flywheel.getPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER);
@@ -465,7 +467,17 @@ public class Launcher implements Subsystem {
     private double getTriggerFiringPosition() {
         switch (TRIGGER_TYPE) {
             case STAR:   return STAR_FEEDING;
-            case STAR_POSE: return servoNormalize(STAR_LAUNCH_3);
+            case STAR_POSE:
+                switch (STAR_FIRED) {
+                    case 0:
+                        return servoNormalize(STAR_LAUNCH_1);
+                    case 1:
+                        return servoNormalize(STAR_LAUNCH_2);
+                    case 2:
+                        return servoNormalize(STAR_LAUNCH_3);
+                    case 3:
+                        return servoNormalize(STAR_REST);
+                }
             case PADDLE: return PADDLE_UP;
             case RAMP:
             default:     return PADDLE_RAMP;
@@ -544,6 +556,7 @@ public class Launcher implements Subsystem {
             claimResources();
             state = LaunchState.FIRING;
             stateTimer = futureTime(FIRING_TIME);
+            launchSpacerTimer = futureTime(LAUNCH_SPACER_TIMER);
         }
     }
 
@@ -552,8 +565,23 @@ public class Launcher implements Subsystem {
      * Transitions to LIFTING when timeout expires OR sensor shows balls remain.
      */
     private void handleFiringState() {
+        if(STAR_FIRED == 3){
+            STAR_FIRED = 0;
+        }
+//        if(STAR_FIRED == 2){
+//            STAR_FIRED = 3;
+//            state = LaunchState.COMPLETE;
+//        }
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
+
+        if(isPast(launchSpacerTimer)){
+            STAR_FIRED++;
+            if(STAR_FIRED == 3){
+                state = LaunchState.COMPLETE;
+            }
+            launchSpacerTimer = futureTime(LAUNCH_SPACER_TIMER);
+        }
         setPaddlePosition(getTriggerFiringPosition());
 
         boolean timeoutExpired = isPast(stateTimer);
