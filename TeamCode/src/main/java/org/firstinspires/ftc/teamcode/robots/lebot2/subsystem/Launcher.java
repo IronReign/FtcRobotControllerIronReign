@@ -79,8 +79,8 @@ public class Launcher implements Subsystem {
 
     // Star discrete position pulse widths (microseconds, converted via servoNormalize)
     public static int STAR_REST = 1900;       // Position 0: intake/idle - all 3 sockets open
-    public static int STAR_LAUNCH_1 = 1470;   // Position 1: fires ball 1
-    public static int STAR_LAUNCH_2 = 1150;   // Position 2: fires ball 2
+    public static int STAR_LAUNCH_1 = 1500;   // Position 1: fires ball 1
+    public static int STAR_LAUNCH_2 = 1200;   // Position 2: fires ball 2
     public static int STAR_LAUNCH_3 = 800;    // Position 3: fires ball 3
     // Current star position: 0=REST/intake, 1-3=successive firing positions
     public static int STAR_FIRED = 0;
@@ -96,17 +96,18 @@ public class Launcher implements Subsystem {
     public static double PADDLE_PASS = 0.53;
 
     // Flywheel configuration
-    public static double SPEED_MULTIPLIER = 1.04;    // Tunable fudge factor until speed formula is recalibrated
-    public static double MIN_LAUNCH_SPEED = 725;   //720 <--old     // degrees/sec - hardcoded working speed from known position
+    public static double SPEED_MULTIPLIER = 1.02;    // Tunable fudge factor until speed formula is recalibrated
+    public static double MIN_LAUNCH_SPEED = 800;   //720 <--old     // degrees/sec - hardcoded working speed from known position
     public static double SPEED_TOLERANCE = 15;      // degrees/sec margin for "at speed" check
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
+    public static double FLYWHEEL_IDLE_SPEED = 600;
 
     // Launch timing for TPU ramp design
-    public static double FIRING_TIME = 2;         // seconds to allow all 3 balls through at conveyor speed
+    public static double FIRING_TIME = 2.1;         // seconds to allow all 3 balls through at conveyor speed
     public static double LIFT_TIME = 0.3;           // seconds to hold LIFT position for last ball
 
     // Post-fire behavior
-    public static boolean STAY_SPINNING_AFTER_FIRE = false;  // Keep flywheel spinning for faster follow-up
+    public static boolean STAY_SPINNING_AFTER_FIRE = true;  // Keep flywheel spinning for faster follow-up
 
     // Speed calculation constants (from physics model)
     public static double LIMELIGHT_OFFSET = 0.23;   // meters from launch point
@@ -144,6 +145,7 @@ public class Launcher implements Subsystem {
 
     // Simplified states for TPU ramp design
     public enum LaunchState {
+        IDLE_SPIN,
         IDLE,           // Flywheel off, paddle in CUP
         SPINNING_UP,    // Flywheel ramping to speed, paddle in CUP
         READY,          // Flywheel at speed, waiting for fire command, paddle in CUP
@@ -161,7 +163,7 @@ public class Launcher implements Subsystem {
 
     private long stateTimer = 0;
     private long launchSpacerTimer = 0;
-    public static double LAUNCH_SPACER_TIMER = .6;
+    public static double LAUNCH_SPACER_TIMER = .5;
     public static double LAUNCH_SPACER_TIMER_LAST = 1.0;  // longer for last ball - no balls behind it pushing
     private boolean fireRequested = false;
     private boolean passThroughMode = false;
@@ -402,6 +404,9 @@ public class Launcher implements Subsystem {
 //        }
         // Run simplified state machine for TPU ramp design
         switch(state) {
+            case IDLE_SPIN:
+                handleIdleSpinState();
+                break;
             case IDLE:
                 handleIdleState();
                 break;
@@ -506,6 +511,15 @@ public class Launcher implements Subsystem {
         //setPaddlePosition(passThroughMode ? getTriggerFiringPosition() : getTriggerIdlePosition());
         setPaddlePosition(getTriggerIdlePosition());
     }
+
+    private void handleIdleSpinState() {
+        releaseResources();
+        flywheel.setVelocity(FLYWHEEL_IDLE_SPEED);
+        flywheelHelp.setVelocity(FLYWHEEL_IDLE_SPEED);
+        //setPaddlePosition(passThroughMode ? getTriggerFiringPosition() : getTriggerIdlePosition());
+        setPaddlePosition(getTriggerIdlePosition());
+    }
+
 
     /**
      * Update target speed from vision distance calculation.

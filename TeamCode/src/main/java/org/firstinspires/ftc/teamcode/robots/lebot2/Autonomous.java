@@ -208,6 +208,11 @@ public class Autonomous implements TelemetryProvider {
 
             // ========== PHASE 1: Backup to Fire ==========
             case START_BACKUP_TO_FIRE:
+                if(launchCycles==0){
+                    FieldMap.OFFSET = 8;
+                }else{
+                    FieldMap.OFFSET = -6;
+                }
                 if(!SKIP_LAUNCH) {
 
                     if (SKIP_INITIAL_BACKUP) {
