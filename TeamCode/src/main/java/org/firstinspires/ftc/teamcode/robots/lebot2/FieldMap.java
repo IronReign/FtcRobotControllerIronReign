@@ -26,6 +26,8 @@ import java.util.Set;
 @Config(value = "Lebot2_FieldMap")
 public class FieldMap {
 
+    public static double OFFSET = 1.5;
+
     // ==================== VISUALIZATION CONFIG ====================
     public static boolean DRAW_WAYPOINTS = true;  // Toggle waypoint visualization
     public static double WAYPOINT_RADIUS = 4.0;   // 8" diameter = 4" radius
@@ -33,7 +35,7 @@ public class FieldMap {
     // ==================== INTAKE ASYMMETRY OFFSET ====================
     // Ball row waypoints need X offset when reflected for blue alliance
     // due to asymmetric intake design (shifts 6" in positive X direction)
-    public static double BALL_ROW_BLUE_X_OFFSET = 3.5;  // inches
+    public static double BALL_ROW_BLUE_X_OFFSET = 2;  // inches
     public static double ROW_X_OFFSET = 0;
     public static double ROW_Y_START_OFFSET = 4;
 
@@ -128,7 +130,7 @@ public class FieldMap {
         // Positions where robot stops to launch balls at goal
         // FIRE_1 X uses FIRE_1_BASE_X which can be offset via Dashboard
         RED_WAYPOINTS.put("FIRE_1", new Waypoint(-14.1732, 15.748, 135));  // Base position, offset applied in get()
-        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-31.7,16, 124.4));  // Fire from inside big triangle
+        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-31.7-OFFSET,16+OFFSET, 124.4));  // Fire from inside big triangle
         RED_WAYPOINTS.put("FIRE_3", new Waypoint(50, 6.5, 180));  // TODO: measure
         RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.5,16.8, 160));  //fire from back triangle
 

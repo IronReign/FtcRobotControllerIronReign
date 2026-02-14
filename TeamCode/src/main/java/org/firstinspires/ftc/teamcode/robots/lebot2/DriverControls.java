@@ -34,7 +34,7 @@ import java.util.Map;
 public class DriverControls implements TelemetryProvider {
 
     // Configuration
-    public static double DRIVE_DAMPENER = 0.7;
+    public static double DRIVE_DAMPENER = 1;
     public static double SLOW_MODE_DAMPENER = 0.3;
     public static boolean slowMode = false;
 
@@ -65,6 +65,7 @@ public class DriverControls implements TelemetryProvider {
      */
     public void initLoop() {
         updateStickyGamepads();
+        handlePipeline();
         handleGameStateSwitch();
         handleAllianceSelection();
         handleStartingPositionSelection();
@@ -381,6 +382,19 @@ public class DriverControls implements TelemetryProvider {
                 case 2:  Autonomous.ABORT_AFTER_ROWS = -1; break;
                 default: Autonomous.ABORT_AFTER_ROWS = -1; break;
             }
+        }
+    }
+
+    private void handlePipeline(){
+        if(stickyGamepad1.dpad_up){
+            if(robot.vision.PIPELINE >= 2){
+                robot.vision.PIPELINE=0;
+                robot.vision.setLimelightEnvironment();
+                return;
+            }
+            robot.vision.PIPELINE++;
+            robot.vision.setLimelightEnvironment();
+            return;
         }
     }
 

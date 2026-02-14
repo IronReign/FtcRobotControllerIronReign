@@ -47,8 +47,8 @@ public class Loader implements Subsystem {
 
     // Configuration
     // Negative = move balls toward rear (intake/feed), Positive = eject forward
-    public static double BELT_POWER = -.8;
-    public static double FEED_POWER = -0.8; // Slower for controlled feeding
+    public static double BELT_POWER = -1;
+    public static double FEED_POWER = -1; // Slower for controlled feeding
     public static double BELT_REVERSE_POWER = 0.5; // Positive = toward front, relieves fin pressure
     public static double BALL_DETECT_THRESHOLD_CM = 10.0; // Distance indicating ball present
     public static int MAX_BALLS = 3;
