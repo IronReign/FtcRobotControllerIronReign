@@ -38,6 +38,9 @@ public class Autonomous implements TelemetryProvider {
 
     private final Robot robot;
 
+    public static double FIRST_ANGLE_OFFSET = 6;
+    public static double SECOND_ANGLE_OFFSET = -6;
+
     // ==================== CONFIGURATION ====================
 
     // Strategic configuration (tunable via FTC Dashboard)
@@ -45,7 +48,7 @@ public class Autonomous implements TelemetryProvider {
     public static boolean DO_OPEN_SESAME = true;      // Release gate after rows 1 & 2?
     public static double MIN_TIME_FOR_ROW = 5.0;     // Minimum seconds needed for a ball row cycle
 
-    public static boolean SKIP_LAUNCH=true;
+    public static boolean SKIP_LAUNCH=false;
 
     // Derived strategy parameters (set by init() based on START_AT_GOAL_WALL, also Dashboard-tunable)
     public static int FIRE_POSITION = 1;              // Which fire position to use (1-4)
@@ -143,7 +146,7 @@ public class Autonomous implements TelemetryProvider {
             GATE_BEFORE_ROW = 2;
             SKIP_INITIAL_BACKUP = false;
         } else {
-            SKIP_LAUNCH=true;
+            SKIP_LAUNCH=false;
             FIRE_POSITION = 4;
             Launcher.STAR_FEEDING = 0.7;
             Launcher.MIN_LAUNCH_SPEED = FieldMap.FIRE_4_DEFAULT_DPS;
@@ -161,6 +164,7 @@ public class Autonomous implements TelemetryProvider {
         rowsCompleted = 0;
         launchCycles = 0;
         gateReleased = false;
+        robot.launcher.LAUNCH_SPACER_TIMER=.5;
 
         // Set robot starting pose based on configured start position
         // (FieldMap.IS_AUDIENCE_START is already set by Robot.setStartingPosition during init_loop)
@@ -209,9 +213,9 @@ public class Autonomous implements TelemetryProvider {
             // ========== PHASE 1: Backup to Fire ==========
             case START_BACKUP_TO_FIRE:
                 if(launchCycles==0){
-                    FieldMap.OFFSET = 8;
+                    FieldMap.FIRE_1_ANGLE_OFFSET = FIRST_ANGLE_OFFSET;       //8
                 }else{
-                    FieldMap.OFFSET = -6;
+                    FieldMap.FIRE_1_ANGLE_OFFSET = SECOND_ANGLE_OFFSET;
                 }
                 if(!SKIP_LAUNCH) {
 
@@ -224,12 +228,13 @@ public class Autonomous implements TelemetryProvider {
                         robot.missions.startNavigateToFire(FIRE_POSITION, true);
                         setState(AutonState.WAITING_BACKUP);
                     }
-                }else{
-                    // SKIP_LAUNCH: just get off the starting line for LEAVE points
-                    // Go to opposing alliance's base (same destination as audience abort)
-                    robot.missions.startNavigateTo(ALT_POSITION_AUDIENCE, !Robot.isRedAlliance);
-                    setState(AutonState.WAITING_BACKUP);
                 }
+//                }else{
+//                    // SKIP_LAUNCH: just get off the starting line for LEAVE points
+//                    // Go to opposing alliance's base (same destination as audience abort)
+//                    robot.missions.startNavigateTo(ALT_POSITION_AUDIENCE, !Robot.isRedAlliance);
+//                    setState(AutonState.WAITING_BACKUP);
+//                }
                 break;
 
             case WAITING_BACKUP:
@@ -249,17 +254,31 @@ public class Autonomous implements TelemetryProvider {
 
             // ========== PHASE 2-3: Target and Launch ==========
             case START_TARGETING:
+                if(robot.getStartingPosition() == Robot.StartingPosition.AUDIENCE){
+                    robot.setBehavior(Robot.Behavior.TARGETING);
+                }
                 //robot.setBehavior(Robot.Behavior.TARGETING);
                 setState(AutonState.WAITING_TARGET);
                 break;
 
             case WAITING_TARGET:
-                //if (robot.getBehavior() == Robot.Behavior.MANUAL) {
+                if(robot.getStartingPosition() == Robot.StartingPosition.AUDIENCE){
+                    //if (robot.getBehavior() == Robot.Behavior.MANUAL) {
                     // Targeting complete, apply vision correction
                     log("TARGETING_COMPLETE", null);
                     robot.applyVisionPoseCorrection();
                     setState(AutonState.START_LAUNCH);
-                //}
+                    //}
+
+                }else {
+
+                    //if (robot.getBehavior() == Robot.Behavior.MANUAL) {
+                    // Targeting complete, apply vision correction
+                    log("TARGETING_COMPLETE", null);
+                    robot.applyVisionPoseCorrection();
+                    setState(AutonState.START_LAUNCH);
+                    //}
+                }
                 break;
 
             case START_LAUNCH:
@@ -282,6 +301,9 @@ public class Autonomous implements TelemetryProvider {
                     robot.applyVisionPoseCorrection();
                     // Power down flywheel during ball collection to conserve power
                     robot.launcher.setBehavior(Launcher.Behavior.IDLE);
+                    if(robot.getStartingPosition() == Robot.StartingPosition.AUDIENCE){
+                        setState(AutonState.START_RETURN_TO_FIRE);
+                    }
                     setState(AutonState.START_BALL_ROW);
                 } else if (robot.missions.isFailed()) {
                     log("LAUNCH_FAILED", "timeout");
@@ -351,9 +373,13 @@ public class Autonomous implements TelemetryProvider {
 
             case START_RETURN_TO_FIRE:
                 // Navigate back to fire position (auto-direction)
-                if(currentRow == 2){
+                if(FieldMap.IS_AUDIENCE_START){
+                    FIRE_POSITION=3;
+                }
+                if(!FieldMap.IS_AUDIENCE_START && currentRow == 2){
                     FIRE_POSITION=2;
                 }
+                FieldMap.FIRE_1_ANGLE_OFFSET = SECOND_ANGLE_OFFSET;
                 robot.missions.startNavigateToFire(FIRE_POSITION);
                 setState(AutonState.WAITING_RETURN);
                 break;
@@ -361,6 +387,9 @@ public class Autonomous implements TelemetryProvider {
             case WAITING_RETURN:
                 if (robot.missions.isComplete()) {
                     log("RETURN_COMPLETE", null);
+                    if(FieldMap.IS_AUDIENCE_START){
+                        setState(AutonState.COMPLETE);
+                    }
                     setState(AutonState.START_TARGETING);
                 } else if (robot.missions.isFailed()) {
                     log("RETURN_FAILED", "timeout");

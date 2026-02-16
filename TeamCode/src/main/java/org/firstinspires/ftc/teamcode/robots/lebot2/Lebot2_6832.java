@@ -156,6 +156,8 @@ public class Lebot2_6832 extends OpMode {
         if (gameState.isAutonomous()) {
             autonomous.init();
         } else {
+            robot.launcher.LAUNCH_SPACER_TIMER = .6;
+            // maybe speed multiplier for teleop .98
             // If starting in TeleOp, ensure manual control
             robot.setBehavior(Robot.Behavior.MANUAL);
         }

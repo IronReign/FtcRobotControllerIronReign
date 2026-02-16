@@ -179,6 +179,7 @@ public class Robot implements TelemetryProvider {
         driveTrain.setVision(vision);   // For continuous vision-based centering
         ledStatus.setLoader(loader);    // For ball detection
         ledStatus.setLauncher(launcher); // For firing detection
+        ledStatus.setVision(vision);
 
         // Add to subsystems list for bulk operations
         subsystems.add((Subsystem) driveTrain);
