@@ -97,10 +97,10 @@ public class Launcher implements Subsystem {
 
     // Flywheel configuration
     public static double SPEED_MULTIPLIER = 1.02;    // Tunable fudge factor until speed formula is recalibrated
-    public static double MIN_LAUNCH_SPEED = 800;   //720 <--old     // degrees/sec - hardcoded working speed from known position
+    public static double MIN_LAUNCH_SPEED = 1040;   //720 <--old     // degrees/sec - hardcoded working speed from known position
     public static double SPEED_TOLERANCE = 15;      // degrees/sec margin for "at speed" check
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
-    public static double FLYWHEEL_IDLE_SPEED = 600;
+    public static double FLYWHEEL_IDLE_SPEED = 800;
 
     // Launch timing for TPU ramp design
     public static double FIRING_TIME = 2.1;         // seconds to allow all 3 balls through at conveyor speed

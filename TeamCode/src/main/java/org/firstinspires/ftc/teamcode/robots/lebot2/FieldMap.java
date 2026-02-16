@@ -26,7 +26,7 @@ import java.util.Set;
 @Config(value = "Lebot2_FieldMap")
 public class FieldMap {
 
-    public static double OFFSET = 1.5;
+    public static double OFFSET = 4.5;
 
     // ==================== VISUALIZATION CONFIG ====================
     public static boolean DRAW_WAYPOINTS = true;  // Toggle waypoint visualization
@@ -66,7 +66,7 @@ public class FieldMap {
 
     // ==================== DEFAULT FLYWHEEL SPEEDS ====================
     // Fallback speeds (deg/sec) when vision distance can't be solved
-    public static double FIRE_1_DEFAULT_DPS = 725;   // Goal start distance
+    public static double FIRE_1_DEFAULT_DPS = 1050;   // Goal start distance
     public static double FIRE_4_DEFAULT_DPS = 1050;  // Audience start distance
 
     // ==================== WAYPOINT CLASS ====================
@@ -122,17 +122,19 @@ public class FieldMap {
         // AUDIENCE: Near audience, facing goal
         //speed for audience start is 1100 and star feed .8
         //65, 16.8
-        RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(66, 6.5, 180));  // TODO: measure heading        //64.5,16.8,
+        RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(64.7, 17.1, 168.2));
+
+        //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(66, 6.5, 180));  // TODO: measure heading        //64.5,16.8,
         // GOAL: Near goal, facing goal
         RED_WAYPOINTS.put("START_GOAL", new Waypoint(-46.4566-4, 47.244+4, 135));   //(-46.4566, 47.244, 135));
 
         // ----- Firing Positions -----
         // Positions where robot stops to launch balls at goal
         // FIRE_1 X uses FIRE_1_BASE_X which can be offset via Dashboard
-        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-14.1732, 15.748, 135));  // Base position, offset applied in get()
+        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-14.1732-2, 15.748+2, 135));  // Base position, offset applied in get()
         RED_WAYPOINTS.put("FIRE_2", new Waypoint(-31.7-OFFSET,16+OFFSET, 124.4));  // Fire from inside big triangle
-        RED_WAYPOINTS.put("FIRE_3", new Waypoint(50, 6.5, 180));  // TODO: measure
-        RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.5,16.8, 160));  //fire from back triangle
+        RED_WAYPOINTS.put("FIRE_3", new Waypoint(56.1, 18.9, 168.8));  // TODO: measure
+        RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.7, 17.1, 168.2));  //fire from back triangle
 
         // ----- Ball Pickup Waypoints -----
         // Starting points for each of the 3 ball rows
