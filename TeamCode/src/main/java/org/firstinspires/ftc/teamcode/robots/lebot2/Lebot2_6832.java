@@ -298,6 +298,7 @@ public class Lebot2_6832 extends OpMode {
             handleTelemetry(robot.launcher.getTelemetry(false), "Launcher", packet);
             handleTelemetry(robot.loader.getTelemetry(false), "Loader", packet);
             handleTelemetry(robot.vision.getTelemetry(false), "Vision", packet);
+            handleTelemetry(robot.turret.getTelemetry(false), "Turret", packet);
         }
     }
 

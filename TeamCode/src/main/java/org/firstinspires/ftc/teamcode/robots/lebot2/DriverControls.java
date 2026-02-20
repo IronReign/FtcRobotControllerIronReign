@@ -33,6 +33,8 @@ import java.util.Map;
 @Config(value = "Lebot2_DriverControls")
 public class DriverControls implements TelemetryProvider {
 
+    public static double turretPower = .01;
+
     // Configuration
     public static double DRIVE_DAMPENER = 1;
     public static double SLOW_MODE_DAMPENER = 0.3;
@@ -126,6 +128,8 @@ public class DriverControls implements TelemetryProvider {
             robot.launcher.setBehavior(Launcher.Behavior.IDLE);
             robot.intake.off();
             robot.loader.releaseBelt();
+            robot.turret.setIdle();
+            robot.turret.setPower(0);
         }
 
         if(stickyGamepad1.x){
@@ -155,7 +159,8 @@ public class DriverControls implements TelemetryProvider {
 
         // Left bumper: Toggle slow mode
         if (stickyGamepad1.a) {
-            slowMode = !slowMode;
+            robot.turret.setTracking();
+            //slowMode = !slowMode;
         }
 
         // Right bumper: Launch all balls in sequence
@@ -169,13 +174,19 @@ public class DriverControls implements TelemetryProvider {
 //            robot.launcher.paddleRamp();
 //            robot.launcher.setPassThroughMode(true);
 //        }
-        if(stickyGamepad1.dpad_up){
-            robot.launcher.changeStar();
+        if(gamepad1.dpad_up){
+            robot.turret.setPower(turretPower);
         }
-        if (stickyGamepad1.dpad_down) {
-            robot.launcher.paddleCup();
-            robot.launcher.setPassThroughMode(false);
+        if(gamepad1.dpad_down){
+            robot.turret.setPower(-turretPower);
         }
+//        if(stickyGamepad1.dpad_up){
+//            //robot.launcher.changeStar();
+//        }
+//        if (stickyGamepad1.dpad_down) {
+////            robot.launcher.paddleCup();
+////            robot.launcher.setPassThroughMode(false);
+//        }
 
         // D-pad left: Simple intake on (not LOAD_ALL)
         if (stickyGamepad1.dpad_left) {
