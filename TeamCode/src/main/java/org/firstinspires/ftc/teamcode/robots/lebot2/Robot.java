@@ -11,6 +11,7 @@ import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Launcher;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.LEDStatus;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Loader;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Turret;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Vision;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.DriveTrainBase;
 import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
@@ -62,6 +63,7 @@ public class Robot implements TelemetryProvider {
     public final Launcher launcher;
     public final Vision vision;
     public final LEDStatus ledStatus;
+    public final Turret turret;
 
     // Missions coordinator (Layer 4 - above Robot behaviors)
     public final Missions missions;
@@ -170,6 +172,7 @@ public class Robot implements TelemetryProvider {
         launcher = new Launcher(hardwareMap);
         vision = new Vision(hardwareMap);
         ledStatus = new LEDStatus(hardwareMap);
+        turret = new Turret(hardwareMap);
 
         // Connect subsystems that need references to each other
         intake.setLoader(loader);       // For LOAD_ALL completion check
@@ -180,6 +183,8 @@ public class Robot implements TelemetryProvider {
         ledStatus.setLoader(loader);    // For ball detection
         ledStatus.setLauncher(launcher); // For firing detection
         ledStatus.setVision(vision);
+        turret.setVision(vision);
+        turret.setDriveTrain((TankDrivePinpoint)driveTrain);
 
         // Add to subsystems list for bulk operations
         subsystems.add((Subsystem) driveTrain);
@@ -188,6 +193,7 @@ public class Robot implements TelemetryProvider {
         subsystems.add(launcher);
         subsystems.add(vision);
         subsystems.add(ledStatus);
+        subsystems.add(turret);
 
         // Voltage sensor
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
