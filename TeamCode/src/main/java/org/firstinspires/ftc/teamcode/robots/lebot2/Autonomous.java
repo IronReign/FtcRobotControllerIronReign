@@ -218,7 +218,6 @@ public class Autonomous implements TelemetryProvider {
                     FieldMap.FIRE_1_ANGLE_OFFSET = SECOND_ANGLE_OFFSET;
                 }
                 if(!SKIP_LAUNCH) {
-
                     if (SKIP_INITIAL_BACKUP) {
                         // Already at fire position — just spin up launcher
                         robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
@@ -228,13 +227,12 @@ public class Autonomous implements TelemetryProvider {
                         robot.missions.startNavigateToFire(FIRE_POSITION, true);
                         setState(AutonState.WAITING_BACKUP);
                     }
+                } else {
+                    // SKIP_LAUNCH: just get off the starting line for LEAVE points
+                    // Go to opposing alliance's base (same destination as audience abort)
+                    robot.missions.startNavigateTo(ALT_POSITION_AUDIENCE, !Robot.isRedAlliance);
+                    setState(AutonState.WAITING_BACKUP);
                 }
-//                }else{
-//                    // SKIP_LAUNCH: just get off the starting line for LEAVE points
-//                    // Go to opposing alliance's base (same destination as audience abort)
-//                    robot.missions.startNavigateTo(ALT_POSITION_AUDIENCE, !Robot.isRedAlliance);
-//                    setState(AutonState.WAITING_BACKUP);
-//                }
                 break;
 
             case WAITING_BACKUP:
@@ -254,30 +252,16 @@ public class Autonomous implements TelemetryProvider {
 
             // ========== PHASE 2-3: Target and Launch ==========
             case START_TARGETING:
-                if(robot.getStartingPosition() == Robot.StartingPosition.AUDIENCE){
-                    robot.setBehavior(Robot.Behavior.TARGETING);
-                }
-                //robot.setBehavior(Robot.Behavior.TARGETING);
+                robot.setBehavior(Robot.Behavior.TARGETING);
                 setState(AutonState.WAITING_TARGET);
                 break;
 
             case WAITING_TARGET:
-                if(robot.getStartingPosition() == Robot.StartingPosition.AUDIENCE){
-                    //if (robot.getBehavior() == Robot.Behavior.MANUAL) {
+                if (robot.getBehavior() == Robot.Behavior.MANUAL) {
                     // Targeting complete, apply vision correction
                     log("TARGETING_COMPLETE", null);
                     robot.applyVisionPoseCorrection();
                     setState(AutonState.START_LAUNCH);
-                    //}
-
-                }else {
-
-                    //if (robot.getBehavior() == Robot.Behavior.MANUAL) {
-                    // Targeting complete, apply vision correction
-                    log("TARGETING_COMPLETE", null);
-                    robot.applyVisionPoseCorrection();
-                    setState(AutonState.START_LAUNCH);
-                    //}
                 }
                 break;
 
@@ -303,8 +287,9 @@ public class Autonomous implements TelemetryProvider {
                     robot.launcher.setBehavior(Launcher.Behavior.IDLE);
                     if(robot.getStartingPosition() == Robot.StartingPosition.AUDIENCE){
                         setState(AutonState.START_RETURN_TO_FIRE);
+                    } else {
+                        setState(AutonState.START_BALL_ROW);
                     }
-                    setState(AutonState.START_BALL_ROW);
                 } else if (robot.missions.isFailed()) {
                     log("LAUNCH_FAILED", "timeout");
                     launchCycles++;
@@ -389,8 +374,9 @@ public class Autonomous implements TelemetryProvider {
                     log("RETURN_COMPLETE", null);
                     if(FieldMap.IS_AUDIENCE_START){
                         setState(AutonState.COMPLETE);
+                    } else {
+                        setState(AutonState.START_TARGETING);
                     }
-                    setState(AutonState.START_TARGETING);
                 } else if (robot.missions.isFailed()) {
                     log("RETURN_FAILED", "timeout");
                     setState(AutonState.START_TARGETING);

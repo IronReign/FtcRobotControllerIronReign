@@ -183,6 +183,7 @@ public class Robot implements TelemetryProvider {
         ledStatus.setLoader(loader);    // For ball detection
         ledStatus.setLauncher(launcher); // For firing detection
         ledStatus.setVision(vision);
+        ledStatus.setTurret(turret);
         turret.setVision(vision);
         turret.setDriveTrain((TankDrivePinpoint)driveTrain);
 

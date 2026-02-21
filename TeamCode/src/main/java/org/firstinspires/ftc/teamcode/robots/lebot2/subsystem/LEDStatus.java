@@ -15,16 +15,13 @@ import java.util.Map;
 /**
  * LED Status subsystem - visual feedback for drivers via SparkFun QWIIC LED Stick.
  *
- * States:
- * - ALLIANCE: All LEDs show alliance color (blue/red) - default state
- * - HAS_BALLS: Amber when loader has balls but not full
- * - FULL: Green for 1 second when loader becomes full, then reverts to ALLIANCE
- * - FIRING: Pulsing white while launching, then reverts to ALLIANCE
- *
- * THREE-PHASE UPDATE:
- * - readSensors(): Nothing to read
- * - calc(): Determine state based on robot/loader/launcher status
- * - act(): Update LED colors
+ * Priority-based state machine (highest priority wins):
+ * 1. FIRING - pulsing white (launcher actively firing)
+ * 2. READY_TO_FIRE - bright white (vision locked + flywheel at speed)
+ * 3. AIMING - cyan (vision has target, turret converging)
+ * 4. FULL - green (loader full, timed on rising edge)
+ * 5. HAS_BALLS - amber (loader has balls)
+ * 6. ALLIANCE - red/blue (default)
  */
 @Config(value = "Lebot2_LEDStatus")
 public class LEDStatus implements Subsystem {
@@ -35,30 +32,31 @@ public class LEDStatus implements Subsystem {
 
     // Configuration
     public static int BRIGHTNESS = 10;  // 0-31
-    public static int AMBER = Color.rgb(255, 140, 0);  // Orange-amber
-    public static long FULL_DISPLAY_MS = 1000;  // How long to show green when full
-    public static double PULSE_FREQUENCY_HZ = 2.0;  // White pulse rate when firing
+    public static int AMBER = Color.rgb(255, 140, 0);
+    public static int CYAN = Color.rgb(0, 255, 255);
+    public static long FULL_DISPLAY_MS = 1000;
+    public static double PULSE_FREQUENCY_HZ = 2.0;
 
     // State
     public enum State {
-        ALLIANCE,   // Default - show alliance color
-        HAS_BALLS,  // Amber - loader has balls but not full
-        FULL,       // Green - loader just became full (timed)
-        FIRING ,    // Pulsing white - launching balls
-        VISION_LOCK,
-        NOTHING
+        ALLIANCE,
+        HAS_BALLS,
+        FULL,
+        AIMING,
+        READY_TO_FIRE,
+        FIRING
     }
     private State state = State.ALLIANCE;
-    private State previousState = State.ALLIANCE;
 
     // Timing
-    private long fullStartMs = 0;  // When we entered FULL state
-    private boolean wasFullLastCycle = false;  // Track rising edge of full
+    private long fullStartMs = 0;
+    private boolean wasFullLastCycle = false;
 
     // References
     private Loader loader = null;
     private Launcher launcher = null;
     private Vision vision = null;
+    private Turret turret = null;
 
     // Current display state
     private int currentColor = Color.BLUE;
@@ -69,26 +67,14 @@ public class LEDStatus implements Subsystem {
             ledStick.setBrightness(BRIGHTNESS);
             hardwarePresent = true;
         } catch (Exception e) {
-            // LED stick not configured - subsystem will be a no-op
             hardwarePresent = false;
         }
     }
 
-    /**
-     * Set reference to Loader for ball detection.
-     */
-    public void setLoader(Loader loader) {
-        this.loader = loader;
-    }
-
-    /**
-     * Set reference to Launcher for firing detection.
-     */
-    public void setLauncher(Launcher launcher) {
-        this.launcher = launcher;
-    }
-
-    public void setVision(Vision vision){this.vision = vision;}
+    public void setLoader(Loader loader) { this.loader = loader; }
+    public void setLauncher(Launcher launcher) { this.launcher = launcher; }
+    public void setVision(Vision vision) { this.vision = vision; }
+    public void setTurret(Turret turret) { this.turret = turret; }
 
     // ==================== THREE-PHASE METHODS ====================
 
@@ -101,70 +87,64 @@ public class LEDStatus implements Subsystem {
     public void calc(Canvas fieldOverlay) {
         if (!hardwarePresent) return;
 
-        previousState = state;
+        // Priority-based state determination (highest first)
+        boolean isFiring = (launcher != null) &&
+                (launcher.getState() == Launcher.LaunchState.FIRING ||
+                 launcher.getState() == Launcher.LaunchState.LIFTING);
 
-        if(vision.hasTarget()){
-            state = State.VISION_LOCK;
-        }else{
-            state = State.NOTHING;
+        boolean isReadyToFire = (turret != null) && turret.isLockedOnTarget() &&
+                (launcher != null) && launcher.isFlywheelAtSpeed();
+
+        boolean isAiming = (vision != null) && vision.hasTarget();
+
+        boolean isFull = (loader != null) && loader.isFull();
+        boolean hasBalls = (loader != null) && !loader.isEmpty();
+
+        if (isFiring) {
+            state = State.FIRING;
+        } else if (isReadyToFire) {
+            state = State.READY_TO_FIRE;
+        } else if (isAiming) {
+            state = State.AIMING;
+        } else if (isFull && !wasFullLastCycle) {
+            // Rising edge of full - start green display
+            state = State.FULL;
+            fullStartMs = System.currentTimeMillis();
+        } else if (state == State.FULL) {
+            // Check if green display time expired
+            if (System.currentTimeMillis() - fullStartMs > FULL_DISPLAY_MS) {
+                state = hasBalls ? State.HAS_BALLS : State.ALLIANCE;
+            }
+        } else if (hasBalls) {
+            state = State.HAS_BALLS;
+        } else {
+            state = State.ALLIANCE;
         }
 
-        // Determine state based on priority (highest first)
-//        boolean isFiring = (launcher != null) &&
-//                (launcher.getState() == Launcher.LaunchState.FIRING ||
-//                 launcher.getState() == Launcher.LaunchState.LIFTING);
-//
-//        boolean isFull = (loader != null) && loader.isFull();
-//        boolean hasBalls = (loader != null) && !loader.isEmpty();
+        wasFullLastCycle = isFull;
 
-//        if (isFiring) {
-//            // Firing takes priority
-//            state = State.FIRING;
-//        } else if (isFull && !wasFullLastCycle) {
-//            // Rising edge of full - start green display
-//            state = State.FULL;
-//            fullStartMs = System.currentTimeMillis();
-//        }
-//        else if (state == State.FULL) {
-//            // Check if green display time expired
-//            if (System.currentTimeMillis() - fullStartMs > FULL_DISPLAY_MS) {
-//                state = State.ALLIANCE;
-//            }
-//            // Otherwise stay in FULL state
-//        }
-//        else if (hasBalls && state != State.FULL) {
-//            // Has balls but not full (and not in green flash)
-//            state = State.HAS_BALLS;
-//        }
-//        else if (state != State.FULL) {
-//            // Default to alliance color
-//            state = State.ALLIANCE;
-//        }
-//
-//        wasFullLastCycle = isFull;
-
-        // Determine color based on state
+        // Determine color
         switch (state) {
-//            case ALLIANCE:
-//                currentColor = Robot.isRedAlliance ? Color.RED : Color.BLUE;
-//                break;
-//            case HAS_BALLS:
-//                currentColor = AMBER;
-//                break;
-//            case FULL:
-//                currentColor = Color.GREEN;
-//                break;
-//            case FIRING:
-//                // Pulse white by modulating brightness with time
-//                double phase = (System.currentTimeMillis() / 1000.0) * PULSE_FREQUENCY_HZ * 2 * Math.PI;
-//                int pulseValue = (int) (127 + 127 * Math.sin(phase));  // 0-254
-//                currentColor = Color.rgb(pulseValue, pulseValue, pulseValue);
-//                break;
-            case NOTHING:
+            case FIRING:
+                double phase = (System.currentTimeMillis() / 1000.0) * PULSE_FREQUENCY_HZ * 2 * Math.PI;
+                int pulseValue = (int) (127 + 127 * Math.sin(phase));
+                currentColor = Color.rgb(pulseValue, pulseValue, pulseValue);
+                break;
+            case READY_TO_FIRE:
+                currentColor = Color.WHITE;
+                break;
+            case AIMING:
+                currentColor = CYAN;
+                break;
+            case FULL:
+                currentColor = Color.GREEN;
+                break;
+            case HAS_BALLS:
                 currentColor = AMBER;
                 break;
-            case VISION_LOCK:
-                currentColor = Color.WHITE;
+            case ALLIANCE:
+            default:
+                currentColor = Robot.isRedAlliance ? Color.RED : Color.BLUE;
                 break;
         }
     }

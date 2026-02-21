@@ -245,8 +245,8 @@ public class Launcher implements Subsystem {
                 state = LaunchState.IDLE;
                 fireRequested = false;
             } else if (newBehavior == Behavior.SPINNING) {
-                // Start spinning up
-                if (state == LaunchState.IDLE) {
+                // Start spinning up from IDLE or IDLE_SPIN
+                if (state == LaunchState.IDLE || state == LaunchState.IDLE_SPIN) {
                     state = LaunchState.SPINNING_UP;
                     shotNumber = 0;  // Reset shot counter for new sequence
                 }
@@ -630,10 +630,8 @@ public class Launcher implements Subsystem {
         setPaddlePosition(getTriggerIdlePosition());
 
         if (STAY_SPINNING_AFTER_FIRE) {
-            // Keep flywheel spinning, go back to READY
-            flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-            flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-            state = LaunchState.READY;
+            // Keep flywheel at idle spin speed for faster follow-up
+            state = LaunchState.IDLE_SPIN;
         } else {
             // Spin down and return to IDLE
             behavior = Behavior.IDLE;

@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Launcher;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Loader;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Turret;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.TelemetryProvider;
 
 import java.util.LinkedHashMap;
@@ -32,8 +33,6 @@ import java.util.Map;
  */
 @Config(value = "Lebot2_DriverControls")
 public class DriverControls implements TelemetryProvider {
-
-    public static double turretPower = .01;
 
     // Configuration
     public static double DRIVE_DAMPENER = 1;
@@ -128,8 +127,7 @@ public class DriverControls implements TelemetryProvider {
             robot.launcher.setBehavior(Launcher.Behavior.IDLE);
             robot.intake.off();
             robot.loader.releaseBelt();
-            robot.turret.setIdle();
-            robot.turret.setPower(0);
+            robot.turret.setLocked();
         }
 
         if(stickyGamepad1.x){
@@ -157,10 +155,13 @@ public class DriverControls implements TelemetryProvider {
             robot.driveTrain.centerOnTarget();
         }
 
-        // Left bumper: Toggle slow mode
+        // A button: Toggle turret tracking/locked
         if (stickyGamepad1.a) {
-            robot.turret.setTracking();
-            //slowMode = !slowMode;
+            if (robot.turret.getBehavior() == Turret.Behavior.TRACKING) {
+                robot.turret.setLocked();
+            } else {
+                robot.turret.setTracking();
+            }
         }
 
         // Right bumper: Launch all balls in sequence
@@ -169,24 +170,15 @@ public class DriverControls implements TelemetryProvider {
             robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
         }
 
-        // D-pad up/down: Manual paddle control (CUP/RAMP positions)
-//        if (stickyGamepad1.dpad_up) {
-//            robot.launcher.paddleRamp();
-//            robot.launcher.setPassThroughMode(true);
-//        }
-        if(gamepad1.dpad_up){
-            robot.turret.setPower(turretPower);
+        // D-pad up: Manual star advance
+        if (stickyGamepad1.dpad_up) {
+            robot.launcher.changeStar();
         }
-        if(gamepad1.dpad_down){
-            robot.turret.setPower(-turretPower);
+
+        // D-pad down: Toggle slow mode
+        if (stickyGamepad1.dpad_down) {
+            slowMode = !slowMode;
         }
-//        if(stickyGamepad1.dpad_up){
-//            //robot.launcher.changeStar();
-//        }
-//        if (stickyGamepad1.dpad_down) {
-////            robot.launcher.paddleCup();
-////            robot.launcher.setPassThroughMode(false);
-//        }
 
         // D-pad left: Simple intake on (not LOAD_ALL)
         if (stickyGamepad1.dpad_left) {

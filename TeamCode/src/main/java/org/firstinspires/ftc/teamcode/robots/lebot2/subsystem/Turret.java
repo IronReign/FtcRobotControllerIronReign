@@ -1,19 +1,17 @@
 package org.firstinspires.ftc.teamcode.robots.lebot2.subsystem;
 
-
-import static org.firstinspires.ftc.teamcode.robots.lebot2.Lebot2_6832.robot;
-
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.ftc.LynxFirmware;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
-import org.firstinspires.ftc.teamcode.robots.lebot2.Missions;
+import org.firstinspires.ftc.teamcode.robots.lebot2.FieldMap;
+import org.firstinspires.ftc.teamcode.robots.lebot2.Robot;
 import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
-import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.DriveTrainBase;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.LinkedHashMap;
@@ -22,227 +20,229 @@ import java.util.Map;
 @Config(value = "Lebot2_Turret")
 public class Turret implements Subsystem {
 
-    public static double NEW_P = 400;
-    public static double NEW_I = 0;
-    public static double NEW_D = 0;
-    public static double NEW_F = 20;
+    // ==================== ENCODER / MECHANICAL LIMITS ====================
+    // Calibrate these on the physical robot:
+    //   Center the turret manually, read encoder -> TURRET_CENTER_TICKS
+    //   Rotate CW to stop, read encoder -> CW_LIMIT_TICKS
+    //   Rotate CCW to stop, read encoder -> CCW_LIMIT_TICKS
+    //   TICKS_PER_DEGREE = (CW_LIMIT_TICKS - CCW_LIMIT_TICKS) / 210.0
+    public static int TURRET_CENTER_TICKS = 0;
+    public static int CW_LIMIT_TICKS = 500;     // placeholder - calibrate on robot
+    public static int CCW_LIMIT_TICKS = -500;    // placeholder - calibrate on robot
+    public static double TICKS_PER_DEGREE = (CW_LIMIT_TICKS - CCW_LIMIT_TICKS) / 210.0;
 
-    public static double CENTERING_MAX_SPEED = 1;
+    // Derived degree limits (computed from ticks, but also dashboard-tunable for quick adjustment)
+    public static double CW_LIMIT_DEG = 105;
+    public static double CCW_LIMIT_DEG = -105;
 
-    //values for assuming red side
-    public static double MAX_HEADING = 180;
-    public static double MIN_HEADING = 90;
+    // ==================== PID PARAMS ====================
+    public static PIDCoefficients TURRET_PID = new PIDCoefficients(0.04, 0.001, 2.0);
+    public static double MAX_SPEED = 1.0;
+    public static double TOLERANCE = 1.0;          // degrees - PID convergence threshold
+    public static double INTEGRAL_CUTIN = 3.0;     // degrees
+    public static double EMA_ALPHA = 0.5;
+    public static double VISION_OFFSET = 0;        // camera center offset in degrees
 
-    public Vision vision = null;
-    //public DriveTrainBase driveTrain = null;
+    // ==================== HARDWARE ====================
+    public static boolean REVERSE_MOTOR = true;
+    private final DcMotorEx turretMotor;
 
-    // ==================== VISION PID PARAMS ====================
-    public static double TOLERANCE = 0;
-    public static PIDCoefficients VISION_PID = new PIDCoefficients(0.04, 0.001, 2.0);
-    public static double VISION_OFFSET = 0; // offset from center of target in LLResult x units
-    public static double VISION_TOLERANCE = 1; // degrees of tx
-    public static double VISION_INTEGRAL_CUTIN = 3.0; // degrees
-    public static double VISION_ALPHA = .5; // EMA alpha for vision PID
-
-    private final PIDController visionPID;
-
-    private double turnMaxSpeed = 1.0;
-
-
-    private final DcMotorEx turret;
-
-    public enum Behavior {
-        IDLE,        //manual
-        TARGETING    //turret alignment
-
-    }
-    private Behavior behavior = Behavior.IDLE;
-
-    public enum TurnState {
-        IDLE,
-        TURNING_TO_HEADING,
-        TARGETING        // Combined heading centering + distance control
-    }
-
-    private TurnState turnState = TurnState.IDLE;
-    private double turnTarget = 0;
-    private double cachedHeading = 0;
-
-    public static boolean reverseTurret = true;
-
+    // ==================== DEPENDENCIES ====================
+    private Vision vision;
     private TankDrivePinpoint driveTrain;
 
-    public static double idlePower = 0;
+    // ==================== PID ====================
+    private final PIDController turretPID;
 
+    // ==================== STATE ====================
+    public enum Behavior {
+        TRACKING,   // Autonomous target seeking: vision when available, pose-based bearing fallback
+        LOCKED      // PID holds turret at 0° (forward). Safety fallback.
+    }
+
+    public enum TargetingPhase {
+        VISION_TRACKING,    // Vision has target, PID on tx
+        POSE_SEEKING,       // No vision, PID on pose-computed bearing
+        AT_LIMIT,           // Desired angle clamped to mechanical limit
+        LOCKED_FORWARD      // Behavior.LOCKED - holding at 0°
+    }
+
+    private Behavior behavior = Behavior.LOCKED;
+    private TargetingPhase phase = TargetingPhase.LOCKED_FORWARD;
+
+    // Sensor reads (Phase 1: readSensors)
+    private int encoderTicks = 0;
+    private double turretAngleDeg = 0;
+
+    // Staged output (Phase 2: calc -> Phase 3: act)
+    private double stagedPower = 0;
+
+    // ==================== CONSTRUCTOR ====================
 
     public Turret(HardwareMap hardwareMap) {
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
-        turret = hardwareMap.get(DcMotorEx.class, "turret");
-        if(reverseTurret){
-            turret.setDirection(DcMotorEx.Direction.REVERSE);
+        turretMotor = hardwareMap.get(DcMotorEx.class, "turret");
+        if (REVERSE_MOTOR) {
+            turretMotor.setDirection(DcMotorEx.Direction.REVERSE);
         }
+        turretMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        turret.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-
-
-        //driveTrain = robot.driveTrain;
-
-        visionPID = new PIDController(VISION_PID);
-        visionPID.setInputRange(-20, 20);
-        visionPID.setOutputRange(-1, 1);
-        visionPID.setIntegralCutIn(VISION_INTEGRAL_CUTIN);
-        visionPID.setContinuous(false);
-        visionPID.setTolerance(VISION_TOLERANCE / 360 * 40); // degrees to percentage of input range
-        visionPID.setEmaAlpha(VISION_ALPHA);
-        visionPID.enable();
-
+        turretPID = new PIDController(TURRET_PID);
+        turretPID.setInputRange(-180, 180);
+        turretPID.setOutputRange(-MAX_SPEED, MAX_SPEED);
+        turretPID.setIntegralCutIn(INTEGRAL_CUTIN);
+        turretPID.setContinuous(false);
+        turretPID.setTolerance(TOLERANCE / 360 * 100);
+        turretPID.setEmaAlpha(EMA_ALPHA);
+        turretPID.enable();
     }
+
+    // ==================== THREE-PHASE SUBSYSTEM ====================
 
     @Override
     public void readSensors() {
-        // PHASE 1: Motor velocity is SDK bulk-cached, no I2C read needed
-        // We read currentSpeed in calc() from the bulk cache
+        encoderTicks = turretMotor.getCurrentPosition();
+        if (TICKS_PER_DEGREE != 0) {
+            turretAngleDeg = (encoderTicks - TURRET_CENTER_TICKS) / TICKS_PER_DEGREE;
+        }
     }
 
     @Override
     public void calc(Canvas fieldOverlay) {
-        switch (behavior){
-            case IDLE:
-                handleIdle();
-                break;
-            case TARGETING:
-                handleTargeting();
-                break;
+        // Update PID tuning from dashboard
+        turretPID.setPID(TURRET_PID);
+        turretPID.setOutputRange(-MAX_SPEED, MAX_SPEED);
+
+        if (behavior == Behavior.LOCKED) {
+            // Hold turret at 0° (forward)
+            phase = TargetingPhase.LOCKED_FORWARD;
+            double targetAngle = clampToLimits(0);
+            turretPID.setSetpoint(targetAngle);
+            turretPID.setInput(turretAngleDeg);
+            stagedPower = turretPID.performPID();
+
+        } else { // TRACKING
+            if (vision != null && vision.hasTarget()) {
+                // Vision mode: error is tx directly (degrees off-center in camera frame)
+                phase = TargetingPhase.VISION_TRACKING;
+                turretPID.setSetpoint(VISION_OFFSET);
+                turretPID.setInput(vision.getTx());
+                stagedPower = turretPID.performPID();
+
+            } else if (driveTrain != null) {
+                // Pose-based bearing fallback
+                Pose2d currentPose = driveTrain.getPose();
+                Pose2d goalPose = FieldMap.getPose(FieldMap.GOAL, Robot.isRedAlliance);
+                double bearingRad = FieldMap.bearingTo(currentPose, goalPose);
+                double chassisRad = currentPose.heading.toDouble();
+                double desiredTurretDeg = normalizeDeg(Math.toDegrees(bearingRad - chassisRad));
+
+                // Clamp target to mechanical limits
+                double clampedTarget = clampToLimits(desiredTurretDeg);
+                phase = (clampedTarget != desiredTurretDeg) ? TargetingPhase.AT_LIMIT : TargetingPhase.POSE_SEEKING;
+
+                turretPID.setSetpoint(clampedTarget);
+                turretPID.setInput(turretAngleDeg);
+                stagedPower = turretPID.performPID();
+
+            } else {
+                // No vision, no drivetrain - hold position
+                stagedPower = 0;
+            }
         }
-    }
-
-    public void handleTargeting(){
-        switch (turnState) {
-            case IDLE:
-                executeIdle();
-                break;
-            case TURNING_TO_HEADING:
-                executeHeadingTurn();
-                break;
-            case TARGETING:
-                executeTrackingTarget();
-                break;
-        }
-    }
-
-    public void handleIdle(){
-        turret.setPower(idlePower);
-    }
-    public void setPower(double power){
-        idlePower = power;
-    }
-
-
-    public void setVision(Vision vision) {
-        this.vision = vision;
-    }
-    public void setDriveTrain(TankDrivePinpoint driveTrain) {
-        this.driveTrain = driveTrain;
-    }
-
-
-    public void setIdle(){
-        turnState = TurnState.IDLE;
-        behavior = Behavior.IDLE;
-    }
-    public void setTracking(){
-        turnState = TurnState.TARGETING;
-        behavior = Behavior.TARGETING;
-    }
-
-    private void executeIdle(){
-        turret.setPower(0);
-    }
-
-    private void executeHeadingTurn() {
-
-        if (driveTrain.getPose().heading.toDouble() >= Math.toRadians(MAX_HEADING) || driveTrain.getPose().heading.toDouble() <= Math.toRadians(MIN_HEADING)) {
-            turret.setPower(0);
-            return;
-
-        } else {
-            turnState = TurnState.TARGETING;
-        }
-
-    }
-
-    private void executeTrackingTarget() {
-        if (vision == null || !vision.hasTarget()) {
-            // Lost target - stop motors but stay in tracking mode (will resume when target reappears)
-            turret.setPower(0);
-            return;
-        }
-//        if (driveTrain.getPose().heading.toDouble() >= Math.toRadians(MAX_HEADING) || driveTrain.getPose().heading.toDouble() <= Math.toRadians(MIN_HEADING)) {
-//            turret.setPower(0);
-//            turnState = TurnState.TURNING_TO_HEADING;
-//            return;
-//
-//        }
-        turnMaxSpeed = CENTERING_MAX_SPEED;
-        turnState = TurnState.TARGETING;
-        visionPID.enable();
-
-
-        double tx = vision.getTx();
-
-        // Negate tx so positive tx (target right) produces positive correction (turn right)
-        visionPID.setInput(tx);
-        visionPID.setSetpoint(VISION_OFFSET);
-        visionPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
-        visionPID.setPID(VISION_PID);
-
-        double correction = visionPID.performPID();
-
-        if (visionPID.lockedOnTarget() || Math.abs(vision.getTx())<TOLERANCE) {
-            turret.setPower(0);
-        }else{
-            turret.setPower(correction);
-        }
-    }
-
-    @Override
-    public void stop(){
-
-    }
-    @Override
-    public void resetStates(){
-
     }
 
     @Override
     public void act() {
-        // PHASE 3: No-op for drive motors
-        // RoadRunner Actions write motors directly during trajectory following
-        // Turn PID writes motors in calc() for immediate response
+        turretMotor.setPower(stagedPower);
     }
+
+    // ==================== PUBLIC API ====================
+
+    public void setVision(Vision vision) {
+        this.vision = vision;
+    }
+
+    public void setDriveTrain(TankDrivePinpoint driveTrain) {
+        this.driveTrain = driveTrain;
+    }
+
+    public void setTracking() {
+        behavior = Behavior.TRACKING;
+    }
+
+    public void setLocked() {
+        behavior = Behavior.LOCKED;
+    }
+
+    public Behavior getBehavior() {
+        return behavior;
+    }
+
+    public TargetingPhase getPhase() {
+        return phase;
+    }
+
+    public boolean isLockedOnTarget() {
+        return phase == TargetingPhase.VISION_TRACKING && turretPID.lockedOnTarget();
+    }
+
+    public double getTurretAngleDeg() {
+        return turretAngleDeg;
+    }
+
+    // ==================== HELPERS ====================
+
+    private double clampToLimits(double angleDeg) {
+        return Math.max(CCW_LIMIT_DEG, Math.min(CW_LIMIT_DEG, angleDeg));
+    }
+
+    private static double normalizeDeg(double deg) {
+        while (deg > 180) deg -= 360;
+        while (deg <= -180) deg += 360;
+        return deg;
+    }
+
+    // ==================== LIFECYCLE ====================
+
+    @Override
+    public void stop() {
+        turretMotor.setPower(0);
+        behavior = Behavior.LOCKED;
+        stagedPower = 0;
+    }
+
+    @Override
+    public void resetStates() {
+        behavior = Behavior.LOCKED;
+        phase = TargetingPhase.LOCKED_FORWARD;
+        stagedPower = 0;
+        turretPID.enable();
+    }
+
+    // ==================== TELEMETRY ====================
+
     @Override
     public String getTelemetryName() {
         return "Turret";
     }
+
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetry = new LinkedHashMap<>();
-        if(vision.hasTarget()){
-            telemetry.put("tx: ", vision.getTx());
-        }else{
-            telemetry.put("No vision: ", null);
+        telemetry.put("Behavior", behavior);
+        telemetry.put("Phase", phase);
+        telemetry.put("Angle (deg)", String.format("%.1f", turretAngleDeg));
+        telemetry.put("Power", String.format("%.3f", stagedPower));
+        telemetry.put("Locked On", isLockedOnTarget());
+        if (vision != null && vision.hasTarget()) {
+            telemetry.put("tx", String.format("%.1f", vision.getTx()));
         }
-        telemetry.put("turn state: ", turnState);
-        telemetry.put("behavior: ", behavior);
-        telemetry.put("turret power: ", idlePower);
-
-
+        if (debug) {
+            telemetry.put("Encoder", encoderTicks);
+        }
         return telemetry;
     }
 }
-
-
-
-

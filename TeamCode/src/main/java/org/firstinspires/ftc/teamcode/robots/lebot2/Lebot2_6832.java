@@ -149,6 +149,9 @@ public class Lebot2_6832 extends OpMode {
         // Reset robot for match start
         robot.resetStates();
 
+        // Turret auto-seeks goal from match start (both auton and teleop)
+        robot.turret.setTracking();
+
         // Limelight dashboard stream is now handled dynamically in loop()
         // based on Vision.ENABLE_DASHBOARD_STREAM config toggle
 
