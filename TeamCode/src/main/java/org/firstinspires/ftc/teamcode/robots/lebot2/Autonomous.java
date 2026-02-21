@@ -38,12 +38,17 @@ public class Autonomous implements TelemetryProvider {
 
     private final Robot robot;
 
+    public static double FIRST_ANGLE_OFFSET = 6;
+    public static double SECOND_ANGLE_OFFSET = -6;
+
     // ==================== CONFIGURATION ====================
 
     // Strategic configuration (tunable via FTC Dashboard)
     public static boolean START_AT_GOAL_WALL = true;  // true = goal wall, false = audience wall
     public static boolean DO_OPEN_SESAME = true;      // Release gate after rows 1 & 2?
     public static double MIN_TIME_FOR_ROW = 5.0;     // Minimum seconds needed for a ball row cycle
+
+    public static boolean SKIP_LAUNCH=false;
 
     // Derived strategy parameters (set by init() based on START_AT_GOAL_WALL, also Dashboard-tunable)
     public static int FIRE_POSITION = 1;              // Which fire position to use (1-4)
@@ -52,6 +57,13 @@ public class Autonomous implements TelemetryProvider {
     public static int ROW_DIRECTION = 1;              // +1 = forward (0→2), -1 = reverse (2→0)
     public static int GATE_BEFORE_ROW = 2;            // Do gate release before this row index
     public static boolean SKIP_INITIAL_BACKUP = false; // Skip backup if already at fire position
+
+    // Selective abort - configurable via gamepad during init_loop (D-pad Right)
+    // -1 = all rows, 0 = no rows, 1 = one row, 2 = two rows
+    public static int ABORT_AFTER_ROWS = -1;
+    // Alternate positions for abort (Dashboard-tunable for field adjustment)
+    public static String ALT_POSITION_GOAL = FieldMap.FIRE_2;  // Inside big triangle
+    public static String ALT_POSITION_AUDIENCE = FieldMap.BASE;  // Opposing alliance's base
 
     // Autonomous time limit
     public static final double AUTON_DURATION_SECONDS = 30.0;
@@ -81,6 +93,10 @@ public class Autonomous implements TelemetryProvider {
         START_GATE,
         WAITING_GATE,
 
+        // Selective abort - navigate to alternate position
+        START_ALTERNATE,
+        WAITING_ALTERNATE,
+
         // End
         COMPLETE
     }
@@ -92,6 +108,7 @@ public class Autonomous implements TelemetryProvider {
 
     private ElapsedTime autonTimer = new ElapsedTime();
     private int currentRow = 0;      // 0, 1, 2 for rows 1, 2, 3
+    private int rowsCompleted = 0;   // Count of completed rows (for selective abort)
     private int launchCycles = 0;
     private boolean gateReleased = false;
 
@@ -118,19 +135,21 @@ public class Autonomous implements TelemetryProvider {
         robot.missions.clearState();
 
         // Set strategy parameters based on starting position
-        if (robot.getStartingPosition()!=Robot.StartingPosition.AUDIENCE) {
+        if (robot.getStartingPosition() != Robot.StartingPosition.AUDIENCE) {
+            SKIP_LAUNCH=false;
             FIRE_POSITION = 1;
-            Launcher.STAR_FEEDING=.85;
-            //Launcher.MIN_LAUNCH_SPEED=725;
+            Launcher.STAR_FEEDING = 1;
+            Launcher.MIN_LAUNCH_SPEED = FieldMap.FIRE_1_DEFAULT_DPS;
             ROW_START = 0;
             ROW_END = 2;
             ROW_DIRECTION = 1;
             GATE_BEFORE_ROW = 2;
             SKIP_INITIAL_BACKUP = false;
         } else {
+            SKIP_LAUNCH=false;
             FIRE_POSITION = 4;
-            Launcher.STAR_FEEDING=.7;
-            Launcher.MIN_LAUNCH_SPEED=1100;
+            Launcher.STAR_FEEDING = 0.7;
+            Launcher.MIN_LAUNCH_SPEED = FieldMap.FIRE_4_DEFAULT_DPS;
             ROW_START = 2;
             ROW_END = 0;
             ROW_DIRECTION = -1;
@@ -142,16 +161,14 @@ public class Autonomous implements TelemetryProvider {
         state = AutonState.INIT;
         previousState = AutonState.INIT;
         currentRow = ROW_START;
+        rowsCompleted = 0;
         launchCycles = 0;
         gateReleased = false;
+        robot.launcher.LAUNCH_SPACER_TIMER=.5;
 
         // Set robot starting pose based on configured start position
-        Pose2d startPose;
-        if (robot.getStartingPosition()!=Robot.StartingPosition.AUDIENCE) {
-            startPose = FieldMap.getPose(FieldMap.START_GOAL, Robot.isRedAlliance);
-        } else {
-            startPose = FieldMap.getPose(FieldMap.START_AUDIENCE, Robot.isRedAlliance);
-        }
+        // (FieldMap.IS_AUDIENCE_START is already set by Robot.setStartingPosition during init_loop)
+        Pose2d startPose = robot.getStartingPose(robot.getStartingPosition());
         robot.driveTrain.setPose(startPose);
 
         // Timer will be reset when execute() first runs
@@ -195,13 +212,25 @@ public class Autonomous implements TelemetryProvider {
 
             // ========== PHASE 1: Backup to Fire ==========
             case START_BACKUP_TO_FIRE:
-                if (SKIP_INITIAL_BACKUP) {
-                    // Already at fire position — just spin up launcher
-                    robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
-                    setState(AutonState.START_TARGETING);
+                if(launchCycles==0){
+                    FieldMap.FIRE_1_ANGLE_OFFSET = FIRST_ANGLE_OFFSET;       //8
+                }else{
+                    FieldMap.FIRE_1_ANGLE_OFFSET = SECOND_ANGLE_OFFSET;
+                }
+                if(!SKIP_LAUNCH) {
+                    if (SKIP_INITIAL_BACKUP) {
+                        // Already at fire position — just spin up launcher
+                        robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
+                        setState(AutonState.START_TARGETING);
+                    } else {
+                        // Back up from gate to fire position, spins up launcher during navigation
+                        robot.missions.startNavigateToFire(FIRE_POSITION, true);
+                        setState(AutonState.WAITING_BACKUP);
+                    }
                 } else {
-                    // Back up from gate to fire position, spins up launcher during navigation
-                    robot.missions.startNavigateToFire(FIRE_POSITION, true);
+                    // SKIP_LAUNCH: just get off the starting line for LEAVE points
+                    // Go to opposing alliance's base (same destination as audience abort)
+                    robot.missions.startNavigateTo(ALT_POSITION_AUDIENCE, !Robot.isRedAlliance);
                     setState(AutonState.WAITING_BACKUP);
                 }
                 break;
@@ -209,7 +238,11 @@ public class Autonomous implements TelemetryProvider {
             case WAITING_BACKUP:
                 if (robot.missions.isComplete()) {
                     log("BACKUP_COMPLETE", null);
-                    setState(AutonState.START_TARGETING);
+                    if(!SKIP_LAUNCH){
+                        setState(AutonState.START_TARGETING);
+                    }else {
+                        setState(AutonState.COMPLETE);
+                    }
                 } else if (robot.missions.isFailed()) {
                     // Timeout - try to launch anyway from current position
                     log("BACKUP_FAILED", "timeout");
@@ -219,17 +252,17 @@ public class Autonomous implements TelemetryProvider {
 
             // ========== PHASE 2-3: Target and Launch ==========
             case START_TARGETING:
-                //robot.setBehavior(Robot.Behavior.TARGETING);
+                robot.setBehavior(Robot.Behavior.TARGETING);
                 setState(AutonState.WAITING_TARGET);
                 break;
 
             case WAITING_TARGET:
-                //if (robot.getBehavior() == Robot.Behavior.MANUAL) {
+                if (robot.getBehavior() == Robot.Behavior.MANUAL) {
                     // Targeting complete, apply vision correction
                     log("TARGETING_COMPLETE", null);
                     robot.applyVisionPoseCorrection();
                     setState(AutonState.START_LAUNCH);
-                //}
+                }
                 break;
 
             case START_LAUNCH:
@@ -252,7 +285,11 @@ public class Autonomous implements TelemetryProvider {
                     robot.applyVisionPoseCorrection();
                     // Power down flywheel during ball collection to conserve power
                     robot.launcher.setBehavior(Launcher.Behavior.IDLE);
-                    setState(AutonState.START_BALL_ROW);
+                    if(robot.getStartingPosition() == Robot.StartingPosition.AUDIENCE){
+                        setState(AutonState.START_RETURN_TO_FIRE);
+                    } else {
+                        setState(AutonState.START_BALL_ROW);
+                    }
                 } else if (robot.missions.isFailed()) {
                     log("LAUNCH_FAILED", "timeout");
                     launchCycles++;
@@ -264,6 +301,20 @@ public class Autonomous implements TelemetryProvider {
 
             // ========== BALL ROW COLLECTION CYCLE ==========
             case START_BALL_ROW:
+                // Selective abort - give way to partner team
+                if (ABORT_AFTER_ROWS >= 0 && rowsCompleted >= ABORT_AFTER_ROWS) {
+                    log("SELECTIVE_ABORT", "rows_done=" + rowsCompleted);
+                    if (FieldMap.IS_AUDIENCE_START) {
+                        // Go to OPPOSING alliance's base (pass !isRedAlliance to get opposite side)
+                        robot.missions.startNavigateTo(ALT_POSITION_AUDIENCE, !Robot.isRedAlliance);
+                    } else {
+                        // Go to FIRE_2 (same alliance)
+                        robot.missions.startNavigateTo(ALT_POSITION_GOAL, Robot.isRedAlliance);
+                    }
+                    setState(AutonState.START_ALTERNATE);
+                    break;
+                }
+
                 // Check if past last row (works for both directions)
                 if (ROW_DIRECTION > 0 ? currentRow > ROW_END : currentRow < ROW_END) {
                     log("ALL_ROWS_DONE", null);
@@ -272,11 +323,11 @@ public class Autonomous implements TelemetryProvider {
                 }
 
                 // Gate release before designated row
-                if (currentRow == GATE_BEFORE_ROW && DO_OPEN_SESAME && !gateReleased) {
-                    log("GATE_BEFORE_ROW", "row=" + currentRow);
-                    setState(AutonState.START_GATE);
-                    break;
-                }
+//                if (currentRow == GATE_BEFORE_ROW && DO_OPEN_SESAME && !gateReleased) {
+//                    log("GATE_BEFORE_ROW", "row=" + currentRow);
+//                    setState(AutonState.START_GATE);
+//                    break;
+//                }
 
                 // Check if enough time for another row cycle
                 if (timeRemaining < MIN_TIME_FOR_ROW) {
@@ -294,10 +345,12 @@ public class Autonomous implements TelemetryProvider {
             case WAITING_BALL_ROW:
                 if (robot.missions.isComplete()) {
                     log("BALL_ROW_COMPLETE", "row=" + currentRow);
+                    rowsCompleted++;
                     currentRow += ROW_DIRECTION;
                     setState(AutonState.START_RETURN_TO_FIRE);
                 } else if (robot.missions.isFailed()) {
                     log("BALL_ROW_FAILED", "row=" + currentRow);
+                    rowsCompleted++;
                     currentRow += ROW_DIRECTION;
                     setState(AutonState.START_RETURN_TO_FIRE);
                 }
@@ -305,9 +358,13 @@ public class Autonomous implements TelemetryProvider {
 
             case START_RETURN_TO_FIRE:
                 // Navigate back to fire position (auto-direction)
-                if(currentRow == 2){
+                if(FieldMap.IS_AUDIENCE_START){
+                    FIRE_POSITION=3;
+                }
+                if(!FieldMap.IS_AUDIENCE_START && currentRow == 2){
                     FIRE_POSITION=2;
                 }
+                FieldMap.FIRE_1_ANGLE_OFFSET = SECOND_ANGLE_OFFSET;
                 robot.missions.startNavigateToFire(FIRE_POSITION);
                 setState(AutonState.WAITING_RETURN);
                 break;
@@ -315,7 +372,11 @@ public class Autonomous implements TelemetryProvider {
             case WAITING_RETURN:
                 if (robot.missions.isComplete()) {
                     log("RETURN_COMPLETE", null);
-                    setState(AutonState.START_TARGETING);
+                    if(FieldMap.IS_AUDIENCE_START){
+                        setState(AutonState.COMPLETE);
+                    } else {
+                        setState(AutonState.START_TARGETING);
+                    }
                 } else if (robot.missions.isFailed()) {
                     log("RETURN_FAILED", "timeout");
                     setState(AutonState.START_TARGETING);
@@ -338,6 +399,19 @@ public class Autonomous implements TelemetryProvider {
                     gateReleased = true;
                     setState(AutonState.START_BALL_ROW);
 
+                }
+                break;
+
+            // ========== SELECTIVE ABORT ==========
+            case START_ALTERNATE:
+                // Navigation already started in abort check
+                setState(AutonState.WAITING_ALTERNATE);
+                break;
+
+            case WAITING_ALTERNATE:
+                if (robot.missions.isComplete() || robot.missions.isFailed()) {
+                    log("ALTERNATE_REACHED", null);
+                    setState(AutonState.COMPLETE);
                 }
                 break;
 
@@ -438,6 +512,7 @@ public class Autonomous implements TelemetryProvider {
         telemetry.put("Time Remaining", String.format("%.1fs", getTimeRemaining()));
         telemetry.put("Current Row", currentRow + 1);  // Display as 1-indexed
         telemetry.put("Launch Cycles", launchCycles);
+        telemetry.put("Abort After", ABORT_AFTER_ROWS < 0 ? "ALL" : ABORT_AFTER_ROWS + " rows");
 
         if (debug) {
             telemetry.put("Previous State", previousState);

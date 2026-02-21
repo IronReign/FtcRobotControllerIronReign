@@ -66,15 +66,24 @@ public class Launcher implements Subsystem {
     // Trigger type selection (Dashboard-tunable)
     public enum TriggerType {
         STAR,   // Continuous rotation star — just spins to feed balls
+        STAR_POSE,
         RAMP,   // TPU ramp with CUP/RAMP/LIFT positions
         PADDLE  // Original paddle with DOWN/UP positions
     }
-    public static TriggerType TRIGGER_TYPE = TriggerType.STAR;
+    public static TriggerType TRIGGER_TYPE = TriggerType.STAR_POSE;
 
     // Star trigger positions (continuous rotation servo)
     // 0.5 = stopped/idle, 1.0 = spinning to feed balls into flywheel
     public static double STAR_IDLE = 0.5;
     public static double STAR_FEEDING = 1.0;
+
+    // Star discrete position pulse widths (microseconds, converted via servoNormalize)
+    public static int STAR_REST = 1900;       // Position 0: intake/idle - all 3 sockets open
+    public static int STAR_LAUNCH_1 = 1500;   // Position 1: fires ball 1
+    public static int STAR_LAUNCH_2 = 1200;   // Position 2: fires ball 2
+    public static int STAR_LAUNCH_3 = 800;    // Position 3: fires ball 3
+    // Current star position: 0=REST/intake, 1-3=successive firing positions
+    public static int STAR_FIRED = 0;
 
     // Ramp trigger positions (servo units 0-1)
     public static double PADDLE_CUP = 0.4;
@@ -87,16 +96,18 @@ public class Launcher implements Subsystem {
     public static double PADDLE_PASS = 0.53;
 
     // Flywheel configuration
-    public static double MIN_LAUNCH_SPEED = 725;   //720 <--old     // degrees/sec - hardcoded working speed from known position
-    public static double SPEED_TOLERANCE = 30;      // degrees/sec margin for "at speed" check
+    public static double SPEED_MULTIPLIER = 1.02;    // Tunable fudge factor until speed formula is recalibrated
+    public static double MIN_LAUNCH_SPEED = 1040;   //720 <--old     // degrees/sec - hardcoded working speed from known position
+    public static double SPEED_TOLERANCE = 15;      // degrees/sec margin for "at speed" check
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
+    public static double FLYWHEEL_IDLE_SPEED = 800;
 
     // Launch timing for TPU ramp design
-    public static double FIRING_TIME = 3.2;         // seconds to allow all 3 balls through at conveyor speed
+    public static double FIRING_TIME = 2.1;         // seconds to allow all 3 balls through at conveyor speed
     public static double LIFT_TIME = 0.3;           // seconds to hold LIFT position for last ball
 
     // Post-fire behavior
-    public static boolean STAY_SPINNING_AFTER_FIRE = false;  // Keep flywheel spinning for faster follow-up
+    public static boolean STAY_SPINNING_AFTER_FIRE = true;  // Keep flywheel spinning for faster follow-up
 
     // Speed calculation constants (from physics model)
     public static double LIMELIGHT_OFFSET = 0.23;   // meters from launch point
@@ -134,6 +145,7 @@ public class Launcher implements Subsystem {
 
     // Simplified states for TPU ramp design
     public enum LaunchState {
+        IDLE_SPIN,
         IDLE,           // Flywheel off, paddle in CUP
         SPINNING_UP,    // Flywheel ramping to speed, paddle in CUP
         READY,          // Flywheel at speed, waiting for fire command, paddle in CUP
@@ -150,6 +162,9 @@ public class Launcher implements Subsystem {
     private double helperSpeed = 0;             //helper flywheel velocity
 
     private long stateTimer = 0;
+    private long launchSpacerTimer = 0;
+    public static double LAUNCH_SPACER_TIMER = .5;
+    public static double LAUNCH_SPACER_TIMER_LAST = 1.0;  // longer for last ball - no balls behind it pushing
     private boolean fireRequested = false;
     private boolean passThroughMode = false;
 
@@ -172,7 +187,7 @@ public class Launcher implements Subsystem {
 
     public Launcher(HardwareMap hardwareMap) {
         flywheel = hardwareMap.get(DcMotorEx.class, "shooter");
-        flywheel.setDirection(DcMotorEx.Direction.REVERSE);
+//        flywheel.setDirection(DcMotorEx.Direction.REVERSE);
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         pidfOrig = flywheel.getPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER);
@@ -230,8 +245,8 @@ public class Launcher implements Subsystem {
                 state = LaunchState.IDLE;
                 fireRequested = false;
             } else if (newBehavior == Behavior.SPINNING) {
-                // Start spinning up
-                if (state == LaunchState.IDLE) {
+                // Start spinning up from IDLE or IDLE_SPIN
+                if (state == LaunchState.IDLE || state == LaunchState.IDLE_SPIN) {
                     state = LaunchState.SPINNING_UP;
                     shotNumber = 0;  // Reset shot counter for new sequence
                 }
@@ -389,6 +404,9 @@ public class Launcher implements Subsystem {
 //        }
         // Run simplified state machine for TPU ramp design
         switch(state) {
+            case IDLE_SPIN:
+                handleIdleSpinState();
+                break;
             case IDLE:
                 handleIdleState();
                 break;
@@ -426,11 +444,20 @@ public class Launcher implements Subsystem {
      */
     private double getTriggerIdlePosition() {
         switch (TRIGGER_TYPE) {
-            case STAR:   return STAR_IDLE;
-            case PADDLE: return PADDLE_DOWN;
+            case STAR:      return STAR_IDLE;
+            case STAR_POSE: return servoNormalize(STAR_REST);
+            case PADDLE:    return PADDLE_DOWN;
             case RAMP:
-            default:     return PADDLE_CUP;
+            default:        return PADDLE_CUP;
         }
+    }
+
+    public void changeStar(){
+        if(STAR_FIRED>=3){
+            STAR_FIRED=0;
+            return;
+        }
+        STAR_FIRED++;
     }
 
     /**
@@ -439,6 +466,14 @@ public class Launcher implements Subsystem {
     private double getTriggerFiringPosition() {
         switch (TRIGGER_TYPE) {
             case STAR:   return STAR_FEEDING;
+            case STAR_POSE:
+                switch (STAR_FIRED) {
+                    case 0:  return servoNormalize(STAR_REST);
+                    case 1:  return servoNormalize(STAR_LAUNCH_1);
+                    case 2:  return servoNormalize(STAR_LAUNCH_2);
+                    case 3:  return servoNormalize(STAR_LAUNCH_3);
+                    default: return servoNormalize(STAR_REST);
+                }
             case PADDLE: return PADDLE_UP;
             case RAMP:
             default:     return PADDLE_RAMP;
@@ -473,14 +508,30 @@ public class Launcher implements Subsystem {
         releaseResources();
         flywheel.setVelocity(0);
         flywheelHelp.setVelocity(0);
-        setPaddlePosition(passThroughMode ? getTriggerFiringPosition() : getTriggerIdlePosition());
+        //setPaddlePosition(passThroughMode ? getTriggerFiringPosition() : getTriggerIdlePosition());
+        setPaddlePosition(getTriggerIdlePosition());
     }
 
+    private void handleIdleSpinState() {
+        releaseResources();
+        flywheel.setVelocity(FLYWHEEL_IDLE_SPEED);
+        flywheelHelp.setVelocity(FLYWHEEL_IDLE_SPEED);
+        //setPaddlePosition(passThroughMode ? getTriggerFiringPosition() : getTriggerIdlePosition());
+        setPaddlePosition(getTriggerIdlePosition());
+    }
+
+
     /**
-     * SPINNING_UP: Flywheel ramping to target speed, paddle stays in CUP.
+     * Update target speed from vision distance calculation.
+     * Falls back to MIN_LAUNCH_SPEED if vision doesn't have a valid pose
+     * (e.g., sun washing out the camera).
      */
     public void updateTargetSpeed(){
-        targetSpeed = vision.getFlywheelSpeed();
+        if (vision != null && vision.hasBotPose()) {
+            targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER;
+        } else {
+            targetSpeed = MIN_LAUNCH_SPEED * SPEED_MULTIPLIER;
+        }
     }
     private void handleSpinningUpState() {
 
@@ -510,6 +561,10 @@ public class Launcher implements Subsystem {
             claimResources();
             state = LaunchState.FIRING;
             stateTimer = futureTime(FIRING_TIME);
+            if (TRIGGER_TYPE == TriggerType.STAR_POSE) {
+                STAR_FIRED = 0;  // Reset to REST before firing sequence
+            }
+            launchSpacerTimer = futureTime(LAUNCH_SPACER_TIMER);
         }
     }
 
@@ -520,13 +575,31 @@ public class Launcher implements Subsystem {
     private void handleFiringState() {
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
+
+        // STAR_POSE: step through discrete positions when spacer timer elapsed AND flywheel at speed
+        // Both conditions required: timer gives conveyor time to load, speed check ensures
+        // flywheel has recovered (compensates for low battery or lost belt on a motor)
+        if (TRIGGER_TYPE == TriggerType.STAR_POSE) {
+            if (isPast(launchSpacerTimer) && isFlywheelAtSpeed()) {
+                STAR_FIRED++;
+                if (STAR_FIRED > 3) {
+                    state = LaunchState.COMPLETE;
+                    return;
+                }
+                // Use longer timer for last ball: loading (pos 2) and firing dwell (pos 3)
+                // Nothing pushing it from behind on conveyor, needs more time to seat and fire
+                double spacer = (STAR_FIRED >= 2) ? LAUNCH_SPACER_TIMER_LAST : LAUNCH_SPACER_TIMER;
+                launchSpacerTimer = futureTime(spacer);
+            }
+            setPaddlePosition(getTriggerFiringPosition());
+            return;
+        }
+
+        // Other trigger types: timeout-based firing
         setPaddlePosition(getTriggerFiringPosition());
 
-        boolean timeoutExpired = isPast(stateTimer);
-
-        if (timeoutExpired) {
+        if (isPast(stateTimer)) {
             if (TRIGGER_TYPE == TriggerType.STAR || TRIGGER_TYPE == TriggerType.PADDLE) {
-                // Star and paddle don't need a separate lift phase — go straight to complete
                 state = LaunchState.COMPLETE;
             } else {
                 // Ramp needs LIFTING phase to push last ball into flywheel
@@ -557,10 +630,8 @@ public class Launcher implements Subsystem {
         setPaddlePosition(getTriggerIdlePosition());
 
         if (STAY_SPINNING_AFTER_FIRE) {
-            // Keep flywheel spinning, go back to READY
-            flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-            flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-            state = LaunchState.READY;
+            // Keep flywheel at idle spin speed for faster follow-up
+            state = LaunchState.IDLE_SPIN;
         } else {
             // Spin down and return to IDLE
             behavior = Behavior.IDLE;
@@ -624,6 +695,7 @@ public class Launcher implements Subsystem {
      * Equivalent to setBehavior(Behavior.IDLE).
      */
     public void abort() {
+        STAR_FIRED = 0;  // Return star to REST/intake position
         setBehavior(Behavior.IDLE);
     }
 
@@ -735,6 +807,7 @@ public class Launcher implements Subsystem {
         releaseResources();
         state = LaunchState.IDLE;
         fireRequested = false;
+        STAR_FIRED = 0;  // Return star to REST/intake position
         flywheel.setVelocity(0);
         flywheelHelp.setVelocity(0);
         paddle.setPosition(getTriggerIdlePosition());
@@ -748,6 +821,7 @@ public class Launcher implements Subsystem {
         state = LaunchState.IDLE;
         fireRequested = false;
         passThroughMode = false;
+        STAR_FIRED = 0;  // Return star to REST/intake position
     }
 
     @Override
@@ -760,9 +834,10 @@ public class Launcher implements Subsystem {
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
         telemetry.put("Trigger", TRIGGER_TYPE);
+        telemetry.put("Star Fired", STAR_FIRED);
         telemetry.put("Behavior", behavior);
         telemetry.put("Flywheel Speed", String.format("%.0f / %.0f", currentSpeed, targetSpeed));
-        telemetry.put("flywheelCurrent", currentSpeed);
+        telemetry.put("flywheelSpeed", currentSpeed);
         telemetry.put("flywheelTarget", targetSpeed);
         telemetry.put("Ready", isReady() ? "YES" : "no");
 
@@ -792,5 +867,9 @@ public class Launcher implements Subsystem {
         }
 
         return telemetry;
+    }
+    public static double servoNormalize(int pulse) {
+        double normalized = (double) pulse;
+        return (normalized - 750.0) / 1500.0; //convert mr servo controller pulse width to double on _0 - 1 scale
     }
 }

@@ -84,6 +84,7 @@ public class Missions implements TelemetryProvider {
         TUNING_SQUARE_POS,      // Drive 24", turn 90° CW, repeat 4x using PositionDriveAction
         TUNING_DRIFT,           // In-place turns to measure Pinpoint position drift
         TUNING_VISION,          // Continuous vision centering (never self-terminates)
+        TUNING_VISION_TRACK,    // Vision tracking with distance control (never self-terminates)
         CHECK_HEALTH            // Pre-match health check
     }
 
@@ -164,6 +165,8 @@ public class Missions implements TelemetryProvider {
     private NavigateToFireState navToFireState = NavigateToFireState.IDLE;
     private boolean navReversed = false;  // Whether to drive in reverse
     private int targetFirePosition = 1;   // Which fire position (1-4)
+    private String targetWaypointName = null;  // For generic waypoint navigation
+    private boolean targetWaypointAlliance = true;  // Alliance flag for waypoint lookup
 
     // RoadRunner action tracking
     private Action currentAction = null;
@@ -416,6 +419,7 @@ public class Missions implements TelemetryProvider {
             case TUNING_SQUARE_POS: return tuningSquarePosState.name();
             case TUNING_DRIFT: return tuningDriftState.name();
             case TUNING_VISION: return "CENTERING";
+            case TUNING_VISION_TRACK: return "TRACKING";
             case CHECK_HEALTH: return healthCheckState.name();
             default: return "NONE";
         }
@@ -481,8 +485,37 @@ public class Missions implements TelemetryProvider {
             return;
         }
         targetFirePosition = Math.max(1, Math.min(4, firePosition));
+        targetWaypointName = null;  // Clear waypoint override
         navReversed = reversed;
         currentMission = Mission.NAVIGATE_TO_FIRE;
+        missionState = MissionState.RUNNING;
+        navToFireState = NavigateToFireState.IDLE;
+        missionTimer.reset();
+    }
+
+    /**
+     * Navigate to any named waypoint with explicit alliance control.
+     * Used for selective abort positions where we may need to go to the
+     * opposing alliance's waypoint (e.g., their BASE).
+     *
+     * @param waypointName The FieldMap waypoint name (e.g., FieldMap.BASE)
+     * @param useRedAlliance true for red side waypoint, false for blue side
+     *                       (pass !Robot.isRedAlliance to get opposing alliance's waypoint)
+     */
+    public void startNavigateTo(String waypointName, boolean useRedAlliance) {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        targetWaypointName = waypointName;
+        targetWaypointAlliance = useRedAlliance;
+        navReversed = false;  // Default to forward driving
+
+        // Calculate optimal direction based on current heading
+        Pose2d currentPose = robot.driveTrain.getPose();
+        Pose2d targetPose = FieldMap.getPose(waypointName, useRedAlliance);
+        navReversed = shouldDriveReversed(currentPose, targetPose);
+
+        currentMission = Mission.NAVIGATE_TO_FIRE;  // Reuse existing nav mission
         missionState = MissionState.RUNNING;
         navToFireState = NavigateToFireState.IDLE;
         missionTimer.reset();
@@ -716,6 +749,32 @@ public class Missions implements TelemetryProvider {
     }
 
     /**
+     * Start the vision tracking tuning mission with distance control.
+     * Tracks the closest visible AprilTag, maintaining both heading (centered on target)
+     * and distance (configurable, default 30"). Uses DECODE pipeline to see any AprilTag.
+     *
+     * Tune these on Dashboard while running:
+     * - TankDrivePinpoint: VISION_PID (heading), DISTANCE_PID (distance)
+     * - TankDrivePinpoint: TARGET_DISTANCE_INCHES (setpoint)
+     * - Vision: TARGET_DISTANCE_K (distance calibration)
+     *
+     * Never self-terminates — use Back button to stop.
+     */
+    public void startTuningVisionTrack() {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        currentMission = Mission.TUNING_VISION_TRACK;
+        missionState = MissionState.RUNNING;
+        missionTimer.reset();
+        robot.vision.setPipeline(Vision.Pipeline.DECODE);
+        ((TankDrivePinpoint) robot.driveTrain).trackTarget();
+        log("TUNING_VISION_TRACK_START",
+                String.format("targetDist=%.0f\"", TankDrivePinpoint.TARGET_DISTANCE_INCHES),
+                robot.driveTrain.getPose());
+    }
+
+    /**
      * Start the pre-match health check mission.
      * Sequences through battery, pinpoint, turns, flywheel, launch, intake, and vision checks.
      * @param gamepad Gamepad for driver confirmation input during star direction check
@@ -944,6 +1003,10 @@ public class Missions implements TelemetryProvider {
                 updateTuningVisionMission();
                 break;
 
+            case TUNING_VISION_TRACK:
+                updateTuningVisionTrackMission();
+                break;
+
             case CHECK_HEALTH:
                 updateCheckHealthMission();
                 break;
@@ -973,13 +1036,20 @@ public class Missions implements TelemetryProvider {
         switch (navToFireState) {
             case IDLE:
                 TankDriveActions.MAX_DRIVE_POWER = .85;
-                // Start spinning up launcher during navigation
-                robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
 
-                // Get target fire position from FieldMap
-                Pose2d firePose = getFirePose(targetFirePosition);
-
-                log("NAV_START", "reversed=" + navReversed + ",fire=" + targetFirePosition, firePose);
+                // Get target pose - either from waypoint name or fire position
+                Pose2d firePose;
+                if (targetWaypointName != null) {
+                    // Generic waypoint navigation (e.g., for selective abort)
+                    firePose = FieldMap.getPose(targetWaypointName, targetWaypointAlliance);
+                    log("NAV_START", "waypoint=" + targetWaypointName + ",reversed=" + navReversed, firePose);
+                    // Don't spin up launcher for non-fire positions
+                } else {
+                    // Fire position navigation - spin up launcher
+                    firePose = getFirePose(targetFirePosition);
+                    robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
+                    log("NAV_START", "reversed=" + navReversed + ",fire=" + targetFirePosition, firePose);
+                }
 
                 // Build Turn-Spline-Turn trajectory using TankDriveActions
                 // This ensures accurate heading at start and end of navigation
@@ -1739,6 +1809,15 @@ public class Missions implements TelemetryProvider {
         // Never self-terminates — use Back button to stop
     }
 
+    private void updateTuningVisionTrackMission() {
+        // Tracking is continuous - just make sure it's still running
+        TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
+        if (!driveTrain.isTracking()) {
+            driveTrain.trackTarget();
+        }
+        // Never self-terminates — use Back button to stop
+    }
+
     private void updateTuningDriftMission() {
         TankDrivePinpoint driveTrain = (TankDrivePinpoint) robot.driveTrain;
 
@@ -2228,6 +2307,14 @@ public class Missions implements TelemetryProvider {
             }
             if (currentMission == Mission.TUNING_VISION) {
                 telemetry.put("Vision tx", String.format("%.1f°", robot.vision.getTx()));
+                telemetry.put("Elapsed", String.format("%.1fs", missionTimer.seconds()));
+            }
+            if (currentMission == Mission.TUNING_VISION_TRACK) {
+                telemetry.put("Vision tx", String.format("%.1f°", robot.vision.getTx()));
+                telemetry.put("Target ta", String.format("%.2f%%", robot.vision.getTa()));
+                telemetry.put("Est Distance", String.format("%.1f\"", robot.vision.getTargetDistanceInches()));
+                telemetry.put("Target Dist", String.format("%.1f\"", TankDrivePinpoint.TARGET_DISTANCE_INCHES));
+                telemetry.put("Has Target", robot.vision.hasTarget() ? "YES" : "no");
                 telemetry.put("Elapsed", String.format("%.1fs", missionTimer.seconds()));
             }
             if (currentMission == Mission.CHECK_HEALTH) {

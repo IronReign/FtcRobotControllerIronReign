@@ -50,15 +50,18 @@ public class Vision implements Subsystem {
         UPMIN,      //default for long distance shooting (1240)
         UPMAX       //default for short distance shooting (1200)
     }
-    private int tiltTicks=1200;
+    public static int tiltTicks=1460;
 
     private Angle angle = Angle.UPMAX;
-
+    public static int PIPELINE = 0;
     // Pipeline configuration
     public enum Pipeline {
-        BLUE(0),      // Only recognizes blue goal (Tag 20)
-        RED(1),       // Only recognizes red goal (Tag 24)
-        GOALS(2),     // Either goal recognized
+        LOW(0),
+        MEDIUM(1),
+        HIGH(2),
+//        BLUE(0),      // Only recognizes blue goal (Tag 20)
+//        RED(1),       // Only recognizes red goal (Tag 24)
+//        GOALS(2),     // Either goal recognized
         OBELISK(3),   // Detects Tags 21-23 on the randomization obelisk
         DECODE(4);    // All DECODE season AprilTags - for vision lock tuning
 
@@ -75,7 +78,7 @@ public class Vision implements Subsystem {
 
     // State
     private boolean isRedAlliance = true;
-    private Pipeline currentPipeline = Pipeline.RED;
+    private Pipeline currentPipeline = Pipeline.MEDIUM;
     private boolean hasValidTarget = false;
     private boolean hasBotPose = false;
     private double tx = 0;  // Horizontal offset (degrees) - for aiming
@@ -102,6 +105,8 @@ public class Vision implements Subsystem {
     public static boolean ENABLE_DASHBOARD_STREAM = false;  // Toggle via dashboard config
     public static int STREAM_FPS = 5;  // Target FPS for dashboard streaming (keep low to reduce lag)
     public static double STREAM_SCALE = 0.5;  // Scale factor for dashboard image (0.25-1.0)
+
+    public static double FLYWHEEL_SPEED_MULTIPLIER =1;
 
     public Vision(HardwareMap hardwareMap) {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -132,14 +137,16 @@ public class Vision implements Subsystem {
     }
 
     public double getFlywheelSpeed(){
-        double speed = 31.58941*Math.pow(distanceToGoal,4) - 193.20612*Math.pow(distanceToGoal,3) + 422.84196*Math.pow(distanceToGoal,2) - 251.80393*distanceToGoal + 701.34893;
-        return speed;
+        double speed = -15.83315*Math.pow(distanceToGoal,4) + 168.95435*Math.pow(distanceToGoal,3) - 622.59954*Math.pow(distanceToGoal,2) + 1041.48259*Math.pow(distanceToGoal,1) + 231.79346;
+        //double speed = 31.58941*Math.pow(distanceToGoal,4) - 193.20612*Math.pow(distanceToGoal,3) + 422.84196*Math.pow(distanceToGoal,2) - 251.80393*distanceToGoal + 701.34893;
+        return speed*FLYWHEEL_SPEED_MULTIPLIER;
     }
 
 
     @Override
     public void calc(Canvas fieldOverlay) {
         // PHASE 2: Get latest Limelight result and extract data
+        tilt.setPosition(servoNormalize(tiltTicks));
         LLResult result = limelight.getLatestResult();
 
         if (result != null && result.isValid()) {
@@ -266,6 +273,27 @@ public class Vision implements Subsystem {
      */
     public double getTa() {
         return ta;
+    }
+
+    // ==================== TARGET DISTANCE ESTIMATION ====================
+    // For tracking a handheld AprilTag (not field-fixed goal)
+    // Distance estimated from target area using inverse square law: distance = k / sqrt(ta)
+    public static double TARGET_DISTANCE_K = 30.0;  // Calibration constant (tune with known distance)
+
+    /**
+     * Get estimated distance to the current target based on apparent size.
+     * Uses the inverse square law: distance ∝ 1/sqrt(area).
+     * Calibrate TARGET_DISTANCE_K by measuring actual distance when ta is known.
+     *
+     * @return Estimated distance in inches (0 if no valid target)
+     */
+    public double getTargetDistanceInches() {
+        if (!hasValidTarget || ta <= 0) {
+            return 0;
+        }
+        // Inverse square law: as distance doubles, area quarters
+        // So distance = k / sqrt(ta)
+        return TARGET_DISTANCE_K / Math.sqrt(ta);
     }
 
     /**
@@ -420,10 +448,26 @@ public class Vision implements Subsystem {
      */
     public void setAlliance(boolean isRed) {
         isRedAlliance = isRed;
-        currentPipeline = isRed ? Pipeline.RED : Pipeline.BLUE;
+        //currentPipeline = isRed ? Pipeline.RED : Pipeline.BLUE;
+        //limelight.pipelineSwitch(currentPipeline.id);
+    }
+
+    public void setLimelightEnvironment(){
+        switch (PIPELINE){
+            case(0):
+                currentPipeline = Pipeline.LOW;
+                break;
+            case(1):
+                currentPipeline = Pipeline.MEDIUM;
+                break;
+            case(2) :
+                currentPipeline = Pipeline.HIGH;
+                break;
+        }
         limelight.pipelineSwitch(currentPipeline.id);
     }
 
+    public int getPIPELINE(){return currentPipeline.id;}
     /**
      * Check if configured for red alliance.
      */
@@ -446,6 +490,9 @@ public class Vision implements Subsystem {
      */
     public Pipeline getCurrentPipeline() {
         return currentPipeline;
+    }
+    public String hasVision(){
+        return (hasBotPose ? "YES" : "no");
     }
 
     public void setTiltPosition(){
@@ -504,6 +551,7 @@ public class Vision implements Subsystem {
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
         telemetry.put("Tilt State: ", angle);
+        telemetry.put("pipeline environment: ", currentPipeline.id);
 
         telemetry.put("Alliance", isRedAlliance ? "RED" : "BLUE");
         telemetry.put("Has Target", hasValidTarget ? "YES" : "no");

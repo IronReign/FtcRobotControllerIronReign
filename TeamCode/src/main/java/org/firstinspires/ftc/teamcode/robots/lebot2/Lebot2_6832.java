@@ -126,9 +126,13 @@ public class Lebot2_6832 extends OpMode {
 
         // Telemetry
         telemetry.addData("Game State", gameState.getName());
-        telemetry.addData("Alliance", Robot.isRedAlliance ? "RED" : "BLUE");
+        telemetry.addData("pipeline environment: ", robot.vision.getPIPELINE());
+        telemetry.addData("DO WE HAVE VISION??? ", robot.vision.hasVision());
+                telemetry.addData("Alliance", Robot.isRedAlliance ? "RED" : "BLUE");
+        telemetry.addData("Abort After", Autonomous.ABORT_AFTER_ROWS < 0 ? "ALL ROWS" :
+                Autonomous.ABORT_AFTER_ROWS + " row(s)");
         telemetry.addLine();
-        telemetry.addData("Controls", "X=Blue, B=Red, RT=Cycle Mode");
+        telemetry.addData("Controls", "X=Blue, B=Red, RT=Cycle Mode, D-Right=Abort");
 
         handleTelemetry(robot.getTelemetry(false), robot.getTelemetryName(), packet);
 
@@ -145,6 +149,9 @@ public class Lebot2_6832 extends OpMode {
         // Reset robot for match start
         robot.resetStates();
 
+        // Turret auto-seeks goal from match start (both auton and teleop)
+        robot.turret.setTracking();
+
         // Limelight dashboard stream is now handled dynamically in loop()
         // based on Vision.ENABLE_DASHBOARD_STREAM config toggle
 
@@ -152,6 +159,8 @@ public class Lebot2_6832 extends OpMode {
         if (gameState.isAutonomous()) {
             autonomous.init();
         } else {
+            robot.launcher.LAUNCH_SPACER_TIMER = .6;
+            // maybe speed multiplier for teleop .98
             // If starting in TeleOp, ensure manual control
             robot.setBehavior(Robot.Behavior.MANUAL);
         }
@@ -179,6 +188,7 @@ public class Lebot2_6832 extends OpMode {
 
             case TELE_OP:
                 TankDrivePinpoint.VISION_TOLERANCE = 2;
+                Vision.FLYWHEEL_SPEED_MULTIPLIER= 1;
                 handleTeleOp(packet);
                 break;
 
@@ -292,6 +302,7 @@ public class Lebot2_6832 extends OpMode {
             handleTelemetry(robot.launcher.getTelemetry(false), "Launcher", packet);
             handleTelemetry(robot.loader.getTelemetry(false), "Loader", packet);
             handleTelemetry(robot.vision.getTelemetry(false), "Vision", packet);
+            handleTelemetry(robot.turret.getTelemetry(false), "Turret", packet);
         }
     }
 

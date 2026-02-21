@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Launcher;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Loader;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Turret;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.TelemetryProvider;
 
 import java.util.LinkedHashMap;
@@ -34,7 +35,7 @@ import java.util.Map;
 public class DriverControls implements TelemetryProvider {
 
     // Configuration
-    public static double DRIVE_DAMPENER = 0.7;
+    public static double DRIVE_DAMPENER = 1;
     public static double SLOW_MODE_DAMPENER = 0.3;
     public static boolean slowMode = false;
 
@@ -65,9 +66,11 @@ public class DriverControls implements TelemetryProvider {
      */
     public void initLoop() {
         updateStickyGamepads();
+        handlePipeline();
         handleGameStateSwitch();
         handleAllianceSelection();
         handleStartingPositionSelection();
+        handleAbortSetting();
         joystickDrive();
     }
 
@@ -107,7 +110,8 @@ public class DriverControls implements TelemetryProvider {
     public void handleButtons() {
         // A button: Toggle intake LOAD_ALL behavior
         // Intake runs until loader is full, then auto-stops
-        if (stickyGamepad1.a) {
+        if (stickyGamepad1.left_bumper) {
+            robot.launcher.STAR_FIRED = 0;      // Set star to REST/intake position
             if (robot.intake.isActive()) {
                 robot.intake.off();
                 robot.loader.releaseBeltFromIntake();
@@ -123,10 +127,12 @@ public class DriverControls implements TelemetryProvider {
             robot.launcher.setBehavior(Launcher.Behavior.IDLE);
             robot.intake.off();
             robot.loader.releaseBelt();
+            robot.turret.setLocked();
         }
 
         if(stickyGamepad1.x){
             robot.launcher.requestManual();
+            robot.launcher.updateTargetSpeed();  // Get vision-based speed (or MIN if no vision)
             robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
         }
 
@@ -149,9 +155,13 @@ public class DriverControls implements TelemetryProvider {
             robot.driveTrain.centerOnTarget();
         }
 
-        // Left bumper: Toggle slow mode
-        if (stickyGamepad1.left_bumper) {
-            slowMode = !slowMode;
+        // A button: Toggle turret tracking/locked
+        if (stickyGamepad1.a) {
+            if (robot.turret.getBehavior() == Turret.Behavior.TRACKING) {
+                robot.turret.setLocked();
+            } else {
+                robot.turret.setTracking();
+            }
         }
 
         // Right bumper: Launch all balls in sequence
@@ -160,29 +170,19 @@ public class DriverControls implements TelemetryProvider {
             robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
         }
 
-        // D-pad up/down: Manual paddle control (CUP/RAMP positions)
-        /*if (stickyGamepad1.dpad_up) {
-            robot.launcher.paddleRamp();
-            robot.launcher.setPassThroughMode(true);
-        }
-        if (stickyGamepad1.dpad_down) {
-            robot.launcher.paddleCup();
-            robot.launcher.setPassThroughMode(false);
-        }*/
-
+        // D-pad up: Manual star advance
         if (stickyGamepad1.dpad_up) {
-            //robot.launcher.paddleRamp();
-            robot.launcher.starReverse();
-            robot.launcher.setPassThroughMode(true);
+            robot.launcher.changeStar();
         }
+
+        // D-pad down: Toggle slow mode
         if (stickyGamepad1.dpad_down) {
-            //robot.launcher.paddleCup();
-            robot.launcher.starFeed();
-            robot.launcher.setPassThroughMode(false);
+            slowMode = !slowMode;
         }
 
         // D-pad left: Simple intake on (not LOAD_ALL)
         if (stickyGamepad1.dpad_left) {
+            robot.launcher.STAR_FIRED = 0;      // Set star to REST/intake position
             robot.intake.on();
             robot.loader.requestBeltForIntake();
         }
@@ -284,7 +284,11 @@ public class DriverControls implements TelemetryProvider {
             }
             if (stickyGamepad1.dpad_down) {
                 robot.missions.initLogging();
-                robot.missions.startTuningVision();
+                if (gamepad1.guide) {
+                    robot.missions.startTuningVisionTrack();  // Home+dpad_down = vision tracking with distance
+                } else {
+                    robot.missions.startTuningVision();       // dpad_down alone = heading centering only
+                }
             }
             if (stickyGamepad1.left_bumper) {
                 robot.missions.initLogging();
@@ -361,6 +365,39 @@ public class DriverControls implements TelemetryProvider {
         // Used for MT1/MT2 pose comparison testing
         if (stickyGamepad1.guide) {
             robot.setStartingPosition(Robot.StartingPosition.CALIBRATION);
+        }
+    }
+
+    /**
+     * Handle selective abort configuration during init.
+     * D-pad Right cycles: ALL → 0 → 1 → 2 → ALL
+     *
+     * This allows configuring how many ball rows to complete before
+     * aborting to an alternate position (for partner team coordination).
+     */
+    private void handleAbortSetting() {
+        if (stickyGamepad1.dpad_right) {
+            // Cycle: -1 (ALL) → 0 → 1 → 2 → -1 (ALL)
+            switch (Autonomous.ABORT_AFTER_ROWS) {
+                case -1: Autonomous.ABORT_AFTER_ROWS = 0; break;
+                case 0:  Autonomous.ABORT_AFTER_ROWS = 1; break;
+                case 1:  Autonomous.ABORT_AFTER_ROWS = 2; break;
+                case 2:  Autonomous.ABORT_AFTER_ROWS = -1; break;
+                default: Autonomous.ABORT_AFTER_ROWS = -1; break;
+            }
+        }
+    }
+
+    private void handlePipeline(){
+        if(stickyGamepad1.dpad_up){
+            if(robot.vision.PIPELINE >= 2){
+                robot.vision.PIPELINE=0;
+                robot.vision.setLimelightEnvironment();
+                return;
+            }
+            robot.vision.PIPELINE++;
+            robot.vision.setLimelightEnvironment();
+            return;
         }
     }
 
