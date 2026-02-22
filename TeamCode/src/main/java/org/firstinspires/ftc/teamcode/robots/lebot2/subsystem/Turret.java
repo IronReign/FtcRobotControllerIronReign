@@ -27,8 +27,8 @@ public class Turret implements Subsystem {
     //   Rotate CCW to stop, read encoder -> CCW_LIMIT_TICKS
     //   TICKS_PER_DEGREE = (CW_LIMIT_TICKS - CCW_LIMIT_TICKS) / 210.0
     public static int TURRET_CENTER_TICKS = 0;
-    public static int CW_LIMIT_TICKS = 500;     // placeholder - calibrate on robot
-    public static int CCW_LIMIT_TICKS = -500;    // placeholder - calibrate on robot
+    public static int CW_LIMIT_TICKS = 3750;     // placeholder - calibrate on robot
+    public static int CCW_LIMIT_TICKS = -3750;    // placeholder - calibrate on robot
     public static double TICKS_PER_DEGREE = (CW_LIMIT_TICKS - CCW_LIMIT_TICKS) / 210.0;
 
     // Derived degree limits (computed from ticks, but also dashboard-tunable for quick adjustment)
@@ -86,6 +86,7 @@ public class Turret implements Subsystem {
         if (REVERSE_MOTOR) {
             turretMotor.setDirection(DcMotorEx.Direction.REVERSE);
         }
+        resetTurret();
         turretMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
@@ -97,6 +98,12 @@ public class Turret implements Subsystem {
         turretPID.setTolerance(TOLERANCE / 360 * 100);
         turretPID.setEmaAlpha(EMA_ALPHA);
         turretPID.enable();
+    }
+
+
+    public void resetTurret(){
+        turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        turretMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     // ==================== THREE-PHASE SUBSYSTEM ====================
@@ -125,12 +132,28 @@ public class Turret implements Subsystem {
 
         } else { // TRACKING
             if (vision != null && vision.hasTarget()) {
-                // Vision mode: error is tx directly (degrees off-center in camera frame)
-                phase = TargetingPhase.VISION_TRACKING;
-                turretPID.setSetpoint(VISION_OFFSET);
-                turretPID.setInput(vision.getTx());
-                stagedPower = turretPID.performPID();
+                if(encoderTicks > CCW_LIMIT_TICKS && encoderTicks < CW_LIMIT_TICKS){
+                    // Vision mode: error is tx directly (degrees off-center in camera frame)
+                    phase = TargetingPhase.VISION_TRACKING;
+                    turretPID.setSetpoint(VISION_OFFSET);
+                    turretPID.setInput(vision.getTx());
+                    stagedPower = turretPID.performPID();
+                }else{
+                    // Pose-based bearing fallback
+                    Pose2d currentPose = driveTrain.getPose();
+                    Pose2d goalPose = FieldMap.getPose(FieldMap.GOAL, Robot.isRedAlliance);
+                    double bearingRad = FieldMap.bearingTo(currentPose, goalPose);
+                    double chassisRad = currentPose.heading.toDouble();
+                    double desiredTurretDeg = normalizeDeg(Math.toDegrees(bearingRad - chassisRad));
 
+                    // Clamp target to mechanical limits
+                    double clampedTarget = clampToLimits(desiredTurretDeg);
+                    phase = (clampedTarget != desiredTurretDeg) ? TargetingPhase.AT_LIMIT : TargetingPhase.POSE_SEEKING;
+
+                    turretPID.setSetpoint(clampedTarget);
+                    turretPID.setInput(turretAngleDeg);
+                    stagedPower = turretPID.performPID();
+                }
             } else if (driveTrain != null) {
                 // Pose-based bearing fallback
                 Pose2d currentPose = driveTrain.getPose();
@@ -237,6 +260,7 @@ public class Turret implements Subsystem {
         telemetry.put("Angle (deg)", String.format("%.1f", turretAngleDeg));
         telemetry.put("Power", String.format("%.3f", stagedPower));
         telemetry.put("Locked On", isLockedOnTarget());
+        telemetry.put("Encoder", encoderTicks);
         if (vision != null && vision.hasTarget()) {
             telemetry.put("tx", String.format("%.1f", vision.getTx()));
         }
