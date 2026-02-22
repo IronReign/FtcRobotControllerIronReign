@@ -177,6 +177,7 @@ public class DriverControls implements TelemetryProvider {
 
         // D-pad down: Toggle slow mode
         if (stickyGamepad1.dpad_down) {
+            //robot.turret.resetTurret();
             slowMode = !slowMode;
         }
 
