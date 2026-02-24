@@ -316,6 +316,8 @@ public class Robot implements TelemetryProvider {
      * Launcher handles FIRING → LIFTING → COMPLETE sequence internally.
      */
     private void handleLaunchAllBehavior2() {
+//        if()
+        //driveTrain.centerOnTarget();
         switch (launchAllState) {
             case IDLE:
 //                if (loader.isEmpty()) {

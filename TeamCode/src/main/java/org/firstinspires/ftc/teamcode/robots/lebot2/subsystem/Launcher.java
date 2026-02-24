@@ -80,8 +80,8 @@ public class Launcher implements Subsystem {
     // Star discrete position pulse widths (microseconds, converted via servoNormalize)
     public static int STAR_REST = 1900;       // Position 0: intake/idle - all 3 sockets open
     public static int STAR_LAUNCH_1 = 1500;   // Position 1: fires ball 1
-    public static int STAR_LAUNCH_2 = 1200;   // Position 2: fires ball 2
-    public static int STAR_LAUNCH_3 = 800;    // Position 3: fires ball 3
+    public static int STAR_LAUNCH_2 = 1100;   // Position 2: fires ball 2
+    public static int STAR_LAUNCH_3 = 700;    // Position 3: fires ball 3
     // Current star position: 0=REST/intake, 1-3=successive firing positions
     public static int STAR_FIRED = 0;
 
@@ -96,7 +96,7 @@ public class Launcher implements Subsystem {
     public static double PADDLE_PASS = 0.53;
 
     // Flywheel configuration
-    public static double SPEED_MULTIPLIER = 1.02;    // Tunable fudge factor until speed formula is recalibrated
+    public static double SPEED_MULTIPLIER = 1.0;    // Tunable fudge factor until speed formula is recalibrated
     public static double MIN_LAUNCH_SPEED = 1040;   //720 <--old     // degrees/sec - hardcoded working speed from known position
     public static double SPEED_TOLERANCE = 15;      // degrees/sec margin for "at speed" check
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
