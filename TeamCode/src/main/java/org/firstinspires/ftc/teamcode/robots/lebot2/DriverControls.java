@@ -157,11 +157,11 @@ public class DriverControls implements TelemetryProvider {
 
         // A button: Toggle turret tracking/locked
         if (stickyGamepad1.a) {
-            if (robot.turret.getBehavior() == Turret.Behavior.TRACKING) {
-                robot.turret.setLocked();
-            } else {
-                robot.turret.setTracking();
-            }
+//            if (robot.turret.getBehavior() == Turret.Behavior.TRACKING) {
+//                robot.turret.setLocked();
+//            } else {
+//                robot.turret.setTracking();
+//            }
         }
 
         // Right bumper: Launch all balls in sequence

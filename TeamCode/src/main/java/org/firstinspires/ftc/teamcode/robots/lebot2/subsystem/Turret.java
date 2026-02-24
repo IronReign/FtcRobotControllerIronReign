@@ -27,9 +27,10 @@ public class Turret implements Subsystem {
     //   Rotate CCW to stop, read encoder -> CCW_LIMIT_TICKS
     //   TICKS_PER_DEGREE = (CW_LIMIT_TICKS - CCW_LIMIT_TICKS) / 210.0
     public static int TURRET_CENTER_TICKS = 0;
-    public static int CW_LIMIT_TICKS = 3750;     // placeholder - calibrate on robot
-    public static int CCW_LIMIT_TICKS = -3750;    // placeholder - calibrate on robot
-    public static double TICKS_PER_DEGREE = (CW_LIMIT_TICKS - CCW_LIMIT_TICKS) / 210.0;
+    public static int FULL_ROTATION_TICKS = 11300;
+    public static int CW_LIMIT_TICKS = 3296;     // placeholder - calibrate on robot
+    public static int CCW_LIMIT_TICKS = -3296;    // placeholder - calibrate on robot
+    public static double TICKS_PER_DEGREE = FULL_ROTATION_TICKS / 360.0;
 
     // Derived degree limits (computed from ticks, but also dashboard-tunable for quick adjustment)
     public static double CW_LIMIT_DEG = 105;
@@ -132,7 +133,7 @@ public class Turret implements Subsystem {
 
         } else { // TRACKING
             if (vision != null && vision.hasTarget()) {
-                if(encoderTicks > CCW_LIMIT_TICKS && encoderTicks < CW_LIMIT_TICKS){
+                if(turretAngleDeg > CCW_LIMIT_DEG && turretAngleDeg < CW_LIMIT_DEG){
                     // Vision mode: error is tx directly (degrees off-center in camera frame)
                     phase = TargetingPhase.VISION_TRACKING;
                     turretPID.setSetpoint(VISION_OFFSET);

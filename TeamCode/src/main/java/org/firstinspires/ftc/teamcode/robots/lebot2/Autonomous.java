@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.lebot2;
 
+import static org.firstinspires.ftc.teamcode.robots.lebot2.Lebot2_6832.robot;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -37,6 +39,8 @@ import java.util.Map;
 public class Autonomous implements TelemetryProvider {
 
     private final Robot robot;
+
+
 
     public static double FIRST_ANGLE_OFFSET = 6;
     public static double SECOND_ANGLE_OFFSET = -6;
@@ -221,6 +225,7 @@ public class Autonomous implements TelemetryProvider {
                     if (SKIP_INITIAL_BACKUP) {
                         // Already at fire position — just spin up launcher
                         robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
+                        //setState(AutonState.START_LAUNCH);
                         setState(AutonState.START_TARGETING);
                     } else {
                         // Back up from gate to fire position, spins up launcher during navigation
@@ -239,6 +244,7 @@ public class Autonomous implements TelemetryProvider {
                 if (robot.missions.isComplete()) {
                     log("BACKUP_COMPLETE", null);
                     if(!SKIP_LAUNCH){
+                        //setState(AutonState.START_LAUNCH);
                         setState(AutonState.START_TARGETING);
                     }else {
                         setState(AutonState.COMPLETE);
@@ -257,8 +263,9 @@ public class Autonomous implements TelemetryProvider {
                 break;
 
             case WAITING_TARGET:
-                if (robot.getBehavior() == Robot.Behavior.MANUAL) {
+                if (robot.getBehavior() == Robot.Behavior.MANUAL ) {
                     // Targeting complete, apply vision correction
+                //shouldnt need since launchall should target robot anyways
                     log("TARGETING_COMPLETE", null);
                     robot.applyVisionPoseCorrection();
                     setState(AutonState.START_LAUNCH);
@@ -281,6 +288,7 @@ public class Autonomous implements TelemetryProvider {
             case WAITING_LAUNCH:
                 if (robot.missions.isComplete()) {
                     log("LAUNCH_COMPLETE", null);
+//                    robot.driveTrain.cancelTurn();
                     launchCycles++;
                     robot.applyVisionPoseCorrection();
                     // Power down flywheel during ball collection to conserve power
@@ -375,10 +383,12 @@ public class Autonomous implements TelemetryProvider {
                     if(FieldMap.IS_AUDIENCE_START){
                         setState(AutonState.COMPLETE);
                     } else {
+                        //setState(AutonState.START_LAUNCH);
                         setState(AutonState.START_TARGETING);
                     }
                 } else if (robot.missions.isFailed()) {
                     log("RETURN_FAILED", "timeout");
+                    //setState(AutonState.START_LAUNCH);
                     setState(AutonState.START_TARGETING);
                 }
                 break;
