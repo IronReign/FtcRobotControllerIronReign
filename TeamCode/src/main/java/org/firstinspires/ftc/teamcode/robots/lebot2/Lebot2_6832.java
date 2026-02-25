@@ -183,10 +183,12 @@ public class Lebot2_6832 extends OpMode {
         // Handle game state
         switch (gameState) {
             case AUTONOMOUS:
+                robot.auton = true;
                 handleAutonomous(packet);
                 break;
 
             case TELE_OP:
+                robot.auton = false;
                 TankDrivePinpoint.VISION_TOLERANCE = 2;
                 Vision.FLYWHEEL_SPEED_MULTIPLIER= 1;
                 handleTeleOp(packet);
@@ -238,7 +240,12 @@ public class Lebot2_6832 extends OpMode {
     private void handleAutonomous(TelemetryPacket packet) {
         // TODO: Implement autonomous routines
         // For now, just run a simple test sequence
-        autonomous.execute();
+        if(autonomous.oldRobot){
+            autonomous.execute();
+        }else{
+            autonomous.execute2();
+        }
+
 
         // Auto-transition to TeleOp after 30 seconds
         long elapsed = System.currentTimeMillis() - startTime;
