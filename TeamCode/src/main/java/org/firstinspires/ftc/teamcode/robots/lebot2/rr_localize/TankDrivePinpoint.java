@@ -130,7 +130,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     // ==================== VISION PID PARAMS ====================
     public static PIDCoefficients VISION_PID = new PIDCoefficients(0.022, 0.01, 0.013);
     public static double VISION_OFFSET = -2; // offset from center of target in LLResult x units
-    public static double VISION_TOLERANCE = 3; // degrees of tx
+    public static double VISION_TOLERANCE = 2; // degrees of tx
     public static double VISION_INTEGRAL_CUTIN = 3.0; // degrees
     public static double VISION_ALPHA = .5; // EMA alpha for vision PID
 
@@ -392,7 +392,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
             turnState = TurnState.IDLE;
             behavior = Behavior.MANUAL;
         } else {
-            // Apply turn power (positive = clockwise)
+            // Apply turn power (positive = clockwise)e
             setMotorPowers(correction, -correction);
         }
     }
@@ -489,6 +489,12 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         } else {
             setMotorPowers(-correction, correction);
         }
+    }
+
+    public void endTurnAuton(){
+        setMotorPowers(0, 0);
+        turnState = TurnState.IDLE;
+        behavior = Behavior.MANUAL;
     }
 
     /**

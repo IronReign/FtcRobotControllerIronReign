@@ -26,6 +26,8 @@ import java.util.Set;
 @Config(value = "Lebot2_FieldMap")
 public class FieldMap {
 
+    public static double AVOID_COLLISION_AUDIENCE = 4;
+
     public static double OFFSET = 4.5;
 
     // ==================== VISUALIZATION CONFIG ====================
@@ -122,7 +124,9 @@ public class FieldMap {
         // AUDIENCE: Near audience, facing goal
         //speed for audience start is 1100 and star feed .8
         //65, 16.8
-        RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(64.7, 17.1, 168.2));
+        //OLD WAYPOINT
+        //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(64.7, 17.1, 168.2));
+        RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(58.7, 20.8, 139));
 
         //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(66, 6.5, 180));  // TODO: measure heading        //64.5,16.8,
         // GOAL: Near goal, facing goal
@@ -131,22 +135,43 @@ public class FieldMap {
         // ----- Firing Positions -----
         // Positions where robot stops to launch balls at goal
         // FIRE_1 X uses FIRE_1_BASE_X which can be offset via Dashboard
-        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-14.1732-2, 15.748+2, 135));  // Base position, offset applied in get()
-        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-31.7-OFFSET,16+OFFSET, 124.4));  // Fire from inside big triangle
-        RED_WAYPOINTS.put("FIRE_3", new Waypoint(56.1, 18.9, 168.8));  // TODO: measure
-        RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.7, 17.1, 168.2));  //fire from back triangle
+        //-------OLD WAYPOINTS-------
+//        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-14.1732-2, 15.748+2, 135));  // Base position, offset applied in get()
+//        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-31.7-OFFSET,16+OFFSET, 124.4));  // Fire from inside big triangle
+//        RED_WAYPOINTS.put("FIRE_3", new Waypoint(56.1, 18.9+AVOID_COLLISION_AUDIENCE, 168.8));  // TODO: measure
+//        RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.7, 17.1, 168.2));  //fire from back triangle
+
+        //----firing points for goal auton-----
+        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-16.4, 19.5, 90));  // Base position, offset applied in get()
+        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-17.1, 17.1, 45));  // Fire from inside big triangle
+        RED_WAYPOINTS.put("FIRE_3", new Waypoint(-16.6, 17.1, 35));  // TODO: measure
+
+        //------firing points for audience auton--------
+        RED_WAYPOINTS.put("FIRE_4", new Waypoint(58.7, 20.8, 139));  //fire from back triangle
+        RED_WAYPOINTS.put("FIRE_5", new Waypoint(58.7, 21.5, 88));
+        RED_WAYPOINTS.put("FIRE_6", new Waypoint(58.7, 21.5, 88));
+
+
 
         // ----- Ball Pickup Waypoints -----
         // Starting points for each of the 3 ball rows
         // Base coordinates only — ROW_X_OFFSET and ROW_Y_START_OFFSET applied dynamically in get()
-        RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732+1, 25.9842-1.5, 90));
+        //-------OLD WAYPOINTS-------
+        RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732, 25.9842-1.5, 90));
         RED_WAYPOINTS.put("BALL_ROW_2_START", new Waypoint(10.2362, 25.9842, 90));
         RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456, 25.9842, 90));
+
+        //new waypoint for picking up ball in opposing human player area during auton
+        RED_WAYPOINTS.put("BALL_ROW_4_START", new Waypoint(60, 52.7, 88));
+        RED_WAYPOINTS.put("BALL_ROW_4_END", new Waypoint(60, 61+3, 88));
+        RED_WAYPOINTS.put("BALL_ROW_5_START", new Waypoint(34.6456, 25.9842, 90));
+        RED_WAYPOINTS.put("BALL_ROW_5_END", new Waypoint(34.6456, 46.8503+4.5, 90));
 
         // ----- Ball Row Endpoints -----
         // Ending points after driving through ball rows
         // Base coordinates only — ROW_X_OFFSET applied dynamically in get()
-        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503+4.5-2.5+.5, 90));
+        //-------OLD WAYPOINTS-------
+        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503+4.5-2.5, 90));
         RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362, 46.8503+4.5-5, 90));
         RED_WAYPOINTS.put("BALL_ROW_3_END", new Waypoint(34.6456, 46.8503+4.5, 90));
 
@@ -323,14 +348,21 @@ public class FieldMap {
     public static final String FIRE_2 = "FIRE_2";
     public static final String FIRE_3 = "FIRE_3";
     public static final String FIRE_4 = "FIRE_4";
+    public static final String FIRE_5 = "FIRE_5";
+    public static final String FIRE_6 = "FIRE_6";
+
 
     public static final String BALL_ROW_1_START = "BALL_ROW_1_START";
     public static final String BALL_ROW_2_START = "BALL_ROW_2_START";
     public static final String BALL_ROW_3_START = "BALL_ROW_3_START";
+    public static final String BALL_ROW_4_START = "BALL_ROW_4_START";
+    public static final String BALL_ROW_5_START = "BALL_ROW_5_START";
 
     public static final String BALL_ROW_1_END = "BALL_ROW_1_END";
     public static final String BALL_ROW_2_END = "BALL_ROW_2_END";
     public static final String BALL_ROW_3_END = "BALL_ROW_3_END";
+    public static final String BALL_ROW_4_END = "BALL_ROW_4_END";
+    public static final String BALL_ROW_5_END = "BALL_ROW_5_END";
 
     public static final String GATE = "GATE";
     public static final String HOMEBASE = "HOMEBASE";

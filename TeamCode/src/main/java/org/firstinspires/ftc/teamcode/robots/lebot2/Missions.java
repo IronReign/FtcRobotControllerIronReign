@@ -104,7 +104,7 @@ public class Missions implements TelemetryProvider {
 
     public static double NAVIGATION_TIMEOUT_SECONDS = 10.0;
     public static double INTAKE_TIMEOUT_SECONDS = 5.0;
-    public static double LAUNCH_TIMEOUT_SECONDS = 8.0;
+    public static double LAUNCH_TIMEOUT_SECONDS = 3.5;
     public static double PRESS_TIMEOUT_SECONDS = 2.0;
     public static double INTAKE_DRIVE_POWER = 0.23;  // Max power while driving through ball rows
 
@@ -113,7 +113,7 @@ public class Missions implements TelemetryProvider {
     // ==================== BALL GROUP CONFIGURATION ====================
 
     // Order to approach ball groups (configurable during match setup)
-    private int[] ballGroupOrder = {0, 1, 2};
+    private int[] ballGroupOrder = {0, 1, 2, 3, 4};
     private int currentGroupIndex = 0;
     private int targetGroupIndex = 0;  // Which group we're currently collecting
 
@@ -566,13 +566,13 @@ public class Missions implements TelemetryProvider {
      * Start the BallGroup mission.
      * Navigates to specified ball group and intakes balls.
      *
-     * @param groupIndex Which group to collect (0, 1, or 2)
+     * @param groupIndex Which group to collect (0, 1, 2, 3, or 4)
      */
     public void startBallGroup(int groupIndex) {
         if (!prepareForNewMission()) {
             return;
         }
-        targetGroupIndex = Math.max(0, Math.min(2, groupIndex));
+        targetGroupIndex = Math.max(0, Math.min(4, groupIndex));
         currentMission = Mission.BALL_GROUP;
         missionState = MissionState.RUNNING;
         ballGroupState = BallGroupState.IDLE;
@@ -1035,7 +1035,7 @@ public class Missions implements TelemetryProvider {
 
         switch (navToFireState) {
             case IDLE:
-                TankDriveActions.MAX_DRIVE_POWER = .85;
+                TankDriveActions.MAX_DRIVE_POWER = .9;
 
                 // Get target pose - either from waypoint name or fire position
                 Pose2d firePose;
@@ -1081,6 +1081,8 @@ public class Missions implements TelemetryProvider {
             case 2: return FieldMap.getPose(FieldMap.FIRE_2, Robot.isRedAlliance);
             case 3: return FieldMap.getPose(FieldMap.FIRE_3, Robot.isRedAlliance);
             case 4: return FieldMap.getPose(FieldMap.FIRE_4, Robot.isRedAlliance);
+            case 5: return FieldMap.getPose(FieldMap.FIRE_5, Robot.isRedAlliance);
+            case 6: return FieldMap.getPose(FieldMap.FIRE_6, Robot.isRedAlliance);
             default: return FieldMap.getPose(FieldMap.FIRE_1, Robot.isRedAlliance);
         }
     }
@@ -1243,7 +1245,7 @@ public class Missions implements TelemetryProvider {
             case INTAKING_THROUGH_ROW:
                 // Drive through the full row while intaking — stop only when trajectory completes
                 if (!driveTrain.isActionRunning()) {
-                    TankDriveActions.MAX_DRIVE_POWER = .85;
+                    TankDriveActions.MAX_DRIVE_POWER = .9;
                     int ballsCollected = robot.loader.getBallCount() - ballCountAtStart;
                     log("BALLGROUP_INTAKE_DONE", "trajectory_done,balls=" + ballsCollected, null);
                     robot.driveTrain.drive(0, 0, 0);
@@ -1266,6 +1268,7 @@ public class Missions implements TelemetryProvider {
             case 0: return FieldMap.getPose(FieldMap.BALL_ROW_1_START, Robot.isRedAlliance);
             case 1: return FieldMap.getPose(FieldMap.BALL_ROW_2_START, Robot.isRedAlliance);
             case 2: return FieldMap.getPose(FieldMap.BALL_ROW_3_START, Robot.isRedAlliance);
+            case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_START, Robot.isRedAlliance);
             default: return FieldMap.getPose(FieldMap.BALL_ROW_1_START, Robot.isRedAlliance);
         }
     }
@@ -1275,6 +1278,7 @@ public class Missions implements TelemetryProvider {
             case 0: return FieldMap.getPose(FieldMap.BALL_ROW_1_END, Robot.isRedAlliance);
             case 1: return FieldMap.getPose(FieldMap.BALL_ROW_2_END, Robot.isRedAlliance);
             case 2: return FieldMap.getPose(FieldMap.BALL_ROW_3_END, Robot.isRedAlliance);
+            case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_END, Robot.isRedAlliance);
             default: return FieldMap.getPose(FieldMap.BALL_ROW_1_END, Robot.isRedAlliance);
         }
     }

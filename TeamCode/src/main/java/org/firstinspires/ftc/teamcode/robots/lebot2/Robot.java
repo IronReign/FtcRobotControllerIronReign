@@ -56,6 +56,8 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 @Config(value = "Lebot2_Robot")
 public class Robot implements TelemetryProvider {
 
+    public static boolean auton = false;
+
     // Subsystems
     public final DriveTrainBase driveTrain;
     public final Intake intake;
@@ -316,8 +318,9 @@ public class Robot implements TelemetryProvider {
      * Launcher handles FIRING → LIFTING → COMPLETE sequence internally.
      */
     private void handleLaunchAllBehavior2() {
-//        if()
-        //driveTrain.centerOnTarget();
+        if(!auton){
+            driveTrain.centerOnTarget();
+        }
         switch (launchAllState) {
             case IDLE:
 //                if (loader.isEmpty()) {
