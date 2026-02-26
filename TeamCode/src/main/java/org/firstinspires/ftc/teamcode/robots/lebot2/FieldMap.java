@@ -164,8 +164,8 @@ public class FieldMap {
         //new waypoint for picking up ball in opposing human player area during auton
         RED_WAYPOINTS.put("BALL_ROW_4_START", new Waypoint(60, 52.7, 88));
         RED_WAYPOINTS.put("BALL_ROW_4_END", new Waypoint(60, 61+3, 88));
-        RED_WAYPOINTS.put("BALL_ROW_5_START", new Waypoint(34.6456, 25.9842, 90));
-        RED_WAYPOINTS.put("BALL_ROW_5_END", new Waypoint(34.6456, 46.8503+4.5, 90));
+        RED_WAYPOINTS.put("BALL_ROW_5_START", new Waypoint(10.2362, 25.9842, 90));
+        RED_WAYPOINTS.put("BALL_ROW_5_END", new Waypoint(10.2362, 46.8503+4.5-5, 90));
 
         // ----- Ball Row Endpoints -----
         // Ending points after driving through ball rows

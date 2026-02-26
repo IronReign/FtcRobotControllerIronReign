@@ -177,10 +177,12 @@ public class Robot implements TelemetryProvider {
         turret = new Turret(hardwareMap);
 
         // Connect subsystems that need references to each other
+        loader.setLauncher(launcher);
         intake.setLoader(loader);       // For LOAD_ALL completion check
         launcher.setLoader(loader);     // For belt claiming and ball counting
         launcher.setIntake(intake);     // For intake suppression during firing
         launcher.setVision(vision);     // For distance-based speed calculation
+        launcher.setTurret(turret);
         driveTrain.setVision(vision);   // For continuous vision-based centering
         ledStatus.setLoader(loader);    // For ball detection
         ledStatus.setLauncher(launcher); // For firing detection
@@ -318,9 +320,6 @@ public class Robot implements TelemetryProvider {
      * Launcher handles FIRING → LIFTING → COMPLETE sequence internally.
      */
     private void handleLaunchAllBehavior2() {
-        if(!auton){
-            driveTrain.centerOnTarget();
-        }
         switch (launchAllState) {
             case IDLE:
 //                if (loader.isEmpty()) {

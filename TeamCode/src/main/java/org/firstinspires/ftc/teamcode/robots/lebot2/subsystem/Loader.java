@@ -45,6 +45,8 @@ public class Loader implements Subsystem {
     private final CachedDistanceSensor frontSensor;
     private final CachedDistanceSensor backSensor;
 
+    private Launcher launcher;
+
     // Configuration
     // Negative = move balls toward rear (intake/feed), Positive = eject forward
     public static double BELT_POWER = -1;
@@ -63,6 +65,8 @@ public class Loader implements Subsystem {
     private BeltOwner beltOwner = BeltOwner.NONE;
     private boolean intakeRequestsBelt = false;
     private boolean launcherClaimsBelt = false;
+
+    public static boolean loaderFull = false;
 
     // State
     public enum LoaderState {
@@ -119,6 +123,7 @@ public class Loader implements Subsystem {
         // Update state based on sensor readings (no counting - unreliable)
         if (ballAtBack && ballAtFront) {
             state = LoaderState.FULL;
+            loaderFull = true;
         } else if (ballAtBack || ballAtFront) {
             state = LoaderState.HAS_BALLS;
         } else {
@@ -162,6 +167,10 @@ public class Loader implements Subsystem {
     public void act() {
         // PHASE 3: Flush motor command
         beltMotor.flush();
+    }
+
+    public void setLauncher(Launcher launcher){
+        this.launcher = launcher;
     }
 
     // ==================== BELT OWNERSHIP ====================

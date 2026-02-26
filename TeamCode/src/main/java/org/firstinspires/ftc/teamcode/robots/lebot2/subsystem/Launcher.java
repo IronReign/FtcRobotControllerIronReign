@@ -68,9 +68,14 @@ public class Launcher implements Subsystem {
         STAR,   // Continuous rotation star — just spins to feed balls
         STAR_POSE,
         RAMP,   // TPU ramp with CUP/RAMP/LIFT positions
-        PADDLE  // Original paddle with DOWN/UP positions
+        PADDLE,  // Original paddle with DOWN/UP positions
+        GATE
     }
     public static TriggerType TRIGGER_TYPE = TriggerType.STAR_POSE;
+
+    //gate trigger positions
+    public static int GATE_CLOSE = 800;      ////TODO: measure
+     public static int GATE_OPEN = 1800;      ////TODO: measure
 
     // Star trigger positions (continuous rotation servo)
     // 0.5 = stopped/idle, 1.0 = spinning to feed balls into flywheel
@@ -176,6 +181,7 @@ public class Launcher implements Subsystem {
     private Loader loader = null;
     private Intake intake = null;
     private Vision vision = null;
+    private Turret turret = null;
 
     // Track if we've claimed resources this firing cycle
     private boolean resourcesClaimed = false;
@@ -225,6 +231,10 @@ public class Launcher implements Subsystem {
      */
     public void setVision(Vision vision) {
         this.vision = vision;
+    }
+
+    public void setTurret(Turret turret){
+        this.turret = turret;
     }
 
     // ==================== BEHAVIOR CONTROL ====================
@@ -367,6 +377,9 @@ public class Launcher implements Subsystem {
         else if (behavior == Behavior.SPINNING && state == LaunchState.IDLE) {
             // Start spinning
             state = LaunchState.SPINNING_UP;
+        }else if (behavior == Behavior.SPINNING && state == LaunchState.IDLE_SPIN) {
+            // Start spinning
+            state = LaunchState.IDLE_SPIN;
         }
 //        else if(behavior == Behavior.SPINNING && state == LaunchState.MANUAL){
 //            state = LaunchState.MANUAL;
@@ -448,6 +461,7 @@ public class Launcher implements Subsystem {
             case STAR_POSE: return servoNormalize(STAR_REST);
             case PADDLE:    return PADDLE_DOWN;
             case RAMP:
+            case GATE:      return servoNormalize(GATE_CLOSE);
             default:        return PADDLE_CUP;
         }
     }
@@ -476,6 +490,7 @@ public class Launcher implements Subsystem {
                 }
             case PADDLE: return PADDLE_UP;
             case RAMP:
+            case GATE:  return servoNormalize(GATE_OPEN);
             default:     return PADDLE_RAMP;
         }
     }
@@ -539,8 +554,14 @@ public class Launcher implements Subsystem {
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
         setPaddlePosition(getTriggerIdlePosition());
 
-        if (isFlywheelAtSpeed()) {
-            state = LaunchState.READY;
+        if(TRIGGER_TYPE == TriggerType.GATE) {
+            if (isFlywheelAtSpeed() && turret.isReadyToLaunch()) {
+                state = LaunchState.READY;
+            }
+        }else{
+            if (isFlywheelAtSpeed()) {
+                state = LaunchState.READY;
+            }
         }
     }
 
@@ -599,7 +620,7 @@ public class Launcher implements Subsystem {
         setPaddlePosition(getTriggerFiringPosition());
 
         if (isPast(stateTimer)) {
-            if (TRIGGER_TYPE == TriggerType.STAR || TRIGGER_TYPE == TriggerType.PADDLE) {
+            if (TRIGGER_TYPE == TriggerType.STAR || TRIGGER_TYPE == TriggerType.PADDLE || TRIGGER_TYPE == TriggerType.GATE) {
                 state = LaunchState.COMPLETE;
             } else {
                 // Ramp needs LIFTING phase to push last ball into flywheel
@@ -637,6 +658,7 @@ public class Launcher implements Subsystem {
             behavior = Behavior.IDLE;
             state = LaunchState.IDLE;
         }
+        loader.loaderFull = false;
     }
 
     /**
@@ -836,6 +858,7 @@ public class Launcher implements Subsystem {
         telemetry.put("Trigger", TRIGGER_TYPE);
         telemetry.put("Star Fired", STAR_FIRED);
         telemetry.put("Behavior", behavior);
+        telemetry.put("Launch State: ", state);
         telemetry.put("Flywheel Speed", String.format("%.0f / %.0f", currentSpeed, targetSpeed));
         telemetry.put("flywheelSpeed", currentSpeed);
         telemetry.put("flywheelTarget", targetSpeed);
