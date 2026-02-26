@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.robots.lebot2.FieldMap;
 import org.firstinspires.ftc.teamcode.robots.lebot2.Robot;
@@ -19,6 +20,17 @@ import java.util.Map;
 
 @Config(value = "Lebot2_Turret")
 public class Turret implements Subsystem {
+
+    public static double BUFFER = 2.5;
+
+    private ElapsedTime lostVisionTimer = new ElapsedTime();
+    public static double LOST_VISION_TIME = .2;
+
+    private ElapsedTime lockedVisionTimer = new ElapsedTime();
+    public static double LOCKED_VISION_TIME = .2;
+
+    public static double LAUNCH_TOLERANCE = 1;
+    public boolean readyToLaunch = false;
 
     // ==================== ENCODER / MECHANICAL LIMITS ====================
     // Calibrate these on the physical robot:
@@ -37,7 +49,7 @@ public class Turret implements Subsystem {
     public static double CCW_LIMIT_DEG = 105;
 
     // ==================== PID PARAMS ====================
-    public static PIDCoefficients TURRET_PID = new PIDCoefficients(0.04, 0.001, 2.0);
+    public static PIDCoefficients TURRET_PID = new PIDCoefficients(0.04, 0.00005, 0.0075);
     public static double MAX_SPEED = 1.0;
     public static double TOLERANCE = 1.0;          // degrees - PID convergence threshold
     public static double INTEGRAL_CUTIN = 3.0;     // degrees
@@ -123,6 +135,19 @@ public class Turret implements Subsystem {
         turretPID.setPID(TURRET_PID);
         turretPID.setOutputRange(-MAX_SPEED, MAX_SPEED);
 
+        if(Math.abs(vision.getTx()) < VISION_OFFSET+LAUNCH_TOLERANCE){
+            if(lockedVisionTimer.seconds() > LOCKED_VISION_TIME){
+                readyToLaunch = true;
+            }else{
+                readyToLaunch = false;
+            }
+
+        }else{
+            readyToLaunch = false;
+            lockedVisionTimer.reset();
+        }
+
+
         if (behavior == Behavior.LOCKED) {
             // Hold turret at 0° (forward)
             phase = TargetingPhase.LOCKED_FORWARD;
@@ -130,17 +155,40 @@ public class Turret implements Subsystem {
             turretPID.setSetpoint(targetAngle);
             turretPID.setInput(turretAngleDeg);
             stagedPower = turretPID.performPID();
+            lostVisionTimer.reset();
 
         } else { // TRACKING
-            if (vision != null && vision.hasTarget()) {
+            if((lostVisionTimer.seconds() > LOST_VISION_TIME && (vision != null && !vision.hasTarget())) || vision == null){
+//                if (driveTrain != null) {
+//                    // Pose-based bearing fallback
+//                    Pose2d currentPose = driveTrain.getPose();
+//                    Pose2d goalPose = FieldMap.getPose(FieldMap.GOAL, Robot.isRedAlliance);
+//                    double bearingRad = FieldMap.bearingTo(currentPose, goalPose);
+//                    double chassisRad = currentPose.heading.toDouble();
+//                    double desiredTurretDeg = normalizeDeg(Math.toDegrees(bearingRad - chassisRad));
+//
+//                    // Clamp target to mechanical limits
+//                    double clampedTarget = clampToLimits(desiredTurretDeg);
+//                    phase = (clampedTarget != desiredTurretDeg) ? TargetingPhase.AT_LIMIT : TargetingPhase.POSE_SEEKING;
+//
+//                    turretPID.setSetpoint(clampedTarget);
+//                    turretPID.setInput(turretAngleDeg);
+//                    stagedPower = turretPID.performPID();
+//
+//                }
+
+            }else if (vision != null && vision.hasTarget()) {
+                lostVisionTimer.reset();
                 //within turning limits
-                if(turretAngleDeg < CCW_LIMIT_DEG && turretAngleDeg > CW_LIMIT_DEG){
+                if(turretAngleDeg < CCW_LIMIT_DEG+BUFFER && turretAngleDeg > CW_LIMIT_DEG-BUFFER){
                     // Vision mode: error is tx directly (degrees off-center in camera frame)
                     phase = TargetingPhase.VISION_TRACKING;
                     turretPID.setSetpoint(VISION_OFFSET);
                     turretPID.setInput(vision.getTx());
                     stagedPower = turretPID.performPID();
+
                 }else{
+                    stagedPower = 0;
 //                    if(turretAngleDeg < 0){
 //                        turretPID.setSetpoint(CW_LIMIT_DEG);
 //                        turretPID.setInput(turretAngleDeg);
@@ -165,7 +213,11 @@ public class Turret implements Subsystem {
 //                    turretPID.setInput(turretAngleDeg);
 //                    stagedPower = turretPID.performPID();
                 }
-            } else if (driveTrain != null) {
+            } else{
+                stagedPower = 0;
+                lostVisionTimer.reset();
+            }
+//            else if (driveTrain != null) {
 //                // Pose-based bearing fallback
 //                Pose2d currentPose = driveTrain.getPose();
 //                Pose2d goalPose = FieldMap.getPose(FieldMap.GOAL, Robot.isRedAlliance);
@@ -180,11 +232,11 @@ public class Turret implements Subsystem {
 //                turretPID.setSetpoint(clampedTarget);
 //                turretPID.setInput(turretAngleDeg);
 //                stagedPower = turretPID.performPID();
-
-            } else {
-                // No vision, no drivetrain - hold position
-                stagedPower = 0;
-            }
+//
+//            } else {
+//                // No vision, no drivetrain - hold position
+//                stagedPower = 0;
+//            }
         }
     }
 
@@ -226,6 +278,8 @@ public class Turret implements Subsystem {
     public double getTurretAngleDeg() {
         return turretAngleDeg;
     }
+
+    public boolean isReadyToLaunch(){return readyToLaunch;}
 
     // ==================== HELPERS ====================
 
@@ -272,6 +326,7 @@ public class Turret implements Subsystem {
         telemetry.put("Power", String.format("%.3f", stagedPower));
         telemetry.put("Locked On", isLockedOnTarget());
         telemetry.put("Encoder", encoderTicks);
+        telemetry.put("Ready to Launch? ", readyToLaunch);
         if (vision != null && vision.hasTarget()) {
             telemetry.put("tx", String.format("%.1f", vision.getTx()));
         }

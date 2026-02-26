@@ -40,6 +40,7 @@ import java.util.Map;
 @Config(value = "Lebot2_Vision")
 public class Vision implements Subsystem {
 
+
     // Hardware
     private final Limelight3A limelight;
     private final LazyServo tilt;

@@ -195,7 +195,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     // PID controllers for turns and tracking
     private final PIDController headingPID;
-    private final PIDController visionPID;
+    private  PIDController visionPID;
     private final PIDController distancePID;
 
     // Cached values from readSensors()
@@ -472,6 +472,12 @@ public final class TankDrivePinpoint implements DriveTrainBase {
             return;
         }
 
+        if(vision.getDistanceToGoal() > 2.6){
+            setLongDistVisionPID();
+        }else{
+            setShortDistVisionPID();
+        }
+
         double tx = vision.getTx();
 
         // Negate tx so positive tx (target right) produces positive correction (turn right)
@@ -495,6 +501,30 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         setMotorPowers(0, 0);
         turnState = TurnState.IDLE;
         behavior = Behavior.MANUAL;
+    }
+
+    public void setShortDistVisionPID(){
+        VISION_PID = new PIDCoefficients(0.022, 0.01, 0.013);
+        visionPID = new PIDController(VISION_PID);
+        visionPID.setInputRange(-20, 20);
+        visionPID.setOutputRange(-1, 1);
+        visionPID.setIntegralCutIn(VISION_INTEGRAL_CUTIN);
+        visionPID.setContinuous(false);
+        visionPID.setTolerance(VISION_TOLERANCE/360*40); // degrees to percentage of input range
+        visionPID.setEmaAlpha(VISION_ALPHA);
+        visionPID.enable();
+    }
+
+    public void setLongDistVisionPID(){
+        VISION_PID = new PIDCoefficients(0.03, 0.01, 0.013);
+        visionPID = new PIDController(VISION_PID);
+        visionPID.setInputRange(-20, 20);
+        visionPID.setOutputRange(-1, 1);
+        visionPID.setIntegralCutIn(VISION_INTEGRAL_CUTIN);
+        visionPID.setContinuous(false);
+        visionPID.setTolerance(VISION_TOLERANCE/360*40); // degrees to percentage of input range
+        visionPID.setEmaAlpha(VISION_ALPHA);
+        visionPID.enable();
     }
 
     /**
