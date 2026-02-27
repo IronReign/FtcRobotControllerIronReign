@@ -40,7 +40,7 @@ import java.util.Map;
 @Config(value = "Lebot2_Autonomous")
 public class Autonomous implements TelemetryProvider {
 
-    public static boolean oldRobot = false;
+    public static boolean oldRobot = true;
 
     private final Robot robot;
 
@@ -498,9 +498,15 @@ public class Autonomous implements TelemetryProvider {
                 break;
             // ========== PHASE 2-3: Target and Launch ==========
             case START_TARGETING:
-                robot.setBehavior(Robot.Behavior.TARGETING);
-                timeoutTimer.reset();
-                setState(AutonState.WAITING_TARGET);
+                if( Math.abs(Math.abs(robot.vision.getTx())-Math.abs(((TankDrivePinpoint)robot.driveTrain).VISION_OFFSET)) < (((TankDrivePinpoint)robot.driveTrain).VISION_TOLERANCE) ){
+                    robot.applyVisionPoseCorrection();
+                    setState(AutonState.START_LAUNCH);
+                }else{
+                    robot.setBehavior(Robot.Behavior.TARGETING);
+                    timeoutTimer.reset();
+                    setState(AutonState.WAITING_TARGET);
+                }
+
                 break;
 
             case WAITING_TARGET:

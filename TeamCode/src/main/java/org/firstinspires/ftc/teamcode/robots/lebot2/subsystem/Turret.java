@@ -159,23 +159,23 @@ public class Turret implements Subsystem {
 
         } else { // TRACKING
             if((lostVisionTimer.seconds() > LOST_VISION_TIME && (vision != null && !vision.hasTarget())) || vision == null){
-//                if (driveTrain != null) {
-//                    // Pose-based bearing fallback
-//                    Pose2d currentPose = driveTrain.getPose();
-//                    Pose2d goalPose = FieldMap.getPose(FieldMap.GOAL, Robot.isRedAlliance);
-//                    double bearingRad = FieldMap.bearingTo(currentPose, goalPose);
-//                    double chassisRad = currentPose.heading.toDouble();
-//                    double desiredTurretDeg = normalizeDeg(Math.toDegrees(bearingRad - chassisRad));
-//
-//                    // Clamp target to mechanical limits
-//                    double clampedTarget = clampToLimits(desiredTurretDeg);
-//                    phase = (clampedTarget != desiredTurretDeg) ? TargetingPhase.AT_LIMIT : TargetingPhase.POSE_SEEKING;
-//
-//                    turretPID.setSetpoint(clampedTarget);
-//                    turretPID.setInput(turretAngleDeg);
-//                    stagedPower = turretPID.performPID();
-//
-//                }
+                if (driveTrain != null) {
+                    // Pose-based bearing fallback
+                    Pose2d currentPose = driveTrain.getPose();
+                    Pose2d goalPose = FieldMap.getPose(FieldMap.GOAL, Robot.isRedAlliance);
+                    double bearingRad = FieldMap.bearingTo(currentPose, goalPose);
+                    double chassisRad = currentPose.heading.toDouble();
+                    double desiredTurretDeg = normalizeDeg(Math.toDegrees(bearingRad - chassisRad));
+
+                    // Clamp target to mechanical limits
+                    double clampedTarget = clampToLimits(desiredTurretDeg);
+                    phase = (clampedTarget != desiredTurretDeg) ? TargetingPhase.AT_LIMIT : TargetingPhase.POSE_SEEKING;
+
+                    turretPID.setSetpoint(clampedTarget);
+                    turretPID.setInput(turretAngleDeg);
+                    stagedPower = turretPID.performPID();
+
+                }
 
             }else if (vision != null && vision.hasTarget()) {
                 lostVisionTimer.reset();

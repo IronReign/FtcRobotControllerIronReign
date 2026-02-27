@@ -153,6 +153,7 @@ public class DriverControls implements TelemetryProvider {
         // Driver can override with joystick if needed
         if (stickyGamepad1.y) {
             robot.driveTrain.centerOnTarget();
+            robot.applyVisionPoseCorrection();
         }
 
         // A button: Toggle turret tracking/locked
@@ -166,6 +167,7 @@ public class DriverControls implements TelemetryProvider {
 
         // Right bumper: Launch all balls in sequence
         if (stickyGamepad1.right_bumper) {
+            robot.driveTrain.centerOnTarget();
             robot.launcher.updateTargetSpeed();
             robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
         }
