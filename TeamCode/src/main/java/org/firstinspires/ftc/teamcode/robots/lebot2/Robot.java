@@ -320,6 +320,7 @@ public class Robot implements TelemetryProvider {
      * Launcher handles FIRING → LIFTING → COMPLETE sequence internally.
      */
     private void handleLaunchAllBehavior2() {
+        launcher.updateTargetSpeed();
         switch (launchAllState) {
             case IDLE:
 //                if (loader.isEmpty()) {
@@ -575,6 +576,11 @@ public class Robot implements TelemetryProvider {
     public boolean applyVisionPoseCorrection() {
         if (!vision.hasBotPose()) {
             return false;
+        }
+        if(vision.getDistanceToGoal() > 2.6){
+            launcher.MIN_LAUNCH_SPEED = launcher.MIN_LAUNCH_SPEED_AUDIENCE;
+        }else{
+            launcher.MIN_LAUNCH_SPEED = launcher.MIN_LAUNCH_SPEED_GOAL;
         }
 
         // Get vision pose - this is the CAMERA position (Limelight uses meters)
