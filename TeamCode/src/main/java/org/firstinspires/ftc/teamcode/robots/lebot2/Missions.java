@@ -104,7 +104,7 @@ public class Missions implements TelemetryProvider {
 
     public static double NAVIGATION_TIMEOUT_SECONDS = 10.0;
     public static double INTAKE_TIMEOUT_SECONDS = 5.0;
-    public static double LAUNCH_TIMEOUT_SECONDS = 3.5;
+    public static double LAUNCH_TIMEOUT_SECONDS = 5;
     public static double PRESS_TIMEOUT_SECONDS = 2.0;
     public static double INTAKE_DRIVE_POWER = 0.23;  // Max power while driving through ball rows
 
@@ -1269,6 +1269,7 @@ public class Missions implements TelemetryProvider {
             case 1: return FieldMap.getPose(FieldMap.BALL_ROW_2_START, Robot.isRedAlliance);
             case 2: return FieldMap.getPose(FieldMap.BALL_ROW_3_START, Robot.isRedAlliance);
             case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_START, Robot.isRedAlliance);
+            case 4: return FieldMap.getPose(FieldMap.BALL_ROW_5_START, Robot.isRedAlliance);
             default: return FieldMap.getPose(FieldMap.BALL_ROW_1_START, Robot.isRedAlliance);
         }
     }
@@ -1279,6 +1280,7 @@ public class Missions implements TelemetryProvider {
             case 1: return FieldMap.getPose(FieldMap.BALL_ROW_2_END, Robot.isRedAlliance);
             case 2: return FieldMap.getPose(FieldMap.BALL_ROW_3_END, Robot.isRedAlliance);
             case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_END, Robot.isRedAlliance);
+            case 4: return FieldMap.getPose(FieldMap.BALL_ROW_5_END, Robot.isRedAlliance);
             default: return FieldMap.getPose(FieldMap.BALL_ROW_1_END, Robot.isRedAlliance);
         }
     }

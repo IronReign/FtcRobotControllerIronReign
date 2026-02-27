@@ -103,11 +103,13 @@ public class Launcher implements Subsystem {
     // Flywheel configuration
     public static double SPEED_MULTIPLIER = 1.0;    // Tunable fudge factor until speed formula is recalibrated
     public static double SPEED_MULTIPLIER_SHORT = 1.04;
-    public static double SPEED_MULTIPLIER_LONG = 1.2;
+    public static double SPEED_MULTIPLIER_LONG = 1.1;
     public static double MIN_LAUNCH_SPEED_AUDIENCE = 1080;
     public static double MIN_LAUNCH_SPEED_GOAL = 880;
     public static double MIN_LAUNCH_SPEED = 1080;   //720 <--old     // degrees/sec - hardcoded working speed from known position
     public static double SPEED_TOLERANCE = 10;      // degrees/sec margin for "at speed" check
+    public static double SPEED_TOLERANCE_SHORT = 10;
+    public static double SPEED_TOLERANCE_LONG = 15;
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
     public static double FLYWHEEL_IDLE_SPEED = 800;
 
@@ -551,10 +553,12 @@ public class Launcher implements Subsystem {
                 targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER_SHORT;
                 LAUNCH_SPACER_TIMER = .5;
                 LAUNCH_SPACER_TIMER_LAST = 1;
+                SPEED_TOLERANCE = SPEED_TOLERANCE_SHORT;
             }else{
                 targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER_LONG;
                 LAUNCH_SPACER_TIMER =.7;
                 LAUNCH_SPACER_TIMER_LAST = 1.2;
+                SPEED_TOLERANCE = SPEED_TOLERANCE_LONG;
             }
         } else {
             targetSpeed = MIN_LAUNCH_SPEED * SPEED_MULTIPLIER;
@@ -562,10 +566,16 @@ public class Launcher implements Subsystem {
     }
 
     public void shootShort(){
+        LAUNCH_SPACER_TIMER = .5;
+        LAUNCH_SPACER_TIMER_LAST = 1;
         MIN_LAUNCH_SPEED = MIN_LAUNCH_SPEED_GOAL;
+        SPEED_TOLERANCE = SPEED_TOLERANCE_SHORT;
     }
     public void shootLong(){
         MIN_LAUNCH_SPEED= MIN_LAUNCH_SPEED_AUDIENCE;
+        LAUNCH_SPACER_TIMER =.7;
+        LAUNCH_SPACER_TIMER_LAST = 1.2;
+        SPEED_TOLERANCE = SPEED_TOLERANCE_LONG;
     }
     private void handleSpinningUpState() {
 

@@ -156,8 +156,9 @@ public class DriverControls implements TelemetryProvider {
             robot.applyVisionPoseCorrection();
         }
 
-        // A button: Toggle turret tracking/locked
+        // A button: Toggle slow mode
         if (stickyGamepad1.a) {
+            slowMode = !slowMode;
 //            if (robot.turret.getBehavior() == Turret.Behavior.TRACKING) {
 //                robot.turret.setLocked();
 //            } else {
@@ -172,15 +173,16 @@ public class DriverControls implements TelemetryProvider {
             robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
         }
 
-        // D-pad up: Manual star advance
+        // D-pad up: shoot short settings for when vision fails
         if (stickyGamepad1.dpad_up) {
-            robot.launcher.changeStar();
+            robot.launcher.shootShort();
         }
 
-        // D-pad down: Toggle slow mode
+        // D-pad down: shoot long settings for when vision fails
         if (stickyGamepad1.dpad_down) {
+            robot.launcher.shootLong();
             //robot.turret.resetTurret();
-            slowMode = !slowMode;
+
         }
 
         // D-pad left: Simple intake on (not LOAD_ALL)
