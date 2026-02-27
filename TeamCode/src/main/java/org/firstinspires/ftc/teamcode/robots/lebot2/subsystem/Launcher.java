@@ -379,7 +379,7 @@ public class Launcher implements Subsystem {
             state = LaunchState.SPINNING_UP;
         }else if (behavior == Behavior.SPINNING && state == LaunchState.IDLE_SPIN) {
             // Start spinning
-            state = LaunchState.IDLE_SPIN;
+            state = LaunchState.SPINNING_UP;
         }
 //        else if(behavior == Behavior.SPINNING && state == LaunchState.MANUAL){
 //            state = LaunchState.MANUAL;

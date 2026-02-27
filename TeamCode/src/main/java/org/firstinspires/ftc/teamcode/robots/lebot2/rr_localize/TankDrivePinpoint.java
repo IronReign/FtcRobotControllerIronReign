@@ -128,6 +128,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public static double HEADING_TOLERANCE = 1.5; // degrees
 
     // ==================== VISION PID PARAMS ====================
+    public static PIDCoefficients VISION_PID_LONG = new PIDCoefficients(0.03, .01, .013);
     public static PIDCoefficients VISION_PID = new PIDCoefficients(0.022, 0.01, 0.013);
     public static double VISION_OFFSET = -2; // offset from center of target in LLResult x units
     public static double VISION_TOLERANCE = 2; // degrees of tx
@@ -472,19 +473,18 @@ public final class TankDrivePinpoint implements DriveTrainBase {
             return;
         }
 
-        if(vision.getDistanceToGoal() > 2.6){
-            setLongDistVisionPID();
-        }else{
-            setShortDistVisionPID();
-        }
-
         double tx = vision.getTx();
 
         // Negate tx so positive tx (target right) produces positive correction (turn right)
         visionPID.setInput(tx);
         visionPID.setSetpoint(VISION_OFFSET);
         visionPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
-        visionPID.setPID(VISION_PID);
+        if(vision.getDistanceToGoal() > 2.6){
+            visionPID.setPID(VISION_PID_LONG);
+        }else{
+            visionPID.setPID(VISION_PID);
+        }
+
 
         double correction = visionPID.performPID();
 
@@ -501,30 +501,6 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         setMotorPowers(0, 0);
         turnState = TurnState.IDLE;
         behavior = Behavior.MANUAL;
-    }
-
-    public void setShortDistVisionPID(){
-        VISION_PID = new PIDCoefficients(0.022, 0.01, 0.013);
-        visionPID = new PIDController(VISION_PID);
-        visionPID.setInputRange(-20, 20);
-        visionPID.setOutputRange(-1, 1);
-        visionPID.setIntegralCutIn(VISION_INTEGRAL_CUTIN);
-        visionPID.setContinuous(false);
-        visionPID.setTolerance(VISION_TOLERANCE/360*40); // degrees to percentage of input range
-        visionPID.setEmaAlpha(VISION_ALPHA);
-        visionPID.enable();
-    }
-
-    public void setLongDistVisionPID(){
-        VISION_PID = new PIDCoefficients(0.03, 0.01, 0.013);
-        visionPID = new PIDController(VISION_PID);
-        visionPID.setInputRange(-20, 20);
-        visionPID.setOutputRange(-1, 1);
-        visionPID.setIntegralCutIn(VISION_INTEGRAL_CUTIN);
-        visionPID.setContinuous(false);
-        visionPID.setTolerance(VISION_TOLERANCE/360*40); // degrees to percentage of input range
-        visionPID.setEmaAlpha(VISION_ALPHA);
-        visionPID.enable();
     }
 
     /**

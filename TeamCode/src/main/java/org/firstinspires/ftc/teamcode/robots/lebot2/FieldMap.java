@@ -125,8 +125,8 @@ public class FieldMap {
         //speed for audience start is 1100 and star feed .8
         //65, 16.8
         //OLD WAYPOINT
-        //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(64.7, 17.1, 168.2));
-        RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(58.7, 20.8, 139));
+        RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(64.7, 17.1, 168.2));
+        //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(58.7, 20.8, 139));
 
         //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(66, 6.5, 180));  // TODO: measure heading        //64.5,16.8,
         // GOAL: Near goal, facing goal
@@ -136,20 +136,20 @@ public class FieldMap {
         // Positions where robot stops to launch balls at goal
         // FIRE_1 X uses FIRE_1_BASE_X which can be offset via Dashboard
         //-------OLD WAYPOINTS-------
-//        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-14.1732-2, 15.748+2, 135));  // Base position, offset applied in get()
-//        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-31.7-OFFSET,16+OFFSET, 124.4));  // Fire from inside big triangle
-//        RED_WAYPOINTS.put("FIRE_3", new Waypoint(56.1, 18.9+AVOID_COLLISION_AUDIENCE, 168.8));  // TODO: measure
-//        RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.7, 17.1, 168.2));  //fire from back triangle
+        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-14.1732-2, 15.748+2, 135));  // Base position, offset applied in get()
+        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-31.7-OFFSET,16+OFFSET, 124.4));  // Fire from inside big triangle
+        RED_WAYPOINTS.put("FIRE_3", new Waypoint(56.1, 18.9+AVOID_COLLISION_AUDIENCE, 168.8));  // TODO: measure
+        RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.7, 17.1, 168.2));  //fire from back triangle
 
         //----firing points for goal auton-----
-        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-16.4, 19.5, 90));  // Base position, offset applied in get()
-        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-17.1, 17.1, 45));  // Fire from inside big triangle
-        RED_WAYPOINTS.put("FIRE_3", new Waypoint(-16.6, 17.1, 35));  // TODO: measure
-
-        //------firing points for audience auton--------
-        RED_WAYPOINTS.put("FIRE_4", new Waypoint(58.7, 20.8, 139));  //fire from back triangle
-        RED_WAYPOINTS.put("FIRE_5", new Waypoint(58.7, 21.5, 88));
-        RED_WAYPOINTS.put("FIRE_6", new Waypoint(58.7, 21.5, 88));
+//        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-16.4, 19.5, 90));  // Base position, offset applied in get()
+//        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-17.1, 17.1, 45));  // Fire from inside big triangle
+//        RED_WAYPOINTS.put("FIRE_3", new Waypoint(-16.6, 17.1, 35));  // TODO: measure
+//
+//        //------firing points for audience auton--------
+//        RED_WAYPOINTS.put("FIRE_4", new Waypoint(58.7, 20.8, 139));  //fire from back triangle
+//        RED_WAYPOINTS.put("FIRE_5", new Waypoint(58.7, 21.5, 88));
+//        RED_WAYPOINTS.put("FIRE_6", new Waypoint(58.7, 21.5, 88));
 
 
 
@@ -161,11 +161,11 @@ public class FieldMap {
         RED_WAYPOINTS.put("BALL_ROW_2_START", new Waypoint(10.2362, 25.9842, 90));
         RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456, 25.9842, 90));
 
-        //new waypoint for picking up ball in opposing human player area during auton
-        RED_WAYPOINTS.put("BALL_ROW_4_START", new Waypoint(60, 52.7, 88));
-        RED_WAYPOINTS.put("BALL_ROW_4_END", new Waypoint(60, 61+3, 88));
-        RED_WAYPOINTS.put("BALL_ROW_5_START", new Waypoint(10.2362, 25.9842, 90));
-        RED_WAYPOINTS.put("BALL_ROW_5_END", new Waypoint(10.2362, 46.8503+4.5-5, 90));
+//        //new waypoint for picking up ball in opposing human player area during auton
+//        RED_WAYPOINTS.put("BALL_ROW_4_START", new Waypoint(60, 52.7, 88));
+//        RED_WAYPOINTS.put("BALL_ROW_4_END", new Waypoint(60, 61+3, 88));
+//        RED_WAYPOINTS.put("BALL_ROW_5_START", new Waypoint(10.2362, 25.9842, 90));
+//        RED_WAYPOINTS.put("BALL_ROW_5_END", new Waypoint(10.2362, 46.8503+4.5-5, 90));
 
         // ----- Ball Row Endpoints -----
         // Ending points after driving through ball rows
