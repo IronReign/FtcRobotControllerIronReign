@@ -131,7 +131,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public static PIDCoefficients VISION_PID_LONG = new PIDCoefficients(0.03, .01, .013);
     public static PIDCoefficients VISION_PID = new PIDCoefficients(0.022, 0.01, 0.013);
     public static double VISION_OFFSET = 0; // offset from center of target in LLResult x units
-    public static double VISION_TOLERANCE = 2; // degrees of tx
+    public static double VISION_TOLERANCE = 1; // degrees of tx
     public static double VISION_INTEGRAL_CUTIN = 3.0; // degrees
     public static double VISION_ALPHA = .5; // EMA alpha for vision PID
 
