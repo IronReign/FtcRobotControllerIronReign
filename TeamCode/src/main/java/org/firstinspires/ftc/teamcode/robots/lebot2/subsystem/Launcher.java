@@ -71,11 +71,11 @@ public class Launcher implements Subsystem {
         PADDLE,  // Original paddle with DOWN/UP positions
         GATE
     }
-    public static TriggerType TRIGGER_TYPE = TriggerType.STAR_POSE;
+    public static TriggerType TRIGGER_TYPE = TriggerType.GATE;
 
     //gate trigger positions
-    public static int GATE_CLOSE = 800;      ////TODO: measure
-     public static int GATE_OPEN = 1800;      ////TODO: measure
+    public static int GATE_CLOSE = 1900;      ////TODO: measure
+     public static int GATE_OPEN = 1300;      ////TODO: measure
 
     // Star trigger positions (continuous rotation servo)
     // 0.5 = stopped/idle, 1.0 = spinning to feed balls into flywheel
@@ -102,19 +102,17 @@ public class Launcher implements Subsystem {
 
     // Flywheel configuration
     public static double SPEED_MULTIPLIER = 1.0;    // Tunable fudge factor until speed formula is recalibrated
-    public static double SPEED_MULTIPLIER_SHORT = 1.04;
-    public static double SPEED_MULTIPLIER_LONG = 1.1;
     public static double MIN_LAUNCH_SPEED_AUDIENCE = 1080;
     public static double MIN_LAUNCH_SPEED_GOAL = 880;
     public static double MIN_LAUNCH_SPEED = 1080;   //720 <--old     // degrees/sec - hardcoded working speed from known position
-    public static double SPEED_TOLERANCE = 10;      // degrees/sec margin for "at speed" check
+    public static double SPEED_TOLERANCE = 5;      // degrees/sec margin for "at speed" check
     public static double SPEED_TOLERANCE_SHORT = 10;
     public static double SPEED_TOLERANCE_LONG = 15;
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
     public static double FLYWHEEL_IDLE_SPEED = 800;
 
     // Launch timing for TPU ramp design
-    public static double FIRING_TIME = 2.1;         // seconds to allow all 3 balls through at conveyor speed
+    public static double FIRING_TIME = 2.4;         // seconds to allow all 3 balls through at conveyor speed
     public static double LIFT_TIME = 0.3;           // seconds to hold LIFT position for last ball
 
     // Post-fire behavior
@@ -166,6 +164,7 @@ public class Launcher implements Subsystem {
         MANUAL          // Manual control for testing
     }
     private LaunchState state = LaunchState.IDLE;
+    public boolean intakeHelp = false;
 
     // State data
     private double targetSpeed = MIN_LAUNCH_SPEED;
@@ -422,6 +421,7 @@ public class Launcher implements Subsystem {
 //                break;
 //        }
         // Run simplified state machine for TPU ramp design
+        targetSpeed = MIN_LAUNCH_SPEED;
         switch(state) {
             case IDLE_SPIN:
                 handleIdleSpinState();
@@ -526,6 +526,7 @@ public class Launcher implements Subsystem {
      * IDLE: Flywheel off, paddle in CUP position.
      */
     private void handleIdleState() {
+        intakeHelp = false;
         releaseResources();
         flywheel.setVelocity(0);
         flywheelHelp.setVelocity(0);
@@ -549,17 +550,18 @@ public class Launcher implements Subsystem {
      */
     public void updateTargetSpeed(){
         if (vision != null && vision.hasBotPose()) {
-            if(vision.getDistanceToGoal() < 2.6){
-                targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER_SHORT;
-                LAUNCH_SPACER_TIMER = .5;
-                LAUNCH_SPACER_TIMER_LAST = 1;
-                SPEED_TOLERANCE = SPEED_TOLERANCE_SHORT;
-            }else{
-                targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER_LONG;
-                LAUNCH_SPACER_TIMER =.7;
-                LAUNCH_SPACER_TIMER_LAST = 1.2;
-                SPEED_TOLERANCE = SPEED_TOLERANCE_LONG;
-            }
+            targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER;
+//            if(vision.getDistanceToGoal() < 2.6){
+//                targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER_SHORT;
+//                LAUNCH_SPACER_TIMER = .5;
+//                LAUNCH_SPACER_TIMER_LAST = 1;
+//                SPEED_TOLERANCE = SPEED_TOLERANCE_SHORT;
+//            }else{
+//                targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER_LONG;
+//                LAUNCH_SPACER_TIMER =.7;
+//                LAUNCH_SPACER_TIMER_LAST = 1.2;
+//                SPEED_TOLERANCE = SPEED_TOLERANCE_LONG;
+//            }
         } else {
             targetSpeed = MIN_LAUNCH_SPEED * SPEED_MULTIPLIER;
         }
@@ -573,7 +575,7 @@ public class Launcher implements Subsystem {
     }
     public void shootLong(){
         MIN_LAUNCH_SPEED= MIN_LAUNCH_SPEED_AUDIENCE;
-        LAUNCH_SPACER_TIMER =.7;
+        LAUNCH_SPACER_TIMER =.5;
         LAUNCH_SPACER_TIMER_LAST = 1.2;
         SPEED_TOLERANCE = SPEED_TOLERANCE_LONG;
     }
@@ -600,7 +602,8 @@ public class Launcher implements Subsystem {
     private void handleReadyState() {
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        setPaddlePosition(getTriggerIdlePosition());
+        //setPaddlePosition(getTriggerIdlePosition());
+        //setPaddlePosition(getTriggerFiringPosition());
 
         if (fireRequested) {
             shotNumber++;
@@ -608,13 +611,14 @@ public class Launcher implements Subsystem {
             fireRequested = false;
 
             // Claim resources and start firing
-            claimResources();
+            //claimResources();
             state = LaunchState.FIRING;
             stateTimer = futureTime(FIRING_TIME);
-            if (TRIGGER_TYPE == TriggerType.STAR_POSE) {
-                STAR_FIRED = 0;  // Reset to REST before firing sequence
-            }
             launchSpacerTimer = futureTime(LAUNCH_SPACER_TIMER);
+//            if (TRIGGER_TYPE == TriggerType.STAR_POSE) {
+//                STAR_FIRED = 0;  // Reset to REST before firing sequence
+//            }
+//            launchSpacerTimer = futureTime(LAUNCH_SPACER_TIMER);
         }
     }
 
@@ -625,6 +629,13 @@ public class Launcher implements Subsystem {
     private void handleFiringState() {
         flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
+
+        if(isPast(launchSpacerTimer)){
+            intakeHelp = true;
+        }
+        if(intakeHelp){
+            claimResources();
+        }
 
         // STAR_POSE: step through discrete positions when spacer timer elapsed AND flywheel at speed
         // Both conditions required: timer gives conveyor time to load, speed check ensures
@@ -676,6 +687,7 @@ public class Launcher implements Subsystem {
      * COMPLETE: Firing sequence done. Transition based on STAY_SPINNING_AFTER_FIRE.
      */
     private void handleCompleteState() {
+        intakeHelp = false;
         releaseResources();
         setPaddlePosition(getTriggerIdlePosition());
 

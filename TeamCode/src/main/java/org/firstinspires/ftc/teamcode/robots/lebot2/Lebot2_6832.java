@@ -158,8 +158,8 @@ public class Lebot2_6832 extends OpMode {
         // Initialize autonomous if starting in autonomous mode
         if (gameState.isAutonomous()) {
             autonomous.init();
+            robot.turret.resetTurret();
         } else {
-            robot.launcher.LAUNCH_SPACER_TIMER = .6;
             // maybe speed multiplier for teleop .98
             // If starting in TeleOp, ensure manual control
             robot.setBehavior(Robot.Behavior.MANUAL);
@@ -240,12 +240,7 @@ public class Lebot2_6832 extends OpMode {
     private void handleAutonomous(TelemetryPacket packet) {
         // TODO: Implement autonomous routines
         // For now, just run a simple test sequence
-        if(autonomous.oldRobot){
-            autonomous.execute();
-        }else{
-            autonomous.execute2();
-        }
-
+        autonomous.execute2();
 
         // Auto-transition to TeleOp after 30 seconds
         long elapsed = System.currentTimeMillis() - startTime;

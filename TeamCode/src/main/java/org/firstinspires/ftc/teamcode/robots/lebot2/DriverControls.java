@@ -35,6 +35,7 @@ import java.util.Map;
 public class DriverControls implements TelemetryProvider {
 
     // Configuration
+    public static double THROTTLE_DAMPENER = .7;
     public static double DRIVE_DAMPENER = 1;
     public static double SLOW_MODE_DAMPENER = 0.3;
     public static boolean slowMode = false;
@@ -87,7 +88,7 @@ public class DriverControls implements TelemetryProvider {
         }else {
 
             // Get drive inputs
-            double throttle = -gamepad1.left_stick_y;
+            double throttle = -gamepad1.left_stick_y*THROTTLE_DAMPENER;
             double turn = gamepad1.right_stick_x;
 
             // Abort any running mission if driver provides significant input
@@ -127,12 +128,12 @@ public class DriverControls implements TelemetryProvider {
             robot.launcher.setBehavior(Launcher.Behavior.IDLE);
             robot.intake.off();
             robot.loader.releaseBelt();
-            robot.turret.setLocked();
+            //robot.turret.setLocked();
         }
 
         if(stickyGamepad1.x){
             robot.launcher.requestManual();
-            robot.launcher.updateTargetSpeed();  // Get vision-based speed (or MIN if no vision)
+            //robot.launcher.updateTargetSpeed();  // Get vision-based speed (or MIN if no vision)
             robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
         }
 
@@ -152,7 +153,8 @@ public class DriverControls implements TelemetryProvider {
         // DriveTrain queries Vision directly for continuous tx updates
         // Driver can override with joystick if needed
         if (stickyGamepad1.y) {
-            robot.driveTrain.centerOnTarget();
+            robot.turret.setTracking();
+            //robot.driveTrain.centerOnTarget();
             robot.applyVisionPoseCorrection();
         }
 
@@ -162,7 +164,7 @@ public class DriverControls implements TelemetryProvider {
 //            if (robot.turret.getBehavior() == Turret.Behavior.TRACKING) {
 //                robot.turret.setLocked();
 //            } else {
-//                robot.turret.setTracking();
+//
 //            }
         }
 
@@ -175,12 +177,12 @@ public class DriverControls implements TelemetryProvider {
 
         // D-pad up: shoot short settings for when vision fails
         if (stickyGamepad1.dpad_up) {
-            robot.launcher.shootShort();
+            //robot.launcher.shootShort();
         }
 
         // D-pad down: shoot long settings for when vision fails
         if (stickyGamepad1.dpad_down) {
-            robot.launcher.shootLong();
+            //robot.launcher.shootLong();
             //robot.turret.resetTurret();
 
         }
@@ -394,16 +396,16 @@ public class DriverControls implements TelemetryProvider {
     }
 
     private void handlePipeline(){
-        if(stickyGamepad1.dpad_up){
-            if(robot.vision.PIPELINE >= 2){
-                robot.vision.PIPELINE=0;
-                robot.vision.setLimelightEnvironment();
-                return;
-            }
-            robot.vision.PIPELINE++;
-            robot.vision.setLimelightEnvironment();
-            return;
-        }
+//        if(stickyGamepad1.dpad_up){
+//            if(robot.vision.PIPELINE >= 2){
+//                robot.vision.PIPELINE=0;
+//                robot.vision.setLimelightEnvironment();
+//                return;
+//            }
+//            robot.vision.PIPELINE++;
+//            robot.vision.setLimelightEnvironment();
+//            return;
+//        }
     }
 
     @Override

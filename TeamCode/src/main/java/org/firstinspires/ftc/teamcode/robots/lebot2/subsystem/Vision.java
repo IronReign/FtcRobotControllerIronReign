@@ -57,11 +57,11 @@ public class Vision implements Subsystem {
     public static int PIPELINE = 0;
     // Pipeline configuration
     public enum Pipeline {
-        LOW(0),
-        MEDIUM(1),
+//        LOW(0),
+//        MEDIUM(1),
         HIGH(2),
-//        BLUE(0),      // Only recognizes blue goal (Tag 20)
-//        RED(1),       // Only recognizes red goal (Tag 24)
+        BLUE(0),      // Only recognizes blue goal (Tag 20)
+        RED(1),       // Only recognizes red goal (Tag 24)
 //        GOALS(2),     // Either goal recognized
         OBELISK(3),   // Detects Tags 21-23 on the randomization obelisk
         DECODE(4);    // All DECODE season AprilTags - for vision lock tuning
@@ -79,7 +79,7 @@ public class Vision implements Subsystem {
 
     // State
     private boolean isRedAlliance = true;
-    private Pipeline currentPipeline = Pipeline.MEDIUM;
+    private Pipeline currentPipeline = Pipeline.RED;
     private boolean hasValidTarget = false;
     private boolean hasBotPose = false;
     private double tx = 0;  // Horizontal offset (degrees) - for aiming
@@ -138,7 +138,8 @@ public class Vision implements Subsystem {
     }
 
     public double getFlywheelSpeed(){
-        double speed = -15.83315*Math.pow(distanceToGoal,4) + 168.95435*Math.pow(distanceToGoal,3) - 622.59954*Math.pow(distanceToGoal,2) + 1041.48259*Math.pow(distanceToGoal,1) + 231.79346;
+        double speed = 126.58655*(distanceToGoal) + 873.71537;
+        // double speed = -15.83315*Math.pow(distanceToGoal,4) + 168.95435*Math.pow(distanceToGoal,3) - 622.59954*Math.pow(distanceToGoal,2) + 1041.48259*Math.pow(distanceToGoal,1) + 231.79346;
         //double speed = 31.58941*Math.pow(distanceToGoal,4) - 193.20612*Math.pow(distanceToGoal,3) + 422.84196*Math.pow(distanceToGoal,2) - 251.80393*distanceToGoal + 701.34893;
         return speed*FLYWHEEL_SPEED_MULTIPLIER;
     }
@@ -449,17 +450,17 @@ public class Vision implements Subsystem {
      */
     public void setAlliance(boolean isRed) {
         isRedAlliance = isRed;
-        //currentPipeline = isRed ? Pipeline.RED : Pipeline.BLUE;
-        //limelight.pipelineSwitch(currentPipeline.id);
+        currentPipeline = isRed ? Pipeline.RED : Pipeline.BLUE;
+        limelight.pipelineSwitch(currentPipeline.id);
     }
 
     public void setLimelightEnvironment(){
         switch (PIPELINE){
             case(0):
-                currentPipeline = Pipeline.LOW;
+                currentPipeline = Pipeline.BLUE;
                 break;
             case(1):
-                currentPipeline = Pipeline.MEDIUM;
+                currentPipeline = Pipeline.RED;
                 break;
             case(2) :
                 currentPipeline = Pipeline.HIGH;
@@ -492,6 +493,13 @@ public class Vision implements Subsystem {
     public Pipeline getCurrentPipeline() {
         return currentPipeline;
     }
+//    public void getID(){
+//        LLResult llResult= limelight.getLatestResult();
+//        int id = -1;
+//        if(llResult != null){
+//            id = llResult.
+//        }
+//    }
     public String hasVision(){
         return (hasBotPose ? "YES" : "no");
     }

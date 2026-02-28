@@ -104,6 +104,8 @@ public class Missions implements TelemetryProvider {
 
     public static double NAVIGATION_TIMEOUT_SECONDS = 10.0;
     public static double INTAKE_TIMEOUT_SECONDS = 5.0;
+    public static double INTAKE_BALL_ROW_TIME = 0;
+    public static double INTAKE_BALL_ROW_4_TIME = 2;
     public static double LAUNCH_TIMEOUT_SECONDS = 5;
     public static double PRESS_TIMEOUT_SECONDS = 2.0;
     public static double INTAKE_DRIVE_POWER = 0.23;  // Max power while driving through ball rows
@@ -151,6 +153,7 @@ public class Missions implements TelemetryProvider {
         IDLE,
         NAVIGATING_TO_ROW_START,
         INTAKING_THROUGH_ROW,
+        INTAKING_PAUSE,     //<--if ball row 4 and need to sit and intake balls at spot
         COMPLETE
     }
     private BallGroupState ballGroupState = BallGroupState.IDLE;
@@ -466,7 +469,11 @@ public class Missions implements TelemetryProvider {
 
         // Calculate optimal direction based on current heading
         Pose2d currentPose = robot.driveTrain.getPose();
-        Pose2d firePose = getFirePose(Math.max(1, Math.min(4, firePosition)));
+        //new robot
+        Pose2d firePose = getFirePose(Math.max(1, Math.min(6, firePosition)));
+        //old robot
+        //Pose2d firePose = getFirePose(Math.max(1, Math.min(4, firePosition)));
+
         boolean useReverse = shouldDriveReversed(currentPose, firePose);
 
         startNavigateToFire(firePosition, useReverse);
@@ -572,7 +579,10 @@ public class Missions implements TelemetryProvider {
         if (!prepareForNewMission()) {
             return;
         }
-        targetGroupIndex = Math.max(0, Math.min(4, groupIndex));
+        //for new robot
+        //targetGroupIndex = Math.max(0, Math.min(4, groupIndex));
+        //for old robot
+        targetGroupIndex = Math.max(0, Math.min(2, groupIndex));
         currentMission = Mission.BALL_GROUP;
         missionState = MissionState.RUNNING;
         ballGroupState = BallGroupState.IDLE;
@@ -1035,7 +1045,7 @@ public class Missions implements TelemetryProvider {
 
         switch (navToFireState) {
             case IDLE:
-                TankDriveActions.MAX_DRIVE_POWER = .9;
+                TankDriveActions.MAX_DRIVE_POWER = .5;
 
                 // Get target pose - either from waypoint name or fire position
                 Pose2d firePose;
@@ -1239,13 +1249,36 @@ public class Missions implements TelemetryProvider {
                     Action intakeTrajectory = actions.driveTo(targetRowEnd, INTAKE_DRIVE_POWER);
                     driveTrain.runAction(intakeTrajectory, actions.getLastTargetPosition());
                     ballGroupState = BallGroupState.INTAKING_THROUGH_ROW;
+
                 }
                 break;
 
             case INTAKING_THROUGH_ROW:
                 // Drive through the full row while intaking — stop only when trajectory completes
                 if (!driveTrain.isActionRunning()) {
-                    TankDriveActions.MAX_DRIVE_POWER = .9;
+                    //for new robot/robot intaking row 4
+                    missionTimer.reset();
+                    ballGroupState = BallGroupState.INTAKING_PAUSE;
+//                    if(missionTimer.seconds()>INTAKE_BALL_ROW_TIME) {
+//                        TankDriveActions.MAX_DRIVE_POWER = .9;
+//                        int ballsCollected = robot.loader.getBallCount() - ballCountAtStart;
+//                        log("BALLGROUP_INTAKE_DONE", "trajectory_done,balls=" + ballsCollected, null);
+//                        robot.driveTrain.drive(0, 0, 0);
+//                        robot.intake.off();
+//                        robot.loader.releaseBeltFromIntake();
+//                        ballGroupState = BallGroupState.COMPLETE;
+//                    }
+                }
+                break;
+
+            case INTAKING_PAUSE:
+                if(targetGroupIndex == 3){
+                    INTAKE_BALL_ROW_TIME = INTAKE_BALL_ROW_4_TIME;
+                }else{
+                    INTAKE_BALL_ROW_TIME = 0;
+                }
+                if(missionTimer.seconds()>INTAKE_BALL_ROW_TIME) {
+                    TankDriveActions.MAX_DRIVE_POWER = .5;
                     int ballsCollected = robot.loader.getBallCount() - ballCountAtStart;
                     log("BALLGROUP_INTAKE_DONE", "trajectory_done,balls=" + ballsCollected, null);
                     robot.driveTrain.drive(0, 0, 0);
@@ -1268,8 +1301,8 @@ public class Missions implements TelemetryProvider {
             case 0: return FieldMap.getPose(FieldMap.BALL_ROW_1_START, Robot.isRedAlliance);
             case 1: return FieldMap.getPose(FieldMap.BALL_ROW_2_START, Robot.isRedAlliance);
             case 2: return FieldMap.getPose(FieldMap.BALL_ROW_3_START, Robot.isRedAlliance);
-            case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_START, Robot.isRedAlliance);
-            case 4: return FieldMap.getPose(FieldMap.BALL_ROW_5_START, Robot.isRedAlliance);
+            //case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_START, Robot.isRedAlliance);
+            //case 4: return FieldMap.getPose(FieldMap.BALL_ROW_5_START, Robot.isRedAlliance);
             default: return FieldMap.getPose(FieldMap.BALL_ROW_1_START, Robot.isRedAlliance);
         }
     }
@@ -1279,8 +1312,8 @@ public class Missions implements TelemetryProvider {
             case 0: return FieldMap.getPose(FieldMap.BALL_ROW_1_END, Robot.isRedAlliance);
             case 1: return FieldMap.getPose(FieldMap.BALL_ROW_2_END, Robot.isRedAlliance);
             case 2: return FieldMap.getPose(FieldMap.BALL_ROW_3_END, Robot.isRedAlliance);
-            case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_END, Robot.isRedAlliance);
-            case 4: return FieldMap.getPose(FieldMap.BALL_ROW_5_END, Robot.isRedAlliance);
+            //case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_END, Robot.isRedAlliance);
+            //case 4: return FieldMap.getPose(FieldMap.BALL_ROW_5_END, Robot.isRedAlliance);
             default: return FieldMap.getPose(FieldMap.BALL_ROW_1_END, Robot.isRedAlliance);
         }
     }

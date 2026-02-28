@@ -40,7 +40,7 @@ import java.util.Map;
 @Config(value = "Lebot2_Autonomous")
 public class Autonomous implements TelemetryProvider {
 
-    public static boolean oldRobot = true;
+    public static boolean oldRobot = false;
 
     private final Robot robot;
 
@@ -118,7 +118,7 @@ public class Autonomous implements TelemetryProvider {
     // ==================== PROGRESS TRACKING ====================
 
     private ElapsedTime autonTimer = new ElapsedTime();
-    private int currentRow = 0;      // 0, 1, 2, 3 for rows 1, 2, 3, 4(<-- aka human player area), 5(<--same as row 3 but so that audience auton can get leave)
+    private int currentRow = 0;      // 0, 1, 2, 3 for rows 1, 2, 3, 4(<-- aka human player area), 5(<--same as row 2 but so that audience auton can get leave)
     private int rowsCompleted = 0;   // Count of completed rows (for selective abort)
     private int launchCycles = 0;
     private boolean gateReleased = false;
@@ -144,6 +144,8 @@ public class Autonomous implements TelemetryProvider {
         // Reset mission progress
         robot.missions.resetGroupProgress();
         robot.missions.clearState();
+        robot.turret.resetTurret();
+        FieldMap.BALL_ROW_BLUE_X_OFFSET =0;
 
         // Set strategy parameters based on starting position
         if (robot.getStartingPosition() != Robot.StartingPosition.AUDIENCE) {
@@ -175,13 +177,13 @@ public class Autonomous implements TelemetryProvider {
         rowsCompleted = 0;
         launchCycles = 0;
         gateReleased = false;
-        robot.launcher.LAUNCH_SPACER_TIMER = AUTON_LAUNCH_SPACER_TIME;
+        //robot.launcher.LAUNCH_SPACER_TIMER = AUTON_LAUNCH_SPACER_TIME;
 
-        if(robot.isRedAlliance){
-            ((TankDrivePinpoint)robot.driveTrain).VISION_OFFSET = -1*Math.abs(((TankDrivePinpoint)robot.driveTrain).VISION_OFFSET);
-        }else{
-            ((TankDrivePinpoint)robot.driveTrain).VISION_OFFSET = Math.abs(((TankDrivePinpoint)robot.driveTrain).VISION_OFFSET);
-        }
+//        if(robot.isRedAlliance){
+//            ((TankDrivePinpoint)robot.driveTrain).VISION_OFFSET = -1*Math.abs(((TankDrivePinpoint)robot.driveTrain).VISION_OFFSET);
+//        }else{
+//            ((TankDrivePinpoint)robot.driveTrain).VISION_OFFSET = Math.abs(((TankDrivePinpoint)robot.driveTrain).VISION_OFFSET);
+//        }
 
         // Set robot starting pose based on configured start position
         // (FieldMap.IS_AUDIENCE_START is already set by Robot.setStartingPosition during init_loop)
@@ -202,11 +204,7 @@ public class Autonomous implements TelemetryProvider {
             // Initialize mission logging with same timestamp
             robot.missions.initLogging();
         }
-        if(!oldRobot){
-            FieldMap.BALL_ROW_BLUE_X_OFFSET =0;
-            ROW_DIRECTION = 1;
-            ROW_END = 4;
-        }
+
     }
 
     // ==================== MAIN EXECUTE ====================
@@ -302,9 +300,7 @@ public class Autonomous implements TelemetryProvider {
                     launchCycles++;
                     robot.applyVisionPoseCorrection();
                     robot.launcher.setBehavior(Launcher.Behavior.IDLE);
-                    if(!FieldMap.IS_AUDIENCE_START){
-                        FIRE_POSITION++;
-                    }
+                    FIRE_POSITION++;
                     setState(AutonState.START_BALL_ROW);
                 }
                 break;
@@ -342,7 +338,7 @@ public class Autonomous implements TelemetryProvider {
                 if (robot.missions.isComplete()) {
                     log("BALL_ROW_COMPLETE", "row=" + currentRow);
                     rowsCompleted++;
-                    currentRow ++;
+                    currentRow += ROW_DIRECTION;
 //                    if (timeRemaining < MIN_TIME_FOR_ROW && FieldMap.IS_AUDIENCE_START) {
 //                        log("TIME_SKIP_ROW", "remaining=" + String.format("%.1f", timeRemaining));
 //                        setState(AutonState.COMPLETE);
