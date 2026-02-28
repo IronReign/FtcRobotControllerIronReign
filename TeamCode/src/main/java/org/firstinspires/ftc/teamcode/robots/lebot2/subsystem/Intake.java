@@ -36,12 +36,13 @@ import java.util.Map;
 public class Intake implements Subsystem {
 
     // Hardware (wrapped for three-phase pattern)
-    private final LazyMotor intakeMotor;
+    //private final LazyMotor intakeMotor;
 
     // Configuration
     public static double INTAKE_POWER = 1.0;
     public static double LAUNCH_ASSIST_POWER = 1.0; // Reduced speed to help feed during launch
     public static double LAUNCH_ASSIST_DURATION_MS = 1000; // How long to assist before auto-stopping
+    public static double LOAD_ALL_DURATION_MS = 5000;
     public static double EJECT_POWER = -0.5; // Reverse to push balls out
 
     // Behavior state machine
@@ -56,6 +57,7 @@ public class Intake implements Subsystem {
 
     // Launch-assist timing
     private long launchAssistStartMs = 0;
+    private long loadAllMs = 0;
 
     // Reference to Loader for LOAD_ALL completion check
     private Loader loader = null;
@@ -64,9 +66,9 @@ public class Intake implements Subsystem {
     private double currentPower = 0;
 
     public Intake(HardwareMap hardwareMap) {
-        intakeMotor = new LazyMotor(hardwareMap, "intake");
-        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        intakeMotor = new LazyMotor(hardwareMap, "intake");
+//        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
     /**
@@ -90,26 +92,37 @@ public class Intake implements Subsystem {
         // Run behavior state machine
         switch (behavior) {
             case OFF:
-                currentPower = 0;
+                loader.releaseBeltFromIntake();
+                //currentPower = 0;
                 break;
 
             case INTAKE:
-                currentPower = INTAKE_POWER;
+                loader.requestBeltForIntake();
+                //currentPower = INTAKE_POWER;
                 break;
 
             case LOAD_ALL:
-                if (loader != null && loader.isFull()) {
-                    // Auto-complete: loader is full
+                if (System.currentTimeMillis() - loadAllMs >= LOAD_ALL_DURATION_MS) {
                     behavior = Behavior.OFF;
                     currentPower = 0;
                     loader.releaseBeltFromIntake();
                 } else {
-                    currentPower = INTAKE_POWER;
+                    loader.requestBeltForIntake();
                 }
                 break;
+//                if (loader != null && loader.isFull()) {
+//                    // Auto-complete: loader is full
+//                    behavior = Behavior.OFF;
+//                    //currentPower = 0;
+//                    loader.releaseBeltFromIntake();
+//                } else {
+//                    loader.requestBeltForIntake();
+//                    //currentPower = INTAKE_POWER;
+//                }
+//                break;
 
             case EJECT:
-                currentPower = EJECT_POWER;
+                //currentPower = EJECT_POWER;
                 break;
 
             case LAUNCH_ASSIST:
@@ -117,19 +130,20 @@ public class Intake implements Subsystem {
                     behavior = Behavior.OFF;
                     currentPower = 0;
                 } else {
+                    loader.claimBeltForLauncher();
                     currentPower = LAUNCH_ASSIST_POWER;
                 }
                 break;
         }
 
         // Queue power for Phase 3
-        intakeMotor.setPower(currentPower);
+        //intakeMotor.setPower(currentPower);
     }
 
     @Override
     public void act() {
         // Flush motor command to hardware
-        intakeMotor.flush();
+        //intakeMotor.flush();
     }
 
     // ==================== BEHAVIOR CONTROL ====================
@@ -169,6 +183,7 @@ public class Intake implements Subsystem {
      */
     public void loadAll() {
         behavior = Behavior.LOAD_ALL;
+        loadAllMs = System.currentTimeMillis();
     }
 
     /**
@@ -203,14 +218,15 @@ public class Intake implements Subsystem {
      * Only enable during health checks — adds I2C overhead.
      */
     public void enableCurrentRead(boolean enabled) {
-        intakeMotor.enableCurrentRead(enabled);
+        //intakeMotor.enableCurrentRead(enabled);
     }
 
     /**
      * Get cached motor current (amps). Requires enableCurrentRead(true).
      */
     public double getMotorCurrent() {
-        return intakeMotor.getCurrent();
+        //return intakeMotor.getCurrent();
+        return -1;
     }
 
     // ==================== LAUNCH ASSIST (called by Launcher) ====================
@@ -239,7 +255,7 @@ public class Intake implements Subsystem {
     public void stop() {
         behavior = Behavior.OFF;
         currentPower = 0;
-        intakeMotor.stop();  // Immediate stop, bypasses lazy pattern
+        //intakeMotor.stop();  // Immediate stop, bypasses lazy pattern
     }
 
     @Override
