@@ -285,13 +285,13 @@ public class Autonomous implements TelemetryProvider {
                 if (robot.missions.isComplete()) {
                     log("LAUNCH_COMPLETE", null);
                     launchCycles++;
-                    robot.applyVisionPoseCorrection();
+                    //robot.applyVisionPoseCorrection();
                     // Power down flywheel during ball collection to conserve power
                     robot.launcher.setBehavior(Launcher.Behavior.IDLE);
 //                    if(robot.getStartingPosition() == Robot.StartingPosition.AUDIENCE){
 //                        setState(AutonState.START_RETURN_TO_FIRE);
 //                    } else {
-                    FIRE_POSITION++;
+                    //FIRE_POSITION++;
 
                     setState(AutonState.START_BALL_ROW);
                     //}
@@ -300,7 +300,7 @@ public class Autonomous implements TelemetryProvider {
                     launchCycles++;
                     robot.applyVisionPoseCorrection();
                     robot.launcher.setBehavior(Launcher.Behavior.IDLE);
-                    FIRE_POSITION++;
+                    //FIRE_POSITION++;
                     setState(AutonState.START_BALL_ROW);
                 }
                 break;

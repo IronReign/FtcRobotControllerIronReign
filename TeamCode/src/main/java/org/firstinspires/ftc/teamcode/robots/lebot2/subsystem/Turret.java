@@ -27,7 +27,7 @@ public class Turret implements Subsystem {
     public static double LOST_VISION_TIME = .2;
 
     private ElapsedTime lockedVisionTimer = new ElapsedTime();
-    public static double LOCKED_VISION_TIME = .2;
+    public static double LOCKED_VISION_TIME = .1;
 
     public static double LAUNCH_TOLERANCE = 1;
     public boolean readyToLaunch = false;
@@ -41,6 +41,7 @@ public class Turret implements Subsystem {
     public static int TURRET_CENTER_TICKS = 0;
     public static int FULL_ROTATION_TICKS = 2820;
     public static double DEGREES_FOR_ROTATION = 360;
+    public static double FALL_BACK_TURN = 35;       //CCW RED
     public static int CW_LIMIT_TICKS = -705;     // placeholder - calibrate on robot
     public static int CCW_LIMIT_TICKS = 705;    // placeholder - calibrate on robot
     public static double TICKS_PER_DEGREE = FULL_ROTATION_TICKS / DEGREES_FOR_ROTATION;
@@ -159,6 +160,7 @@ public class Turret implements Subsystem {
 
         } else { // TRACKING
             if((lostVisionTimer.seconds() > LOST_VISION_TIME && (vision != null && !vision.hasTarget())) || vision == null){
+                //stagedPower =0;
                 if (driveTrain != null) {
                     // Pose-based bearing fallback
                     Pose2d currentPose = driveTrain.getPose();
@@ -241,19 +243,19 @@ public class Turret implements Subsystem {
             }else{
                 if (driveTrain != null) {
                     // Pose-based bearing fallback
-                    Pose2d currentPose = driveTrain.getPose();
-                    Pose2d goalPose = FieldMap.getPose(FieldMap.GOAL, Robot.isRedAlliance);
-                    double bearingRad = FieldMap.bearingTo(currentPose, goalPose);
-                    double chassisRad = currentPose.heading.toDouble();
-                    double desiredTurretDeg = normalizeDeg(Math.toDegrees(bearingRad - chassisRad));
-
-                    // Clamp target to mechanical limits
-                    double clampedTarget = clampToLimits(desiredTurretDeg);
-                    phase = (clampedTarget != desiredTurretDeg) ? TargetingPhase.AT_LIMIT : TargetingPhase.POSE_SEEKING;
-
-                    turretPID.setSetpoint(clampedTarget);
-                    turretPID.setInput(turretAngleDeg);
-                    stagedPower = turretPID.performPID();
+//                    Pose2d currentPose = driveTrain.getPose();
+//                    Pose2d goalPose = FieldMap.getPose(FieldMap.GOAL, Robot.isRedAlliance);
+//                    double bearingRad = FieldMap.bearingTo(currentPose, goalPose);
+//                    double chassisRad = currentPose.heading.toDouble();
+//                    double desiredTurretDeg = normalizeDeg(Math.toDegrees(bearingRad - chassisRad));
+//
+//                    // Clamp target to mechanical limits
+//                    double clampedTarget = clampToLimits(desiredTurretDeg);
+//                    phase = (clampedTarget != desiredTurretDeg) ? TargetingPhase.AT_LIMIT : TargetingPhase.POSE_SEEKING;
+//
+//                    turretPID.setSetpoint(clampedTarget);
+//                    turretPID.setInput(turretAngleDeg);
+//                    stagedPower = turretPID.performPID();
 
                 }
             }
