@@ -101,9 +101,9 @@ public class Launcher implements Subsystem {
     public static double PADDLE_PASS = 0.53;
 
     // Flywheel configuration
-    public static double SPEED_MULTIPLIER = 1.0;    // Tunable fudge factor until speed formula is recalibrated
-    public static double MIN_LAUNCH_SPEED_AUDIENCE = 1080;
-    public static double MIN_LAUNCH_SPEED_GOAL = 880;
+    public static double SPEED_MULTIPLIER = .9;    // Tunable fudge factor until speed formula is recalibrated
+    public static double MIN_LAUNCH_SPEED_AUDIENCE = 1350;
+    public static double MIN_LAUNCH_SPEED_GOAL = 930;
     public static double MIN_LAUNCH_SPEED = 1080;   //720 <--old     // degrees/sec - hardcoded working speed from known position
     public static double SPEED_TOLERANCE = 5;      // degrees/sec margin for "at speed" check
     public static double SPEED_TOLERANCE_SHORT = 10;
@@ -363,6 +363,11 @@ public class Launcher implements Subsystem {
             }
         }
 
+        if(targetSpeed>1000){
+            SPEED_TOLERANCE=15;
+        }else{
+            SPEED_TOLERANCE=5;
+        }
         // Hardcode target speed until botpose/distance calculation is calibrated
         // TODO: Re-enable vision-based speed calculation once Limelight is working
         //targetSpeed = MIN_LAUNCH_SPEED;
@@ -421,7 +426,7 @@ public class Launcher implements Subsystem {
 //                break;
 //        }
         // Run simplified state machine for TPU ramp design
-        targetSpeed = MIN_LAUNCH_SPEED;
+        //targetSpeed = MIN_LAUNCH_SPEED;
         switch(state) {
             case IDLE_SPIN:
                 handleIdleSpinState();
@@ -563,7 +568,9 @@ public class Launcher implements Subsystem {
 //                SPEED_TOLERANCE = SPEED_TOLERANCE_LONG;
 //            }
         } else {
-            targetSpeed = MIN_LAUNCH_SPEED * SPEED_MULTIPLIER;
+           return;
+
+           // targetSpeed = MIN_LAUNCH_SPEED * SPEED_MULTIPLIER;
         }
     }
 

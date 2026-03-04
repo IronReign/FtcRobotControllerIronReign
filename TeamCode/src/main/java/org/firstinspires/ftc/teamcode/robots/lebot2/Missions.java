@@ -106,7 +106,7 @@ public class Missions implements TelemetryProvider {
     public static double INTAKE_TIMEOUT_SECONDS = 5.0;
     public static double INTAKE_BALL_ROW_TIME = 0;
     public static double INTAKE_BALL_ROW_4_TIME = 2;
-    public static double LAUNCH_TIMEOUT_SECONDS = 5;
+    public static double LAUNCH_TIMEOUT_SECONDS = 10;
     public static double PRESS_TIMEOUT_SECONDS = 2.0;
     public static double INTAKE_DRIVE_POWER = 0.23;  // Max power while driving through ball rows
 

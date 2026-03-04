@@ -36,7 +36,9 @@ public class DriverControls implements TelemetryProvider {
 
     // Configuration
     public static double THROTTLE_DAMPENER = .7;
-    public static double DRIVE_DAMPENER = 1;
+    public static double BACKWARD_DAMP = .4;
+    public static double FORWARD_DAMP = .9;
+    public static double DRIVE_DAMPENER = .7;
     public static double SLOW_MODE_DAMPENER = 0.3;
     public static boolean slowMode = false;
 
@@ -87,9 +89,16 @@ public class DriverControls implements TelemetryProvider {
             robot.driveTrain.drive(left,right,0);
         }else {
 
+
             // Get drive inputs
-            double throttle = -gamepad1.left_stick_y*THROTTLE_DAMPENER;
+            //double throttle = -gamepad1.left_stick_y*THROTTLE_DAMPENER;
+            if(-gamepad1.left_stick_y<0){
+                THROTTLE_DAMPENER = BACKWARD_DAMP;
+            }else{
+                THROTTLE_DAMPENER = FORWARD_DAMP;
+            }
             double turn = gamepad1.right_stick_x;
+            double throttle = -gamepad1.left_stick_y*THROTTLE_DAMPENER;
 
             // Abort any running mission if driver provides significant input
             if (robot.missions.isActive() && (Math.abs(throttle) > 0.1 || Math.abs(turn) > 0.1)) {
@@ -170,19 +179,21 @@ public class DriverControls implements TelemetryProvider {
 
         // Right bumper: Launch all balls in sequence
         if (stickyGamepad1.right_bumper) {
-            robot.driveTrain.centerOnTarget();
+            //robot.driveTrain.centerOnTarget();
+            robot.applyVisionPoseCorrection();
             robot.launcher.updateTargetSpeed();
             robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
         }
 
         // D-pad up: shoot short settings for when vision fails
-        if (stickyGamepad1.dpad_up) {
-            //robot.launcher.shootShort();
+        if (stickyGamepad1.dpad_down) {
+
+            robot.launcher.shootShort();
         }
 
         // D-pad down: shoot long settings for when vision fails
-        if (stickyGamepad1.dpad_down) {
-            //robot.launcher.shootLong();
+        if (stickyGamepad1.dpad_up) {
+            robot.launcher.shootLong();
             //robot.turret.resetTurret();
 
         }
@@ -196,11 +207,12 @@ public class DriverControls implements TelemetryProvider {
 
         // D-pad right: Eject balls
         if (stickyGamepad1.dpad_right) {
-            //robot.launcher.manualFire();
-            robot.intake.eject();         //bring back after manual test
-            // For eject, we use setBeltPower which claims as launcher priority
-            // Positive = eject forward
-            robot.loader.setBeltPower(0.5);       //bring back after manual test
+            robot.turret.setLocked();
+//            //robot.launcher.manualFire();
+//            robot.intake.eject();         //bring back after manual test
+//            // For eject, we use setBeltPower which claims as launcher priority
+//            // Positive = eject forward
+//            robot.loader.setBeltPower(0.5);       //bring back after manual test
         }
 
         // Guide button: Reset encoders and ball count
