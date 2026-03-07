@@ -136,13 +136,13 @@ public class Turret implements Subsystem {
         turretPID.setPID(TURRET_PID);
         turretPID.setOutputRange(-MAX_SPEED, MAX_SPEED);
 
-        if(Math.abs(vision.getTx()) < Math.abs(VISION_OFFSET)+LAUNCH_TOLERANCE){
+        if(vision != null && vision.hasTarget() &&
+                Math.abs(vision.getTx()) < Math.abs(VISION_OFFSET)+LAUNCH_TOLERANCE){
             if(lockedVisionTimer.seconds() > LOCKED_VISION_TIME){
                 readyToLaunch = true;
             }else{
                 readyToLaunch = false;
             }
-
         }else{
             readyToLaunch = false;
             lockedVisionTimer.reset();
@@ -190,56 +190,13 @@ public class Turret implements Subsystem {
                     stagedPower = turretPID.performPID();
 
                 } else {
-                    stagedPower = 0;
+                    // Past mechanical limits - PID back toward nearest limit
+                    phase = TargetingPhase.AT_LIMIT;
+                    double nearestLimit = (turretAngleDeg < 0) ? CW_LIMIT_DEG + BUFFER : CCW_LIMIT_DEG - BUFFER;
+                    turretPID.setSetpoint(nearestLimit);
+                    turretPID.setInput(turretAngleDeg);
+                    stagedPower = turretPID.performPID();
                 }
-////                    if(turretAngleDeg < 0){
-////                        turretPID.setSetpoint(CW_LIMIT_DEG);
-////                        turretPID.setInput(turretAngleDeg);
-////                        stagedPower = turretPID.performPID();
-////                    }else{
-////                        turretPID.setSetpoint(CCW_LIMIT_DEG);
-////                        turretPID.setInput(turretAngleDeg);
-////                        stagedPower = turretPID.performPID();
-////                    }
-////                    // Pose-based bearing fallback
-////                    Pose2d currentPose = driveTrain.getPose();
-////                    Pose2d goalPose = FieldMap.getPose(FieldMap.GOAL, Robot.isRedAlliance);
-////                    double bearingRad = FieldMap.bearingTo(currentPose, goalPose);
-////                    double chassisRad = currentPose.heading.toDouble();
-////                    double desiredTurretDeg = normalizeDeg(Math.toDegrees(bearingRad - chassisRad));
-////
-////                    // Clamp target to mechanical limits
-////                    double clampedTarget = clampToLimits(desiredTurretDeg);
-////                    phase = (clampedTarget != desiredTurretDeg) ? TargetingPhase.AT_LIMIT : TargetingPhase.POSE_SEEKING;
-////
-////                    turretPID.setSetpoint(clampedTarget);
-////                    turretPID.setInput(turretAngleDeg);
-////                    stagedPower = turretPID.performPID();
-//                }
-//            } else{
-//                stagedPower = 0;
-//                lostVisionTimer.reset();
-//            }
-//            else if (driveTrain != null) {
-//                // Pose-based bearing fallback
-//                Pose2d currentPose = driveTrain.getPose();
-//                Pose2d goalPose = FieldMap.getPose(FieldMap.GOAL, Robot.isRedAlliance);
-//                double bearingRad = FieldMap.bearingTo(currentPose, goalPose);
-//                double chassisRad = currentPose.heading.toDouble();
-//                double desiredTurretDeg = normalizeDeg(Math.toDegrees(bearingRad - chassisRad));
-//
-//                // Clamp target to mechanical limits
-//                double clampedTarget = clampToLimits(desiredTurretDeg);
-//                phase = (clampedTarget != desiredTurretDeg) ? TargetingPhase.AT_LIMIT : TargetingPhase.POSE_SEEKING;
-//
-//                turretPID.setSetpoint(clampedTarget);
-//                turretPID.setInput(turretAngleDeg);
-//                stagedPower = turretPID.performPID();
-//
-//            } else {
-//                // No vision, no drivetrain - hold position
-//                stagedPower = 0;
-//            }
             }else{
                 if (driveTrain != null) {
                     // Pose-based bearing fallback

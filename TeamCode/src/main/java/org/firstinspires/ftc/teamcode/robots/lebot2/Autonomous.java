@@ -64,7 +64,7 @@ public class Autonomous implements TelemetryProvider {
     // Derived strategy parameters (set by init() based on START_AT_GOAL_WALL, also Dashboard-tunable)
     public static int FIRE_POSITION = 1;              // Which fire position to use (1-4)
     public static int ROW_START = 0;                  // First ball row index
-    public static int ROW_END = 3;                    // Last ball row index
+    public static int ROW_END = 2;                    // Last ball row index
     public static int ROW_DIRECTION = 1;              // +1 = forward (0→2), -1 = reverse (2→0)
     public static int GATE_BEFORE_ROW = 2;            // Do gate release before this row index
     public static boolean SKIP_INITIAL_BACKUP = false; // Skip backup if already at fire position
@@ -352,7 +352,7 @@ public class Autonomous implements TelemetryProvider {
                 } else if (robot.missions.isFailed()) {
                     log("BALL_ROW_FAILED", "row=" + currentRow);
                     rowsCompleted++;
-                    currentRow ++;
+                    currentRow += ROW_DIRECTION;
 //                    if (timeRemaining < MIN_TIME_FOR_ROW && FieldMap.IS_AUDIENCE_START) {
 //                        log("TIME_SKIP_ROW", "remaining=" + String.format("%.1f", timeRemaining));
 //                        setState(AutonState.COMPLETE);

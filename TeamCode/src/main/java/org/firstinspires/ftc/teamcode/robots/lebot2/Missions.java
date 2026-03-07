@@ -491,7 +491,7 @@ public class Missions implements TelemetryProvider {
         if (!prepareForNewMission()) {
             return;
         }
-        targetFirePosition = Math.max(1, Math.min(4, firePosition));
+        targetFirePosition = Math.max(1, Math.min(6, firePosition));
         targetWaypointName = null;  // Clear waypoint override
         navReversed = reversed;
         currentMission = Mission.NAVIGATE_TO_FIRE;
@@ -579,15 +579,14 @@ public class Missions implements TelemetryProvider {
         if (!prepareForNewMission()) {
             return;
         }
-        //for new robot
-        //targetGroupIndex = Math.max(0, Math.min(4, groupIndex));
-        //for old robot
         targetGroupIndex = Math.max(0, Math.min(2, groupIndex));
         currentMission = Mission.BALL_GROUP;
         missionState = MissionState.RUNNING;
         ballGroupState = BallGroupState.IDLE;
         ballCountAtStart = robot.loader.getBallCount();
         missionTimer.reset();
+        log("BALLGROUP_REQUESTED", "requested=" + groupIndex + ",clamped=" + targetGroupIndex,
+                getRowStartPose(targetGroupIndex));
     }
 
     /**
