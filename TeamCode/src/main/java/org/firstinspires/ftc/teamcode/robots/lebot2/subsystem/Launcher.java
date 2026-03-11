@@ -105,6 +105,10 @@ public class Launcher implements Subsystem {
     public static double MIN_LAUNCH_SPEED_AUDIENCE = 1350;
     public static double MIN_LAUNCH_SPEED_GOAL = 930;
     public static double MIN_LAUNCH_SPEED = 1080;   //720 <--old     // degrees/sec - hardcoded working speed from known position
+
+    // Distance hint for fallback speed when vision is unavailable
+    public enum DistanceHint { NEAR, FAR }
+    private DistanceHint distanceHint = DistanceHint.NEAR;
     public static double SPEED_TOLERANCE = 5;      // degrees/sec margin for "at speed" check
     public static double SPEED_TOLERANCE_SHORT = 10;
     public static double SPEED_TOLERANCE_LONG = 15;
@@ -550,38 +554,51 @@ public class Launcher implements Subsystem {
 
     /**
      * Update target speed from vision distance calculation.
-     * Falls back to MIN_LAUNCH_SPEED if vision doesn't have a valid pose
-     * (e.g., sun washing out the camera).
+     * Falls back to distance-hint-based speed if vision doesn't have a valid pose.
      */
     public void updateTargetSpeed(){
         if (vision != null && vision.hasBotPose()) {
             targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER;
-//            if(vision.getDistanceToGoal() < 2.6){
-//                targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER_SHORT;
-//                LAUNCH_SPACER_TIMER = .5;
-//                LAUNCH_SPACER_TIMER_LAST = 1;
-//                SPEED_TOLERANCE = SPEED_TOLERANCE_SHORT;
-//            }else{
-//                targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER_LONG;
-//                LAUNCH_SPACER_TIMER =.7;
-//                LAUNCH_SPACER_TIMER_LAST = 1.2;
-//                SPEED_TOLERANCE = SPEED_TOLERANCE_LONG;
-//            }
+            // Update distance hint from live vision data
+            if (vision.getDistanceToGoal() > 2.6) {
+                distanceHint = DistanceHint.FAR;
+            } else {
+                distanceHint = DistanceHint.NEAR;
+            }
         } else {
-           return;
-
-           // targetSpeed = MIN_LAUNCH_SPEED * SPEED_MULTIPLIER;
+            // No vision — use fallback speed based on distance hint
+            if (distanceHint == DistanceHint.FAR) {
+                targetSpeed = MIN_LAUNCH_SPEED_AUDIENCE * SPEED_MULTIPLIER;
+            } else {
+                targetSpeed = MIN_LAUNCH_SPEED_GOAL * SPEED_MULTIPLIER;
+            }
         }
+    }
+
+    /**
+     * Set the distance hint for fallback speed when vision is unavailable.
+     * Called from Robot.setStartingPosition() and Autonomous.init().
+     */
+    public void setDistanceHint(DistanceHint hint) {
+        this.distanceHint = hint;
+    }
+
+    /**
+     * Set a specific pre-spin target speed (e.g., computed from fire position distance).
+     * Will be overwritten by updateTargetSpeed() once vision is available.
+     */
+    public void setPreSpinSpeed(double speed) {
+        targetSpeed = speed;
     }
 
     public void shootShort(){
         LAUNCH_SPACER_TIMER = .5;
         LAUNCH_SPACER_TIMER_LAST = 1;
-        MIN_LAUNCH_SPEED = MIN_LAUNCH_SPEED_GOAL;
+        distanceHint = DistanceHint.NEAR;
         SPEED_TOLERANCE = SPEED_TOLERANCE_SHORT;
     }
     public void shootLong(){
-        MIN_LAUNCH_SPEED= MIN_LAUNCH_SPEED_AUDIENCE;
+        distanceHint = DistanceHint.FAR;
         LAUNCH_SPACER_TIMER =.5;
         LAUNCH_SPACER_TIMER_LAST = 1.2;
         SPEED_TOLERANCE = SPEED_TOLERANCE_LONG;
@@ -593,7 +610,8 @@ public class Launcher implements Subsystem {
         setPaddlePosition(getTriggerIdlePosition());
 
         if(TRIGGER_TYPE == TriggerType.GATE) {
-            if (isFlywheelAtSpeed() && turret.isReadyToLaunch()) {
+            if (isFlywheelAtSpeed() &&
+                    (turret.isReadyToLaunch() || turret.isReadyToLaunchDegraded())) {
                 state = LaunchState.READY;
             }
         }else{

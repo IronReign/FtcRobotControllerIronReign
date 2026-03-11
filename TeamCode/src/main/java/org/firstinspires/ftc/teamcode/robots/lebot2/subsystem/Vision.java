@@ -138,10 +138,16 @@ public class Vision implements Subsystem {
     }
 
     public double getFlywheelSpeed(){
-        double speed = 126.58655*(distanceToGoal) + 873.71537;
-        // double speed = -15.83315*Math.pow(distanceToGoal,4) + 168.95435*Math.pow(distanceToGoal,3) - 622.59954*Math.pow(distanceToGoal,2) + 1041.48259*Math.pow(distanceToGoal,1) + 231.79346;
-        //double speed = 31.58941*Math.pow(distanceToGoal,4) - 193.20612*Math.pow(distanceToGoal,3) + 422.84196*Math.pow(distanceToGoal,2) - 251.80393*distanceToGoal + 701.34893;
-        return speed*FLYWHEEL_SPEED_MULTIPLIER;
+        return computeFlywheelSpeed(distanceToGoal);
+    }
+
+    /**
+     * Compute flywheel speed from distance to goal (meters).
+     * Static so it can be called without a Vision instance (e.g., for pre-spin from known positions).
+     */
+    public static double computeFlywheelSpeed(double distanceMeters) {
+        double speed = 126.58655 * distanceMeters + 873.71537;
+        return speed * FLYWHEEL_SPEED_MULTIPLIER;
     }
 
 

@@ -62,7 +62,8 @@ public class Autonomous implements TelemetryProvider {
     public static boolean SKIP_LAUNCH=false;
 
     // Derived strategy parameters (set by init() based on START_AT_GOAL_WALL, also Dashboard-tunable)
-    public static int FIRE_POSITION = 1;              // Which fire position to use (1-4)
+    public static int FIRE_POSITION = 1;              // Which fire position to use (1-6)
+    public static int MAX_FIRE_POSITION = 3;           // Max fire position for current side
     public static int ROW_START = 0;                  // First ball row index
     public static int ROW_END = 2;                    // Last ball row index
     public static int ROW_DIRECTION = 1;              // +1 = forward (0→2), -1 = reverse (2→0)
@@ -151,8 +152,9 @@ public class Autonomous implements TelemetryProvider {
         if (robot.getStartingPosition() != Robot.StartingPosition.AUDIENCE) {
             SKIP_LAUNCH=false;
             FIRE_POSITION = 1;
+            MAX_FIRE_POSITION = 3;
             Launcher.STAR_FEEDING = 1;
-            Launcher.MIN_LAUNCH_SPEED = FieldMap.FIRE_1_DEFAULT_DPS;
+            robot.launcher.setDistanceHint(Launcher.DistanceHint.NEAR);
             ROW_START = 0;
             ROW_END = 2;
             ROW_DIRECTION = 1;
@@ -161,8 +163,9 @@ public class Autonomous implements TelemetryProvider {
         } else {
             SKIP_LAUNCH=false;
             FIRE_POSITION = 4;
+            MAX_FIRE_POSITION = 6;
             Launcher.STAR_FEEDING = 0.7;
-            Launcher.MIN_LAUNCH_SPEED = FieldMap.FIRE_4_DEFAULT_DPS;
+            robot.launcher.setDistanceHint(Launcher.DistanceHint.FAR);
             ROW_START = 2;
             ROW_END = 0;
             ROW_DIRECTION = -1;
@@ -291,7 +294,7 @@ public class Autonomous implements TelemetryProvider {
 //                    if(robot.getStartingPosition() == Robot.StartingPosition.AUDIENCE){
 //                        setState(AutonState.START_RETURN_TO_FIRE);
 //                    } else {
-                    //FIRE_POSITION++;
+                    FIRE_POSITION = Math.min(FIRE_POSITION + 1, MAX_FIRE_POSITION);
 
                     setState(AutonState.START_BALL_ROW);
                     //}
@@ -300,7 +303,7 @@ public class Autonomous implements TelemetryProvider {
                     launchCycles++;
                     robot.applyVisionPoseCorrection();
                     robot.launcher.setBehavior(Launcher.Behavior.IDLE);
-                    //FIRE_POSITION++;
+                    FIRE_POSITION = Math.min(FIRE_POSITION + 1, MAX_FIRE_POSITION);
                     setState(AutonState.START_BALL_ROW);
                 }
                 break;

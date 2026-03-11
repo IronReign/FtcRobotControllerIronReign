@@ -500,11 +500,11 @@ public class Robot implements TelemetryProvider {
         // Update FieldMap offset selection so Dashboard shows correct waypoints
         FieldMap.IS_AUDIENCE_START = (position == StartingPosition.AUDIENCE);
 
-        // Set appropriate fallback launch speed for the start position
+        // Set distance hint for fallback launch speed
         if (position == StartingPosition.AUDIENCE) {
-            Launcher.MIN_LAUNCH_SPEED = FieldMap.FIRE_4_DEFAULT_DPS;
+            launcher.setDistanceHint(Launcher.DistanceHint.FAR);
         } else {
-            Launcher.MIN_LAUNCH_SPEED = FieldMap.FIRE_1_DEFAULT_DPS;
+            launcher.setDistanceHint(Launcher.DistanceHint.NEAR);
         }
 
         if (position == StartingPosition.UNKNOWN) {
@@ -577,11 +577,7 @@ public class Robot implements TelemetryProvider {
         if (!vision.hasBotPose()) {
             return false;
         }
-        if(vision.getDistanceToGoal() > 2.6){
-            launcher.MIN_LAUNCH_SPEED = launcher.MIN_LAUNCH_SPEED_AUDIENCE;
-        }else{
-            launcher.MIN_LAUNCH_SPEED = launcher.MIN_LAUNCH_SPEED_GOAL;
-        }
+        // Distance hint is now updated automatically inside updateTargetSpeed()
 
         // Get vision pose - this is the CAMERA position (Limelight uses meters)
         double camX = vision.getRobotX();

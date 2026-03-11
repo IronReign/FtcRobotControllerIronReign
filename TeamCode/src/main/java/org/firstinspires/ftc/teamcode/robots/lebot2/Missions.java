@@ -498,6 +498,16 @@ public class Missions implements TelemetryProvider {
         missionState = MissionState.RUNNING;
         navToFireState = NavigateToFireState.IDLE;
         missionTimer.reset();
+
+        // Pre-spin flywheel to expected speed for destination fire position
+        Pose2d firePose = getFirePose(targetFirePosition);
+        Pose2d goalPose = FieldMap.getPose(FieldMap.GOAL, Robot.isRedAlliance);
+        double dx = (firePose.position.x - goalPose.position.x) * 0.0254; // inches to meters
+        double dy = (firePose.position.y - goalPose.position.y) * 0.0254;
+        double distanceM = Math.sqrt(dx * dx + dy * dy);
+        double expectedSpeed = Vision.computeFlywheelSpeed(distanceM) * Launcher.SPEED_MULTIPLIER;
+        robot.launcher.setPreSpinSpeed(expectedSpeed);
+        robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
     }
 
     /**
