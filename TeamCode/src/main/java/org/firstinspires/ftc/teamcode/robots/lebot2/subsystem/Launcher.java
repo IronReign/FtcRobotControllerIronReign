@@ -48,6 +48,15 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 @Config(value = "Lebot2_Launcher")
 public class Launcher implements Subsystem {
 
+    public static boolean TUNING_SPEED_CALC = false;
+    public static double tuningSpeed;
+
+    public static double FEED_GOAL = -.7;
+    public static double FEED_AUDIENCE = -.5;
+    public static double VISION_OFFSET_GOAL = 0;
+    public static double VISION_OFFSET_AUDIENCE = -2;           //-2 for red need test if same for blue
+
+
     public static double NEW_P = 400;
     public static double NEW_I = 0;
     public static double NEW_D = 0;
@@ -116,7 +125,7 @@ public class Launcher implements Subsystem {
     public static double FLYWHEEL_IDLE_SPEED = 800;
 
     // Launch timing for TPU ramp design
-    public static double FIRING_TIME = 2.4;         // seconds to allow all 3 balls through at conveyor speed
+    public static double FIRING_TIME = 6;         // seconds to allow all 3 balls through at conveyor speed
     public static double LIFT_TIME = 0.3;           // seconds to hold LIFT position for last ball
 
     // Post-fire behavior
@@ -557,20 +566,28 @@ public class Launcher implements Subsystem {
      * Falls back to distance-hint-based speed if vision doesn't have a valid pose.
      */
     public void updateTargetSpeed(){
-        if (vision != null && vision.hasBotPose()) {
-            targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER;
-            // Update distance hint from live vision data
-            if (vision.getDistanceToGoal() > 2.6) {
-                distanceHint = DistanceHint.FAR;
+        if(TUNING_SPEED_CALC){
+            targetSpeed = tuningSpeed;
+        }else {
+            if (vision != null && vision.hasBotPose()) {
+                targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER;
+                // Update distance hint from live vision data
+                if (vision.getDistanceToGoal() > 2.3) {
+                    distanceHint = DistanceHint.FAR;
+                    loader.FEED_POWER = FEED_AUDIENCE;
+                    turret.VISION_OFFSET = VISION_OFFSET_AUDIENCE;
+                } else {
+                    distanceHint = DistanceHint.NEAR;
+                    loader.FEED_POWER = FEED_GOAL;
+                    turret.VISION_OFFSET = VISION_OFFSET_GOAL;
+                }
             } else {
-                distanceHint = DistanceHint.NEAR;
-            }
-        } else {
-            // No vision — use fallback speed based on distance hint
-            if (distanceHint == DistanceHint.FAR) {
-                targetSpeed = MIN_LAUNCH_SPEED_AUDIENCE * SPEED_MULTIPLIER;
-            } else {
-                targetSpeed = MIN_LAUNCH_SPEED_GOAL * SPEED_MULTIPLIER;
+                // No vision — use fallback speed based on distance hint
+                if (distanceHint == DistanceHint.FAR) {
+                    targetSpeed = MIN_LAUNCH_SPEED_AUDIENCE * SPEED_MULTIPLIER;
+                } else {
+                    targetSpeed = MIN_LAUNCH_SPEED_GOAL * SPEED_MULTIPLIER;
+                }
             }
         }
     }

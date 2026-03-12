@@ -180,8 +180,8 @@ public class DriverControls implements TelemetryProvider {
         // Right bumper: Launch all balls in sequence
         if (stickyGamepad1.right_bumper) {
             //robot.driveTrain.centerOnTarget();
-            robot.applyVisionPoseCorrection();
-            robot.launcher.updateTargetSpeed();
+            //robot.applyVisionPoseCorrection();
+            //robot.launcher.updateTargetSpeed();
             robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
         }
 
@@ -207,12 +207,12 @@ public class DriverControls implements TelemetryProvider {
 
         // D-pad right: Eject balls
         if (stickyGamepad1.dpad_right) {
-            robot.turret.setLocked();
+            //robot.turret.setLocked();
 //            //robot.launcher.manualFire();
 //            robot.intake.eject();         //bring back after manual test
 //            // For eject, we use setBeltPower which claims as launcher priority
 //            // Positive = eject forward
-//            robot.loader.setBeltPower(0.5);       //bring back after manual test
+            robot.loader.setBeltPower(0.5);       //bring back after manual test
         }
 
         // Guide button: Reset encoders and ball count

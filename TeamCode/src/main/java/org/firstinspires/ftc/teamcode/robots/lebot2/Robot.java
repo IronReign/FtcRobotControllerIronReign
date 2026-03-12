@@ -321,6 +321,7 @@ public class Robot implements TelemetryProvider {
      */
     private void handleLaunchAllBehavior2() {
         launcher.updateTargetSpeed();
+
         switch (launchAllState) {
             case IDLE:
 //                if (loader.isEmpty()) {
