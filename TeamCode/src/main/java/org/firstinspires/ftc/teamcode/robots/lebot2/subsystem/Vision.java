@@ -41,6 +41,8 @@ import java.util.Map;
 public class Vision implements Subsystem {
 
 
+
+
     // Hardware
     private final Limelight3A limelight;
     private final LazyServo tilt;
@@ -146,7 +148,8 @@ public class Vision implements Subsystem {
      * Static so it can be called without a Vision instance (e.g., for pre-spin from known positions).
      */
     public static double computeFlywheelSpeed(double distanceMeters) {
-        double speed = 126.58655 * distanceMeters + 873.71537;
+        double speed = -61.26791*Math.pow(distanceMeters, 4) + 509.11374*Math.pow(distanceMeters, 3) - 1468.05892*Math.pow(distanceMeters, 2) + 1819.21675*Math.pow(distanceMeters, 1) +264.3843;
+        //double speed = 126.58655 * distanceMeters + 873.71537;
         return speed * FLYWHEEL_SPEED_MULTIPLIER;
     }
 

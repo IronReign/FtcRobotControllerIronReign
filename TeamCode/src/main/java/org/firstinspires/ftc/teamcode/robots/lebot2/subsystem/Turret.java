@@ -96,7 +96,8 @@ public class Turret implements Subsystem {
     public static double CCW_LIMIT_DEG = 90;
 
     // ==================== PID PARAMS ====================
-    public static PIDCoefficients TURRET_PID = new PIDCoefficients(0.04, 0.00005, 0.0075);
+    //pid for only turret no other subsystems running: 0.025, 0, .002
+    public static PIDCoefficients TURRET_PID = new PIDCoefficients(0.025, 0, .002);      //old values: 0.04, 0.00005, 0.0075
     public static double MAX_SPEED = 1.0;
     public static double TOLERANCE = 1.0;          // degrees - PID convergence threshold
     public static double INTEGRAL_CUTIN = 3.0;     // degrees
