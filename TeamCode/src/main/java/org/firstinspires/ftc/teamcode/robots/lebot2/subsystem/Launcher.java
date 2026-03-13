@@ -351,8 +351,8 @@ public class Launcher implements Subsystem {
         if (LOGGING_ENABLED) {
             if (behavior == Behavior.SPINNING && logStartTime == 0) {
                 // Start new log session
-                flywheelLog = new CsvLogKeeper("flywheel_log", 6,
-                    "elapsedMs,state,primarySpeed,helperSpeed,targetSpeed,speedDiff,fireRequested,isAtSpeed");
+                flywheelLog = new CsvLogKeeper("flywheel_log", 12,
+                    "elapsedMs,state,primarySpeed,helperSpeed,targetSpeed,speedDiff,primaryPower,helperPower,primaryAmps,helperAmps,fireRequested,isAtSpeed");
                 logStartTime = System.currentTimeMillis();
             }
             if (logStartTime > 0 && behavior == Behavior.SPINNING) {
@@ -363,7 +363,11 @@ public class Launcher implements Subsystem {
                 row.add(String.format("%.1f", currentSpeed));
                 row.add(String.format("%.1f", helperSpeed));
                 row.add(String.format("%.1f", targetSpeed));
-                row.add(String.format("%.1f", targetSpeed - helperSpeed));      //difference between motors
+                row.add(String.format("%.1f", targetSpeed - helperSpeed));
+                row.add(String.format("%.3f", flywheel.getPower()));
+                row.add(String.format("%.3f", flywheelHelp.getPower()));
+                row.add(String.format("%.2f", flywheel.getCurrent(CurrentUnit.AMPS)));
+                row.add(String.format("%.2f", flywheelHelp.getCurrent(CurrentUnit.AMPS)));
                 row.add(fireRequested);
                 row.add(isFlywheelAtSpeed());
                 flywheelLog.UpdateLog(row);

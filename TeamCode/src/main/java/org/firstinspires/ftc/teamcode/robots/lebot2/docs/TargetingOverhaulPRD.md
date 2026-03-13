@@ -43,9 +43,9 @@ We need a targeting system that fires quickly with "good enough" aim, handles vi
 
 ## Proposed Changes
 
-### Phase 1: Turret PID Tuning & "Good Enough" Firing
+### Phase 1: Turret PID Tuning & "Good Enough" Firing [IMPLEMENTED]
 
-#### 1A. Oscillation-Aware Lock
+#### 1A. Oscillation-Aware Lock [DONE]
 
 Replace the current binary `readyToLaunch` with a graduated readiness check that considers oscillation amplitude over a time-based rolling window.
 
@@ -69,7 +69,7 @@ New fields:
 
 This gives the PID time to settle when it can, but doesn't let perfect be the enemy of good.
 
-#### 1B. PID Retuning
+#### 1B. PID Retuning [DONE — instrumentation added, Stage 1 tuned by code team]
 
 The current PID (P=0.04, I=0.00005, D=0.0075) needs field-tuning. Rather than guessing coefficients, add instrumentation:
 
@@ -97,7 +97,7 @@ PID tuning should be done empirically on the robot with CSV logging. Do NOT assu
 
 Each stage may require different PID coefficients. If the difference between stages is significant, consider load-aware PID switching (e.g., slightly higher D when flywheel is active). But try a single set of coefficients tuned at stage 2 first — that's the most common firing condition.
 
-#### 1C. Turret Telemetry Enhancement
+#### 1C. Turret Telemetry Enhancement [DONE]
 
 Add to turret telemetry:
 - `Oscillation (deg)` — current amplitude from rolling window
@@ -105,9 +105,9 @@ Add to turret telemetry:
 - `Aiming Time (ms)` — time since tracking started on current target
 - `tx History` — sparkline or min/max over last window
 
-### Phase 2: Flywheel Speed Management
+### Phase 2: Flywheel Speed Management [IMPLEMENTED]
 
-#### 2A. Centralize MIN_LAUNCH_SPEED
+#### 2A. Centralize MIN_LAUNCH_SPEED [DONE]
 
 Currently mutated from Robot.applyVisionPoseCorrection(), Launcher.shootShort(), Launcher.shootLong(), and Autonomous.init(). Replace with a single source of truth.
 
@@ -128,7 +128,7 @@ public void updateTargetSpeed() {
 
 Where `distanceHint` is set once based on starting position (AUDIENCE = FAR, GOAL = NEAR) and updated whenever applyVisionPoseCorrection() runs. This eliminates the multi-writer race.
 
-#### 2B. Pre-Spin During Navigation
+#### 2B. Pre-Spin During Navigation [DONE]
 
 Currently the flywheel is IDLE during ball collection and navigation. By the time we reach the fire position and spin up, we've wasted 1-2 seconds.
 
@@ -154,7 +154,36 @@ This means the flywheel is at or near the correct launch speed by the time we ar
 
 Note: `setPreSpinSpeed()` is a new method that sets `targetSpeed` directly. Once at the fire position, `updateTargetSpeed()` will overwrite it with the live vision-based calculation if vision is available, which is fine — the pre-spin speed is just a head start.
 
-### Phase 3: Vision Interruption Handling
+#### 2C. Teleop Pre-Spin: Nearest Fire Position Prediction [NOT STARTED — follow-on]
+
+Phase 2B only helps autonomous — in teleop there's no `startNavigateToFire()` call. But the driver tends to navigate to the same known-good fire positions defined in FieldMap. When vision is unavailable, we can use the odo-based pose to predict where the driver is headed.
+
+**Trigger:** Intake completes (loader reports full or ball count reaches 3).
+
+**Logic:**
+1. Get current odo pose
+2. Compute distance from current pose to each fire position (FIRE_1 through FIRE_6)
+3. Select the nearest fire position
+4. Compute expected flywheel speed from that position's distance to goal
+5. Pre-spin flywheel to that speed
+
+```java
+// In Robot or DriverControls, when loader transitions to full:
+Pose2d currentPose = driveTrain.getPose();
+int nearestFire = findNearestFirePosition(currentPose);
+double distanceM = computeDistanceToGoal(getFirePose(nearestFire));
+double expectedSpeed = Vision.computeFlywheelSpeed(distanceM) * Launcher.SPEED_MULTIPLIER;
+launcher.setPreSpinSpeed(expectedSpeed);
+```
+
+This gives the driver a head start on spin-up as they navigate to their chosen fire position. If vision becomes available before they fire, `updateTargetSpeed()` overwrites with the live calculation.
+
+**Edge cases:**
+- Driver goes to a non-preset position: pre-spin speed is approximate but close, vision corrects on arrival
+- Driver changes direction mid-transit: nearest position updates, but we only compute once on intake-full. Could re-evaluate periodically but adds complexity for marginal benefit.
+- Odo is drifted: nearest position may be wrong, but the speed difference between adjacent fire positions is small enough that a wrong guess still gets the flywheel close.
+
+### Phase 3: Vision Interruption Handling [IMPLEMENTED]
 
 The current system has a single `LOST_VISION_TIME = 0.2s` debounce, after which it falls back to odometry-based bearing. This is wrong for two reasons:
 
@@ -162,7 +191,7 @@ The current system has a single `LOST_VISION_TIME = 0.2s` debounce, after which 
 
 2. **Odometry drift makes the fallback worse than doing nothing.** In competition, wheel slip from collisions, defense, and acceleration cause odo position to drift several inches per cycle. When we switch to odo-based bearing, the turret jerks to a heading computed from a stale/wrong field position — often farther from correct than just holding the last vision-based position. Then when vision returns, it jerks back. The result is worse than if we'd just held still.
 
-#### 3A. Three-Tier Vision Loss Response
+#### 3A. Three-Tier Vision Loss Response [DONE]
 
 Replace the single debounce with three tiers based on how long vision has been lost:
 
@@ -214,7 +243,7 @@ if (lostDuration < HOLD_POSITION_MS / 1000.0) {
 
 Add `HOLDING` to `TargetingPhase` enum.
 
-#### 3B. Odometry Trust Tracking
+#### 3B. Odometry Trust Tracking [DONE]
 
 Odometry drifts fast in competition. We need to know whether the odo-based bearing is worth using.
 
@@ -243,7 +272,7 @@ When odo is untrusted, the Tier 2 fallback is skipped entirely — we stay in HO
 
 **Telemetry:** Add `Odo Trust` (YES/NO), `Divergence (deg)`, `Last Check (ms ago)` to turret telemetry. This is critical diagnostic data for understanding competition behavior.
 
-#### 3C. Timed Vision Window for Launch Sequence
+#### 3C. Timed Vision Window for Launch Sequence [DONE — via Tier 3 degraded readiness]
 
 Give the targeting system a finite budget after arriving at the fire position:
 
@@ -264,7 +293,7 @@ This ensures we always fire within a bounded time. The turret's current position
 - The turret was tracking during approach (vision or odo had us aimed)
 - Holding position preserves whatever aim we had
 
-#### 3D. Launcher Accepts Degraded Lock
+#### 3D. Launcher Accepts Degraded Lock [DONE]
 
 ```java
 // In Launcher.handleSpinningUpState():
@@ -276,7 +305,7 @@ if (TRIGGER_TYPE == TriggerType.GATE) {
 }
 ```
 
-#### 3E. Wire FALL_BACK_TURN
+#### 3E. Wire FALL_BACK_TURN [DEFERRED]
 
 The code team added `FALL_BACK_TURN = 35` but never used it. This is a fixed turret angle for a known fire position when both vision AND odometry are unavailable.
 
@@ -287,9 +316,9 @@ turretPID.setSetpoint(clampToLimits(FALL_BACK_TURN));
 
 But this is rarely needed — if we have a drivetrain and an initial position, Tier 2 odo bearing is available (even if untrusted, it's better than a fixed angle). FALL_BACK_TURN is really the "everything is broken" fallback.
 
-### Phase 4: Autonomous Fire Position Progression
+### Phase 4: Autonomous Fire Position Progression [IMPLEMENTED]
 
-#### 4A. Re-enable FIRE_POSITION Advancement
+#### 4A. Re-enable FIRE_POSITION Advancement [DONE]
 
 `FIRE_POSITION++` is commented out in execute2(). Without this, the robot always fires from the same position, making it predictable and potentially less effective if the first position has an obstructed view.
 
@@ -304,11 +333,11 @@ if (FIRE_POSITION > MAX_FIRE_POSITION) {
 
 Where `MAX_FIRE_POSITION` is 3 for goal-side (FIRE_1, FIRE_2, FIRE_3) and 6 for audience-side (FIRE_4, FIRE_5, FIRE_6). Note: FIRE_5 and FIRE_6 currently have identical coordinates — these need to be differentiated in FieldMap.
 
-#### 4B. Fix FIRE_5/FIRE_6 Coordinates
+#### 4B. Fix FIRE_5/FIRE_6 Coordinates [PENDING — needs physical measurement]
 
 Both are currently `(58.7, 21.5, 88°)` — a copy-paste placeholder. The team needs to measure and set distinct positions for these.
 
-### Phase 5: Driver Feedback & Teleop Integration
+### Phase 5: Driver Feedback & Teleop Integration [NOT STARTED]
 
 #### 5A. LED Integration with Lock Quality
 
@@ -340,7 +369,7 @@ public void forceFire() {
 
 `updateTargetSpeed()` is commented out on the X button press (DriverControls line 145). When the driver manually spins up, the flywheel should get the correct speed. Re-enable this.
 
-### Phase 6: Relocalization
+### Phase 6: Relocalization [NOT STARTED]
 
 Odometry drift is the root cause of the odo-bearing jerk problem, and it compounds: every time vision corrects the pose, a noisy single-frame reading can inject error rather than removing it. We need relocalization to be more robust.
 
@@ -427,6 +456,79 @@ Log vision vs. odo divergence to CSV for post-match analysis:
 - Only log when chassis is stationary (same condition as sample collection)
 - This data will show how fast odo drifts in real matches, how much audience-side readings vary vs goal-side, and whether the filtered corrections are helping
 
+### Phase 7: Flywheel Recovery & Shot Cadence [IN PROGRESS — logging added, analysis pending]
+
+Each ball that contacts the flywheel steals angular momentum, causing a speed dip. The current system fires all 3 balls with a continuous conveyor feed — the second and third balls hit a progressively slower flywheel, reducing range and accuracy. At audience-side distances the energy budget is tighter and this problem is worse.
+
+The code team has already tuned around this by:
+- Slowing the conveyor feed for audience shots (`FEED_AUDIENCE = -0.5` vs `FEED_GOAL = -0.7`)
+- Increasing `FIRING_TIME` to 6 seconds (from 2.4) to give more recovery time
+- Using `VISION_OFFSET_AUDIENCE = -2°` to steer balls off the rails (higher energy = more rebounds)
+
+But slowing the feed has diminishing returns — too slow and the last ball jams with nothing pushing from behind.
+
+#### 7A. Flywheel Power Analysis [DONE — logging implemented, awaiting data collection]
+
+Before changing the control strategy, we need to understand what's happening. Motor power logging has been added to the existing CSV logger (toggle via `LOGGING_ENABLED` on Dashboard):
+
+**New columns:** `primaryPower`, `helperPower`, `primaryAmps`, `helperAmps`
+
+**Key questions the log should answer:**
+1. Are the motors already at full power (1.0) during speed recovery? If so, there's no headroom — we're motor-limited and need to optimize cadence.
+2. If power is below 1.0, the PIDF isn't aggressive enough and we're leaving performance on the table.
+3. How much does speed drop per ball? If it's consistent, we can predict recovery time.
+4. How long does recovery take? This determines the minimum safe pause between balls.
+5. Do the primary and helper motors track each other, or does one lag?
+
+#### 7B. Feed-Pause-Feed Strategy [NOT STARTED — depends on 7A data]
+
+If motor analysis shows the flywheel can recover between shots but the continuous feed doesn't give it time:
+
+```
+FEED_PAUSE_MS = 300     // Pause between balls to let flywheel recover
+FEED_BURST_MS = 500     // Feed duration to advance one ball into the flywheel
+
+Firing sequence:
+  0ms:     Gate opens, conveyor runs at FEED_POWER
+  500ms:   Conveyor pauses (first ball has fired)
+  800ms:   Conveyor runs again (flywheel has recovered ~300ms)
+  1300ms:  Conveyor pauses (second ball has fired)
+  1600ms:  Conveyor runs again
+  2100ms:  Third ball fires
+  ~2500ms: Gate closes, COMPLETE
+```
+
+Implementation: Replace the continuous `claimResources()` belt run in `handleFiringState()` with a state machine that alternates between feed and pause. The pause duration is calibrated from the power analysis (it needs to be long enough for the flywheel to recover but short enough that the ball doesn't settle and jam).
+
+**For the last ball:** Use a longer feed burst or higher feed power, since there's nothing behind it pushing it into the flywheel. The current `LAUNCH_SPACER_TIMER_LAST` already accounts for this but may need to be re-tuned alongside the pause strategy.
+
+#### 7C. Aggressive Flywheel PIDF / Bang-Bang [NOT STARTED — depends on 7A data]
+
+If the power analysis shows the motors are NOT at full power during recovery, the PIDF isn't aggressive enough. Current coefficients: `P=400, I=0, D=0, F=20`.
+
+**Option A: Increase P dramatically.** With `P=400`, a 100 deg/s speed deficit produces a correction of `400 * (100 / maxVelocity)`. If `maxVelocity` is ~2500 deg/s, that's `400 * 0.04 = 16` — a small correction on top of the F=20 feedforward. Increasing P to 2000+ would make the controller much more aggressive about recovering.
+
+**Option B: Software bang-bang.** Switch the motors to `RUN_WITHOUT_ENCODER` and control power directly:
+
+```java
+// In handleFiringState(), replace setVelocity with:
+if (currentSpeed < targetSpeed) {
+    flywheel.setPower(1.0);       // Full power when below target
+    flywheelHelp.setPower(1.0);
+} else {
+    // At or above target — hold with feedforward estimate
+    double holdPower = targetSpeed / MAX_FLYWHEEL_SPEED;  // Open-loop estimate
+    flywheel.setPower(holdPower);
+    flywheelHelp.setPower(holdPower);
+}
+```
+
+This eliminates the PIDF latency entirely. At high speeds, the motor's own back-EMF limits overshoot naturally — the motor can't accelerate much past the target before back-EMF balances the applied voltage. This makes bang-bang safe at high RPM.
+
+**Option C: Only use bang-bang during FIRING state.** Keep the SDK PIDF for SPINNING_UP and READY (where smooth approach matters), but switch to bang-bang during FIRING when maximum recovery speed is the priority. This is the most conservative approach — it only changes behavior during the critical window.
+
+**Recommendation:** Start with Option A (increase P) since it requires no code change — just Dashboard-tune P upward during a firing test while watching the CSV log. If that's insufficient, move to Option C. Option B is the nuclear option if nothing else works.
+
 ## Resolved Decisions
 
 1. **Oscillation window**: Time-based (fixed 500ms). Simpler, good enough for our loop rates.
@@ -437,20 +539,28 @@ Log vision vs. odo divergence to CSV for post-match analysis:
 
 ## Implementation Priority
 
-1. **Phase 3A** (three-tier vision loss response) — Most critical. The turret jerking to odo bearing on every vision dropout is actively harmful. Switching to HOLD as the default short-term response is the single most impactful change.
-2. **Phase 1A + 1B** (oscillation-aware lock + PID tuning) — Second biggest impact. Directly addresses "takes too long to fire." PID tuning must be done empirically — profile the step response first.
-3. **Phase 3B + 3C + 3D** (odo trust tracking + timed window + degraded lock) — Completes the vision fallback story. Ensures we always fire within a bounded time.
-4. **Phase 2A** (centralize MIN_LAUNCH_SPEED) — Eliminates an entire class of bugs.
-5. **Phase 6A** (stationary filtered relocalization) — Reduces odo drift at checkpoints, which makes Tier 2 odo fallback more useful when needed.
-6. **Phase 2B** (pre-spin to fire position speed) — Free time savings, moderate implementation effort (need static speed utility).
-7. **Phase 4A** (fire position progression) — Quick re-enable once positions are verified.
-8. **Phase 5** (driver feedback) — Important for teleop but not blocking autonomous.
-9. **Phase 6B** (distance-aware confidence) — Refinement. Only matters once 6A is working and we have data on audience-side accuracy.
+### Completed
+1. ~~**Phase 3A** (three-tier vision loss response)~~ DONE
+2. ~~**Phase 1A + 1B** (oscillation-aware lock + PID tuning)~~ DONE (Stage 1 PID tuned by code team)
+3. ~~**Phase 3B + 3C + 3D** (odo trust tracking + timed window + degraded lock)~~ DONE
+4. ~~**Phase 2A** (centralize MIN_LAUNCH_SPEED)~~ DONE (code team extended with feed power + vision offset switching)
+5. ~~**Phase 2B** (pre-spin to fire position speed)~~ DONE
+6. ~~**Phase 4A** (fire position progression)~~ DONE
+7. ~~**Phase 7A** (flywheel power logging)~~ DONE — awaiting data collection
+
+### Remaining (in priority order)
+1. **Phase 6A** (stationary filtered relocalization) — Reduces odo drift at checkpoints. Driver-triggered relocalization was already disabled due to large jumps — this is the fix.
+2. **Phase 7B/7C** (feed-pause or bang-bang) — Depends on 7A data. If motors have headroom, increase P or bang-bang. If already at full power, optimize cadence with feed-pause.
+3. **Phase 5** (driver feedback) — LED lock quality, force-fire button, restore updateTargetSpeed on X.
+4. **Phase 6B** (distance-aware confidence) — Refinement. Only matters once 6A is working and we have data on audience-side accuracy.
+5. **Phase 2C** (teleop pre-spin from nearest fire position) — Follow-on enhancement.
+6. **Phase 4B** (FIRE_5/FIRE_6 coordinates) — Needs physical measurement by code team.
+7. **Phase 1B Stages 2-3** (PID tuning with flywheel + intake load) — Code team has Stage 1. Stages 2-3 needed for competition-realistic tuning.
 
 ## Testing Plan
 
 1. **PID tuning — staged load** (CSV logging throughout):
-   - **Stage 1** (turret isolated): Profile step response, characterize inertia, max slew rate, braking distance. Get baseline PID that settles cleanly.
+   - **Stage 1** (turret isolated): Profile step response, characterize inertia, max slew rate, braking distance. Get baseline PID that settles cleanly. *(Code team completed this: P=0.025, I=0, D=0.002)*
    - **Stage 2** (turret + flywheel at launch speed): Re-profile with flywheel vibration and voltage sag. Retune D/P as needed. This is the primary tuning target.
    - **Stage 3** (turret + flywheel + intake): Verify lock survives intake motor cutting in mid-aim. Retune only if lock breaks.
    - Target across all stages: settle to <3° in <0.5s from 30° initial offset.
@@ -461,11 +571,15 @@ Log vision vs. odo divergence to CSV for post-match analysis:
 6. **Dynamic test** (full auton): Run execute2() and log lock quality, fire timing, divergence. Verify fire position progression and row direction.
 7. **Degraded fire test**: Partially block the Limelight during auton. Verify the timed window fires from held position rather than hanging indefinitely.
 8. **Relocalization test**: Compare single-frame vs stationary-filtered correction accuracy at both goal-side and audience-side positions.
-9. **Teleop driver test**: Verify LED feedback, force-fire button, manual speed presets.
+9. **Flywheel recovery test**: Fire 3 balls from goal-side and audience-side with `LOGGING_ENABLED = true`. Analyze CSV for: peak power during recovery, speed drop per ball, recovery time between balls, primary vs helper motor symmetry. Determines whether to pursue 7B (cadence) or 7C (control strategy).
+10. **Teleop driver test**: Verify LED feedback, force-fire button, manual speed presets.
 
 ## Open Questions
 
 1. **HOLD_POSITION_MS tuning**: 300ms is a guess. Too short = unnecessary odo fallback. Too long = turret stays aimed at where the goal *was* after a chassis turn. Need data from the occlusion test to calibrate. May need to be chassis-velocity-aware: if chassis is turning, HOLD should be shorter since the held angle becomes wrong faster.
 2. **Turret vs chassis speed**: If the chassis can rotate faster than the turret can track, we may need to either (a) limit chassis turn speed during aiming phases, or (b) accept that the turret will lag and need a catch-up window after turns complete. Need data from the chassis turn test.
 3. **Relocalization during auton checkpoints**: Should we add explicit relocalization pauses (e.g., 200ms at fire position to collect samples), or rely on whatever frames arrive during the normal spin-up window? The spin-up window is naturally a stationary period, but it may not always last long enough for 5+ samples.
-4. **Audience-side range threshold**: 2.6m is the current magic number for distance-based switching throughout the codebase. Should the relocalization confidence threshold use the same value, or does Limelight accuracy degrade at a different distance than flywheel speed needs to change?
+4. **Audience-side range threshold**: 2.3m is now the distance threshold (changed from 2.6 by code team). Should the relocalization confidence threshold use the same value, or does Limelight accuracy degrade at a different distance than flywheel speed needs to change?
+5. **VISION_OFFSET as rebound management**: The -2° audience offset steers balls to reduce bounce-outs. The blue-side offset likely mirrors red but needs testing. Should this be stored per-alliance, or is the geometry symmetric enough that one value works for both?
+6. **Feed-pause last ball**: The last ball has nothing pushing from behind. Does it need higher feed power, longer burst, or a different approach entirely (e.g., a brief reverse pulse to re-seat it before the final feed)?
+7. **Bang-bang hysteresis**: If we go with Option C (bang-bang during FIRING only), do we need a hysteresis band (e.g., full power below target-5, hold power above target) to prevent chatter at the setpoint? At high RPM the electromechanical lag probably provides natural hysteresis, but this needs verification.
