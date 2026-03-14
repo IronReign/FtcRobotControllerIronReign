@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -305,6 +306,13 @@ public class Lebot2_6832 extends OpMode {
             handleTelemetry(robot.vision.getTelemetry(false), "Vision", packet);
             handleTelemetry(robot.turret.getTelemetry(false), "Turret", packet);
         }
+
+        telemetry.addData("Reloc_Samples", robot.relocSamples.size());
+        telemetry.addData("Reloc_Spread", robot.computeSpread(robot.relocSamples)); // Current batch spread
+
+        // Current corrected pose
+        Pose2d currentPose = robot.driveTrain.getPose();
+        telemetry.addData("Pose", currentPose.position);
     }
 
     private void handleTelemetry(Map<String, Object> telemetryMap, String name, TelemetryPacket packet) {

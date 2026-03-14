@@ -122,6 +122,9 @@ public class Robot implements TelemetryProvider {
     public List<Pose2d> relocSamples = new ArrayList<>();
     private Pose2d lastPose = null;
     private long lastPoseTime = 0;
+    double effectiveSpread = RELOC_MAX_SPREAD_M;
+    public static double AUDIENCE_RANGE_THRESHOLD_M = 2.6;
+    public int requiredSamples = RELOC_SAMPLES;
 
     // Robot-level behaviors (multi-subsystem coordination only)
     // Note: Most behaviors are now handled by individual subsystems
@@ -630,6 +633,11 @@ public class Robot implements TelemetryProvider {
             return;
         }
 
+        if (vision.getDistanceToGoal() > AUDIENCE_RANGE_THRESHOLD_M) {
+            effectiveSpread *= 1.5;
+            requiredSamples = RELOC_SAMPLES * 2;
+        }
+
         // Gather poses from frames
         Pose2d sample = transformBotposeToRobotCenter();
         relocSamples.add(sample);
@@ -643,7 +651,7 @@ public class Robot implements TelemetryProvider {
     // Identifying accurate pose
     public boolean applyFilteredCorrection() {
         // Check for enough frames
-        if (relocSamples.size() < RELOC_SAMPLES){
+        if (relocSamples.size() < requiredSamples){
             return false;
         }
 
@@ -651,7 +659,7 @@ public class Robot implements TelemetryProvider {
         double spreadM = computeSpread(relocSamples);
 
         // Reject noisy data
-        if(spreadM > (RELOC_MAX_SPREAD_M * 39.3701)){
+        if(spreadM > (effectiveSpread * 39.3701)) {
             relocSamples.clear();
             return false;
         }
@@ -743,7 +751,7 @@ public class Robot implements TelemetryProvider {
     }
 
     // Determines how noisy the data is (whether it is usable or has outliers)
-    private double computeSpread(List<Pose2d> poses) {
+    public double computeSpread(List<Pose2d> poses) {
 
         if (poses.isEmpty()) return 0;
 
