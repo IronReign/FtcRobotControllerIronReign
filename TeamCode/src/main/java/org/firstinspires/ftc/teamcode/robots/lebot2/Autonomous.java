@@ -289,6 +289,7 @@ public class Autonomous implements TelemetryProvider {
                     log("LAUNCH_COMPLETE", null);
                     launchCycles++;
                     //robot.applyVisionPoseCorrection();
+                    robot.applyFilteredCorrection();
                     // Power down flywheel during ball collection to conserve power
                     robot.launcher.setBehavior(Launcher.Behavior.IDLE);
 //                    if(robot.getStartingPosition() == Robot.StartingPosition.AUDIENCE){
@@ -301,7 +302,8 @@ public class Autonomous implements TelemetryProvider {
                 } else if (robot.missions.isFailed()) {
                     log("LAUNCH_FAILED", "timeout");
                     launchCycles++;
-                    robot.applyVisionPoseCorrection();
+                    //robot.applyVisionPoseCorrection();
+                    robot.applyFilteredCorrection();
                     robot.launcher.setBehavior(Launcher.Behavior.IDLE);
                     FIRE_POSITION = Math.min(FIRE_POSITION + 1, MAX_FIRE_POSITION);
                     setState(AutonState.START_BALL_ROW);
@@ -498,7 +500,8 @@ public class Autonomous implements TelemetryProvider {
             // ========== PHASE 2-3: Target and Launch ==========
             case START_TARGETING:
                 if( Math.abs(Math.abs(robot.vision.getTx())-Math.abs(((TankDrivePinpoint)robot.driveTrain).VISION_OFFSET)) < (((TankDrivePinpoint)robot.driveTrain).VISION_TOLERANCE) ){
-                    robot.applyVisionPoseCorrection();
+                    //robot.applyVisionPoseCorrection();
+                    robot.collectRelocSample();
                     setState(AutonState.START_LAUNCH);
                 }else{
                     robot.setBehavior(Robot.Behavior.TARGETING);
@@ -512,13 +515,15 @@ public class Autonomous implements TelemetryProvider {
                 if(timeoutTimer.seconds() > CENTERING_TIMEOUT_SECONDS){
                     log("TARGETING_TIMEOUT", null);
                     ((TankDrivePinpoint)robot.driveTrain).endTurnAuton();
-                    robot.applyVisionPoseCorrection();
+                    //robot.applyVisionPoseCorrection();
+                    robot.collectRelocSample();
                     setState(AutonState.START_LAUNCH);
                 }else if (robot.getBehavior() == Robot.Behavior.MANUAL) {
                     // Targeting complete, apply vision correction
                     log("TARGETING_COMPLETE", null);
                     ((TankDrivePinpoint)robot.driveTrain).endTurnAuton();
-                    robot.applyVisionPoseCorrection();
+                    //robot.applyVisionPoseCorrection();
+                    robot.collectRelocSample();
                     setState(AutonState.START_LAUNCH);
                 }
                 break;
@@ -540,7 +545,8 @@ public class Autonomous implements TelemetryProvider {
                 if (robot.missions.isComplete()) {
                     log("LAUNCH_COMPLETE", null);
                     launchCycles++;
-                    robot.applyVisionPoseCorrection();
+                    //robot.applyVisionPoseCorrection();
+                    robot.applyFilteredCorrection();
                     // Power down flywheel during ball collection to conserve power
                     robot.launcher.setBehavior(Launcher.Behavior.IDLE);
 //                    if(robot.getStartingPosition() == Robot.StartingPosition.AUDIENCE){
@@ -551,7 +557,8 @@ public class Autonomous implements TelemetryProvider {
                 } else if (robot.missions.isFailed()) {
                     log("LAUNCH_FAILED", "timeout");
                     launchCycles++;
-                    robot.applyVisionPoseCorrection();
+                    //robot.applyVisionPoseCorrection();
+                    robot.applyFilteredCorrection();
                     robot.launcher.setBehavior(Launcher.Behavior.IDLE);
                     setState(AutonState.START_BALL_ROW);
                 }

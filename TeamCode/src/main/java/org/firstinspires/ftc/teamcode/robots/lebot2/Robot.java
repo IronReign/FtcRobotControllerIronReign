@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 /**
  * Robot coordinator class for Lebot2.
@@ -115,6 +114,14 @@ public class Robot implements TelemetryProvider {
     public static double CAMERA_FORWARD_OFFSET_M = 0.33;  // 33cm forward of center of rotation
     public static double CAMERA_SIDE_OFFSET_M = 0.0;      // Lateral offset (positive = right)
     public static double CAMERA_HEIGHT_M = 0.30;          // Height above ground (~12 inches)
+
+    // Vision Relocalization
+    private static final int RELOC_SAMPLES = 5;            // Number of frames to average
+    private static final double RELOC_MAX_SPREAD_M = 0.15; // Reject if samples differ >15cm
+    private static final double RELOC_MAX_VELOCITY = 2.0;  // inches/sec to consider robot stationary
+    public List<Pose2d> relocSamples = new ArrayList<>();
+    private Pose2d lastPose = null;
+    private long lastPoseTime = 0;
 
     // Robot-level behaviors (multi-subsystem coordination only)
     // Note: Most behaviors are now handled by individual subsystems
@@ -610,6 +617,161 @@ public class Robot implements TelemetryProvider {
         }
 
         return true;
+    }
+
+    // Frame Collection
+    public void collectRelocSample() {
+        // Check if limelight in view
+        if (!vision.hasBotPose()) return;
+
+        // Check if robot is stationary
+        if (getRobotSpeed() > RELOC_MAX_VELOCITY) {
+            relocSamples.clear();
+            return;
+        }
+
+        // Gather poses from frames
+        Pose2d sample = transformBotposeToRobotCenter();
+        relocSamples.add(sample);
+
+        // Accounts for excess frames
+        if (relocSamples.size() > RELOC_SAMPLES) {
+            relocSamples.remove(0);
+        }
+    }
+
+    // Identifying accurate pose
+    public boolean applyFilteredCorrection() {
+        // Check for enough frames
+        if (relocSamples.size() < RELOC_SAMPLES){
+            return false;
+        }
+
+        // Determine usability of frames
+        double spreadM = computeSpread(relocSamples);
+
+        // Reject noisy data
+        if(spreadM > (RELOC_MAX_SPREAD_M * 39.3701)){
+            relocSamples.clear();
+            return false;
+        }
+
+        // Average poses
+        Pose2d avg = averagePoses(relocSamples);
+        driveTrain.setPose(avg);
+
+        if (!initialPositionSet) {
+            initialPositionSet = true;
+        }
+
+        // Reset
+        relocSamples.clear();
+        return true;
+    }
+
+    // Averaging position from frames gathered
+    private Pose2d averagePoses(List<Pose2d> poses) {
+
+        double avgX = 0;
+        double avgY = 0;
+
+        double sinSum = 0;
+        double cosSum = 0;
+
+        for (Pose2d p : poses) {
+
+            avgX += p.position.x;
+            avgY += p.position.y;
+
+            double heading = p.heading.toDouble();
+            sinSum += Math.sin(heading);
+            cosSum += Math.cos(heading);
+        }
+
+        int n = poses.size();
+
+        avgX /= n;
+        avgY /= n;
+
+        double avgHeading = Math.atan2(sinSum / n, cosSum / n);
+
+        return new Pose2d(avgX, avgY, avgHeading);
+    }
+
+    // Determine position of robot considering limelight offset
+    private Pose2d transformBotposeToRobotCenter() {
+
+        double camX = vision.getRobotX();
+        double camY = vision.getRobotY();
+        double headingRad = vision.getRobotHeading();
+
+        double cosH = Math.cos(headingRad);
+        double sinH = Math.sin(headingRad);
+
+        double robotX = camX - CAMERA_FORWARD_OFFSET_M * cosH + CAMERA_SIDE_OFFSET_M * sinH;
+        double robotY = camY - CAMERA_FORWARD_OFFSET_M * sinH - CAMERA_SIDE_OFFSET_M * cosH;
+
+        double xInches = robotX * 39.3701;
+        double yInches = robotY * 39.3701;
+
+        return new Pose2d(xInches, yInches, headingRad);
+    }
+
+    // Determine drivetrain velocity
+    private double getRobotSpeed() {
+
+        Pose2d currentPose = driveTrain.getPose();
+        long now = System.nanoTime();
+
+        if (lastPose == null) {
+            lastPose = currentPose;
+            lastPoseTime = now;
+            return 0;
+        }
+
+        double dx = currentPose.position.x - lastPose.position.x;
+        double dy = currentPose.position.y - lastPose.position.y;
+
+        double dt = (now - lastPoseTime) / 1e9;
+
+        lastPose = currentPose;
+        lastPoseTime = now;
+
+        if (dt <= 0) return 0;
+
+        return Math.hypot(dx, dy) / dt;
+    }
+
+    // Determines how noisy the data is (whether it is usable or has outliers)
+    private double computeSpread(List<Pose2d> poses) {
+
+        if (poses.isEmpty()) return 0;
+
+        double avgX = 0;
+        double avgY = 0;
+
+        for (Pose2d p : poses) {
+            avgX += p.position.x;
+            avgY += p.position.y;
+        }
+
+        avgX /= poses.size();
+        avgY /= poses.size();
+
+        double maxDist = 0;
+
+        for (Pose2d p : poses) {
+            double dx = p.position.x - avgX;
+            double dy = p.position.y - avgY;
+
+            double dist = Math.hypot(dx, dy);
+
+            if (dist > maxDist) {
+                maxDist = dist;
+            }
+        }
+
+        return maxDist;
     }
 
     /**
