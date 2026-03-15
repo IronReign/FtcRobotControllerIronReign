@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.lebot2;
 
+import static org.firstinspires.ftc.teamcode.robots.lebot2.Lebot2_6832.robot;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Action;
@@ -85,6 +87,7 @@ public class Missions implements TelemetryProvider {
         TUNING_DRIFT,           // In-place turns to measure Pinpoint position drift
         TUNING_VISION,          // Continuous vision centering (never self-terminates)
         TUNING_VISION_TRACK,    // Vision tracking with distance control (never self-terminates)
+        TUNING_VISION_POS,
         CHECK_HEALTH            // Pre-match health check
     }
 
@@ -791,6 +794,18 @@ public class Missions implements TelemetryProvider {
         log("TUNING_VISION_TRACK_START",
                 String.format("targetDist=%.0f\"", TankDrivePinpoint.TARGET_DISTANCE_INCHES),
                 robot.driveTrain.getPose());
+    }
+
+    public void averageFrames() {
+        if (!prepareForNewMission()) {
+            return;
+        }
+        currentMission = Mission.TUNING_VISION_POS;
+        missionState = MissionState.RUNNING;
+        missionTimer.reset();
+        robot.vision.setPipeline(Vision.Pipeline.DECODE);
+        robot.collectRelocSample();
+        robot.applyFilteredCorrection();
     }
 
     /**
