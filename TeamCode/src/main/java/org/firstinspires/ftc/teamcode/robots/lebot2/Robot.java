@@ -668,10 +668,6 @@ public class Robot implements TelemetryProvider {
         Pose2d avg = averagePoses(relocSamples);
         driveTrain.setPose(avg);
 
-        if (!initialPositionSet) {
-            initialPositionSet = true;
-        }
-
         // Reset
         relocSamples.clear();
         return true;
