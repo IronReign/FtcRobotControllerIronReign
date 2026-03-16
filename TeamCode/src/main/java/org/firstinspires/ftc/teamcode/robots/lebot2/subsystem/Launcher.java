@@ -124,8 +124,20 @@ public class Launcher implements Subsystem {
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
     public static double FLYWHEEL_IDLE_SPEED = 800;
 
+    // Firing boost: raise PIDF target during FIRING to maximize recovery torque
+    // PIDF still controls speed (prevents overspeed), but the higher target
+    // makes it apply near-full power when speed drops from ball impacts
+    public static boolean FIRING_BOOST = true;   // Dashboard tunable
+    public static double FIRING_BOOST_SPEED = 150; // deg/s above target — max overspeed ceiling
+
+    // Ball exit detection: count speed drops during FIRING to detect when all balls are out
+    public static boolean BALL_EXIT_DETECTION = false; // Dashboard tunable — experimental
+    public static double BALL_EXIT_DROP_THRESHOLD = 80; // deg/s drop between cycles to count as ball exit
+    public static int BALL_EXIT_EXPECTED_COUNT = 3;     // end FIRING after this many detected exits
+    public static double BALL_EXIT_COOLDOWN_MS = 200;   // ignore drops within this window of a previous detection
+
     // Launch timing for TPU ramp design
-    public static double FIRING_TIME = 6;         // seconds to allow all 3 balls through at conveyor speed
+    public static double FIRING_TIME = 1.5;       // seconds — hard timeout, backup for ball exit detection
     public static double LIFT_TIME = 0.3;           // seconds to hold LIFT position for last ball
 
     // Post-fire behavior
@@ -194,6 +206,11 @@ public class Launcher implements Subsystem {
     // Debug: track speed when firing was allowed
     private double speedAtFireApproval = 0;
     private int shotNumber = 0;
+
+    // Ball exit detection state
+    private double previousSpeed = 0;
+    private int ballExitCount = 0;
+    private long lastBallExitTime = 0;
 
     // References to other subsystems for coordination
     private Loader loader = null;
@@ -351,8 +368,8 @@ public class Launcher implements Subsystem {
         if (LOGGING_ENABLED) {
             if (behavior == Behavior.SPINNING && logStartTime == 0) {
                 // Start new log session
-                flywheelLog = new CsvLogKeeper("flywheel_log", 12,
-                    "elapsedMs,state,primarySpeed,helperSpeed,targetSpeed,speedDiff,primaryPower,helperPower,primaryAmps,helperAmps,fireRequested,isAtSpeed");
+                flywheelLog = new CsvLogKeeper("flywheel_log", 13,
+                    "elapsedMs,state,primarySpeed,helperSpeed,targetSpeed,speedDiff,primaryPower,helperPower,primaryAmps,helperAmps,fireRequested,isAtSpeed,ballExits");
                 logStartTime = System.currentTimeMillis();
             }
             if (logStartTime > 0 && behavior == Behavior.SPINNING) {
@@ -370,6 +387,7 @@ public class Launcher implements Subsystem {
                 row.add(String.format("%.2f", flywheelHelp.getCurrent(CurrentUnit.AMPS)));
                 row.add(fireRequested);
                 row.add(isFlywheelAtSpeed());
+                row.add(ballExitCount);
                 flywheelLog.UpdateLog(row);
             }
             if (behavior == Behavior.IDLE && logStartTime > 0) {
@@ -660,6 +678,8 @@ public class Launcher implements Subsystem {
             //claimResources();
             state = LaunchState.FIRING;
             stateTimer = futureTime(FIRING_TIME);
+            ballExitCount = 0;
+            previousSpeed = currentSpeed;
             launchSpacerTimer = futureTime(LAUNCH_SPACER_TIMER);
 //            if (TRIGGER_TYPE == TriggerType.STAR_POSE) {
 //                STAR_FIRED = 0;  // Reset to REST before firing sequence
@@ -673,8 +693,11 @@ public class Launcher implements Subsystem {
      * Transitions to LIFTING when timeout expires OR sensor shows balls remain.
      */
     private void handleFiringState() {
-        flywheel.setVelocity(targetSpeed, AngleUnit.DEGREES);
-        flywheelHelp.setVelocity(targetSpeed, AngleUnit.DEGREES);
+        // Boost PIDF target during firing: PIDF sees larger error after ball impacts
+        // → applies near-max power for recovery, but speed is still capped (no runaway)
+        double firingSpeed = FIRING_BOOST ? targetSpeed + FIRING_BOOST_SPEED : targetSpeed;
+        flywheel.setVelocity(firingSpeed, AngleUnit.DEGREES);
+        flywheelHelp.setVelocity(firingSpeed, AngleUnit.DEGREES);
 
         if(isPast(launchSpacerTimer)){
             intakeHelp = true;
@@ -702,7 +725,24 @@ public class Launcher implements Subsystem {
             return;
         }
 
-        // Other trigger types: timeout-based firing
+        // Ball exit detection: count speed drops to detect when all balls have fired
+        if (BALL_EXIT_DETECTION) {
+            double speedDrop = previousSpeed - currentSpeed;
+            long now = System.currentTimeMillis();
+            if (speedDrop > BALL_EXIT_DROP_THRESHOLD
+                    && (now - lastBallExitTime) > BALL_EXIT_COOLDOWN_MS) {
+                ballExitCount++;
+                lastBallExitTime = now;
+            }
+            previousSpeed = currentSpeed;
+
+            if (ballExitCount >= BALL_EXIT_EXPECTED_COUNT) {
+                state = LaunchState.COMPLETE;
+                return;
+            }
+        }
+
+        // Other trigger types: timeout-based firing (hard backstop)
         setPaddlePosition(getTriggerFiringPosition());
 
         if (isPast(stateTimer)) {
@@ -975,6 +1015,7 @@ public class Launcher implements Subsystem {
             telemetry.put("Paddle Pos", paddle.getPendingPosition());
             telemetry.put("Pass-Through", passThroughMode ? "ON" : "off");
             telemetry.put("Fire Requested", fireRequested);
+            telemetry.put("Ball Exits", ballExitCount + " / " + BALL_EXIT_EXPECTED_COUNT);
         }
 
         return telemetry;

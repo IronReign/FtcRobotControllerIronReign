@@ -202,6 +202,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     // Cached values from readSensors()
     private double cachedHeading = 0;
     private Pose2d cachedPose = new Pose2d(0, 0, 0);
+    private PoseVelocity2d cachedVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
 
     // ==================== CONSTRUCTOR ====================
 
@@ -300,6 +301,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         PoseVelocity2d vel = localizer.update();
         cachedPose = localizer.getPose();
         cachedHeading = Math.toDegrees(cachedPose.heading.toDouble());
+        cachedVelocity = vel;
 
         // Update pose history for visualization
         poseHistory.add(cachedPose);
@@ -814,6 +816,10 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     @Override
     public double getHeadingDegrees() {
         return cachedHeading;
+    }
+
+    public PoseVelocity2d getVelocity() {
+        return cachedVelocity;
     }
 
     @Override
