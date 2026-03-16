@@ -164,9 +164,7 @@ public class DriverControls implements TelemetryProvider {
         if (stickyGamepad1.y) {
             robot.turret.setTracking();
             //robot.driveTrain.centerOnTarget();
-            //robot.applyVisionPoseCorrection();
-            robot.collectRelocSample();
-            robot.applyFilteredCorrection();
+            robot.relocalizer.apply();
         }
 
         // A button: Toggle slow mode
@@ -225,12 +223,13 @@ public class DriverControls implements TelemetryProvider {
 
         // Back button: Apply vision pose correction to Pinpoint
         // Only works when vision has a valid botpose (facing AprilTag)
-        if (stickyGamepad1.back && robot.canApplyVisionCorrection()) {
-            robot.collectRelocSample();
-            boolean applied = robot.applyFilteredCorrection();
+        if (stickyGamepad1.back) {
+            boolean applied = robot.relocalizer.apply();
             if (applied) {
-                // Brief rumble feedback to confirm correction was applied
                 gamepad1.rumble(100);
+            } else {
+                // Not ready yet — short double-rumble to indicate "working on it"
+                gamepad1.rumble(50);
             }
         }
 
@@ -317,7 +316,7 @@ public class DriverControls implements TelemetryProvider {
                 robot.missions.startCheckHealth(gamepad1);
             }
             if(stickyGamepad1.right_trigger){
-                robot.missions.averageFrames();
+                robot.relocalizer.apply();
             }
         }
 

@@ -369,91 +369,177 @@ public void forceFire() {
 
 `updateTargetSpeed()` is commented out on the X button press (DriverControls line 145). When the driver manually spins up, the flywheel should get the correct speed. Re-enable this.
 
-### Phase 6: Relocalization [NOT STARTED]
+### Phase 6: Relocalization [IN PROGRESS — code team attempted, needs retooling]
 
 Odometry drift is the root cause of the odo-bearing jerk problem, and it compounds: every time vision corrects the pose, a noisy single-frame reading can inject error rather than removing it. We need relocalization to be more robust.
 
-**Key constraint:** Continuous odo correction (blending vision into odo every frame) is not realistic with our hardware. The Limelight's botpose is not reliable enough while the chassis is moving — motion blur, vibration, and variable detection latency make moving-frame readings noisy. We should only trust vision field position when the chassis is stationary or moving very slowly.
+**Key constraints:**
+1. **Stationary only.** The Limelight's botpose is not reliable while the chassis is moving — motion blur, vibration, and detection latency make moving-frame readings noisy. We should only trust vision field position when the chassis is stationary.
+2. **Camera is on the turret.** Turret rotation moves the camera even when the chassis is still. Turret motion during sample collection degrades accuracy just like chassis motion.
+3. **Audience-side is noisier.** Fire positions near the Limelight's maximum AprilTag range produce systematically less accurate botpose readings. The system must account for this.
 
-**Additional constraint:** Audience-side fire positions are near the Limelight's maximum AprilTag detection range. Botpose readings from these positions may be systematically less accurate than goal-side readings. The system should account for this.
+**Key terminology:**
+- **Relocalization opportunity** — a brief window (target <500ms) where the robot is still enough that vision readings can be trusted. Occurs naturally at fire positions during spin-up, during brief navigation pauses, or when the driver stops to shoot.
+- **Sample** — a single vision botpose frame, transformed to robot-center coordinates, with a timestamp.
+- **Sample set** — a group of samples collected during one relocalization opportunity. All samples must come from similar conditions.
+- **Correction** — writing an averaged, validated sample set to the drivetrain pose. This is the output of a successful relocalization.
 
-#### 6A. Stationary Filtered Vision Pose Correction
+#### Code Team Status
 
-Currently `applyVisionPoseCorrection()` takes a single botpose frame and writes it directly to the drivetrain. A single noisy frame can shift the robot's believed position by inches.
+The code team (commits `ba402bdb`, `af50b5e4`, `bc59c535`) implemented the right concept: collect multiple stationary frames, average them, reject noisy batches. They built working utility methods (`averagePoses`, `computeSpread`, `transformBotposeToRobotCenter`, `getRobotSpeed`). However the implementation has several bugs that prevent it from ever succeeding:
 
-**Proposal:** Only collect relocalization samples when the chassis is stationary (or nearly so), and average multiple frames before applying.
+1. **Single-call pattern**: `collectRelocSample()` is called at discrete state transitions (once per event), not continuously. Each call adds one sample, but `applyFilteredCorrection()` needs 5-10. The sample buffer never fills.
+2. **Audience buffer impossible**: Buffer caps at 5 samples (`relocSamples.size() > RELOC_SAMPLES` removes oldest), but audience mode requires 10 (`requiredSamples = RELOC_SAMPLES * 2`). The check can never pass.
+3. **Runaway spread multiplier**: `effectiveSpread *= 1.5` runs every call from audience range with no reset. After N calls: 0.15 × 1.5^N → unbounded, eventually accepts garbage.
+4. **Missing motion gates**: No check for chassis rotation rate or turret rotation rate. A robot spinning in place at zero translational velocity would pass the velocity check but produce wildly different botpose readings per frame.
 
-```java
-// New fields in Robot:
-private static final int RELOC_SAMPLES = 5;       // Frames to average
-private static final double RELOC_MAX_SPREAD_M = 0.15;  // Reject if samples spread > 15cm
-private static final double RELOC_MAX_VELOCITY = 2.0;   // inches/sec — below this is "stationary"
-private List<Pose2d> relocSamples = new ArrayList<>();
+The utility methods are sound and will be reused. The collection/application architecture needs a full redesign.
 
-public void collectRelocSample() {
-    // Only collect when chassis is nearly stationary
-    if (!vision.hasBotPose()) return;
-    if (driveTrain.getVelocity() > RELOC_MAX_VELOCITY) {
-        relocSamples.clear();  // Motion invalidates collected samples
-        return;
-    }
+#### 6A. Background Relocalization Collector
 
-    Pose2d sample = transformBotposeToRobotCenter();
-    relocSamples.add(sample);
-}
+The fundamental design change: relocalization runs as a **self-contained background process** every cycle. External code doesn't manage collection — it just checks `isRelocReady()` and calls `applyReloc()`. The collector manages its own state, including flushing when conditions break.
 
-public boolean applyFilteredCorrection() {
-    if (relocSamples.size() < RELOC_SAMPLES) return false;
+##### Individual Sample Acceptance Rules
 
-    // Check spread — if samples disagree too much, vision is unreliable
-    double spreadM = computeSpread(relocSamples);
-    if (spreadM > RELOC_MAX_SPREAD_M) {
-        relocSamples.clear();
-        return false;  // Reject noisy batch
-    }
+ALL must be true for a single frame to enter the sample set:
 
-    // Apply average
-    Pose2d averaged = averagePoses(relocSamples);
-    driveTrain.setPose(averaged);
-    relocSamples.clear();
-    return true;
-}
+| # | Gate | Source | Threshold | Rationale |
+|---|------|--------|-----------|-----------|
+| 1 | Vision available | `vision.hasBotPose()` | boolean | No tag solution = no sample |
+| 2 | Chassis translation | `PoseVelocity2d` from `updatePoseEstimate()` | < 2.0 in/s | Motion blur corrupts pose solve |
+| 3 | Chassis rotation | `PoseVelocity2d` angular component | < 5.0 deg/s | Heading change smears tag positions in frame |
+| 4 | Turret rotation | Δ`turretAngleDeg` between cycles | < 3.0 deg/s | Camera is on turret — turret hunting moves the camera even if chassis is still |
+| 5 | Sample freshness | Oldest sample in buffer | < 500ms old | Samples from a previous stop cannot be mixed with samples from this stop |
+
+**Any gate failure flushes the entire sample buffer.** A single frame of motion during collection invalidates the batch because we can't know which samples were affected. This is deliberately conservative — a brief flush and restart costs ~200ms, while a bad correction costs an entire launch cycle.
+
+##### Sample Set Acceptance Rules
+
+A collected set is ready for application when ALL are true:
+
+| # | Check | Method | Threshold |
+|---|-------|--------|-----------|
+| 1 | Minimum count | `samples.size()` | ≥ `MIN_SAMPLES` (3) |
+| 2 | Position spread | Max distance from median position | < `MAX_SPREAD_INCHES` (6.0 in / ~15cm) |
+| 3 | Heading spread | Max heading deviation from median heading | < `MAX_HEADING_SPREAD_DEG` (5.0°) |
+| 4 | Outlier rejection | Distance from median > 2 × MAD | Remove outliers, re-check count ≥ MIN_SAMPLES |
+
+**No fixed required count.** Unlike the previous design (5 goal-side, 10 audience-side), the collector accepts a set as soon as it has enough agreeing samples. At close range where readings are tight, 3-4 samples may converge in ~100ms. At audience range where readings are noisy, it may take 8-10 samples and ~300ms before spread drops below threshold. The data tells us when it's ready, not a hardcoded number.
+
+**Maximum buffer size** is capped at 15 samples (~500ms at typical Limelight rates). If 15 samples can't converge, the vision conditions are too noisy and we should not attempt correction.
+
+##### Outlier Rejection Within a Set
+
+The previous design (and students' implementation) used max-distance-from-centroid (mean). This is vulnerable to outliers pulling the mean. Better approach:
+
+1. Compute **median X** and **median Y** (robust to up to 50% outliers)
+2. Compute **median absolute deviation** (MAD) for each axis
+3. Reject any sample where distance from median position > 2 × MAD
+4. If > 30% of samples rejected → the set is too noisy, flush everything
+5. Average the **surviving** samples (now safe to use mean — outliers are gone)
+
+Heading outliers are handled separately: compute circular median, reject samples with heading deviation > `MAX_HEADING_SPREAD_DEG` from median.
+
+##### Flush Conditions
+
+The sample buffer is flushed (cleared) when any of:
+- **Any gate fails** — chassis moved, turned, turret rotated, or vision lost (even one frame)
+- **Oldest sample exceeds age limit** — the opportunity window has passed
+- **Set rejected** — too much spread or too many outliers after 15 samples collected
+- **Correction applied** — start fresh for next opportunity
+
+##### Distance-Aware Thresholds
+
+Rather than a runaway multiplier, compute the effective threshold once per collection attempt based on current distance:
+
+```
+if distance > AUDIENCE_RANGE_THRESHOLD_M (2.3):
+    effectiveSpreadInches = MAX_SPREAD_INCHES * 1.5    // fixed multiplier, not cumulative
+else:
+    effectiveSpreadInches = MAX_SPREAD_INCHES
 ```
 
-Call `collectRelocSample()` every loop when at a fire position (the robot is naturally stationary during spin-up and aiming). Call `applyFilteredCorrection()` before launching. This gives 5 frames of averaging (~100-200ms at typical Limelight rates) and rejects batches where the Limelight is giving inconsistent readings.
+At audience range, we accept noisier data because that's all we can get — but the convergence requirement (spread must be below threshold) still ensures internal consistency. The noisier readings just mean more samples are needed before they agree, which happens naturally.
 
-The stationary requirement means:
-- Samples are only collected when the robot has stopped at the fire position
-- Any chassis movement (joystick input, trajectory correction) clears the sample buffer
-- The flywheel spin-up window naturally provides a stationary collection period
-
-#### 6B. Distance-Aware Confidence
-
-Audience-side fire positions are near the Limelight's maximum detection range. Botpose accuracy degrades with distance — the same pixel error in the image translates to a larger position error at range.
-
-**Proposal:** Scale the relocalization acceptance threshold by distance:
-
-```java
-double effectiveSpread = RELOC_MAX_SPREAD_M;
-if (vision.getDistanceToGoal() > AUDIENCE_RANGE_THRESHOLD_M) {
-    // Relax spread threshold at long range — readings are noisier
-    effectiveSpread *= 1.5;
-    // But also require more samples for averaging
-    requiredSamples = RELOC_SAMPLES * 2;  // 10 instead of 5
-}
-```
+##### Background Collector Pseudocode
 
 ```
-AUDIENCE_RANGE_THRESHOLD_M = 2.6  // Beyond this, vision is less reliable
+// Called every cycle from Robot.calc() or equivalent update loop
+updateRelocalization():
+    // --- Gate checks ---
+    if (!vision.hasBotPose()):              flush(); return
+    if (chassisTranslationRate > MAX_VEL):  flush(); return
+    if (chassisRotationRate > MAX_ROT):     flush(); return
+    if (turretRotationRate > MAX_TURRET):   flush(); return
+
+    // --- Collect ---
+    sample = transformBotposeToRobotCenter() with timestamp
+    add sample to buffer
+    drop samples older than WINDOW_MS
+
+    // --- Evaluate ---
+    if buffer.size() < MIN_SAMPLES:
+        relocReady = false; return
+
+    medianPos = computeMedianPosition(buffer)
+    survivors = rejectOutliers(buffer, medianPos, 2 * MAD)
+
+    if survivors.size() < MIN_SAMPLES:
+        // Too many outliers — set is noisy
+        if buffer.size() >= MAX_SAMPLES: flush()  // give up
+        relocReady = false; return
+
+    posSpread = maxDistFromMedian(survivors)
+    hdgSpread = maxHeadingDeviation(survivors)
+    effectiveSpread = distanceAware(MAX_SPREAD_INCHES)
+
+    if posSpread < effectiveSpread AND hdgSpread < MAX_HEADING_SPREAD_DEG:
+        relocReady = true
+        averagedPose = averagePoses(survivors)
+    else if buffer.size() >= MAX_SAMPLES:
+        flush()  // 15 samples and still can't converge
+        relocReady = false
+
+// Called by external code (auton state machine, driver button) when ready
+applyReloc():
+    if !relocReady: return false
+    driveTrain.setPose(averagedPose)
+    flush()
+    return true
 ```
 
-This means we accept noisier readings from far away (because that's all we can get), but average more aggressively to compensate.
+##### Integration Points
 
-#### 6C. Divergence Logging
+The collector runs **every cycle** — no need for explicit collect calls at state transitions. External code interacts only through:
+- `isRelocReady()` — are we confident in the averaged pose?
+- `applyReloc()` — write it to drivetrain and reset
+- Telemetry: sample count, spread, age, distance, ready status
+
+**Autonomous:** Check `isRelocReady()` at fire position arrival. If ready, apply before launching. If not ready within the spin-up window, launch anyway — the odo pose is still usable for this cycle, and we'll try again next cycle.
+
+**Teleop:** Driver presses relocalization button. If `isRelocReady()`, apply immediately and rumble. If not, brief rumble pattern to indicate "not yet" — the collector is working, try again in a moment.
+
+##### Constants Summary
+
+```
+MIN_SAMPLES = 3                  // Minimum to compute meaningful spread
+MAX_SAMPLES = 15                 // Give up after this many without convergence
+WINDOW_MS = 500                  // Max age of oldest sample in buffer
+MAX_TRANSLATION_VEL = 2.0        // in/s — chassis translational velocity gate
+MAX_ROTATION_VEL = 5.0           // deg/s — chassis rotational velocity gate
+MAX_TURRET_VEL = 3.0             // deg/s — turret angular velocity gate
+MAX_SPREAD_INCHES = 6.0          // ~15cm — position spread threshold
+MAX_HEADING_SPREAD_DEG = 5.0     // heading spread threshold
+AUDIENCE_RANGE_THRESHOLD_M = 2.3 // beyond this, relax spread by 1.5×
+OUTLIER_REJECTION_FACTOR = 2.0   // reject samples > 2×MAD from median
+MAX_OUTLIER_FRACTION = 0.3       // flush if >30% of samples are outliers
+```
+
+#### 6B. Divergence Logging
 
 Log vision vs. odo divergence to CSV for post-match analysis:
-- Timestamp, visionX, visionY, odoX, odoY, divergenceM, divergenceDeg, chassisVelocity, distanceToGoal
-- Only log when chassis is stationary (same condition as sample collection)
+- Timestamp, visionX, visionY, odoX, odoY, divergenceInches, chassisVelocity, distanceToGoal, sampleCount, spread, relocApplied
+- Only log when the collector has valid samples (same stationarity conditions)
 - This data will show how fast odo drifts in real matches, how much audience-side readings vary vs goal-side, and whether the filtered corrections are helping
 
 ### Phase 7: Flywheel Recovery & Shot Cadence [IN PROGRESS — logging added, analysis pending]
@@ -529,6 +615,25 @@ This eliminates the PIDF latency entirely. At high speeds, the motor's own back-
 
 **Recommendation:** Start with Option A (increase P) since it requires no code change — just Dashboard-tune P upward during a firing test while watching the CSV log. If that's insufficient, move to Option C. Option B is the nuclear option if nothing else works.
 
+#### 7D. PIDF Target Boost During Firing [DONE]
+
+Rather than switching motor control modes (bang-bang, RUN_WITHOUT_ENCODER), boost the PIDF velocity target during FIRING state by a fixed offset (`FIRING_BOOST_SPEED = 150 deg/s`). This makes the PIDF apply near-maximum power during recovery (it sees a larger error) while still capping speed (no runaway overspeed). Dashboard-tunable via `FIRING_BOOST` (boolean) and `FIRING_BOOST_SPEED` (deg/s).
+
+With P=400, even a +82 deg/s boost saturates the motor controller output (400 × 82 = 32,800 > 32,767 max). So +150 is more than sufficient for full-power recovery, and the max overspeed between ball impacts is bounded at 150 deg/s above target.
+
+`FIRING_TIME` reduced from 6.0s to 1.5s (hard backstop — all balls typically exit within 1s).
+
+#### 7E. Ball Exit Detection [DONE — experimental, off by default]
+
+Speed-drop counter to detect when all balls have exited, ending FIRING early:
+- Each cycle compares previous speed to current speed
+- Drop > `BALL_EXIT_DROP_THRESHOLD` (80 deg/s) counts as a ball exit
+- Cooldown of `BALL_EXIT_COOLDOWN_MS` (200ms) prevents double-counting from recovery oscillation
+- FIRING ends when `ballExitCount >= BALL_EXIT_EXPECTED_COUNT` (3)
+- Hard timeout (`FIRING_TIME`) still acts as backup
+
+Toggle via `BALL_EXIT_DETECTION` (default false). Ball exit count logged in CSV and telemetry for validation. The threshold of 80 deg/s is based on pre-boost log analysis (drops were ~115-130 observed). With FIRING_BOOST active, the faster recovery may reduce observed drops to ~100 — threshold should still trigger but needs validation with boost-enabled logs.
+
 ## Resolved Decisions
 
 1. **Oscillation window**: Time-based (fixed 500ms). Simpler, good enough for our loop rates.
@@ -536,6 +641,7 @@ This eliminates the PIDF latency entirely. At high speeds, the motor's own back-
 3. **FALL_BACK_TURN**: Decide later — needs field testing to determine if it's even useful.
 4. **Force-fire**: Bypass turret lock only. Flywheel must still be at speed — firing below speed wastes balls.
 5. **Continuous odo correction**: Not realistic with our hardware. Vision botpose is only reliable when the chassis is stationary or moving very slowly. Relocalization must be checkpoint-based, not continuous.
+6. **Flywheel recovery strategy**: PIDF target boost (Option D — not originally in PRD). Simpler than bang-bang, no mode switching, PIDF still controls speed, max overspeed is bounded and tunable.
 
 ## Implementation Priority
 
@@ -546,13 +652,15 @@ This eliminates the PIDF latency entirely. At high speeds, the motor's own back-
 4. ~~**Phase 2A** (centralize MIN_LAUNCH_SPEED)~~ DONE (code team extended with feed power + vision offset switching)
 5. ~~**Phase 2B** (pre-spin to fire position speed)~~ DONE
 6. ~~**Phase 4A** (fire position progression)~~ DONE
-7. ~~**Phase 7A** (flywheel power logging)~~ DONE — awaiting data collection
+7. ~~**Phase 7A** (flywheel power logging)~~ DONE
+8. ~~**Phase 7D** (PIDF target boost during firing)~~ DONE
+9. ~~**Phase 7E** (ball exit detection — experimental)~~ DONE — needs validation with boost-enabled logs
 
 ### Remaining (in priority order)
-1. **Phase 6A** (stationary filtered relocalization) — Reduces odo drift at checkpoints. Driver-triggered relocalization was already disabled due to large jumps — this is the fix.
-2. **Phase 7B/7C** (feed-pause or bang-bang) — Depends on 7A data. If motors have headroom, increase P or bang-bang. If already at full power, optimize cadence with feed-pause.
+1. **Phase 6A** (background relocalization collector) — Full retool of code team's attempt. Needs turret motion gate, convergence-based readiness, outlier rejection, continuous background collection. Existing utility methods (averagePoses, computeSpread, transformBotposeToRobotCenter, getRobotSpeed) can be reused.
+2. **Phase 7B** (feed-pause cadence) — May not be needed if 7D boost + 7E detection work well. Depends on competition testing.
 3. **Phase 5** (driver feedback) — LED lock quality, force-fire button, restore updateTargetSpeed on X.
-4. **Phase 6B** (distance-aware confidence) — Refinement. Only matters once 6A is working and we have data on audience-side accuracy.
+4. **Phase 6B** (divergence logging) — Collect data on odo drift rates and vision accuracy at different distances. Informs whether 6A thresholds need adjustment.
 5. **Phase 2C** (teleop pre-spin from nearest fire position) — Follow-on enhancement.
 6. **Phase 4B** (FIRE_5/FIRE_6 coordinates) — Needs physical measurement by code team.
 7. **Phase 1B Stages 2-3** (PID tuning with flywheel + intake load) — Code team has Stage 1. Stages 2-3 needed for competition-realistic tuning.
@@ -570,7 +678,10 @@ This eliminates the PIDF latency entirely. At high speeds, the motor's own back-
 5. **Static fire test** (robot parked at known position): Verify full targeting→fire pipeline. Measure time from SPINNING_UP to fire() call. Target: <1.5s with vision, <2.5s without.
 6. **Dynamic test** (full auton): Run execute2() and log lock quality, fire timing, divergence. Verify fire position progression and row direction.
 7. **Degraded fire test**: Partially block the Limelight during auton. Verify the timed window fires from held position rather than hanging indefinitely.
-8. **Relocalization test**: Compare single-frame vs stationary-filtered correction accuracy at both goal-side and audience-side positions.
+8. **Relocalization test — gate validation**: Park robot at a known position. Verify samples accumulate when still, flush when chassis nudged, flush when turret manually rotated, flush when vision blocked. Check telemetry: sample count, spread, ready status.
+9. **Relocalization test — accuracy**: At goal-side and audience-side fire positions, compare corrected pose vs known position. Run 10 trials each. Measure correction error (should be <2 inches goal-side, <4 inches audience-side). Compare against old single-frame correction.
+10. **Relocalization test — convergence speed**: Time from robot stop to `isRelocReady()` at both distances. Target: <300ms goal-side, <500ms audience-side.
+11. **Flywheel boost validation**: Fire 3 balls with `FIRING_BOOST=true` and `LOGGING_ENABLED=true`. Verify observed speed drops are still >80 deg/s (ball exit detection threshold). If drops are smaller, adjust `BALL_EXIT_DROP_THRESHOLD` based on data.
 9. **Flywheel recovery test**: Fire 3 balls from goal-side and audience-side with `LOGGING_ENABLED = true`. Analyze CSV for: peak power during recovery, speed drop per ball, recovery time between balls, primary vs helper motor symmetry. Determines whether to pursue 7B (cadence) or 7C (control strategy).
 10. **Teleop driver test**: Verify LED feedback, force-fire button, manual speed presets.
 
