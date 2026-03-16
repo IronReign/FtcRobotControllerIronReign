@@ -43,8 +43,11 @@ public class Loader implements Subsystem {
     // Hardware (wrapped for three-phase pattern)
     private final LazyMotor beltMotor;
     private final LazyMotor intakeMotor;
-    //private final CachedDistanceSensor frontSensor;
+
+    private final CachedDistanceSensor frontSensor;
     private final CachedDistanceSensor backSensor;
+    private final CachedDistanceSensor midSensor;
+
 
     public static double AMPS_AT_FULL = 0;
     public double intakeAmps = 0;
@@ -82,6 +85,7 @@ public class Loader implements Subsystem {
 
     // Ball tracking (sensor-based, no counting)
     private double frontDistance = 100; // cm, starts high (no ball)
+    private double midDistance = 100;
     private double backDistance = 100;  // cm, starts high (no ball)
     private boolean ballAtFront = false;
     private boolean ballAtBack = false;
@@ -102,7 +106,8 @@ public class Loader implements Subsystem {
         beltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        //frontSensor = new CachedDistanceSensor(hardwareMap, "frontDist", DistanceUnit.CM);
+        frontSensor = new CachedDistanceSensor(hardwareMap, "frontDist", DistanceUnit.CM);
+        midSensor = new CachedDistanceSensor(hardwareMap, "midDist", DistanceUnit.CM);
         backSensor = new CachedDistanceSensor(hardwareMap, "backDist", DistanceUnit.CM);
     }
 
@@ -111,8 +116,9 @@ public class Loader implements Subsystem {
     @Override
     public void readSensors() {
         // PHASE 1: Refresh I2C sensors
-        //frontSensor.refresh();
+        frontSensor.refresh();
         backSensor.refresh();
+        midSensor.refresh();
     }
 
     @Override
@@ -120,7 +126,8 @@ public class Loader implements Subsystem {
         // PHASE 2: Read cached values and process logic
 
         // Get cached sensor values
-        //frontDistance = frontSensor.getDistance();
+        frontDistance = frontSensor.getDistance();
+        midDistance = midSensor.getDistance();
         backDistance = backSensor.getDistance();
         intakeAmps = beltMotor.getCurrent();
 
@@ -458,8 +465,9 @@ public class Loader implements Subsystem {
         telemetry.put("State", state);
         //telemetry.put("Ball at Front", ballAtFront ? "YES" : "no");
         telemetry.put("Ball at Back", ballAtBack ? "YES" : "no");
-        //telemetry.put("Front Dist", String.format("%.1f", frontDistance));
+        telemetry.put("Front Dist", String.format("%.1f", frontDistance));
         telemetry.put("Back Dist", String.format("%.1f", backDistance));
+        telemetry.put("Mid Dist", String.format("%.1f", midDistance));
         telemetry.put("Belt Owner", beltOwner);
 
         if (debug) {
