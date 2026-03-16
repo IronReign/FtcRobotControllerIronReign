@@ -27,7 +27,7 @@ public class bobbyOpMode extends OpMode
     @Override
     public void init(){
         // ----------INITIALIZE ROBOT
-        robot=new Robot(hardwareMap, gamepad1);
+        robot=new Robot(hardwareMap, gamepad1,0);
         robot.init();
         g1=new StickyGamepad(gamepad1);
 
@@ -72,7 +72,7 @@ public class bobbyOpMode extends OpMode
             timer1.reset();
             shootStep = 0;
             flywheelOn = true;
-            robot.setFlywheelPower(1.0);
+            robot.setFlywheelVelocity(125);
         }
 
         if (!sequenceRunning) return;
@@ -127,7 +127,7 @@ public class bobbyOpMode extends OpMode
         // -------- SEQUENCE COMPLETE — RESET --------
         robot.setIntakePower(0.0);
         robot.setPusherDown();
-        robot.setFlywheelPower(0.0);
+        robot.setFlywheelVelocity(0.0);
         sequenceRunning = false;
         flywheelOn = false;
     }
@@ -146,8 +146,8 @@ public class bobbyOpMode extends OpMode
     public void handleFlywheel(StickyGamepad g1) {
         if(g1.right_bumper)flywheelOn = !flywheelOn;
 
-        if(flywheelOn) robot.setFlywheelPower(1.0);
-        else robot.setFlywheelPower(0.0);
+        if(flywheelOn) robot.setFlywheelVelocity(100);
+        else robot.setFlywheelVelocity(0.0);
     }
 
 

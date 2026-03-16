@@ -16,7 +16,7 @@ public class VisionTuner extends OpMode {
 
     @Override
     public void init() {
-        robot = new Robot(hardwareMap, gamepad1);
+        robot = new Robot(hardwareMap, gamepad1,0);
         robot.init();   // pipeline + camera still initialized here
 
         dashboard = FtcDashboard.getInstance();

@@ -8,19 +8,15 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.robots.deepthought.subsystem.Subsystem;
-import org.openftc.easyopencv.OpenCvCamera;
-import org.openftc.easyopencv.OpenCvCameraFactory;
-import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvWebcam;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
@@ -42,13 +38,13 @@ public class Robot implements Subsystem {
 
 
     // SERVO VARS
-    int startServoPosition = 1400;
+    int startServoPosition = 1390;
     int pushUp = 1070;
     Servo flywheelPusher;
 
     // VISION VARS
     OpenCvWebcam webcam;
-    BallPipeline pipeline;
+    MasterVisionPipeline pipeline;
 
 
     // ODOMETRY VARS.
@@ -56,16 +52,6 @@ public class Robot implements Subsystem {
     public static double WHEEL_RADIUS = 1.476;    // inches (75mm / 2)
     public static double CHAIN_RATIO = 20.0/15;   // wheel not directly on motor
 
-    // remeber to mesure
-    public static double TRACK_WIDTH = 14.5;   // inches (left ↔ right wheel distance)
-    public static double WHEEL_BASE  = 16.5;   // inches (front ↔ back wheel distance)
-    private double lastHeading = 0.0;
-
-
-
-    // ROBOT POSITION VARS
-//    public double x = -51.44;
-//    public double y =51.44;
 
     public double x = 0.0;
     public double y = 0.0;
@@ -80,12 +66,23 @@ public class Robot implements Subsystem {
 
     //IMU DECLARATION
     BNO055IMU imu;                // ADDED
-    double headingOffset = 0.0;   // ADDED
+    double headingOffset;   // ADDED
+
+    double angleStart;
+
+    // ---------- CAMERA / APRILTAG PARAMS ----------
+    public static final double TAG_SIZE = 0.166; // meters (6.5 inches)
+
+    public static final double FX = 578.272;
+    public static final double FY = 578.272;
+    public static final double CX = 402.145;
+    public static final double CY = 221.506;
 
     // ROBOT CONSTRUCTOR
-    public Robot(HardwareMap hardwareMap, Gamepad gamepad1) {
+    public Robot(HardwareMap hardwareMap, Gamepad gamepad1, double angle) {
         this.hardwareMap = hardwareMap;
         this.gamepad1 = gamepad1;
+        angleStart = angle;
     }
 
     @Override
@@ -111,7 +108,7 @@ public class Robot implements Subsystem {
 
         // Normalize measurements for proportional power
         double biggest = Math.max(  1.0 ,   Math.max(    Math.abs(lf)   ,  Math.max(  Math.abs(rf) , Math.max( Math.abs(lb) , Math.abs(rb)  )  )   )   );
-
+        biggest = 1;
         leftBack.setPower( lb / biggest);
         rightBack.setPower( rb / biggest);
         leftFront.setPower( lf / biggest);
@@ -158,39 +155,55 @@ public class Robot implements Subsystem {
         intake.setDirection(DcMotor.Direction.REVERSE);
         flywheelL.setDirection(DcMotor.Direction.REVERSE);
 
-        flywheelL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        flywheelR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        flywheelL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        flywheelR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        flywheelL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        flywheelR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        flywheelL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flywheelR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+        flywheelL.setPIDFCoefficients(
+                DcMotor.RunMode.RUN_USING_ENCODER,
+                new PIDFCoefficients(30, 0, 2, 11)
+        );
+
+        flywheelR.setPIDFCoefficients(
+                DcMotor.RunMode.RUN_USING_ENCODER,
+                new PIDFCoefficients(30, 0, 2, 11)
+        );
+
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         flywheelPusher.setPosition(servoNormalize(startServoPosition));
 
 
-        int cameraMonitorViewId =
-                hardwareMap.appContext
-                        .getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        webcam = OpenCvCameraFactory.getInstance().createWebcam(
-                hardwareMap.get(WebcamName.class, "Webcam 1"),
-                0
-        );
-
-        pipeline = new BallPipeline();
-        webcam.setPipeline(pipeline);
-        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
-        {
-            @Override
-            public void onOpened()
-            {
-                webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);
-                FtcDashboard.getInstance().startCameraStream(webcam,0);
-            }
-
-            @Override
-            public void onError(int errorCode) {}
-        });
+//        int cameraMonitorViewId =
+//                hardwareMap.appContext
+//                        .getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+//        webcam = OpenCvCameraFactory.getInstance().createWebcam(
+//                hardwareMap.get(WebcamName.class, "Webcam 1"),
+//                0
+//        );
+//
+//        pipeline = new MasterVisionPipeline(
+//                TAG_SIZE,
+//                FX,FY,
+//                CX, CY
+//        );
+//        webcam.setPipeline(pipeline);
+//        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
+//        {
+//            @Override
+//            public void onOpened()
+//            {
+//                webcam.startStreaming(640, 480, OpenCvCameraRotation.UPRIGHT);
+//                FtcDashboard.getInstance().startCameraStream(webcam,0);
+//            }
+//
+//            @Override
+//            public void onError(int errorCode) {}
+//        });
 
 
         // IMU INITIALIZATION
@@ -203,61 +216,19 @@ public class Robot implements Subsystem {
 
         imu.initialize(params);
 
-       //  -red aliance
-        headingOffset = getRawHeading() - Math.toRadians(0);
-
-        // - blue aliance
-//        headingOffset = getRawHeading() - Math.toRadians(45);
-
-//        resetHeading();
+        resetHeading();
+        headingOffset -= Math.toRadians(angleStart);
         heading = getHeading(); // initial heading in field coordinates
-        lastHeading = heading;
+
         // -------------------------------
-
-
         lastLF = leftFront.getCurrentPosition();
         lastRF = rightFront.getCurrentPosition();
         lastLB = leftBack.getCurrentPosition();
         lastRB = rightBack.getCurrentPosition();
     }
 
-//public void updatePose() {
-//    int lf = leftFront.getCurrentPosition();
-//    int rf = rightFront.getCurrentPosition();
-//    int lb = leftBack.getCurrentPosition();
-//    int rb = rightBack.getCurrentPosition();
-//
-//    int dLF = lf - lastLF;
-//    int dRF = rf - lastRF;
-//    int dLB = lb - lastLB;
-//    int dRB = rb - lastRB;
-//
-//    lastLF = lf;
-//    lastRF = rf;
-//    lastLB = lb;
-//    lastRB = rb;
-//
-//    double dlf = ticksToInches(dLF);
-//    double drf = ticksToInches(dRF);
-//    double dlb = ticksToInches(dLB);
-//    double drb = ticksToInches(dRB);
-//
-//    double dxRobot = (dlf + drf + dlb + drb) / 4.0;
-//    double dyRobot = (-dlf + drf + dlb - drb) / 4.0;
-//
-//    heading = getHeading();
-//
-//    double cos = Math.cos(heading);
-//    double sin = Math.sin(heading);
-//
-//    // SWAPPED: dyRobot affects field X, dxRobot affects field Y
-//    x += dyRobot * cos + dxRobot * sin;
-//    y += dyRobot * sin - dxRobot * cos;
-//}
 
-
-    public void updatePose()
-    {
+    public void updatePose()  {
 
         // Read in encoder values
         int lf = leftFront.getCurrentPosition();
@@ -286,43 +257,7 @@ public class Robot implements Subsystem {
         double dlb = ticksToInches(dLB);
         double drb = ticksToInches(dRB);
 
-
-        // Update heading to separate rotational and strafe motion
         heading = getHeading();
-//        double dTheta = heading - lastHeading;
-//
-//        while(dTheta > Math.PI) dTheta -= 2 * Math.PI;
-//        while(dTheta < -Math.PI) dTheta += 2 * Math.PI;
-//
-//        lastHeading = heading;
-//
-//        // Calculate ticks lost to rotational motion
-//        double rotationRadius =( TRACK_WIDTH + WHEEL_BASE) / 2 ;
-//        double rotationDist = dTheta * rotationRadius;
-//
-//        // Remove from each wheel
-//        dlf -= rotationDist;
-//        drf += rotationDist;
-//        dlb -= rotationDist;
-//        drb += rotationDist;
-
-        double dTheta = heading - lastHeading;
-
-        while (dTheta > Math.PI) dTheta -= 2 * Math.PI;
-        while (dTheta < -Math.PI) dTheta += 2 * Math.PI;
-
-        lastHeading = heading;
-
-        double rotationRadius = (TRACK_WIDTH + WHEEL_BASE) / 2.0;
-        double rotationDist = dTheta * rotationRadius / 2.0;
-
-        dlf -= rotationDist;
-        drf += rotationDist;
-        dlb -= rotationDist;
-        drb += rotationDist;
-
-
-
 
         // Calculate change in robots position
         double dxR = (dlf + drf + dlb + drb) / 4.0;
@@ -335,12 +270,7 @@ public class Robot implements Subsystem {
         // Update robots position
         x += dyR * cos + dxR * sin;
         y += dyR * sin - dxR * cos;
-
-        // Try This if axes are flipped
-    //    x += dxRobot * cos - dyRobot * sin;
-    //    y += dxRobot * sin + dyRobot * cos;
     }
-
 
     public void setTurnPower(double turn) {
         mecanumDrive(0,0,turn) ;
@@ -371,9 +301,12 @@ public class Robot implements Subsystem {
         return WHEEL_RADIUS * 2 * Math.PI * CHAIN_RATIO * ticks / TICKS_PER_REV;
     }
 
-    public void setFlywheelPower(double x) {
-        flywheelL.setPower(x);
-        flywheelR.setPower(x);
+    public void setFlywheelVelocity(double rpm) {
+        double FLYWHEEL_TICKS_PER_REV = 1120.0;
+        double ticksPerSecond = (rpm * FLYWHEEL_TICKS_PER_REV) / 60.0;
+
+        flywheelL.setVelocity(ticksPerSecond);
+        flywheelR.setVelocity(ticksPerSecond);
     }
     public void setIntakePower(double x) {
         intake.setPower(x);
@@ -400,6 +333,8 @@ public class Robot implements Subsystem {
         telemetry.put("y (inches)", y);
         telemetry.put("heading (rad)", heading);
         telemetry.put("LF encoder", leftFront.getCurrentPosition());
+        telemetry.put("Flywheel L velocity", flywheelL.getVelocity()*60/ 1120);
+        telemetry.put("Flywheel R velocity", flywheelR.getVelocity()*60/1120);
 
         return telemetry;
     }
