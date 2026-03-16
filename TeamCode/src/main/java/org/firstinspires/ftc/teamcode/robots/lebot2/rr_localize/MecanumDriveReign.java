@@ -52,7 +52,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.Drawing;
-import org.firstinspires.ftc.teamcode.rrQuickStart.Localizer;
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.Localizer;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.MecanumLocalizerInputsMessage;

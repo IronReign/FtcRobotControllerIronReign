@@ -8,8 +8,10 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Launcher;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.LEDStatus;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Loader;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Turret;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Vision;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.DriveTrainBase;
 import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
@@ -23,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
-import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 /**
  * Robot coordinator class for Lebot2.
@@ -54,12 +55,16 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 @Config(value = "Lebot2_Robot")
 public class Robot implements TelemetryProvider {
 
+    public static boolean auton = false;
+
     // Subsystems
     public final DriveTrainBase driveTrain;
     public final Intake intake;
     public final Loader loader;
     public final Launcher launcher;
     public final Vision vision;
+    public final LEDStatus ledStatus;
+    public final Turret turret;
 
     // Missions coordinator (Layer 4 - above Robot behaviors)
     public final Missions missions;
@@ -77,19 +82,49 @@ public class Robot implements TelemetryProvider {
     // Configuration
     public static boolean isRedAlliance = true;
 
+    // Starting position configuration
+    public enum StartingPosition {
+        UNKNOWN,      // Position unknown (teleop testing) - use MT1 for initial fix
+        AUDIENCE,     // Touching audience wall - can see goal AprilTag (long range)
+        GOAL,         // Touching goal wall - too close for vision, must back up first
+        CALIBRATION   // Field center, facing red goal - for MT1/MT2 comparison testing
+    }
+    private StartingPosition startingPosition = StartingPosition.UNKNOWN;
+    private boolean initialPositionSet = false;  // True once we've set or corrected initial pose
+
+    // Starting poses are now defined in FieldMap (START_AUDIENCE, START_GOAL)
+    // Use FieldMap.getPose(name, isRedAlliance) to get alliance-aware poses
+
+    // Calibration pose - field center, facing red goal
+    // In DECODE coordinates: X+ toward audience, so facing red goal ≈ 135°
+    // (Red goal is in the back-left quadrant from audience perspective)
+    // Used for MT1/MT2 comparison testing - provides known heading to seed MT2
+    public static final Pose2d CALIBRATION_POSE = new Pose2d(0, 0, 0);
+
     // Robot Dimensions (inches, relative to center of rotation)
     // Center of rotation = midpoint between drive wheels (on the axle line)
     // Since wheels are mounted near the back, FRONT_EXTENT > BACK_EXTENT
     public static double FRONT_EXTENT = 9.0;   // Center of rotation to front bumper
     public static double BACK_EXTENT = 5.0;    // Center of rotation to back bumper
     public static double SIDE_EXTENT = 7.0;    // Center to side (half robot width)
-    public static double TRACK_WIDTH = 11.5;   // Distance between wheel centers (should match TankDrivePinpoint.PARAMS.trackWidthTicks)
+    public static double TRACK_WIDTH = 14.0;   // NOT USED - actual track width is hardcoded in TankDrivePinpoint.java:187
 
-    // Camera offset from center of rotation (for Limelight configuration reference)
-    // These values should be entered in Limelight web interface, stored here for documentation
-    public static double CAMERA_FORWARD_OFFSET = 6.0;  // Positive = camera in front of center of rotation
-    public static double CAMERA_SIDE_OFFSET = 0.0;     // Positive = camera to the right
-    public static double CAMERA_HEIGHT = 12.0;         // Height above ground
+    // Camera offset from center of rotation (used to transform Limelight pose to robot center)
+    // Limelight reports camera position - we need to offset to get robot center of rotation
+    public static double CAMERA_FORWARD_OFFSET_M = 0.33;  // 33cm forward of center of rotation
+    public static double CAMERA_SIDE_OFFSET_M = 0.0;      // Lateral offset (positive = right)
+    public static double CAMERA_HEIGHT_M = 0.30;          // Height above ground (~12 inches)
+
+    // Vision Relocalization
+    private static final int RELOC_SAMPLES = 5;            // Number of frames to average
+    private static final double RELOC_MAX_SPREAD_M = 0.15; // Reject if samples differ >15cm
+    private static final double RELOC_MAX_VELOCITY = 2.0;  // inches/sec to consider robot stationary
+    public List<Pose2d> relocSamples = new ArrayList<>();
+    private Pose2d lastPose = null;
+    private long lastPoseTime = 0;
+    double effectiveSpread = RELOC_MAX_SPREAD_M;
+    public static double AUDIENCE_RANGE_THRESHOLD_M = 2.6;
+    public int requiredSamples = RELOC_SAMPLES;
 
     // Robot-level behaviors (multi-subsystem coordination only)
     // Note: Most behaviors are now handled by individual subsystems
@@ -148,13 +183,23 @@ public class Robot implements TelemetryProvider {
         loader = new Loader(hardwareMap);
         launcher = new Launcher(hardwareMap);
         vision = new Vision(hardwareMap);
+        ledStatus = new LEDStatus(hardwareMap);
+        turret = new Turret(hardwareMap);
 
         // Connect subsystems that need references to each other
+        loader.setLauncher(launcher);
         intake.setLoader(loader);       // For LOAD_ALL completion check
         launcher.setLoader(loader);     // For belt claiming and ball counting
         launcher.setIntake(intake);     // For intake suppression during firing
         launcher.setVision(vision);     // For distance-based speed calculation
+        launcher.setTurret(turret);
         driveTrain.setVision(vision);   // For continuous vision-based centering
+        ledStatus.setLoader(loader);    // For ball detection
+        ledStatus.setLauncher(launcher); // For firing detection
+        ledStatus.setVision(vision);
+        ledStatus.setTurret(turret);
+        turret.setVision(vision);
+        turret.setDriveTrain((TankDrivePinpoint)driveTrain);
 
         // Add to subsystems list for bulk operations
         subsystems.add((Subsystem) driveTrain);
@@ -162,6 +207,8 @@ public class Robot implements TelemetryProvider {
         subsystems.add(loader);
         subsystems.add(launcher);
         subsystems.add(vision);
+        subsystems.add(ledStatus);
+        subsystems.add(turret);
 
         // Voltage sensor
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
@@ -189,6 +236,16 @@ public class Robot implements TelemetryProvider {
         // Clear bulk cache first - this refreshes all motor encoder/velocity data
         for (LynxModule hub : hubs) {
             hub.clearBulkCache();
+        }
+
+        // Configure Vision MT1/MT2 mode based on whether initial position is known
+        // When position is unknown, force MT1 since Pinpoint heading may be wrong
+        vision.setForceMT1(!initialPositionSet);
+
+        // Feed current heading to Vision for MegaTag2 localization
+        // Only useful when initialPositionSet is true (otherwise MT1 is forced)
+        if (initialPositionSet) {
+            vision.updateRobotOrientation(driveTrain.getHeadingDegrees());
         }
 
         // Read I2C sensors for all subsystems
@@ -237,36 +294,28 @@ public class Robot implements TelemetryProvider {
 
     // ==================== BEHAVIOR HANDLERS ====================
 
-    public static int targetHeadingDegrees = 45;
-
     private void handleTargetingBehavior() {
         // Two-phase targeting: IMU rough turn, then vision fine tune
         switch (targetingState) {
             case IDLE:
-                // Start with IMU turn toward target area
+                // Calculate bearing from current position to goal (alliance-aware)
+                Pose2d currentPose = driveTrain.getPose();
+                Pose2d goalPose = FieldMap.getPose(FieldMap.GOAL, isRedAlliance);
+                double targetHeadingRadians = FieldMap.bearingTo(currentPose, goalPose);
+                int targetHeadingDegrees = (int) Math.toDegrees(targetHeadingRadians);
                 driveTrain.turnToHeading(targetHeadingDegrees, 0.7);
                 targetingState = TargetingState.TURNING_IMU;
                 break;
 
             case TURNING_IMU:
                 if (driveTrain.isTurnComplete()) {
-                    // IMU turn complete, start vision targeting
-                    if (vision.hasTarget()) {
-                        driveTrain.turnToTarget(vision.getTx(), 0.5);
-                        targetingState = TargetingState.TURNING_VISION;
-                    } else {
-                        // No target visible, complete
-                        targetingState = TargetingState.IDLE;
-                        behavior = Behavior.MANUAL;
-                    }
+                    // IMU turn complete, start vision centering
+                    driveTrain.centerOnTarget();
+                    targetingState = TargetingState.TURNING_VISION;
                 }
                 break;
 
             case TURNING_VISION:
-                // Keep updating target while turning
-                if (vision.hasTarget()) {
-                    driveTrain.turnToTarget(vision.getTx(), 0.5);
-                }
                 if (driveTrain.isTurnComplete()) {
                     targetingState = TargetingState.IDLE;
                     behavior = Behavior.MANUAL;
@@ -281,12 +330,14 @@ public class Robot implements TelemetryProvider {
      * Launcher handles FIRING → LIFTING → COMPLETE sequence internally.
      */
     private void handleLaunchAllBehavior2() {
+        launcher.updateTargetSpeed();
+
         switch (launchAllState) {
             case IDLE:
-                if (loader.isEmpty()) {
-                    behavior = Behavior.MANUAL;
-                    return;
-                }
+//                if (loader.isEmpty()) {
+//                    behavior = Behavior.MANUAL;
+//                    return;
+//                }
                 // Start flywheel spinning
                 launcher.setBehavior(Launcher.Behavior.SPINNING);
                 launchAllState = LaunchAllState.SPINNING_UP;
@@ -446,6 +497,297 @@ public class Robot implements TelemetryProvider {
         vision.setAlliance(isRed);
     }
 
+    // ==================== STARTING POSITION ====================
+
+    /**
+     * Set starting position and initialize drivetrain pose.
+     * Call during init_loop based on driver selection.
+     *
+     * @param position The starting position (AUDIENCE, GOAL, or UNKNOWN)
+     */
+    public void setStartingPosition(StartingPosition position) {
+        this.startingPosition = position;
+
+        // Update FieldMap offset selection so Dashboard shows correct waypoints
+        FieldMap.IS_AUDIENCE_START = (position == StartingPosition.AUDIENCE);
+
+        // Set distance hint for fallback launch speed
+        if (position == StartingPosition.AUDIENCE) {
+            launcher.setDistanceHint(Launcher.DistanceHint.FAR);
+        } else {
+            launcher.setDistanceHint(Launcher.DistanceHint.NEAR);
+        }
+
+        if (position == StartingPosition.UNKNOWN) {
+            // Unknown position - don't set pose, wait for vision fix
+            initialPositionSet = false;
+        } else {
+            // Get the appropriate pose based on alliance and position
+            Pose2d pose = getStartingPose(position);
+            driveTrain.setPose(pose);
+            initialPositionSet = true;
+        }
+    }
+
+    /**
+     * Get the starting pose for a given position based on current alliance.
+     * Uses FieldMap waypoints which handle alliance reflection automatically.
+     */
+    public Pose2d getStartingPose(StartingPosition position) {
+        // Calibration pose is alliance-independent (field center)
+        if (position == StartingPosition.CALIBRATION) {
+            return CALIBRATION_POSE;
+        }
+
+        // Get pose from FieldMap - handles alliance reflection automatically
+        String waypointName = (position == StartingPosition.AUDIENCE)
+                ? FieldMap.START_AUDIENCE
+                : FieldMap.START_GOAL;
+        return FieldMap.getPose(waypointName, isRedAlliance);
+    }
+
+    /**
+     * Get current starting position selection.
+     */
+    public StartingPosition getStartingPosition() {
+        return startingPosition;
+    }
+
+    /**
+     * Check if initial position has been set (either via selection or vision fix).
+     * When false, Vision should prefer MT1 to get full pose including heading.
+     */
+    public boolean isInitialPositionSet() {
+        return initialPositionSet;
+    }
+
+    /**
+     * Mark initial position as set (called after successful vision correction when UNKNOWN).
+     */
+    public void markInitialPositionSet() {
+        initialPositionSet = true;
+    }
+
+    // ==================== VISION POSE CORRECTION ====================
+
+    /**
+     * Apply vision-based pose correction to Pinpoint localizer.
+     * Uses MegaTag2 when available (better single-tag accuracy with IMU fusion),
+     * falls back to MegaTag1 when heading is unknown (robot restart scenario).
+     *
+     * The Limelight reports camera position, so we transform to robot center
+     * using the camera offset constants.
+     *
+     * Call this when:
+     * - Driver triggers correction (Back button during teleop)
+     * - At autonomous checkpoints (after reaching launch position)
+     *
+     * @return true if correction was applied, false if no valid vision pose
+     */
+    public boolean applyVisionPoseCorrection() {
+        if (!vision.hasBotPose()) {
+            return false;
+        }
+        // Distance hint is now updated automatically inside updateTargetSpeed()
+
+        // Get vision pose - this is the CAMERA position (Limelight uses meters)
+        double camX = vision.getRobotX();
+        double camY = vision.getRobotY();
+        double headingRad = vision.getRobotHeading();
+
+        // Transform from camera position to robot center of rotation
+        // Camera is forward of center, so robot center is BEHIND camera
+        // robot_center = camera_pos - offset_in_robot_frame (rotated to field frame)
+        double cosH = Math.cos(headingRad);
+        double sinH = Math.sin(headingRad);
+
+        // Forward offset: subtract because robot center is behind camera
+        // Side offset: positive = camera right of center, so subtract for robot center
+        double robotX = camX - CAMERA_FORWARD_OFFSET_M * cosH + CAMERA_SIDE_OFFSET_M * sinH;
+        double robotY = camY - CAMERA_FORWARD_OFFSET_M * sinH - CAMERA_SIDE_OFFSET_M * cosH;
+
+        // Convert to inches for RoadRunner
+        double xInches = robotX * 39.3701;
+        double yInches = robotY * 39.3701;
+
+        Pose2d visionPose = new Pose2d(xInches, yInches, headingRad);
+
+        driveTrain.setPose(visionPose);
+
+        // Mark initial position as set (important for UNKNOWN starting position)
+        if (!initialPositionSet) {
+            initialPositionSet = true;
+        }
+
+        return true;
+    }
+
+    // Frame Collection
+    public void collectRelocSample() {
+        // Check if limelight in view
+        if (!vision.hasBotPose()) return;
+
+        // Check if robot is stationary
+        if (getRobotSpeed() > RELOC_MAX_VELOCITY) {
+            relocSamples.clear();
+            return;
+        }
+
+        if (vision.getDistanceToGoal() > AUDIENCE_RANGE_THRESHOLD_M) {
+            effectiveSpread *= 1.5;
+            requiredSamples = RELOC_SAMPLES * 2;
+        }
+
+        // Gather poses from frames
+        Pose2d sample = transformBotposeToRobotCenter();
+        relocSamples.add(sample);
+
+        // Accounts for excess frames
+        if (relocSamples.size() > RELOC_SAMPLES) {
+            relocSamples.remove(0);
+        }
+    }
+
+    // Identifying accurate pose
+    public boolean applyFilteredCorrection() {
+        // Check for enough frames
+        if (relocSamples.size() < requiredSamples){
+            return false;
+        }
+
+        // Determine usability of frames
+        double spreadM = computeSpread(relocSamples);
+
+        // Reject noisy data
+        if(spreadM > (effectiveSpread * 39.3701)) {
+            relocSamples.clear();
+            return false;
+        }
+
+        // Average poses
+        Pose2d avg = averagePoses(relocSamples);
+        driveTrain.setPose(avg);
+
+        // Reset
+        relocSamples.clear();
+        return true;
+    }
+
+    // Averaging position from frames gathered
+    private Pose2d averagePoses(List<Pose2d> poses) {
+
+        double avgX = 0;
+        double avgY = 0;
+
+        double sinSum = 0;
+        double cosSum = 0;
+
+        for (Pose2d p : poses) {
+
+            avgX += p.position.x;
+            avgY += p.position.y;
+
+            double heading = p.heading.toDouble();
+            sinSum += Math.sin(heading);
+            cosSum += Math.cos(heading);
+        }
+
+        int n = poses.size();
+
+        avgX /= n;
+        avgY /= n;
+
+        double avgHeading = Math.atan2(sinSum / n, cosSum / n);
+
+        return new Pose2d(avgX, avgY, avgHeading);
+    }
+
+    // Determine position of robot considering limelight offset
+    private Pose2d transformBotposeToRobotCenter() {
+
+        double camX = vision.getRobotX();
+        double camY = vision.getRobotY();
+        double headingRad = vision.getRobotHeading();
+
+        double cosH = Math.cos(headingRad);
+        double sinH = Math.sin(headingRad);
+
+        double robotX = camX - CAMERA_FORWARD_OFFSET_M * cosH + CAMERA_SIDE_OFFSET_M * sinH;
+        double robotY = camY - CAMERA_FORWARD_OFFSET_M * sinH - CAMERA_SIDE_OFFSET_M * cosH;
+
+        double xInches = robotX * 39.3701;
+        double yInches = robotY * 39.3701;
+
+        return new Pose2d(xInches, yInches, headingRad);
+    }
+
+    // Determine drivetrain velocity
+    private double getRobotSpeed() {
+
+        Pose2d currentPose = driveTrain.getPose();
+        long now = System.nanoTime();
+
+        if (lastPose == null) {
+            lastPose = currentPose;
+            lastPoseTime = now;
+            return 0;
+        }
+
+        double dx = currentPose.position.x - lastPose.position.x;
+        double dy = currentPose.position.y - lastPose.position.y;
+
+        double dt = (now - lastPoseTime) / 1e9;
+
+        lastPose = currentPose;
+        lastPoseTime = now;
+
+        if (dt <= 0) return 0;
+
+        return Math.hypot(dx, dy) / dt;
+    }
+
+    // Determines how noisy the data is (whether it is usable or has outliers)
+    public double computeSpread(List<Pose2d> poses) {
+
+        if (poses.isEmpty()) return 0;
+
+        double avgX = 0;
+        double avgY = 0;
+
+        for (Pose2d p : poses) {
+            avgX += p.position.x;
+            avgY += p.position.y;
+        }
+
+        avgX /= poses.size();
+        avgY /= poses.size();
+
+        double maxDist = 0;
+
+        for (Pose2d p : poses) {
+            double dx = p.position.x - avgX;
+            double dy = p.position.y - avgY;
+
+            double dist = Math.hypot(dx, dy);
+
+            if (dist > maxDist) {
+                maxDist = dist;
+            }
+        }
+
+        return maxDist;
+    }
+
+    /**
+     * Check if vision pose correction is available.
+     * Use this to enable/disable the correction button or provide feedback.
+     *
+     * @return true if vision has a valid botpose that could be applied
+     */
+    public boolean canApplyVisionCorrection() {
+        return vision.hasBotPose();
+    }
+
     /**
      * Get current battery voltage.
      */
@@ -533,6 +875,7 @@ public class Robot implements TelemetryProvider {
 
         telemetry.put("Behavior", behavior);
         telemetry.put("Alliance", isRedAlliance ? "RED" : "BLUE");
+        telemetry.put("Start Pos", startingPosition + (initialPositionSet ? "" : " (unset)"));
         telemetry.put("Balls", loader.getBallCount() + "/" + Loader.MAX_BALLS);
 
         if (debug) {

@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Launcher;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Loader;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Turret;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.TelemetryProvider;
 
 import java.util.LinkedHashMap;
@@ -34,7 +35,10 @@ import java.util.Map;
 public class DriverControls implements TelemetryProvider {
 
     // Configuration
-    public static double DRIVE_DAMPENER = 0.7;
+    public static double THROTTLE_DAMPENER = .7;
+    public static double BACKWARD_DAMP = .4;
+    public static double FORWARD_DAMP = .9;
+    public static double DRIVE_DAMPENER = .7;
     public static double SLOW_MODE_DAMPENER = 0.3;
     public static boolean slowMode = false;
 
@@ -65,24 +69,41 @@ public class DriverControls implements TelemetryProvider {
      */
     public void initLoop() {
         updateStickyGamepads();
+        handlePipeline();
         handleGameStateSwitch();
         handleAllianceSelection();
+        handleStartingPositionSelection();
+        handleAbortSetting();
+        joystickDrive();
     }
 
     /**
      * Handle main driving controls during teleop.
      */
-    public void joystickDrive() {
-        boolean sepereate = false;
-        if(sepereate){
+    void joystickDrive() {
+        boolean tank = false; // set true to drive motors independently for true tank drive
+
+        if(tank){
             double left= gamepad1.left_stick_y;
             double right = gamepad1.right_stick_y;
             robot.driveTrain.drive(left,right,0);
         }else {
 
+
             // Get drive inputs
-            double throttle = -gamepad1.left_stick_y;
-            double turn = -gamepad1.right_stick_x;
+            //double throttle = -gamepad1.left_stick_y*THROTTLE_DAMPENER;
+            if(-gamepad1.left_stick_y<0){
+                THROTTLE_DAMPENER = BACKWARD_DAMP;
+            }else{
+                THROTTLE_DAMPENER = FORWARD_DAMP;
+            }
+            double turn = gamepad1.right_stick_x;
+            double throttle = -gamepad1.left_stick_y*THROTTLE_DAMPENER;
+
+            // Abort any running mission if driver provides significant input
+            if (robot.missions.isActive() && (Math.abs(throttle) > 0.1 || Math.abs(turn) > 0.1)) {
+                robot.missions.abort();
+            }
 
             // Apply dampening
             double dampener = slowMode ? SLOW_MODE_DAMPENER : DRIVE_DAMPENER;
@@ -93,20 +114,14 @@ public class DriverControls implements TelemetryProvider {
             // any running RR trajectory or PID turn
             robot.driveTrain.drive(throttle, 0, turn);
 
-            // Handle button inputs
-            handleButtons();
         }
     }
-//    public void driveWheelsSeperate(){
-//        double left=gamepad1.left_stick_y;
-//        double right = gamepad1.right_stick_y;
-//        robot.driveTrain.setMotorPowers();
-//    }
 
-    private void handleButtons() {
+    public void handleButtons() {
         // A button: Toggle intake LOAD_ALL behavior
         // Intake runs until loader is full, then auto-stops
-        if (stickyGamepad1.a) {
+        if (stickyGamepad1.left_bumper) {
+            robot.launcher.STAR_FIRED = 0;      // Set star to REST/intake position
             if (robot.intake.isActive()) {
                 robot.intake.off();
                 robot.loader.releaseBeltFromIntake();
@@ -121,11 +136,13 @@ public class DriverControls implements TelemetryProvider {
             robot.setBehavior(Robot.Behavior.MANUAL);
             robot.launcher.setBehavior(Launcher.Behavior.IDLE);
             robot.intake.off();
-            robot.loader.stopBelt();
+            robot.loader.releaseBelt();
+            //robot.turret.setLocked();
         }
 
         if(stickyGamepad1.x){
             robot.launcher.requestManual();
+            //robot.launcher.updateTargetSpeed();  // Get vision-based speed (or MIN if no vision)
             robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
         }
 
@@ -145,41 +162,58 @@ public class DriverControls implements TelemetryProvider {
         // DriveTrain queries Vision directly for continuous tx updates
         // Driver can override with joystick if needed
         if (stickyGamepad1.y) {
-            robot.driveTrain.centerOnTarget();
+            robot.turret.setTracking();
+            //robot.driveTrain.centerOnTarget();
+            //robot.applyVisionPoseCorrection();
+            robot.collectRelocSample();
+            robot.applyFilteredCorrection();
         }
 
-        // Left bumper: Toggle slow mode
-        if (stickyGamepad1.left_bumper) {
+        // A button: Toggle slow mode
+        if (stickyGamepad1.a) {
             slowMode = !slowMode;
+//            if (robot.turret.getBehavior() == Turret.Behavior.TRACKING) {
+//                robot.turret.setLocked();
+//            } else {
+//
+//            }
         }
 
         // Right bumper: Launch all balls in sequence
         if (stickyGamepad1.right_bumper) {
+            //robot.driveTrain.centerOnTarget();
+            //robot.applyVisionPoseCorrection();
+            //robot.launcher.updateTargetSpeed();
             robot.setBehavior(Robot.Behavior.LAUNCH_ALL);
         }
 
-        // D-pad up/down: Manual paddle control (CUP/RAMP positions)
-        if (stickyGamepad1.dpad_up) {
-            robot.launcher.paddleRamp();
-            robot.launcher.setPassThroughMode(true);
-        }
+        // D-pad up: shoot short settings for when vision fails
         if (stickyGamepad1.dpad_down) {
-            robot.launcher.paddleCup();
-            robot.launcher.setPassThroughMode(false);
+
+            robot.launcher.shootShort();
+        }
+
+        // D-pad down: shoot long settings for when vision fails
+        if (stickyGamepad1.dpad_up) {
+            robot.launcher.shootLong();
+            //robot.turret.resetTurret();
+
         }
 
         // D-pad left: Simple intake on (not LOAD_ALL)
         if (stickyGamepad1.dpad_left) {
+            robot.launcher.STAR_FIRED = 0;      // Set star to REST/intake position
             robot.intake.on();
             robot.loader.requestBeltForIntake();
         }
 
         // D-pad right: Eject balls
         if (stickyGamepad1.dpad_right) {
-            //robot.launcher.manualFire();
-            robot.intake.eject();         //bring back after manual test
-            // For eject, we use setBeltPower which claims as launcher priority
-            // Positive = eject forward
+            //robot.turret.setLocked();
+//            //robot.launcher.manualFire();
+//            robot.intake.eject();         //bring back after manual test
+//            // For eject, we use setBeltPower which claims as launcher priority
+//            // Positive = eject forward
             robot.loader.setBeltPower(0.5);       //bring back after manual test
         }
 
@@ -187,6 +221,17 @@ public class DriverControls implements TelemetryProvider {
         if (stickyGamepad1.guide) {
             robot.driveTrain.resetEncoders();
             robot.loader.resetBallCount();
+        }
+
+        // Back button: Apply vision pose correction to Pinpoint
+        // Only works when vision has a valid botpose (facing AprilTag)
+        if (stickyGamepad1.back && robot.canApplyVisionCorrection()) {
+            robot.collectRelocSample();
+            boolean applied = robot.applyFilteredCorrection();
+            if (applied) {
+                // Brief rumble feedback to confirm correction was applied
+                gamepad1.rumble(100);
+            }
         }
 
         //Start button: change tilt index which correspond to servo tilt of limelight
@@ -206,6 +251,79 @@ public class DriverControls implements TelemetryProvider {
             robot.vision.setTiltUpMin();
         }else{
             robot.vision.setTiltUpMax();
+        }
+
+    }
+
+    /**
+     * Handle tuning mission controls in TEST mode.
+     * Uses gamepad1 - safe because handleButtons() is NOT called in TEST mode.
+     * Called from Lebot2_6832.handleTest().
+     *
+     * Gamepad1 buttons (TEST mode only):
+     *   A = Start Rotation Test (90° turns CW/CCW)
+     *   B = Start Square Test (position-based; Home+B = old RR version)
+     *   X = Start Straight Line Test (position-based; Home+X = old RR version)
+     *   Y = Start Turn Accuracy Test (45°, 90°, 180° turns)
+     *   RB = Start Ramsete Test (trajectory with heading disturbance)
+     *   Back = Abort current tuning mission
+     *   Home (Guide) = Hold as shift key for B/X to use old RR trajectory versions
+     */
+    public void handleTuningControls() {
+        // Only allow starting new missions if none running
+        if (!robot.missions.isActive()) {
+            if (stickyGamepad1.a) {
+                robot.missions.initLogging();  // Ensure logging is on
+                robot.missions.startTuningRotation();
+            }
+            if (stickyGamepad1.b) {
+                robot.missions.initLogging();
+                if (gamepad1.guide) {
+                    robot.missions.startTuningSquare();       // Home+B = old RR square
+                } else {
+                    robot.missions.startTuningSquarePos();    // B = position-based square
+                }
+            }
+            if (stickyGamepad1.x) {
+                robot.missions.initLogging();
+                if (gamepad1.guide) {
+                    robot.missions.startTuningStraight();     // Home+X = old RR straight
+                } else {
+                    robot.missions.startTuningStraightPos();  // X = position-based straight
+                }
+            }
+            if (stickyGamepad1.y) {
+                robot.missions.initLogging();
+                robot.missions.startTuningTurn();
+            }
+            if (stickyGamepad1.right_bumper) {
+                robot.missions.initLogging();
+                robot.missions.startTuningRamsete();
+            }
+            if (stickyGamepad1.dpad_up) {
+                robot.missions.initLogging();
+                robot.missions.startTuningDrift();
+            }
+            if (stickyGamepad1.dpad_down) {
+                robot.missions.initLogging();
+                if (gamepad1.guide) {
+                    robot.missions.startTuningVisionTrack();  // Home+dpad_down = vision tracking with distance
+                } else {
+                    robot.missions.startTuningVision();       // dpad_down alone = heading centering only
+                }
+            }
+            if (stickyGamepad1.left_bumper) {
+                robot.missions.initLogging();
+                robot.missions.startCheckHealth(gamepad1);
+            }
+            if(stickyGamepad1.right_trigger){
+                robot.missions.averageFrames();
+            }
+        }
+
+        // Back button aborts current mission
+        if (stickyGamepad1.back && robot.missions.isActive()) {
+            robot.missions.abort();
         }
     }
 
@@ -239,6 +357,73 @@ public class DriverControls implements TelemetryProvider {
             Robot.isRedAlliance = true;
             robot.setAlliance(true);
         }
+    }
+
+    /**
+     * Handle starting position selection during init.
+     *
+     * Starting positions determine initial Pinpoint pose:
+     * - AUDIENCE: Touching audience wall, can see goal AprilTag (long range)
+     * - GOAL: Touching goal wall, too close for vision initially
+     * - UNKNOWN: For teleop testing, position unknown until first vision fix
+     * - CALIBRATION: Field center, facing red goal - for MT1/MT2 comparison
+     *
+     * Blue positions are reflections of Red positions across field X axis.
+     */
+    private void handleStartingPositionSelection() {
+        // A button: Audience wall position
+        if (stickyGamepad1.a) {
+            robot.setStartingPosition(Robot.StartingPosition.AUDIENCE);
+        }
+
+        // Y button: Goal wall position
+        if (stickyGamepad1.y) {
+            robot.setStartingPosition(Robot.StartingPosition.GOAL);
+        }
+
+        // Back button: Unknown position (teleop and relocalization testing)
+        if (stickyGamepad1.back) {
+            robot.setStartingPosition(Robot.StartingPosition.UNKNOWN);
+        }
+
+        // Guide button: Calibration position (field center, facing red goal)
+        // Used for MT1/MT2 pose comparison testing
+        if (stickyGamepad1.guide) {
+            robot.setStartingPosition(Robot.StartingPosition.CALIBRATION);
+        }
+    }
+
+    /**
+     * Handle selective abort configuration during init.
+     * D-pad Right cycles: ALL → 0 → 1 → 2 → ALL
+     *
+     * This allows configuring how many ball rows to complete before
+     * aborting to an alternate position (for partner team coordination).
+     */
+    private void handleAbortSetting() {
+        if (stickyGamepad1.dpad_right) {
+            // Cycle: -1 (ALL) → 0 → 1 → 2 → -1 (ALL)
+            switch (Autonomous.ABORT_AFTER_ROWS) {
+                case -1: Autonomous.ABORT_AFTER_ROWS = 0; break;
+                case 0:  Autonomous.ABORT_AFTER_ROWS = 1; break;
+                case 1:  Autonomous.ABORT_AFTER_ROWS = 2; break;
+                case 2:  Autonomous.ABORT_AFTER_ROWS = -1; break;
+                default: Autonomous.ABORT_AFTER_ROWS = -1; break;
+            }
+        }
+    }
+
+    private void handlePipeline(){
+//        if(stickyGamepad1.dpad_up){
+//            if(robot.vision.PIPELINE >= 2){
+//                robot.vision.PIPELINE=0;
+//                robot.vision.setLimelightEnvironment();
+//                return;
+//            }
+//            robot.vision.PIPELINE++;
+//            robot.vision.setLimelightEnvironment();
+//            return;
+//        }
     }
 
     @Override

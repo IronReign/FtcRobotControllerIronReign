@@ -10,6 +10,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.Drawing;
 import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.MecanumDriveReign;
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.PinpointLocalizer;
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
 import org.firstinspires.ftc.teamcode.rrQuickStart.TankDrive;
 
 
@@ -45,12 +47,15 @@ public class LocalizationTest extends LinearOpMode {
                 Drawing.drawRobot(packet.fieldOverlay(), pose);
                 FtcDashboard.getInstance().sendTelemetryPacket(packet);
             }
-        } else if (TuningOpModes.DRIVE_CLASS.equals(TankDrive.class)) {
-            TankDrive drive = new TankDrive(hardwareMap, new Pose2d(0, 0, 0));
+        } else if (TuningOpModes.DRIVE_CLASS.equals(TankDrivePinpoint.class)) {
+            TankDrivePinpoint drive = new TankDrivePinpoint(hardwareMap, new Pose2d(0, 0, 0));
 
             waitForStart();
 
             while (opModeIsActive()) {
+                // Refresh localizer at start of cycle (I2C read)
+                ((PinpointLocalizer) drive.localizer).refresh();
+
                 drive.setDrivePowers(new PoseVelocity2d(
                         new Vector2d(
                                 -gamepad1.left_stick_y,
@@ -71,6 +76,9 @@ public class LocalizationTest extends LinearOpMode {
                 packet.fieldOverlay().setStroke("#3F51B5");
                 Drawing.drawRobot(packet.fieldOverlay(), pose);
                 FtcDashboard.getInstance().sendTelemetryPacket(packet);
+
+                // Mark cycle complete so next iteration gets fresh data
+                ((PinpointLocalizer) drive.localizer).markCycleComplete();
             }
         } else {
             throw new RuntimeException();

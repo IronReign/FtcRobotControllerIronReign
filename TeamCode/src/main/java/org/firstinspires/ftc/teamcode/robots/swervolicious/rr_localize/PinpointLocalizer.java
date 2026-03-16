@@ -41,7 +41,7 @@ public final class PinpointLocalizer implements Localizer {
     private static final float goBILDA_SWINGARM_POD = 13.26291192f;
     private static final float goBILDA_4_BAR_POD    = 19.89436789f;
 
-    public static org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.PinpointLocalizer.Params PARAMS = new org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.PinpointLocalizer.Params();
+    public static Params PARAMS = new Params();
 
     public final GoBildaPinpointDriver driver;
     public final GoBildaPinpointDriver.EncoderDirection initialParDirection, initialPerpDirection;

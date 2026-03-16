@@ -22,6 +22,7 @@ import com.acmerobotics.roadrunner.PoseVelocity2dDual;
 import com.acmerobotics.roadrunner.ProfileAccelConstraint;
 import com.acmerobotics.roadrunner.ProfileParams;
 import com.acmerobotics.roadrunner.RamseteController;
+import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.TankKinematics;
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.TimeTrajectory;
@@ -42,17 +43,18 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import org.firstinspires.ftc.teamcode.robots.lebot2.FieldMap;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.DriveTrainBase;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Vision;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.PoseMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.messages.TankCommandMessage;
 import org.firstinspires.ftc.teamcode.rrQuickStart.Drawing;
-import org.firstinspires.ftc.teamcode.rrQuickStart.Localizer;
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -80,16 +82,17 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     public static class Params {
         // drive model parameters
-        public double inPerTick = 19.89436789f * 25.4;  //23.75/11995; // Pinpoint reports in inches, so 1:1 mapping
-        public double trackWidthTicks = 4777.861530266601; // Track width in inches for kinematics         //14
+        public double inPerTick = 1/(19.89436789f * 25.4);  //23.75/11995; // Pinpoint reports in inches, so 1:1 mapping
+        public double trackWidthTicks = 4777.861530266601; // (unused legacy)
+        public double trackWidthInches = 14.0; // Track width for TankKinematics - tune via Dashboard
 
         // feedforward parameters (in tick units)
         public double kS = 1.164863007541458;
         public double kV = 0.0003462964757510799;
-        public double kA = 0;
+        public double kA = .0001;
 
         // path profile parameters (in inches)
-        public double maxWheelVel = 50;
+        public double maxWheelVel = 25;
         public double minProfileAccel = -30;
         public double maxProfileAccel = 50;
 
@@ -102,20 +105,47 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         public double ramseteBBar = 2.0; // positive
 
         // turn controller gains
-        public double turnGain = 0.0;
-        public double turnVelGain = 0.0;
+        public double turnGain = 25.0;
+        public double turnVelGain = 3.0;
+        public double turnIGain = 1.0;           // Integral gain for steady-state accuracy
+        public double turnICutIn = 5.0;         // Only integrate when error < this (degrees)
+        public double turnFeedforwardScale = 0.0; // Scale feedforward (0=pure feedback, 1=full feedforward)
+
+        // turn completion (position-based after profile ends)
+        public double turnCompleteTolerance = 1.5;      // Heading error tolerance (degrees)
+        public double turnCompleteVelTolerance = 0.2;   // Angular velocity tolerance (rad/s)
+        public double turnCompleteTimeout = 2.0;        // Max seconds to settle after profile (safety)
     }
 
     public static Params PARAMS = new Params();
 
     // ==================== TURN PID PARAMS ====================
+    // TODO: These PID constants need tuning for vision-based targeting.
+    // Current P is too weak for small errors - needs higher P or proper I term.
+    // The I=0.04 exists but may need adjustment for steady-state error.
 
     public static PIDCoefficients HEADING_PID = new PIDCoefficients(0.03, 0.04, 0.0);
-    public static double HEADING_TOLERANCE = 2.0; // degrees
+    public static double HEADING_TOLERANCE = 1.5; // degrees
+
+    // ==================== VISION PID PARAMS ====================
+    public static PIDCoefficients VISION_PID_LONG = new PIDCoefficients(0.03, .01, .013);
+    public static PIDCoefficients VISION_PID = new PIDCoefficients(0.022, 0.01, 0.013);
+    public static double VISION_OFFSET = 0; // offset from center of target in LLResult x units
+    public static double VISION_TOLERANCE = 1; // degrees of tx
+    public static double VISION_INTEGRAL_CUTIN = 3.0; // degrees
+    public static double VISION_ALPHA = .5; // EMA alpha for vision PID
+
+    // Distance tracking PID (for maintaining distance to target)
+    public static PIDCoefficients DISTANCE_PID = new PIDCoefficients(0.02, 0.0, 0.01);
+    public static double DISTANCE_TOLERANCE = 2.0; // inches
+    public static double TARGET_DISTANCE_INCHES = 30.0; // Target distance to maintain
+    public static double DISTANCE_MAX_SPEED = 0.4; // Max speed for distance control
+
 
     // ==================== ROADRUNNER INFRASTRUCTURE ====================
 
-    public final TankKinematics kinematics;
+    public TankKinematics kinematics;  // Non-final to allow Dashboard tuning of trackWidthInches
+    private double lastTrackWidth = 0;  // Track changes to PARAMS.trackWidthInches
 
     public final TurnConstraints defaultTurnConstraints;
     public final VelConstraint defaultVelConstraint;
@@ -148,8 +178,8 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public enum TurnState {
         IDLE,
         TURNING_TO_HEADING,
-        TURNING_TO_TARGET,      // Single tx value (legacy)
-        CENTERING_ON_TARGET     // Continuous tx from Vision (preferred)
+        CENTERING_ON_TARGET,    // Continuous tx from Vision (heading only)
+        TRACKING_TARGET         // Combined heading centering + distance control
     }
     private TurnState turnState = TurnState.IDLE;
     private double turnTarget = 0;
@@ -161,9 +191,13 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     // RoadRunner action tracking
     private Action currentAction = null;
+    private Vector2d currentActionTarget = null;  // Cached target for visualization
+    private List<Vector2d> trajectoryWaypoints = new ArrayList<>();  // All waypoints for visualization
 
-    // PID controller for turns
+    // PID controllers for turns and tracking
     private final PIDController headingPID;
+    private  PIDController visionPID;
+    private final PIDController distancePID;
 
     // Cached values from readSensors()
     private double cachedHeading = 0;
@@ -178,8 +212,9 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         // This allows TuningOpModes to set their own mode if needed
 
         // Initialize kinematics with track width
-        //kinematics = new TankKinematics(PARAMS.inPerTick * PARAMS.trackWidthTicks);
-        kinematics = new TankKinematics(14);        //track width of robot is 14 inches from center to center of wheels
+        // Track width tunable via Dashboard (PARAMS.trackWidthInches)
+        kinematics = new TankKinematics(PARAMS.trackWidthInches);
+        lastTrackWidth = PARAMS.trackWidthInches;
         // Initialize constraints
         defaultTurnConstraints = new TurnConstraints(
                 PARAMS.maxAngVel, -PARAMS.maxAngAccel, PARAMS.maxAngAccel);
@@ -217,6 +252,24 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         headingPID.setTolerance(HEADING_TOLERANCE);
         headingPID.enable();
 
+        // Initialize vision PID for target centering
+        visionPID = new PIDController(VISION_PID);
+        visionPID.setInputRange(-20, 20);
+        visionPID.setOutputRange(-1, 1);
+        visionPID.setIntegralCutIn(VISION_INTEGRAL_CUTIN);
+        visionPID.setContinuous(false);
+        visionPID.setTolerance(VISION_TOLERANCE/360*40); // degrees to percentage of input range
+        visionPID.setEmaAlpha(VISION_ALPHA);
+        visionPID.enable();
+
+        // Initialize distance PID for target distance tracking
+        distancePID = new PIDController(DISTANCE_PID);
+        distancePID.setInputRange(0, 100);  // inches
+        distancePID.setOutputRange(-DISTANCE_MAX_SPEED, DISTANCE_MAX_SPEED);
+        distancePID.setContinuous(false);
+        distancePID.setTolerance(DISTANCE_TOLERANCE / 100.0);  // percentage of input range
+        distancePID.enable();
+
         cachedPose = pose;
         cachedHeading = Math.toDegrees(pose.heading.toDouble());
 
@@ -230,6 +283,12 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         // PHASE 1: Refresh Pinpoint localizer (triggers I2C bulk read)
         if (localizer instanceof PinpointLocalizer) {
             ((PinpointLocalizer) localizer).refresh();
+        }
+
+        // Check if trackWidthInches changed via Dashboard - rebuild kinematics if so
+        if (PARAMS.trackWidthInches != lastTrackWidth) {
+            kinematics = new TankKinematics(PARAMS.trackWidthInches);
+            lastTrackWidth = PARAMS.trackWidthInches;
         }
     }
 
@@ -249,7 +308,13 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         }
         estimatedPoseWriter.write(new PoseMessage(cachedPose));
 
-        // Run turn state machine
+        // Service RoadRunner actions (for turnToHeading and other trajectory-based turns)
+        if (behavior == Behavior.TRAJECTORY && currentAction != null) {
+            TelemetryPacket packet = new TelemetryPacket();
+            updateAction(packet);
+        }
+
+        // Run turn state machine (for legacy PID turns and vision centering)
         switch (turnState) {
             case IDLE:
                 // Nothing to do
@@ -259,17 +324,47 @@ public final class TankDrivePinpoint implements DriveTrainBase {
                 executeTurnToHeading();
                 break;
 
-            case TURNING_TO_TARGET:
-                executeTurnToTarget();
-                break;
-
             case CENTERING_ON_TARGET:
                 executeCenteringOnTarget();
                 break;
+
+            case TRACKING_TARGET:
+                executeTrackingTarget();
+                break;
         }
 
-        // Draw robot on field overlay if provided
+        // Draw robot and field elements on overlay if provided
         if (fieldOverlay != null) {
+            // Draw field waypoints (optional, controlled by FieldMap.DRAW_WAYPOINTS)
+            FieldMap.drawWaypoints(fieldOverlay);
+
+            // Draw trajectory waypoints for spline visualization
+            if (!trajectoryWaypoints.isEmpty()) {
+                // Draw intermediate waypoints in yellow
+                for (int i = 0; i < trajectoryWaypoints.size() - 1; i++) {
+                    Vector2d wp = trajectoryWaypoints.get(i);
+                    fieldOverlay.setFill("#FFFF0080");  // Yellow with 50% alpha
+                    fieldOverlay.setStroke("#FFFF00");  // Yellow outline
+                    fieldOverlay.setStrokeWidth(2);
+                    fieldOverlay.fillCircle(wp.x, wp.y, FieldMap.WAYPOINT_RADIUS * 0.75);
+                    fieldOverlay.strokeCircle(wp.x, wp.y, FieldMap.WAYPOINT_RADIUS * 0.75);
+                }
+                // Draw final target in green
+                Vector2d finalWp = trajectoryWaypoints.get(trajectoryWaypoints.size() - 1);
+                fieldOverlay.setFill("#00FF0080");  // Green with 50% alpha
+                fieldOverlay.setStroke("#00FF00");  // Green outline
+                fieldOverlay.setStrokeWidth(2);
+                fieldOverlay.fillCircle(finalWp.x, finalWp.y, FieldMap.WAYPOINT_RADIUS);
+                fieldOverlay.strokeCircle(finalWp.x, finalWp.y, FieldMap.WAYPOINT_RADIUS);
+            } else if (currentActionTarget != null) {
+                // Fallback: draw single target in green (for non-spline trajectories)
+                fieldOverlay.setFill("#00FF0080");  // Green with 50% alpha
+                fieldOverlay.setStroke("#00FF00");  // Green outline
+                fieldOverlay.setStrokeWidth(2);
+                fieldOverlay.fillCircle(currentActionTarget.x, currentActionTarget.y, FieldMap.WAYPOINT_RADIUS);
+                fieldOverlay.strokeCircle(currentActionTarget.x, currentActionTarget.y, FieldMap.WAYPOINT_RADIUS);
+            }
+
             drawPoseHistory(fieldOverlay);
             fieldOverlay.setStroke("#3F51B5");
             Drawing.drawRobot(fieldOverlay, cachedPose);
@@ -298,32 +393,25 @@ public final class TankDrivePinpoint implements DriveTrainBase {
             turnState = TurnState.IDLE;
             behavior = Behavior.MANUAL;
         } else {
-            // Apply turn power (positive = clockwise)
-            setMotorPowers(correction, -correction);
-        }
-    }
-
-    private void executeTurnToTarget() {
-        // For vision-based turning, we want tx (turnTarget) to reach 0
-        // Input = current offset, Setpoint = desired offset (0)
-        headingPID.setInput(turnTarget);
-        headingPID.setSetpoint(0);
-        headingPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
-        headingPID.setPID(HEADING_PID);
-
-        double correction = headingPID.performPID();
-
-        if (headingPID.onTarget()) {
-            setMotorPowers(0, 0);
-            turnState = TurnState.IDLE;
-            behavior = Behavior.MANUAL;
-        } else {
+            // Apply turn power (positive = clockwise)e
             setMotorPowers(correction, -correction);
         }
     }
 
     @Override
     public void turnToHeading(double headingDegrees, double maxSpeed) {
+        // Use RoadRunner's turnTo action for accurate, well-tuned turns
+        Action turnAction = actionBuilder(cachedPose)
+                .turnTo(Math.toRadians(headingDegrees))
+                .build();
+        runAction(turnAction);
+    }
+
+    /**
+     * Legacy PID-based turn to heading. Kept for reference/testing.
+     * Note: PID constants are poorly tuned - prefer turnToHeading() which uses RoadRunner.
+     */
+    public void turnToHeadingPID(double headingDegrees, double maxSpeed) {
         turnTarget = headingDegrees;
         turnMaxSpeed = maxSpeed;
         turnState = TurnState.TURNING_TO_HEADING;
@@ -333,16 +421,15 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
     @Override
     public void turnToTarget(double tx, double maxSpeed) {
-        turnTarget = tx; // tx is the offset, we want to drive it to 0
-        turnMaxSpeed = maxSpeed;
-        turnState = TurnState.TURNING_TO_TARGET;
-        behavior = Behavior.PID_TURN;
-        headingPID.enable();
+        // Deprecated — use centerOnTarget() for vision-based aiming
+        centerOnTarget();
     }
 
     @Override
     public boolean isTurnComplete() {
-        return turnState == TurnState.IDLE;
+        // For PID turns: check turnState
+        // For RoadRunner turns: check if action completed (behavior back to MANUAL)
+        return turnState == TurnState.IDLE && behavior != Behavior.TRAJECTORY;
     }
 
     @Override
@@ -373,7 +460,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         turnMaxSpeed = CENTERING_MAX_SPEED;
         turnState = TurnState.CENTERING_ON_TARGET;
         behavior = Behavior.PID_TURN;
-        headingPID.enable();
+        visionPID.enable();
     }
 
     private void executeCenteringOnTarget() {
@@ -388,30 +475,114 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
         double tx = vision.getTx();
 
-        // PID: we want tx to be 0 (target centered)
-        // Input = current offset, Setpoint = desired offset (0)
-        headingPID.setInput(tx);
-        headingPID.setSetpoint(0);
-        headingPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
-        headingPID.setPID(HEADING_PID);
+        // Negate tx so positive tx (target right) produces positive correction (turn right)
+        visionPID.setInput(tx);
+        visionPID.setSetpoint(VISION_OFFSET);
+        visionPID.setOutputRange(-turnMaxSpeed, turnMaxSpeed);
+        if(vision.getDistanceToGoal() > 2.6){
+            visionPID.setPID(VISION_PID_LONG);
+        }else{
+            visionPID.setPID(VISION_PID);
+        }
 
-        double correction = headingPID.performPID();
 
-        if (headingPID.onTarget()) {
+        double correction = visionPID.performPID();
+
+        if (visionPID.lockedOnTarget()) {
             setMotorPowers(0, 0);
             turnState = TurnState.IDLE;
             behavior = Behavior.MANUAL;
         } else {
-            setMotorPowers(correction, -correction);
+            setMotorPowers(-correction, correction);
         }
+    }
+
+    public void endTurnAuton(){
+        setMotorPowers(0, 0);
+        turnState = TurnState.IDLE;
+        behavior = Behavior.MANUAL;
+    }
+
+    /**
+     * Start combined target tracking - centers on target AND maintains distance.
+     * Uses vision tx for heading control and target area for distance estimation.
+     * Never self-terminates - use stopTracking() to end.
+     */
+    public void trackTarget() {
+        if (vision == null) {
+            return;
+        }
+
+        turnState = TurnState.TRACKING_TARGET;
+        behavior = Behavior.PID_TURN;
+        visionPID.enable();
+        distancePID.enable();
+    }
+
+    /**
+     * Stop target tracking and return to manual control.
+     */
+    public void stopTracking() {
+        if (turnState == TurnState.TRACKING_TARGET) {
+            setMotorPowers(0, 0);
+            turnState = TurnState.IDLE;
+            behavior = Behavior.MANUAL;
+        }
+    }
+
+    /**
+     * Check if currently tracking a target.
+     */
+    public boolean isTracking() {
+        return turnState == TurnState.TRACKING_TARGET;
+    }
+
+    private void executeTrackingTarget() {
+        // Check if we still have a target
+        if (vision == null || !vision.hasTarget()) {
+            // Lost target - stop motors but stay in tracking mode (will resume when target reappears)
+            setMotorPowers(0, 0);
+            return;
+        }
+
+        // --- Heading control (same as centerOnTarget) ---
+        double tx = vision.getTx();
+        visionPID.setInput(tx);
+        visionPID.setSetpoint(VISION_OFFSET);
+        visionPID.setOutputRange(-CENTERING_MAX_SPEED, CENTERING_MAX_SPEED);
+        visionPID.setPID(VISION_PID);
+        double turnCorrection = visionPID.performPID();
+
+        // --- Distance control ---
+        double currentDistance = vision.getTargetDistanceInches();
+        distancePID.setInput(currentDistance);
+        distancePID.setSetpoint(TARGET_DISTANCE_INCHES);
+        distancePID.setOutputRange(-DISTANCE_MAX_SPEED, DISTANCE_MAX_SPEED);
+        distancePID.setPID(DISTANCE_PID);
+        double driveCorrection = distancePID.performPID();
+
+        // Combine: driveCorrection for forward/back, turnCorrection for differential
+        // Positive driveCorrection = too far, need to drive forward
+        // Negative driveCorrection = too close, need to drive backward
+        double leftPower = driveCorrection - turnCorrection;
+        double rightPower = driveCorrection + turnCorrection;
+
+        // Clamp to [-1, 1]
+        double maxPower = Math.max(Math.abs(leftPower), Math.abs(rightPower));
+        if (maxPower > 1.0) {
+            leftPower /= maxPower;
+            rightPower /= maxPower;
+        }
+
+        setMotorPowers(leftPower, rightPower);
     }
 
     // ==================== TELEOP DRIVING ====================
 
     @Override
     public void drive(double throttle, double strafe, double turn) {
-        boolean seperate = false;
-        if(seperate){
+        boolean separate = false;
+        if(separate){
             setMotorPowers(throttle, strafe);
             return;
         }else {
@@ -482,6 +653,75 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public void runAction(Action action) {
         currentAction = action;
         behavior = Behavior.TRAJECTORY;
+
+        // Cache the target position for visualization
+        currentActionTarget = extractTargetFromAction(action);
+    }
+
+    /**
+     * Run a RoadRunner action with an explicit target position for visualization.
+     * Use this instead of runAction(Action) when you know the target position
+     * (e.g., from TankDriveActions.getLastTargetPosition()) to avoid relying on
+     * extraction from the action tree.
+     *
+     * @param action The action to run
+     * @param targetPosition The target position for the green disk visualization
+     */
+    public void runAction(Action action, Vector2d targetPosition) {
+        currentAction = action;
+        behavior = Behavior.TRAJECTORY;
+        currentActionTarget = targetPosition;
+        trajectoryWaypoints.clear();
+    }
+
+    /**
+     * Run a RoadRunner action with multiple waypoints for visualization.
+     * Use this for spline trajectories where you want to see all intermediate targets.
+     *
+     * @param action The action to run
+     * @param waypoints All waypoints along the trajectory (intermediate, row start, row end)
+     */
+    public void runAction(Action action, List<Vector2d> waypoints) {
+        currentAction = action;
+        behavior = Behavior.TRAJECTORY;
+        trajectoryWaypoints.clear();
+        trajectoryWaypoints.addAll(waypoints);
+        // Set currentActionTarget to the final waypoint for backward compatibility
+        if (!waypoints.isEmpty()) {
+            currentActionTarget = waypoints.get(waypoints.size() - 1);
+        }
+    }
+
+    /**
+     * Extract the end position from a RoadRunner action for visualization.
+     * Handles FollowTrajectoryAction, TurnAction, and SequentialAction (recursively).
+     */
+    private Vector2d extractTargetFromAction(Action action) {
+        if (action instanceof FollowTrajectoryAction) {
+            FollowTrajectoryAction followAction = (FollowTrajectoryAction) action;
+            double pathLength = followAction.timeTrajectory.path.length();
+            Pose2d endPose = followAction.timeTrajectory.path.get(pathLength, 1).value();
+            return endPose.position;
+        }
+        if (action instanceof TurnAction) {
+            TurnAction turnAction = (TurnAction) action;
+            return turnAction.turn.beginPose.position;
+        }
+        // Handle SequentialAction - find the last trajectory/turn action
+        if (action instanceof com.acmerobotics.roadrunner.SequentialAction) {
+            com.acmerobotics.roadrunner.SequentialAction seqAction =
+                    (com.acmerobotics.roadrunner.SequentialAction) action;
+            // SequentialAction has a public 'actions' field (List<Action>)
+            java.util.List<Action> actions = seqAction.getInitialActions();
+            // Find the last action that has a position target
+            for (int i = actions.size() - 1; i >= 0; i--) {
+                Vector2d target = extractTargetFromAction(actions.get(i));
+                if (target != null) {
+                    return target;
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -489,6 +729,8 @@ public final class TankDrivePinpoint implements DriveTrainBase {
      */
     public void cancelAction() {
         currentAction = null;
+        currentActionTarget = null;
+        trajectoryWaypoints.clear();
         if (behavior == Behavior.TRAJECTORY) {
             behavior = Behavior.MANUAL;
             setMotorPowers(0, 0);
@@ -510,6 +752,8 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         boolean running = currentAction.run(packet);
         if (!running) {
             currentAction = null;
+            currentActionTarget = null;
+            trajectoryWaypoints.clear();
             behavior = Behavior.MANUAL;
         }
         return running;
@@ -536,7 +780,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         }
     }
 
-    private void setMotorPowers(double left, double right) {
+    void setMotorPowers(double left, double right) {
         for (DcMotorEx m : leftMotors) {
             m.setPower(left);
         }
@@ -594,6 +838,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     /**
      * Update pose estimate from localizer.
      * Called by RoadRunner Actions during trajectory following.
+     * Also called by standalone tuning opmodes like LocalizationTest.
      */
     public PoseVelocity2d updatePoseEstimate() {
         PoseVelocity2d vel = localizer.update();
@@ -707,6 +952,10 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         private final TimeTurn turn;
 
         private double beginTs = -1;
+        private double lastTs = -1;
+        private double turnIntegral = 0.0;  // Accumulated heading error for I term
+        private double settlingStartTs = -1;  // When settling phase started
+        private Rotation2d finalTargetHeading = null;  // Target heading after profile ends
 
         public TurnAction(TimeTurn turn) {
             this.turn = turn;
@@ -714,30 +963,85 @@ public final class TankDrivePinpoint implements DriveTrainBase {
 
         @Override
         public boolean run(@NonNull TelemetryPacket p) {
+            double now = Actions.now();
             double t;
+            double dt;
             if (beginTs < 0) {
-                beginTs = Actions.now();
+                beginTs = now;
+                lastTs = now;
                 t = 0;
+                dt = 0;
+                turnIntegral = 0;  // Reset integral at start of turn
             } else {
-                t = Actions.now() - beginTs;
+                t = now - beginTs;
+                dt = now - lastTs;
+                lastTs = now;
             }
-
-            if (t >= turn.duration) {
-                setMotorPowers(0, 0);
-                return false;
-            }
-
-            Pose2dDual<Time> txWorldTarget = turn.get(t);
-            targetPoseWriter.write(new PoseMessage(txWorldTarget.value()));
 
             PoseVelocity2d robotVelRobot = updatePoseEstimate();
+            Rotation2d currentHeading = localizer.getPose().heading;
+
+            // Determine target heading and feedforward velocity
+            Rotation2d targetHeading;
+            double ffVel;
+            Pose2d targetPose;  // For visualization
+            boolean inSettlingPhase = (t >= turn.duration);
+
+            if (inSettlingPhase) {
+                // Settling phase: profile done, hold final target
+                if (finalTargetHeading == null) {
+                    // Capture final target heading from end of profile
+                    finalTargetHeading = turn.get(turn.duration).heading.value();
+                    settlingStartTs = now;
+                }
+                targetHeading = finalTargetHeading;
+                ffVel = 0;  // No feedforward during settling
+                targetPose = new Pose2d(turn.beginPose.position, targetHeading);
+
+                // Check completion conditions
+                double headingErrorDeg = Math.toDegrees(targetHeading.minus(currentHeading));
+                double settlingTime = now - settlingStartTs;
+
+                boolean positionSettled = Math.abs(headingErrorDeg) < PARAMS.turnCompleteTolerance;
+                boolean velocitySettled = Math.abs(robotVelRobot.angVel) < PARAMS.turnCompleteVelTolerance;
+                boolean timedOut = settlingTime > PARAMS.turnCompleteTimeout;
+
+                if ((positionSettled && velocitySettled) || timedOut) {
+                    setMotorPowers(0, 0);
+                    return false;
+                }
+            } else {
+                // Profile phase: follow moving target
+                Pose2dDual<Time> txWorldTarget = turn.get(t);
+                targetPose = txWorldTarget.value();
+                targetPoseWriter.write(new PoseMessage(targetPose));
+                targetHeading = txWorldTarget.heading.value();
+                ffVel = txWorldTarget.heading.velocity().value();
+            }
+
+            // Calculate heading error (radians)
+            double headingError = targetHeading.minus(currentHeading);
+            double headingErrorDeg = Math.toDegrees(headingError);
+
+            // Accumulate integral only when error is below cut-in threshold
+            if (Math.abs(headingErrorDeg) < PARAMS.turnICutIn) {
+                turnIntegral += headingError * dt;
+            } else {
+                turnIntegral = 0;  // Reset if error grows beyond cut-in (anti-windup)
+            }
+
+            // Velocity error (target is 0 during settling)
+            double velError = (inSettlingPhase ? 0 : ffVel) - robotVelRobot.angVel;
+
+            // Scaled feedforward + PID feedback
+            double ffTerm = ffVel * PARAMS.turnFeedforwardScale;
+            double pTerm = PARAMS.turnGain * headingError;
+            double iTerm = PARAMS.turnIGain * turnIntegral;
+            double dTerm = PARAMS.turnVelGain * velError;
 
             PoseVelocity2dDual<Time> command = new PoseVelocity2dDual<>(
                     Vector2dDual.constant(new Vector2d(0, 0), 3),
-                    txWorldTarget.heading.velocity().plus(
-                            PARAMS.turnGain * localizer.getPose().heading.minus(txWorldTarget.heading.value()) +
-                                    PARAMS.turnVelGain * (robotVelRobot.angVel - txWorldTarget.heading.velocity().value())
-                    )
+                    DualNum.constant(ffTerm + pTerm + iTerm + dTerm, 3)
             );
             driveCommandWriter.write(new DriveCommandMessage(command));
 
@@ -755,7 +1059,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
             drawPoseHistory(c);
 
             c.setStroke("#4CAF50");
-            Drawing.drawRobot(c, txWorldTarget.value());
+            Drawing.drawRobot(c, targetPose);
 
             c.setStroke("#3F51B5");
             Drawing.drawRobot(c, localizer.getPose());
@@ -833,16 +1137,24 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
+        // Position in inches and meters for easy comparison with Vision
+        double xIn = cachedPose.position.x;
+        double yIn = cachedPose.position.y;
+        double xM = xIn / 39.3701;
+        double yM = yIn / 39.3701;
+
+        telemetry.put("Pose (in)", String.format("(%.1f, %.1f)", xIn, yIn));
+        telemetry.put("Pose (m)", String.format("(%.2f, %.2f)", xM, yM));
+        telemetry.put("Heading", String.format("%.1f°", cachedHeading));
         telemetry.put("Drive Mode", behavior);
-        telemetry.put("Heading (deg)", String.format("%.1f", cachedHeading));
-        telemetry.put("Pose", String.format("(%.1f, %.1f)", cachedPose.position.x, cachedPose.position.y));
 
         if (debug) {
             telemetry.put("Turn State", turnState);
-            telemetry.put("Turn Target", turnTarget);
-            telemetry.put("PID Error", headingPID.getError());
-            telemetry.put("Left Power", leftMotors.get(0).getPower());
-            telemetry.put("Right Power", rightMotors.get(0).getPower());
+            telemetry.put("Turn Target", String.format("%.1f", turnTarget));
+            telemetry.put("Heading PID Error", String.format("%.2f", headingPID.getError()));
+            telemetry.put("Vision PID Error", String.format("%.2f", visionPID.getError()));
+            telemetry.put("Left Power", String.format("%.2f", leftMotors.get(0).getPower()));
+            telemetry.put("Right Power", String.format("%.2f", rightMotors.get(0).getPower()));
             telemetry.put("Action Running", currentAction != null);
         }
 

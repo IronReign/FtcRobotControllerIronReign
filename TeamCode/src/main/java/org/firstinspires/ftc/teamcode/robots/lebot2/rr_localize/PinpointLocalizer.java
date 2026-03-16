@@ -6,7 +6,7 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
-import org.firstinspires.ftc.teamcode.rrQuickStart.Localizer;
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.Localizer;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -55,20 +55,36 @@ public final class PinpointLocalizer implements Localizer {
         double mmPerTick = inPerTick * 25.4;
         driver.setEncoderResolution(goBILDA_4_BAR_POD, DistanceUnit.MM);
         //driver.setOffsets(mmPerTick * PARAMS.parYTicks, mmPerTick * PARAMS.perpXTicks, DistanceUnit.MM);
-        driver.setOffsets(-180.5, 131.9, DistanceUnit.MM);
         // TODO: reverse encoder directions if needed
         initialParDirection = GoBildaPinpointDriver.EncoderDirection.FORWARD;
-        initialPerpDirection = GoBildaPinpointDriver.EncoderDirection.FORWARD;
+        initialPerpDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
 
         driver.setEncoderDirections(initialParDirection, initialPerpDirection);
 
         driver.resetPosAndIMU();
+
+        // Set offsets AFTER resetPosAndIMU in case reset clears them
+        driver.setOffsets(-180.5, 131.9, DistanceUnit.MM);
+
+        // Verify offsets were retained — check logcat for these values
+        System.out.println("Pinpoint offsets set: X=-180.5 mm, Y=131.9 mm (after resetPosAndIMU)");
 
         txWorldPinpoint = initialPose;
     }
 
     @Override
     public void setPose(Pose2d pose) {
+        // Get fresh reading from Pinpoint before computing transform
+        // This ensures the transform uses the current encoder values,
+        // preventing drift if there's been any motion or noise since last refresh
+        driver.update();
+        if (Objects.requireNonNull(driver.getDeviceStatus()) == GoBildaPinpointDriver.DeviceStatus.READY) {
+            txPinpointRobot = new Pose2d(
+                    driver.getPosX(DistanceUnit.INCH),
+                    driver.getPosY(DistanceUnit.INCH),
+                    driver.getHeading(UnnormalizedAngleUnit.RADIANS)
+            );
+        }
         txWorldPinpoint = pose.times(txPinpointRobot.inverse());
     }
 

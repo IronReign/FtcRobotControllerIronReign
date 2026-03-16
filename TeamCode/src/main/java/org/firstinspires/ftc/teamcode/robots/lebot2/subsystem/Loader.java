@@ -42,13 +42,19 @@ public class Loader implements Subsystem {
 
     // Hardware (wrapped for three-phase pattern)
     private final LazyMotor beltMotor;
-    private final CachedDistanceSensor frontSensor;
+    private final LazyMotor intakeMotor;
+    //private final CachedDistanceSensor frontSensor;
     private final CachedDistanceSensor backSensor;
+
+    public static double AMPS_AT_FULL = 0;
+    public double intakeAmps = 0;
+
+    private Launcher launcher;
 
     // Configuration
     // Negative = move balls toward rear (intake/feed), Positive = eject forward
-    public static double BELT_POWER = -1.0;
-    public static double FEED_POWER = -0.8; // Slower for controlled feeding
+    public static double BELT_POWER = -1;
+    public static double FEED_POWER = -.7; // Slower for controlled feeding
     public static double BELT_REVERSE_POWER = 0.5; // Positive = toward front, relieves fin pressure
     public static double BALL_DETECT_THRESHOLD_CM = 10.0; // Distance indicating ball present
     public static int MAX_BALLS = 3;
@@ -63,6 +69,8 @@ public class Loader implements Subsystem {
     private BeltOwner beltOwner = BeltOwner.NONE;
     private boolean intakeRequestsBelt = false;
     private boolean launcherClaimsBelt = false;
+
+    public static boolean loaderFull = false;
 
     // State
     public enum LoaderState {
@@ -87,11 +95,14 @@ public class Loader implements Subsystem {
 
     public Loader(HardwareMap hardwareMap) {
         beltMotor = new LazyMotor(hardwareMap, "conveyor");
+        intakeMotor = new LazyMotor(hardwareMap, "intake");
         beltMotor.setDirection(DcMotorSimple.Direction.REVERSE); // So negative = toward rear
         beltMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         beltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        frontSensor = new CachedDistanceSensor(hardwareMap, "frontDist", DistanceUnit.CM);
+        //frontSensor = new CachedDistanceSensor(hardwareMap, "frontDist", DistanceUnit.CM);
         backSensor = new CachedDistanceSensor(hardwareMap, "backDist", DistanceUnit.CM);
     }
 
@@ -100,7 +111,7 @@ public class Loader implements Subsystem {
     @Override
     public void readSensors() {
         // PHASE 1: Refresh I2C sensors
-        frontSensor.refresh();
+        //frontSensor.refresh();
         backSensor.refresh();
     }
 
@@ -109,27 +120,31 @@ public class Loader implements Subsystem {
         // PHASE 2: Read cached values and process logic
 
         // Get cached sensor values
-        frontDistance = frontSensor.getDistance();
+        //frontDistance = frontSensor.getDistance();
         backDistance = backSensor.getDistance();
+        intakeAmps = beltMotor.getCurrent();
 
         // Determine ball positions from sensors
-        ballAtFront = frontDistance < BALL_DETECT_THRESHOLD_CM;
+        //ballAtFront = frontDistance < BALL_DETECT_THRESHOLD_CM;
         ballAtBack = backDistance < BALL_DETECT_THRESHOLD_CM;
 
         // Update state based on sensor readings (no counting - unreliable)
-        if (ballAtBack && ballAtFront) {
-            state = LoaderState.FULL;
-        } else if (ballAtBack || ballAtFront) {
-            state = LoaderState.HAS_BALLS;
-        } else {
-            state = LoaderState.EMPTY;
-        }
+//        if (ballAtBack) {
+//            state = LoaderState.FULL;
+//            loaderFull = true;
+//        }
+////        else if (ballAtBack || ballAtFront) {
+////            state = LoaderState.HAS_BALLS;
+////        }
+//        else {
+//            state = LoaderState.EMPTY;
+//        }
 
         // Compute time-confirmed isFull virtual sensor (debouncing)
         // Raw condition: state is FULL and back sensor confirms ball present
-        boolean rawFull = (state == LoaderState.FULL) && ballAtBack;
+        //boolean rawFull = (state == LoaderState.FULL) && ballAtBack;
 
-        if (rawFull) {
+        if (intakeAmps > AMPS_AT_FULL) {
             if (fullConditionStartMs == 0) {
                 // Rising edge - start timing
                 fullConditionStartMs = System.currentTimeMillis();
@@ -140,6 +155,16 @@ public class Loader implements Subsystem {
             // Condition not met - reset timer and clear confirmed state
             fullConditionStartMs = 0;
             isFullConfirmed = false;
+        }
+
+        if(isFullConfirmed){
+            state = LoaderState.FULL;
+        }else{
+            if(ballAtBack){
+                state = LoaderState.HAS_BALLS;
+            }else{
+                state = LoaderState.EMPTY;
+            }
         }
 
         // Resolve belt ownership (priority: LAUNCHER > INTAKE > NONE)
@@ -156,12 +181,18 @@ public class Loader implements Subsystem {
 
         // Queue belt power (will be flushed in act())
         beltMotor.setPower(beltPower);
+        intakeMotor.setPower(beltPower);
     }
 
     @Override
     public void act() {
         // PHASE 3: Flush motor command
         beltMotor.flush();
+        intakeMotor.flush();
+    }
+
+    public void setLauncher(Launcher launcher){
+        this.launcher = launcher;
     }
 
     // ==================== BELT OWNERSHIP ====================
@@ -172,6 +203,9 @@ public class Loader implements Subsystem {
      */
     public void requestBeltForIntake() {
         intakeRequestsBelt = true;
+        // Reset full confirmation so LOAD_ALL gets a fresh debounce window
+        fullConditionStartMs = 0;
+        isFullConfirmed = false;
     }
 
     /**
@@ -219,7 +253,10 @@ public class Loader implements Subsystem {
      */
     public void reverseBeltForFiring() {
         beltMotor.setPower(BELT_REVERSE_POWER);
+        intakeMotor.setPower(BELT_REVERSE_POWER);
     }
+
+
 
     /**
      * Stop belt after reverse pulse.
@@ -227,6 +264,25 @@ public class Loader implements Subsystem {
      */
     public void stopBeltForFiring() {
         beltMotor.setPower(0);
+        intakeMotor.setPower(0);
+    }
+
+    // ==================== CURRENT MONITORING (for health check) ====================
+
+    /**
+     * Enable/disable current monitoring on the belt motor.
+     * Only enable during health checks — adds I2C overhead.
+     */
+    public void enableBeltCurrentRead(boolean enabled) {
+        beltMotor.enableCurrentRead(enabled);
+        intakeMotor.enableCurrentRead(enabled);
+    }
+
+    /**
+     * Get cached belt motor current (amps). Requires enableBeltCurrentRead(true).
+     */
+    public double getBeltCurrent() {
+        return beltMotor.getCurrent();
     }
 
     // ==================== LEGACY METHODS (for compatibility) ====================
@@ -248,12 +304,14 @@ public class Loader implements Subsystem {
     }
 
     /**
-     * Stop the belt.
+     * Release the belt even if we don't know who owns it.
      * @deprecated Use releaseBeltFromIntake() or releaseBeltFromLauncher() instead
      */
-    public void stopBelt() {
-        intakeRequestsBelt = false;
-        launcherClaimsBelt = false;
+    public void releaseBelt() {
+//        intakeRequestsBelt = false;
+//        launcherClaimsBelt = false;
+        releaseBeltFromIntake();
+        releaseBeltFromLauncher();
     }
 
     /**
@@ -373,6 +431,7 @@ public class Loader implements Subsystem {
         beltOwner = BeltOwner.NONE;
         beltPower = 0;
         beltMotor.stop();  // Immediate stop, bypasses lazy pattern
+        intakeMotor.stop();
     }
 
     @Override
@@ -394,10 +453,12 @@ public class Loader implements Subsystem {
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
+        telemetry.put("Loader Amps: ", beltMotor.getCurrent());
+
         telemetry.put("State", state);
-        telemetry.put("Ball at Front", ballAtFront ? "YES" : "no");
+        //telemetry.put("Ball at Front", ballAtFront ? "YES" : "no");
         telemetry.put("Ball at Back", ballAtBack ? "YES" : "no");
-        telemetry.put("Front Dist", String.format("%.1f", frontDistance));
+        //telemetry.put("Front Dist", String.format("%.1f", frontDistance));
         telemetry.put("Back Dist", String.format("%.1f", backDistance));
         telemetry.put("Belt Owner", beltOwner);
 

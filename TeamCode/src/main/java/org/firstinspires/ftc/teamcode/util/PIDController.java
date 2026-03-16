@@ -7,8 +7,6 @@ import static org.firstinspires.ftc.teamcode.util.utilMethods.between;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -76,14 +74,19 @@ public class PIDController {
     private double pwrD = 0.0;
     private double pwrF = 0.0;
 
-    private List<Boolean> lastTenStates;
+    private double m_errorEMA = 0.0;      // Exponential moving average of |error|
+    private double m_emaAlpha = 0.2;      // EMA smoothing factor (0-1, higher = more responsive)
 
     public boolean isEnabled() {
         return m_enabled;
     }
 
-    public void clearCache() {
-        lastTenStates = new ArrayList<Boolean>();
+    public void setEmaAlpha(double alpha) {
+        m_emaAlpha = alpha;
+    }
+
+    public void resetEMA() {
+        m_errorEMA = 0.0;
     }
 
     /**
@@ -94,7 +97,6 @@ public class PIDController {
      * @param Kd the derivative coefficient
      */
     public PIDController(double Kp, double Ki, double Kd) {
-        lastTenStates = new ArrayList<Boolean>();
         m_P = Kp;
         m_I = Ki;
         m_D = Kd;
@@ -102,7 +104,6 @@ public class PIDController {
     }
 
     public PIDController(double Kp, double Ki, double Kd, Function<Double, Double> kF) {
-        lastTenStates = new ArrayList<Boolean>();
         m_P = Kp;
         m_I = Ki;
         m_D = Kd;
@@ -111,7 +112,6 @@ public class PIDController {
     }
 
     public PIDController(PIDCoefficients coefficients) {
-        lastTenStates = new ArrayList<Boolean>();
         m_P = coefficients.p;
         m_I = coefficients.i;
         m_D = coefficients.d;
@@ -132,10 +132,8 @@ public class PIDController {
             // Calculate the error signal
             m_error = m_setpoint - m_input;
 
-            lastTenStates.add(onTarget());
-            if (lastTenStates.size() > 10) {
-                lastTenStates.remove(0);
-            }
+            // Update exponential moving average of |error|
+            m_errorEMA = m_emaAlpha * Math.abs(m_error) + (1 - m_emaAlpha) * m_errorEMA;
             // !!!!DEBUG!!!
             //System.out.println(m_setpoint);
             //Log.d("PID", String.valueOf(m_setpoint));
@@ -430,7 +428,7 @@ public class PIDController {
     }
 
     public boolean lockedOnTarget() {
-        return lastTenStates.contains(false);
+        return m_errorEMA < m_tolerance / 100 * (m_maximumInput - m_minimumInput);
     }
 
 
@@ -459,6 +457,7 @@ public class PIDController {
         m_prevError = 0;
         m_totalError = 0;
         m_result = 0;
+        m_errorEMA = 0;
         m_prevTime = System.nanoTime();
     }
 
