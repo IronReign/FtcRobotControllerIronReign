@@ -45,8 +45,10 @@ public class Loader implements Subsystem {
     public static double INTAKE_POWER = -1;
     public static double FEED_POWER = -.7;         // Slower for controlled feeding to flywheel
     public static double REVERSE_POWER = 0.5;      // Positive = toward front
-    public static double EJECT_POWER = 0.3;        // Gentle forward pulse to clear 4th ball
-    public static double EJECT_DURATION_MS = 300;   // Duration of overfull eject pulse
+    public static double EJECT_POWER = 0.8;         // Forward pulse to clear 4th ball
+    public static double EJECT_DURATION_MS = 200;   // Duration of overfull eject pulse
+    public static double EJECT_RECOVERY_MS = 300;   // Reverse pulse after eject to reseat 3rd ball
+    public static double EJECT_RECOVERY_POWER = -1.0; // Toward rear — pull 3rd ball back
     public static int MAX_BALLS = 3;
     public static long FULL_CONFIRM_MS = 100; // Debounce time for isFull virtual sensor
 
@@ -75,8 +77,9 @@ public class Loader implements Subsystem {
     private boolean isFullConfirmed = false;  // Debounced isFull virtual sensor
     private long fullConditionStartMs = 0;    // When raw full condition started
 
-    // Overfull eject state
-    private boolean ejecting = false;
+    // Overfull eject state: EJECT phase (forward) → RECOVERY phase (reverse to reseat)
+    private enum EjectPhase { IDLE, EJECTING, RECOVERING }
+    private EjectPhase ejectPhase = EjectPhase.IDLE;
     private long ejectStartMs = 0;
 
     // Motor power (resolved from ownership)
@@ -129,26 +132,34 @@ public class Loader implements Subsystem {
             state = LoaderState.EMPTY;
         }
 
-        // Overfull eject: brief gentle forward pulse to clear trapped 4th ball
-        // Only triggers during intake (not during firing) and only once per detection
-        if (state == LoaderState.OVERFULL && !ejecting && !launcherClaimsBelt) {
-            ejecting = true;
-            ejectStartMs = System.currentTimeMillis();
+        // Overfull eject: two-phase sequence
+        //   EJECTING:   forward pulse to push 4th ball out
+        //   RECOVERING:  reverse pulse to pull 3rd ball back into position
+        long now = System.currentTimeMillis();
+        if (state == LoaderState.OVERFULL && ejectPhase == EjectPhase.IDLE && !launcherClaimsBelt) {
+            ejectPhase = EjectPhase.EJECTING;
+            ejectStartMs = now;
         }
-        if (ejecting) {
-            if (System.currentTimeMillis() - ejectStartMs < EJECT_DURATION_MS) {
-                // Override with eject pulse
+        if (ejectPhase == EjectPhase.EJECTING) {
+            if (now - ejectStartMs < EJECT_DURATION_MS) {
                 motorPower = EJECT_POWER;
                 intakeMotor.setPower(motorPower);
-                return; // Skip normal ownership for this cycle
+                return;
             } else {
-                // Eject complete
-                ejecting = false;
+                // Eject done — transition to recovery
+                ejectPhase = EjectPhase.RECOVERING;
+                ejectStartMs = now;
             }
         }
-        // Reset eject flag when no longer overfull so it can trigger again if needed
-        if (state != LoaderState.OVERFULL) {
-            ejecting = false;
+        if (ejectPhase == EjectPhase.RECOVERING) {
+            if (now - ejectStartMs < EJECT_RECOVERY_MS) {
+                motorPower = EJECT_RECOVERY_POWER;
+                intakeMotor.setPower(motorPower);
+                return;
+            } else {
+                // Recovery done — back to idle
+                ejectPhase = EjectPhase.IDLE;
+            }
         }
 
         // Resolve motor ownership (priority: LAUNCHER > INTAKE > NONE)
@@ -225,7 +236,7 @@ public class Loader implements Subsystem {
      * Runs intake forward at EJECT_POWER for EJECT_DURATION_MS.
      */
     public void triggerEject() {
-        ejecting = true;
+        ejectPhase = EjectPhase.EJECTING;
         ejectStartMs = System.currentTimeMillis();
     }
 
@@ -384,7 +395,7 @@ public class Loader implements Subsystem {
         // Reset virtual sensor timing (but not ball count - that persists)
         fullConditionStartMs = 0;
         isFullConfirmed = false;
-        ejecting = false;
+        ejectPhase = EjectPhase.IDLE;
     }
 
     @Override
@@ -400,7 +411,9 @@ public class Loader implements Subsystem {
 
         telemetry.put("State", state);
         telemetry.put("Ball Count", chamberSensor.getBallCount());
-        telemetry.put("Overfull", chamberSensor.isOverfull() ? (ejecting ? "EJECTING" : "EJECT!") : "no");
+        telemetry.put("Overfull", chamberSensor.isOverfull() ?
+                (ejectPhase == EjectPhase.EJECTING ? "EJECTING" :
+                 ejectPhase == EjectPhase.RECOVERING ? "RECOVERING" : "EJECT!") : "no");
         telemetry.put("Motor Owner", beltOwner);
 
         if (debug) {

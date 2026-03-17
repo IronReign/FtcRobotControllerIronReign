@@ -39,12 +39,16 @@ public class ChamberSensor {
 
     // ==================== THRESHOLDS (Dashboard tunable) ====================
 
-    // Rear sensor: looks through channel toward gate (cm)
-    public static double REAR_EMPTY_CM = 30;       // > this = can see through gate, no balls
-    public static double REAR_BALL1_CM = 16;        // boundary between 1st and 2nd ball detection
+    // Rear sensor: mounted on side of channel (cm)
+    // Discrete ranges with dead zones between them
+    public static double REAR_EMPTY_CM = 20;       // > this = no balls
+    public static double REAR_BALL1_MAX_CM = 20;   // 16–20 = 1st ball
+    public static double REAR_BALL1_MIN_CM = 16;
+    public static double REAR_BALL2_MAX_CM = 13.5;  // 2–13.5 = 2nd ball
+    public static double REAR_BALL2_MIN_CM = 2;
 
     // Mid sensor: 3rd ball position (cm)
-    public static double MID_BALL3_CM = 16;         // < this = 3rd ball present
+    public static double MID_BALL3_CM = 15;         // < this = 3rd ball present
 
     // Front sensor: 4th ball trap detection (cm)
     public static double FRONT_OVERFULL_CM = 13;    // < this = 4th ball trapped
@@ -67,13 +71,14 @@ public class ChamberSensor {
     private double frontDistance = 100;
 
     private int ballCount = 0;
+    private int previousRearBalls = 0;  // Retained across dead zones
     private boolean overFull = false;
     private long overfullStartMs = 0;   // when raw overfull condition first detected
 
     // ==================== CONSTRUCTOR ====================
 
     public ChamberSensor(HardwareMap hardwareMap) {
-        rearSensor = new CachedDistanceSensor(hardwareMap, "rearDist", DistanceUnit.CM);
+        rearSensor = new CachedDistanceSensor(hardwareMap, "backDist", DistanceUnit.CM);
         midSensor = new CachedDistanceSensor(hardwareMap, "midDist", DistanceUnit.CM);
         frontSensor = new CachedDistanceSensor(hardwareMap, "frontDist", DistanceUnit.CM);
     }
@@ -99,13 +104,17 @@ public class ChamberSensor {
         midDistance = midSensor.getDistance();
         frontDistance = frontSensor.getDistance();
 
-        // Rear sensor: positions 1 and 2
-        int rearBalls = 0;
-        if (rearDistance <= REAR_BALL1_CM) {
-            rearBalls = 2;  // sees 2nd ball — 1st ball + gate block the longer view
-        } else if (rearDistance <= REAR_EMPTY_CM) {
-            rearBalls = 1;  // sees 1st ball only
+        // Rear sensor: discrete ranges with dead zones
+        // Readings in dead zones retain the previous count (no change)
+        int rearBalls = previousRearBalls;
+        if (rearDistance > REAR_EMPTY_CM) {
+            rearBalls = 0;  // empty
+        } else if (rearDistance <= REAR_BALL1_MAX_CM && rearDistance >= REAR_BALL1_MIN_CM) {
+            rearBalls = 1;  // 1st ball
+        } else if (rearDistance <= REAR_BALL2_MAX_CM && rearDistance >= REAR_BALL2_MIN_CM) {
+            rearBalls = 2;  // 2nd ball
         }
+        previousRearBalls = rearBalls;
 
         // Mid sensor: position 3
         boolean ball3 = midDistance < MID_BALL3_CM;
