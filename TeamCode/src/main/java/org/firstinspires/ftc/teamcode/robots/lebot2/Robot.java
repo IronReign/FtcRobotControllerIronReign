@@ -357,8 +357,10 @@ public class Robot implements TelemetryProvider {
 
             case FIRING:
                 // Wait for launcher to complete the sequence
+                // COMPLETE transitions to IDLE_SPIN (stay spinning) or IDLE (stop)
                 Launcher.LaunchState launcherState = launcher.getState();
                 if (launcherState == Launcher.LaunchState.IDLE ||
+                    launcherState == Launcher.LaunchState.IDLE_SPIN ||
                     launcherState == Launcher.LaunchState.READY) {
                     launchAllState = LaunchAllState.COMPLETE;
                 }
