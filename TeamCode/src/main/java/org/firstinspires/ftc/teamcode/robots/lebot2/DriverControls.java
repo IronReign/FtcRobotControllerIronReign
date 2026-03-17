@@ -205,20 +205,14 @@ public class DriverControls implements TelemetryProvider {
             robot.loader.requestBeltForIntake();
         }
 
-        // D-pad right: Eject balls
+        // D-pad right: Eject balls (brief forward pulse)
         if (stickyGamepad1.dpad_right) {
-            //robot.turret.setLocked();
-//            //robot.launcher.manualFire();
-//            robot.intake.eject();         //bring back after manual test
-//            // For eject, we use setBeltPower which claims as launcher priority
-//            // Positive = eject forward
-            robot.loader.setBeltPower(0.5);       //bring back after manual test
+            robot.loader.triggerEject();
         }
 
-        // Guide button: Reset encoders and ball count
+        // Guide button: Reset encoders
         if (stickyGamepad1.guide) {
             robot.driveTrain.resetEncoders();
-            robot.loader.resetBallCount();
         }
 
         // Back button: Apply vision pose correction to Pinpoint

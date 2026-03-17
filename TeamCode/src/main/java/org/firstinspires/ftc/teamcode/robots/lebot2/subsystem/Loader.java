@@ -221,8 +221,15 @@ public class Loader implements Subsystem {
     }
 
     /**
-     * Check if launcher currently owns the motor.
+     * Manually trigger an eject pulse (same mechanism as auto-eject on overfull).
+     * Runs intake forward at EJECT_POWER for EJECT_DURATION_MS.
      */
+    public void triggerEject() {
+        ejecting = true;
+        ejectStartMs = System.currentTimeMillis();
+    }
+
+    /**
     public boolean isLauncherUsingBelt() {
         return beltOwner == BeltOwner.LAUNCHER;
     }
@@ -287,19 +294,6 @@ public class Loader implements Subsystem {
     public void releaseBelt() {
         releaseBeltFromIntake();
         releaseBeltFromLauncher();
-    }
-
-    /**
-     * Set motor to a specific power (bypasses ownership - use for manual control only).
-     *
-     * @param power Motor power (-1 to 1). Negative = toward rear, Positive = eject forward.
-     */
-    public void setBeltPower(double power) {
-        if (power != 0) {
-            launcherClaimsBelt = true;
-        } else {
-            launcherClaimsBelt = false;
-        }
     }
 
     /**
