@@ -364,10 +364,8 @@ public class Launcher implements Subsystem {
     public void calc(Canvas fieldOverlay) {
         // PHASE 2: Read cached velocity and run state machine
 
-        // Gate: prevent flywheel spin during init_loop
+        // Gate: prevent flywheel spin during init_loop (motor suppression in act())
         if (!enabled) {
-            flywheel.setVelocity(0);
-            flywheelHelp.setVelocity(0);
             state = LaunchState.IDLE;
             behavior = Behavior.IDLE;
             return;
@@ -376,8 +374,6 @@ public class Launcher implements Subsystem {
         pidNew = new PIDFCoefficients(NEW_P,NEW_I,NEW_D,NEW_F);
         flywheel.setVelocityPIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F);
         flywheelHelp.setVelocityPIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F);
-//        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidNew);
-//        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidNew);
         pidfModified = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Get flywheel speed (bulk-cached by SDK)
@@ -512,7 +508,12 @@ public class Launcher implements Subsystem {
 
     @Override
     public void act() {
-        // PHASE 3: Flush paddle servo command
+        // PHASE 3: Flush commands to hardware
+        if (!enabled) {
+            // Suppress flywheel motors when disabled (init_loop)
+            flywheel.setVelocity(0);
+            flywheelHelp.setVelocity(0);
+        }
         paddle.flush();
     }
 
