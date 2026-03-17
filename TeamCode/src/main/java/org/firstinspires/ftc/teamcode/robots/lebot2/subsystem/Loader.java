@@ -6,8 +6,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.teamcode.robots.lebot2.util.CachedDistanceSensor;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.LazyMotor;
 
 import java.util.LinkedHashMap;
@@ -43,8 +41,7 @@ public class Loader implements Subsystem {
     // Hardware (wrapped for three-phase pattern)
     private final LazyMotor beltMotor;
     private final LazyMotor intakeMotor;
-    //private final CachedDistanceSensor frontSensor;
-    private final CachedDistanceSensor backSensor;
+    public final ChamberSensor chamberSensor;  // Three-sensor virtual ball counter
 
     public static double AMPS_AT_FULL = 0;
     public double intakeAmps = 0;
@@ -56,7 +53,8 @@ public class Loader implements Subsystem {
     public static double BELT_POWER = -1;
     public static double FEED_POWER = -.7; // Slower for controlled feeding
     public static double BELT_REVERSE_POWER = 0.5; // Positive = toward front, relieves fin pressure
-    public static double BALL_DETECT_THRESHOLD_CM = 10.0; // Distance indicating ball present
+    public static double EJECT_POWER = 0.3;        // Gentle forward pulse to clear 4th ball
+    public static double EJECT_DURATION_MS = 300;   // Duration of overfull eject pulse
     public static int MAX_BALLS = 3;
     public static long FULL_CONFIRM_MS = 100; // Debounce time for isFull virtual sensor
 
@@ -76,19 +74,18 @@ public class Loader implements Subsystem {
     public enum LoaderState {
         EMPTY,      // No balls in chamber
         HAS_BALLS,  // 1-2 balls in chamber
-        FULL        // 3 balls (max capacity)
+        FULL,       // 3 balls (max capacity)
+        OVERFULL    // 4th ball trapped — needs brief eject
     }
     private LoaderState state = LoaderState.EMPTY;
-
-    // Ball tracking (sensor-based, no counting)
-    private double frontDistance = 100; // cm, starts high (no ball)
-    private double backDistance = 100;  // cm, starts high (no ball)
-    private boolean ballAtFront = false;
-    private boolean ballAtBack = false;
 
     // Virtual sensor state (time-confirmed)
     private boolean isFullConfirmed = false;  // Debounced isFull virtual sensor
     private long fullConditionStartMs = 0;    // When raw full condition started
+
+    // Overfull eject state
+    private boolean ejecting = false;
+    private long ejectStartMs = 0;
 
     // Belt power (resolved from ownership)
     private double beltPower = 0;
@@ -102,8 +99,7 @@ public class Loader implements Subsystem {
         beltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        //frontSensor = new CachedDistanceSensor(hardwareMap, "frontDist", DistanceUnit.CM);
-        backSensor = new CachedDistanceSensor(hardwareMap, "backDist", DistanceUnit.CM);
+        chamberSensor = new ChamberSensor(hardwareMap);
     }
 
     // ==================== THREE-PHASE METHODS ====================
@@ -111,60 +107,61 @@ public class Loader implements Subsystem {
     @Override
     public void readSensors() {
         // PHASE 1: Refresh I2C sensors
-        //frontSensor.refresh();
-        backSensor.refresh();
+        chamberSensor.refresh();
     }
 
     @Override
     public void calc(Canvas fieldOverlay) {
         // PHASE 2: Read cached values and process logic
 
-        // Get cached sensor values
-        //frontDistance = frontSensor.getDistance();
-        backDistance = backSensor.getDistance();
+        // Update chamber sensor and read ball count
+        chamberSensor.update();
         intakeAmps = beltMotor.getCurrent();
 
-        // Determine ball positions from sensors
-        //ballAtFront = frontDistance < BALL_DETECT_THRESHOLD_CM;
-        ballAtBack = backDistance < BALL_DETECT_THRESHOLD_CM;
-
-        // Update state based on sensor readings (no counting - unreliable)
-//        if (ballAtBack) {
-//            state = LoaderState.FULL;
-//            loaderFull = true;
-//        }
-////        else if (ballAtBack || ballAtFront) {
-////            state = LoaderState.HAS_BALLS;
-////        }
-//        else {
-//            state = LoaderState.EMPTY;
-//        }
-
-        // Compute time-confirmed isFull virtual sensor (debouncing)
-        // Raw condition: state is FULL and back sensor confirms ball present
-        //boolean rawFull = (state == LoaderState.FULL) && ballAtBack;
-
-        if (intakeAmps > AMPS_AT_FULL) {
+        // Debounced full confirmation
+        boolean rawFull = chamberSensor.isFull();
+        if (rawFull) {
             if (fullConditionStartMs == 0) {
-                // Rising edge - start timing
                 fullConditionStartMs = System.currentTimeMillis();
             }
-            // Confirm after debounce period
             isFullConfirmed = (System.currentTimeMillis() - fullConditionStartMs) >= FULL_CONFIRM_MS;
         } else {
-            // Condition not met - reset timer and clear confirmed state
             fullConditionStartMs = 0;
             isFullConfirmed = false;
         }
 
-        if(isFullConfirmed){
+        // State determination
+        if (chamberSensor.isOverfull()) {
+            state = LoaderState.OVERFULL;
+        } else if (isFullConfirmed) {
             state = LoaderState.FULL;
-        }else{
-            if(ballAtBack){
-                state = LoaderState.HAS_BALLS;
-            }else{
-                state = LoaderState.EMPTY;
+        } else if (chamberSensor.getBallCount() > 0) {
+            state = LoaderState.HAS_BALLS;
+        } else {
+            state = LoaderState.EMPTY;
+        }
+
+        // Overfull eject: brief gentle reverse to clear trapped 4th ball
+        // Only triggers during intake (not during firing) and only once per detection
+        if (state == LoaderState.OVERFULL && !ejecting && !launcherClaimsBelt) {
+            ejecting = true;
+            ejectStartMs = System.currentTimeMillis();
+        }
+        if (ejecting) {
+            if (System.currentTimeMillis() - ejectStartMs < EJECT_DURATION_MS) {
+                // Override belt with eject pulse
+                beltPower = EJECT_POWER;
+                beltMotor.setPower(beltPower);
+                intakeMotor.setPower(beltPower);
+                return; // Skip normal belt ownership for this cycle
+            } else {
+                // Eject complete
+                ejecting = false;
             }
+        }
+        // Reset eject flag when no longer overfull so it can trigger again if needed
+        if (state != LoaderState.OVERFULL) {
+            ejecting = false;
         }
 
         // Resolve belt ownership (priority: LAUNCHER > INTAKE > NONE)
@@ -329,33 +326,24 @@ public class Loader implements Subsystem {
     }
 
     /**
-     * Check if there's a ball at the back ready to launch.
-     *
-     * @return true if back sensor detects a ball
+     * Check if there's a ball at the rear ready to launch.
      */
     public boolean isBallAtBack() {
-        return ballAtBack;
+        return chamberSensor.hasBallsAtRear();
     }
 
     /**
-     * Check if there's a ball at the front (just entered).
-     *
-     * @return true if front sensor detects a ball
+     * Check if a 4th ball is trapped at the front.
      */
-    public boolean isBallAtFront() {
-        return ballAtFront;
+    public boolean isOverfull() {
+        return chamberSensor.isOverfull();
     }
 
     /**
-     * Get estimated ball count based on sensors.
-     * @deprecated Ball counting is unreliable. Use isEmpty()/isFull() instead.
-     * @return Estimated count: 0 if empty, 2 if full, 1 otherwise
+     * Get ball count from chamber sensor (0-3 launchable balls).
      */
-    @Deprecated
     public int getBallCount() {
-        if (state == LoaderState.EMPTY) return 0;
-        if (state == LoaderState.FULL) return 2;
-        return 1;
+        return chamberSensor.getBallCount();
     }
 
     /**
@@ -370,22 +358,17 @@ public class Loader implements Subsystem {
     }
 
     /**
-     * Check if chamber is full (raw, unconfirmed).
-     * Use for debugging or when immediate response is needed.
-     *
-     * @return true if both sensors detect balls
+     * Check if chamber is full (raw, unconfirmed — based on sensor count, no debounce).
      */
     public boolean isFullRaw() {
-        return state == LoaderState.FULL;
+        return chamberSensor.isFull();
     }
 
     /**
      * Check if chamber is empty.
-     *
-     * @return true if no sensors detect balls
      */
     public boolean isEmpty() {
-        return state == LoaderState.EMPTY;
+        return chamberSensor.isEmpty();
     }
 
     /**
@@ -408,20 +391,16 @@ public class Loader implements Subsystem {
 
     /**
      * Get raw front sensor distance.
-     *
-     * @return Distance in cm
      */
     public double getFrontDistance() {
-        return frontDistance;
+        return chamberSensor.getFrontDistance();
     }
 
     /**
-     * Get raw back sensor distance.
-     *
-     * @return Distance in cm
+     * Get raw rear sensor distance.
      */
     public double getBackDistance() {
-        return backDistance;
+        return chamberSensor.getRearDistance();
     }
 
     @Override
@@ -442,6 +421,7 @@ public class Loader implements Subsystem {
         // Reset virtual sensor timing (but not ball count - that persists)
         fullConditionStartMs = 0;
         isFullConfirmed = false;
+        ejecting = false;
     }
 
     @Override
@@ -456,13 +436,12 @@ public class Loader implements Subsystem {
         telemetry.put("Loader Amps: ", beltMotor.getCurrent());
 
         telemetry.put("State", state);
-        //telemetry.put("Ball at Front", ballAtFront ? "YES" : "no");
-        telemetry.put("Ball at Back", ballAtBack ? "YES" : "no");
-        //telemetry.put("Front Dist", String.format("%.1f", frontDistance));
-        telemetry.put("Back Dist", String.format("%.1f", backDistance));
+        telemetry.put("Ball Count", chamberSensor.getBallCount());
+        telemetry.put("Overfull", chamberSensor.isOverfull() ? (ejecting ? "EJECTING" : "EJECT!") : "no");
         telemetry.put("Belt Owner", beltOwner);
 
         if (debug) {
+            telemetry.putAll(chamberSensor.getTelemetry());
             telemetry.put("isFull (confirmed)", isFullConfirmed ? "YES" : "no");
             telemetry.put("Belt Power", String.format("%.2f", beltPower));
             telemetry.put("Intake Requests", intakeRequestsBelt);
