@@ -159,6 +159,7 @@ public class Launcher implements Subsystem {
         SPINNING    // Flywheel at speed, ready to fire
     }
     private Behavior behavior = Behavior.IDLE;
+    private boolean enabled = false;  // Gate: flywheel won't spin until enabled in start()
 
     // ==================== INTERNAL STATE MACHINE ====================
 
@@ -275,6 +276,17 @@ public class Launcher implements Subsystem {
     // ==================== BEHAVIOR CONTROL ====================
 
     /**
+     * Enable the launcher (call in start()). Flywheel won't spin until enabled.
+     * Prevents illegal flywheel spin during init_loop.
+     */
+    public void enable() { enabled = true; }
+
+    /**
+     * Disable the launcher (call in stop()). Stops flywheel immediately.
+     */
+    public void disable() { enabled = false; }
+
+    /**
      * Set the launcher behavior.
      *
      * @param newBehavior IDLE or SPINNING
@@ -352,12 +364,16 @@ public class Launcher implements Subsystem {
     public void calc(Canvas fieldOverlay) {
         // PHASE 2: Read cached velocity and run state machine
 
+        // Gate: prevent flywheel spin during init_loop (motor suppression in act())
+        if (!enabled) {
+            state = LaunchState.IDLE;
+            behavior = Behavior.IDLE;
+            return;
+        }
 
         pidNew = new PIDFCoefficients(NEW_P,NEW_I,NEW_D,NEW_F);
         flywheel.setVelocityPIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F);
         flywheelHelp.setVelocityPIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F);
-//        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidNew);
-//        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidNew);
         pidfModified = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Get flywheel speed (bulk-cached by SDK)
@@ -492,7 +508,12 @@ public class Launcher implements Subsystem {
 
     @Override
     public void act() {
-        // PHASE 3: Flush paddle servo command
+        // PHASE 3: Flush commands to hardware
+        if (!enabled) {
+            // Suppress flywheel motors when disabled (init_loop)
+            flywheel.setVelocity(0);
+            flywheelHelp.setVelocity(0);
+        }
         paddle.flush();
     }
 
@@ -952,6 +973,7 @@ public class Launcher implements Subsystem {
 
     @Override
     public void stop() {
+        enabled = false;
         behavior = Behavior.IDLE;
         releaseResources();
         state = LaunchState.IDLE;

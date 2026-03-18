@@ -634,6 +634,65 @@ Speed-drop counter to detect when all balls have exited, ending FIRING early:
 
 Toggle via `BALL_EXIT_DETECTION` (default false). Ball exit count logged in CSV and telemetry for validation. The threshold of 80 deg/s is based on pre-boost log analysis (drops were ~115-130 observed). With FIRING_BOOST active, the faster recovery may reduce observed drops to ~100 — threshold should still trigger but needs validation with boost-enabled logs.
 
+### Phase 8: Chamber Sensor & Ball Counting [DONE]
+
+The build team added two new distance sensors (mid and front) to the ball channel, giving us three total. This enables reliable ball counting for the first time — replacing the old single-sensor heuristic and the never-working current-sensing approach.
+
+#### 8A. ChamberSensor Virtual Ball Counter [DONE]
+
+A dedicated `ChamberSensor` class (not a full Subsystem) that fuses three distance sensors into a ball count. Loader owns it and delegates all ball queries to it.
+
+**Sensor layout (rear to front of channel):**
+
+| Sensor | Distance | Meaning |
+|--------|----------|---------|
+| Rear | > 30 cm | Empty — can see through gate |
+| Rear | 16–30 cm | 1st ball (nearest launch position) |
+| Rear | < 16 cm | 2nd ball (1st ball + gate block the view) |
+| Mid | < 16 cm | 3rd ball present (fully loaded position) |
+| Front | < 13 cm | 4th ball trapped (overfull — needs eject) |
+
+Ball count = rear balls (0-2) + mid ball (0-1). The 4th ball (front) is tracked separately since it's not launchable.
+
+**Hardware config names:** `"rearDist"`, `"midDist"`, `"frontDist"` — all `CachedDistanceSensor` instances following the three-phase I2C pattern.
+
+#### 8B. Transit Edge Case Guards [DONE]
+
+Balls entering from the front pass through each sensor zone in sequence. Without guards, a ball in transit triggers false readings:
+
+**Problem 1 — False ball count jumps:** Ball A temporarily reads as "2 balls" at the rear sensor (< 16cm before settling to 16-30cm) while Ball B passes through mid. Raw count spikes to 3 with only 2 balls.
+
+**Solution: Rate-limited ballCount (±1 per cycle).** It's physically impossible to gain or lose 2 balls in one update cycle (~50ms). The count ramps 0→1→2→3 over successive cycles, naturally filtering transit spikes. Also correctly handles ball exits during firing (ramps down 3→2→1→0 rather than jumping to 0).
+
+**Problem 2 — False overfull:** Every incoming ball briefly triggers the front sensor (< 13cm) as it enters, before moving deeper into the channel.
+
+**Solution: Two-layer guard on overfull detection.**
+1. **State guard:** `isOverfull()` requires `ballCount >= 3`. If we don't have 3 balls loaded, a front sensor hit is just a ball in transit.
+2. **Debounce guard:** Front sensor must read < 13cm for 150ms continuously. A ball in transit passes through in ~100ms; a genuinely trapped 4th ball stays indefinitely.
+
+#### 8C. Overfull Auto-Eject [DONE]
+
+When Loader detects the OVERFULL state (debounced), it automatically runs a brief eject pulse:
+- **Trigger:** `state == OVERFULL` AND belt not claimed by launcher (never eject mid-fire)
+- **Action:** 300ms pulse at power +0.3 (gentle forward = eject direction)
+- **One-shot:** `ejecting` flag prevents re-triggering during the pulse. Resets when state leaves OVERFULL, allowing re-trigger if another 4th ball gets trapped.
+- **Dashboard tunable:** `EJECT_POWER` (0.3) and `EJECT_DURATION_MS` (300)
+
+#### 8D. Dynamic Ball Exit Count [NOT STARTED]
+
+With reliable ball counting, `BALL_EXIT_EXPECTED_COUNT` in the Launcher can be set dynamically from `loader.chamberSensor.getBallCount()` at the start of each firing sequence, instead of being hardcoded to 3. This makes ball exit detection (Phase 7E) work correctly when firing with fewer than 3 balls.
+
+**Constants summary:**
+```
+REAR_EMPTY_CM = 30           // > this = no balls at rear
+REAR_BALL1_CM = 16           // boundary between 1-ball and 2-ball detection
+MID_BALL3_CM = 16            // < this = 3rd ball present
+FRONT_OVERFULL_CM = 13       // < this = 4th ball at front
+OVERFULL_DEBOUNCE_MS = 150   // front sensor must hold this long
+EJECT_POWER = 0.3            // gentle forward pulse
+EJECT_DURATION_MS = 300      // eject pulse duration
+```
+
 ## Resolved Decisions
 
 1. **Oscillation window**: Time-based (fixed 500ms). Simpler, good enough for our loop rates.
@@ -655,15 +714,19 @@ Toggle via `BALL_EXIT_DETECTION` (default false). Ball exit count logged in CSV 
 7. ~~**Phase 7A** (flywheel power logging)~~ DONE
 8. ~~**Phase 7D** (PIDF target boost during firing)~~ DONE
 9. ~~**Phase 7E** (ball exit detection — experimental)~~ DONE — needs validation with boost-enabled logs
+10. ~~**Phase 8A** (ChamberSensor virtual ball counter)~~ DONE — three-sensor fusion with rate limiting
+11. ~~**Phase 8B** (transit edge case guards)~~ DONE — ballCount rate limit + overfull state guard + debounce
+12. ~~**Phase 8C** (overfull auto-eject)~~ DONE — 300ms gentle forward pulse
 
 ### Remaining (in priority order)
-1. **Phase 6A** (background relocalization collector) — Full retool of code team's attempt. Needs turret motion gate, convergence-based readiness, outlier rejection, continuous background collection. Existing utility methods (averagePoses, computeSpread, transformBotposeToRobotCenter, getRobotSpeed) can be reused.
-2. **Phase 7B** (feed-pause cadence) — May not be needed if 7D boost + 7E detection work well. Depends on competition testing.
-3. **Phase 5** (driver feedback) — LED lock quality, force-fire button, restore updateTargetSpeed on X.
-4. **Phase 6B** (divergence logging) — Collect data on odo drift rates and vision accuracy at different distances. Informs whether 6A thresholds need adjustment.
-5. **Phase 2C** (teleop pre-spin from nearest fire position) — Follow-on enhancement.
-6. **Phase 4B** (FIRE_5/FIRE_6 coordinates) — Needs physical measurement by code team.
-7. **Phase 1B Stages 2-3** (PID tuning with flywheel + intake load) — Code team has Stage 1. Stages 2-3 needed for competition-realistic tuning.
+1. **Phase 6A** (background relocalization collector) — Implemented. Needs field testing to validate gate thresholds and convergence speed.
+2. **Phase 8D** (dynamic ball exit count) — Set `BALL_EXIT_EXPECTED_COUNT` from `chamberSensor.getBallCount()` at fire start.
+3. **Phase 7B** (feed-pause cadence) — May not be needed if 7D boost + 7E detection work well. Depends on competition testing.
+4. **Phase 5** (driver feedback) — LED lock quality, force-fire button, restore updateTargetSpeed on X.
+5. **Phase 6B** (divergence logging) — Collect data on odo drift rates and vision accuracy at different distances. Informs whether 6A thresholds need adjustment.
+6. **Phase 2C** (teleop pre-spin from nearest fire position) — Follow-on enhancement.
+7. **Phase 4B** (FIRE_5/FIRE_6 coordinates) — Needs physical measurement by code team.
+8. **Phase 1B Stages 2-3** (PID tuning with flywheel + intake load) — Code team has Stage 1. Stages 2-3 needed for competition-realistic tuning.
 
 ## Testing Plan
 
@@ -682,8 +745,12 @@ Toggle via `BALL_EXIT_DETECTION` (default false). Ball exit count logged in CSV 
 9. **Relocalization test — accuracy**: At goal-side and audience-side fire positions, compare corrected pose vs known position. Run 10 trials each. Measure correction error (should be <2 inches goal-side, <4 inches audience-side). Compare against old single-frame correction.
 10. **Relocalization test — convergence speed**: Time from robot stop to `isRelocReady()` at both distances. Target: <300ms goal-side, <500ms audience-side.
 11. **Flywheel boost validation**: Fire 3 balls with `FIRING_BOOST=true` and `LOGGING_ENABLED=true`. Verify observed speed drops are still >80 deg/s (ball exit detection threshold). If drops are smaller, adjust `BALL_EXIT_DROP_THRESHOLD` based on data.
-9. **Flywheel recovery test**: Fire 3 balls from goal-side and audience-side with `LOGGING_ENABLED = true`. Analyze CSV for: peak power during recovery, speed drop per ball, recovery time between balls, primary vs helper motor symmetry. Determines whether to pursue 7B (cadence) or 7C (control strategy).
-10. **Teleop driver test**: Verify LED feedback, force-fire button, manual speed presets.
+12. **Flywheel recovery test**: Fire 3 balls from goal-side and audience-side with `LOGGING_ENABLED = true`. Analyze CSV for: peak power during recovery, speed drop per ball, recovery time between balls, primary vs helper motor symmetry. Determines whether to pursue 7B (cadence) or 7C (control strategy).
+13. **Chamber sensor — threshold calibration**: With channel empty, 1 ball, 2 balls, 3 balls — verify telemetry shows correct ball count at each stage. Adjust `REAR_EMPTY_CM`, `REAR_BALL1_CM`, `MID_BALL3_CM` if needed. Record actual distances in each configuration.
+14. **Chamber sensor — transit test**: Run intake with 0 balls loaded, feed 3 balls in sequence. Watch telemetry: ball count should increment 0→1→2→3 smoothly without jumping. Verify no false overfull triggers during intake. Verify rate-limiting prevents count spikes.
+15. **Chamber sensor — overfull test**: Load 3 balls, then push a 4th ball into the front. Verify overfull triggers after ~150ms debounce, eject pulse fires (belt briefly reverses), and 4th ball is pushed out. Verify eject does not trigger during a firing sequence.
+16. **Chamber sensor — firing integration**: Fire with `BALL_EXIT_DETECTION=true`. Verify ball count decrements as balls exit. Verify `BALL_EXIT_EXPECTED_COUNT` matches actual loaded count (once 8D is implemented).
+17. **Teleop driver test**: Verify LED feedback, force-fire button, manual speed presets.
 
 ## Open Questions
 

@@ -149,6 +149,9 @@ public class Lebot2_6832 extends OpMode {
         // Reset robot for match start
         robot.resetStates();
 
+        // Enable flywheel (suppressed during init_loop to comply with rules)
+        robot.launcher.enable();
+
         // Turret auto-seeks goal from match start (both auton and teleop)
         robot.turret.setTracking();
 
