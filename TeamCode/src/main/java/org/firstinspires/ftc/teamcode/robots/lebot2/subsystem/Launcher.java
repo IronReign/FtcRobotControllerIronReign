@@ -128,7 +128,8 @@ public class Launcher implements Subsystem {
     // PIDF still controls speed (prevents overspeed), but the higher target
     // makes it apply near-full power when speed drops from ball impacts
     public static boolean FIRING_BOOST = true;   // Dashboard tunable
-    public static double FIRING_BOOST_SPEED = 150; // deg/s above target — max overspeed ceiling
+    public static double FIRING_BOOST_SPEED = 600; // deg/s above target — max overspeed ceiling
+    public static double FIRING_BOOST_DELAY_MS = 400; // Delay before boost activates (tune to let 1st ball exit at normal speed)
 
     // Ball exit detection: count speed drops during FIRING to detect when all balls are out
     public static boolean BALL_EXIT_DETECTION = false; // Dashboard tunable — experimental
@@ -139,6 +140,14 @@ public class Launcher implements Subsystem {
     // Launch timing for TPU ramp design
     public static double FIRING_TIME = 1.5;       // seconds — hard timeout, backup for ball exit detection
     public static double LIFT_TIME = 0.3;           // seconds to hold LIFT position for last ball
+
+    // Pulsed firing: alternate FEED/PAUSE phases to let flywheel recover between balls
+    // All feeds run at full power — timing controls the cadence
+    public static boolean PULSED_FIRING = true;     // Dashboard toggle — false = continuous feed
+    public static double PULSE_FEED_MS = 100;        // Feed burst duration per ball
+    public static double PULSE_PAUSE_MS = 300;        // Pause for flywheel recovery between balls
+    public static double PULSE_LAST_FEED_MS = 600;   // Longer burst for last ball (nothing pushing behind)
+    public static double PULSE_FEED_POWER = -1.0;    // Full power for all pulsed feeds
 
     // Post-fire behavior
     public static boolean STAY_SPINNING_AFTER_FIRE = true;  // Keep flywheel spinning for faster follow-up
@@ -212,6 +221,13 @@ public class Launcher implements Subsystem {
     private double previousSpeed = 0;
     private int ballExitCount = 0;
     private long lastBallExitTime = 0;
+    private long firingStartMs = 0;
+
+    // Pulsed firing state
+    private enum PulsePhase { FEED, PAUSE }
+    private PulsePhase pulsePhase = PulsePhase.FEED;
+    private long pulseTimer = 0;
+    private int pulseBallsFed = 0;
 
     // References to other subsystems for coordination
     private Loader loader = null;
@@ -428,6 +444,7 @@ public class Launcher implements Subsystem {
 
                 // Force back to idle and release resources
                 releaseResources();
+                loader.FEED_POWER = FEED_GOAL;  // Restore default in case pulsed mode left it at 0
                 state = LaunchState.IDLE;
 
 
@@ -701,7 +718,11 @@ public class Launcher implements Subsystem {
             stateTimer = futureTime(FIRING_TIME);
             ballExitCount = 0;
             previousSpeed = currentSpeed;
+            firingStartMs = System.currentTimeMillis();
             launchSpacerTimer = futureTime(LAUNCH_SPACER_TIMER);
+            pulsePhase = PulsePhase.FEED;
+            pulseTimer = 0;
+            pulseBallsFed = 0;
 //            if (TRIGGER_TYPE == TriggerType.STAR_POSE) {
 //                STAR_FIRED = 0;  // Reset to REST before firing sequence
 //            }
@@ -714,17 +735,29 @@ public class Launcher implements Subsystem {
      * Transitions to LIFTING when timeout expires OR sensor shows balls remain.
      */
     private void handleFiringState() {
-        // Boost PIDF target during firing: PIDF sees larger error after ball impacts
-        // → applies near-max power for recovery, but speed is still capped (no runaway)
-        double firingSpeed = FIRING_BOOST ? targetSpeed + FIRING_BOOST_SPEED : targetSpeed;
+        // Track speed changes for ball exit detection
+        double speedDrop = previousSpeed - currentSpeed;
+        previousSpeed = currentSpeed;
+
+        // Boost PIDF target after configurable delay
+        // At 0ms delay: boost from FIRING start (maximum recovery, first ball may overshoot)
+        // Increase delay to let first ball exit at normal speed before boost kicks in
+        boolean boostActive = FIRING_BOOST
+                && (System.currentTimeMillis() - firingStartMs) >= FIRING_BOOST_DELAY_MS;
+        double firingSpeed = boostActive
+                ? targetSpeed + FIRING_BOOST_SPEED : targetSpeed;
         flywheel.setVelocity(firingSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(firingSpeed, AngleUnit.DEGREES);
 
-        if(isPast(launchSpacerTimer)){
-            intakeHelp = true;
-        }
-        if(intakeHelp){
-            claimResources();
+        // Continuous feed: intake starts after spacer delay and runs nonstop
+        // Pulsed mode manages its own claim/release cycle — skip this
+        if (!PULSED_FIRING) {
+            if (isPast(launchSpacerTimer)) {
+                intakeHelp = true;
+            }
+            if (intakeHelp) {
+                claimResources();
+            }
         }
 
         // STAR_POSE: step through discrete positions when spacer timer elapsed AND flywheel at speed
@@ -746,16 +779,59 @@ public class Launcher implements Subsystem {
             return;
         }
 
+        // Pulsed firing for GATE: alternate FEED/PAUSE to let flywheel recover
+        // Resources claimed once — belt power toggled between full and zero per phase
+        if (PULSED_FIRING && TRIGGER_TYPE == TriggerType.GATE) {
+            // Initialize on first cycle — claim once for entire sequence
+            if (pulseTimer == 0) {
+                pulseTimer = System.currentTimeMillis();
+                pulsePhase = PulsePhase.FEED;
+                claimResources();
+            }
+
+            long elapsed = System.currentTimeMillis() - pulseTimer;
+            boolean isLastBall = (pulseBallsFed >= BALL_EXIT_EXPECTED_COUNT - 1);
+            double feedDuration = isLastBall ? PULSE_LAST_FEED_MS : PULSE_FEED_MS;
+
+            if (pulsePhase == PulsePhase.FEED) {
+                // Belt at full power — pushing ball into flywheel
+                loader.FEED_POWER = PULSE_FEED_POWER;
+                if (elapsed >= feedDuration) {
+                    pulseBallsFed++;
+                    if (pulseBallsFed >= BALL_EXIT_EXPECTED_COUNT) {
+                        state = LaunchState.COMPLETE;
+                        return;
+                    }
+                    pulsePhase = PulsePhase.PAUSE;
+                    pulseTimer = System.currentTimeMillis();
+                }
+            } else {
+                // PAUSE — belt stopped, flywheel recovering
+                loader.FEED_POWER = 0;
+                if (elapsed >= PULSE_PAUSE_MS) {
+                    pulsePhase = PulsePhase.FEED;
+                    pulseTimer = System.currentTimeMillis();
+                }
+            }
+
+            setPaddlePosition(getTriggerFiringPosition());
+
+            // Hard timeout still applies
+            if (isPast(stateTimer)) {
+                state = LaunchState.COMPLETE;
+            }
+            return;
+        }
+
         // Ball exit detection: count speed drops to detect when all balls have fired
+        // (speedDrop and previousSpeed already updated at top of method)
         if (BALL_EXIT_DETECTION) {
-            double speedDrop = previousSpeed - currentSpeed;
             long now = System.currentTimeMillis();
             if (speedDrop > BALL_EXIT_DROP_THRESHOLD
                     && (now - lastBallExitTime) > BALL_EXIT_COOLDOWN_MS) {
                 ballExitCount++;
                 lastBallExitTime = now;
             }
-            previousSpeed = currentSpeed;
 
             if (ballExitCount >= BALL_EXIT_EXPECTED_COUNT) {
                 state = LaunchState.COMPLETE;
@@ -796,6 +872,7 @@ public class Launcher implements Subsystem {
     private void handleCompleteState() {
         intakeHelp = false;
         releaseResources();
+        loader.FEED_POWER = FEED_GOAL;  // Restore default in case pulsed mode left it at 0
         setPaddlePosition(getTriggerIdlePosition());
 
         if (STAY_SPINNING_AFTER_FIRE) {

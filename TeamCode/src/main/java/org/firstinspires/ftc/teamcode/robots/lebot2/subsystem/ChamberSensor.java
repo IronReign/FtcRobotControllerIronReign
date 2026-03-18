@@ -43,14 +43,15 @@ public class ChamberSensor {
     // Discrete ranges with dead zones between them
     public static double REAR_EMPTY_CM = 20;       // > this = no balls
     public static double REAR_BALL1_MAX_CM = 20;   // 16–20 = 1st ball
-    public static double REAR_BALL1_MIN_CM = 16;
-    public static double REAR_BALL2_MAX_CM = 13.5;  // 2–13.5 = 2nd ball
+    public static double REAR_BALL1_MIN_CM = 10;
+    public static double REAR_BALL2_MAX_CM = 9.5;  // 2–13.5 = 2nd ball
     public static double REAR_BALL2_MIN_CM = 2;
 
     // Mid sensor: 3rd ball position (cm)
     public static double MID_BALL3_CM = 15;         // < this = 3rd ball present
 
     // Front sensor: 4th ball trap detection (cm)
+    public static boolean FRONT_SENSOR_ENABLED = false; // Disable to skip I2C read and overfull detection
     public static double FRONT_OVERFULL_CM = 13;    // < this = 4th ball trapped
 
     // Overfull debounce: a ball in transit passes the front sensor briefly (~100ms).
@@ -92,7 +93,9 @@ public class ChamberSensor {
     public void refresh() {
         rearSensor.refresh();
         midSensor.refresh();
-        frontSensor.refresh();
+        if (FRONT_SENSOR_ENABLED) {
+            frontSensor.refresh();
+        }
     }
 
     /**
@@ -102,7 +105,9 @@ public class ChamberSensor {
     public void update() {
         rearDistance = rearSensor.getDistance();
         midDistance = midSensor.getDistance();
-        frontDistance = frontSensor.getDistance();
+        if (FRONT_SENSOR_ENABLED) {
+            frontDistance = frontSensor.getDistance();
+        }
 
         // Rear sensor: discrete ranges with dead zones
         // Readings in dead zones retain the previous count (no change)
@@ -133,6 +138,11 @@ public class ChamberSensor {
         // Note: 4th ball is tracked separately — ballCount reflects launchable balls (0-3)
 
         // Front sensor: position 4 (overfull)
+        // Skipped entirely when FRONT_SENSOR_ENABLED is false (saves I2C bandwidth)
+        if (!FRONT_SENSOR_ENABLED) {
+            overFull = false;
+            return;
+        }
         // State guard: only a genuine 4th ball if we already have 3 loaded.
         // Without this, every incoming ball triggers overfull as it passes the front sensor.
         // Debounce guard: ball in transit passes in ~100ms, genuine 4th ball stays.

@@ -106,15 +106,8 @@ public class LEDStatus implements Subsystem {
             state = State.READY_TO_FIRE;
         } else if (isAiming) {
             state = State.AIMING;
-        } else if (isFull && !wasFullLastCycle) {
-            // Rising edge of full - start green display
-            state = State.FULL;
-            fullStartMs = System.currentTimeMillis();
-        } else if (state == State.FULL) {
-            // Check if green display time expired
-            if (System.currentTimeMillis() - fullStartMs > FULL_DISPLAY_MS) {
-                state = hasBalls ? State.HAS_BALLS : State.ALLIANCE;
-            }
+        } else if (isFull) {
+            state = State.FULL;   // Stay green as long as full
         } else if (hasBalls) {
             state = State.HAS_BALLS;
         } else {

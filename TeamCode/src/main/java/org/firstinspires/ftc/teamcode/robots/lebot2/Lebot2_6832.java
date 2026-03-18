@@ -7,6 +7,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
@@ -148,6 +149,10 @@ public class Lebot2_6832 extends OpMode {
 
         // Reset robot for match start
         robot.resetStates();
+
+        // Ensure drive motors are in BRAKE mode (may have been set to FLOAT during init_loop)
+        ((TankDrivePinpoint)robot.driveTrain).setZeroPowerBehavior(
+                DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Enable flywheel (suppressed during init_loop to comply with rules)
         robot.launcher.enable();

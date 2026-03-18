@@ -791,6 +791,19 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         }
     }
 
+    /**
+     * Switch zero power behavior on all drive motors.
+     * BRAKE = short motor windings (hard stop). FLOAT = coast.
+     */
+    public void setZeroPowerBehavior(DcMotor.ZeroPowerBehavior zpb) {
+        for (DcMotorEx m : leftMotors) {
+            m.setZeroPowerBehavior(zpb);
+        }
+        for (DcMotorEx m : rightMotors) {
+            m.setZeroPowerBehavior(zpb);
+        }
+    }
+
     // ==================== POSE METHODS ====================
 
     @Override

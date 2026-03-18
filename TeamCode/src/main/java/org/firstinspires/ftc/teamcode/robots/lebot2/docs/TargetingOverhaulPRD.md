@@ -566,27 +566,29 @@ Before changing the control strategy, we need to understand what's happening. Mo
 4. How long does recovery take? This determines the minimum safe pause between balls.
 5. Do the primary and helper motors track each other, or does one lag?
 
-#### 7B. Feed-Pause-Feed Strategy [NOT STARTED — depends on 7A data]
+#### 7B. Pulsed Firing (Feed-Pause-Feed) [DONE]
 
-If motor analysis shows the flywheel can recover between shots but the continuous feed doesn't give it time:
+Dashboard toggle `PULSED_FIRING` (default false). When enabled, `handleFiringState()` alternates FEED/PAUSE phases instead of running the intake continuously. All feeds run at full power (`PULSE_FEED_POWER = -1.0`) — cadence is controlled entirely by timing, not power.
 
 ```
-FEED_PAUSE_MS = 300     // Pause between balls to let flywheel recover
-FEED_BURST_MS = 500     // Feed duration to advance one ball into the flywheel
-
-Firing sequence:
-  0ms:     Gate opens, conveyor runs at FEED_POWER
-  500ms:   Conveyor pauses (first ball has fired)
-  800ms:   Conveyor runs again (flywheel has recovered ~300ms)
-  1300ms:  Conveyor pauses (second ball has fired)
-  1600ms:  Conveyor runs again
-  2100ms:  Third ball fires
-  ~2500ms: Gate closes, COMPLETE
+Sequence with defaults (PULSE_FEED_MS=200, PULSE_PAUSE_MS=300):
+  0ms:     Gate opens, intake runs at full power (FEED phase)
+  200ms:   Intake stops (PAUSE phase) — ball 1 fired, flywheel recovers
+  500ms:   Intake runs (FEED phase)
+  700ms:   Intake stops (PAUSE phase) — ball 2 fired
+  1000ms:  Intake runs for 600ms at full power (last ball — PULSE_LAST_FEED_MS)
+  1600ms:  COMPLETE
 ```
 
-Implementation: Replace the continuous `claimResources()` belt run in `handleFiringState()` with a state machine that alternates between feed and pause. The pause duration is calibrated from the power analysis (it needs to be long enough for the flywheel to recover but short enough that the ball doesn't settle and jam).
+The last ball gets a longer feed burst (`PULSE_LAST_FEED_MS = 600`) because nothing is pushing from behind. `BALL_EXIT_EXPECTED_COUNT` controls the number of feed/pause cycles. Hard timeout `FIRING_TIME` acts as backstop — may need to be increased to accommodate the full pulse sequence.
 
-**For the last ball:** Use a longer feed burst or higher feed power, since there's nothing behind it pushing it into the flywheel. The current `LAUNCH_SPACER_TIMER_LAST` already accounts for this but may need to be re-tuned alongside the pause strategy.
+**Implementation:** Resources are claimed once at the start of pulsed firing (not per-pulse). During FEED phases, `loader.FEED_POWER` is set to `PULSE_FEED_POWER`. During PAUSE phases, `loader.FEED_POWER` is set to 0. This requires launcher calc to run before loader calc — subsystem ordering was changed to: intake → launcher → loader.
+
+**FEED_POWER safety:** When firing completes or is aborted, `loader.FEED_POWER` is restored to `FEED_GOAL` to prevent stale zero values from affecting subsequent continuous-mode firing.
+
+**Continuous vs pulsed:** With `PULSED_FIRING = false`, the intake runs continuously for `FIRING_TIME` at `FEED_POWER` (set by `updateTargetSpeed()` based on distance). Pulsed mode gives explicit control over cadence regardless of distance.
+
+**Dashboard tunable:** `PULSED_FIRING`, `PULSE_FEED_MS`, `PULSE_PAUSE_MS`, `PULSE_LAST_FEED_MS`, `PULSE_FEED_POWER`
 
 #### 7C. Aggressive Flywheel PIDF / Bang-Bang [NOT STARTED — depends on 7A data]
 
@@ -619,7 +621,9 @@ This eliminates the PIDF latency entirely. At high speeds, the motor's own back-
 
 Rather than switching motor control modes (bang-bang, RUN_WITHOUT_ENCODER), boost the PIDF velocity target during FIRING state by a fixed offset (`FIRING_BOOST_SPEED = 150 deg/s`). This makes the PIDF apply near-maximum power during recovery (it sees a larger error) while still capping speed (no runaway overspeed). Dashboard-tunable via `FIRING_BOOST` (boolean) and `FIRING_BOOST_SPEED` (deg/s).
 
-With P=400, even a +82 deg/s boost saturates the motor controller output (400 × 82 = 32,800 > 32,767 max). So +150 is more than sufficient for full-power recovery, and the max overspeed between ball impacts is bounded at 150 deg/s above target.
+**Configurable delay:** `FIRING_BOOST_DELAY_MS` (default 0) controls when the boost activates after FIRING starts. At 0ms, boost is immediate (maximum recovery, first ball may overshoot). Increase to ~200-400ms to let the first ball exit at calibrated speed before boost kicks in. Dashboard-tunable.
+
+**Log analysis finding (flywheel_log.csv):** At 0.641 power (base target ~980), motors draw ~4.7+3.9A during ball recovery — well below the 8.9A spin-up peak. The PIDF has significant headroom. With boost at +500 (power 0.968), current reaches 10.4A — closer to saturation. The boost is essential for adequate recovery.
 
 `FIRING_TIME` reduced from 6.0s to 1.5s (hard backstop — all balls typically exit within 1s).
 
@@ -644,15 +648,18 @@ A dedicated `ChamberSensor` class (not a full Subsystem) that fuses three distan
 
 **Sensor layout (rear to front of channel):**
 
+The rear sensor is mounted on the **side** of the channel (not looking through the center) to avoid false readings from shooting through holes in the wiffle balls. This produces discrete detection ranges with dead zones between them.
+
 | Sensor | Distance | Meaning |
 |--------|----------|---------|
-| Rear | > 30 cm | Empty — can see through gate |
-| Rear | 16–30 cm | 1st ball (nearest launch position) |
-| Rear | < 16 cm | 2nd ball (1st ball + gate block the view) |
+| Rear | > 20 cm | Empty — no balls |
+| Rear | 16–20 cm | 1st ball (nearest launch position) |
+| Rear | 13.5–16 cm | **Dead zone** — retains previous count |
+| Rear | 2–13.5 cm | 2nd ball |
 | Mid | < 16 cm | 3rd ball present (fully loaded position) |
 | Front | < 13 cm | 4th ball trapped (overfull — needs eject) |
 
-Ball count = rear balls (0-2) + mid ball (0-1). The 4th ball (front) is tracked separately since it's not launchable.
+Ball count = rear balls (0-2) + mid ball (0-1). The 4th ball (front) is tracked separately since it's not launchable. Dead zone readings retain the previous rear ball count to prevent flickering.
 
 **Hardware config names:** `"rearDist"`, `"midDist"`, `"frontDist"` — all `CachedDistanceSensor` instances following the three-phase I2C pattern.
 
@@ -672,11 +679,25 @@ Balls entering from the front pass through each sensor zone in sequence. Without
 
 #### 8C. Overfull Auto-Eject [DONE]
 
-When Loader detects the OVERFULL state (debounced), it automatically runs a brief eject pulse:
-- **Trigger:** `state == OVERFULL` AND belt not claimed by launcher (never eject mid-fire)
-- **Action:** 300ms pulse at power +0.3 (gentle forward = eject direction)
-- **One-shot:** `ejecting` flag prevents re-triggering during the pulse. Resets when state leaves OVERFULL, allowing re-trigger if another 4th ball gets trapped.
-- **Dashboard tunable:** `EJECT_POWER` (0.3) and `EJECT_DURATION_MS` (300)
+When Loader detects the OVERFULL state (debounced), it runs a two-phase eject-and-recovery sequence:
+
+**Phase 1 — EJECTING:** Forward pulse to push 4th ball out.
+**Phase 2 — RECOVERING:** Reverse pulse to pull 3rd ball back into position.
+
+The recovery phase is critical — without it, the eject force displaces the 3rd ball forward enough to trigger a second overfull detection after cooldown, ejecting a ball we want to keep. Full reverse power (-1.0) is needed because three loaded balls create significant resistance.
+
+- **Trigger:** `state == OVERFULL` AND motor not claimed by launcher (never eject mid-fire)
+- **Blocked during either phase** — no re-trigger until the full sequence (eject + recovery) completes
+- **Manual trigger:** `triggerEject()` on Loader, wired to D-pad right in DriverControls
+- **Dashboard tunable:** `EJECT_POWER`, `EJECT_DURATION_MS`, `EJECT_RECOVERY_POWER`, `EJECT_RECOVERY_MS`
+
+#### 8E. Gate Closure & Ball Position Changes [IN PROGRESS]
+
+The gate was not closing fully, allowing the 1st ball (nearest launch) to ride too high in the channel. This caused frequent jamming during firing. A physical modification tightens the gate closure.
+
+**Impact on chamber sensor:** Tighter gate changes the resting positions of all balls in the channel, shifting sensor distance readings. The rear sensor thresholds (`REAR_BALL1_MAX/MIN_CM`, `REAR_BALL2_MAX/MIN_CM`) need recalibration after the gate modification. The dead zone boundaries between ball 1 and ball 2 detection are particularly sensitive.
+
+**Impact on overfull eject:** With balls packed tighter, the 3rd ball is closer to the front and more susceptible to being displaced during the eject pulse. The eject/recovery tuning (`EJECT_POWER`, `EJECT_DURATION_MS`, `EJECT_RECOVERY_POWER`, `EJECT_RECOVERY_MS`) may need re-tuning. The recovery phase becomes even more critical — the 3rd ball has less margin before it enters the overfull detection zone.
 
 #### 8D. Dynamic Ball Exit Count [NOT STARTED]
 
@@ -684,14 +705,49 @@ With reliable ball counting, `BALL_EXIT_EXPECTED_COUNT` in the Launcher can be s
 
 **Constants summary:**
 ```
-REAR_EMPTY_CM = 30           // > this = no balls at rear
-REAR_BALL1_CM = 16           // boundary between 1-ball and 2-ball detection
+REAR_EMPTY_CM = 20           // > this = no balls at rear
+REAR_BALL1_MAX_CM = 20       // 16–20 = 1st ball
+REAR_BALL1_MIN_CM = 16
+REAR_BALL2_MAX_CM = 13.5     // 2–13.5 = 2nd ball
+REAR_BALL2_MIN_CM = 2
 MID_BALL3_CM = 16            // < this = 3rd ball present
 FRONT_OVERFULL_CM = 13       // < this = 4th ball at front
 OVERFULL_DEBOUNCE_MS = 150   // front sensor must hold this long
-EJECT_POWER = 0.3            // gentle forward pulse
-EJECT_DURATION_MS = 300      // eject pulse duration
+EJECT_POWER = 0.8            // forward pulse to push 4th ball out
+EJECT_DURATION_MS = 200      // eject pulse duration
+EJECT_RECOVERY_POWER = -1.0  // full reverse to reseat 3rd ball
+EJECT_RECOVERY_MS = 300      // recovery pulse duration
 ```
+
+### Phase 9: Operational Fixes & Driver Experience
+
+#### 9A. Flywheel Init-Loop Gate [DONE]
+
+Launcher has an `enabled` flag (default false). `calc()` forces state/behavior to IDLE when disabled. `act()` commands zero velocity when disabled. `enable()` called in `start()`, `disable()` called in `stop()`. Prevents illegal flywheel spin during init_loop while still allowing all other subsystems to run.
+
+#### 9B. LAUNCH_ALL Exit Fix [DONE]
+
+`handleLaunchAllBehavior2()` FIRING case now checks for `IDLE_SPIN` in addition to `IDLE` and `READY`. Previously, with `STAY_SPINNING_AFTER_FIRE=true`, COMPLETE→IDLE_SPIN was never detected, causing the Robot to stay stuck in LAUNCH_ALL behavior and re-trigger the launcher.
+
+#### 9C. Side Belt Purge & Dual Intake Motors [DONE]
+
+Removed the defunct side conveyor belt motor ("conveyor"). Loader now drives two intake motors (`"intake"` and `"intake2"`, opposite directions) that power the same belt from both sides. The ownership API names (`requestBeltForIntake`, etc.) were kept for caller compatibility. Subsystem ordering changed to intake → launcher → loader so launcher can set `FEED_POWER` before loader reads it.
+
+#### 9D. Hybrid FLOAT/BRAKE Zero Power [DONE]
+
+Anti-wheelie measure for teleop. When the driver pushes the stick backward, drive motors switch to FLOAT (coast). When the driver pushes forward, motors switch back to BRAKE (precise control). A `wasReversing` flag persists FLOAT through the stick dead zone so the robot coasts smoothly out of reverse. `start()` explicitly resets to BRAKE to prevent FLOAT from carrying into autonomous after init_loop driving.
+
+#### 9E. LOAD_ALL Stops on Chamber Full [DONE]
+
+Intake LOAD_ALL behavior now checks `loader.isFull()` (from ChamberSensor) and stops early when the chamber reaches 3 balls. Previously ran for the full `LOAD_ALL_DURATION_MS` timeout regardless. The timeout remains as a backstop.
+
+#### 9F. LED Stays Green When Full [DONE]
+
+LED state `FULL` (green) now persists as long as the chamber is full, rather than flashing green for 1 second then reverting to amber. Amber (HAS_BALLS) only shows for 1-2 balls. Vision target (AIMING → cyan) still overrides green when the robot sees an AprilTag.
+
+#### 9G. Front Sensor Bypass [DONE]
+
+`FRONT_SENSOR_ENABLED` toggle (default false) on ChamberSensor. When disabled, skips the front distance sensor I2C read and overfull detection entirely. Added because the gate closure modification pushed the ball stack forward enough that a 4th ball is no longer trapped — it falls out naturally when the robot drives away. Saves I2C bandwidth. Toggle back to true if needed.
 
 ## Resolved Decisions
 
@@ -713,20 +769,28 @@ EJECT_DURATION_MS = 300      // eject pulse duration
 6. ~~**Phase 4A** (fire position progression)~~ DONE
 7. ~~**Phase 7A** (flywheel power logging)~~ DONE
 8. ~~**Phase 7D** (PIDF target boost during firing)~~ DONE
-9. ~~**Phase 7E** (ball exit detection — experimental)~~ DONE — needs validation with boost-enabled logs
-10. ~~**Phase 8A** (ChamberSensor virtual ball counter)~~ DONE — three-sensor fusion with rate limiting
-11. ~~**Phase 8B** (transit edge case guards)~~ DONE — ballCount rate limit + overfull state guard + debounce
-12. ~~**Phase 8C** (overfull auto-eject)~~ DONE — 300ms gentle forward pulse
+9. ~~**Phase 7E** (ball exit detection — experimental)~~ DONE — speed-drop counting, also used for deferred boost trigger
+10. ~~**Phase 7B** (pulsed firing)~~ DONE — feed/pause/feed sequence with full-power feeds, dashboard-tunable cadence
+11. ~~**Phase 8A** (ChamberSensor virtual ball counter)~~ DONE — three-sensor fusion with rate limiting and dead zone handling
+12. ~~**Phase 8B** (transit edge case guards)~~ DONE — ballCount rate limit + overfull state guard + debounce
+13. ~~**Phase 8C** (overfull auto-eject)~~ DONE — two-phase eject (forward pulse) + recovery (full reverse to reseat 3rd ball)
+14. ~~**Phase 8E** (gate closure modification)~~ DONE — physical change, sensor recalibrated, front sensor bypassed
+15. ~~**Phase 9A** (flywheel init-loop gate)~~ DONE
+16. ~~**Phase 9B** (LAUNCH_ALL exit fix)~~ DONE
+17. ~~**Phase 9C** (side belt purge + dual intake motors)~~ DONE
+18. ~~**Phase 9D** (hybrid FLOAT/BRAKE zero power)~~ DONE — anti-wheelie
+19. ~~**Phase 9E** (LOAD_ALL stops on chamber full)~~ DONE
+20. ~~**Phase 9F** (LED stays green when full)~~ DONE
+21. ~~**Phase 9G** (front sensor bypass)~~ DONE
 
 ### Remaining (in priority order)
 1. **Phase 6A** (background relocalization collector) — Implemented. Needs field testing to validate gate thresholds and convergence speed.
 2. **Phase 8D** (dynamic ball exit count) — Set `BALL_EXIT_EXPECTED_COUNT` from `chamberSensor.getBallCount()` at fire start.
-3. **Phase 7B** (feed-pause cadence) — May not be needed if 7D boost + 7E detection work well. Depends on competition testing.
-4. **Phase 5** (driver feedback) — LED lock quality, force-fire button, restore updateTargetSpeed on X.
-5. **Phase 6B** (divergence logging) — Collect data on odo drift rates and vision accuracy at different distances. Informs whether 6A thresholds need adjustment.
-6. **Phase 2C** (teleop pre-spin from nearest fire position) — Follow-on enhancement.
-7. **Phase 4B** (FIRE_5/FIRE_6 coordinates) — Needs physical measurement by code team.
-8. **Phase 1B Stages 2-3** (PID tuning with flywheel + intake load) — Code team has Stage 1. Stages 2-3 needed for competition-realistic tuning.
+3. **Phase 5** (driver feedback) — LED lock quality ~~and full-chamber green~~ (done in 9F), force-fire button, restore updateTargetSpeed on X.
+4. **Phase 6B** (divergence logging) — Collect data on odo drift rates and vision accuracy at different distances.
+5. **Phase 2C** (teleop pre-spin from nearest fire position) — Follow-on enhancement.
+6. **Phase 4B** (FIRE_5/FIRE_6 coordinates) — Needs physical measurement by code team.
+7. **Phase 1B Stages 2-3** (PID tuning with flywheel + intake load) — Code team has Stage 1. Stages 2-3 needed for competition-realistic tuning.
 
 ## Testing Plan
 

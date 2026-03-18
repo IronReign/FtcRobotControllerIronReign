@@ -6,9 +6,11 @@ import static org.firstinspires.ftc.teamcode.robots.lebot2.Lebot2_6832.robot;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
+import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Launcher;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Loader;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.Turret;
@@ -36,11 +38,14 @@ public class DriverControls implements TelemetryProvider {
 
     // Configuration
     public static double THROTTLE_DAMPENER = .7;
-    public static double BACKWARD_DAMP = .4;
-    public static double FORWARD_DAMP = .9;
-    public static double DRIVE_DAMPENER = .7;
-    public static double SLOW_MODE_DAMPENER = 0.3;
+    public static double BACKWARD_DAMP = .9;
+    public static double FORWARD_DAMP = 1.0;
+
+    //turn dampeners
+    public static double TURN_DAMP = .9;
+    public static double SLOW_MODE_DAMPENER = 0.4;
     public static boolean slowMode = false;
+    private boolean wasReversing = false;  // For hybrid FLOAT/BRAKE zero power behavior
 
     // Gamepads
     private final Gamepad gamepad1;
@@ -91,14 +96,26 @@ public class DriverControls implements TelemetryProvider {
 
 
             // Get drive inputs
-            //double throttle = -gamepad1.left_stick_y*THROTTLE_DAMPENER;
-            if(-gamepad1.left_stick_y<0){
+            double rawThrottle = -gamepad1.left_stick_y;
+            if(rawThrottle < 0){
                 THROTTLE_DAMPENER = BACKWARD_DAMP;
             }else{
                 THROTTLE_DAMPENER = FORWARD_DAMP;
             }
             double turn = gamepad1.right_stick_x;
-            double throttle = -gamepad1.left_stick_y*THROTTLE_DAMPENER;
+            double throttle = rawThrottle * THROTTLE_DAMPENER;
+
+            // Hybrid zero power: FLOAT after reversing (coast out smoothly),
+            // BRAKE once driver applies forward throttle (precise control)
+            // Persists FLOAT through the stick-release dead zone
+            if (rawThrottle < -0.05) {
+                wasReversing = true;
+            } else if (rawThrottle > 0.05) {
+                wasReversing = false;
+            }
+            ((TankDrivePinpoint)robot.driveTrain).setZeroPowerBehavior(
+                    wasReversing ? DcMotor.ZeroPowerBehavior.FLOAT
+                                 : DcMotor.ZeroPowerBehavior.BRAKE);
 
             // Abort any running mission if driver provides significant input
             if (robot.missions.isActive() && (Math.abs(throttle) > 0.1 || Math.abs(turn) > 0.1)) {
@@ -106,7 +123,7 @@ public class DriverControls implements TelemetryProvider {
             }
 
             // Apply dampening
-            double dampener = slowMode ? SLOW_MODE_DAMPENER : DRIVE_DAMPENER;
+            double dampener = slowMode ? SLOW_MODE_DAMPENER : TURN_DAMP;
             turn *= dampener;
 
             // ALWAYS call drive - the drivetrain handles mode switching internally

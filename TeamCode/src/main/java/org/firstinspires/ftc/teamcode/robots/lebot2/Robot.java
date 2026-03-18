@@ -197,8 +197,8 @@ public class Robot implements TelemetryProvider {
         // Add to subsystems list for bulk operations
         subsystems.add((Subsystem) driveTrain);
         subsystems.add(intake);
+        subsystems.add(launcher);  // Before loader: launcher sets FEED_POWER, loader reads it
         subsystems.add(loader);
-        subsystems.add(launcher);
         subsystems.add(vision);
         subsystems.add(ledStatus);
         subsystems.add(turret);
