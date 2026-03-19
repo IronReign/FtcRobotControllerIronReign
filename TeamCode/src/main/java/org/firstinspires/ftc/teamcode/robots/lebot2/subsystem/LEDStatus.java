@@ -5,7 +5,9 @@ import android.graphics.Color;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.sparkfun.SparkFunLEDStick;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.robots.lebot2.Robot;
 
@@ -28,9 +30,14 @@ public class LEDStatus implements Subsystem {
 
     // Hardware
     private SparkFunLEDStick ledStick;
+    private DcMotorSimple godMotor;
+    private Servo glowServo;
     private boolean hardwarePresent = false;
 
     // Configuration
+    public static double GOD_POWER = 0.3;          // Dashboard tunable — max safe value is 0.5
+    private static final double GOD_MAX_POWER = 0.5; // Hard clamp — higher burns out the LED
+    public static double GLOW_PATTERN = 0.0;        // Dashboard tunable — Blinkin pattern select (0.0-1.0)
     public static int BRIGHTNESS = 10;  // 0-31
     public static int AMBER = Color.rgb(255, 140, 0);
     public static int CYAN = Color.rgb(0, 255, 255);
@@ -68,6 +75,16 @@ public class LEDStatus implements Subsystem {
             hardwarePresent = true;
         } catch (Exception e) {
             hardwarePresent = false;
+        }
+        try {
+            godMotor = hardwareMap.get(DcMotorSimple.class, "god");
+        } catch (Exception e) {
+            godMotor = null;
+        }
+        try {
+            glowServo = hardwareMap.get(Servo.class, "glow");
+        } catch (Exception e) {
+            glowServo = null;
         }
     }
 
@@ -144,16 +161,25 @@ public class LEDStatus implements Subsystem {
 
     @Override
     public void act() {
-        if (!hardwarePresent) return;
-
-        ledStick.setBrightness(BRIGHTNESS);
-        ledStick.setColor(currentColor);
+        if (hardwarePresent) {
+            ledStick.setBrightness(BRIGHTNESS);
+            ledStick.setColor(currentColor);
+        }
+        if (godMotor != null) {
+            godMotor.setPower(Math.min(GOD_POWER, GOD_MAX_POWER));
+        }
+        if (glowServo != null) {
+            glowServo.setPosition(GLOW_PATTERN);
+        }
     }
 
     @Override
     public void stop() {
         if (hardwarePresent) {
             ledStick.turnAllOff();
+        }
+        if (godMotor != null) {
+            godMotor.setPower(0);
         }
     }
 

@@ -29,6 +29,7 @@ public class Relocalizer {
 
     // ==================== CONSTANTS (Dashboard tunable) ====================
 
+    public static boolean ENABLED = false;          // Master toggle — off by default
     public static int MIN_SAMPLES = 3;
     public static int MAX_SAMPLES = 15;
     public static double WINDOW_MS = 500;                   // max age of oldest sample
@@ -89,6 +90,11 @@ public class Relocalizer {
         long now = System.currentTimeMillis();
 
         // --- Gate checks ---
+        if (!ENABLED) {
+            flush();
+            return;
+        }
+
         if (!vision.hasBotPose()) {
             flush();
             return;

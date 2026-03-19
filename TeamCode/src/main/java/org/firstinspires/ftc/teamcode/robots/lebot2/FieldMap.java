@@ -35,10 +35,14 @@ public class FieldMap {
     public static double WAYPOINT_RADIUS = 4.0;   // 8" diameter = 4" radius
 
     // ==================== INTAKE ASYMMETRY OFFSET ====================
-    // Ball row waypoints need X offset when reflected for blue alliance
+    // Ball row waypoints used to need X offset when reflected for blue alliance
     // due to asymmetric intake design (shifts 6" in positive X direction)
-    public static double BALL_ROW_BLUE_X_OFFSET = 2;  // inches
+    // but this has been largely resolved.
+    public static double BALL_ROW_BLUE_X_OFFSET = 0;  // inches
     public static double ROW_X_OFFSET = 0;
+
+    // shift how close to the wall rows start - affects navigation and this is
+    // where intake starts. applies to both alliances.
     public static double ROW_Y_START_OFFSET = 4;
 
     // ==================== START POSITION MODE ====================
@@ -48,9 +52,9 @@ public class FieldMap {
     // ==================== SPLINE-SPECIFIC OFFSETS (GOAL START) ====================
     // X offsets for row starts when approaching from FIRE_1 (goal side).
     // Negative = shift left (toward goal). Only applied when USE_SPLINES is true.
-    public static double GOAL_ROW_1_SPLINE_X_OFFSET = 0;
-    public static double GOAL_ROW_2_SPLINE_X_OFFSET = -6;  // inches
-    public static double GOAL_ROW_3_SPLINE_X_OFFSET = -7;  // inches
+    public static double GOAL_ROW_1_SPLINE_X_OFFSET = -4;
+    public static double GOAL_ROW_2_SPLINE_X_OFFSET = -7;  // inches
+    public static double GOAL_ROW_3_SPLINE_X_OFFSET = -4;  // inches
 
     // ==================== SPLINE-SPECIFIC OFFSETS (AUDIENCE START) ====================
     // X offsets for row starts when approaching from FIRE_4 (audience side).
@@ -142,9 +146,9 @@ public class FieldMap {
 //        RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.7, 17.1, 168.2));  //fire from back triangle
 
         //----firing points for goal auton-----
-        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-16.4, 19.5, 90));  // Base position, offset applied in get()
-        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-17.1, 17.1, 45));  // Fire from inside big triangle
-        RED_WAYPOINTS.put("FIRE_3", new Waypoint(-16.6, 17.1, 35));  // TODO: measure
+        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-24.9, 28.0, 135));  // 12" closer to goal, heading matches START_GOAL
+        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-22, 22, 90));  // Fire from inside big triangle
+        RED_WAYPOINTS.put("FIRE_3", new Waypoint(-16.6, 17.1, 90));  // TODO: measure
 
         //------firing points for audience auton--------
         RED_WAYPOINTS.put("FIRE_4", new Waypoint(58.7-OFFSET, 20.8, 139));  //fire from back triangle

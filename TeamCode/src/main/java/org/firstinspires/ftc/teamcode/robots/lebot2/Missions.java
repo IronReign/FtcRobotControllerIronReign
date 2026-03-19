@@ -1055,7 +1055,7 @@ public class Missions implements TelemetryProvider {
 
         switch (navToFireState) {
             case IDLE:
-                TankDriveActions.MAX_DRIVE_POWER = .5;
+                // MAX_DRIVE_POWER now dashboard-tunable — don't override here
 
                 // Get target pose - either from waypoint name or fire position
                 Pose2d firePose;
@@ -1248,7 +1248,7 @@ public class Missions implements TelemetryProvider {
 
             case NAVIGATING_TO_ROW_START:
                 if (!driveTrain.isActionRunning()) {
-                    TankDriveActions.MAX_DRIVE_POWER = .25;
+                    // Intake drive speed now dashboard-tunable via INTAKE_DRIVE_POWER
                     // Arrived at row start, begin intake run through row
                     log("BALLGROUP_AT_ROW_START", null, null);
                     robot.intake.loadAll();
@@ -1288,7 +1288,7 @@ public class Missions implements TelemetryProvider {
                     INTAKE_BALL_ROW_TIME = 0;
                 }
                 if(missionTimer.seconds()>INTAKE_BALL_ROW_TIME) {
-                    TankDriveActions.MAX_DRIVE_POWER = .5;
+                    // MAX_DRIVE_POWER now dashboard-tunable — don't override here
                     int ballsCollected = robot.loader.getBallCount() - ballCountAtStart;
                     log("BALLGROUP_INTAKE_DONE", "trajectory_done,balls=" + ballsCollected, null);
                     robot.driveTrain.drive(0, 0, 0);

@@ -112,7 +112,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         public double turnFeedforwardScale = 0.0; // Scale feedforward (0=pure feedback, 1=full feedforward)
 
         // turn completion (position-based after profile ends)
-        public double turnCompleteTolerance = 1.5;      // Heading error tolerance (degrees)
+        public double turnCompleteTolerance = 5.0;      // Heading error tolerance (degrees) — turret handles fine aim
         public double turnCompleteVelTolerance = 0.2;   // Angular velocity tolerance (rad/s)
         public double turnCompleteTimeout = 2.0;        // Max seconds to settle after profile (safety)
     }
@@ -139,7 +139,7 @@ public final class TankDrivePinpoint implements DriveTrainBase {
     public static PIDCoefficients DISTANCE_PID = new PIDCoefficients(0.02, 0.0, 0.01);
     public static double DISTANCE_TOLERANCE = 2.0; // inches
     public static double TARGET_DISTANCE_INCHES = 30.0; // Target distance to maintain
-    public static double DISTANCE_MAX_SPEED = 0.4; // Max speed for distance control
+    public static double DISTANCE_MAX_SPEED = 0.7; // Max speed for distance control
 
 
     // ==================== ROADRUNNER INFRASTRUCTURE ====================
