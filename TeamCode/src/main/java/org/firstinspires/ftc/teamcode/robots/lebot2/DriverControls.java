@@ -46,6 +46,7 @@ public class DriverControls implements TelemetryProvider {
     public static double SLOW_MODE_DAMPENER = 0.4;
     public static boolean slowMode = false;
     private boolean wasReversing = false;  // For hybrid FLOAT/BRAKE zero power behavior
+    private boolean turretCalibrating = false;  // Two-phase turret encoder reset
 
     // Gamepads
     private final Gamepad gamepad1;
@@ -79,6 +80,7 @@ public class DriverControls implements TelemetryProvider {
         handleAllianceSelection();
         handleStartingPositionSelection();
         handleAbortSetting();
+        handleInitIntake();
         joystickDrive();
     }
 
@@ -138,7 +140,6 @@ public class DriverControls implements TelemetryProvider {
         // A button: Toggle intake LOAD_ALL behavior
         // Intake runs until loader is full, then auto-stops
         if (stickyGamepad1.left_bumper) {
-            robot.launcher.STAR_FIRED = 0;      // Set star to REST/intake position
             if (robot.intake.isActive()) {
                 robot.intake.off();
                 robot.loader.releaseBeltFromIntake();
@@ -217,7 +218,6 @@ public class DriverControls implements TelemetryProvider {
 
         // D-pad left: Simple intake on (not LOAD_ALL)
         if (stickyGamepad1.dpad_left) {
-            robot.launcher.STAR_FIRED = 0;      // Set star to REST/intake position
             robot.intake.on();
             robot.loader.requestBeltForIntake();
         }
@@ -396,10 +396,22 @@ public class DriverControls implements TelemetryProvider {
             robot.setStartingPosition(Robot.StartingPosition.UNKNOWN);
         }
 
-        // Guide button: Calibration position (field center, facing red goal)
-        // Used for MT1/MT2 pose comparison testing
+        // Guide button: Two-phase turret encoder calibration
+        // Press 1: Release motor so turret can be manually centered
+        // Press 2: Zero encoder at current position and re-enable
         if (stickyGamepad1.guide) {
-            robot.setStartingPosition(Robot.StartingPosition.CALIBRATION);
+            if (!turretCalibrating) {
+                // Phase 1: release the motor
+                robot.turret.setCalibrating(true);
+                turretCalibrating = true;
+                gamepad1.rumble(200);
+            } else {
+                // Phase 2: zero encoder, restore previous behavior
+                robot.turret.resetTurret();
+                robot.turret.setCalibrating(false);
+                turretCalibrating = false;
+                gamepad1.rumble(100);
+            }
         }
     }
 
@@ -410,6 +422,22 @@ public class DriverControls implements TelemetryProvider {
      * This allows configuring how many ball rows to complete before
      * aborting to an alternate position (for partner team coordination).
      */
+    /**
+     * Handle intake during init_loop for preloading balls.
+     * Left bumper toggles intake — same mapping as teleop for muscle memory.
+     */
+    private void handleInitIntake() {
+        if (stickyGamepad1.left_bumper) {
+            if (robot.intake.isActive()) {
+                robot.intake.off();
+                robot.loader.releaseBeltFromIntake();
+            } else {
+                robot.intake.loadAll();
+                robot.loader.requestBeltForIntake();
+            }
+        }
+    }
+
     private void handleAbortSetting() {
         if (stickyGamepad1.dpad_right) {
             // Cycle: -1 (ALL) → 0 → 1 → 2 → -1 (ALL)

@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.DriveTrainBase;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.LazyServo;
 
 import java.util.ArrayList;
@@ -118,6 +119,10 @@ public class Launcher implements Subsystem {
     // Distance hint for fallback speed when vision is unavailable
     public enum DistanceHint { NEAR, FAR }
     private DistanceHint distanceHint = DistanceHint.NEAR;
+    // If robot X position exceeds this threshold, use preset speed instead of vision distance.
+    // Audience-side firing positions are too far for reliable vision distance readings.
+    // Dashboard-tunable. Set to a large value (e.g., 999) to always use vision distance.
+    public static double PRESET_SPEED_X_THRESHOLD = 32;  // inches — audience side of field
     public static double SPEED_TOLERANCE = 5;      // degrees/sec margin for "at speed" check
     public static double SPEED_TOLERANCE_SHORT = 10;
     public static double SPEED_TOLERANCE_LONG = 15;
@@ -145,7 +150,8 @@ public class Launcher implements Subsystem {
     // All feeds run at full power — timing controls the cadence
     public static boolean PULSED_FIRING = true;     // Dashboard toggle — false = continuous feed
     public static double PULSE_FEED_MS = 100;        // Feed burst duration per ball
-    public static double PULSE_PAUSE_MS = 300;        // Pause for flywheel recovery between balls
+    public static double PULSE_PAUSE_MS = 300;        // Pause for flywheel recovery between balls (goal)
+    public static double PULSE_PAUSE_MS_FAR = 500;   // Longer pause for audience range (higher flywheel speed)
     public static double PULSE_LAST_FEED_MS = 600;   // Longer burst for last ball (nothing pushing behind)
     public static double PULSE_FEED_POWER = -1.0;    // Full power for all pulsed feeds
 
@@ -234,6 +240,7 @@ public class Launcher implements Subsystem {
     private Intake intake = null;
     private Vision vision = null;
     private Turret turret = null;
+    private DriveTrainBase driveTrain = null;
 
     // Track if we've claimed resources this firing cycle
     private boolean resourcesClaimed = false;
@@ -287,6 +294,10 @@ public class Launcher implements Subsystem {
 
     public void setTurret(Turret turret){
         this.turret = turret;
+    }
+
+    public void setDriveTrain(DriveTrainBase driveTrain) {
+        this.driveTrain = driveTrain;
     }
 
     // ==================== BEHAVIOR CONTROL ====================
@@ -628,26 +639,37 @@ public class Launcher implements Subsystem {
     public void updateTargetSpeed(){
         if(TUNING_SPEED_CALC){
             targetSpeed = tuningSpeed;
-        }else {
-            if (vision != null && vision.hasBotPose()) {
-                targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER;
-                // Update distance hint from live vision data
-                if (vision.getDistanceToGoal() > 2.3) {
-                    distanceHint = DistanceHint.FAR;
-                    loader.FEED_POWER = FEED_AUDIENCE;
-                    turret.VISION_OFFSET = VISION_OFFSET_AUDIENCE;
-                } else {
-                    distanceHint = DistanceHint.NEAR;
-                    loader.FEED_POWER = FEED_GOAL;
-                    turret.VISION_OFFSET = VISION_OFFSET_GOAL;
-                }
+            return;
+        }
+
+        // Position-based preset: if robot is on the audience side of the field,
+        // vision distance is unreliable — use preset speed from known firing position.
+        boolean usePreset = driveTrain != null
+                && driveTrain.getPose().position.x > PRESET_SPEED_X_THRESHOLD;
+
+        if (usePreset) {
+            distanceHint = DistanceHint.FAR;
+            targetSpeed = MIN_LAUNCH_SPEED_AUDIENCE * SPEED_MULTIPLIER;
+            loader.FEED_POWER = FEED_AUDIENCE;
+            turret.VISION_OFFSET = VISION_OFFSET_AUDIENCE;
+        } else if (vision != null && vision.hasBotPose()) {
+            targetSpeed = vision.getFlywheelSpeed() * SPEED_MULTIPLIER;
+            // Update distance hint from live vision data
+            if (vision.getDistanceToGoal() > 2.3) {
+                distanceHint = DistanceHint.FAR;
+                loader.FEED_POWER = FEED_AUDIENCE;
+                turret.VISION_OFFSET = VISION_OFFSET_AUDIENCE;
             } else {
-                // No vision — use fallback speed based on distance hint
-                if (distanceHint == DistanceHint.FAR) {
-                    targetSpeed = MIN_LAUNCH_SPEED_AUDIENCE * SPEED_MULTIPLIER;
-                } else {
-                    targetSpeed = MIN_LAUNCH_SPEED_GOAL * SPEED_MULTIPLIER;
-                }
+                distanceHint = DistanceHint.NEAR;
+                loader.FEED_POWER = FEED_GOAL;
+                turret.VISION_OFFSET = VISION_OFFSET_GOAL;
+            }
+        } else {
+            // No vision — use fallback speed based on distance hint
+            if (distanceHint == DistanceHint.FAR) {
+                targetSpeed = MIN_LAUNCH_SPEED_AUDIENCE * SPEED_MULTIPLIER;
+            } else {
+                targetSpeed = MIN_LAUNCH_SPEED_GOAL * SPEED_MULTIPLIER;
             }
         }
     }
@@ -807,8 +829,11 @@ public class Launcher implements Subsystem {
                 }
             } else {
                 // PAUSE — belt stopped, flywheel recovering
+                // Resume feeding once minimum pause elapsed AND flywheel back at speed
+                // Audience range uses longer minimum pause (higher speed = longer recovery)
                 loader.FEED_POWER = 0;
-                if (elapsed >= PULSE_PAUSE_MS) {
+                double minPause = (distanceHint == DistanceHint.FAR) ? PULSE_PAUSE_MS_FAR : PULSE_PAUSE_MS;
+                if (elapsed >= minPause && isFlywheelAtSpeed()) {
                     pulsePhase = PulsePhase.FEED;
                     pulseTimer = System.currentTimeMillis();
                 }

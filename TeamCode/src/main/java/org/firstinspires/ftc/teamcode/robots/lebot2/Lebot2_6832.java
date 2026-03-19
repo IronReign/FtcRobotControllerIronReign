@@ -166,7 +166,6 @@ public class Lebot2_6832 extends OpMode {
         // Initialize autonomous if starting in autonomous mode
         if (gameState.isAutonomous()) {
             autonomous.init();
-            robot.turret.resetTurret();
         } else {
             // maybe speed multiplier for teleop .98
             // If starting in TeleOp, ensure manual control

@@ -130,6 +130,7 @@ public class FieldMap {
         //65, 16.8
         //OLD WAYPOINT
         //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(64.7, 17.1, 168.2));
+        //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(58.7, 20.8, 139));
         RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(58.7, 20.8, 139));
 
         //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(66, 6.5, 180));  // TODO: measure heading        //64.5,16.8,

@@ -186,6 +186,7 @@ public class Robot implements TelemetryProvider {
         launcher.setIntake(intake);     // For intake suppression during firing
         launcher.setVision(vision);     // For distance-based speed calculation
         launcher.setTurret(turret);
+        launcher.setDriveTrain(driveTrain);
         driveTrain.setVision(vision);   // For continuous vision-based centering
         ledStatus.setLoader(loader);    // For ball detection
         ledStatus.setLauncher(launcher); // For firing detection
@@ -491,11 +492,18 @@ public class Robot implements TelemetryProvider {
     }
 
     /**
-     * Set alliance color.
+     * Set alliance color. Re-applies starting pose if position is already selected,
+     * since pose coordinates depend on alliance (Y and heading are reflected for blue).
      */
     public void setAlliance(boolean isRed) {
         isRedAlliance = isRed;
         vision.setAlliance(isRed);
+
+        // Re-apply pose with new alliance if position is already known
+        if (startingPosition != StartingPosition.UNKNOWN && initialPositionSet) {
+            Pose2d pose = getStartingPose(startingPosition);
+            driveTrain.setPose(pose);
+        }
     }
 
     // ==================== STARTING POSITION ====================

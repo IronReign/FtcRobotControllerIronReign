@@ -145,7 +145,6 @@ public class Autonomous implements TelemetryProvider {
         // Reset mission progress
         robot.missions.resetGroupProgress();
         robot.missions.clearState();
-        robot.turret.resetTurret();
         FieldMap.BALL_ROW_BLUE_X_OFFSET =0;
 
         // Set strategy parameters based on starting position
@@ -193,6 +192,10 @@ public class Autonomous implements TelemetryProvider {
         Pose2d startPose = robot.getStartingPose(robot.getStartingPosition());
         robot.driveTrain.setPose(startPose);
 
+        // Odo is perfectly trusted at init — we just set the pose from FieldMap.
+        // This enables pose-based turret seeking immediately (no need to wait for vision).
+        robot.turret.bootstrapOdoTrust();
+
         // Timer will be reset when execute() first runs
         autonTimer.reset();
 
@@ -239,10 +242,11 @@ public class Autonomous implements TelemetryProvider {
             case START_BACKUP_TO_FIRE:
                 if(!SKIP_LAUNCH) {
                     if (SKIP_INITIAL_BACKUP) {
-                        // Already at fire position — just spin up launcher
+                        // Already at fire position (audience start, against wall)
+                        // Spin up flywheel and let turret acquire target via pose-seeking
                         robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
-                        setState(AutonState.START_LAUNCH);
-                        //setState(AutonState.START_TARGETING);
+                        timeoutTimer.reset();
+                        setState(AutonState.START_TARGETING);
                     } else {
                         // Back up from gate to fire position, spins up launcher during navigation
                         robot.missions.startNavigateToFire(FIRE_POSITION, true);
@@ -267,6 +271,27 @@ public class Autonomous implements TelemetryProvider {
                 } else if (robot.missions.isFailed()) {
                     // Timeout - try to launch anyway from current position
                     log("BACKUP_FAILED", "timeout");
+                    setState(AutonState.START_LAUNCH);
+                }
+                break;
+
+            // ========== Turret Targeting (audience start — no chassis turn) ==========
+            case START_TARGETING:
+                // Turret is in TRACKING mode with odo trust bootstrapped.
+                // It will pose-seek toward goal, then refine with vision if acquired.
+                // Flywheel is already spinning from START_BACKUP_TO_FIRE.
+                log("TARGETING_START", "phase=" + robot.turret.getPhase().name());
+                setState(AutonState.WAITING_TARGET);
+                break;
+
+            case WAITING_TARGET:
+                if (robot.turret.isReadyToLaunch() || robot.turret.isReadyToLaunchDegraded()) {
+                    log("TARGETING_COMPLETE", "phase=" + robot.turret.getPhase().name());
+                    robot.relocalizer.apply();
+                    setState(AutonState.START_LAUNCH);
+                } else if (timeoutTimer.seconds() > CENTERING_TIMEOUT_SECONDS) {
+                    log("TARGETING_TIMEOUT", null);
+                    robot.relocalizer.apply();
                     setState(AutonState.START_LAUNCH);
                 }
                 break;
