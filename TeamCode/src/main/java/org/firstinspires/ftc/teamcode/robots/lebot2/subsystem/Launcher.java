@@ -55,7 +55,9 @@ public class Launcher implements Subsystem {
     public static double FEED_GOAL = -.7;
     public static double FEED_AUDIENCE = -.5;
     public static double VISION_OFFSET_GOAL = 0;
-    public static double VISION_OFFSET_AUDIENCE = -2;           //-2 for red need test if same for blue
+    public static double VISION_OFFSET_AUDIENCE = 4;           //-2 for red need test if same for blue
+
+    // 4 offset for blue
 
 
     public static double NEW_P = 400;
@@ -111,10 +113,12 @@ public class Launcher implements Subsystem {
     public static double PADDLE_PASS = 0.53;
 
     // Flywheel configuration
-    public static double SPEED_MULTIPLIER = .9;    // Tunable fudge factor until speed formula is recalibrated
+    public static double SPEED_MULTIPLIER = .85;    // Tunable fudge factor until speed formula is recalibrated
     public static double MIN_LAUNCH_SPEED_AUDIENCE = 1350;
-    public static double MIN_LAUNCH_SPEED_GOAL = 930;
-    public static double MIN_LAUNCH_SPEED = 1080;   //720 <--old     // degrees/sec - hardcoded working speed from known position
+    public static double MIN_LAUNCH_SPEED_AUDIENCE_AUTON= 1350;
+    public static double MIN_LAUNCH_SPEED_AUDIENCE_TELEOP= 1420;
+    public static double MIN_LAUNCH_SPEED_GOAL = 1050;
+    public static double MIN_LAUNCH_SPEED = 1350;   //720 <--old     // degrees/sec - hardcoded working speed from known position
 
     // Distance hint for fallback speed when vision is unavailable
     public enum DistanceHint { NEAR, FAR }
@@ -143,16 +147,18 @@ public class Launcher implements Subsystem {
     public static double BALL_EXIT_COOLDOWN_MS = 200;   // ignore drops within this window of a previous detection
 
     // Launch timing for TPU ramp design
-    public static double FIRING_TIME = 1.5;       // seconds — hard timeout, backup for ball exit detection
-    public static double LIFT_TIME = 0.3;           // seconds to hold LIFT position for last ball
+    public static double FIRING_TIME = 2.5;       // seconds — hard timeout, backup for ball exit detection
+    public static double LIFT_TIME = 0.3;
+
+    // seconds to hold LIFT position for last ball
 
     // Pulsed firing: alternate FEED/PAUSE phases to let flywheel recover between balls
     // All feeds run at full power — timing controls the cadence
     public static boolean PULSED_FIRING = true;     // Dashboard toggle — false = continuous feed
-    public static double PULSE_FEED_MS = 100;        // Feed burst duration per ball
-    public static double PULSE_PAUSE_MS = 300;        // Pause for flywheel recovery between balls (goal)
+    public static double PULSE_FEED_MS = 150;        // Feed burst duration per ball
+    public static double PULSE_PAUSE_MS = 30;  //300      // Pause for flywheel recovery between balls (goal)
     public static double PULSE_PAUSE_MS_FAR = 500;   // Longer pause for audience range (higher flywheel speed)
-    public static double PULSE_LAST_FEED_MS = 600;   // Longer burst for last ball (nothing pushing behind)
+    public static double PULSE_LAST_FEED_MS = 600;  //600 // Longer burst for last ball (nothing pushing behind)
     public static double PULSE_FEED_POWER = -1.0;    // Full power for all pulsed feeds
 
     // Post-fire behavior

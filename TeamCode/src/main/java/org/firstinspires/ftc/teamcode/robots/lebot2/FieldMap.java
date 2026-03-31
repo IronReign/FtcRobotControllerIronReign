@@ -26,8 +26,14 @@ import java.util.Set;
 @Config(value = "Lebot2_FieldMap")
 public class FieldMap {
 
+    public static double ROW_2_X_OFFSET = -2;
+    public static double AUDIENCE_Y_BALL_ROW_OFFSET = 5;
+
+    public static double BALL_ROW_5_START_OFFSET = 9;
+
     public static double AVOID_COLLISION_AUDIENCE = 10;
 
+    public static double AUDIENCE_HUMAN_PLAYER_BALLROW_OFFSET =5 ;
     public static double OFFSET = 2;          //4.5
 
     // ==================== VISUALIZATION CONFIG ====================
@@ -131,11 +137,14 @@ public class FieldMap {
         //OLD WAYPOINT
         //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(64.7, 17.1, 168.2));
         //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(58.7, 20.8, 139));
+        //old reliable
         RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(58.7, 20.8, 139));
+        //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(57, 24.2, 90));
 
         //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(66, 6.5, 180));  // TODO: measure heading        //64.5,16.8,
         // GOAL: Near goal, facing goal
         RED_WAYPOINTS.put("START_GOAL", new Waypoint(-46.4566-4, 47.244+4, 135));   //(-46.4566, 47.244, 135));
+        //RED_WAYPOINTS.put("LEAVE", new Waypoint(-43, 28.0, 180));
 
         // ----- Firing Positions -----
         // Positions where robot stops to launch balls at goal
@@ -147,14 +156,21 @@ public class FieldMap {
 //        RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.7, 17.1, 168.2));  //fire from back triangle
 
         //----firing points for goal auton-----
+        //LEAVE
+        //RED_WAYPOINTS.put("FIRE_1", new Waypoint(-24.9, 28.0, 180));
+        //REGULAR
         RED_WAYPOINTS.put("FIRE_1", new Waypoint(-24.9, 28.0, 135));  // 12" closer to goal, heading matches START_GOAL
+        //LEAVE
+        //RED_WAYPOINTS.put("FIRE_2", new Waypoint(-50, 28, 180));  // Fire from inside big triangle
+        //REGULAR
         RED_WAYPOINTS.put("FIRE_2", new Waypoint(-22, 22, 90));  // Fire from inside big triangle
         RED_WAYPOINTS.put("FIRE_3", new Waypoint(-16.6, 17.1, 90));  // TODO: measure
 
         //------firing points for audience auton--------
+        //RED_WAYPOINTS.put("FIRE_4", new Waypoint(57, 24.2, 90));
         RED_WAYPOINTS.put("FIRE_4", new Waypoint(58.7-OFFSET, 20.8, 139));  //fire from back triangle
-        RED_WAYPOINTS.put("FIRE_5", new Waypoint(58.7, 21.5, 88));
-        RED_WAYPOINTS.put("FIRE_6", new Waypoint(58.7, 21.5, 88));
+        RED_WAYPOINTS.put("FIRE_5", new Waypoint(58.7, 21.5, 139));
+        RED_WAYPOINTS.put("FIRE_6", new Waypoint(58.7, 21.5, 139));
 
 
 
@@ -164,11 +180,11 @@ public class FieldMap {
         //-------OLD WAYPOINTS-------
         RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732, 25.9842-1.5, 90));
         RED_WAYPOINTS.put("BALL_ROW_2_START", new Waypoint(10.2362, 25.9842, 90));
-        RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456, 25.9842, 90));
+        RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456-1, 25.9842, 90));
 
         //new waypoint for picking up ball in opposing human player area during auton
-//        RED_WAYPOINTS.put("BALL_ROW_4_START", new Waypoint(60, 52.7, 100));
-//        RED_WAYPOINTS.put("BALL_ROW_4_END", new Waypoint(60, 61+9, 100));
+//        RED_WAYPOINTS.put("BALL_ROW_4_START", new Waypoint(62.4-BALL_ROW_5_START_OFFSET, 53.2, 90));
+//        RED_WAYPOINTS.put("BALL_ROW_4_END", new Waypoint(62.4, 60+AUDIENCE_HUMAN_PLAYER_BALLROW_OFFSET, 90));
 //        RED_WAYPOINTS.put("BALL_ROW_5_START", new Waypoint(10.2362, 25.9842, 90));
 //        RED_WAYPOINTS.put("BALL_ROW_5_END", new Waypoint(10.2362, 46.8503+4.5-5, 90));
 
@@ -176,9 +192,9 @@ public class FieldMap {
         // Ending points after driving through ball rows
         // Base coordinates only — ROW_X_OFFSET applied dynamically in get()
         //-------OLD WAYPOINTS-------
-        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503+4.5-2.5, 90));
-        RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362, 46.8503+4.5-5, 90));
-        RED_WAYPOINTS.put("BALL_ROW_3_END", new Waypoint(34.6456, 46.8503+4.5, 90));
+        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503+4.5-2.5+1.5, 90));
+        RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362, 46.8503+4.5-5+1, 90));
+        RED_WAYPOINTS.put("BALL_ROW_3_END", new Waypoint(34.6456-1, 46.8503+6.5, 90));
 
         // ----- Gate -----
         // Position to release previously scored balls
@@ -235,18 +251,28 @@ public class FieldMap {
                     baseWaypoint.y,
                     baseWaypoint.heading + FIRE_2_ANGLE_OFFSET
             );
-        } else if (name.equals("FIRE_4")) {
-            redWaypoint = new Waypoint(
-                    baseWaypoint.x,
-                    baseWaypoint.y,
-                    baseWaypoint.heading + FIRE_4_ANGLE_OFFSET
-            );
         }
+//        else if (name.equals("FIRE_4")) {
+//            redWaypoint = new Waypoint(
+//                    baseWaypoint.x,
+//                    baseWaypoint.y,
+//                    baseWaypoint.heading + FIRE_4_ANGLE_OFFSET
+//            );
+//        }
 
         // Apply dynamic offsets to ball row waypoints
         if (name.startsWith("BALL_ROW")) {
             double xOffset = -ROW_X_OFFSET;  // Negative because original had subtraction
             double yOffset = 0;
+            if (name.contains("_END")) {
+                if(IS_AUDIENCE_START){
+                    if(name.equals("BALL_ROW_2_END")){
+                        yOffset = AUDIENCE_Y_BALL_ROW_OFFSET;
+                    }
+                }
+
+            }
+
             if (name.contains("_START")) {
                 yOffset = ROW_Y_START_OFFSET;
 
@@ -258,7 +284,9 @@ public class FieldMap {
                         if (name.equals("BALL_ROW_1_START")) {
                             xOffset += AUD_ROW_1_SPLINE_X_OFFSET;
                         } else if (name.equals("BALL_ROW_2_START")) {
-                            xOffset += AUD_ROW_2_SPLINE_X_OFFSET;
+                            //xOffset += AUD_ROW_2_SPLINE_X_OFFSET;
+                            xOffset = ROW_2_X_OFFSET;
+                            yOffset = ROW_Y_START_OFFSET;
                         } else if (name.equals("BALL_ROW_3_START")) {
                             xOffset += AUD_ROW_3_SPLINE_X_OFFSET;
                         }

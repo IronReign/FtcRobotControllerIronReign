@@ -35,6 +35,7 @@ import java.util.Map;
  */
 @Config(value = "Lebot2_DriverControls")
 public class DriverControls implements TelemetryProvider {
+    public static boolean locked = false;
 
     // Configuration
     public static double THROTTLE_DAMPENER = .7;
@@ -110,7 +111,7 @@ public class DriverControls implements TelemetryProvider {
             // Hybrid zero power: FLOAT after reversing (coast out smoothly),
             // BRAKE once driver applies forward throttle (precise control)
             // Persists FLOAT through the stick-release dead zone
-            if (rawThrottle < -0.05) {
+            if (rawThrottle < -0.05 && Math.abs(turn) < .1) {
                 wasReversing = true;
             } else if (rawThrottle > 0.05) {
                 wasReversing = false;
@@ -118,6 +119,9 @@ public class DriverControls implements TelemetryProvider {
             ((TankDrivePinpoint)robot.driveTrain).setZeroPowerBehavior(
                     wasReversing ? DcMotor.ZeroPowerBehavior.FLOAT
                                  : DcMotor.ZeroPowerBehavior.BRAKE);
+            if(Math.abs(turn) > .05){
+                ((TankDrivePinpoint)robot.driveTrain).setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            }
 
             // Abort any running mission if driver provides significant input
             if (robot.missions.isActive() && (Math.abs(throttle) > 0.1 || Math.abs(turn) > 0.1)) {
@@ -235,23 +239,35 @@ public class DriverControls implements TelemetryProvider {
         // Back button: Apply vision pose correction to Pinpoint
         // Only works when vision has a valid botpose (facing AprilTag)
         if (stickyGamepad1.back) {
-            boolean applied = robot.relocalizer.apply();
-            if (applied) {
-                gamepad1.rumble(100);
-            } else {
-                // Not ready yet — short double-rumble to indicate "working on it"
-                gamepad1.rumble(50);
+            if(locked){
+                robot.applyVisionPoseCorrection();
             }
+
+//            boolean applied = robot.relocalizer.apply();
+//            if (applied) {
+//                gamepad1.rumble(100);
+//            } else {
+//                // Not ready yet — short double-rumble to indicate "working on it"
+//                gamepad1.rumble(50);
+//            }
         }
 
         //Start button: change tilt index which correspond to servo tilt of limelight
+
         if(stickyGamepad1.start){
-            if(tiltIndex!=3){
-                tiltIndex++;
+            locked=!locked;
+            if(locked){
+                robot.turret.setLocked();
+            }else{
+                robot.turret.setTracking();
             }
-            else{
-                tiltIndex=0;
-            }
+
+//            if(tiltIndex!=3){
+//                tiltIndex++;
+//            }
+//            else{
+//                tiltIndex=0;
+//            }
         }
         if(tiltIndex==0){
             robot.vision.setTiltDown();
