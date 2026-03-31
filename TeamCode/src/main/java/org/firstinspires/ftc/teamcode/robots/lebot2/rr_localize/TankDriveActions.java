@@ -443,7 +443,7 @@ public class TankDriveActions {
             // Start settling timer when robot first crosses the finish line (overshoot).
             // This is the safety net — if the PID oscillates and never converges,
             // the timeout will terminate the action.
-            if (alongTrack <= 0 && settlingStartTime < 0) {
+            if ((alongTrack <= 0 || Math.abs(alongTrack)< POSITION_TOLERANCE*3) && settlingStartTime < 0) {
                 settlingStartTime = System.currentTimeMillis();
             }
             if (settlingStartTime > 0 &&

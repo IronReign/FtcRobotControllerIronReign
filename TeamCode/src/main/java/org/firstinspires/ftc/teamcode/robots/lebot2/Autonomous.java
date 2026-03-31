@@ -40,6 +40,8 @@ import java.util.Map;
 @Config(value = "Lebot2_Autonomous")
 public class Autonomous implements TelemetryProvider {
 
+    public static boolean leave = false;
+
     public static boolean oldRobot = false;
 
     private final Robot robot;
@@ -146,6 +148,8 @@ public class Autonomous implements TelemetryProvider {
         robot.missions.resetGroupProgress();
         robot.missions.clearState();
         FieldMap.BALL_ROW_BLUE_X_OFFSET =0;
+        robot.launcher.SPEED_MULTIPLIER = .85;
+        robot.launcher.MIN_LAUNCH_SPEED_AUDIENCE = robot.launcher.MIN_LAUNCH_SPEED_AUDIENCE_AUTON;
 
         // Set strategy parameters based on starting position
         if (robot.getStartingPosition() != Robot.StartingPosition.AUDIENCE) {
@@ -180,6 +184,13 @@ public class Autonomous implements TelemetryProvider {
         launchCycles = 0;
         gateReleased = false;
         //robot.launcher.LAUNCH_SPACER_TIMER = AUTON_LAUNCH_SPACER_TIME;
+        if(robot.isRedAlliance){
+            robot.launcher.VISION_OFFSET_AUDIENCE = -2;
+                    //-Math.abs(robot.launcher.VISION_OFFSET_AUDIENCE);
+        }else{
+            robot.launcher.VISION_OFFSET_AUDIENCE = 4;
+                    //Math.abs(robot.launcher.VISION_OFFSET_AUDIENCE);
+        }
 
 //        if(robot.isRedAlliance){
 //            ((TankDrivePinpoint)robot.driveTrain).VISION_OFFSET = -1*Math.abs(((TankDrivePinpoint)robot.driveTrain).VISION_OFFSET);
@@ -320,8 +331,13 @@ public class Autonomous implements TelemetryProvider {
 //                        setState(AutonState.START_RETURN_TO_FIRE);
 //                    } else {
                     FIRE_POSITION = Math.min(FIRE_POSITION + 1, MAX_FIRE_POSITION);
+                    if(leave && !FieldMap.IS_AUDIENCE_START){
+                        setState(AutonState.START_RETURN_TO_FIRE);
+                    }else{
+                        setState(AutonState.START_BALL_ROW);
+                    }
 
-                    setState(AutonState.START_BALL_ROW);
+
                     //}
                 } else if (robot.missions.isFailed()) {
                     log("LAUNCH_FAILED", "timeout");
@@ -329,7 +345,11 @@ public class Autonomous implements TelemetryProvider {
                     robot.relocalizer.apply();
                     robot.launcher.setBehavior(Launcher.Behavior.IDLE);
                     FIRE_POSITION = Math.min(FIRE_POSITION + 1, MAX_FIRE_POSITION);
-                    setState(AutonState.START_BALL_ROW);
+                    if(leave && !FieldMap.IS_AUDIENCE_START){
+                        setState(AutonState.START_RETURN_TO_FIRE);
+                    }else {
+                        setState(AutonState.START_BALL_ROW);
+                    }
                 }
                 break;
 
@@ -406,12 +426,20 @@ public class Autonomous implements TelemetryProvider {
             case WAITING_RETURN:
                 if (robot.missions.isComplete()) {
                     log("RETURN_COMPLETE", null);
+                    if(leave && !FieldMap.IS_AUDIENCE_START){
+                        setState(AutonState.COMPLETE);
+                    }else {
                         setState(AutonState.START_LAUNCH);
+                    }
                         //setState(AutonState.START_TARGETING);
 
                 } else if (robot.missions.isFailed()) {
                     log("RETURN_FAILED", "timeout");
-                    setState(AutonState.START_LAUNCH);
+                    if(leave && !FieldMap.IS_AUDIENCE_START){
+                        setState(AutonState.COMPLETE);
+                    }else {
+                        setState(AutonState.START_LAUNCH);
+                    }
                     //setState(AutonState.START_TARGETING);
                 }
                 break;

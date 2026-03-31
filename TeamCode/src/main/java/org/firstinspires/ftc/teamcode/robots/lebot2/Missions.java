@@ -103,7 +103,7 @@ public class Missions implements TelemetryProvider {
 
     // ==================== TIMEOUT CONFIGURATION ====================
 
-    public static double NAVIGATION_TIMEOUT_SECONDS = 10.0;
+    public static double NAVIGATION_TIMEOUT_SECONDS = 6.0;
     public static double INTAKE_TIMEOUT_SECONDS = 5.0;
     public static double INTAKE_BALL_ROW_TIME = 0;
     public static double INTAKE_BALL_ROW_4_TIME = 2;
@@ -1311,7 +1311,7 @@ public class Missions implements TelemetryProvider {
             case 0: return FieldMap.getPose(FieldMap.BALL_ROW_1_START, Robot.isRedAlliance);
             case 1: return FieldMap.getPose(FieldMap.BALL_ROW_2_START, Robot.isRedAlliance);
             case 2: return FieldMap.getPose(FieldMap.BALL_ROW_3_START, Robot.isRedAlliance);
-            //case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_START, Robot.isRedAlliance);
+            case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_START, Robot.isRedAlliance);
             //case 4: return FieldMap.getPose(FieldMap.BALL_ROW_5_START, Robot.isRedAlliance);
             default: return FieldMap.getPose(FieldMap.BALL_ROW_1_START, Robot.isRedAlliance);
         }
@@ -1322,7 +1322,7 @@ public class Missions implements TelemetryProvider {
             case 0: return FieldMap.getPose(FieldMap.BALL_ROW_1_END, Robot.isRedAlliance);
             case 1: return FieldMap.getPose(FieldMap.BALL_ROW_2_END, Robot.isRedAlliance);
             case 2: return FieldMap.getPose(FieldMap.BALL_ROW_3_END, Robot.isRedAlliance);
-            //case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_END, Robot.isRedAlliance);
+            case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_END, Robot.isRedAlliance);
             //case 4: return FieldMap.getPose(FieldMap.BALL_ROW_5_END, Robot.isRedAlliance);
             default: return FieldMap.getPose(FieldMap.BALL_ROW_1_END, Robot.isRedAlliance);
         }
