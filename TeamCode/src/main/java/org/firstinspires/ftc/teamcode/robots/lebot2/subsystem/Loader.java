@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.lebot2.subsystem;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.LazyMotor;
@@ -32,7 +33,8 @@ import java.util.Map;
 public class Loader implements Subsystem {
 
     // Hardware (wrapped for three-phase pattern)
-    private final LazyMotor intakeMotor;       // Sole motor — moves balls through channel
+    private final LazyMotor intakeMotor;       // Intake motor 1
+    private final LazyMotor intakeMotor2;      // Intake motor 2 (opposite side, reversed)
     public final ChamberSensor chamberSensor;  // Three-sensor virtual ball counter
 
     public static double AMPS_AT_FULL = 0;
@@ -90,6 +92,11 @@ public class Loader implements Subsystem {
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        intakeMotor2 = new LazyMotor(hardwareMap, "intake2");
+        intakeMotor2.setDirection(DcMotorSimple.Direction.REVERSE); // Faces opposite direction
+        intakeMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intakeMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         chamberSensor = new ChamberSensor(hardwareMap);
     }
 
@@ -144,6 +151,7 @@ public class Loader implements Subsystem {
             if (now - ejectStartMs < EJECT_DURATION_MS) {
                 motorPower = EJECT_POWER;
                 intakeMotor.setPower(motorPower);
+                intakeMotor2.setPower(motorPower);
                 return;
             } else {
                 // Eject done — transition to recovery
@@ -155,6 +163,7 @@ public class Loader implements Subsystem {
             if (now - ejectStartMs < EJECT_RECOVERY_MS) {
                 motorPower = EJECT_RECOVERY_POWER;
                 intakeMotor.setPower(motorPower);
+                intakeMotor2.setPower(motorPower);
                 return;
             } else {
                 // Recovery done — back to idle
@@ -176,12 +185,14 @@ public class Loader implements Subsystem {
 
         // Queue motor power (will be flushed in act())
         intakeMotor.setPower(motorPower);
+        intakeMotor2.setPower(motorPower);
     }
 
     @Override
     public void act() {
-        // PHASE 3: Flush motor command
+        // PHASE 3: Flush motor commands
         intakeMotor.flush();
+        intakeMotor2.flush();
     }
 
     public void setLauncher(Launcher launcher){
@@ -253,6 +264,7 @@ public class Loader implements Subsystem {
      */
     public void reverseBeltForFiring() {
         intakeMotor.setPower(REVERSE_POWER);
+        intakeMotor2.setPower(REVERSE_POWER);
     }
 
     /**
@@ -261,6 +273,7 @@ public class Loader implements Subsystem {
      */
     public void stopBeltForFiring() {
         intakeMotor.setPower(0);
+        intakeMotor2.setPower(0);
     }
 
     // ==================== CURRENT MONITORING (for health check) ====================
@@ -271,6 +284,7 @@ public class Loader implements Subsystem {
      */
     public void enableBeltCurrentRead(boolean enabled) {
         intakeMotor.enableCurrentRead(enabled);
+        intakeMotor2.enableCurrentRead(enabled);
     }
 
     /**
@@ -385,6 +399,7 @@ public class Loader implements Subsystem {
         beltOwner = BeltOwner.NONE;
         motorPower = 0;
         intakeMotor.stop();
+        intakeMotor2.stop();
     }
 
     @Override

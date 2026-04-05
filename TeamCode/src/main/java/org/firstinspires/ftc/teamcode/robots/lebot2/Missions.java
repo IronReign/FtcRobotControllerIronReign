@@ -103,7 +103,7 @@ public class Missions implements TelemetryProvider {
 
     // ==================== TIMEOUT CONFIGURATION ====================
 
-    public static double NAVIGATION_TIMEOUT_SECONDS = 10.0;
+    public static double NAVIGATION_TIMEOUT_SECONDS = 6.0;
     public static double INTAKE_TIMEOUT_SECONDS = 5.0;
     public static double INTAKE_BALL_ROW_TIME = 0;
     public static double INTAKE_BALL_ROW_4_TIME = 2;
@@ -1055,7 +1055,7 @@ public class Missions implements TelemetryProvider {
 
         switch (navToFireState) {
             case IDLE:
-                TankDriveActions.MAX_DRIVE_POWER = .5;
+                // MAX_DRIVE_POWER now dashboard-tunable — don't override here
 
                 // Get target pose - either from waypoint name or fire position
                 Pose2d firePose;
@@ -1248,7 +1248,7 @@ public class Missions implements TelemetryProvider {
 
             case NAVIGATING_TO_ROW_START:
                 if (!driveTrain.isActionRunning()) {
-                    TankDriveActions.MAX_DRIVE_POWER = .25;
+                    // Intake drive speed now dashboard-tunable via INTAKE_DRIVE_POWER
                     // Arrived at row start, begin intake run through row
                     log("BALLGROUP_AT_ROW_START", null, null);
                     robot.intake.loadAll();
@@ -1288,7 +1288,7 @@ public class Missions implements TelemetryProvider {
                     INTAKE_BALL_ROW_TIME = 0;
                 }
                 if(missionTimer.seconds()>INTAKE_BALL_ROW_TIME) {
-                    TankDriveActions.MAX_DRIVE_POWER = .5;
+                    // MAX_DRIVE_POWER now dashboard-tunable — don't override here
                     int ballsCollected = robot.loader.getBallCount() - ballCountAtStart;
                     log("BALLGROUP_INTAKE_DONE", "trajectory_done,balls=" + ballsCollected, null);
                     robot.driveTrain.drive(0, 0, 0);
@@ -1311,7 +1311,7 @@ public class Missions implements TelemetryProvider {
             case 0: return FieldMap.getPose(FieldMap.BALL_ROW_1_START, Robot.isRedAlliance);
             case 1: return FieldMap.getPose(FieldMap.BALL_ROW_2_START, Robot.isRedAlliance);
             case 2: return FieldMap.getPose(FieldMap.BALL_ROW_3_START, Robot.isRedAlliance);
-            //case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_START, Robot.isRedAlliance);
+            case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_START, Robot.isRedAlliance);
             //case 4: return FieldMap.getPose(FieldMap.BALL_ROW_5_START, Robot.isRedAlliance);
             default: return FieldMap.getPose(FieldMap.BALL_ROW_1_START, Robot.isRedAlliance);
         }
@@ -1322,7 +1322,7 @@ public class Missions implements TelemetryProvider {
             case 0: return FieldMap.getPose(FieldMap.BALL_ROW_1_END, Robot.isRedAlliance);
             case 1: return FieldMap.getPose(FieldMap.BALL_ROW_2_END, Robot.isRedAlliance);
             case 2: return FieldMap.getPose(FieldMap.BALL_ROW_3_END, Robot.isRedAlliance);
-            //case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_END, Robot.isRedAlliance);
+            case 3: return FieldMap.getPose(FieldMap.BALL_ROW_4_END, Robot.isRedAlliance);
             //case 4: return FieldMap.getPose(FieldMap.BALL_ROW_5_END, Robot.isRedAlliance);
             default: return FieldMap.getPose(FieldMap.BALL_ROW_1_END, Robot.isRedAlliance);
         }

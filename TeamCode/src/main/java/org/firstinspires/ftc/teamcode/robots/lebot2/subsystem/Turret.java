@@ -131,6 +131,7 @@ public class Turret implements Subsystem {
 
     private Behavior behavior = Behavior.LOCKED;
     private TargetingPhase phase = TargetingPhase.LOCKED_FORWARD;
+    private boolean calibrating = false;  // Motor released for manual positioning
 
     // Sensor reads (Phase 1: readSensors)
     private int encoderTicks = 0;
@@ -179,6 +180,12 @@ public class Turret implements Subsystem {
 
     @Override
     public void calc(Canvas fieldOverlay) {
+        // Calibration mode: motor released, skip all PID
+        if (calibrating) {
+            stagedPower = 0;
+            return;
+        }
+
         // Update PID tuning from dashboard
         turretPID.setPID(TURRET_PID);
         turretPID.setOutputRange(-MAX_SPEED, MAX_SPEED);
@@ -257,6 +264,14 @@ public class Turret implements Subsystem {
                     turretPID.setInput(turretAngleDeg);
                     stagedPower = turretPID.performPID();
 
+                    // Pose-seeking with trusted odo is accurate enough to fire (especially
+                    // for preloads where odo was just set from FieldMap). Signal degraded
+                    // readiness once PID has converged on the computed bearing.
+                    double poseError = Math.abs(clampedTarget - turretAngleDeg);
+                    if (poseError < GOOD_ENOUGH_DEG) {
+                        readyToLaunchDegraded = true;
+                    }
+
                 } else {
                     // Tier 3: HOLD + DEGRADED READY — hold position, signal we can fire from here
                     // Vision has been gone long enough that we should fire and move on
@@ -313,6 +328,25 @@ public class Turret implements Subsystem {
 
     public boolean isReadyToLaunchDegraded() { return readyToLaunchDegraded; }
 
+    /**
+     * Enable/disable calibration mode. When calibrating, motor power is zeroed
+     * so the turret can be manually positioned. Call resetTurret() after
+     * centering, then setCalibrating(false) to resume normal operation.
+     */
+    public void setCalibrating(boolean cal) {
+        this.calibrating = cal;
+    }
+
+    /**
+     * Bootstrap odo trust at autonomous init.
+     * Call after setting the robot's starting pose from FieldMap — at that point
+     * odo is perfectly accurate, so pose-based turret seeking should work immediately.
+     */
+    public void bootstrapOdoTrust() {
+        odoTrusted = true;
+        lastDivergenceTimeMs = System.currentTimeMillis();
+    }
+
     public LockQuality getLockQuality() { return lockQuality; }
 
     public double getOscillationDeg() { return currentOscillationDeg; }
@@ -368,9 +402,13 @@ public class Turret implements Subsystem {
             lockQuality = LockQuality.NO_VISION;
             readyToLaunch = false;
             inPerfectLock = false;
-            // Reset aiming timer when we lose vision so it restarts on reacquisition
-            aimingTimer.reset();
-            txHistoryCount = 0;
+            // Only reset aiming timer and tx history on prolonged vision loss.
+            // Brief dropouts (< HOLD_POSITION_S) preserve state so lock quality
+            // can resume quickly — critical for intermittent vision at audience range.
+            if (lostVisionTimer.seconds() > HOLD_POSITION_S) {
+                aimingTimer.reset();
+                txHistoryCount = 0;
+            }
         }
     }
 

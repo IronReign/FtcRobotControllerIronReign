@@ -40,6 +40,8 @@ import java.util.Map;
 @Config(value = "Lebot2_Autonomous")
 public class Autonomous implements TelemetryProvider {
 
+    public static boolean leave = false;
+
     public static boolean oldRobot = false;
 
     private final Robot robot;
@@ -145,8 +147,9 @@ public class Autonomous implements TelemetryProvider {
         // Reset mission progress
         robot.missions.resetGroupProgress();
         robot.missions.clearState();
-        robot.turret.resetTurret();
         FieldMap.BALL_ROW_BLUE_X_OFFSET =0;
+        robot.launcher.SPEED_MULTIPLIER = .85;
+        robot.launcher.MIN_LAUNCH_SPEED_AUDIENCE = robot.launcher.MIN_LAUNCH_SPEED_AUDIENCE_AUTON;
 
         // Set strategy parameters based on starting position
         if (robot.getStartingPosition() != Robot.StartingPosition.AUDIENCE) {
@@ -181,6 +184,13 @@ public class Autonomous implements TelemetryProvider {
         launchCycles = 0;
         gateReleased = false;
         //robot.launcher.LAUNCH_SPACER_TIMER = AUTON_LAUNCH_SPACER_TIME;
+        if(robot.isRedAlliance){
+            robot.launcher.VISION_OFFSET_AUDIENCE = -2;
+                    //-Math.abs(robot.launcher.VISION_OFFSET_AUDIENCE);
+        }else{
+            robot.launcher.VISION_OFFSET_AUDIENCE = 4;
+                    //Math.abs(robot.launcher.VISION_OFFSET_AUDIENCE);
+        }
 
 //        if(robot.isRedAlliance){
 //            ((TankDrivePinpoint)robot.driveTrain).VISION_OFFSET = -1*Math.abs(((TankDrivePinpoint)robot.driveTrain).VISION_OFFSET);
@@ -192,6 +202,10 @@ public class Autonomous implements TelemetryProvider {
         // (FieldMap.IS_AUDIENCE_START is already set by Robot.setStartingPosition during init_loop)
         Pose2d startPose = robot.getStartingPose(robot.getStartingPosition());
         robot.driveTrain.setPose(startPose);
+
+        // Odo is perfectly trusted at init — we just set the pose from FieldMap.
+        // This enables pose-based turret seeking immediately (no need to wait for vision).
+        robot.turret.bootstrapOdoTrust();
 
         // Timer will be reset when execute() first runs
         autonTimer.reset();
@@ -239,10 +253,11 @@ public class Autonomous implements TelemetryProvider {
             case START_BACKUP_TO_FIRE:
                 if(!SKIP_LAUNCH) {
                     if (SKIP_INITIAL_BACKUP) {
-                        // Already at fire position — just spin up launcher
+                        // Already at fire position (audience start, against wall)
+                        // Spin up flywheel and let turret acquire target via pose-seeking
                         robot.launcher.setBehavior(Launcher.Behavior.SPINNING);
-                        setState(AutonState.START_LAUNCH);
-                        //setState(AutonState.START_TARGETING);
+                        timeoutTimer.reset();
+                        setState(AutonState.START_TARGETING);
                     } else {
                         // Back up from gate to fire position, spins up launcher during navigation
                         robot.missions.startNavigateToFire(FIRE_POSITION, true);
@@ -271,6 +286,27 @@ public class Autonomous implements TelemetryProvider {
                 }
                 break;
 
+            // ========== Turret Targeting (audience start — no chassis turn) ==========
+            case START_TARGETING:
+                // Turret is in TRACKING mode with odo trust bootstrapped.
+                // It will pose-seek toward goal, then refine with vision if acquired.
+                // Flywheel is already spinning from START_BACKUP_TO_FIRE.
+                log("TARGETING_START", "phase=" + robot.turret.getPhase().name());
+                setState(AutonState.WAITING_TARGET);
+                break;
+
+            case WAITING_TARGET:
+                if (robot.turret.isReadyToLaunch() || robot.turret.isReadyToLaunchDegraded()) {
+                    log("TARGETING_COMPLETE", "phase=" + robot.turret.getPhase().name());
+                    robot.relocalizer.apply();
+                    setState(AutonState.START_LAUNCH);
+                } else if (timeoutTimer.seconds() > CENTERING_TIMEOUT_SECONDS) {
+                    log("TARGETING_TIMEOUT", null);
+                    robot.relocalizer.apply();
+                    setState(AutonState.START_LAUNCH);
+                }
+                break;
+
             case START_LAUNCH:
                 //if (!robot.loader.isEmpty()) {
                 log("LAUNCH_START", "balls=" + robot.loader.getBallCount());
@@ -295,8 +331,13 @@ public class Autonomous implements TelemetryProvider {
 //                        setState(AutonState.START_RETURN_TO_FIRE);
 //                    } else {
                     FIRE_POSITION = Math.min(FIRE_POSITION + 1, MAX_FIRE_POSITION);
+                    if(leave && !FieldMap.IS_AUDIENCE_START){
+                        setState(AutonState.START_RETURN_TO_FIRE);
+                    }else{
+                        setState(AutonState.START_BALL_ROW);
+                    }
 
-                    setState(AutonState.START_BALL_ROW);
+
                     //}
                 } else if (robot.missions.isFailed()) {
                     log("LAUNCH_FAILED", "timeout");
@@ -304,7 +345,11 @@ public class Autonomous implements TelemetryProvider {
                     robot.relocalizer.apply();
                     robot.launcher.setBehavior(Launcher.Behavior.IDLE);
                     FIRE_POSITION = Math.min(FIRE_POSITION + 1, MAX_FIRE_POSITION);
-                    setState(AutonState.START_BALL_ROW);
+                    if(leave && !FieldMap.IS_AUDIENCE_START){
+                        setState(AutonState.START_RETURN_TO_FIRE);
+                    }else {
+                        setState(AutonState.START_BALL_ROW);
+                    }
                 }
                 break;
 
@@ -381,12 +426,20 @@ public class Autonomous implements TelemetryProvider {
             case WAITING_RETURN:
                 if (robot.missions.isComplete()) {
                     log("RETURN_COMPLETE", null);
+                    if(leave && !FieldMap.IS_AUDIENCE_START){
+                        setState(AutonState.COMPLETE);
+                    }else {
                         setState(AutonState.START_LAUNCH);
+                    }
                         //setState(AutonState.START_TARGETING);
 
                 } else if (robot.missions.isFailed()) {
                     log("RETURN_FAILED", "timeout");
-                    setState(AutonState.START_LAUNCH);
+                    if(leave && !FieldMap.IS_AUDIENCE_START){
+                        setState(AutonState.COMPLETE);
+                    }else {
+                        setState(AutonState.START_LAUNCH);
+                    }
                     //setState(AutonState.START_TARGETING);
                 }
                 break;

@@ -7,6 +7,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDrivePinpoint;
@@ -149,6 +150,10 @@ public class Lebot2_6832 extends OpMode {
         // Reset robot for match start
         robot.resetStates();
 
+        // Ensure drive motors are in BRAKE mode (may have been set to FLOAT during init_loop)
+        ((TankDrivePinpoint)robot.driveTrain).setZeroPowerBehavior(
+                DcMotor.ZeroPowerBehavior.BRAKE);
+
         // Enable flywheel (suppressed during init_loop to comply with rules)
         robot.launcher.enable();
 
@@ -161,7 +166,6 @@ public class Lebot2_6832 extends OpMode {
         // Initialize autonomous if starting in autonomous mode
         if (gameState.isAutonomous()) {
             autonomous.init();
-            robot.turret.resetTurret();
         } else {
             // maybe speed multiplier for teleop .98
             // If starting in TeleOp, ensure manual control
@@ -194,6 +198,7 @@ public class Lebot2_6832 extends OpMode {
                 robot.auton = false;
                 TankDrivePinpoint.VISION_TOLERANCE = 2;
                 Vision.FLYWHEEL_SPEED_MULTIPLIER= 1;
+                robot.launcher.MIN_LAUNCH_SPEED_AUDIENCE = robot.launcher.MIN_LAUNCH_SPEED_AUDIENCE_TELEOP;
                 handleTeleOp(packet);
                 break;
 
@@ -249,6 +254,7 @@ public class Lebot2_6832 extends OpMode {
         long elapsed = System.currentTimeMillis() - startTime;
         if (elapsed > 30000) {
             gameState = GameState.TELE_OP;
+            robot.turret.setTracking();
         }
     }
 

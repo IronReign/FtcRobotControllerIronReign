@@ -50,8 +50,8 @@ public class TankDriveActions {
     public static double INTAKE_VEL_INCHES_SEC = 10.0;  // ~20% of max (50 in/s)
 
     // Dashboard-tunable turn skip thresholds (degrees)
-    public static double INITIAL_TURN_SKIP_TOLERANCE = 2.0;  // Skip initial turn if within this
-    public static double FINAL_TURN_SKIP_TOLERANCE = 2.0;    // Skip final turn if within this
+    public static double INITIAL_TURN_SKIP_TOLERANCE = 5.0;  // Skip initial turn if within this
+    public static double FINAL_TURN_SKIP_TOLERANCE = 10.0;   // Skip final turn if within this (turret handles aim)
 
     // Position drive PID coefficients (Dashboard-tunable)
     public static PIDCoefficients DISTANCE_PID = new PIDCoefficients(0.04, 0.04, 2.0);
@@ -443,7 +443,7 @@ public class TankDriveActions {
             // Start settling timer when robot first crosses the finish line (overshoot).
             // This is the safety net — if the PID oscillates and never converges,
             // the timeout will terminate the action.
-            if (alongTrack <= 0 && settlingStartTime < 0) {
+            if ((alongTrack <= 0 || Math.abs(alongTrack)< POSITION_TOLERANCE*3) && settlingStartTime < 0) {
                 settlingStartTime = System.currentTimeMillis();
             }
             if (settlingStartTime > 0 &&

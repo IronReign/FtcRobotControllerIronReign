@@ -102,24 +102,18 @@ public class Intake implements Subsystem {
                 break;
 
             case LOAD_ALL:
-                if (System.currentTimeMillis() - loadAllMs >= LOAD_ALL_DURATION_MS) {
+                if (loader != null && loader.isFull()) {
+                    // Chamber full — stop early
                     behavior = Behavior.OFF;
-                    currentPower = 0;
+                    loader.releaseBeltFromIntake();
+                } else if (System.currentTimeMillis() - loadAllMs >= LOAD_ALL_DURATION_MS) {
+                    // Timeout — stop even if not full
+                    behavior = Behavior.OFF;
                     loader.releaseBeltFromIntake();
                 } else {
                     loader.requestBeltForIntake();
                 }
                 break;
-//                if (loader != null && loader.isFull()) {
-//                    // Auto-complete: loader is full
-//                    behavior = Behavior.OFF;
-//                    //currentPower = 0;
-//                    loader.releaseBeltFromIntake();
-//                } else {
-//                    loader.requestBeltForIntake();
-//                    //currentPower = INTAKE_POWER;
-//                }
-//                break;
 
             case EJECT:
                 //currentPower = EJECT_POWER;
