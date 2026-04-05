@@ -677,7 +677,7 @@ public class Launcher implements Subsystem {
             } else {
                 targetSpeed = MIN_LAUNCH_SPEED_GOAL * SPEED_MULTIPLIER;
             }
-        }
+         }
     }
 
     /**

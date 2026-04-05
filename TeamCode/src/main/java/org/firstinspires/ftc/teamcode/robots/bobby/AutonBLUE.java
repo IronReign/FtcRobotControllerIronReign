@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.bobby;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -10,8 +11,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
-@Autonomous(name = "BobbyAutonBLUE")
-@Config(value = "BobbyAutonBlue")
+@Autonomous(name = "BobbyAutonRED")
+@Config(value = "BobbyAutonRed")
 
 public class AutonBLUE extends OpMode
 {
@@ -37,13 +38,6 @@ public class AutonBLUE extends OpMode
     // Constants
     static final double CAMERA_CENTER_X = 320;
     static final double FLYWHEEL_POWER = 1.0;
-//
-//    // Constants for turnToHeading() method
-//    public static  double kP = 0.05;
-//    public static  double tol = 1.5;
-//    public static  double turnTarget = 90;
-
-
 
 
     // Backup/Strafe tracking
@@ -58,7 +52,6 @@ public class AutonBLUE extends OpMode
 
     // Shooting sequence control + variables
     private boolean shootInitialized = false;
-
     ElapsedTime timer1 = new ElapsedTime();
     int shootStep = 0;
     boolean sequenceRunning = false;
@@ -70,10 +63,6 @@ public class AutonBLUE extends OpMode
     double cycleTimeMs = 0;
     double error;
     double correction;
-
-    // Distance to back up before b4 first shot
-//    public static double firstDriveDist = 19;
-
 
     //PID vars
     PIDController turnPID;
@@ -89,7 +78,6 @@ public class AutonBLUE extends OpMode
     public static double drivekP = 1.5;
     public static double turnkP = 2.0 ;
     public static double turnD = 0.003;
-
     public static double turnTol = 0.025;
 
     public static double turnDeadZone = 1.5;
@@ -100,7 +88,7 @@ public class AutonBLUE extends OpMode
 
 
 
-    public static double intakeDist = 42;
+    public static double intakeDist = 45;
     //    public static double drivePow = 0.7;
     private double[] intakePosY =  {2, 36, 61};
     private int shootNum = 0;
@@ -108,28 +96,29 @@ public class AutonBLUE extends OpMode
 
 
     // Starting position + constants per alliance
-    public static double startX = -51.44;
+    public static double startX = 51.44;
     public static double startY = 51.44;
-    public double launchX = -37.47 ;
+    public double launchX =  37.47 ;
     public double launchY = 37.47;
-    public static double intakeAngle =  -90 ;
-    public static double firstBackUpDist = 11;
+    public static double intakeAngle =  90 ;
+    public static double firstBackUpDist = 12;
     public static double secondBackUpDist = 45.5 - firstBackUpDist;
-    public static double launchHeading =  45;
+    public static double launchHeading =  -45;
     public boolean zeroToLaunch = false;
 
-    public static double backPow = 0.25;
+    public static double backPow = 0.15;
 
     public static double maxTurnTime = 2800;
 
     ElapsedTime turnTimer = new ElapsedTime();
+
     ElapsedTime intakeTimer = new ElapsedTime();
+
+
     @Override
     public void init() {
-        robot = new Robot(hardwareMap, null, launchHeading);
-        robot.init();
-        robot.x = startX;
-        robot.y = startY;
+        robot = new Robot( hardwareMap, Math.toRadians(launchHeading));
+        robot.setPose(startX, startY);
         dashboard = FtcDashboard.getInstance();
 
         // Turn PID init
@@ -182,7 +171,7 @@ public class AutonBLUE extends OpMode
     public void loop() {
         cycleTimeMs = cycleTimer.milliseconds();
         cycleTimer.reset();
-        robot.updatePose();
+        robot.update(new Canvas());
         executeAuton();
         sendDashboardTelemetry();
     }
@@ -212,11 +201,12 @@ public class AutonBLUE extends OpMode
 
             case TURN_TO_INTAKE:
                 if(pidTurnToHeading( Math.toRadians(intakeAngle) ) || turnTimer.milliseconds() >= maxTurnTime ) autonState = State.INTAKE;
+                intakeTimer.reset();
                 break;
 
             case INTAKE:
                 robot.setIntakePower(1.0);
-                if(driveBackwards(intakeDist, backPow))
+                if(driveBackwards(intakeDist, backPow)|| intakeTimer.seconds()>=11)
                 {
                     robot.setIntakePower(0.0);
                     autonState  = State.FORTH_FROM_INTAKE ;
@@ -225,7 +215,7 @@ public class AutonBLUE extends OpMode
                 break;
 
             case FORTH_FROM_INTAKE:
-                if(driveForward(intakeDist-10, 0.5))
+                if(driveForward(intakeDist-12, 0.5))
                 {
                     turnTimer.reset();
                     autonState = State.TURN_TO_LAUNCH;
@@ -264,8 +254,8 @@ public class AutonBLUE extends OpMode
     public boolean goToPID(double targetX, double targetY, double targetHeading) {
 
         // --- Position error ---
-        double xError = targetX - robot.x;
-        double yError = targetY - robot.y;
+        double xError = targetX - robot.getX();
+        double yError = targetY - robot.getY();
 
         xPID.setSetpoint(0);
         xPID.setInput(-xError);
@@ -321,7 +311,7 @@ public class AutonBLUE extends OpMode
         double heading = robot.getHeading();
 
         turnPID.setInputRange(-Math.PI, Math.PI);
-        turnPID.setOutputRange(-0.8,0.8);
+        turnPID.setOutputRange(-.8,.8);
         turnPID.setContinuous(true);
         turnPID.setSetpoint(targetHeading);
         turnPID.setInput(heading);
@@ -345,12 +335,12 @@ public class AutonBLUE extends OpMode
     private boolean driveBackwards(double distance, double power) {
 
         if (!driveInitialized) {
-            backStartX = robot.x;
-            backStartY = robot.y;
+            backStartX = robot.getX();
+            backStartY = robot.getY();
             driveInitialized = true;
         }
 
-        double traveled = Math.hypot(robot.x - backStartX, robot.y - backStartY);
+        double traveled = Math.hypot(robot.getX() - backStartX, robot.getY() - backStartY);
 
         if (traveled < distance) {
             robot.mecanumDrive(power, 0, 0); // BACKWARD
@@ -366,13 +356,13 @@ public class AutonBLUE extends OpMode
     {
         if(!drivePIDinitialized)
         {
-            driveStartX = robot.x;
-            driveStartY = robot.y;
+            driveStartX = robot.getX();
+            driveStartY = robot.getY();
             driveDistPID.reset();
             drivePIDinitialized = true;
         }
 
-        double traveled = Math.hypot(robot.x - driveStartX, robot.y - driveStartY);
+        double traveled = Math.hypot(robot.getX() - driveStartX, robot.getY() - driveStartY);
 
         double error = distance - traveled;
         driveDistPID.setTolerance(1.0);
@@ -397,12 +387,12 @@ public class AutonBLUE extends OpMode
     {
         if(!driveInitialized)
         {
-            backStartX = robot.x;
-            backStartY = robot.y;
+            backStartX = robot.getX();
+            backStartY = robot.getY();
             driveInitialized = true;
         }
 
-        double traveled = Math.hypot(robot.x - backStartX, robot.y - backStartY);
+        double traveled = Math.hypot(robot.getX() - backStartX, robot.getY() - backStartY);
 
         if (traveled < distance) {
             robot.mecanumDrive(-power, 0, 0); // FORWARD
@@ -416,12 +406,12 @@ public class AutonBLUE extends OpMode
 
     private boolean strafeRight(double distance, double power) {
         if (!strafeInitialized) {
-            strafeStartX = robot.x;
-            strafeStartY = robot.y;
+            strafeStartX = robot.getX();
+            strafeStartY = robot.getY();
             strafeInitialized = true;
         }
 
-        double traveled = Math.hypot(robot.x - strafeStartX, robot.y - strafeStartY);
+        double traveled = Math.hypot(robot.getX() - strafeStartX, robot.getY() - strafeStartY);
 
         if (traveled < distance) {
             robot.mecanumDrive(0, -power, 0); // strafe right
@@ -435,12 +425,12 @@ public class AutonBLUE extends OpMode
 
     private boolean strafeLeft(double distance, double power) {
         if (!strafeInitialized) {
-            strafeStartX = robot.x;
-            strafeStartY = robot.y;
+            strafeStartX = robot.getX();
+            strafeStartY = robot.getY();
             strafeInitialized = true;
         }
 
-        double traveled = Math.hypot(robot.x - strafeStartX, robot.y - strafeStartY);
+        double traveled = Math.hypot(robot.getX() - strafeStartX, robot.getY() - strafeStartY);
 
         if (traveled < distance) {
             robot.mecanumDrive(0, power, 0); // strafe left
@@ -471,7 +461,7 @@ public class AutonBLUE extends OpMode
         if (!sequenceRunning) return;
 
         double time = timer1.seconds();
-        double PRELOAD_TIME = 0.8;
+        double PRELOAD_TIME = 0.5;
         double SERVO_UP_TIME = 0.2;
         double SERVO_DOWN_TIME = 0.4;
         double FEED_TIME = 0.4;
@@ -490,10 +480,10 @@ public class AutonBLUE extends OpMode
             boolean keepIntakeOn = shootStep == 1;
             if (singleShotTime < SERVO_UP_TIME) {
                 robot.setPusherUp();
-                robot.setIntakePower(keepIntakeOn ? 0.9 : 0.0);
+                robot.setIntakePower(keepIntakeOn ? 1.0 : 0.0);// was 0.8
             } else if (singleShotTime < SERVO_UP_TIME + SERVO_DOWN_TIME) {
                 robot.setPusherDown();
-                robot.setIntakePower(keepIntakeOn ? 0.2 : 0.0);
+                robot.setIntakePower(keepIntakeOn ? 0.3 : 0.0);//was0.1
             } else if (singleShotTime < SHOT_TIME) {
                 robot.setIntakePower(1.0);
                 robot.setPusherDown();
@@ -530,18 +520,16 @@ public class AutonBLUE extends OpMode
     private void sendDashboardTelemetry() {
         TelemetryPacket packet = new TelemetryPacket();
         packet.put("Auton State", autonState.toString());
-        packet.put("Robot X", robot.x);
-        packet.put("Robot Y", robot.y);
+        packet.put("Robot X", robot.getX());
+        packet.put("Robot Y", robot.getY());
         packet.put("Heading", Math.toDegrees(robot.getHeading()));
         packet.put("error", Math.toDegrees(error));
         packet.put("correction", Math.toDegrees(correction));
         packet.put("Cycle Time (ms)", cycleTimeMs);
         packet.put("Loop Frequency (Hz)", 1000.0 / cycleTimeMs);
-        packet.put("motorRBpower", robot.rightBack.getPower());
+        packet.put("motorRBpower", robot.getRightBackPower());
 
         dashboard.sendTelemetryPacket(packet);
     }
 
-
 }
-

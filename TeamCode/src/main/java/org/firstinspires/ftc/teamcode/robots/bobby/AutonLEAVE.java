@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.bobby;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -10,14 +11,14 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.util.PIDController;
 
-@Autonomous(name = "BobbyAutonLEAVE")
-@Config(value = "BobbyAutonLEAVE")
+@Autonomous(name = "BobbyAutonRED")
+@Config(value = "BobbyAutonRed")
 
 public class AutonLEAVE extends OpMode
 {
 
     //ALIANCE
-    public static boolean BlueAlliance = false;
+    public static boolean BlueAlliance = true;
 
 
     // Robot and Dashboard Declaration
@@ -77,7 +78,7 @@ public class AutonLEAVE extends OpMode
     public static double drivekP = 1.5;
     public static double turnkP = 2.0 ;
     public static double turnD = 0.003;
-    public static double turnTol = 0.08;
+    public static double turnTol = 0.025;
 
     public static double turnDeadZone = 1.5;
     private boolean turnInitialized = false;
@@ -101,7 +102,7 @@ public class AutonLEAVE extends OpMode
     public double launchY = 37.47;
     public static double intakeAngle =  90 ;
     public static double firstBackUpDist = 12;
-    public static double secondBackUpDist = 45 - firstBackUpDist;
+    public static double secondBackUpDist = 45.5 - firstBackUpDist;
     public static double launchHeading =  -45;
     public boolean zeroToLaunch = false;
 
@@ -111,14 +112,13 @@ public class AutonLEAVE extends OpMode
 
     ElapsedTime turnTimer = new ElapsedTime();
 
+    ElapsedTime intakeTimer = new ElapsedTime();
 
 
     @Override
     public void init() {
-        robot = new Robot(hardwareMap, null, launchHeading);
-        robot.init();
-        robot.x = startX;
-        robot.y = startY;
+        robot = new Robot( hardwareMap, Math.toRadians(launchHeading));
+        robot.setPose(startX, startY);
         dashboard = FtcDashboard.getInstance();
 
         // Turn PID init
@@ -171,7 +171,7 @@ public class AutonLEAVE extends OpMode
     public void loop() {
         cycleTimeMs = cycleTimer.milliseconds();
         cycleTimer.reset();
-        robot.updatePose();
+        robot.update(new Canvas());
         executeAuton();
         sendDashboardTelemetry();
     }
@@ -186,14 +186,14 @@ public class AutonLEAVE extends OpMode
             case LAUNCH:
                 if(shootingSequenceAuto())
                 {
-                    shootNum ++;
-                    autonState =  State.STRAFE_TO_EXIT ;
+                    autonState = State.STRAFE_TO_EXIT;
                 }
                 break;
 
             case STRAFE_TO_EXIT:
-                if(BlueAlliance){ if(strafeRight(20, 1.0)) autonState =State.DONE;}
+                if(BlueAlliance){ if(strafeRight(20, 1.0)) autonState = State.DONE;}
                 else { if(strafeLeft(20,1.0)) autonState = State.DONE; }
+
 
             case DONE:
                 stop();
@@ -205,8 +205,8 @@ public class AutonLEAVE extends OpMode
     public boolean goToPID(double targetX, double targetY, double targetHeading) {
 
         // --- Position error ---
-        double xError = targetX - robot.x;
-        double yError = targetY - robot.y;
+        double xError = targetX - robot.getX();
+        double yError = targetY - robot.getY();
 
         xPID.setSetpoint(0);
         xPID.setInput(-xError);
@@ -286,12 +286,12 @@ public class AutonLEAVE extends OpMode
     private boolean driveBackwards(double distance, double power) {
 
         if (!driveInitialized) {
-            backStartX = robot.x;
-            backStartY = robot.y;
+            backStartX = robot.getX();
+            backStartY = robot.getY();
             driveInitialized = true;
         }
 
-        double traveled = Math.hypot(robot.x - backStartX, robot.y - backStartY);
+        double traveled = Math.hypot(robot.getX() - backStartX, robot.getY() - backStartY);
 
         if (traveled < distance) {
             robot.mecanumDrive(power, 0, 0); // BACKWARD
@@ -307,13 +307,13 @@ public class AutonLEAVE extends OpMode
     {
         if(!drivePIDinitialized)
         {
-            driveStartX = robot.x;
-            driveStartY = robot.y;
+            driveStartX = robot.getX();
+            driveStartY = robot.getY();
             driveDistPID.reset();
             drivePIDinitialized = true;
         }
 
-        double traveled = Math.hypot(robot.x - driveStartX, robot.y - driveStartY);
+        double traveled = Math.hypot(robot.getX() - driveStartX, robot.getY() - driveStartY);
 
         double error = distance - traveled;
         driveDistPID.setTolerance(1.0);
@@ -334,18 +334,16 @@ public class AutonLEAVE extends OpMode
         robot.mecanumDrive(power,0,0);
         return false;
     }
-
-
     private boolean driveForward(double distance, double power)
     {
         if(!driveInitialized)
         {
-            backStartX = robot.x;
-            backStartY = robot.y;
+            backStartX = robot.getX();
+            backStartY = robot.getY();
             driveInitialized = true;
         }
 
-        double traveled = Math.hypot(robot.x - backStartX, robot.y - backStartY);
+        double traveled = Math.hypot(robot.getX() - backStartX, robot.getY() - backStartY);
 
         if (traveled < distance) {
             robot.mecanumDrive(-power, 0, 0); // FORWARD
@@ -359,12 +357,12 @@ public class AutonLEAVE extends OpMode
 
     private boolean strafeRight(double distance, double power) {
         if (!strafeInitialized) {
-            strafeStartX = robot.x;
-            strafeStartY = robot.y;
+            strafeStartX = robot.getX();
+            strafeStartY = robot.getY();
             strafeInitialized = true;
         }
 
-        double traveled = Math.hypot(robot.x - strafeStartX, robot.y - strafeStartY);
+        double traveled = Math.hypot(robot.getX() - strafeStartX, robot.getY() - strafeStartY);
 
         if (traveled < distance) {
             robot.mecanumDrive(0, -power, 0); // strafe right
@@ -378,12 +376,12 @@ public class AutonLEAVE extends OpMode
 
     private boolean strafeLeft(double distance, double power) {
         if (!strafeInitialized) {
-            strafeStartX = robot.x;
-            strafeStartY = robot.y;
+            strafeStartX = robot.getX();
+            strafeStartY = robot.getY();
             strafeInitialized = true;
         }
 
-        double traveled = Math.hypot(robot.x - strafeStartX, robot.y - strafeStartY);
+        double traveled = Math.hypot(robot.getX() - strafeStartX, robot.getY() - strafeStartY);
 
         if (traveled < distance) {
             robot.mecanumDrive(0, power, 0); // strafe left
@@ -408,7 +406,7 @@ public class AutonLEAVE extends OpMode
             timer1.reset();
             shootStep = 0;
             flywheelOn = true;
-            robot.setFlywheelVelocity(FLYWHEEL_POWER);
+            robot.setFlywheelVelocity(1300);
         }
 
         if (!sequenceRunning) return;
@@ -473,17 +471,16 @@ public class AutonLEAVE extends OpMode
     private void sendDashboardTelemetry() {
         TelemetryPacket packet = new TelemetryPacket();
         packet.put("Auton State", autonState.toString());
-        packet.put("Robot X", robot.x);
-        packet.put("Robot Y", robot.y);
+        packet.put("Robot X", robot.getX());
+        packet.put("Robot Y", robot.getY());
         packet.put("Heading", Math.toDegrees(robot.getHeading()));
         packet.put("error", Math.toDegrees(error));
         packet.put("correction", Math.toDegrees(correction));
         packet.put("Cycle Time (ms)", cycleTimeMs);
         packet.put("Loop Frequency (Hz)", 1000.0 / cycleTimeMs);
-        packet.put("motorRBpower", robot.rightBack.getPower());
+        packet.put("motorRBpower", robot.getRightBackPower());
 
         dashboard.sendTelemetryPacket(packet);
     }
 
 }
-
