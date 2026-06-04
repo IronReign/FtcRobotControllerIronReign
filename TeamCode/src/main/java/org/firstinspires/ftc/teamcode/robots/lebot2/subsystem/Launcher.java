@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.robots.lebot2.Robot;
 import org.firstinspires.ftc.teamcode.robots.lebot2.subsystem.drivetrain.DriveTrainBase;
 import org.firstinspires.ftc.teamcode.robots.lebot2.util.LazyServo;
 
@@ -114,7 +115,6 @@ public class Launcher implements Subsystem {
 
     // Flywheel configuration
     public static double SPEED_MULTIPLIER = .85;    // Tunable fudge factor until speed formula is recalibrated
-    public static double MIN_LAUNCH_SPEED_AUDIENCE = 1350;
     public static double MIN_LAUNCH_SPEED_AUDIENCE_AUTON= 1350;
     public static double MIN_LAUNCH_SPEED_AUDIENCE_TELEOP= 1420;
     public static double MIN_LAUNCH_SPEED_GOAL = 1050;
@@ -654,6 +654,11 @@ public class Launcher implements Subsystem {
             return;
         }
 
+        // Audience preset speed differs between auton and teleop — pick by mode.
+        // Both constants stay independently Dashboard-tunable (no per-loop overwrite).
+        double audienceSpeed = Robot.auton ? MIN_LAUNCH_SPEED_AUDIENCE_AUTON
+                                           : MIN_LAUNCH_SPEED_AUDIENCE_TELEOP;
+
         // Position-based preset: if robot is on the audience side of the field,
         // vision distance is unreliable — use preset speed from known firing position.
         boolean usePreset = driveTrain != null
@@ -661,7 +666,7 @@ public class Launcher implements Subsystem {
 
         if (usePreset) {
             distanceHint = DistanceHint.FAR;
-            targetSpeed = MIN_LAUNCH_SPEED_AUDIENCE * SPEED_MULTIPLIER;
+            targetSpeed = audienceSpeed * SPEED_MULTIPLIER;
             loader.FEED_POWER = FEED_AUDIENCE;
             turret.VISION_OFFSET = VISION_OFFSET_AUDIENCE;
         } else if (vision != null && vision.hasBotPose()) {
@@ -679,7 +684,7 @@ public class Launcher implements Subsystem {
         } else {
             // No vision — use fallback speed based on distance hint
             if (distanceHint == DistanceHint.FAR) {
-                targetSpeed = MIN_LAUNCH_SPEED_AUDIENCE * SPEED_MULTIPLIER;
+                targetSpeed = audienceSpeed * SPEED_MULTIPLIER;
             } else {
                 targetSpeed = MIN_LAUNCH_SPEED_GOAL * SPEED_MULTIPLIER;
             }

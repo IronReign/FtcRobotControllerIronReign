@@ -149,7 +149,8 @@ public class Autonomous implements TelemetryProvider {
         robot.missions.clearState();
         FieldMap.BALL_ROW_BLUE_X_OFFSET =0;
         robot.launcher.SPEED_MULTIPLIER = .85;
-        robot.launcher.MIN_LAUNCH_SPEED_AUDIENCE = robot.launcher.MIN_LAUNCH_SPEED_AUDIENCE_AUTON;
+        // Audience speed (auton vs teleop) is now selected inside updateTargetSpeed() by mode —
+        // no longer overwritten here, so the Dashboard values stay tunable.
 
         // Set strategy parameters based on starting position
         if (robot.getStartingPosition() != Robot.StartingPosition.AUDIENCE) {

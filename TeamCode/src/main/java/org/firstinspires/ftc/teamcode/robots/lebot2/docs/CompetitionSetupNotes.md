@@ -56,7 +56,7 @@ Previously, audience start skipped straight to launching with no targeting. The 
 Now:
 1. **Turret auto-seeks the goal** using odometry-based bearing from match start. It rotates toward the goal immediately without needing vision.
 2. **Targeting step before first launch** — the robot waits (up to 2 seconds) for turret lock before firing preloads. If vision acquires the target, it refines. If not, odometry bearing is accurate enough for preloads.
-3. **Fixed flywheel speed at audience range** — vision distance is unreliable at long range, so the robot uses a preset speed (MIN_LAUNCH_SPEED_AUDIENCE) instead of vision-computed distance. This happens automatically when the robot's field X position is past 32 inches (audience side). No driver action needed.
+3. **Fixed flywheel speed at audience range** — vision distance is unreliable at long range, so the robot uses a preset audience speed instead of vision-computed distance (separate auton/teleop values, picked automatically by mode). This happens automatically when the robot's field X position is past 32 inches (audience side). No driver action needed.
 
 ### What the Driver Sees
 
@@ -131,7 +131,8 @@ This means the driver does NOT need to manually switch between shootShort / shoo
 |---|---|---|---|
 | CENTERING_TIMEOUT_SECONDS | Lebot2_Autonomous | 2.0 | Max wait for turret lock before launching (audience) |
 | PRESET_SPEED_X_THRESHOLD | Lebot2_Launcher | 32 | Field X boundary for switching to preset speed |
-| MIN_LAUNCH_SPEED_AUDIENCE | Lebot2_Launcher | 1350 | Preset flywheel speed at audience range |
+| MIN_LAUNCH_SPEED_AUDIENCE_AUTON | Lebot2_Launcher | 1350 | Preset audience flywheel speed in autonomous |
+| MIN_LAUNCH_SPEED_AUDIENCE_TELEOP | Lebot2_Launcher | 1420 | Preset audience flywheel speed in teleop (tunable live) |
 | PULSE_PAUSE_MS | Lebot2_Launcher | 300 | Min recovery pause between balls (goal) |
 | PULSE_PAUSE_MS_FAR | Lebot2_Launcher | 500 | Min recovery pause between balls (audience) |
 | HOLD_POSITION_S | Lebot2_Turret | 0.3 | Vision dropout grace period before resetting lock |

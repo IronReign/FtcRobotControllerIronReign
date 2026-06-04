@@ -211,7 +211,6 @@ public class Lebot2_6832 extends OpMode {
                 robot.auton = false;
                 TankDrivePinpoint.VISION_TOLERANCE = 2;
                 Vision.FLYWHEEL_SPEED_MULTIPLIER= 1;
-                robot.launcher.MIN_LAUNCH_SPEED_AUDIENCE = robot.launcher.MIN_LAUNCH_SPEED_AUDIENCE_TELEOP;
                 handleTeleOp(packet);
                 break;
 
