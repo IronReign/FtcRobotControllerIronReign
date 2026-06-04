@@ -137,8 +137,7 @@ public class Launcher implements Subsystem {
     // PIDF still controls speed (prevents overspeed), but the higher target
     // makes it apply near-full power when speed drops from ball impacts
     public static boolean FIRING_BOOST = true;   // Dashboard tunable
-    public static double FIRING_BOOST_SPEED = 600; // deg/s above target — max overspeed ceiling
-    public static double FIRING_BOOST_DELAY_MS = 400; // Delay before boost activates (tune to let 1st ball exit at normal speed)
+    public static double FIRING_BOOST_SPEED = 600; // deg/s added to setpoint to force PIDF saturation while recovering/feeding
 
     // Ball exit detection: count speed drops during FIRING to detect when all balls are out
     public static boolean BALL_EXIT_DETECTION = false; // Dashboard tunable — experimental
@@ -778,11 +777,16 @@ public class Launcher implements Subsystem {
         double speedDrop = previousSpeed - currentSpeed;
         previousSpeed = currentSpeed;
 
-        // Boost PIDF target after configurable delay
-        // At 0ms delay: boost from FIRING start (maximum recovery, first ball may overshoot)
-        // Increase delay to let first ball exit at normal speed before boost kicks in
-        boolean boostActive = FIRING_BOOST
-                && (System.currentTimeMillis() - firingStartMs) >= FIRING_BOOST_DELAY_MS;
+        // Firing boost = force the PIDF into saturation (full power) by raising the
+        // setpoint by FIRING_BOOST_SPEED. Two reasons to boost:
+        //   feeding  — a ball is going through; the impact is imminent/ongoing, so pre-load
+        //              full power to beat the motor's lag (anticipatory). It won't launch hot
+        //              because the impact pulls speed down at the same time.
+        //   below target — recovering from a hit; drive full power until caught up.
+        // Boost OFF once settled at target with no ball feeding (the long wait before the
+        // last ball) so it can't over-drive past target and send that ball long.
+        boolean feeding = PULSED_FIRING && (pulsePhase == PulsePhase.FEED);
+        boolean boostActive = FIRING_BOOST && (feeding || currentSpeed < targetSpeed);
         double firingSpeed = boostActive
                 ? targetSpeed + FIRING_BOOST_SPEED : targetSpeed;
         flywheel.setVelocity(firingSpeed, AngleUnit.DEGREES);
