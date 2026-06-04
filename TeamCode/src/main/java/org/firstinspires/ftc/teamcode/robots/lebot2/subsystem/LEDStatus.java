@@ -41,23 +41,17 @@ public class LEDStatus implements Subsystem {
     public static int BRIGHTNESS = 10;  // 0-31
     public static int AMBER = Color.rgb(255, 140, 0);
     public static int CYAN = Color.rgb(0, 255, 255);
-    public static long FULL_DISPLAY_MS = 1000;
-    public static double PULSE_FREQUENCY_HZ = 2.0;
+    public static int YELLOW = Color.rgb(255, 255, 0);
+    public static double PULSE_FREQUENCY_HZ = 2.0;   // firing white pulse
+    public static double OVERFULL_FLASH_HZ = 4.0;    // overfull green flash
 
-    // State
-    public enum State {
-        ALLIANCE,
-        HAS_BALLS,
-        FULL,
-        AIMING,
-        READY_TO_FIRE,
-        FIRING
-    }
-    private State state = State.ALLIANCE;
-
-    // Timing
-    private long fullStartMs = 0;
-    private boolean wasFullLastCycle = false;
+    // Zone layout on the SparkFun QWIIC LED Stick (10 LEDs, array indices 0-9):
+    //   0 and 9  -> alliance color, always on (so the alliance is always visible)
+    //   1-4      -> loader zone:  off=empty, amber=has balls, green=full, flashing green=overfull
+    //   5-8      -> turret/vision zone: off, yellow=odo pose-seeking, cyan=vision tracking,
+    //               white=locked/ready, pulsing white=firing
+    private static final int LED_COUNT = 10;
+    private final int[] ledColors = new int[LED_COUNT];
 
     // References
     private Loader loader = null;
@@ -65,8 +59,9 @@ public class LEDStatus implements Subsystem {
     private Vision vision = null;
     private Turret turret = null;
 
-    // Current display state
-    private int currentColor = Color.BLUE;
+    // Telemetry labels for the two zones
+    private String loaderZone = "off";
+    private String turretZone = "off";
 
     public LEDStatus(HardwareMap hardwareMap) {
         try {
@@ -104,66 +99,69 @@ public class LEDStatus implements Subsystem {
     public void calc(Canvas fieldOverlay) {
         if (!hardwarePresent) return;
 
-        // Priority-based state determination (highest first)
+        long now = System.currentTimeMillis();
+
+        // ===== Alliance ends (0, 9) =====
+        int allianceColor = Robot.isRedAlliance ? Color.RED : Color.BLUE;
+
+        // ===== Loader zone (1-4) =====
+        int loaderColor;
+        if (loader == null) {
+            loaderColor = Color.BLACK;
+            loaderZone = "n/a";
+        } else if (loader.isOverfull()) {
+            // Flashing green — full AND a 4th ball needs clearing
+            long halfPeriodMs = (long) (500.0 / OVERFULL_FLASH_HZ);
+            boolean on = (now / Math.max(1, halfPeriodMs)) % 2 == 0;
+            loaderColor = on ? Color.GREEN : Color.BLACK;
+            loaderZone = "OVERFULL";
+        } else if (loader.isFull()) {
+            loaderColor = Color.GREEN;
+            loaderZone = "FULL";
+        } else if (!loader.isEmpty()) {
+            loaderColor = AMBER;
+            loaderZone = "has balls";
+        } else {
+            loaderColor = Color.BLACK;
+            loaderZone = "empty";
+        }
+
+        // ===== Turret / vision zone (5-8) =====
         boolean isFiring = (launcher != null) &&
                 (launcher.getState() == Launcher.LaunchState.FIRING ||
                  launcher.getState() == Launcher.LaunchState.LIFTING);
-
-        boolean isReadyToFire = (turret != null) && turret.isLockedOnTarget() &&
-                (launcher != null) && launcher.isFlywheelAtSpeed();
-
-        boolean isAiming = (vision != null) && vision.hasTarget();
-
-        boolean isFull = (loader != null) && loader.isFull();
-        boolean hasBalls = (loader != null) && !loader.isEmpty();
-
+        int turretColor;
         if (isFiring) {
-            state = State.FIRING;
-        } else if (isReadyToFire) {
-            state = State.READY_TO_FIRE;
-        } else if (isAiming) {
-            state = State.AIMING;
-        } else if (isFull) {
-            state = State.FULL;   // Stay green as long as full
-        } else if (hasBalls) {
-            state = State.HAS_BALLS;
+            double phase = (now / 1000.0) * PULSE_FREQUENCY_HZ * 2 * Math.PI;
+            int p = (int) (127 + 127 * Math.sin(phase));
+            turretColor = Color.rgb(p, p, p);   // pulsing white
+            turretZone = "FIRING";
+        } else if (turret != null && (turret.isReadyToLaunch() || turret.isReadyToLaunchDegraded())) {
+            turretColor = Color.WHITE;
+            turretZone = "ready";
+        } else if (turret != null && turret.getPhase() == Turret.TargetingPhase.VISION_TRACKING) {
+            turretColor = CYAN;
+            turretZone = "vision";
+        } else if (turret != null && turret.getPhase() == Turret.TargetingPhase.POSE_SEEKING) {
+            turretColor = YELLOW;
+            turretZone = "pose-seek";
         } else {
-            state = State.ALLIANCE;
+            turretColor = Color.BLACK;
+            turretZone = "off";
         }
 
-        wasFullLastCycle = isFull;
-
-        // Determine color
-        switch (state) {
-            case FIRING:
-                double phase = (System.currentTimeMillis() / 1000.0) * PULSE_FREQUENCY_HZ * 2 * Math.PI;
-                int pulseValue = (int) (127 + 127 * Math.sin(phase));
-                currentColor = Color.rgb(pulseValue, pulseValue, pulseValue);
-                break;
-            case READY_TO_FIRE:
-                currentColor = Color.WHITE;
-                break;
-            case AIMING:
-                currentColor = CYAN;
-                break;
-            case FULL:
-                currentColor = Color.GREEN;
-                break;
-            case HAS_BALLS:
-                currentColor = AMBER;
-                break;
-            case ALLIANCE:
-            default:
-                currentColor = Robot.isRedAlliance ? Color.RED : Color.BLUE;
-                break;
-        }
+        // ===== Assemble the strip =====
+        ledColors[0] = allianceColor;
+        ledColors[9] = allianceColor;
+        for (int i = 1; i <= 4; i++) ledColors[i] = loaderColor;
+        for (int i = 5; i <= 8; i++) ledColors[i] = turretColor;
     }
 
     @Override
     public void act() {
         if (hardwarePresent) {
             ledStick.setBrightness(BRIGHTNESS);
-            ledStick.setColor(currentColor);
+            ledStick.setColors(ledColors);   // whole strip in one update (3 I2C writes)
         }
         if (godMotor != null) {
             godMotor.setPower(Math.min(GOD_POWER, GOD_MAX_POWER));
@@ -185,9 +183,8 @@ public class LEDStatus implements Subsystem {
 
     @Override
     public void resetStates() {
-        state = State.ALLIANCE;
-        wasFullLastCycle = false;
-        fullStartMs = 0;
+        loaderZone = "off";
+        turretZone = "off";
     }
 
     // ==================== TELEMETRY ====================
@@ -203,10 +200,8 @@ public class LEDStatus implements Subsystem {
 
         telemetry.put("Present", hardwarePresent ? "YES" : "no");
         if (hardwarePresent) {
-            telemetry.put("State", state);
-            if (debug) {
-                telemetry.put("Color", String.format("#%06X", currentColor & 0xFFFFFF));
-            }
+            telemetry.put("Loader zone", loaderZone);
+            telemetry.put("Turret zone", turretZone);
         }
 
         return telemetry;

@@ -128,7 +128,16 @@ public class Loader implements Subsystem {
             isFullConfirmed = false;
         }
 
-        // State determination
+        // FULL and OVERFULL are concurrent conditions, not mutually exclusive:
+        // overfull (a 4th ball at the front) definitionally means the chamber is also full.
+        // isFull() must report true in both cases so intake/belt stop and the LED goes
+        // green regardless of the eject state. The LoaderState below is just the
+        // highest-priority *display/eject* label — isFull()/isOverfull() are the queries.
+        if (chamberSensor.isOverfull()) {
+            isFullConfirmed = true;  // overfull implies full — don't wait on the debounce
+        }
+
+        // State determination (display + eject trigger label)
         if (chamberSensor.isOverfull()) {
             state = LoaderState.OVERFULL;
         } else if (isFullConfirmed) {
