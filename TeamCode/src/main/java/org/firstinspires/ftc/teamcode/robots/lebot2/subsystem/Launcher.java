@@ -241,6 +241,10 @@ public class Launcher implements Subsystem {
     private long pulseTimer = 0;
     private int pulseBallsFed = 0;
 
+    // Exposed for CSV logging (computed in handleFiringState, logged a cycle later in calc)
+    private boolean boostActive = false;
+    private double firingSpeed = 0;
+
     // References to other subsystems for coordination
     private Loader loader = null;
     private Intake intake = null;
@@ -421,9 +425,9 @@ public class Launcher implements Subsystem {
         // CSV logging for debugging flywheel behavior
         if (LOGGING_ENABLED) {
             if (behavior == Behavior.SPINNING && logStartTime == 0) {
-                // Start new log session
-                flywheelLog = new CsvLogKeeper("flywheel_log", 13,
-                    "elapsedMs,state,primarySpeed,helperSpeed,targetSpeed,speedDiff,primaryPower,helperPower,primaryAmps,helperAmps,fireRequested,isAtSpeed,ballExits");
+                // Start new log session (one per volley — closed at COMPLETE/warm-idle below)
+                flywheelLog = new CsvLogKeeper("flywheel_log", 16,
+                    "elapsedMs,state,pulsePhase,boostActive,primarySpeed,helperSpeed,targetSpeed,firingSpeed,speedDiff,primaryPower,helperPower,primaryAmps,helperAmps,fireRequested,isAtSpeed,ballExits");
                 logStartTime = System.currentTimeMillis();
             }
             if (logStartTime > 0 && behavior == Behavior.SPINNING) {
@@ -431,9 +435,12 @@ public class Launcher implements Subsystem {
                 ArrayList<Object> row = new ArrayList<>();
                 row.add(System.currentTimeMillis() - logStartTime);
                 row.add(state.name());
+                row.add(pulsePhase.name());
+                row.add(boostActive);
                 row.add(String.format("%.1f", currentSpeed));
                 row.add(String.format("%.1f", helperSpeed));
                 row.add(String.format("%.1f", targetSpeed));
+                row.add(String.format("%.1f", firingSpeed));
                 row.add(String.format("%.1f", currentSpeed - helperSpeed));  // inter-motor differential
                 row.add(String.format("%.3f", flywheel.getPower()));
                 row.add(String.format("%.3f", flywheelHelp.getPower()));
@@ -444,7 +451,9 @@ public class Launcher implements Subsystem {
                 row.add(ballExitCount);
                 flywheelLog.UpdateLog(row);
             }
-            if (behavior == Behavior.IDLE && logStartTime > 0) {
+            // Close at warm-idle (volley done) OR full idle, so each volley is its own
+            // session (elapsedMs restarts at 0 for the next one).
+            if ((behavior == Behavior.IDLE || behavior == Behavior.IDLE_SPINNING) && logStartTime > 0) {
                 // End log session
                 flywheelLog.CloseLog();
                 logStartTime = 0;
@@ -786,9 +795,8 @@ public class Launcher implements Subsystem {
         // Boost OFF once settled at target with no ball feeding (the long wait before the
         // last ball) so it can't over-drive past target and send that ball long.
         boolean feeding = PULSED_FIRING && (pulsePhase == PulsePhase.FEED);
-        boolean boostActive = FIRING_BOOST && (feeding || currentSpeed < targetSpeed);
-        double firingSpeed = boostActive
-                ? targetSpeed + FIRING_BOOST_SPEED : targetSpeed;
+        boostActive = FIRING_BOOST && (feeding || currentSpeed < targetSpeed);
+        firingSpeed = boostActive ? targetSpeed + FIRING_BOOST_SPEED : targetSpeed;
         flywheel.setVelocity(firingSpeed, AngleUnit.DEGREES);
         flywheelHelp.setVelocity(firingSpeed, AngleUnit.DEGREES);
 
