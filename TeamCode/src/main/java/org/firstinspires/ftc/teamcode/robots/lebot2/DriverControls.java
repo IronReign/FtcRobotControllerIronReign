@@ -236,24 +236,17 @@ public class DriverControls implements TelemetryProvider {
             robot.driveTrain.resetEncoders();
         }
 
-        // Back button: Apply vision pose correction to Pinpoint
-        // Only works when vision has a valid botpose (facing AprilTag)
+        // Back button: Apply vision pose correction to Pinpoint.
+        // Works whenever vision has a valid botpose — independent of turret lock state.
+        // Long rumble = applied, short rumble = no botpose available.
         if (stickyGamepad1.back) {
-            if(locked){
-                robot.applyVisionPoseCorrection();
-            }
-
-//            boolean applied = robot.relocalizer.apply();
-//            if (applied) {
-//                gamepad1.rumble(100);
-//            } else {
-//                // Not ready yet — short double-rumble to indicate "working on it"
-//                gamepad1.rumble(50);
-//            }
+            boolean applied = robot.applyVisionPoseCorrection();
+            gamepad1.rumble(applied ? 100 : 50);
         }
 
-        //Start button: change tilt index which correspond to servo tilt of limelight
-
+        // Start button: toggle turret lock (LOCKED at 0° forward) vs tracking.
+        // Independent of vision pose correction (Back button) — lock a misbehaving
+        // turret without affecting relocalization, and vice versa.
         if(stickyGamepad1.start){
             locked=!locked;
             if(locked){
@@ -261,13 +254,6 @@ public class DriverControls implements TelemetryProvider {
             }else{
                 robot.turret.setTracking();
             }
-
-//            if(tiltIndex!=3){
-//                tiltIndex++;
-//            }
-//            else{
-//                tiltIndex=0;
-//            }
         }
         if(tiltIndex==0){
             robot.vision.setTiltDown();
