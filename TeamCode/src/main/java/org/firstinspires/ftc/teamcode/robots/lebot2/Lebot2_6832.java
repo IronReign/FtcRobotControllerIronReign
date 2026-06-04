@@ -167,8 +167,17 @@ public class Lebot2_6832 extends OpMode {
         if (gameState.isAutonomous()) {
             autonomous.init();
         } else {
-            // maybe speed multiplier for teleop .98
-            // If starting in TeleOp, ensure manual control
+            // Teleop: restore the field pose handed off from auton (survives the OpMode
+            // restart via statics), unless the driver explicitly picked a start position
+            // in init_loop. This lets the robot begin teleop already localized — turret
+            // pose-seeking can anticipate the goal and position-based flywheel speed works.
+            if (Robot.autonPoseValid
+                    && robot.getStartingPosition() == Robot.StartingPosition.UNKNOWN
+                    && (System.currentTimeMillis() - Robot.savedAutonPoseTimeMs) < Robot.HANDOFF_MAX_AGE_MS) {
+                robot.driveTrain.setPose(Robot.savedAutonPose);
+                robot.turret.bootstrapOdoTrust();  // pose is known -> enable pose-seeking in teleop
+            }
+            Robot.autonPoseValid = false;  // consume so a later standalone teleop won't reuse a stale pose
             robot.setBehavior(Robot.Behavior.MANUAL);
         }
     }
@@ -192,6 +201,10 @@ public class Lebot2_6832 extends OpMode {
             case AUTONOMOUS:
                 robot.auton = true;
                 handleAutonomous(packet);
+                // Save field pose each loop so teleop can restore it across the OpMode restart
+                Robot.savedAutonPose = robot.driveTrain.getPose();
+                Robot.autonPoseValid = true;
+                Robot.savedAutonPoseTimeMs = System.currentTimeMillis();
                 break;
 
             case TELE_OP:

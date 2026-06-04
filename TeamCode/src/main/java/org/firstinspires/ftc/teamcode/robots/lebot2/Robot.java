@@ -102,6 +102,17 @@ public class Robot implements TelemetryProvider {
     // Used for MT1/MT2 comparison testing - provides known heading to seed MT2
     public static final Pose2d CALIBRATION_POSE = new Pose2d(0, 0, 0);
 
+    // ---- Auton -> Teleop pose handoff ----
+    // The Pinpoint pose is wiped to (0,0,0) on the teleop OpMode restart
+    // (PinpointLocalizer resets the device). These statics survive the restart within
+    // the app process: auton saves its field pose each loop, teleop start restores it so
+    // the robot begins teleop already localized (enables turret pose-seeking and
+    // position-based flywheel speed without driver intervention).
+    public static Pose2d savedAutonPose = null;
+    public static boolean autonPoseValid = false;
+    public static long savedAutonPoseTimeMs = 0;
+    public static final long HANDOFF_MAX_AGE_MS = 120000;  // ignore a handoff older than this
+
     // Robot Dimensions (inches, relative to center of rotation)
     // Center of rotation = midpoint between drive wheels (on the axle line)
     // Since wheels are mounted near the back, FRONT_EXTENT > BACK_EXTENT
