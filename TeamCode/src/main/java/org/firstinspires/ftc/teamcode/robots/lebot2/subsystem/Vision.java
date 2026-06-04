@@ -94,6 +94,7 @@ public class Vision implements Subsystem {
     private double robotHeading = 0;  // Robot heading from botpose (radians)
     private boolean usingMT2 = false;  // True if MT2 localization is active
     private boolean forceMT1 = false;  // Force MT1 mode (when initial position unknown)
+    public static boolean USE_MT2 = false;  // Master toggle — MT2 unreliable here, default MT1
 
     // Both MT1 and MT2 poses for comparison (calibration/debugging)
     private Pose3D mt1Pose = null;
@@ -192,12 +193,15 @@ public class Vision implements Subsystem {
                 mt2X = mt2Y = mt2Heading = 0;
             }
 
-            // Select which pose to use based on forceMT1 flag
-            if (!forceMT1 && mt2Pose != null) {
+            // Select which pose to use.
+            // MT2 is unreliable in this low-AprilTag environment (depends on a good
+            // heading seed that we often don't have) — default to MT1. USE_MT2 is a
+            // Dashboard escape hatch in case MT2 is ever made trustworthy.
+            if (USE_MT2 && !forceMT1 && mt2Pose != null) {
                 usingMT2 = true;
                 botPose = mt2Pose;
             } else {
-                // Force MT1 mode or MT2 unavailable
+                // MT1 (single/multi-tag, no heading seed dependency)
                 usingMT2 = false;
                 botPose = mt1Pose;
             }

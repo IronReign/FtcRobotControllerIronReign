@@ -131,7 +131,7 @@ public class Launcher implements Subsystem {
     public static double SPEED_TOLERANCE_SHORT = 10;
     public static double SPEED_TOLERANCE_LONG = 15;
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
-    public static double FLYWHEEL_IDLE_SPEED = 800;
+    public static double FLYWHEEL_IDLE_SPEED = 500;  // deg/sec — warm idle for faster spin-up
 
     // Firing boost: raise PIDF target during FIRING to maximize recovery torque
     // PIDF still controls speed (prevents overspeed), but the higher target
@@ -176,8 +176,9 @@ public class Launcher implements Subsystem {
      * Set via setBehavior(), query via getBehavior().
      */
     public enum Behavior {
-        IDLE,       // Flywheel off, paddle down (default)
-        SPINNING    // Flywheel at speed, ready to fire
+        IDLE,          // Flywheel off, paddle down (default)
+        SPINNING,      // Flywheel at fire speed, ready to fire
+        IDLE_SPINNING  // Warm idle — flywheel held at FLYWHEEL_IDLE_SPEED for fast follow-up
     }
     private Behavior behavior = Behavior.IDLE;
     private boolean enabled = false;  // Gate: flywheel won't spin until enabled in start()
@@ -340,6 +341,11 @@ public class Launcher implements Subsystem {
                     state = LaunchState.SPINNING_UP;
                     shotNumber = 0;  // Reset shot counter for new sequence
                 }
+            } else if (newBehavior == Behavior.IDLE_SPINNING) {
+                // Drop to warm idle — flywheel held at FLYWHEEL_IDLE_SPEED
+                releaseResources();
+                state = LaunchState.IDLE_SPIN;
+                fireRequested = false;
             }
         }
     }
@@ -429,7 +435,7 @@ public class Launcher implements Subsystem {
                 row.add(String.format("%.1f", currentSpeed));
                 row.add(String.format("%.1f", helperSpeed));
                 row.add(String.format("%.1f", targetSpeed));
-                row.add(String.format("%.1f", targetSpeed - helperSpeed));
+                row.add(String.format("%.1f", currentSpeed - helperSpeed));  // inter-motor differential
                 row.add(String.format("%.3f", flywheel.getPower()));
                 row.add(String.format("%.3f", flywheelHelp.getPower()));
                 row.add(String.format("%.2f", flywheel.getCurrent(CurrentUnit.AMPS)));
@@ -631,8 +637,8 @@ public class Launcher implements Subsystem {
 
     private void handleIdleSpinState() {
         releaseResources();
-        flywheel.setVelocity(FLYWHEEL_IDLE_SPEED);
-        flywheelHelp.setVelocity(FLYWHEEL_IDLE_SPEED);
+        flywheel.setVelocity(FLYWHEEL_IDLE_SPEED, AngleUnit.DEGREES);
+        flywheelHelp.setVelocity(FLYWHEEL_IDLE_SPEED, AngleUnit.DEGREES);
         //setPaddlePosition(passThroughMode ? getTriggerFiringPosition() : getTriggerIdlePosition());
         setPaddlePosition(getTriggerIdlePosition());
     }
@@ -907,7 +913,10 @@ public class Launcher implements Subsystem {
         setPaddlePosition(getTriggerIdlePosition());
 
         if (STAY_SPINNING_AFTER_FIRE) {
-            // Keep flywheel at idle spin speed for faster follow-up
+            // Keep flywheel at warm idle for faster follow-up.
+            // Behavior must switch to IDLE_SPINNING — otherwise the calc() sync block
+            // sees behavior==SPINNING && state==IDLE_SPIN and bounces it back to SPINNING_UP.
+            behavior = Behavior.IDLE_SPINNING;
             state = LaunchState.IDLE_SPIN;
         } else {
             // Spin down and return to IDLE
@@ -1121,6 +1130,16 @@ public class Launcher implements Subsystem {
         telemetry.put("flywheelTarget", targetSpeed);
         telemetry.put("min launch speed: ", MIN_LAUNCH_SPEED);
         telemetry.put("Ready", isReady() ? "YES" : "no");
+
+        // Dual-motor fighting diagnostic:
+        //   speedDiff near 0 = motors agree (rigid coupling makes this likely)
+        //   powerDiff large while speedDiff small = the two hub PIDs are fighting
+        //   primaryPower live-varying = getPower() IS usable under hub velocity PID
+        telemetry.put("lead/help speed", String.format("%.0f / %.0f  (d=%.0f)",
+                currentSpeed, helperSpeed, currentSpeed - helperSpeed));
+        telemetry.put("lead/help power", String.format("%.3f / %.3f  (d=%.3f)",
+                flywheel.getPower(), flywheelHelp.getPower(),
+                flywheel.getPower() - flywheelHelp.getPower()));
 
         telemetry.put("P, I, D, F (orig)", String.format("%.04f, %.04f, %.04f, %.04f", pidfOrig.p, pidfOrig.i, pidfOrig.d, pidfOrig.f));
         telemetry.put("algorithm", pidfOrig.algorithm);
