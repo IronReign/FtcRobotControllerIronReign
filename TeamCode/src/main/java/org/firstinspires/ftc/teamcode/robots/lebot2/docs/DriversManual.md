@@ -89,6 +89,26 @@ If something goes wrong, press **B** to emergency stop everything.
 
 ---
 
+## LED Status Indicators
+
+The SparkFun LED stick (10 LEDs) is split into three zones so loader and turret status are visible at the same time. Read it left-to-right by zone:
+
+| LEDs | Zone | Meaning |
+|---|---|---|
+| **Ends (1 & 10)** | Alliance | Always your alliance color (red / blue). If these are the wrong color, fix alliance selection in Init. |
+| **Inner-left (2–5)** | Loader | **Off** = empty · **Amber** = has balls (1–2) · **Green** = full (3, ready) · **Flashing green** = overfull (4th ball, auto-eject clearing it) |
+| **Inner-right (6–9)** | Turret / Vision | **Off** = not seeking · **Yellow** = aiming by odometry (no tag yet) · **Cyan** = tracking the tag · **White** = locked & ready to fire · **Pulsing white** = firing |
+
+Quick reads during a match:
+- **Green loader + white turret** = loaded and locked, take the shot.
+- **Green loader stays green** = chamber is full; intake has auto-stopped.
+- **Yellow turret** = it knows roughly where the goal is from odometry but hasn't seen the tag — usually resolves to cyan/white once the camera picks up the AprilTag.
+- **Flashing green** = a 4th ball is being ejected; let it clear.
+
+The flash/pulse rates (`OVERFULL_FLASH_HZ`, `PULSE_FREQUENCY_HZ`) and brightness are tunable on Dashboard under `Lebot2_LEDStatus`.
+
+---
+
 ## Autonomous Mode
 
 Autonomous runs automatically after pressing Start (if game state is set to Autonomous during init). The driver does not need to do anything during autonomous, but can take over with the joystick if needed — any significant input aborts the current mission.
