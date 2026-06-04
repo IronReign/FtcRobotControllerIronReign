@@ -599,19 +599,17 @@ public class Robot implements TelemetryProvider {
         }
         // Distance hint is now updated automatically inside updateTargetSpeed()
 
-        // Get vision pose - this is the CAMERA position (Limelight uses meters)
+        // Get vision pose from botpose. The Limelight is TURRET-MOUNTED, so the
+        // botpose heading is the CAMERA's field heading = chassis + turret angle.
         double camX = vision.getRobotX();
         double camY = vision.getRobotY();
-        double headingRad = vision.getRobotHeading();
+        double camHeadingRad = vision.getRobotHeading();
 
-        // Transform from camera position to robot center of rotation
-        // Camera is forward of center, so robot center is BEHIND camera
-        // robot_center = camera_pos - offset_in_robot_frame (rotated to field frame)
-        double cosH = Math.cos(headingRad);
-        double sinH = Math.sin(headingRad);
-
-        // Forward offset: subtract because robot center is behind camera
-        // Side offset: positive = camera right of center, so subtract for robot center
+        // Translation: the camera offset points along the camera's pointing direction,
+        // so rotate it by the CAMERA heading to project into the field. This lands on the
+        // turret pivot, which is ~coincident with the robot's center of rotation.
+        double cosH = Math.cos(camHeadingRad);
+        double sinH = Math.sin(camHeadingRad);
         double robotX = camX - CAMERA_FORWARD_OFFSET_M * cosH + CAMERA_SIDE_OFFSET_M * sinH;
         double robotY = camY - CAMERA_FORWARD_OFFSET_M * sinH - CAMERA_SIDE_OFFSET_M * cosH;
 
@@ -619,7 +617,12 @@ public class Robot implements TelemetryProvider {
         double xInches = robotX * 39.3701;
         double yInches = robotY * 39.3701;
 
-        Pose2d visionPose = new Pose2d(xInches, yInches, headingRad);
+        // Heading: subtract the turret angle to recover CHASSIS heading.
+        // Matches the turret's own convention (POSE_SEEKING sets turretAngle = bearing - chassis,
+        // i.e. cameraHeading = chassis + turretAngle).
+        double chassisHeadingRad = camHeadingRad - Math.toRadians(turret.getTurretAngleDeg());
+
+        Pose2d visionPose = new Pose2d(xInches, yInches, chassisHeadingRad);
 
         driveTrain.setPose(visionPose);
 

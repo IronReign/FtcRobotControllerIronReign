@@ -272,20 +272,25 @@ public class Relocalizer {
     }
 
     private Pose2d transformBotposeToRobotCenter() {
+        // Limelight is turret-mounted: botpose heading is the CAMERA field heading
+        // = chassis + turret. Keep this in sync with Robot.applyVisionPoseCorrection().
         double camX = vision.getRobotX();
         double camY = vision.getRobotY();
-        double headingRad = vision.getRobotHeading();
+        double camHeadingRad = vision.getRobotHeading();
 
-        double cosH = Math.cos(headingRad);
-        double sinH = Math.sin(headingRad);
-
+        // Rotate the camera offset by the CAMERA heading -> lands on turret pivot (~robot center).
+        double cosH = Math.cos(camHeadingRad);
+        double sinH = Math.sin(camHeadingRad);
         double robotX = camX - CAMERA_FORWARD_OFFSET_M * cosH + CAMERA_SIDE_OFFSET_M * sinH;
         double robotY = camY - CAMERA_FORWARD_OFFSET_M * sinH - CAMERA_SIDE_OFFSET_M * cosH;
 
         double xInches = robotX * 39.3701;
         double yInches = robotY * 39.3701;
 
-        return new Pose2d(xInches, yInches, headingRad);
+        // Subtract turret angle to recover chassis heading.
+        double chassisHeadingRad = camHeadingRad - Math.toRadians(turret.getTurretAngleDeg());
+
+        return new Pose2d(xInches, yInches, chassisHeadingRad);
     }
 
     private static Pose2d averagePoses(List<Pose2d> poses) {
