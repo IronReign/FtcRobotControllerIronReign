@@ -141,10 +141,10 @@ public class FieldMap {
     public static Waypoint WP_FIRE_4 = new Waypoint(56.7, 20.8, 139);   // was 58.7 - OFFSET
     public static Waypoint WP_FIRE_5 = new Waypoint(58.7, 21.5, 139);
     public static Waypoint WP_FIRE_6 = new Waypoint(58.7, 21.5, 139);
-    public static Waypoint WP_BALL_ROW_1_START = new Waypoint(-14.1732, 24.4842, 90);
+    public static Waypoint WP_BALL_ROW_1_START = new Waypoint(-14.1732 + 1, 24.4842 + 8, 90);
     public static Waypoint WP_BALL_ROW_2_START = new Waypoint(10.2362, 25.9842, 90);
     public static Waypoint WP_BALL_ROW_3_START = new Waypoint(33.6456, 25.9842, 90);
-    public static Waypoint WP_BALL_ROW_1_END = new Waypoint(-14.1732, 50.3503, 90);
+    public static Waypoint WP_BALL_ROW_1_END = new Waypoint(-14.1732 + 1, 50.3503 + 6, 90);
     public static Waypoint WP_BALL_ROW_2_END = new Waypoint(10.2362, 47.3503, 90);
     public static Waypoint WP_BALL_ROW_3_END = new Waypoint(33.6456, 53.3503, 90);
 
