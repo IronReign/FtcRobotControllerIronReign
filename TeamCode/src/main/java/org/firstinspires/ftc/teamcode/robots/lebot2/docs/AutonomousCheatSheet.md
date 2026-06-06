@@ -44,6 +44,30 @@ INIT -> BACKUP_TO_FIRE -> LAUNCH -> BALL_ROW(0) -> RETURN_TO_FIRE -> LAUNCH -> B
 
 All waypoints defined for RED alliance. Blue is auto-reflected across X axis (Y negates, heading negates).
 
+### Live waypoint tuning (Dashboard)
+
+The frequently-moved waypoints are exposed as editable objects on Dashboard under
+`Lebot2_FieldMap`, named `WP_*` (e.g. `WP_FIRE_1`, `WP_BALL_ROW_2_START`). Each expands to
+`x / y / heading` and can be edited live — the field overlay redraws immediately, and the
+change flows through `get()` (offsets still applied) into navigation.
+
+- **Editable:** `WP_START_AUDIENCE`, `WP_START_GOAL`, `WP_FIRE_1..WP_FIRE_6`,
+  `WP_BALL_ROW_1/2/3_START`, `WP_BALL_ROW_1/2/3_END`. Coords are RED base — blue mirrors automatically.
+- **Not editable (by design):** `GOAL`, `BASE`, `GATE`, `HUMAN_PLAYER`, `HOMEBASE` — official
+  field constants; change these only in code with review.
+- The per-waypoint **offset dials** (`ROW_X_OFFSET`, spline offsets, `FIRE_*_ANGLE_OFFSET`,
+  etc.) still apply on top of the base coords. Use offsets for systematic nudges, edit the
+  `WP_*` base for moving a single waypoint.
+
+**Save your tuning back to code — Dashboard edits are NOT persisted.** Workflow:
+1. Tune `WP_*` on Dashboard, verify on the field overlay.
+2. Set `DUMP_WAYPOINTS = true` (`Lebot2_FieldMap`). On the next loop it prints every current
+   waypoint in paste-ready form to **logcat**, then flips itself back off.
+3. Copy those values into the `WP_*` field initializers in `FieldMap.java` and commit.
+
+If you skip step 3, the tuned values live only in that laptop's Dashboard config and will be
+lost on a different machine / app reinstall — the code values (now stale) win silently.
+
 ### Firing Positions
 
 | Name | Base (x, y, heading) | Angle Offset Parameter | Effective heading |

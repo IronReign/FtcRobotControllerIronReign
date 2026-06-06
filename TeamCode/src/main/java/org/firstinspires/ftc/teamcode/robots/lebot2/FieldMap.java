@@ -7,6 +7,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDriveActions;
 
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -84,9 +85,11 @@ public class FieldMap {
     // ==================== WAYPOINT CLASS ====================
 
     public static class Waypoint {
-        public final double x;        // inches
-        public final double y;        // inches
-        public final double heading;  // degrees
+        // Non-final so FTC Dashboard can edit x/y/heading live when a Waypoint is
+        // exposed as a public static @Config field (see WP_* fields below).
+        public double x;        // inches
+        public double y;        // inches
+        public double heading;  // degrees
 
         public Waypoint(double x, double y, double heading) {
             this.x = x;
@@ -123,6 +126,31 @@ public class FieldMap {
         }
     }
 
+    // ==================== TUNABLE WAYPOINTS (Dashboard-editable) ====================
+    // RED-alliance base coords; blue is mirrored automatically in get().
+    // Edit x/y/heading live on Dashboard (Lebot2_FieldMap → WP_*), watch the field overlay,
+    // then set DUMP_WAYPOINTS = true to print paste-ready coords to logcat and copy them
+    // back into the static block below. (Dashboard edits are NOT saved to code.)
+    // NOTE: fixed field references (GOAL, BASE, GATE, HUMAN_PLAYER, HOMEBASE) are intentionally
+    // NOT exposed — they're official field constants and shouldn't be casually edited.
+    public static Waypoint WP_START_AUDIENCE  = new Waypoint(58.7, 20.8, 139);
+    public static Waypoint WP_START_GOAL      = new Waypoint(-50.4566, 51.244, 135);
+    public static Waypoint WP_FIRE_1 = new Waypoint(-24.9, 28.0, 135);
+    public static Waypoint WP_FIRE_2 = new Waypoint(-22, 22, 90);
+    public static Waypoint WP_FIRE_3 = new Waypoint(-16.6, 17.1, 90);
+    public static Waypoint WP_FIRE_4 = new Waypoint(56.7, 20.8, 139);   // was 58.7 - OFFSET
+    public static Waypoint WP_FIRE_5 = new Waypoint(58.7, 21.5, 139);
+    public static Waypoint WP_FIRE_6 = new Waypoint(58.7, 21.5, 139);
+    public static Waypoint WP_BALL_ROW_1_START = new Waypoint(-14.1732, 24.4842, 90);
+    public static Waypoint WP_BALL_ROW_2_START = new Waypoint(10.2362, 25.9842, 90);
+    public static Waypoint WP_BALL_ROW_3_START = new Waypoint(33.6456, 25.9842, 90);
+    public static Waypoint WP_BALL_ROW_1_END = new Waypoint(-14.1732, 50.3503, 90);
+    public static Waypoint WP_BALL_ROW_2_END = new Waypoint(10.2362, 47.3503, 90);
+    public static Waypoint WP_BALL_ROW_3_END = new Waypoint(33.6456, 53.3503, 90);
+
+    // Set true on Dashboard to print all current waypoints (paste-ready) to logcat, then resets.
+    public static boolean DUMP_WAYPOINTS = false;
+
     // ==================== RED ALLIANCE WAYPOINTS ====================
     // All waypoints defined for RED alliance (negative Y side)
     // Blue alliance waypoints are auto-generated via reflection
@@ -138,13 +166,10 @@ public class FieldMap {
         //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(64.7, 17.1, 168.2));
         //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(58.7, 20.8, 139));
         //old reliable
-        RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(58.7, 20.8, 139));
-        //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(57, 24.2, 90));
+        RED_WAYPOINTS.put("START_AUDIENCE", WP_START_AUDIENCE);
 
-        //RED_WAYPOINTS.put("START_AUDIENCE", new Waypoint(66, 6.5, 180));  // TODO: measure heading        //64.5,16.8,
         // GOAL: Near goal, facing goal
-        RED_WAYPOINTS.put("START_GOAL", new Waypoint(-46.4566-4, 47.244+4, 135));   //(-46.4566, 47.244, 135));
-        //RED_WAYPOINTS.put("LEAVE", new Waypoint(-43, 28.0, 180));
+        RED_WAYPOINTS.put("START_GOAL", WP_START_GOAL);
 
         // ----- Firing Positions -----
         // Positions where robot stops to launch balls at goal
@@ -156,21 +181,14 @@ public class FieldMap {
 //        RED_WAYPOINTS.put("FIRE_4", new Waypoint(64.7, 17.1, 168.2));  //fire from back triangle
 
         //----firing points for goal auton-----
-        //LEAVE
-        //RED_WAYPOINTS.put("FIRE_1", new Waypoint(-24.9, 28.0, 180));
-        //REGULAR
-        RED_WAYPOINTS.put("FIRE_1", new Waypoint(-24.9, 28.0, 135));  // 12" closer to goal, heading matches START_GOAL
-        //LEAVE
-        //RED_WAYPOINTS.put("FIRE_2", new Waypoint(-50, 28, 180));  // Fire from inside big triangle
-        //REGULAR
-        RED_WAYPOINTS.put("FIRE_2", new Waypoint(-22, 22, 90));  // Fire from inside big triangle
-        RED_WAYPOINTS.put("FIRE_3", new Waypoint(-16.6, 17.1, 90));  // TODO: measure
+        RED_WAYPOINTS.put("FIRE_1", WP_FIRE_1);  // heading matches START_GOAL
+        RED_WAYPOINTS.put("FIRE_2", WP_FIRE_2);  // Fire from inside big triangle
+        RED_WAYPOINTS.put("FIRE_3", WP_FIRE_3);
 
         //------firing points for audience auton--------
-        //RED_WAYPOINTS.put("FIRE_4", new Waypoint(57, 24.2, 90));
-        RED_WAYPOINTS.put("FIRE_4", new Waypoint(58.7-OFFSET, 20.8, 139));  //fire from back triangle
-        RED_WAYPOINTS.put("FIRE_5", new Waypoint(58.7, 21.5, 139));
-        RED_WAYPOINTS.put("FIRE_6", new Waypoint(58.7, 21.5, 139));
+        RED_WAYPOINTS.put("FIRE_4", WP_FIRE_4);  //fire from back triangle
+        RED_WAYPOINTS.put("FIRE_5", WP_FIRE_5);
+        RED_WAYPOINTS.put("FIRE_6", WP_FIRE_6);
 
 
 
@@ -178,9 +196,9 @@ public class FieldMap {
         // Starting points for each of the 3 ball rows
         // Base coordinates only — ROW_X_OFFSET and ROW_Y_START_OFFSET applied dynamically in get()
         //-------OLD WAYPOINTS-------
-        RED_WAYPOINTS.put("BALL_ROW_1_START", new Waypoint(-14.1732, 25.9842-1.5, 90));
-        RED_WAYPOINTS.put("BALL_ROW_2_START", new Waypoint(10.2362, 25.9842, 90));
-        RED_WAYPOINTS.put("BALL_ROW_3_START", new Waypoint(34.6456-1, 25.9842, 90));
+        RED_WAYPOINTS.put("BALL_ROW_1_START", WP_BALL_ROW_1_START);
+        RED_WAYPOINTS.put("BALL_ROW_2_START", WP_BALL_ROW_2_START);
+        RED_WAYPOINTS.put("BALL_ROW_3_START", WP_BALL_ROW_3_START);
 
         //new waypoint for picking up ball in opposing human player area during auton
 //        RED_WAYPOINTS.put("BALL_ROW_4_START", new Waypoint(62.4-BALL_ROW_5_START_OFFSET, 53.2, 90));
@@ -192,9 +210,9 @@ public class FieldMap {
         // Ending points after driving through ball rows
         // Base coordinates only — ROW_X_OFFSET applied dynamically in get()
         //-------OLD WAYPOINTS-------
-        RED_WAYPOINTS.put("BALL_ROW_1_END", new Waypoint(-14.1732, 46.8503+4.5-2.5+1.5, 90));
-        RED_WAYPOINTS.put("BALL_ROW_2_END", new Waypoint(10.2362, 46.8503+4.5-5+1, 90));
-        RED_WAYPOINTS.put("BALL_ROW_3_END", new Waypoint(34.6456-1, 46.8503+6.5, 90));
+        RED_WAYPOINTS.put("BALL_ROW_1_END", WP_BALL_ROW_1_END);
+        RED_WAYPOINTS.put("BALL_ROW_2_END", WP_BALL_ROW_2_END);
+        RED_WAYPOINTS.put("BALL_ROW_3_END", WP_BALL_ROW_3_END);
 
         // ----- Gate -----
         // Position to release previously scored balls
@@ -371,6 +389,22 @@ public class FieldMap {
         RED_WAYPOINTS.put(name, new Waypoint(x, y, heading));
     }
 
+    /**
+     * Build a paste-ready dump of all current RED waypoints (base coords, before offsets).
+     * After tuning the WP_* waypoints on Dashboard, set DUMP_WAYPOINTS=true to print this to
+     * logcat, then copy the lines back into the static block / WP_* fields so the tuned values
+     * survive in code (Dashboard edits are not persisted to source).
+     */
+    public static String dumpWaypoints() {
+        StringBuilder sb = new StringBuilder("==== FieldMap waypoint dump (RED base coords) ====\n");
+        for (Map.Entry<String, Waypoint> e : RED_WAYPOINTS.entrySet()) {
+            Waypoint w = e.getValue();
+            sb.append(String.format(Locale.US,
+                    "new Waypoint(%.4f, %.4f, %.4f);  // %s%n", w.x, w.y, w.heading, e.getKey()));
+        }
+        return sb.toString();
+    }
+
     // ==================== WAYPOINT NAME CONSTANTS ====================
     // Use these to avoid typos
 
@@ -415,6 +449,12 @@ public class FieldMap {
      * @param canvas The FTC Dashboard field overlay canvas
      */
     public static void drawWaypoints(Canvas canvas) {
+        // One-shot: dump current waypoints to logcat when toggled on Dashboard
+        if (DUMP_WAYPOINTS) {
+            System.out.println(dumpWaypoints());
+            DUMP_WAYPOINTS = false;
+        }
+
         if (!DRAW_WAYPOINTS || canvas == null) {
             return;
         }
