@@ -47,17 +47,19 @@ All waypoints defined for RED alliance. Blue is auto-reflected across X axis (Y 
 ### Live waypoint tuning (Dashboard)
 
 The frequently-moved waypoints are exposed as editable objects on Dashboard under
-`Lebot2_FieldMap`, named `WP_*` (e.g. `WP_FIRE_1`, `WP_BALL_ROW_2_START`). Each expands to
+`Lebot2_FieldMap`, named `WP_*` (e.g. `WP_FIRE_1`, `WP_GOAL_ROW_2_START`). Each expands to
 `x / y / heading` and can be edited live — the field overlay redraws immediately, and the
-change flows through `get()` (offsets still applied) into navigation.
+change flows through `get()` into navigation.
 
-- **Editable:** `WP_START_AUDIENCE`, `WP_START_GOAL`, `WP_FIRE_1..WP_FIRE_6`,
-  `WP_BALL_ROW_1/2/3_START`, `WP_BALL_ROW_1/2/3_END`. Coords are RED base — blue mirrors automatically.
+- **Editable:** `WP_START_AUDIENCE`, `WP_START_GOAL`, `WP_FIRE_1..WP_FIRE_6`, and the two
+  decoupled ball-row sets `WP_GOAL_ROW_1/2/3_START`, `WP_GOAL_ROW_1/2/3_END`,
+  `WP_AUD_ROW_1/2/3_START`, `WP_AUD_ROW_1/2/3_END`. Coords are RED base — blue mirrors automatically.
+- **Ball rows are decoupled by approach** (goal vs audience): the waypoint IS the spline
+  anchor, no offsets. `get()` returns the set matching `IS_AUDIENCE_START`, which also controls
+  which set is drawn — so flip `IS_AUDIENCE_START` to view/tune one set at a time.
 - **Not editable (by design):** `GOAL`, `BASE`, `GATE`, `HUMAN_PLAYER`, `HOMEBASE` — official
   field constants; change these only in code with review.
-- The per-waypoint **offset dials** (`ROW_X_OFFSET`, spline offsets, `FIRE_*_ANGLE_OFFSET`,
-  etc.) still apply on top of the base coords. Use offsets for systematic nudges, edit the
-  `WP_*` base for moving a single waypoint.
+- `FIRE_*_ANGLE_OFFSET` still applies to fire-position headings.
 
 **Save your tuning back to code — Dashboard edits are NOT persisted.** Workflow:
 1. Tune `WP_*` on Dashboard, verify on the field overlay.
@@ -86,50 +88,32 @@ lost on a different machine / app reinstall — the code values (now stale) win 
 | `START_GOAL` | (-50.46, 51.24, 135) |
 | `START_AUDIENCE` | (58.7, 20.8, 139) |
 
-### Ball Rows (Red Alliance base coords)
+### Ball Rows — decoupled by approach (Red base; blue mirrors)
 
-| Row | START base | END base |
+Rows are now two independent sets with no offsets — the coordinate IS the spline anchor.
+`get()` returns the set matching `IS_AUDIENCE_START`. These were seeded from the resolved
+offset values in use at decouple time.
+
+**Goal-approach set** (`WP_GOAL_ROW_*`):
+
+| Row | START (x, y, 90) | END (x, y, 90) |
 |---|---|---|
-| 1 | (-14.17, 24.48, 90) | (-14.17, 49.35, 90) |
-| 2 | (10.24, 25.98, 90) | (10.24, 46.35, 90) |
-| 3 | (34.65, 25.98, 90) | (34.65, 51.35, 90) |
+| 1 | (-17.1732, 36.4842) | (-13.1732, 56.3503) |
+| 2 | (3.2362, 29.9842) | (10.2362, 47.3503) |
+| 3 | (29.6456, 29.9842) | (33.6456, 53.3503) |
 
-### Row Offset Parameters
+**Audience-approach set** (`WP_AUD_ROW_*`):
 
-| Parameter | Default | Effect |
+| Row | START (x, y, 90) | END (x, y, 90) |
 |---|---|---|
-| `ROW_Y_START_OFFSET` | `4` | Added to _START Y. **Positive pushes start further from wall** (closer to end) |
-| `ROW_X_OFFSET` | `0` | Subtracted from all row X coords |
-| `BALL_ROW_BLUE_X_OFFSET` | `0` | Additional X offset for blue alliance ball rows (intake asymmetry) |
-| `OFFSET` | `2` | Used in FIRE_4 X calculation only: `58.7 - OFFSET` |
+| 1 | (-7.1732, 36.4842) | (-13.1732, 56.3503) |
+| 2 | (8.2362, 29.9842) | (10.2362, 52.3503) |
+| 3 | (33.6456, 29.9842) | (33.6456, 53.3503) |
 
-### Spline X Offsets (applied only when `USE_SPLINES=true`, to _START only)
-
-These shift the row approach point laterally so the spline entry arc lines up cleanly.
-
-**Goal start** (approaching from negative X / FIRE_1 side):
-
-| Parameter | Default | Applied to |
-|---|---|---|
-| `GOAL_ROW_1_SPLINE_X_OFFSET` | `-4` | Row 1 start |
-| `GOAL_ROW_2_SPLINE_X_OFFSET` | `-7` | Row 2 start |
-| `GOAL_ROW_3_SPLINE_X_OFFSET` | `-4` | Row 3 start |
-
-**Audience start** (approaching from positive X / FIRE_4 side):
-
-| Parameter | Default | Applied to |
-|---|---|---|
-| `AUD_ROW_1_SPLINE_X_OFFSET` | `6` | Row 1 start |
-| `AUD_ROW_2_SPLINE_X_OFFSET` | `4` | Row 2 start |
-| `AUD_ROW_3_SPLINE_X_OFFSET` | `0` | Row 3 start |
-
-### Worked Example: Effective Row 1 START for Goal/Red
-
-Base: (-14.17, 24.48)
-+ ROW_Y_START_OFFSET(4) on Y
-- ROW_X_OFFSET(0) on X
-+ GOAL_ROW_1_SPLINE_X_OFFSET(-4) on X
-= **(-18.17, 28.48, 90)**
+All row offset machinery (`ROW_X_OFFSET`, `ROW_Y_START_OFFSET`, `*_SPLINE_X_OFFSET`,
+`ROW_2_X_OFFSET`, `AUDIENCE_Y_BALL_ROW_OFFSET`, `BALL_ROW_BLUE_X_OFFSET`) has been **removed** —
+edit the `WP_GOAL_ROW_*` / `WP_AUD_ROW_*` coordinates directly. `OFFSET` (was `58.7 - OFFSET`
+for FIRE_4) is now inert; `WP_FIRE_4` holds the resolved value directly.
 
 ### Flywheel Default Speeds
 
@@ -298,7 +282,6 @@ DistanceHint = NEAR
 ROW_START = 0, ROW_END = 2, ROW_DIRECTION = +1
 GATE_BEFORE_ROW = 2
 SKIP_INITIAL_BACKUP = false
-BALL_ROW_BLUE_X_OFFSET = 0
 ```
 
 ### Audience Wall Start
@@ -310,7 +293,6 @@ DistanceHint = FAR
 ROW_START = 2, ROW_END = 0, ROW_DIRECTION = -1
 GATE_BEFORE_ROW = 0
 SKIP_INITIAL_BACKUP = true
-BALL_ROW_BLUE_X_OFFSET = 0
 ```
 
 ---
@@ -321,11 +303,11 @@ BALL_ROW_BLUE_X_OFFSET = 0
 |---|---|
 | Robot overshoots fire position | `POSITION_TOLERANCE`, `SETTLING_TIMEOUT_MS`, `DISTANCE_PID` |
 | Turns too slow / oscillating | `turnGain`, `turnVelGain`, `turnIGain`, `turnCompleteTolerance` |
-| Missing balls in row | `ROW_Y_START_OFFSET`, spline X offsets, `INTAKE_VEL_INCHES_SEC` |
-| Row approach arc is wrong | `GOAL_ROW_*_SPLINE_X_OFFSET` (or AUD), `SPLINE_PRETURN_THRESHOLD_DEG` |
+| Missing balls in row | `WP_GOAL_ROW_*` / `WP_AUD_ROW_*` (move the row anchors), `INTAKE_VEL_INCHES_SEC` |
+| Row approach arc is wrong | edit the relevant `WP_*_ROW_*_START` (x/heading), `SPLINE_PRETURN_THRESHOLD_DEG` |
 | Balls not launching far enough | `SPEED_MULTIPLIER`, `FIRE_*_DEFAULT_DPS`, `FIRE_*_ANGLE_OFFSET` |
 | Firing too slow between balls | `LAUNCH_SPACER_TIMER`, `PULSED_FIRING`, pulsed timing params |
 | Robot wheelies on decel | `DECEL_SLEW_RATE_REVERSE`, `ACCEL_SLEW_RATE`, `MAX_DRIVE_POWER` |
 | Auton times out | `NAVIGATION_TIMEOUT_SECONDS`, `LAUNCH_TIMEOUT_SECONDS` |
 | Skip rows to save time | `ABORT_AFTER_ROWS` (0=launch only, 1=one row, etc.) |
-| Blue alliance offset issues | `BALL_ROW_BLUE_X_OFFSET` |
+| Wrong row set being tuned/shown | `IS_AUDIENCE_START` selects goal vs audience set (and the overlay) |

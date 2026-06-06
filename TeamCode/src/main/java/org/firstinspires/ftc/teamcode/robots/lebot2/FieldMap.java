@@ -4,8 +4,6 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 
-import org.firstinspires.ftc.teamcode.robots.lebot2.rr_localize.TankDriveActions;
-
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -27,9 +25,6 @@ import java.util.Set;
 @Config(value = "Lebot2_FieldMap")
 public class FieldMap {
 
-    public static double ROW_2_X_OFFSET = -2;
-    public static double AUDIENCE_Y_BALL_ROW_OFFSET = 5;
-
     public static double BALL_ROW_5_START_OFFSET = 9;
 
     public static double AVOID_COLLISION_AUDIENCE = 10;
@@ -41,34 +36,14 @@ public class FieldMap {
     public static boolean DRAW_WAYPOINTS = true;  // Toggle waypoint visualization
     public static double WAYPOINT_RADIUS = 4.0;   // 8" diameter = 4" radius
 
-    // ==================== INTAKE ASYMMETRY OFFSET ====================
-    // Ball row waypoints used to need X offset when reflected for blue alliance
-    // due to asymmetric intake design (shifts 6" in positive X direction)
-    // but this has been largely resolved.
-    public static double BALL_ROW_BLUE_X_OFFSET = 0;  // inches
-    public static double ROW_X_OFFSET = 0;
-
-    // shift how close to the wall rows start - affects navigation and this is
-    // where intake starts. applies to both alliances.
-    public static double ROW_Y_START_OFFSET = 4;
-
     // ==================== START POSITION MODE ====================
-    // Set by Autonomous at init to select which offset set to use
+    // Selects which ball-row set is used AND drawn: goal-approach vs audience-approach.
+    // Set by Autonomous/Robot at init from the chosen start; also a manual Dashboard
+    // toggle for tuning/viewing one row set at a time.
     public static boolean IS_AUDIENCE_START = false;
 
-    // ==================== SPLINE-SPECIFIC OFFSETS (GOAL START) ====================
-    // X offsets for row starts when approaching from FIRE_1 (goal side).
-    // Negative = shift left (toward goal). Only applied when USE_SPLINES is true.
-    public static double GOAL_ROW_1_SPLINE_X_OFFSET = -4;
-    public static double GOAL_ROW_2_SPLINE_X_OFFSET = -7;  // inches
-    public static double GOAL_ROW_3_SPLINE_X_OFFSET = -4;  // inches
-
-    // ==================== SPLINE-SPECIFIC OFFSETS (AUDIENCE START) ====================
-    // X offsets for row starts when approaching from FIRE_4 (audience side).
-    // Positive = shift right (toward audience). Larger offsets for rows further from FIRE_4.
-    public static double AUD_ROW_1_SPLINE_X_OFFSET = 6;   // inches, furthest from FIRE_4
-    public static double AUD_ROW_2_SPLINE_X_OFFSET = 4;   // inches
-    public static double AUD_ROW_3_SPLINE_X_OFFSET = 0;   // inches, closest to FIRE_4
+    // Ball rows are now decoupled goal vs audience sets (WP_GOAL_ROW_* / WP_AUD_ROW_*) —
+    // the waypoints are the spline anchors directly, no offsets. Blue still mirrors red.
 
     // ==================== FIRING ANGLE OFFSETS ====================
     // Offset from goal center for firing positions (degrees)
@@ -141,12 +116,24 @@ public class FieldMap {
     public static Waypoint WP_FIRE_4 = new Waypoint(56.7, 20.8, 139);   // was 58.7 - OFFSET
     public static Waypoint WP_FIRE_5 = new Waypoint(58.7, 21.5, 139);
     public static Waypoint WP_FIRE_6 = new Waypoint(58.7, 21.5, 139);
-    public static Waypoint WP_BALL_ROW_1_START = new Waypoint(-14.1732 + 1, 24.4842 + 8, 90);
-    public static Waypoint WP_BALL_ROW_2_START = new Waypoint(10.2362, 25.9842, 90);
-    public static Waypoint WP_BALL_ROW_3_START = new Waypoint(33.6456, 25.9842, 90);
-    public static Waypoint WP_BALL_ROW_1_END = new Waypoint(-14.1732 + 1, 50.3503 + 6, 90);
-    public static Waypoint WP_BALL_ROW_2_END = new Waypoint(10.2362, 47.3503, 90);
-    public static Waypoint WP_BALL_ROW_3_END = new Waypoint(33.6456, 53.3503, 90);
+    // Ball rows are decoupled by approach direction — splining a row from the goal end vs the
+    // audience end is a different trajectory, so each has its own anchors. RED base; blue mirrors.
+    // get() selects the set by IS_AUDIENCE_START (which also drives the field overlay).
+    // Seeded from the resolved offset values that were in use at decouple time.
+    // ----- Goal-approach set -----
+    public static Waypoint WP_GOAL_ROW_1_START = new Waypoint(-17.1732, 36.4842, 90);
+    public static Waypoint WP_GOAL_ROW_2_START = new Waypoint(3.2362, 29.9842, 90);
+    public static Waypoint WP_GOAL_ROW_3_START = new Waypoint(29.6456, 29.9842, 90);
+    public static Waypoint WP_GOAL_ROW_1_END   = new Waypoint(-13.1732, 56.3503, 90);
+    public static Waypoint WP_GOAL_ROW_2_END   = new Waypoint(10.2362, 47.3503, 90);
+    public static Waypoint WP_GOAL_ROW_3_END   = new Waypoint(33.6456, 53.3503, 90);
+    // ----- Audience-approach set -----
+    public static Waypoint WP_AUD_ROW_1_START = new Waypoint(-7.1732, 36.4842, 90);
+    public static Waypoint WP_AUD_ROW_2_START = new Waypoint(8.2362, 29.9842, 90);
+    public static Waypoint WP_AUD_ROW_3_START = new Waypoint(33.6456, 29.9842, 90);
+    public static Waypoint WP_AUD_ROW_1_END   = new Waypoint(-13.1732, 56.3503, 90);
+    public static Waypoint WP_AUD_ROW_2_END   = new Waypoint(10.2362, 52.3503, 90);
+    public static Waypoint WP_AUD_ROW_3_END   = new Waypoint(33.6456, 53.3503, 90);
 
     // Set true on Dashboard to print all current waypoints (paste-ready) to logcat, then resets.
     public static boolean DUMP_WAYPOINTS = false;
@@ -193,12 +180,12 @@ public class FieldMap {
 
 
         // ----- Ball Pickup Waypoints -----
-        // Starting points for each of the 3 ball rows
-        // Base coordinates only — ROW_X_OFFSET and ROW_Y_START_OFFSET applied dynamically in get()
-        //-------OLD WAYPOINTS-------
-        RED_WAYPOINTS.put("BALL_ROW_1_START", WP_BALL_ROW_1_START);
-        RED_WAYPOINTS.put("BALL_ROW_2_START", WP_BALL_ROW_2_START);
-        RED_WAYPOINTS.put("BALL_ROW_3_START", WP_BALL_ROW_3_START);
+        // Ball rows are decoupled goal/audience sets; get() selects the active set by
+        // IS_AUDIENCE_START. These map entries reference the GOAL set only for enumeration
+        // and overlay (get() overrides the selection for any BALL_ROW name).
+        RED_WAYPOINTS.put("BALL_ROW_1_START", WP_GOAL_ROW_1_START);
+        RED_WAYPOINTS.put("BALL_ROW_2_START", WP_GOAL_ROW_2_START);
+        RED_WAYPOINTS.put("BALL_ROW_3_START", WP_GOAL_ROW_3_START);
 
         //new waypoint for picking up ball in opposing human player area during auton
 //        RED_WAYPOINTS.put("BALL_ROW_4_START", new Waypoint(62.4-BALL_ROW_5_START_OFFSET, 53.2, 90));
@@ -207,12 +194,10 @@ public class FieldMap {
 //        RED_WAYPOINTS.put("BALL_ROW_5_END", new Waypoint(10.2362, 46.8503+4.5-5, 90));
 
         // ----- Ball Row Endpoints -----
-        // Ending points after driving through ball rows
-        // Base coordinates only — ROW_X_OFFSET applied dynamically in get()
-        //-------OLD WAYPOINTS-------
-        RED_WAYPOINTS.put("BALL_ROW_1_END", WP_BALL_ROW_1_END);
-        RED_WAYPOINTS.put("BALL_ROW_2_END", WP_BALL_ROW_2_END);
-        RED_WAYPOINTS.put("BALL_ROW_3_END", WP_BALL_ROW_3_END);
+        // (See note above — GOAL set referenced for enumeration; get() selects active set.)
+        RED_WAYPOINTS.put("BALL_ROW_1_END", WP_GOAL_ROW_1_END);
+        RED_WAYPOINTS.put("BALL_ROW_2_END", WP_GOAL_ROW_2_END);
+        RED_WAYPOINTS.put("BALL_ROW_3_END", WP_GOAL_ROW_3_END);
 
         // ----- Gate -----
         // Position to release previously scored balls
@@ -248,6 +233,13 @@ public class FieldMap {
      * @throws IllegalArgumentException if waypoint name not found
      */
     public static Waypoint get(String name, boolean isRedAlliance) {
+        // Ball rows: decoupled goal vs audience approach sets, selected by start mode.
+        // The waypoints ARE the spline anchors — no offsets applied. Blue mirrors red.
+        if (name.startsWith("BALL_ROW")) {
+            Waypoint redRow = selectRowWaypoint(name);
+            return isRedAlliance ? redRow : redRow.reflected();
+        }
+
         Waypoint baseWaypoint = RED_WAYPOINTS.get(name);
         if (baseWaypoint == null) {
             throw new IllegalArgumentException("Unknown waypoint: " + name);
@@ -270,76 +262,31 @@ public class FieldMap {
                     baseWaypoint.heading + FIRE_2_ANGLE_OFFSET
             );
         }
-//        else if (name.equals("FIRE_4")) {
-//            redWaypoint = new Waypoint(
-//                    baseWaypoint.x,
-//                    baseWaypoint.y,
-//                    baseWaypoint.heading + FIRE_4_ANGLE_OFFSET
-//            );
-//        }
-
-        // Apply dynamic offsets to ball row waypoints
-        if (name.startsWith("BALL_ROW")) {
-            double xOffset = -ROW_X_OFFSET;  // Negative because original had subtraction
-            double yOffset = 0;
-            if (name.contains("_END")) {
-                if(IS_AUDIENCE_START){
-                    if(name.equals("BALL_ROW_2_END")){
-                        yOffset = AUDIENCE_Y_BALL_ROW_OFFSET;
-                    }
-                }
-
-            }
-
-            if (name.contains("_START")) {
-                yOffset = ROW_Y_START_OFFSET;
-
-                // Apply spline-specific X offsets when USE_SPLINES is enabled
-                // Select offset set based on starting position (approach direction matters)
-                if (TankDriveActions.USE_SPLINES) {
-                    if (IS_AUDIENCE_START) {
-                        // Approaching from FIRE_4 (positive X side)
-                        if (name.equals("BALL_ROW_1_START")) {
-                            xOffset += AUD_ROW_1_SPLINE_X_OFFSET;
-                        } else if (name.equals("BALL_ROW_2_START")) {
-                            //xOffset += AUD_ROW_2_SPLINE_X_OFFSET;
-                            xOffset = ROW_2_X_OFFSET;
-                            yOffset = ROW_Y_START_OFFSET;
-                        } else if (name.equals("BALL_ROW_3_START")) {
-                            xOffset += AUD_ROW_3_SPLINE_X_OFFSET;
-                        }
-                    } else {
-                        // Approaching from FIRE_1 (negative X side)
-                        if (name.equals("BALL_ROW_1_START")) {
-                            xOffset += GOAL_ROW_1_SPLINE_X_OFFSET;
-                        } else if (name.equals("BALL_ROW_2_START")) {
-                            xOffset += GOAL_ROW_2_SPLINE_X_OFFSET;
-                        } else if (name.equals("BALL_ROW_3_START")) {
-                            xOffset += GOAL_ROW_3_SPLINE_X_OFFSET;
-                        }
-                    }
-                }
-            }
-            redWaypoint = new Waypoint(
-                    baseWaypoint.x + xOffset,
-                    baseWaypoint.y + yOffset,
-                    baseWaypoint.heading
-            );
-        }
 
         if (isRedAlliance) {
             return redWaypoint;
         }
 
-        // Ball row waypoints need additional X offset for blue due to intake asymmetry
-        if (name.startsWith("BALL_ROW")) {
-//            if(name.startsWith("BALL_ROW_1")){
-//                return redWaypoint.reflectedWithXOffset(0);
-//            }
-            return redWaypoint.reflectedWithXOffset(BALL_ROW_BLUE_X_OFFSET);
-        }
-
         return redWaypoint.reflected();
+    }
+
+    /**
+     * Select the active RED ball-row waypoint based on start mode (goal vs audience approach).
+     * Splining a row from opposite ends of the field is a different trajectory, so each
+     * approach has its own anchors — no shared base + offsets.
+     */
+    private static Waypoint selectRowWaypoint(String name) {
+        boolean aud = IS_AUDIENCE_START;
+        switch (name) {
+            case "BALL_ROW_1_START": return aud ? WP_AUD_ROW_1_START : WP_GOAL_ROW_1_START;
+            case "BALL_ROW_2_START": return aud ? WP_AUD_ROW_2_START : WP_GOAL_ROW_2_START;
+            case "BALL_ROW_3_START": return aud ? WP_AUD_ROW_3_START : WP_GOAL_ROW_3_START;
+            case "BALL_ROW_1_END":   return aud ? WP_AUD_ROW_1_END   : WP_GOAL_ROW_1_END;
+            case "BALL_ROW_2_END":   return aud ? WP_AUD_ROW_2_END   : WP_GOAL_ROW_2_END;
+            case "BALL_ROW_3_END":   return aud ? WP_AUD_ROW_3_END   : WP_GOAL_ROW_3_END;
+            default:
+                throw new IllegalArgumentException("Unknown ball row: " + name);
+        }
     }
 
     /**
@@ -397,12 +344,33 @@ public class FieldMap {
      */
     public static String dumpWaypoints() {
         StringBuilder sb = new StringBuilder("==== FieldMap waypoint dump (RED base coords) ====\n");
+        // Non-row waypoints from the map (rows are decoupled — handled explicitly below)
         for (Map.Entry<String, Waypoint> e : RED_WAYPOINTS.entrySet()) {
+            if (e.getKey().startsWith("BALL_ROW")) continue;
             Waypoint w = e.getValue();
-            sb.append(String.format(Locale.US,
-                    "new Waypoint(%.4f, %.4f, %.4f);  // %s%n", w.x, w.y, w.heading, e.getKey()));
+            sb.append(dumpLine(e.getKey(), w));
         }
+        // Both decoupled ball-row sets
+        sb.append("-- goal-approach rows --\n");
+        sb.append(dumpLine("WP_GOAL_ROW_1_START", WP_GOAL_ROW_1_START));
+        sb.append(dumpLine("WP_GOAL_ROW_2_START", WP_GOAL_ROW_2_START));
+        sb.append(dumpLine("WP_GOAL_ROW_3_START", WP_GOAL_ROW_3_START));
+        sb.append(dumpLine("WP_GOAL_ROW_1_END", WP_GOAL_ROW_1_END));
+        sb.append(dumpLine("WP_GOAL_ROW_2_END", WP_GOAL_ROW_2_END));
+        sb.append(dumpLine("WP_GOAL_ROW_3_END", WP_GOAL_ROW_3_END));
+        sb.append("-- audience-approach rows --\n");
+        sb.append(dumpLine("WP_AUD_ROW_1_START", WP_AUD_ROW_1_START));
+        sb.append(dumpLine("WP_AUD_ROW_2_START", WP_AUD_ROW_2_START));
+        sb.append(dumpLine("WP_AUD_ROW_3_START", WP_AUD_ROW_3_START));
+        sb.append(dumpLine("WP_AUD_ROW_1_END", WP_AUD_ROW_1_END));
+        sb.append(dumpLine("WP_AUD_ROW_2_END", WP_AUD_ROW_2_END));
+        sb.append(dumpLine("WP_AUD_ROW_3_END", WP_AUD_ROW_3_END));
         return sb.toString();
+    }
+
+    private static String dumpLine(String label, Waypoint w) {
+        return String.format(Locale.US,
+                "new Waypoint(%.4f, %.4f, %.4f);  // %s%n", w.x, w.y, w.heading, label);
     }
 
     // ==================== WAYPOINT NAME CONSTANTS ====================
@@ -443,8 +411,8 @@ public class FieldMap {
      * Draw all waypoints on the field overlay.
      * Red alliance waypoints drawn in red, blue alliance in blue.
      * Each waypoint is drawn as an 8" diameter circle.
-     * Waypoints are drawn with all dynamic offsets applied (ROW_X_OFFSET,
-     * ROW_Y_START_OFFSET, spline-specific offsets when USE_SPLINES is true).
+     * Ball rows show only the ACTIVE set (goal vs audience) per IS_AUDIENCE_START,
+     * since get() returns the selected set.
      *
      * @param canvas The FTC Dashboard field overlay canvas
      */

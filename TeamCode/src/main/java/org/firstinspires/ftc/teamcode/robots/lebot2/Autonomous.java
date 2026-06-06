@@ -147,7 +147,6 @@ public class Autonomous implements TelemetryProvider {
         // Reset mission progress
         robot.missions.resetGroupProgress();
         robot.missions.clearState();
-        FieldMap.BALL_ROW_BLUE_X_OFFSET =0;
         robot.launcher.SPEED_MULTIPLIER = .85;
         // Audience speed (auton vs teleop) is now selected inside updateTargetSpeed() by mode —
         // no longer overwritten here, so the Dashboard values stay tunable.
