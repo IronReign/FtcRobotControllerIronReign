@@ -129,7 +129,7 @@ for FIRE_4) is now inert; `WP_FIRE_4` holds the resolved value directly.
 | Parameter | Default | What it does |
 |---|---|---|
 | `USE_SPLINES` | `true` | Spline trajectories for ball row approach; turn-drive-turn for everything else |
-| `INTAKE_VEL_INCHES_SEC` | `10.0` | Velocity through ball row (lineToY segment of spline trajectory) |
+| `INTAKE_VEL_INCHES_SEC` | `10.0` | Velocity through ball row (the spline-through-row segment) |
 | `INITIAL_TURN_SKIP_TOLERANCE` | `5.0` | Skip initial turn if heading within this many degrees of bearing |
 | `FINAL_TURN_SKIP_TOLERANCE` | `10.0` | Skip final turn if heading within this (turret handles fine aim) |
 | `SPLINE_PRETURN_THRESHOLD_DEG` | `30.0` | If heading differs from row bearing by more than this, add pre-turn before spline |
@@ -139,9 +139,13 @@ for FIRE_4) is now inert; `WP_FIRE_4` holds the resolved value directly.
 
 ### How Spline Row Pickup Works (buildRowTrajectory)
 1. Compute bearing from current pose to row start
-2. If heading difference > `SPLINE_PRETURN_THRESHOLD_DEG`: **turn -> intake -> spline -> lineToY**
-3. If heading difference <= threshold: **intake -> spline -> lineToY**
-4. Spline approach uses default velocity; lineToY segment uses `INTAKE_VEL_INCHES_SEC`
+2. If heading difference > `SPLINE_PRETURN_THRESHOLD_DEG`: **turn -> intake -> spline to START -> spline to END**
+3. If heading difference <= threshold: **intake -> spline to START -> spline to END**
+4. Approach spline uses default velocity; the through-row spline uses `INTAKE_VEL_INCHES_SEC`
+5. The through-row segment is now a `splineTo(rowEnd)` — it honors the **full** END pose
+   (x, y, and heading-as-exit-tangent), so the drive-through can angle. Both START and END
+   are full spline anchors. (Caveat: START heading and the START→END direction must be
+   roughly compatible or RoadRunner throws a path-continuity error at build time.)
 
 ### How Return-to-Fire Works (turn-drive-turn)
 1. `shouldDriveReversed()` picks forward or reverse based on least turning

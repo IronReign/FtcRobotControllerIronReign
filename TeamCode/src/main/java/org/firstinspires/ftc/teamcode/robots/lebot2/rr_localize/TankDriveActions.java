@@ -256,11 +256,12 @@ public class TankDriveActions {
      * Uses a hybrid approach:
      * 1. If robot heading differs significantly from bearing to row start, turn first
      * 2. Fire intake callback after the turn (before spline approach)
-     * 3. Spline to row start with entry tangent matching bearing, exit tangent at 90°
-     * 4. Drive straight through row at reduced velocity
+     * 3. Spline to row start (entry tangent from bearing, exit tangent = rowStart heading)
+     * 4. Spline through the row to rowEnd at reduced velocity — uses the FULL rowEnd pose
+     *    (position + heading), so the drive-through can angle, not just run straight up Y
      *
-     * @param rowStart Start of ball row (position + heading as entry tangent)
-     * @param rowEnd End of ball row (position)
+     * @param rowStart Start of ball row (position + heading as spline tangent)
+     * @param rowEnd End of ball row (position + heading as spline exit tangent)
      * @param intakeVelInchesPerSec Velocity through the row while intaking (inches/sec)
      * @param onIntakeStart Action to fire after turn (e.g., start intake)
      * @return RR trajectory action for entire row sequence
@@ -299,7 +300,7 @@ public class TankDriveActions {
 
             Action splineAction = driveTrain.actionBuilder(postTurnPose)
                     .splineTo(rowStart.position, rowStart.heading.toDouble())
-                    .lineToY(rowEnd.position.y, slowConstraint, driveTrain.defaultAccelConstraint)
+                    .splineTo(rowEnd.position, rowEnd.heading.toDouble(), slowConstraint, driveTrain.defaultAccelConstraint)
                     .build();
 
             // Intake starts after turn, before spline approach
@@ -311,7 +312,7 @@ public class TankDriveActions {
 
             Action splineAction = driveTrain.actionBuilder(currentPose)
                     .splineTo(rowStart.position, rowStart.heading.toDouble())
-                    .lineToY(rowEnd.position.y, slowConstraint, driveTrain.defaultAccelConstraint)
+                    .splineTo(rowEnd.position, rowEnd.heading.toDouble(), slowConstraint, driveTrain.defaultAccelConstraint)
                     .build();
 
             // Intake starts before spline (no turn needed, already facing roughly right direction)
