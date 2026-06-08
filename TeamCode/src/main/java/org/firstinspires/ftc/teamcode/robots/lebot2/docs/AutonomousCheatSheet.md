@@ -63,8 +63,9 @@ change flows through `get()` into navigation.
 
 **Save your tuning back to code — Dashboard edits are NOT persisted.** Workflow:
 1. Tune `WP_*` on Dashboard, verify on the field overlay.
-2. Set `DUMP_WAYPOINTS = true` (`Lebot2_FieldMap`). On the next loop it prints every current
-   waypoint in paste-ready form to **logcat**, then flips itself back off.
+2. Set `DUMP_WAYPOINTS = true` (`Lebot2_FieldMap`). On the next loop it writes every current
+   waypoint in paste-ready form to **`/FIRST/waypoint_dump.txt`** on the robot (overwrites each
+   time), then flips itself back off. Pull it off the robot like the CSV logs.
 3. Copy those values into the `WP_*` field initializers in `FieldMap.java` and commit.
 
 If you skip step 3, the tuned values live only in that laptop's Dashboard config and will be

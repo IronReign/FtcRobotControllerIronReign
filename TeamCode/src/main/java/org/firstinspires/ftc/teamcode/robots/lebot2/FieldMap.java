@@ -1,9 +1,14 @@
 package org.firstinspires.ftc.teamcode.robots.lebot2;
 
+import android.os.Environment;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -121,12 +126,12 @@ public class FieldMap {
     // get() selects the set by IS_AUDIENCE_START (which also drives the field overlay).
     // Seeded from the resolved offset values that were in use at decouple time.
     // ----- Goal-approach set -----
-    public static Waypoint WP_GOAL_ROW_1_START = new Waypoint(-17.1732, 36.4842, 90);
-    public static Waypoint WP_GOAL_ROW_2_START = new Waypoint(3.2362, 29.9842, 90);
-    public static Waypoint WP_GOAL_ROW_3_START = new Waypoint(29.6456, 29.9842, 90);
-    public static Waypoint WP_GOAL_ROW_1_END   = new Waypoint(-13.1732, 56.3503, 90);
-    public static Waypoint WP_GOAL_ROW_2_END   = new Waypoint(10.2362, 47.3503, 90);
-    public static Waypoint WP_GOAL_ROW_3_END   = new Waypoint(33.6456, 53.3503, 90);
+    public static Waypoint WP_GOAL_ROW_1_START = new Waypoint(-17, 38, 45);
+    public static Waypoint WP_GOAL_ROW_2_START = new Waypoint(5, 39, 45);
+    public static Waypoint WP_GOAL_ROW_3_START = new Waypoint(29, 39, 30);
+    public static Waypoint WP_GOAL_ROW_1_END   = new Waypoint(-12, 54, 90);
+    public static Waypoint WP_GOAL_ROW_2_END   = new Waypoint(12, 54, 90);
+    public static Waypoint WP_GOAL_ROW_3_END   = new Waypoint(34, 54, 90);
     // ----- Audience-approach set -----
     public static Waypoint WP_AUD_ROW_1_START = new Waypoint(-7.1732, 36.4842, 90);
     public static Waypoint WP_AUD_ROW_2_START = new Waypoint(8.2362, 29.9842, 90);
@@ -373,6 +378,20 @@ public class FieldMap {
                 "new Waypoint(%.4f, %.4f, %.4f);  // %s%n", w.x, w.y, w.heading, label);
     }
 
+    /**
+     * Write the current waypoint dump to /FIRST/waypoint_dump.txt (overwrites each time, so the
+     * file always holds the latest values). Pull it off the robot like the CSV logs.
+     */
+    public static void writeDumpToFile() {
+        String path = Environment.getExternalStorageDirectory() + "/FIRST/waypoint_dump.txt";
+        try (FileWriter fw = new FileWriter(new File(path), false)) {
+            fw.write(dumpWaypoints());
+            System.out.println("Waypoint dump written to " + path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     // ==================== WAYPOINT NAME CONSTANTS ====================
     // Use these to avoid typos
 
@@ -417,9 +436,9 @@ public class FieldMap {
      * @param canvas The FTC Dashboard field overlay canvas
      */
     public static void drawWaypoints(Canvas canvas) {
-        // One-shot: dump current waypoints to logcat when toggled on Dashboard
+        // One-shot: dump current waypoints to /FIRST/waypoint_dump.txt when toggled on Dashboard
         if (DUMP_WAYPOINTS) {
-            System.out.println(dumpWaypoints());
+            writeDumpToFile();
             DUMP_WAYPOINTS = false;
         }
 
