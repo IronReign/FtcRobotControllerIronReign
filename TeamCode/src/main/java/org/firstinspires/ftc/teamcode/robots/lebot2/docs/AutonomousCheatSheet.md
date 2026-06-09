@@ -1,7 +1,7 @@
 # Autonomous Configuration Cheat Sheet
 ## execute2() — Goal Wall Start (splines enabled)
 
-Generated from direct code read — 2026-03-19
+Generated from direct code read — 2026-03-19 (reviewed/updated 2026-06-08)
 
 ---
 
@@ -17,24 +17,28 @@ Generated from direct code read — 2026-03-19
 | `ROW_START` | `0` (goal) / `2` (aud) | First ball row index |
 | `ROW_END` | `2` (goal) / `0` (aud) | Last ball row index |
 | `ROW_DIRECTION` | `+1` (goal) / `-1` (aud) | Direction through rows |
-| `ABORT_AFTER_ROWS` | `-1` | Selective abort: -1=all rows, 0=no rows, N=after N rows then navigate to alt position |
-| `ALT_POSITION_GOAL` | `"FIRE_2"` | Abort destination for goal start |
-| `ALT_POSITION_AUDIENCE` | `"BASE"` | Abort destination for audience start (opposing alliance base) |
+| `ABORT_AFTER_ROWS` | `-1` | Selective abort: -1=all rows, 0=no rows, N=after N rows then navigate to alt position (init: D-pad Right) |
+| `ALT_POSITION_GOAL` | `"FIRE_2"` | Goal abort destination — **FIRE_2 is INSIDE the launch triangle, so NO LEAVE points** |
+| `ALT_POSITION_AUDIENCE` | `"BASE"` | Audience abort destination — opposing alliance base (outside, gets LEAVE) |
+| `CENTERING_TIMEOUT_SECONDS` | `2.0` | **Audience only:** max wait for turret lock before the first launch (START_TARGETING) |
 | `LOGGING_ENABLED` | `true` | CSV logging |
+| `leave` | `false` | **BROKEN/one-off** — goal-side; parks at a firing position, no LEAVE points. Ignore until rebuilt. |
 
 ### execute2() Flow
 ```
-INIT -> BACKUP_TO_FIRE -> LAUNCH -> BALL_ROW(0) -> RETURN_TO_FIRE -> LAUNCH -> BALL_ROW(1) -> ... -> COMPLETE
+Goal start:     INIT -> BACKUP_TO_FIRE -> LAUNCH -> BALL_ROW(0) -> RETURN_TO_FIRE -> LAUNCH -> ... -> COMPLETE
+Audience start: INIT -> (already at fire) SPIN UP -> START_TARGETING (wait for turret lock,
+                up to CENTERING_TIMEOUT_SECONDS) -> LAUNCH -> BALL_ROW(2) -> RETURN -> LAUNCH -> ...
                                     ^ FIRE_POSITION increments each cycle
 ```
-**Key difference from execute()**: No START_TARGETING / WAITING_TARGET states. Goes straight BACKUP -> LAUNCH. No vision centering step before launch.
+**Audience adds a turret-targeting wait before the first launch** (`START_TARGETING` / `WAITING_TARGET`, gated by `CENTERING_TIMEOUT_SECONDS`); goal start backs in and launches without it.
 
 ### Dead / Dormant in execute2()
 - `DO_OPEN_SESAME` — gate release code fully commented out
 - `MIN_TIME_FOR_ROW` — time-based skip logic fully commented out
 - `GATE_BEFORE_ROW` — set but never checked
-- `CENTERING_TIMEOUT_SECONDS` — used only in execute()
-- `FIRST_ANGLE_OFFSET`, `SECOND_ANGLE_OFFSET` — used only in execute()
+- `leave` — goal-side one-off; parks at a firing position (no LEAVE points), effectively useless
+- `FIRST_ANGLE_OFFSET`, `SECOND_ANGLE_OFFSET` — used only in the retired `execute()` path
 - `AUTON_LAUNCH_SPACER_TIME` — assignment to launcher commented out
 - `oldRobot` — never read anywhere meaningful
 
@@ -254,8 +258,8 @@ for FIRE_4) is now inert; `WP_FIRE_4` holds the resolved value directly.
 | `LAUNCH_SPACER_TIMER_LAST` | `1.0s` | Longer spacer for last ball (no ball behind pushing) |
 | `FEED_GOAL` | `-0.7` | Belt feed power for goal distance |
 | `FEED_AUDIENCE` | `-0.5` | Belt feed power for audience distance |
-| `VISION_OFFSET_GOAL` | `0` | Vision offset for goal-side shots |
-| `VISION_OFFSET_AUDIENCE` | `-2` | Vision offset for audience-side shots |
+| `VISION_OFFSET_GOAL` | `0` | Turret aim offset for goal-side shots |
+| `VISION_OFFSET_AUDIENCE` | `4` | Turret aim offset for audience-side shots (also set alliance-specific in auton: red −2 / blue 4) |
 
 ---
 
