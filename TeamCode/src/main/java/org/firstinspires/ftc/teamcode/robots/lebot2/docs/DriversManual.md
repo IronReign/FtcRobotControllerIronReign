@@ -29,6 +29,12 @@ Controls active while the OpMode is initialized but not yet started.
 
 > **Turret calibration:** the Guide-button two-phase calibration is **currently broken — don't rely on it.** Instead, **physically rotate the turret so the tic marks line up** (turret pointing straight forward) **before or during init**. The encoder zeros to that aligned position, so getting the tic marks aligned at startup is the calibration.
 
+> ⚠️ **Vision pipelines are PER-ALLIANCE — you must tune BOTH.** The Limelight uses a different pipeline for each alliance: **blue = pipeline 0, red = pipeline 1.** Selecting alliance (X/B) switches the camera to that alliance's pipeline. **Tuning vision for one alliance does NOTHING for the other** — if you retune at a venue (lighting/exposure/AprilTag changes), you must tune **both** pipeline 0 and pipeline 1, or the alliance you didn't tune will get no vision solutions and the robot will play blind (no targeting, no relocalization). DECODE (pipeline 4) is tuning-only and is **never** used in a match, so verifying AprilTags on DECODE does not confirm the match pipelines work.
+
+> ⚠️ **BEST PRACTICE at new venue** Connect the limelight to a laptop and tune pipeline 0 or 1 on the least illuminated tag on the competition fields. 0 is Blue, 1 is Red. The exposure value is usually around 300. The value should the lowest where the april tag always looks locked at the furthest distance it needs to work from. Then bump it up just a little for safety. Shade the april tag from some overhead light with a spare field tile. Does it still work? Copy the new exposure value to the other pipeline.
+
+> ✅ **Pre-match vision confirmation (do this every match):** After selecting your alliance in Init, point the robot at your goal AprilTag and **watch the turret/vision LEDs (inner-right zone) go cyan, then white** — that confirms the live match pipeline is actually seeing the tag for the alliance you're playing. If they stay off/yellow with the tag clearly in view, the pipeline for this alliance is not solving — fix it before the match (see Test Mode → Vision check). The Test-Mode Vision health check can also confirm this, but **you must run it on the alliance you'll actually play and read the values** (`target=YES botpose=YES`) — that check always shows PASS, so the PASS label alone means nothing.
+
 ---
 
 ## Tele-Op Mode
@@ -212,7 +218,7 @@ Press **Back** at any time to abort the health check.
 | **Star Direction** | Star trigger spins correct way | Driver visual confirmation (A=yes, B=no) |
 | **Intake Motor** | Intake belt draws current | Current > 0.1A during 1-second run |
 | **Conveyor (intake)** | Conveyor draws current during intake | Current > 0.1A during 1-second run |
-| **Vision** | Limelight sees targets | Informational only (always passes) — reports whether target/botpose detected |
+| **Vision** | Limelight sees targets | Informational only (**always shows PASS**) — you must READ the reported `target=` and `botpose=` values; both must be `YES`. ⚠️ Run this on the alliance you'll actually play (pipelines are per-alliance: blue=0, red=1) with your goal AprilTag in view. |
 
 ### Reading the Results
 
@@ -249,6 +255,7 @@ RESULT:             ALL CHECKS PASSED
 | Star Direction FAIL | Star spinning wrong way or not spinning | Check star servo direction/wiring |
 | Intake Motor FAIL | Intake belt motor disconnected | Check intake motor cable |
 | Conveyor FAIL | Conveyor motor disconnected | Check conveyor motor cable |
+| Vision `target=NO` / `botpose=NO` (but camera connects) | This alliance's pipeline (blue=0, red=1) isn't tuned/configured at this venue — tag not detected or field map (.fmap) not loaded. **A pipeline tuned for one alliance does not help the other.** | In the Limelight web app, select **this alliance's** pipeline slot, confirm it's an AprilTag pipeline detecting your goal tag, and that the DECODE field map is loaded (needed for botpose). Tune BOTH pipelines for the venue. |
 
 ### Dashboard Thresholds
 

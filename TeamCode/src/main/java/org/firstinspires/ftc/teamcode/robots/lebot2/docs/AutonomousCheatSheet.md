@@ -306,6 +306,25 @@ SKIP_INITIAL_BACKUP = true
 
 ---
 
+## 9. Vision Pipelines (Limelight) — PER-ALLIANCE
+
+⚠️ **The match pipeline is chosen by alliance, and each alliance is a separate Limelight pipeline:**
+
+| Alliance | Pipeline | Goal AprilTag |
+|---|---|---|
+| Blue | `0` | Tag 20 |
+| Red | `1` | Tag 24 |
+| (tuning only) DECODE | `4` | all DECODE tags — **never used in a match** |
+
+- `Vision.setAlliance(isRed)` switches the camera: red → pipeline 1, blue → pipeline 0. Default at construction is pipeline 1 (red).
+- **Tuning one alliance's pipeline does NOTHING for the other.** If you retune vision at a venue (exposure/lighting/tag), you must tune **both** pipeline 0 and pipeline 1, or the un-tuned alliance gets no solutions (no targeting, no botpose, no relocalization) and plays blind.
+- **DECODE (4) is tuning-only.** Verifying AprilTags on DECODE in the web app does **not** confirm the match pipelines (0/1) work — they're independent slots.
+- `botpose` (used for localization/distance) requires the **DECODE field map (.fmap)** loaded on the active pipeline. A pipeline can detect the tag (gives `tx` for turret aim) yet return no botpose if the fmap is missing.
+
+**Pre-match vision check (every match):** after selecting alliance, aim at your goal tag and confirm the turret/vision LEDs go **cyan → white**, or run the Test-Mode Vision health check **on the alliance you'll play** and read `target=YES botpose=YES` (that check always shows PASS — the label means nothing, read the values).
+
+---
+
 ## Quick Reference: What to Tune for Common Issues
 
 | Problem | Parameters to adjust |
@@ -320,3 +339,4 @@ SKIP_INITIAL_BACKUP = true
 | Auton times out | `NAVIGATION_TIMEOUT_SECONDS`, `LAUNCH_TIMEOUT_SECONDS` |
 | Skip rows to save time | `ABORT_AFTER_ROWS` (0=launch only, 1=one row, etc.) |
 | Wrong row set being tuned/shown | `IS_AUDIENCE_START` selects goal vs audience set (and the overlay) |
+| No vision on one alliance (camera connects, no solutions) | That alliance's pipeline isn't tuned (blue=0, red=1) — tune BOTH pipelines per venue; confirm .fmap loaded for botpose (see §9) |
