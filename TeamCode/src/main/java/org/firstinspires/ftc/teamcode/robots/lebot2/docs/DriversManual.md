@@ -120,15 +120,17 @@ Set these to give way to a partner team or grab LEAVE points. Several behave **d
   - `ALL` (default) = collect every row
   - `0` = launch preloads only, collect no rows
   - `1` / `2` = collect that many rows, then park
-  - **Park destination differs by side:** goal start parks at `FIRE_2` (stays on your side); audience start drives to the **opposing alliance's BASE** (clears your partner's lane). Both are Dashboard-tunable (`ALT_POSITION_GOAL`, `ALT_POSITION_AUDIENCE`).
-- **`leave`** (Dashboard) — **goal start only**: fire preloads, return to fire, then stop. A minimal "score preloads and stay out of the way" run.
-- **`SKIP_LAUNCH`** (Dashboard) — skip launching entirely and just drive off the line for **LEAVE** points.
+  - **Park destination by side:** goal start parks at `FIRE_2` — **note this is a firing position INSIDE the launch triangle, so it does NOT earn LEAVE points** and doesn't really clear your alliance area. Audience start drives to the **opposing alliance's BASE** (outside — clears the lane and gets LEAVE). Both are Dashboard-tunable (`ALT_POSITION_GOAL`, `ALT_POSITION_AUDIENCE`).
+- **`SKIP_LAUNCH`** (Dashboard) — skip launching entirely and just drive off the line for **LEAVE** points (goes to opposing base — the one option that reliably leaves the zone).
 - **`CENTERING_TIMEOUT_SECONDS`** (Dashboard) — **audience only**: how long to wait for turret lock before the first launch.
 
-### ⚠️ Currently broken / inactive — do NOT tune these
+> **Only `SKIP_LAUNCH` (or an audience-start abort) actually leaves the launch zone for LEAVE points.** There is currently no goal-side "fire preloads then leave" — the goal-side abort and `leave` both park inside the triangle.
 
-These appear on Dashboard but **do nothing right now** (their code paths are disabled). Tuning them live will mislead you:
+### ⚠️ Currently broken / useless — do NOT tune these
 
+These appear on Dashboard but **do nothing useful right now** (their code paths are disabled or misbehave). Tuning them live will mislead you:
+
+- **`leave`** — **broken/useless.** Goal-side only; supposed to be a "leave" play but it just fires preloads, returns to a **firing position** (inside the triangle), and stops — **no LEAVE points, doesn't leave.** Leftover one-off; ignore it until rebuilt.
 - `DO_OPEN_SESAME` — gate release is fully commented out; no Open Sesame happens.
 - `MIN_TIME_FOR_ROW` — the time-based row-skip is disabled; rows are not skipped on low time.
 - `START_AT_GOAL_WALL` — overridden by the gamepad start-position selection (A/Y); has no effect.

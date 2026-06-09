@@ -127,11 +127,11 @@ public class FieldMap {
     // Seeded from the resolved offset values that were in use at decouple time.
     // ----- Goal-approach set -----
     public static Waypoint WP_GOAL_ROW_1_START = new Waypoint(-17, 38, 45);
-    public static Waypoint WP_GOAL_ROW_2_START = new Waypoint(5, 39, 45);
-    public static Waypoint WP_GOAL_ROW_3_START = new Waypoint(29, 39, 30);
-    public static Waypoint WP_GOAL_ROW_1_END   = new Waypoint(-12, 54, 90);
-    public static Waypoint WP_GOAL_ROW_2_END   = new Waypoint(12, 54, 90);
-    public static Waypoint WP_GOAL_ROW_3_END   = new Waypoint(34, 54, 90);
+    public static Waypoint WP_GOAL_ROW_2_START = new Waypoint(5, 44, 55);
+    public static Waypoint WP_GOAL_ROW_3_START = new Waypoint(29, 43, 35);
+    public static Waypoint WP_GOAL_ROW_1_END   = new Waypoint(-12, 48, 90);
+    public static Waypoint WP_GOAL_ROW_2_END   = new Waypoint(12, 59, 90);
+    public static Waypoint WP_GOAL_ROW_3_END   = new Waypoint(34, 59, 90);
     // ----- Audience-approach set -----
     public static Waypoint WP_AUD_ROW_1_START = new Waypoint(-7.1732, 36.4842, 90);
     public static Waypoint WP_AUD_ROW_2_START = new Waypoint(8.2362, 29.9842, 90);

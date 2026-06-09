@@ -112,9 +112,9 @@ public final class TankDrivePinpoint implements DriveTrainBase {
         public double turnFeedforwardScale = 0.0; // Scale feedforward (0=pure feedback, 1=full feedforward)
 
         // turn completion (position-based after profile ends)
-        public double turnCompleteTolerance = 5.0;      // Heading error tolerance (degrees) — turret handles fine aim
-        public double turnCompleteVelTolerance = 0.2;   // Angular velocity tolerance (rad/s)
-        public double turnCompleteTimeout = 2.0;        // Max seconds to settle after profile (safety)
+        public double turnCompleteTolerance = 8.0;      // Heading error tolerance (degrees) — turret handles fine aim
+        public double turnCompleteVelTolerance = 0.8;   // Angular velocity tolerance (rad/s)
+        public double turnCompleteTimeout = 0.5;        // Max seconds to settle after profile (safety)
     }
 
     public static Params PARAMS = new Params();
