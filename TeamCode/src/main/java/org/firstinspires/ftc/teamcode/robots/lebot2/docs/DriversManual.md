@@ -42,51 +42,34 @@ Controls active while the OpMode is initialized but not yet started.
 
 Drive input is always active. If a mission or trajectory is running, significant joystick input (>10% deflection) automatically aborts it and returns control to the driver.
 
-Normal turn dampening is 70%. Slow mode reduces it to 30%.
+Normal turn dampening is 90%. Slow mode (toggle with **A**) reduces it to 40%.
 
-### Subsystem Controls
-
-| Input | Action |
-|---|---|
-| **A** | **Toggle intake** (LOAD_ALL mode). Press once to start: overhead belt + conveyor run, auto-stop when loader sensors detect full. Press again to stop manually. |
-| **B** | **Emergency stop all**. Stops intake, conveyor, launcher. Resets robot to manual control. |
-| **X** | **Spin up flywheel**. Starts the launcher motors ramping to target speed. |
-| **Y** | **Center on vision target**. Robot turns to face the detected AprilTag. Driver can override with joystick. |
-| **Left Bumper** | **Toggle slow mode**. Reduces turn sensitivity for precise alignment. |
-| **Right Bumper** | **Launch all**. Fires all loaded balls in sequence. Flywheel must be at speed (use X first). Intake assists at reduced power during the launch sequence. |
-
-### Paddle / Trigger Controls
+### Controls
 
 | Input | Action |
 |---|---|
-| D-pad Up | Paddle to RAMP position, enable pass-through mode |
-| D-pad Down | Paddle to CUP position, disable pass-through mode |
-
-### Intake Overrides
-
-| Input | Action |
-|---|---|
-| D-pad Left | Simple intake on (continuous, no auto-stop) |
-| D-pad Right | Eject balls (intake reverses, conveyor pushes forward) |
-
-### Utility
-
-| Input | Action |
-|---|---|
-| Start | Cycle Limelight tilt: Down / Straight / Up-Min / Up-Max |
-| Back | Apply vision pose correction to Pinpoint (only when an AprilTag is visible). Gamepad rumbles to confirm. |
-| Guide (Home) | Reset drive encoders and ball count |
+| **Left Bumper** | **Toggle intake** (LOAD_ALL): runs the intake until the loader is full, then auto-stops. Press again to stop manually. |
+| **Right Bumper** | **Launch all** loaded balls in sequence (spin up with **X** first; intake assists during the volley). |
+| **X** | **Spin up flywheel** to target speed. |
+| **Y** | **Turret tracking on** — turret seeks the goal (vision, then odometry). Also applies a relocalization. |
+| **B** | **Emergency stop** — cancels launcher, intake, belt; returns to manual control. |
+| **A** | **Toggle slow mode** (precise turning). |
+| **Start** | **Toggle turret lock** — LOCKED (held forward) vs tracking. Use to park a misbehaving turret. |
+| **Back** | **Apply vision pose correction** (relocalize) when a tag is visible. Long rumble = applied, short = no botpose. |
+| **Guide (Home)** | **Reset drive encoders.** |
+| **D-pad Down** | **Shoot-short preset** — near-range speed/feed (use when vision distance is unreliable). |
+| **D-pad Up** | **Shoot-long preset** — far/audience-range speed/feed. |
+| **D-pad Left** | **Simple intake on** (continuous, no auto-stop). |
+| **D-pad Right** | **Eject** the top ball (brief forward pulse + reverse reseat). |
 
 ### Launch Sequence Detail
 
 The full launch cycle when you press **Right Bumper**:
 
-1. Flywheel must already be spinning (press **X** first and wait for it to reach speed)
-2. Right Bumper triggers LAUNCH_ALL behavior
-3. Star trigger / ramp feeds balls into the spinning flywheel
-4. Conveyor belt pushes balls toward the trigger
-5. Intake runs at assist power for ~1 second to help feed
-6. After all balls are fired, subsystems return to idle
+1. Flywheel must already be spinning (press **X** first) — and the turret should be locked on the goal (white turret LEDs).
+2. Right Bumper triggers LAUNCH_ALL: it waits for the flywheel at speed + turret ready, then fires.
+3. **Pulsed firing** feeds the balls one at a time (feed / pause / feed) so the flywheel recovers speed between balls for consistent distance.
+4. After all balls are out, the flywheel drops to a **warm idle** (stays spinning for a fast next volley).
 
 If something goes wrong, press **B** to emergency stop everything.
 
