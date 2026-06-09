@@ -16,7 +16,9 @@ Controls active while the OpMode is initialized but not yet started.
 | A | Set starting position: **Audience wall** |
 | Y | Set starting position: **Goal wall** |
 | Back | Set starting position: **Unknown** (for teleop testing) |
-| Guide (Home) | Set starting position: **Calibration** (field center, facing red goal) |
+| **D-pad Right** | **Selective abort**: cycle how many ball rows to collect before parking — **ALL → 0 → 1 → 2 → ALL** (see Autonomous Coordination below). Current value shows in init telemetry as "Abort After". |
+| **Left Bumper** | **Toggle intake** to preload balls during setup |
+| Guide (Home) | Turret calibration — **currently unreliable, see note below** |
 | Left Stick Y | Drive forward/backward (for pre-match positioning) |
 | Right Stick X | Turn left/right |
 
@@ -24,7 +26,8 @@ Controls active while the OpMode is initialized but not yet started.
 - **Audience**: Touching audience wall, can see goal AprilTag at range
 - **Goal**: Touching goal wall (default for competition)
 - **Unknown**: Position unknown, relies on vision to localize
-- **Calibration**: Field center facing red goal, for testing vision pose comparison
+
+> **Turret calibration:** the Guide-button two-phase calibration is **currently broken — don't rely on it.** Instead, **physically rotate the turret so the tic marks line up** (turret pointing straight forward) **before or during init**. The encoder zeros to that aligned position, so getting the tic marks aligned at startup is the calibration.
 
 ---
 
@@ -113,24 +116,40 @@ The flash/pulse rates (`OVERFULL_FLASH_HZ`, `PULSE_FREQUENCY_HZ`) and brightness
 
 Autonomous runs automatically after pressing Start (if game state is set to Autonomous during init). The driver does not need to do anything during autonomous, but can take over with the joystick if needed — any significant input aborts the current mission.
 
-### Strategy (Goal Wall Start)
+### Strategy
 
-1. Back up from starting position to fire position
-2. Target goal with vision, launch preloaded balls
-3. Collect ball row 1, return to fire, target, launch
-4. Collect ball row 2, return to fire, target, launch
-5. Navigate to gate, release scored balls (Open Sesame)
-6. Collect ball row 3 (includes released balls), return to fire, launch
+The flow depends on which start you selected in init (A = audience, Y = goal):
 
-The autonomous coordinator skips remaining rows if time is running low (< 5 seconds remaining per row cycle).
+**Goal wall start:**
+1. Back up to the fire position (spinning up on the way)
+2. Launch preloaded balls
+3. Collect ball row 1 → return to fire → launch
+4. Collect ball row 2 → return to fire → launch
+5. Collect ball row 3 → return to fire → launch
 
-### Dashboard-Tunable Options
+**Audience wall start:** already at the fire spot — spin up, wait briefly for the turret to lock (up to `CENTERING_TIMEOUT_SECONDS`), launch preloads, then collect rows in reverse order (3 → 2 → 1) with returns to fire between.
 
-These can be changed on FTC Dashboard before the match:
+### Autonomous Coordination Options (partner play)
 
-- `START_AT_GOAL_WALL` — true for goal wall start, false for audience
-- `DO_OPEN_SESAME` — whether to release the gate after rows 1 & 2
-- `MIN_TIME_FOR_ROW` — minimum seconds needed to attempt another row cycle
+Set these to give way to a partner team or grab LEAVE points. Several behave **differently for goal vs audience starts.**
+
+- **Selective abort** — `ABORT_AFTER_ROWS` (init: **D-pad Right**, or Dashboard `Lebot2_Autonomous`). How many rows to collect before parking out of the way:
+  - `ALL` (default) = collect every row
+  - `0` = launch preloads only, collect no rows
+  - `1` / `2` = collect that many rows, then park
+  - **Park destination differs by side:** goal start parks at `FIRE_2` (stays on your side); audience start drives to the **opposing alliance's BASE** (clears your partner's lane). Both are Dashboard-tunable (`ALT_POSITION_GOAL`, `ALT_POSITION_AUDIENCE`).
+- **`leave`** (Dashboard) — **goal start only**: fire preloads, return to fire, then stop. A minimal "score preloads and stay out of the way" run.
+- **`SKIP_LAUNCH`** (Dashboard) — skip launching entirely and just drive off the line for **LEAVE** points.
+- **`CENTERING_TIMEOUT_SECONDS`** (Dashboard) — **audience only**: how long to wait for turret lock before the first launch.
+
+### ⚠️ Currently broken / inactive — do NOT tune these
+
+These appear on Dashboard but **do nothing right now** (their code paths are disabled). Tuning them live will mislead you:
+
+- `DO_OPEN_SESAME` — gate release is fully commented out; no Open Sesame happens.
+- `MIN_TIME_FOR_ROW` — the time-based row-skip is disabled; rows are not skipped on low time.
+- `START_AT_GOAL_WALL` — overridden by the gamepad start-position selection (A/Y); has no effect.
+- `AUTON_LAUNCH_SPACER_TIME`, `FIRST_ANGLE_OFFSET`, `SECOND_ANGLE_OFFSET` — only used by the retired `execute()` path, not the live auton.
 
 ---
 
