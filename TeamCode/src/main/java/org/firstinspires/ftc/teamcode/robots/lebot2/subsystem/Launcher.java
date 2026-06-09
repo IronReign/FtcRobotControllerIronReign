@@ -127,9 +127,10 @@ public class Launcher implements Subsystem {
     // Audience-side firing positions are too far for reliable vision distance readings.
     // Dashboard-tunable. Set to a large value (e.g., 999) to always use vision distance.
     public static double PRESET_SPEED_X_THRESHOLD = 32;  // inches — audience side of field
-    public static double SPEED_TOLERANCE = 5;      // degrees/sec margin for "at speed" check
-    public static double SPEED_TOLERANCE_SHORT = 10;
-    public static double SPEED_TOLERANCE_LONG = 15;
+    // "At speed" margin (deg/sec) — looser at audience range where speed is higher/noisier.
+    // Selected by distanceHint in isFlywheelAtSpeed(). Both Dashboard-tunable.
+    public static double SPEED_TOLERANCE_GOAL = 5;     // goal/near range
+    public static double SPEED_TOLERANCE_AUD = 15;     // audience/far range
     public static double FLYWHEEL_SPINDOWN_TIME = 0.5; // seconds
     public static double FLYWHEEL_IDLE_SPEED = 500;  // deg/sec — warm idle for faster spin-up
 
@@ -154,8 +155,8 @@ public class Launcher implements Subsystem {
     // Pulsed firing: alternate FEED/PAUSE phases to let flywheel recover between balls
     // All feeds run at full power — timing controls the cadence
     public static boolean PULSED_FIRING = true;     // Dashboard toggle — false = continuous feed
-    public static double PULSE_FEED_MS = 150;        // Feed burst duration per ball
-    public static double PULSE_PAUSE_MS = 30;  //300      // Pause for flywheel recovery between balls (goal)
+    public static double PULSE_FEED_MS = 100;        // Feed burst duration per ball
+    public static double PULSE_PAUSE_MS = 100;  //300      // Pause for flywheel recovery between balls (goal)
     public static double PULSE_PAUSE_MS_FAR = 500;   // Longer pause for audience range (higher flywheel speed)
     public static double PULSE_LAST_FEED_MS = 600;  //600 // Longer burst for last ball (nothing pushing behind)
     public static double PULSE_FEED_POWER = -1.0;    // Full power for all pulsed feeds
@@ -461,11 +462,9 @@ public class Launcher implements Subsystem {
             }
         }
 
-        if(targetSpeed>1000){
-            SPEED_TOLERANCE=15;
-        }else{
-            SPEED_TOLERANCE=5;
-        }
+        // At-speed margin is now selected by distanceHint in isFlywheelAtSpeed()
+        // (SPEED_TOLERANCE_GOAL / SPEED_TOLERANCE_AUD) — no per-cycle override here.
+
         // Hardcode target speed until botpose/distance calculation is calibrated
         // TODO: Re-enable vision-based speed calculation once Limelight is working
         //targetSpeed = MIN_LAUNCH_SPEED;
@@ -718,14 +717,12 @@ public class Launcher implements Subsystem {
     public void shootShort(){
         LAUNCH_SPACER_TIMER = .5;
         LAUNCH_SPACER_TIMER_LAST = 1;
-        distanceHint = DistanceHint.NEAR;
-        SPEED_TOLERANCE = SPEED_TOLERANCE_SHORT;
+        distanceHint = DistanceHint.NEAR;  // at-speed margin follows the hint automatically
     }
     public void shootLong(){
-        distanceHint = DistanceHint.FAR;
+        distanceHint = DistanceHint.FAR;   // at-speed margin follows the hint automatically
         LAUNCH_SPACER_TIMER =.5;
         LAUNCH_SPACER_TIMER_LAST = 1.2;
-        SPEED_TOLERANCE = SPEED_TOLERANCE_LONG;
     }
     private void handleSpinningUpState() {
 
@@ -961,7 +958,8 @@ public class Launcher implements Subsystem {
      * Check if flywheel is at target speed.
      */
     public boolean isFlywheelAtSpeed() {
-        return currentSpeed >= (targetSpeed - SPEED_TOLERANCE);
+        double tol = (distanceHint == DistanceHint.FAR) ? SPEED_TOLERANCE_AUD : SPEED_TOLERANCE_GOAL;
+        return currentSpeed >= (targetSpeed - tol);
     }
 
     /**
