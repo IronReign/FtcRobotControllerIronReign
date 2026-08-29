@@ -6,6 +6,9 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.acmerobotics.dashboard.canvas.Canvas;
 
+import java.util.Map;
+import java.util.HashMap;
+
 public class MecanumDrive implements DriveTrainBase{
 
     // MOTOR DECLARATION
