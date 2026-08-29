@@ -34,6 +34,7 @@ public class MeccanumDrive implements DriveTrainBase{
         rearLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
+    @Override
     public void drive(double forward, double strafe, double turn)
     {
         
@@ -58,14 +59,14 @@ public class MeccanumDrive implements DriveTrainBase{
     private void setMotorPowers( double frontRightPower, double frontLeftPower, double rearRightPower, double rearLeftPower) {
         
         frontRight.setPower(frontRightPower);
-        frontLeft.setPower(rearLeftPower);
+        frontLeft.setPower(frontLeftPower);
         rearRight.setPower(rearRightPower);
         rearLeft.setPower(rearLeftPower);
             
     }
 
 
-        @Override
+    @Override
     public void readSensors()
     {
 
