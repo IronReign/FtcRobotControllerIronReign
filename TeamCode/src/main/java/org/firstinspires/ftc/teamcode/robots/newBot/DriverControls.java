@@ -1,4 +1,7 @@
 package org.firstinspires.ftc.teamcode.robots.newBot;
+import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.hardware.Gamepad;
+
 
 @Config(value = "newBot_DriverControls")
 public class DriverControls {
