@@ -1,9 +1,18 @@
 package org.firstinspires.ftc.teamcode.robots.newBot;
+import com.acmerobotics.dashboard.canvas.Canvas;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 
-public class Robot implements TelemetryProvider {
+import java.util.ArrayList;
+import java.util.List;
+
+import org.firstinspires.ftc.teamcode.robots.newBot.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.newBot.subsystem.drivetrain.DriveTrainBase;
+import org.firstinspires.ftc.teamcode.robots.newBot.subsystem.drivetrain.MecanumDrive;
+
+public class Robot{
 
     // SUBSYSTEMS DECLARATION
-    private final DriveTrainBase driveTrain;
+    public final DriveTrainBase driveTrain;
 
     //SUBSYTEM ARRAY DECLARATION
     private final List<Subsystem> subsystems = new ArrayList<>();
@@ -21,7 +30,7 @@ public class Robot implements TelemetryProvider {
     }
 
 
-    public void update(){
+    public void update(Canvas fieldOverlay){
         
         // I2C SENSOR READ 
         for(Subsystem subsystem : subsystems)
@@ -44,7 +53,7 @@ public class Robot implements TelemetryProvider {
             subsystem.stop();
     }
 
-    public void resetStates({
+    public void resetStates(){
         for(Subsystem subsystem : subsystems)
             subsystem.resetStates();
     }

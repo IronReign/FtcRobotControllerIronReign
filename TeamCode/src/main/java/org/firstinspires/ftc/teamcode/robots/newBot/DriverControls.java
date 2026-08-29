@@ -4,9 +4,9 @@ package org.firstinspires.ftc.teamcode.robots.newBot;
 public class DriverControls {
 
     private final Gamepad gamepad1;
-    private final NewBot robot;
+    private final Robot robot;
 
-    public DriverControls( Gamepad gamepad1, NewBot robot)
+    public DriverControls( Gamepad gamepad1, Robot robot)
     {
         this.gamepad1 = gamepad1;
         this.robot = robot;
@@ -22,10 +22,6 @@ public class DriverControls {
         double strafe = gamepad1.left_stick_x;
         double turn = gamepad1.right_stick_x;
         
-        robot.driveTrain.drive(
-                forward,
-                strafe,
-                turn
-        );
+        robot.driveTrain.drive( forward, strafe, turn );
     }
 }
