@@ -1,16 +1,12 @@
-package org.firstinspires.ftc.teamcode.robots.newBot.subsystem;
+package org.firstinspires.ftc.teamcode.robots.newBot.subsystem.drivetrain;
 
-import com.acmerobotics.dashboard.canvas.Canvas;
+import org.firstinspires.ftc.teamcode.robots.newBot.subsystem.Subsystem;
 
-public interface Subsystem {
+public interface DriveTrainBase extends Subsystem {
 
-    void readSensors();
-
-    void calc(Canvas fieldOverlay);
-
-    void act();
-
-    void stop();
-
-    void resetStates();
+    void drive(
+        double forward,
+        double strafe,
+        double turn
+    );
 }
