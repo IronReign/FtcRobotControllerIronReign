@@ -1,13 +1,13 @@
 package org.firstinspires.ftc.teamcode.robots.newBot;
 
-public class Robot extends TelemetryProvider {
+public class Robot implements TelemetryProvider {
 
     // SUBSYSTEM INIT
-    public final MeccanumDrive driveTrain;
+    public final DriveTrainBase driveTrain;
 
-    public NewBot(HardwareMap hardwareMap)
+    public Robot(HardwareMap hardwareMap)
     {
-        MeccanumDrive = new MeccanumDrive(hardwareMap);
+        driveTrain = new MeccanumDrive(hardwareMap);
     }
 
     
