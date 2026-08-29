@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.acmerobotics.dashboard.canvas.Canvas;
 
-public class MeccanumDrive implements DriveTrainBase{
+public class MecanumDrive implements DriveTrainBase{
 
     // MOTOR DECLARATION
     private final DcMotorEx frontRight;
@@ -16,7 +16,7 @@ public class MeccanumDrive implements DriveTrainBase{
 
 
 
-    public MeccanumDrive(HardwareMap hardwareMap)
+    public MecanumDrive(HardwareMap hardwareMap)
     {
         // MOTOR INIT
         frontRight = hardwareMap.get( DcMotorEx.class, "frontRight");
@@ -75,7 +75,7 @@ public class MeccanumDrive implements DriveTrainBase{
 
 
     @Override
-    public void calc(Canvas fieldOverlay)){
+    public void calc(Canvas fieldOverlay){
 
     }
 
@@ -96,7 +96,14 @@ public class MeccanumDrive implements DriveTrainBase{
 
     }
     
-
-
+    @Override
+    public Map<String, Object> getTelemetry(boolean debug) {
+        return new HashMap<>();
+    }
+    
+    @Override
+    public String getTelemetryName() {
+        return "Mecanum Drive";
+    }
 
 }

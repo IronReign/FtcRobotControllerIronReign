@@ -22,7 +22,7 @@ public class Robot{
     public Robot(HardwareMap hardwareMap)
     {
         // SBUSYSTEM INIT
-        driveTrain = new MeccanumDrive(hardwareMap);
+        driveTrain = new MecanumDrive(hardwareMap);
         
         // ADD SUBSYSTEMS TO ARRAY
         subsystems.add(driveTrain);
