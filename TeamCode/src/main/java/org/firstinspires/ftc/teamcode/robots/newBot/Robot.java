@@ -1,18 +1,27 @@
 package org.firstinspires.ftc.teamcode.robots.newBot;
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.firstinspires.ftc.teamcode.robots.newBot.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.newBot.subsystem.Flywheel;
+import org.firstinspires.ftc.teamcode.robots.newBot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.newBot.subsystem.drivetrain.DriveTrainBase;
 import org.firstinspires.ftc.teamcode.robots.newBot.subsystem.drivetrain.MecanumDrive;
 
+@Config(value = "newBot_Robot")
 public class Robot{
+
+    // Sfalse = one motor, true = two motors
+    public static boolean USE_TWO_MOTOR_FLYWHEEL = false;
 
     // SUBSYSTEMS DECLARATION
     public final DriveTrainBase driveTrain;
+    public final Intake intake;
+    public final Flywheel flywheel;
 
     //SUBSYTEM ARRAY DECLARATION
     private final List<Subsystem> subsystems = new ArrayList<>();
@@ -23,9 +32,13 @@ public class Robot{
     {
         // SBUSYSTEM INIT
         driveTrain = new MecanumDrive(hardwareMap);
+        intake = new Intake(hardwareMap);
+        flywheel = new Flywheel(hardwareMap, USE_TWO_MOTOR_FLYWHEEL);
         
         // ADD SUBSYSTEMS TO ARRAY
         subsystems.add(driveTrain);
+        subsystems.add(intake);
+        subsystems.add(flywheel);
         
     }
 

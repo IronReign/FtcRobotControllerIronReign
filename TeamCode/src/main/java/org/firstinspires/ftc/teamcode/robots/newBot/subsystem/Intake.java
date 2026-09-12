@@ -14,7 +14,7 @@ public class Intake implements Subsystem {
     private double targetPower = 0;
 
     public Intake(HardwareMap hardwareMap) {
-        intakeMotor = hardwareMap.get(DcMotorEx.class, "intakeMotor");
+        intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
     }
 
     //Queue power

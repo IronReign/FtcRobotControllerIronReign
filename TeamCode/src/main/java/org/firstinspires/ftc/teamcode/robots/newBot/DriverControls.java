@@ -8,6 +8,7 @@ public class DriverControls {
 
     private final Gamepad gamepad1;
     private final Robot robot;
+    private boolean previousA = false;
 
     public DriverControls( Gamepad gamepad1, Robot robot)
     {
@@ -17,6 +18,21 @@ public class DriverControls {
 
     public void update(){
         handleJoystickDrive();
+        handleIntake();
+        handleFlywheel();
+    }
+
+    private void handleIntake() {
+        // Hold right bumper to intake, left bumper to reverse. Both = stop.
+        double power = (gamepad1.right_bumper ? 1 : 0) - (gamepad1.left_bumper ? 1 : 0);
+        robot.intake.setPower(power);
+    }
+
+    private void handleFlywheel() {
+        if (gamepad1.a && !previousA) {
+            robot.flywheel.toggle();
+        }
+        previousA = gamepad1.a;
     }
 
     public void handleJoystickDrive() {
