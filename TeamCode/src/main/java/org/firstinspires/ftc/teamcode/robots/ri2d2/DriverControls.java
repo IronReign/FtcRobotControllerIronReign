@@ -1,4 +1,5 @@
-package org.firstinspires.ftc.teamcode.robots.newBot;
+package org.firstinspires.ftc.teamcode.robots.ri2d2;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
@@ -10,6 +11,10 @@ public class DriverControls {
     private final Robot robot;
     private boolean previousA = false;
 
+    public static double intakePower = -0.7;
+    private boolean intake = false;
+    private boolean previousRightBumper = false;
+
     public DriverControls( Gamepad gamepad1, Robot robot)
     {
         this.gamepad1 = gamepad1;
@@ -19,21 +24,24 @@ public class DriverControls {
     public void update(){
         handleJoystickDrive();
         handleIntake();
-        handleFlywheel();
+        //handleFlywheel();
     }
 
     private void handleIntake() {
-        // Hold right bumper to intake, left bumper to reverse. Both = stop.
-        double power = (gamepad1.right_bumper ? 1 : 0) - (gamepad1.left_bumper ? 1 : 0);
-        robot.intake.setPower(power);
+        // Toggle once per press, even when the right bumper is held.
+        if (gamepad1.right_bumper && !previousRightBumper) {
+            intake = !intake;
+        }
+        previousRightBumper = gamepad1.right_bumper;
+        robot.intake.setPower(intake ? intakePower : 0);
     }
 
-    private void handleFlywheel() {
-        if (gamepad1.a && !previousA) {
-            robot.flywheel.toggle();
-        }
-        previousA = gamepad1.a;
-    }
+//    private void handleFlywheel() {
+//        if (gamepad1.a && !previousA) {
+//            robot.flywheel.toggle();
+//        }
+//        previousA = gamepad1.a;
+//    }
 
     public void handleJoystickDrive() {
 
