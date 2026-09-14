@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.firstinspires.ftc.teamcode.robots.ri2d2.subsystem.Subsystem;
+import org.firstinspires.ftc.teamcode.robots.ri2d2.subsystem.Catapult;
 import org.firstinspires.ftc.teamcode.robots.ri2d2.subsystem.Flywheel;
 import org.firstinspires.ftc.teamcode.robots.ri2d2.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.ri2d2.subsystem.drivetrain.DriveTrainBase;
@@ -21,6 +22,7 @@ public class Robot{
     // SUBSYSTEMS DECLARATION
     public final DriveTrainBase driveTrain;
     public final Intake intake;
+    public final Catapult catapult;
     //public final Flywheel flywheel;
 
     //SUBSYTEM ARRAY DECLARATION
@@ -33,11 +35,13 @@ public class Robot{
         // SBUSYSTEM INIT
         driveTrain = new MecanumDrive(hardwareMap);
         intake = new Intake(hardwareMap);
+        catapult = new Catapult(hardwareMap);
         //flywheel = new Flywheel(hardwareMap, USE_TWO_MOTOR_FLYWHEEL);
-        
+
         // ADD SUBSYSTEMS TO ARRAY
         subsystems.add(driveTrain);
         subsystems.add(intake);
+        subsystems.add(catapult);
         //subsystems.add(flywheel);
         
     }

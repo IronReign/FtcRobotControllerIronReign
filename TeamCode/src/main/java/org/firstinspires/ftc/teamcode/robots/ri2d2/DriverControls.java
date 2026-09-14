@@ -15,6 +15,11 @@ public class DriverControls {
     private boolean intake = false;
     private boolean previousRightBumper = false;
 
+    private boolean previousY = false;
+    private boolean previousX = false;
+    private boolean previousB = false;
+    private boolean previousBack = false;
+
     public DriverControls( Gamepad gamepad1, Robot robot)
     {
         this.gamepad1 = gamepad1;
@@ -24,7 +29,43 @@ public class DriverControls {
     public void update(){
         handleJoystickDrive();
         handleIntake();
+        handleCatapult();
         //handleFlywheel();
+    }
+
+    private void handleCatapult() {
+        // Y = arm: winds down, latches, slackens, ends at READY ready to fire
+        if (gamepad1.y && !previousY) {
+            robot.catapult.retract();
+        }
+        previousY = gamepad1.y;
+
+        // X = launch. Slackens the string first if it isn't already slack.
+        if (gamepad1.x && !previousX) {
+            robot.catapult.launch();
+        }
+        previousX = gamepad1.x;
+
+        // B = abort whatever the catapult is doing
+        if (gamepad1.b && !previousB) {
+            robot.catapult.abort();
+        }
+        previousB = gamepad1.b;
+
+        // BACK = zero the spool encoder at the current position (setup only)
+        if (gamepad1.back && !previousBack) {
+            robot.catapult.zeroEncoder();
+        }
+        previousBack = gamepad1.back;
+
+        // Dpad jogs the spool by hand so we can rig the string and find positions
+        if (gamepad1.dpad_up) {
+            robot.catapult.jog(1);
+        } else if (gamepad1.dpad_down) {
+            robot.catapult.jog(-1);
+        } else {
+            robot.catapult.jog(0);
+        }
     }
 
     private void handleIntake() {
