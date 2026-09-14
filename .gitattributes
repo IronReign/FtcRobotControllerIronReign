@@ -1,0 +1,35 @@
+# Line endings are normalized to LF in the repository, so a Windows editor
+# saving CRLF no longer shows every line of a file as changed.
+#
+# Git auto-detects text vs binary. The rules below cover the cases where
+# autodetection would guess wrong, or where the platform requires CRLF.
+#
+# After editing this file, run:  git add --renormalize .
+
+* text=auto eol=lf
+
+# Windows batch scripts need CRLF - cmd.exe can mis-parse LF-only files
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+# Shell scripts must stay LF even in a Windows checkout
+*.sh        text eol=lf
+gradlew     text eol=lf
+
+# Binary assets - never normalize, never diff as text
+*.jar       binary
+*.aar       binary
+*.so        binary
+*.keystore  binary
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.pdf       binary
+*.wav       binary
+*.mp3       binary
+*.mp4       binary
+*.zip       binary
+*.tflite    binary
+*.onnx      binary
