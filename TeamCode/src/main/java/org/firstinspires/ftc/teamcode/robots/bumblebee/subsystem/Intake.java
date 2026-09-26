@@ -105,7 +105,7 @@ public class Intake implements Subsystem{
 
     @Override
     public String getTelemetryName() {
-        return "";
+        return "Intake";
     }
 
 }
