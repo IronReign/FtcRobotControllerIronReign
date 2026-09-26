@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.robots.bumblebee;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.robots.bumblebee.subsystem.DriveTrain;
+import org.firstinspires.ftc.teamcode.robots.bumblebee.subsystem.drivetrain.DriveTrain;
 import org.firstinspires.ftc.teamcode.robots.bumblebee.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.bumblebee.subsystem.Subsystem;
 

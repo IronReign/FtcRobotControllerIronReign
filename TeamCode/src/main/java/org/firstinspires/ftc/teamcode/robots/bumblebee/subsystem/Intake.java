@@ -25,9 +25,11 @@ public class Intake implements Subsystem{
 
 
     //INTAKING STATES
-    public enum IntakeState{
+    public static enum IntakeState{
         OFF,
-        INTAKING
+        INTAKING,
+
+        EJECTING
     }
     private IntakeState intakeState = IntakeState.OFF;
 
@@ -61,6 +63,10 @@ public class Intake implements Subsystem{
 
             case INTAKING:
                 intakeVelocity = ticksPerSecond;
+                break;
+
+            case EJECTING:
+                intakeVelocity = -ticksPerSecond;
                 break;
         }
 

@@ -22,12 +22,7 @@ public class NewBotTeleOp extends OpMode {
     public void loop() {
         driverControls.update();
         robot.update(new Canvas());
-        for (Map.Entry<String, Object> entry : robot.catapult.getTelemetry(true).entrySet()) {
-            telemetry.addData(entry.getKey(), entry.getValue());
-        }
-//        for (Map.Entry<String, Object> entry : robot.flywheel.getTelemetry(false).entrySet()) {
-//            telemetry.addData(entry.getKey(), entry.getValue());
-//        }
+
     }
 
     @Override
