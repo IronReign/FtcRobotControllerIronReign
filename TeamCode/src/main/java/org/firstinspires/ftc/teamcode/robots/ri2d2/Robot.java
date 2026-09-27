@@ -21,7 +21,8 @@ public class Robot{
 
     // SUBSYSTEMS DECLARATION
     public final DriveTrainBase driveTrain;
-//    public final Intake intake;
+    public final Intake intake;
+    public final Catapult catapult;
     //public final Flywheel flywheel;
 
     //SUBSYTEM ARRAY DECLARATION
@@ -33,13 +34,15 @@ public class Robot{
     {
         // SBUSYSTEM INIT
         driveTrain = new MecanumDrive(hardwareMap);
-//        intake = new Intake(hardwareMap);
+        intake = new Intake(hardwareMap);
+        catapult = new Catapult(hardwareMap);
         //flywheel = new Flywheel(hardwareMap, USE_TWO_MOTOR_FLYWHEEL);
 
         // ADD SUBSYSTEMS TO ARRAY
         subsystems.add(driveTrain);
-//        subsystems.add(intake);
-
+        subsystems.add(intake);
+        subsystems.add(catapult);
+        //subsystems.add(flywheel);
         
     }
 

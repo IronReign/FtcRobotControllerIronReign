@@ -20,7 +20,7 @@ public class Intake implements Subsystem{
 
 
     // ENCODER CALCULATION VARIABLES
-    public static double goalRPM = 0.0;
+    public static double goalRPM = 700;
     public static double ticksPerSecond;
 
 

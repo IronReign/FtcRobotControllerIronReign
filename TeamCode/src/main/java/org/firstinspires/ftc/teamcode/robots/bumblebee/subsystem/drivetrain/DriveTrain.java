@@ -64,6 +64,7 @@ public class DriveTrain implements Subsystem {
         strafe = s;
         turn = t;
     }
+
     public void driveNonFieldCentric(double forward, double strafe, double turn){
          frontLeftPower = forward + strafe + turn;
          frontRightPower = forward - strafe - turn;
@@ -87,8 +88,8 @@ public class DriveTrain implements Subsystem {
 
         theta = AngleUnit.normalizeDegrees(theta - headingDegrees);
 
-        double newForward = r * Math.sin(theta);
-        double newRight = r * Math.cos(theta);
+        double newForward = r * Math.sin(Math.toRadians(theta));
+        double newRight = r * Math.cos(Math.toRadians(theta));
 
         driveNonFieldCentric(newForward, newRight, turn);
     }
@@ -102,7 +103,11 @@ public class DriveTrain implements Subsystem {
 
     @Override
     public void calc(Canvas fieldOverlay) {
-        driveFieldCentric(forward, strafe, turn);
+        if(fieldCentric) {
+            driveFieldCentric(forward, strafe, turn);
+        } else{
+            driveNonFieldCentric(forward, strafe, turn);
+        }
     }
 
     @Override
