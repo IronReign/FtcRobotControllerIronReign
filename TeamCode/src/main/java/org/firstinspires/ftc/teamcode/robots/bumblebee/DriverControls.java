@@ -2,17 +2,17 @@ package org.firstinspires.ftc.teamcode.robots.bumblebee;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 import org.firstinspires.ftc.teamcode.robots.bumblebee.subsystem.Intake;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
 
 public class DriverControls {
     private final Robot robot;
     private final Gamepad gamepad1;
-
-    private boolean intake = false;
-    private boolean bumperWasPressed = false;
+    private final StickyGamepad stickyGamepad1;
 
     public DriverControls(Robot robot, Gamepad gamepad1){
         this.robot = robot;
         this.gamepad1 = gamepad1;
+        this.stickyGamepad1 = new StickyGamepad(gamepad1);
     }
 
     public void update(){
@@ -21,7 +21,7 @@ public class DriverControls {
     }
 
     public void handleDrivetrain(){
-        double forward = gamepad1.left_stick_y;
+        double forward = -gamepad1.left_stick_y;
         double strafe = gamepad1.left_stick_x;
         double turn = gamepad1.right_stick_x;
 
@@ -29,20 +29,15 @@ public class DriverControls {
     }
 
     public void handleIntake(){
-        boolean bumperPressed = gamepad1.right_bumper || gamepad1.left_bumper;
+        stickyGamepad1.update();
 
-        if( bumperPressed && !bumperWasPressed) intake = !intake;
-
-        bumperWasPressed = bumperPressed;
-
-        if(intake && gamepad1.right_bumper) {
-            robot.intake.setBehavior(Intake.IntakeState.INTAKING);
-        } else if( intake && gamepad1.left_bumper){
-            robot.intake.setBehavior(Intake.IntakeState.EJECTING);
-        }else if(!intake){
-            robot.intake.setBehavior(Intake.IntakeState.OFF);
+        if(stickyGamepad1.right_bumper){
+            if(robot.intake.getBehavior() == Intake.Behavior.INTAKING) robot.intake.setBehavior(Intake.Behavior.OFF);
+            else robot.intake.setBehavior(Intake.Behavior.INTAKING);
+        }else if(stickyGamepad1.left_bumper){
+            if(robot.intake.getBehavior() == Intake.Behavior.EJECTING) robot.intake.setBehavior(Intake.Behavior.OFF);
+            else robot.intake.setBehavior(Intake.Behavior.EJECTING);
         }
-
     }
 
 }

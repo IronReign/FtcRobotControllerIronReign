@@ -25,17 +25,17 @@ public class Intake implements Subsystem{
 
 
     //INTAKING STATES
-    public static enum IntakeState{
+    public static enum Behavior {
         OFF,
         INTAKING,
 
         EJECTING
     }
-    private IntakeState intakeState = IntakeState.OFF;
+    private Behavior behavior = Behavior.OFF;
 
     // TO FLUSH
     private double intakeVelocity = 0.0;
-
+    double ticksPerRev;
 
     public Intake(HardwareMap hardwareMap){
 
@@ -45,7 +45,7 @@ public class Intake implements Subsystem{
         intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         intakeSlave.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        double ticksPerRev = intake.getMotorType().getTicksPerRev();
+        ticksPerRev = intake.getMotorType().getTicksPerRev();
         ticksPerSecond = (ticksPerRev * goalRPM) / 60.0;
     }
 
@@ -55,7 +55,7 @@ public class Intake implements Subsystem{
 
     @Override
     public void calc(Canvas fieldOverlay){
-        switch (intakeState){
+        switch (behavior){
 
             case OFF:
                 intakeVelocity = 0.0;
@@ -80,13 +80,17 @@ public class Intake implements Subsystem{
 
     @Override
     public void stop(){
-        intakeState = IntakeState.OFF;
+        behavior = Behavior.OFF;
         intake.setPower(0.0);
         intakeSlave.setPower(0.0);
     }
 
-    public void setBehavior(IntakeState intakeState){
-        this.intakeState = intakeState;
+    public void setBehavior(Behavior behavior){
+        this.behavior = behavior;
+    }
+
+    public Behavior getBehavior(){
+        return behavior;
     }
 
     @Override
@@ -103,8 +107,8 @@ public class Intake implements Subsystem{
         Map<String, Object> telemetry = new LinkedHashMap<>();
 
         telemetry.put("Goal RPM", goalRPM);
-        telemetry.put("Intake RPM", intake.getVelocity() * 60.0);
-        telemetry.put("Intake Slave RPM", intakeSlave.getVelocity() * 60.0);
+        telemetry.put("Intake RPM", intake.getVelocity() * 60.0 / ticksPerRev);
+        telemetry.put("Intake Slave RPM", intakeSlave.getVelocity() * 60.0 / ticksPerRev);
 
         return telemetry;
     }
