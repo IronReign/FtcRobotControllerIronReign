@@ -16,6 +16,7 @@ import org.firstinspires.ftc.teamcode.robots.lebot2.util.LimelightStream;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -72,21 +73,15 @@ public class Vision implements Subsystem {
 
 
     // ==================== VISION PIPELINES ====================
-    public static int pollenTrackingPipeline = 2;
-    public static int dummyPipeline = 3;
-    public static int redAudienceUpBlueAudienceUp = 4;
-    public static int redAudienceUpBlueAudienceDown = 5;
-    public static int redAudienceDownBlueAudienceUp = 6;
-    public static int redAudienceDownBlueAudienceDown = 7;
 
     public static enum Pipeline{
         
-        POLLEN(pollenTrackingPipeline, false),
-        DUMMY(dummyPipeline,false),
-        RED_AUDIENCE_UP_BLUE_AUDIENCE_UP(redAudienceUpBlueAudienceUp, true),
-        RED_AUDIENCE_UP_BLUE_AUDIENCE_DOWN(redAudienceUpBlueAudienceDown, true),
-        RED_AUDIENCE_DOWN_BLUE_AUDIENCE_UP(redAudienceDownBlueAudienceUp, true),
-        RED_AUDIENCE_DOWN_BLUE_AUDIENCE_DOWN(redAudienceDownBlueAudienceDown, true);
+        POLLEN(0, false),
+        DUMMY(1,false),
+        RED_AUDIENCE_UP_BLUE_AUDIENCE_UP(2, true),
+        RED_AUDIENCE_UP_BLUE_AUDIENCE_DOWN(3, true),
+        RED_AUDIENCE_DOWN_BLUE_AUDIENCE_UP(4, true),
+        RED_AUDIENCE_DOWN_BLUE_AUDIENCE_DOWN(5, true);
 
         public final int id;
         public final boolean isLocalizer;
@@ -100,6 +95,14 @@ public class Vision implements Subsystem {
     private Pipeline pipeline = Pipeline.DUMMY;
     private Pipeline requestedPipeline;
     private boolean pipelineRequested;
+
+    private final HashMap<String, Pipeline> pipelineStrings = new HashMap<>();
+    {
+      pipelineStrings.put("AUDIENCE_SIDE_UPAUDIENCE_SIDE_UP", Pipeline.RED_AUDIENCE_UP_BLUE_AUDIENCE_UP);
+      pipelineStrings.put("AUDIENCE_SIDE_UPREAR_SIDE_UP", Pipeline.RED_AUDIENCE_UP_BLUE_AUDIENCE_DOWN);
+      pipelineStrings.put("REAR_SIDE_UPAUDIENCE_SIDE_UP", Pipeline.RED_AUDIENCE_DOWN_BLUE_AUDIENCE_UP);
+      pipelineStrings.put("REAR_SIDE_UPREAR_SIDE_UP", Pipeline.RED_AUDIENCE_DOWN_BLUE_AUDIENCE_DOWN);
+    }
 
     // ==================== DASHBOARD ====================
     private LimelightStream limelightStream = null;
@@ -173,16 +176,7 @@ public class Vision implements Subsystem {
 
                     if(redHive.getHiveState() == HiveTracker.HiveState.UNKNOWN || blueHive.getHiveState() == HiveTracker.HiveState.UNKNOWN) break;
 
-                    Pipeline toUse;
-                    if(blueHive.getHiveState() == HiveTracker.HiveState.AUDIENCE_SIDE_UP &&  redHive.getHiveState() == HiveTracker.HiveState.AUDIENCE_SIDE_UP ){
-                        toUse = Pipeline.RED_AUDIENCE_UP_BLUE_AUDIENCE_UP;
-                    }else if(blueHive.getHiveState() == HiveTracker.HiveState.REAR_SIDE_UP &&  redHive.getHiveState() == HiveTracker.HiveState.REAR_SIDE_UP ){
-                        toUse = Pipeline.RED_AUDIENCE_DOWN_BLUE_AUDIENCE_DOWN;
-                    }else if(blueHive.getHiveState() == HiveTracker.HiveState.AUDIENCE_SIDE_UP && redHive.getHiveState() == HiveTracker.HiveState.REAR_SIDE_UP){
-                        toUse = Pipeline.RED_AUDIENCE_DOWN_BLUE_AUDIENCE_UP;
-                    }else{
-                        toUse = Pipeline.RED_AUDIENCE_UP_BLUE_AUDIENCE_DOWN;
-                    }
+                    Pipeline toUse = pipelineStrings.get(  redHive.getHiveState().toString() + blueHive.getHiveState().toString());
 
                     if( pipeline != toUse){
                       setPipeline(toUse);
@@ -242,7 +236,7 @@ public class Vision implements Subsystem {
           setServo(requestedPipeline);
           tiltPending = true;
           pipeline = Pipeline.DUMMY;
-          limeLight.pipelineSwitch(dummyPipeline);
+          limeLight.pipelineSwitch(Pipeline.DUMMY.id);
         }
 
         this.requestedPipeline = requestedPipeline;
