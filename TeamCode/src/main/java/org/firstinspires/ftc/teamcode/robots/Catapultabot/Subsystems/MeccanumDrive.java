@@ -15,6 +15,9 @@ public class MeccanumDrive implements Subsystem
     private final DcMotorEx fleft, fright,  bleft, bright;
     private double forward, strafe, turn;
     private double flp, frp, blp, brp;
+
+    public boolean driving = false;
+
     public MeccanumDrive(HardwareMap controller)
     {
         //assign vars
@@ -65,6 +68,7 @@ public class MeccanumDrive implements Subsystem
     @Override
     public void calc(Canvas fieldOverlay) {
         drive(forward, strafe, turn);
+        driving = flp != 0 || frp != 0 || blp !=0 || brp != 0;
     }
 
     @Override
