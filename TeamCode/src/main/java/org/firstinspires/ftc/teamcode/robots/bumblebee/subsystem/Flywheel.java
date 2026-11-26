@@ -26,14 +26,14 @@ public class Flywheel implements Subsystem{
     private final DcMotorEx flywheel;
     private final DcMotorEx feeder;
 
-    public static double goalRPM = 3700;
+    public static double goalRPM = 2750;
     public static double rpmTolerance = 25;
     public static long feedTime_ms = 4000L;
     public static long spinUpTimeout_ms = 2000L;
     public static double idlePercent = 0.5;
 
     private double bareTicksPerRev  = 28.0;
-    private double gearRatio = 48.0/30.0;
+    private double gearRatio = 30.0/48;
     private double ticksPerRev = bareTicksPerRev * gearRatio;
     private double ticksPerSecond = (ticksPerRev * goalRPM) / 60.0;
 

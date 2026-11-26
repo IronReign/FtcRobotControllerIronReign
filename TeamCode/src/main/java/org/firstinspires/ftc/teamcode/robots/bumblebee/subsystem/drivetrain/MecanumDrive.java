@@ -71,7 +71,7 @@ public final class MecanumDrive {
         // feedforward parameters (in tick units)
         public double kS = 0.9871447486437899;
         public double kV = 0.00023798897311968326;
-        public double kA = 0;
+        public double kA = 0.00005;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 50;
@@ -165,9 +165,9 @@ public final class MecanumDrive {
         MecanumKinematics.WheelVelocities<Time> wheelVels = new MecanumKinematics(1).inverse(
                 PoseVelocity2dDual.constant(powers, 1));
 
-        double maxPowerMag = .6;
+        double maxPowerMag = 1.0;
         for (DualNum<Time> power : wheelVels.all()) {
-            maxPowerMag = Math.max(maxPowerMag, power.value());
+            maxPowerMag = Math.max(maxPowerMag, Math.abs(power.value()));
         }
 
         leftFront.setPower(wheelVels.leftFront.get(0) / maxPowerMag);
